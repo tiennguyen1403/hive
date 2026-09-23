@@ -1356,3 +1356,20 @@ trùng md5 khi đặt lại con trỏ. Payload HTML `/` 54.925 → 63.248 B (+15
 xem lại khi có dữ liệu thật. Lệch ghi nhận: `data/catalog.ts` không import `COLORS` (import chết); `getDrop` dùng
 `dropByNo`; `generateStaticParams` thành async (B0b bỏ). Mở: `photoSetsNeeded` là hàm chết (lát tỉa); `React.cache` cho
 `loadCatalog` vào B0b; hook cảnh báo `DESIGN.md` mới hơn `.impeccable/design.json` (drift từ v3, chưa sửa).
+
+**Lát B0b ĐẠT (23/09/2026, `backend-implementer`, phiên chính duyệt độc lập).** Catalog đọc từ Postgres trong Supabase
+cục bộ: `supabase/migrations/20260923083130_catalog.sql` (5 enum, 6 bảng sống + 6 bảng `seed_*`, RLS trên cả 12 bảng,
+`select` công khai cho 6 bảng sống, `reset_demo(p_anchor)` chỉ `service_role`, `catalog_snapshot()` trả JSON camelCase
+với timestamp `+07:00`); `supabase/seed.sql` sinh bởi `scripts/gen-seed.ts` (test chống lệch trong `npm test`);
+`lib/db/server.ts` (`createServerClient`, env `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` chỉ server), `lib/db/catalog-snapshot.ts`
+(guard tay, 18 test), `lib/db/catalog.ts` (`React.cache` + `connection()` + `rpc`), `lib/db/database.types.ts` sinh máy,
+`app/api/health/route.ts` (401 khi có `CRON_SECRET`, 503 không lộ lỗi), `vitest.db.config.mts` (`test:db`, đọc `.env.local`
+bằng `node:fs`, không `@next/env`), `.env.example`; bỏ `generateStaticParams` ở PDP. Dependency đúng bốn: `supabase`,
+`tsx` (dev), `@supabase/supabase-js`, `@supabase/ssr`. Kiểm: `db reset` 31 s; `supabase start` lần đầu 9'29" (tải image),
+lần sau 30 s; md5 seed/types trùng khi sinh lại; **1.061 test / 47 tệp** xanh với stack tắt; **10 test DB** xanh (snapshot
+`toEqual` `FIXTURE_CATALOG`, 21/38/152/4/2/6, anon không đọc `seed_*`, không gọi `reset_demo`, idempotent); build sạch với
+stack tắt; sweep 59 lượt 0 console / 0 tràn / 0 chữ nhỏ / 0 request ngoài 3200; 16 ảnh `…/b0b/after/` — 10 trùng byte
+với B0a, 6 lệch chỉ ở đồng hồ đếm ngược và nhiễu JPEG (đo pixel). `/` 0,016 s, `/api/health` 0,012 s, `{"ok":true,"drops":4}`.
+**Hệ quả:** mọi trang là `ƒ` (root layout gọi `loadCatalog()` → `connection()`), kể cả `/about`, `/faq`; giữ tới B3 rồi
+xét cache theo tag. Quyết định kèm: `.gitignore` thêm `!.env.example`; kịch bản 16 ảnh chép sang `tools/backend-shots.js`;
+A5/A6 trong `tasks/backend.md` đã tick. Khoá service không nằm trong tệp nào; B3 quyết chỗ cất cho nút "Đặt lại".

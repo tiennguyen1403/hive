@@ -13,6 +13,13 @@ export default defineConfig({
     // so `node` is enough and there is no jsdom yet. Phase 2 brings components,
     // and with them jsdom + @testing-library/react.
     environment: "node",
-    include: ["{data,lib,app,components}/**/*.test.ts"],
+    // `scripts/` joined the list at slice B0b: `supabase/seed.sql` is generated
+    // from `data/*.ts`, and `scripts/gen-seed.test.ts` is what fails when the
+    // file on disk and the fixture drift apart.
+    //
+    // `*.dbtest.ts` is deliberately NOT here. Those need a running Postgres,
+    // and `npm test` has to stay runnable without Docker — they have their own
+    // runner in `vitest.db.config.mts` (`npm run test:db`).
+    include: ["{data,lib,app,components,scripts}/**/*.test.ts"],
   },
 });

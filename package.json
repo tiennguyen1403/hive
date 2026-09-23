@@ -8,11 +8,16 @@
     "start": "next start -p 3100",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:db": "vitest run --config vitest.db.config.mts",
+    "seed:gen": "tsx scripts/gen-seed.ts",
+    "db:types": "supabase gen types typescript --local > lib/db/database.types.ts",
     "typecheck": "tsc --noEmit",
     "preview": "next build && next start -p 3200",
     "preview:serve": "next start -p 3200"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.0",
     "next": "^16.3.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
@@ -23,7 +28,9 @@
     "@types/node": "^26.6.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "supabase": "^2.117.0",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.1"
   }

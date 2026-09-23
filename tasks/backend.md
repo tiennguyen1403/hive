@@ -121,9 +121,10 @@ GHN/GHTK API. Schema đã chừa chỗ.
 - [ ] **A3** Tắt xác nhận email chấp nhận được với người xem demo.
 - [ ] **A4** Đăng ký/đặt đơn tự do + reset hằng ngày là đủ vệ sinh; rate limit mặc định của
   Supabase Auth (30 yêu cầu/5 phút/IP) đủ. Kiểm: chạy demo 1 tuần.
-- [ ] **A5** Docker Desktop chạy được để `supabase start`; nếu không, dùng dự án Free thứ hai
-  làm dev/test (Free cho 2 dự án).
-- [ ] **A6** Playwright sweep chạy được trên DB cục bộ sau `reset_demo()`.
+- [x] **A5** Docker Desktop chạy được để `supabase start` — kiểm ở B0b 23/09: lần đầu 9 phút 29
+  giây (tải image), lần sau 30 giây; `db reset` 31 giây.
+- [x] **A6** Playwright sweep chạy được trên DB cục bộ sau `reset_demo()` — kiểm ở B0b 23/09: 59
+  lượt, 0 console / 0 tràn / 0 chữ nhỏ / 0 request ngoài 3200.
 
 ## 9. Lát thực thi (rủi ro giảm dần)
 

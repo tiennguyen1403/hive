@@ -17,15 +17,13 @@ const RELATED = 4;
 /** "Cùng tầm giá" — half as much again, or half as much. */
 const NEAR_PRICE = 0.5;
 
-/**
- * Pre-render every style. The catalog is a fixed list of 21 and the URLs are
- * the first thing a shopper shares, so there is no reason for any of them to
- * be built on demand.
- */
-export async function generateStaticParams() {
-  const catalog = await loadCatalog();
-  return catalog.products.map((p) => ({ slug: p.slug }));
-}
+// There is no `generateStaticParams` here any more. It used to pre-render all
+// twenty-one styles, which was free while the catalogue was a fixture in the
+// bundle; since slice B0b it would mean querying Postgres during `next build`
+// and then serving stock figures frozen at deploy time. A style's remaining
+// count is the one number on this page that must not be stale, so the page is
+// rendered per request (`lib/db/catalog.ts` calls `connection()`), and an
+// unknown slug still gets `notFound()` rather than an empty shell.
 
 export async function generateMetadata(
   props: PageProps<"/products/[slug]">,

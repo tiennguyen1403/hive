@@ -6,6 +6,9 @@ build/
 *.pem
 npm-debug.log*
 .env*
+# …except the template, which carries no value — only the two names a server
+# needs and where to read them from (`npx supabase status`).
+!.env.example
 next-env.d.ts
 .impeccable/config.local.json
 .playwright-cli/
