@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logo HIVE · tay bài 5 · mark tròn H + ong</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-b89d52.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-vietnamese-0260aa.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-ext-d711e9.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+  :root {
+    --ink: #171410; --ink-2: #6b6250; --hair: #ece7dd; --line: #9c937f; --plate: #f4efe6;
+    --honey: #eba400; --honey-text: #9e6817; --cloth: #171410; --cloth-ink: #fff; --cloth-2: #b9b0a0; --cloth-hair: #3a352e;
+    --display: "Unbounded", system-ui, sans-serif; --sans: "Be Vietnam Pro", system-ui, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: #fff; color: var(--ink); scrollbar-color: var(--line) var(--plate); }
+  body { margin: 0; font: 14px/1.55 var(--sans); }
+  ::selection { background: var(--honey); color: var(--ink); }
+  a { color: var(--honey-text); }
+  figure { margin: 0; }
+
+  header { padding: 32px 24px 20px; border-bottom: 1px solid var(--hair); display: grid; grid-template-columns: minmax(0, 72ch) 1fr; gap: 24px; align-items: end; }
+  header h1 { margin: 0 0 8px; font: 800 22px/1.15 var(--display); letter-spacing: -0.02em; }
+  header p { margin: 0 0 6px; color: var(--ink-2); }
+  header .status { justify-self: end; font-size: 12px; color: var(--ink-2); border: 1px dashed var(--honey); border-radius: 4px; padding: 6px 10px; }
+
+  main { padding: 0 24px 72px; }
+  .head { display: grid; grid-template-columns: 170px repeat(4, minmax(0, 1fr)); gap: 0 16px; padding: 26px 0 10px; border-bottom: 1px solid var(--ink); }
+  .head .dir b { display: block; font: 800 15px/1.2 var(--display); letter-spacing: -0.01em; margin-bottom: 4px; }
+  .head .dir span { color: var(--ink-2); font-size: 12px; }
+  .head .dir em { font-style: normal; font-weight: 600; color: var(--ink); }
+  .row { display: grid; grid-template-columns: 170px repeat(4, minmax(0, 1fr)); gap: 0 16px; padding: 22px 0; border-bottom: 1px solid var(--hair); align-items: start; }
+  .row.wide { grid-template-columns: 170px 1fr; }
+  .row > h2 { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.35; }
+  .row > h2 small { display: block; font-weight: 400; color: var(--ink-2); margin-top: 4px; }
+  .cell { min-height: 110px; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 16px; border-radius: 4px; position: relative; }
+  .cell.white { outline: 1px solid var(--hair); }
+  .cell.plate { background: var(--plate); }
+  .cell.stack { flex-direction: column; align-items: stretch; gap: 12px; }
+  .cell .colkey { display: none; }
+  .grounds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+  .g { height: 96px; display: grid; place-items: center; border-radius: 4px; }
+  .g.white { outline: 1px solid var(--hair); background: #fff; }
+  .g.cloth { background: var(--cloth); }
+  .g.honey { background: var(--honey); }
+  .on-white { color: #171410; --n: #eba400; }
+  .on-cloth { color: #eba400; --n: #ffffff; }
+  .on-honey { color: #171410; --n: #171410; }
+
+  .mk { display: block; width: auto; height: auto; flex: none; }
+  .pair { display: flex; gap: 22px; align-items: flex-end; }
+  .pair figure { text-align: center; font-size: 11px; color: var(--ink-2); }
+  .pair figure svg { margin: 0 auto 6px; color: var(--ink); }
+  .con { width: 100%; height: 140px; display: block; }
+  .rule { font-size: 12.5px; color: var(--ink); margin: 0; line-height: 1.45; }
+  .rule b { font-weight: 600; }
+
+  /* the wordmark exactly as prototype/name/index.html sets it: Unbounded 800, tracking -0.02em; the number rides in honey */
+  .display { font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
+  .word { font-size: 56px; }
+  .word .n { color: var(--n); }
+  .lock { display: inline-flex; align-items: center; gap: .28em; }
+  .lock svg { flex: none; }
+  .row.two { grid-template-columns: 170px repeat(2, minmax(0, 1fr)); row-gap: 16px; }
+  .row.two > h2 { grid-row: 1 / span 2; }
+  .wm { font-family: var(--display); font-weight: 800; letter-spacing: .14em; font-size: 16px; line-height: 1; white-space: nowrap; }
+  .wm .n { letter-spacing: 0; color: var(--honey-text); }
+  .wm.w13 { font-size: 13px; } .wm.w14 { font-size: 14px; letter-spacing: .08em; }
+  .on-cloth .wm .n { color: #fff; }
+
+  .nav { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 300px; min-height: 52px; padding: 8px 14px; background: #fff; outline: 1px solid var(--hair); box-shadow: 0 2px 8px rgba(23,20,16,.08); border-radius: 4px; }
+  .nav .itag { margin-left: auto; font: 700 11px/1 var(--sans); letter-spacing: .06em; padding: 5px 8px; border-radius: 3px; background: var(--cloth); color: var(--honey); white-space: nowrap; }
+  .favs { display: flex; gap: 12px; align-items: flex-end; }
+  .favs figure { text-align: center; font-size: 11px; color: var(--ink-2); }
+  .favs .chip { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 4px; outline: 1px solid var(--hair); margin: 0 auto 6px; background: #fff; }
+  .favs .chip.dark { background: var(--cloth); outline: 0; }
+
+  .cover { width: 100%; max-width: 300px; background: var(--cloth); color: var(--cloth-ink); padding: 14px 16px 0; border-radius: 4px; display: grid; grid-template-rows: auto 1fr auto; min-height: 280px; position: relative; overflow: hidden; }
+  .cover .top { display: flex; align-items: center; gap: 8px; color: var(--honey); min-height: 32px; }
+  .cover .num { display: flex; align-items: baseline; gap: 8px; margin-top: 14px; }
+  .cover .num b { font: 800 88px/.9 var(--display); color: var(--honey); letter-spacing: -0.03em; }
+  .cover .num i { font: 600 11px/1 var(--sans); letter-spacing: .14em; font-style: normal; color: var(--honey); }
+  .cover .headline { font: 800 18px/1.25 var(--display); letter-spacing: -0.01em; margin: 12px 0 18px; max-width: 16ch; }
+  .cover .meta { font-size: 12px; color: var(--cloth-2); display: flex; justify-content: space-between; gap: 8px; padding: 10px 0 12px; border-top: 1px solid var(--honey); }
+
+  .garment { display: flex; gap: 18px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+  .hangtag { width: 140px; min-height: 236px; background: #fff; outline: 1px solid var(--line); border-radius: 4px; padding: 28px 12px 12px; position: relative; display: grid; grid-template-rows: auto auto 1fr auto; gap: 8px; }
+  .hangtag::before { content: ""; position: absolute; top: 9px; left: 50%; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; border: 1.5px solid var(--line); }
+  .hangtag .brand { display: flex; align-items: center; gap: 6px; min-height: 30px; }
+  .hangtag .issue { font: 700 11px/1 var(--sans); letter-spacing: .12em; color: var(--ink); background: var(--honey); display: inline-block; padding: 4px 6px; border-radius: 3px; justify-self: start; }
+  .hangtag .prod { align-self: end; }
+  .hangtag .prod b { display: block; font: 800 19px/1 var(--display); letter-spacing: -0.01em; }
+  .hangtag .prod span { display: block; font-size: 11px; color: var(--ink-2); margin-top: 4px; line-height: 1.35; }
+  .hangtag .price { display: grid; gap: 4px; border-top: 1px solid var(--hair); padding-top: 8px; }
+  .hangtag .price b { font: 800 15px/1 var(--display); }
+  .hangtag .price span { font: 600 11px/1 var(--sans); letter-spacing: .1em; color: var(--ink-2); }
+  .label { width: 144px; height: 44px; background: var(--cloth); color: var(--honey); display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; border-radius: 2px; }
+  .label::after { content: ""; position: absolute; inset: 4px; border: 1px dashed var(--honey); opacity: .8; border-radius: 2px; }
+  .garment figcaption { font-size: 11px; color: var(--ink-2); text-align: center; margin-top: 6px; }
+
+  .avatars { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .avatars figure { text-align: center; font-size: 11px; color: var(--ink-2); }
+  .av { display: grid; place-items: center; margin: 0 auto 6px; }
+  .av.c40 { width: 40px; height: 40px; border-radius: 50%; }
+  .av.s120 { width: 120px; height: 120px; border-radius: 4px; }
+  .av.honey { background: var(--honey); } .av.cloth { background: var(--cloth); }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th, td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--hair); vertical-align: top; font-size: 13px; }
+  th { font-weight: 600; width: 170px; }
+  thead th { font: 800 13px/1.2 var(--display); border-bottom: 1px solid var(--ink); padding-bottom: 8px; }
+  td.mid { color: var(--ink-2); } td.bad { color: #b3261e; }
+  .verdict { margin: 28px 0 0; max-width: 72ch; }
+  .verdict h2 { font: 800 16px/1.2 var(--display); margin: 0 0 8px; }
+  .verdict p { margin: 0 0 10px; }
+  .demoted { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--hair); }
+  .demoted h3 { font: 600 13px/1.3 var(--sans); margin: 0 0 8px; color: var(--ink-2); }
+  .demoted ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 20px; font-size: 12.5px; color: var(--ink-2); }
+  .demoted li b { color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 1000px) {
+    header { grid-template-columns: 1fr; } header .status { justify-self: start; }
+    .head { display: none; }
+    .row, .row.wide, .row.two { grid-template-columns: 1fr; gap: 12px; padding: 18px 0; }
+    .row.two > h2 { grid-row: auto; }
+    .cell .colkey { display: block; position: absolute; left: 8px; top: 6px; font: 800 11px/1 var(--display); color: var(--ink-2); z-index: 1; }
+    .word { font-size: 40px; }
+    table thead { display: none; }
+    table, tbody, tr, th, td { display: block; width: auto; }
+    tr { padding: 10px 0; border-bottom: 1px solid var(--hair); }
+    th, td { border: 0; padding: 2px 0; }
+    td::before { font-weight: 600; color: var(--ink); }
+    td:nth-child(2)::before { content: "T · "; } td:nth-child(3)::before { content: "U · "; } td:nth-child(4)::before { content: "V · "; } td:nth-child(5)::before { content: "X · "; }
+  }
+  @media (max-width: 420px) { header, main { padding-left: 18px; padding-right: 18px; } .cell { padding: 14px 12px; } .garment { gap: 12px; } .word { font-size: 34px; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Mark frame 0 0 100 100, circle centre (50,50). Ring: r 46.5, stroke 3.5. Seal: disc r 48 with the artwork knocked out.
+         H inside: Unbounded 800 at 72, baseline 77 → cap 23–77, ink x 20.1–79.9, stems 15.5 wide (20.1–35.6 · 64.4–79.9),
+         gap 35.6–64.4, crossbar band y 43.2–56.8. Scaled from the 100px measurement (ink 8.65–91.65, cap 11–86, band 39–58). -->
+
+    <!-- one bee seen from above, head up, wings solid and held 3–4 units off the body so the same drawing works as ink and as a hole -->
+    <path id="c-abd" d="M50,47 C64,47 67,57 66,67 C65,81 57,93 50,98 C43,93 35,81 34,67 C33,57 36,47 50,47 Z"/>
+    <mask id="c-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#fff"/><rect x="20" y="60" width="60" height="6" fill="#000"/><rect x="20" y="74" width="60" height="6" fill="#000"/></mask>
+    <g id="c-wings-left"><ellipse cx="21" cy="22" rx="16" ry="8" transform="rotate(32 21 22)"/><ellipse cx="21" cy="48" rx="12" ry="6" transform="rotate(-15 21 48)"/></g>
+    <g id="bee-circ">
+      <g fill="currentColor"><use href="#c-wings-left"/><use href="#c-wings-left" transform="matrix(-1 0 0 1 100 0)"/></g>
+      <path d="M45,10 C43,4 38,1 31,2 M55,10 C57,4 62,1 69,2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+      <use href="#c-abd" fill="currentColor" mask="url(#c-cut)"/>
+      <circle cx="50" cy="37" r="13" fill="currentColor"/>
+      <circle cx="50" cy="17" r="9" fill="currentColor"/>
+    </g>
+    <!-- the same bee at rest: wings folded on the back as two cut outlines, stripes at the tail; head top at y=0, stinger at y=78 -->
+    <path id="r-abd" d="M0,38 C11,38 14,45 13,52 C12,64 6,74 0,78 C-6,74 -12,64 -13,52 C-14,45 -11,38 0,38 Z"/>
+    <mask id="r-back" maskUnits="userSpaceOnUse" x="-20" y="-12" width="40" height="95">
+      <rect x="-20" y="-12" width="40" height="95" fill="#fff"/>
+      <rect x="-20" y="63" width="40" height="4" fill="#000"/><rect x="-20" y="71" width="40" height="3.5" fill="#000"/>
+      <g fill="none" stroke="#000" stroke-width="2.2"><ellipse cx="-5" cy="45" rx="4.2" ry="15" transform="rotate(8 -5 45)"/><ellipse cx="5" cy="45" rx="4.2" ry="15" transform="rotate(-8 5 45)"/></g>
+    </mask>
+    <g id="bee-rest">
+      <path d="M-4,3 C-5,-1 -6,-5 -7,-9 M4,3 C5,-1 6,-5 7,-9" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <g fill="currentColor" mask="url(#r-back)"><circle cx="0" cy="9" r="9"/><circle cx="0" cy="28" r="12"/><use href="#r-abd"/></g>
+    </g>
+    <!-- a bee perched, seen from the side, facing right; the surface it stands on is y=0, its legs meet it at x 0–10 -->
+    <path id="p-abd" d="M-16,-6.5 C-16,-11.5 -12,-14 -6,-14 C-1,-14 2,-10.5 2,-6.5 C2,-2.5 -1,1 -6,1 C-12,1 -16,-1.5 -16,-6.5 Z"/>
+    <mask id="p-cut" maskUnits="userSpaceOnUse" x="-20" y="-20" width="30" height="30"><rect x="-20" y="-20" width="30" height="30" fill="#fff"/><rect x="-12" y="-16" width="2" height="20" fill="#000"/><rect x="-7" y="-16" width="2" height="20" fill="#000"/></mask>
+    <g id="bee-perch">
+      <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <ellipse cx="-3" cy="-14" rx="6" ry="2.5" transform="rotate(25 -3 -14)"/>
+        <ellipse cx="0" cy="-17" rx="8" ry="3" transform="rotate(45 0 -17)"/>
+        <path d="M14,-10 Q16,-15 20,-16 M13,-11 Q13,-16 17,-18"/>
+        <path d="M2,-3 L0,0 M5,-2 L5,0 M8,-3 L10,0"/>
+      </g>
+      <use href="#p-abd" fill="currentColor" mask="url(#p-cut)"/>
+      <circle cx="5" cy="-7" r="5.5" fill="currentColor"/>
+      <circle cx="12" cy="-7" r="4" fill="currentColor"/>
+    </g>
+
+    <!-- ===== T · the wings are the crossbar: the bar goes, the bee stands in the middle, wing tips under the stems ===== -->
+    <mask id="h-nobar" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#fff"/><rect x="35.4" y="42.8" width="29.2" height="14.4" fill="#000"/></mask>
+    <g id="art-t">
+      <text x="50" y="77" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="72" fill="currentColor" mask="url(#h-nobar)">H</text>
+      <svg x="30" y="30" width="40" height="40" viewBox="0 0 100 100" overflow="visible"><use href="#bee-circ"/></svg>
+    </g>
+    <!-- ===== U · the bee is the crossbar: the same bee lying head-right in the gap, tail 3 into the left stem ===== -->
+    <g id="art-u">
+      <text x="50" y="77" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="72" fill="currentColor" mask="url(#h-nobar)">H</text>
+      <svg x="32.2" y="32.25" width="35.5" height="35.5" viewBox="0 0 100 100" overflow="visible"><use href="#bee-circ" transform="rotate(90 50 50)"/></svg>
+    </g>
+    <!-- ===== V · the left stem is the bee: stem removed, a resting bee at cap height stands in its place, bar attached to its side ===== -->
+    <mask id="h-nostem" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#fff"/><rect x="19" y="20" width="17" height="60" fill="#000"/></mask>
+    <g id="art-v">
+      <text x="50" y="77" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="72" fill="currentColor" mask="url(#h-nostem)">H</text>
+      <g transform="translate(27.85 23) scale(0.692)"><use href="#bee-rest"/></g>
+    </g>
+    <!-- ===== X · the bee perches on the H: the letter sits lower and smaller (56, cap 40–82), the bee stands on the left stem's top ===== -->
+    <g id="art-x">
+      <text x="50" y="82" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="56" fill="currentColor">H</text>
+      <g transform="translate(33 40) scale(1.1)"><use href="#bee-perch"/></g>
+    </g>
+
+    <!-- ring and seal renderings of each artwork -->
+    <symbol id="t-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46.5" fill="none" stroke="currentColor" stroke-width="3.5"/><use href="#art-t"/></symbol>
+    <symbol id="u-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46.5" fill="none" stroke="currentColor" stroke-width="3.5"/><use href="#art-u"/></symbol>
+    <symbol id="v-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46.5" fill="none" stroke="currentColor" stroke-width="3.5"/><use href="#art-v"/></symbol>
+    <symbol id="x-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46.5" fill="none" stroke="currentColor" stroke-width="3.5"/><use href="#art-x"/></symbol>
+    <mask id="neg-t" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#fff"/><use href="#art-t" style="color:#000"/></mask>
+    <mask id="neg-u" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#fff"/><use href="#art-u" style="color:#000"/></mask>
+    <mask id="neg-v" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#fff"/><use href="#art-v" style="color:#000"/></mask>
+    <mask id="neg-x" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#fff"/><use href="#art-x" style="color:#000"/></mask>
+    <symbol id="t-seal" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="currentColor" mask="url(#neg-t)"/></symbol>
+    <symbol id="u-seal" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="currentColor" mask="url(#neg-u)"/></symbol>
+    <symbol id="v-seal" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="currentColor" mask="url(#neg-v)"/></symbol>
+    <symbol id="x-seal" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="currentColor" mask="url(#neg-x)"/></symbol>
+  </defs>
+</svg>
+
+<header>
+  <div>
+    <h1>Logo HIVE · tay bài 5 · mark tròn H + ong</h1>
+    <p>Đề bài đã rõ: <b>một mark hình tròn</b>, bên trong chữ H và con ong là <b>một hình</b>; wordmark HIVE giữ đúng như <a href="./">index.html</a> (Unbounded 800, cách chữ −0,02em); lockup là <b>[mark] HIVE.05</b>, số là ô dữ liệu. Bảng này chỉ so bốn cách ghép H với con ong bên trong vòng tròn. Mỗi cách được dựng hai lối: <b>viền tròn</b> (mark là nét mực trong vòng) và <b>con dấu</b> (đĩa đặc, H và ong khoét ra). Cùng một hình vẽ, hai lối in.</p>
+    <p>Đặt tên từ T. Con ong là con ong của tay bài 3, cánh đặc và hở khỏi thân một khe để in khoét vẫn đọc được.</p>
+  </div>
+  <div class="status">Chưa có hướng nào được duyệt · tay bài 4 ở <a href="hive-one.html">hive-one.html</a> · tay bài 3 ở <a href="hive-bee.html">hive-bee.html</a></div>
+</header>
+
+<main>
+  <div class="head">
+    <div></div>
+    <div class="dir"><b>T · Cánh là thanh ngang</b><span><em>Ong đứng giữa H.</em> Thanh ngang bỏ đi; con ong đứng giữa hai thân, hai cánh xoè chạm hai thân và thành thanh ngang.</span></div>
+    <div class="dir"><b>U · Ong là thanh ngang</b><span><em>Ong nằm trong H.</em> Con ong nằm ngang, đuôi cắm thân trái, đầu chạm thân phải; chính nó là thanh ngang, cánh xoè lên xuống hai ô trống.</span></div>
+    <div class="dir"><b>V · Thân trái là con ong</b><span><em>Ong là một nửa chữ.</em> Thân trái của H bỏ đi; con ong đậu, cánh xếp, đứng đúng chỗ đó và thanh ngang bám vào hông nó.</span></div>
+    <div class="dir"><b>X · Ong đậu trên H</b><span><em>Ong chạm chữ.</em> H nguyên vẹn; con ong nhìn ngang đậu trên vai thân trái, quay mặt vào chữ. Nhẹ nhất, ít ghép nhất.</span></div>
+  </div>
+
+  <section class="row">
+    <h2>Quy tắc và hình dựng<small>đường mật ong là đường dựng, không in ra</small></h2>
+    <div class="cell white stack on-white"><span class="colkey">T</span>
+      <svg class="con" viewBox="0 0 100 106">
+        <circle cx="50" cy="50" r="46.5" fill="none" stroke="#eba400" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="50" y="77" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="72" fill="#171410" opacity=".18">H</text>
+        <rect x="35.6" y="43.2" width="28.8" height="13.6" fill="none" stroke="#eba400" stroke-width="1" stroke-dasharray="3 2"/>
+        <svg x="30" y="30" width="40" height="40" viewBox="0 0 100 100" overflow="visible" style="color:#c28800"><use href="#bee-circ"/></svg>
+        <text x="50" y="104" text-anchor="middle" font-family="Be Vietnam Pro, system-ui" font-size="6.5" fill="#9e6817">thanh ngang → hai cánh · thân ong đứng giữa</text>
+      </svg>
+      <p class="rule"><b>Thanh ngang của H là hai cánh ong.</b> Con ong đứng thẳng giữa hai thân, cao 0,72 cap; đầu cánh chui dưới hai thân nên ba mảnh dính thành một chữ H. Sọc bụng là hai nhát cắt ngang.</p>
+    </div>
+    <div class="cell white stack on-white"><span class="colkey">U</span>
+      <svg class="con" viewBox="0 0 100 106">
+        <circle cx="50" cy="50" r="46.5" fill="none" stroke="#eba400" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="50" y="77" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="72" fill="#171410" opacity=".18">H</text>
+        <rect x="35.6" y="43.2" width="28.8" height="13.6" fill="none" stroke="#eba400" stroke-width="1" stroke-dasharray="3 2"/>
+        <svg x="32.2" y="32.25" width="35.5" height="35.5" viewBox="0 0 100 100" overflow="visible" style="color:#c28800"><use href="#bee-circ" transform="rotate(90 50 50)"/></svg>
+        <text x="50" y="104" text-anchor="middle" font-family="Be Vietnam Pro, system-ui" font-size="6.5" fill="#9e6817">thanh ngang → thân ong · cánh lên xuống</text>
+      </svg>
+      <p class="rule"><b>Con ong là thanh ngang.</b> Là K của tay bài 3 đưa vào vòng tròn: thân ong dày bằng thanh cũ, đuôi cắm ba đơn vị vào thân trái, đầu chạm thân phải, cánh xoè lên ô trên và xuống ô dưới.</p>
+    </div>
+    <div class="cell white stack on-white"><span class="colkey">V</span>
+      <svg class="con" viewBox="0 0 100 106">
+        <circle cx="50" cy="50" r="46.5" fill="none" stroke="#eba400" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="50" y="77" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="72" fill="#171410" opacity=".18">H</text>
+        <rect x="20.1" y="23" width="15.5" height="54" fill="none" stroke="#eba400" stroke-width="1" stroke-dasharray="3 2"/>
+        <g transform="translate(27.85 23) scale(0.692)" style="color:#c28800"><use href="#bee-rest"/></g>
+        <text x="50" y="104" text-anchor="middle" font-family="Be Vietnam Pro, system-ui" font-size="6.5" fill="#9e6817">thân trái → con ong đậu · cao đúng cap</text>
+      </svg>
+      <p class="rule"><b>Thân trái của H là con ong.</b> Con ong đậu, cánh xếp trên lưng, đầu ở cap line, ngòi ở baseline, rộng bằng thân chữ; thanh ngang bám vào hông nó. Chữ H còn nguyên hai thân, một thân là sinh vật.</p>
+    </div>
+    <div class="cell white stack on-white"><span class="colkey">X</span>
+      <svg class="con" viewBox="0 0 100 106">
+        <circle cx="50" cy="50" r="46.5" fill="none" stroke="#eba400" stroke-width="1" stroke-dasharray="3 2"/>
+        <text x="50" y="82" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="56" fill="#171410" opacity=".18">H</text>
+        <line x1="26.8" y1="40" x2="38.8" y2="40" stroke="#eba400" stroke-width="1.2"/>
+        <g transform="translate(33 40) scale(1.1)" style="color:#c28800"><use href="#bee-perch"/></g>
+        <text x="50" y="104" text-anchor="middle" font-family="Be Vietnam Pro, system-ui" font-size="6.5" fill="#9e6817">H hạ thấp · ong đậu trên vai thân trái</text>
+      </svg>
+      <p class="rule"><b>Con ong đậu trên H.</b> Chữ H nguyên vẹn, hạ thấp và nhỏ hơn (cap 0,42 đường kính) để chừa chỗ; con ong nhìn ngang đứng trên vai thân trái, chân chạm chữ, mặt quay vào trong. Ghép bằng tiếp xúc, không thay phần nào của chữ.</p>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Mark 120px<small>hai lối in cùng một hình: viền tròn · con dấu</small></h2>
+    <div class="cell white on-white pair"><span class="colkey">T</span><figure><svg class="mk" style="width:120px" viewBox="0 0 100 100"><use href="#t-ring"/></svg>viền</figure><figure><svg class="mk" style="width:120px" viewBox="0 0 100 100"><use href="#t-seal"/></svg>con dấu</figure></div>
+    <div class="cell white on-white pair"><span class="colkey">U</span><figure><svg class="mk" style="width:120px" viewBox="0 0 100 100"><use href="#u-ring"/></svg>viền</figure><figure><svg class="mk" style="width:120px" viewBox="0 0 100 100"><use href="#u-seal"/></svg>con dấu</figure></div>
+    <div class="cell white on-white pair"><span class="colkey">V</span><figure><svg class="mk" style="width:120px" viewBox="0 0 100 100"><use href="#v-ring"/></svg>viền</figure><figure><svg class="mk" style="width:120px" viewBox="0 0 100 100"><use href="#v-seal"/></svg>con dấu</figure></div>
+    <div class="cell white on-white pair"><span class="colkey">X</span><figure><svg class="mk" style="width:120px" viewBox="0 0 100 100"><use href="#x-ring"/></svg>viền</figure><figure><svg class="mk" style="width:120px" viewBox="0 0 100 100"><use href="#x-seal"/></svg>con dấu</figure></div>
+  </section>
+
+  <section class="row">
+    <h2>Trên ba nền<small>con dấu 64px trên trắng, vải đen, mật ong</small></h2>
+    <div class="cell stack" style="padding:0"><span class="colkey">T</span><div class="grounds">
+      <div class="g white on-white"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div>
+      <div class="g cloth on-cloth"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div>
+      <div class="g honey on-honey"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div></div></div>
+    <div class="cell stack" style="padding:0"><span class="colkey">U</span><div class="grounds">
+      <div class="g white on-white"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div>
+      <div class="g cloth on-cloth"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div>
+      <div class="g honey on-honey"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div></div></div>
+    <div class="cell stack" style="padding:0"><span class="colkey">V</span><div class="grounds">
+      <div class="g white on-white"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div>
+      <div class="g cloth on-cloth"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div>
+      <div class="g honey on-honey"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div></div></div>
+    <div class="cell stack" style="padding:0"><span class="colkey">X</span><div class="grounds">
+      <div class="g white on-white"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div>
+      <div class="g cloth on-cloth"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div>
+      <div class="g honey on-honey"><svg class="mk" style="width:64px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div></div></div>
+  </section>
+
+  <section class="row two">
+    <h2>Lockup [mark] HIVE.05<small>wordmark 56px như index.html, mark cao 1,15 cap; số là ô dữ liệu</small></h2>
+    <div class="cell white on-white stack" style="gap:18px"><span class="colkey">T</span>
+      <span class="lock"><svg class="mk" style="width:50px" viewBox="0 0 100 100"><use href="#t-seal"/></svg><span class="display word">HIVE<span class="n">.05</span></span></span>
+      <span class="lock"><svg class="mk" style="width:50px" viewBox="0 0 100 100"><use href="#t-ring"/></svg><span class="display word">HIVE<span class="n">.05</span></span></span>
+    </div>
+    <div class="cell white on-white stack" style="gap:18px"><span class="colkey">U</span>
+      <span class="lock"><svg class="mk" style="width:50px" viewBox="0 0 100 100"><use href="#u-seal"/></svg><span class="display word">HIVE<span class="n">.05</span></span></span>
+      <span class="lock"><svg class="mk" style="width:50px" viewBox="0 0 100 100"><use href="#u-ring"/></svg><span class="display word">HIVE<span class="n">.05</span></span></span>
+    </div>
+    <div class="cell white on-white stack" style="gap:18px"><span class="colkey">V</span>
+      <span class="lock"><svg class="mk" style="width:50px" viewBox="0 0 100 100"><use href="#v-seal"/></svg><span class="display word">HIVE<span class="n">.05</span></span></span>
+      <span class="lock"><svg class="mk" style="width:50px" viewBox="0 0 100 100"><use href="#v-ring"/></svg><span class="display word">HIVE<span class="n">.05</span></span></span>
+    </div>
+    <div class="cell white on-white stack" style="gap:18px"><span class="colkey">X</span>
+      <span class="lock"><svg class="mk" style="width:50px" viewBox="0 0 100 100"><use href="#x-seal"/></svg><span class="display word">HIVE<span class="n">.05</span></span></span>
+      <span class="lock"><svg class="mk" style="width:50px" viewBox="0 0 100 100"><use href="#x-ring"/></svg><span class="display word">HIVE<span class="n">.05</span></span></span>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Nav 390 và favicon<small>[mark 26] HIVE.05 ở 16px; favicon là con dấu 16 và 32</small></h2>
+    <div class="cell plate stack on-white"><span class="colkey">T</span>
+      <div class="nav"><svg class="mk" style="width:26px" viewBox="0 0 100 100"><use href="#t-seal"/></svg><span class="wm">HIVE<span class="n">.05</span></span><span class="itag">ĐANG MỞ</span></div>
+      <div class="favs"><figure><div class="chip"><svg class="mk" style="width:16px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div>16</figure><figure><div class="chip"><svg class="mk" style="width:32px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div>32</figure><figure><div class="chip dark on-cloth"><svg class="mk" style="width:16px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div>16 tối</figure><figure><div class="chip dark on-cloth"><svg class="mk" style="width:32px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div>32 tối</figure></div>
+    </div>
+    <div class="cell plate stack on-white"><span class="colkey">U</span>
+      <div class="nav"><svg class="mk" style="width:26px" viewBox="0 0 100 100"><use href="#u-seal"/></svg><span class="wm">HIVE<span class="n">.05</span></span><span class="itag">ĐANG MỞ</span></div>
+      <div class="favs"><figure><div class="chip"><svg class="mk" style="width:16px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div>16</figure><figure><div class="chip"><svg class="mk" style="width:32px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div>32</figure><figure><div class="chip dark on-cloth"><svg class="mk" style="width:16px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div>16 tối</figure><figure><div class="chip dark on-cloth"><svg class="mk" style="width:32px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div>32 tối</figure></div>
+    </div>
+    <div class="cell plate stack on-white"><span class="colkey">V</span>
+      <div class="nav"><svg class="mk" style="width:26px" viewBox="0 0 100 100"><use href="#v-seal"/></svg><span class="wm">HIVE<span class="n">.05</span></span><span class="itag">ĐANG MỞ</span></div>
+      <div class="favs"><figure><div class="chip"><svg class="mk" style="width:16px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div>16</figure><figure><div class="chip"><svg class="mk" style="width:32px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div>32</figure><figure><div class="chip dark on-cloth"><svg class="mk" style="width:16px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div>16 tối</figure><figure><div class="chip dark on-cloth"><svg class="mk" style="width:32px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div>32 tối</figure></div>
+    </div>
+    <div class="cell plate stack on-white"><span class="colkey">X</span>
+      <div class="nav"><svg class="mk" style="width:26px" viewBox="0 0 100 100"><use href="#x-seal"/></svg><span class="wm">HIVE<span class="n">.05</span></span><span class="itag">ĐANG MỞ</span></div>
+      <div class="favs"><figure><div class="chip"><svg class="mk" style="width:16px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div>16</figure><figure><div class="chip"><svg class="mk" style="width:32px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div>32</figure><figure><div class="chip dark on-cloth"><svg class="mk" style="width:16px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div>16 tối</figure><figure><div class="chip dark on-cloth"><svg class="mk" style="width:32px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div>32 tối</figure></div>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Bìa Số trên trang chủ<small>khối vải đen 390; con dấu mật ong 30px cạnh tên, số lớn là số của bìa</small></h2>
+    <div class="cell plate on-cloth"><span class="colkey">T</span>
+      <div class="cover"><div class="top"><svg class="mk" style="width:30px" viewBox="0 0 100 100"><use href="#t-seal"/></svg><span class="wm w14">HIVE</span></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu</span><span>73 / 181 còn</span></div></div>
+    </div>
+    <div class="cell plate on-cloth"><span class="colkey">U</span>
+      <div class="cover"><div class="top"><svg class="mk" style="width:30px" viewBox="0 0 100 100"><use href="#u-seal"/></svg><span class="wm w14">HIVE</span></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu</span><span>73 / 181 còn</span></div></div>
+    </div>
+    <div class="cell plate on-cloth"><span class="colkey">V</span>
+      <div class="cover"><div class="top"><svg class="mk" style="width:30px" viewBox="0 0 100 100"><use href="#v-seal"/></svg><span class="wm w14">HIVE</span></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu</span><span>73 / 181 còn</span></div></div>
+    </div>
+    <div class="cell plate on-cloth"><span class="colkey">X</span>
+      <div class="cover"><div class="top"><svg class="mk" style="width:30px" viewBox="0 0 100 100"><use href="#x-seal"/></svg><span class="wm w14">HIVE</span></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu</span><span>73 / 181 còn</span></div></div>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Tem treo và nhãn dệt<small>tem giấy 140×236 với dữ liệu mẫu KHÓI; nhãn cổ áo thêu một màu</small></h2>
+    <div class="cell plate garment"><span class="colkey">T</span>
+      <figure><div class="hangtag on-white">
+        <div class="brand"><svg class="mk" style="width:30px" viewBox="0 0 100 100"><use href="#t-seal"/></svg><span class="wm w14">HIVE</span></div>
+        <span class="issue">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo</figcaption></figure>
+      <figure><div class="label on-cloth"><svg class="mk" style="width:26px" viewBox="0 0 100 100"><use href="#t-ring"/></svg><span class="wm w13">HIVE</span></div><figcaption>nhãn dệt · viền</figcaption></figure>
+    </div>
+    <div class="cell plate garment"><span class="colkey">U</span>
+      <figure><div class="hangtag on-white">
+        <div class="brand"><svg class="mk" style="width:30px" viewBox="0 0 100 100"><use href="#u-seal"/></svg><span class="wm w14">HIVE</span></div>
+        <span class="issue">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo</figcaption></figure>
+      <figure><div class="label on-cloth"><svg class="mk" style="width:26px" viewBox="0 0 100 100"><use href="#u-ring"/></svg><span class="wm w13">HIVE</span></div><figcaption>nhãn dệt · viền</figcaption></figure>
+    </div>
+    <div class="cell plate garment"><span class="colkey">V</span>
+      <figure><div class="hangtag on-white">
+        <div class="brand"><svg class="mk" style="width:30px" viewBox="0 0 100 100"><use href="#v-seal"/></svg><span class="wm w14">HIVE</span></div>
+        <span class="issue">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo</figcaption></figure>
+      <figure><div class="label on-cloth"><svg class="mk" style="width:26px" viewBox="0 0 100 100"><use href="#v-ring"/></svg><span class="wm w13">HIVE</span></div><figcaption>nhãn dệt · viền</figcaption></figure>
+    </div>
+    <div class="cell plate garment"><span class="colkey">X</span>
+      <figure><div class="hangtag on-white">
+        <div class="brand"><svg class="mk" style="width:30px" viewBox="0 0 100 100"><use href="#x-seal"/></svg><span class="wm w14">HIVE</span></div>
+        <span class="issue">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo</figcaption></figure>
+      <figure><div class="label on-cloth"><svg class="mk" style="width:26px" viewBox="0 0 100 100"><use href="#x-ring"/></svg><span class="wm w13">HIVE</span></div><figcaption>nhãn dệt · viền</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Avatar mạng xã hội<small>con dấu tự là hình tròn: 40 và 120, mật ong trên vải đen và ngược lại</small></h2>
+    <div class="cell plate avatars"><span class="colkey">T</span>
+      <figure><div class="av c40 cloth on-cloth"><svg class="mk" style="width:40px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div>40</figure>
+      <figure><div class="av c40 honey on-honey"><svg class="mk" style="width:40px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div>40 mật</figure>
+      <figure><div class="av s120 cloth on-cloth"><svg class="mk" style="width:104px" viewBox="0 0 100 100"><use href="#t-seal"/></svg></div>120</figure>
+      <figure><div class="av s120 honey on-honey"><svg class="mk" style="width:104px" viewBox="0 0 100 100"><use href="#t-ring"/></svg></div>120 viền</figure>
+    </div>
+    <div class="cell plate avatars"><span class="colkey">U</span>
+      <figure><div class="av c40 cloth on-cloth"><svg class="mk" style="width:40px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div>40</figure>
+      <figure><div class="av c40 honey on-honey"><svg class="mk" style="width:40px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div>40 mật</figure>
+      <figure><div class="av s120 cloth on-cloth"><svg class="mk" style="width:104px" viewBox="0 0 100 100"><use href="#u-seal"/></svg></div>120</figure>
+      <figure><div class="av s120 honey on-honey"><svg class="mk" style="width:104px" viewBox="0 0 100 100"><use href="#u-ring"/></svg></div>120 viền</figure>
+    </div>
+    <div class="cell plate avatars"><span class="colkey">V</span>
+      <figure><div class="av c40 cloth on-cloth"><svg class="mk" style="width:40px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div>40</figure>
+      <figure><div class="av c40 honey on-honey"><svg class="mk" style="width:40px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div>40 mật</figure>
+      <figure><div class="av s120 cloth on-cloth"><svg class="mk" style="width:104px" viewBox="0 0 100 100"><use href="#v-seal"/></svg></div>120</figure>
+      <figure><div class="av s120 honey on-honey"><svg class="mk" style="width:104px" viewBox="0 0 100 100"><use href="#v-ring"/></svg></div>120 viền</figure>
+    </div>
+    <div class="cell plate avatars"><span class="colkey">X</span>
+      <figure><div class="av c40 cloth on-cloth"><svg class="mk" style="width:40px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div>40</figure>
+      <figure><div class="av c40 honey on-honey"><svg class="mk" style="width:40px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div>40 mật</figure>
+      <figure><div class="av s120 cloth on-cloth"><svg class="mk" style="width:104px" viewBox="0 0 100 100"><use href="#x-seal"/></svg></div>120</figure>
+      <figure><div class="av s120 honey on-honey"><svg class="mk" style="width:104px" viewBox="0 0 100 100"><use href="#x-ring"/></svg></div>120 viền</figure>
+    </div>
+  </section>
+
+  <section class="row wide">
+    <h2>So nhanh<small>đọc từ bảng trên, không phải điểm số</small></h2>
+    <div>
+      <table>
+        <thead><tr><th></th><th>T · Cánh là thanh ngang</th><th>U · Ong là thanh ngang</th><th>V · Thân trái là con ong</th><th>X · Ong đậu trên H</th></tr></thead>
+        <tbody>
+          <tr><th>H và ong là một?</th><td>một: cánh ong là nét của chữ</td><td>một: thân ong là nét của chữ</td><td>một: con ong là nửa chữ</td><td class="mid">chạm nhau, không thay nét nào</td></tr>
+          <tr><th>Đọc ra H ở 64px</th><td>hai thân + dải cánh; đọc được, hơi giống chữ H có chữ I ở giữa</td><td>rõ nhất: hai thân + một thanh</td><td class="mid">thân trái là hình sinh vật, mắt phải đoán nửa giây</td><td>rõ: H nguyên</td></tr>
+          <tr><th>Đọc ra ong ở 64px</th><td>rõ: ong đứng, cánh xoè, sọc</td><td class="mid">khá: ong nằm, cánh lên xuống</td><td class="mid">cần 120px mới thấy cánh xếp</td><td class="mid">chấm nhỏ trên vai chữ</td></tr>
+          <tr><th>Con dấu (khoét) ở 32px</th><td>vòng + H, ong thành chấm</td><td>vòng + H thanh dày, rõ nhất</td><td class="mid">vòng + hình lạ ở thân trái</td><td>vòng + H nhỏ</td></tr>
+          <tr><th>Thêu một màu</th><td>được: mảng đặc, cánh hở khe</td><td>được</td><td class="mid">cánh xếp là nét mảnh, mất khi thêu nhỏ</td><td class="mid">chân, cánh là nét mảnh</td></tr>
+          <tr><th>Riêng biệt</th><td>cao: H có thanh ngang là cánh ong là của riêng</td><td>cao</td><td>cao nhất, cũng lạ nhất</td><td class="mid">trung bình: "con vật đậu trên chữ" quen</td></tr>
+          <tr><th>Rủi ro</th><td class="mid">thân ong thành nét thứ ba, H có thể đọc thành H+I</td><td class="mid">ong nằm ngang nhỏ, ở 24px là một thanh sần</td><td class="mid">chữ H mất cân, thân trái nặng hơn</td><td class="mid">ít ghép nhất; bạn đã chê "tách nhau"</td></tr>
+        </tbody>
+      </table>
+      <div class="verdict">
+        <h2>Ý của phiên thiết kế</h2>
+        <p><b>U · Ong là thanh ngang</b> là mark tôi đề xuất, in kiểu <b>con dấu</b>. Trong vòng tròn, chữ H phải đọc ra trước ở 24–32px, và U là cách duy nhất mà thanh ngang vẫn là một thanh: thu nhỏ thì con ong lặn vào chữ, phóng to thì hiện ra. Con dấu tự là avatar tròn, là tem dập trên giấy, là nhãn dệt hai màu; viền tròn để dành cho thêu một màu.</p>
+        <p><b>T</b> là con ong đẹp nhất ở cỡ lớn nhưng thân ong đứng giữa làm chữ H có ba nét dọc. <b>V</b> lạ và riêng nhất, trả giá bằng chữ H lệch. <b>X</b> dựng để bạn thấy mức "chạm" so với mức "ghép".</p>
+        <p>Chọn xong T/U/V/X và viền/con dấu, tôi dựng vòng mock app: nav, favicon, bìa, tem in, rồi giao agent. Hai câu mở cho vòng đó: nav dùng <b>HIVE.05</b> thay tem "SỐ 05" hay giữ tem cho trạng thái "đang mở"; và số trên nền trắng ở cỡ nhỏ phải dùng mật ong đậm <code>#9e6817</code> vì mật ong tươi chỉ đạt 1,9:1.</p>
+      </div>
+      <div class="demoted">
+        <h3>Ba cách ghép trong vòng tròn đã xét và để lại</h3>
+        <ul>
+          <li><b>Hai thân H là hai cánh xếp</b> · con ong đậu, hai cánh dài làm hai thân chữ. Cánh nối nhau ở ngực (trên) chứ không ở giữa: hình ra chữ Π, không ra H.</li>
+          <li><b>Vòng tròn là bốn cánh</b> · bốn cánh ong xếp thành vành. Đẹp làm hoa văn, nhưng vòng không còn là vòng và ong không còn là ong.</li>
+          <li><b>H sọc ong, mọc râu cánh ngòi</b> · H hoá thành thân ong. Hai thân chữ thành hai bụng, con ong hai thân.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

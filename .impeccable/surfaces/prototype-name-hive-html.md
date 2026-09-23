@@ -2,7 +2,7 @@
 version: 1
 slug: "prototype-name-hive-html"
 primary_target: "prototype/name/hive.html"
-related_targets: ["prototype/name/index.html","prototype/name/hive-2.html","prototype/name/hive-g.html","prototype/name/hive-bee.html"]
+related_targets: ["prototype/name/index.html","prototype/name/hive-2.html","prototype/name/hive-g.html","prototype/name/hive-bee.html","prototype/name/hive-one.html","prototype/name/hive-mark.html"]
 ---
 
 # prototype/name/hive.html — bảng hướng logo HIVE (mock so sánh, chưa duyệt)
@@ -60,3 +60,21 @@ duy nhất nhìn từ trên (khung 100×100, đối xứng qua x=50; bụng là 
 L xoay 90° rồi −12°. Đề xuất K. Đã dựng con ong nhìn ngang cho K/L và loại sau khi chụp: dưới 24px đọc thành con ruồi. Sáu hướng demoted ghi
 trên bảng (ong nhìn ngang, ong cắt rập, V là hai cánh, đường bay vòng, ong chúa, ong trong lục giác). Kiểm: 8 hàng chụp 2x, 0 lỗi console,
 0 tràn ngang ở 1280 và 390; lỗi tràn 390 lúc đầu do `style` inline `grid-template-columns` thắng media query → chuyển sang class `.row.wide`.
+
+## Tay bài 4 (23/09/2026, `prototype/name/hive-one.html`) — dựng xong, đề bài đổi trước khi duyệt
+Người dùng: "kết hợp con ong và chữ HIVE vào trong một logo/mark, hiện tại 2 thứ đó đang tách nhau". Dựng bốn cách ghép cả tên với con ong
+thành một hình: **P** tên cắt trên bụng ong nằm ngang, **Q** wordmark là thân ong (râu ở H, cánh từ đỉnh I, chân, ngòi ở E; đo E: thanh
+giữa y 46–62 kết thúc x 368, thanh trên/dưới x 371), **R** hai thanh chữ V là cánh, thân treo dưới đỉnh V (đỉnh x 246,4; hõm trong y 71),
+**S** con ong đậu cánh xếp thay chữ I. Chụp 9 hàng, 0 lỗi, 0 tràn. Chưa kịp trình thì người dùng chỉnh đề bài (xem tay bài 5); giữ tệp làm bằng chứng.
+
+## Tay bài 5 (23/09/2026, `prototype/name/hive-mark.html`) — mark tròn H + ong
+Đề bài chốt lại: **một mark hình tròn**, bên trong **chữ H và con ong là một hình** (không ghép cả chữ HIVE); wordmark HIVE giữ như
+`index.html` (Unbounded 800, cách −0,02em); lockup **[mark] HIVE.05**, số là ô dữ liệu. Khung 100×100, H Unbounded 800 cỡ 72 baseline 77
+(cap 23–77, thân 20,1–35,6 và 64,4–79,9, thanh ngang y 43,2–56,8); vòng r 46,5 nét 3,5 (viền) hoặc đĩa r 48 khoét (con dấu) — cùng một
+hình vẽ `art-*`, hai lối in. Con ong `bee-circ`: cánh đặc, hở thân 3–4 đơn vị bằng hình học (không mask) để in khoét vẫn đọc. Bốn cách:
+**T** cánh là thanh ngang (ong đứng giữa, tỉ lệ 0,4, đầu cánh chui dưới thân chữ), **U** ong là thanh ngang (K xoay 90°, tỉ lệ 0,355),
+**V** thân trái là con ong đậu (`bee-rest` tỉ lệ 0,692), **X** ong nhìn ngang đậu trên vai thân trái (H cỡ 56, baseline 82). Đề xuất **U con dấu**.
+Lỗi dựng đã sửa sau lượt chụp 1: màu chú thích `.pair figure` nhuộm xám svg → `.pair figure svg{color:var(--ink)}`; lockup 56px tràn ô 4 cột
+làm svg co về 0 → hàng 2 cột + `.mk{flex:none}`; tem nav gãy dòng → `white-space:nowrap`; nhãn dựng đè vòng → viewBox 100×106, nhãn y 104.
+Lượt cuối: 9 hàng 2x, 0 lỗi console, 0 tràn ở 1280 và 390; detect chỉ advisory cỡ chữ literal (56px của index) và radius 2px nhãn dệt.
+Câu mở cho vòng mock app: nav dùng HIVE.05 thay tem SỐ 05 hay giữ tem trạng thái; số nhỏ trên trắng phải dùng `#9e6817`.
