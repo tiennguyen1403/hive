@@ -1,4 +1,4 @@
-# Brief — Lát B1: tài khoản thật (Supabase Auth), hồ sơ, sổ địa chỉ *(nháp 23/09/2026, giao sau khi B0b commit)*
+# Brief — Lát B1: tài khoản thật (Supabase Auth), hồ sơ, sổ địa chỉ *(giao 23/09/2026 sau khi B0b commit `3558977`)*
 
 Agent: `backend-implementer`. Hồ sơ nền: `tasks/backend.md` (QĐ-25). Tiền đề: B0a và B0b đã đạt — catalog đọc từ
 Postgres qua `loadCatalog()`, `lib/db/server.ts` dựng server client, stack cục bộ chạy bằng `npx supabase start`,
@@ -7,6 +7,24 @@ Postgres qua `loadCatalog()`, `lib/db/server.ts` dựng server client, stack c�
 Lát này thay **đăng nhập mô phỏng** (QĐ-15: `lib/session.ts` khớp email với fixture, mật khẩu không kiểm) bằng Supabase
 Auth email + mật khẩu; đưa **hồ sơ** và **sổ địa chỉ** lên Postgres với RLS; phiên đọc trên server. Đơn hàng vẫn là
 fixture (B2). Quản trị chưa có cổng (B3). Giỏ, yêu thích, để dành, tìm kiếm gần đây, tuỳ chọn vẫn ở `localStorage`.
+
+## 1b. Từ báo cáo B0b (23/09, đã đạt và commit `3558977`)
+
+- Stack cục bộ đang **chạy** (12 container). Docker Desktop khởi động bằng đường dẫn đầy đủ `"C:Program FilesDockerDockerDocker Desktop.exe"`
+  nếu tắt; `npx supabase start` ~30 s khi đã có image; `npx supabase db reset` ~31 s. Cổng **3200 đang trống** (phiên chính đã tắt preview cũ);
+  cổng 3100 là server mock, không đụng.
+- `.env.local` hiện có `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`. **Tự thêm** `SUPABASE_SECRET_KEY` (giá trị `SERVICE_ROLE_KEY`/secret từ
+  `npx supabase status -o env`) và `DEMO_PASSWORD` vào `.env.local`; không in ra, không commit. `.env.example` ghi tên biến và giá trị mặc định
+  `DEMO_PASSWORD=xemthu-2026`.
+- `server-only` không resolve trong vitest: giữ mapper/validator thuần trong module không import `server-only` (mẫu `fixtureInput()` ở
+  `scripts/gen-seed.ts`), DAL `lib/db/*` mới import `server-only`.
+- `vitest.db.config.mts` nạp `.env.local` bằng `node:fs` (không `@next/env`, vì nó bỏ `.env.local` khi NODE_ENV=test). Script `tsx`
+  (`scripts/seed-users.ts`) nạp `.env.local` cùng cách; **không thêm `dotenv`**.
+- `lib/db/server.ts` đã có `getSupabase()` (createServerClient, cookie adapter getAll/setAll trong try/catch) — dùng lại cho client
+  phiên; `lib/db/catalog.ts` dùng `cache` + `connection()` + `rpc("catalog_snapshot")`. Mọi trang đã là `ƒ`.
+- Mốc kiểm hiện tại: `npm test` **1.061 test / 47 tệp**, `npm run test:db` **10 test**, build 56 trang, sweep 59 lượt 0/0/0/0,
+  16 ảnh `.playwright-cli/shots/backend/b0b/after/`.
+- Báo cáo: 6 mục tiếng Việt như B0b; mục 4 ghi rõ cách đổi mật khẩu theo docs và từng câu chữ đã bỏ trên màn.
 
 ## 1. Lát
 

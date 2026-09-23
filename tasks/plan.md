@@ -1373,3 +1373,10 @@ với B0a, 6 lệch chỉ ở đồng hồ đếm ngược và nhiễu JPEG (đo
 **Hệ quả:** mọi trang là `ƒ` (root layout gọi `loadCatalog()` → `connection()`), kể cả `/about`, `/faq`; giữ tới B3 rồi
 xét cache theo tag. Quyết định kèm: `.gitignore` thêm `!.env.example`; kịch bản 16 ảnh chép sang `tools/backend-shots.js`;
 A5/A6 trong `tasks/backend.md` đã tick. Khoá service không nằm trong tệp nào; B3 quyết chỗ cất cho nút "Đặt lại".
+
+**QĐ-26 (23/09/2026) — Logo do người dùng tự tạo bằng công cụ ngoài.** Sáu bảng ở `prototype/name/` (`hive.html`, `hive-2.html`,
+`hive-g.html`, `hive-bee.html`, `hive-one.html`, `hive-mark.html`) đều bị loại. Đề bài cuối người dùng chốt: một mark **hình tròn**, trong đó
+chữ H và con ong là **một hình**; wordmark HIVE giữ như `prototype/name/index.html` (Unbounded 800, cách chữ −0,02em); lockup
+**[mark] HIVE.05**, số là ô dữ liệu. Phiên chính đã đưa mô tả phong cách (con dấu tròn, monogram, flat vector một màu, cấm lục giác /
+vương miện / vệt bay / gradient) và một prompt tiếng Anh; người dùng tự tạo. **Logo tạm gác**, không dựng thêm bảng. Khi có tệp logo: vòng
+mock app (nav, favicon, bìa, tem in) → agent → finish review → DESIGN.md, thay chỗ giữ "BRAND". Backend tiếp tục B1 ngay.
