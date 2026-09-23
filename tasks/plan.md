@@ -1426,3 +1426,8 @@ có đếm ngược 12 giờ, mua chiếc XL cuối → "XL hết" → huỷ →
 `brand.adminSim` một chiều; chú giải `vitest.db.config.mts`. **Mở (B3):** `p_now` là tham số hàm `anon` gọi được — khi sang giờ thật phải bỏ
 khỏi chữ ký công khai hoặc kẹp theo `now()`; `track_order` chưa giới hạn tần suất; admin vẫn fixture nên đơn từ `DH-2432` chưa hiện ở admin;
 tab thua cuộc đua đứng cuối trang (chỉ thấy toast); đơn chuyển khoản đặt ngày mẫu 21/09 có hạn rơi vào 22/09 mà đồng hồ mẫu không tới.
+
+**Stack cục bộ tỉa (23/09/2026, người dùng yêu cầu vì Docker ngốn RAM).** `supabase/config.toml` tắt `analytics`, `realtime`, `storage`,
+`edge_runtime` (dự án không dùng, QĐ-25 §10); giữ `studio`, `inbucket`. 12 → **7 container**, RAM container ~1,5 GB → **~0,55 GB** (analytics 511 MB
+và vector crash-loop biến mất). Sau tỉa: `db reset`, `seed:users`, `test:db` 66/66, `db:types` không đổi, `/api/health` ok. Máy ảo WSL
+(`.wslconfig` `memory=4GB`) chưa hạ; người dùng có thể đặt 3GB rồi `wsl --shutdown`.
