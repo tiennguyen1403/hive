@@ -111,10 +111,15 @@ port = 54324
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Slice B3c, 24/09/2026: storage is back ON. Product photos uploaded from the
+# back office live in the `product-photos` bucket, which the migration
+# `…_photos.sql` creates (not this file), so the hosted project gets it from
+# `db push` too. The Server Action refuses anything over 1,5 MB and the bucket
+# over 1 572 864 bytes; 2 MiB here is only the global ceiling above both.
 [storage]
-enabled = false
+enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
-file_size_limit = "50MiB"
+file_size_limit = "2MiB"
 
 # Uncomment to configure local storage buckets
 # [storage.buckets.images]
@@ -128,8 +133,10 @@ file_size_limit = "50MiB"
 enabled = true
 
 # Image transformation API is available to Supabase Pro plan.
-# [storage.image_transformation]
-# enabled = true
+# Off (slice B3c): the browser crops and shrinks each photo before upload and
+# `next/image` resizes on the way out, so no imgproxy container is started.
+[storage.image_transformation]
+enabled = false
 
 # Store analytical data in S3 for running ETL jobs over Iceberg Catalog
 # This feature is only available on the hosted platform.
@@ -394,6 +401,7 @@ deno_version = 2
 
 # Trimmed 23/09/2026: analytics, realtime, storage and edge_runtime are off because the
 # project uses none of them (QĐ-25 §10) and the containers cost ~0.9 GB of RAM together.
+# 24/09/2026 (slice B3c): storage came back for the product photos — see [storage].
 [analytics]
 enabled = false
 port = 54327

@@ -1,27 +1,46 @@
 import { describe, expect, it } from "vitest";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { productId, type Product, type Promotion } from "@/data/types";
+import { buildCatalog } from "./catalog";
 import {
+  CATALOG_ERROR_CODES,
+  DROP_LENGTH_DAYS,
   MAX_PROMO_CODE,
+  NO_CHANGE_MESSAGE,
+  SLUG_TAKEN_MESSAGE,
   STALE_STOCK_MESSAGE,
   borrowedPhotoKeys,
   catalogFailureMessage,
   catalogFailureOf,
   checkAdjustment,
+  colorLabelOf,
+  cutTotal,
+  failureDetail,
   familyOfKind,
   gridCells,
   isEmptyPatch,
+  isNewSlug,
   isSlug,
   isVnInstant,
   nextDropNo,
+  overlapMessage,
+  overlappingDrop,
   productPatch,
+  productSlug,
+  proposedWindow,
   readCells,
+  readColorOrder,
   readDropNo,
+  readNewProduct,
+  readPhotoMap,
   readPromoDraft,
   readTeaser,
   readWindow,
+  sameOrder,
   sameTerms,
+  slugTaken,
   termsOf,
+  uniqueSlug,
 } from "./catalog-admin";
 
 const catalog = FIXTURE_CATALOG;
@@ -333,5 +352,309 @@ describe("productPatch — only what changed", () => {
   it("never carries the cut, whatever the form sends", () => {
     const read = productPatch(khoi, { ...formOf(khoi), cutUnits: 99 }, catalog);
     expect(read.ok && "cutUnits" in read.value).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────── slice B3c
+const UP = `up/${"0123456789abcdef".repeat(2)}.webp`;
+
+describe("what the database answers about a new style and its photos", () => {
+  it("reads the five codes slice B3c added, beside the five of B3b", () => {
+    expect(CATALOG_ERROR_CODES).toHaveLength(10);
+    for (const code of ["DROP_CLOSED", "NO_COLORS", "COLOR_EMPTY", "PHOTO_MISSING", "PHOTO_UNKNOWN"]) {
+      expect(catalogFailureOf({ code: "P0001", message: code })).toBe(code);
+    }
+    // Never raised by SQL: a file the server would not store is the action's word.
+    expect(catalogFailureOf({ code: "P0001", message: "UPLOAD_BAD" })).toBe("UNAVAILABLE");
+  });
+
+  it("keeps what a refusal was about — the colour, or the issue in the way", () => {
+    expect(failureDetail({ details: "black" })).toBe("black");
+    expect(failureDetail({ details: null })).toBe("");
+    expect(failureDetail(null)).toBe("");
+    expect(colorLabelOf("moss")).toBe("Rêu");
+    expect(colorLabelOf("pink")).toBe("");
+  });
+
+  it("says the brief's sentences, and names the colour or the issue when it knows it", () => {
+    expect(catalogFailureMessage("ADD_PRODUCT", "NOT_ALLOWED")).toBe("Mã địa chỉ đã có mẫu khác dùng");
+    expect(SLUG_TAKEN_MESSAGE).toBe("Mã địa chỉ đã có mẫu khác dùng");
+    expect(catalogFailureMessage("ADD_PRODUCT", "DROP_CLOSED")).toBe("Số đã đóng, không thêm mẫu vào đó");
+    expect(catalogFailureMessage("ADD_PRODUCT", "DROP_CLOSED", "Số 04")).toBe("Số 04 đã đóng, không thêm mẫu vào đó");
+    expect(catalogFailureMessage("ADD_PRODUCT", "NO_COLORS")).toBe("Chọn ít nhất một màu");
+    expect(catalogFailureMessage("ADD_PRODUCT", "COLOR_EMPTY", "Đen")).toBe("Điền số cắt cho Đen");
+    expect(catalogFailureMessage("ADD_PRODUCT", "PHOTO_MISSING", "Rêu")).toBe("Chọn ảnh cho Rêu");
+    expect(catalogFailureMessage("ADD_PRODUCT", "PHOTO_UNKNOWN")).toBe("Ảnh không còn trên kho, chọn lại");
+    expect(catalogFailureMessage("SET_PHOTO", "PHOTO_UNKNOWN", "Kem")).toBe("Ảnh Kem không còn trên kho, chọn lại");
+    expect(catalogFailureMessage("ADD_PRODUCT", "NOT_FOUND", "Số 09")).toBe("Chưa có Số 09 — chọn số khác.");
+    expect(catalogFailureMessage("SET_PHOTO", "BAD_INPUT")).toBe(NO_CHANGE_MESSAGE);
+    expect(NO_CHANGE_MESSAGE).toBe("Chưa có thay đổi nào để lưu.");
+    expect(catalogFailureMessage("UPLOAD_PHOTO", "UPLOAD_BAD")).toBe("Tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB");
+    expect(catalogFailureMessage("UPLOAD_PHOTO", "UPLOAD_BAD", "Đen")).toBe(
+      "Không tải được ảnh Đen: tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB",
+    );
+    expect(catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", "Đen")).toBe(
+      "Không tải được ảnh Đen. Thử lại sau ít phút.",
+    );
+    expect(catalogFailureMessage("ADD_PRODUCT", "UNAVAILABLE")).toBe("Chưa lưu được. Thử lại sau ít phút.");
+    expect(overlapMessage(6)).toBe("Lịch chồng lên Số 06");
+  });
+});
+
+describe("the window a new issue is offered", () => {
+  // The fixture's last issue, 06, closes at 20:00 on 16/10.
+  it("opens at the shop's hour the day after the last issue closes, and runs fourteen days", () => {
+    const at = new Date("2026-09-20T18:50:00+07:00");
+    expect(DROP_LENGTH_DAYS).toBe(14);
+    expect(proposedWindow(catalog.drops, at)).toEqual({
+      opensAt: "2026-10-17T20:00:00+07:00",
+      closesAt: "2026-10-31T20:00:00+07:00",
+    });
+    expect(overlappingDrop(catalog.drops, proposedWindow(catalog.drops, at))).toBeUndefined();
+  });
+
+  it("never proposes a day before tomorrow", () => {
+    const late = new Date("2026-12-01T09:00:00+07:00");
+    expect(proposedWindow(catalog.drops, late)).toEqual({
+      opensAt: "2026-12-02T20:00:00+07:00",
+      closesAt: "2026-12-16T20:00:00+07:00",
+    });
+    expect(proposedWindow([], late).opensAt).toBe("2026-12-02T20:00:00+07:00");
+  });
+
+  it("finds the issue a window runs into, and lets one open the instant another closes", () => {
+    const six = catalog.dropByNo.get(6)!;
+    expect(overlappingDrop(catalog.drops, { opensAt: "2026-10-01T20:00:00+07:00", closesAt: "2026-10-15T20:00:00+07:00" })?.no).toBe(6);
+    expect(overlappingDrop(catalog.drops, { opensAt: six.closesAt, closesAt: "2026-10-30T20:00:00+07:00" })).toBeUndefined();
+    expect(overlappingDrop(catalog.drops, { opensAt: "2026-09-12T20:00:00+07:00", closesAt: "2026-10-30T20:00:00+07:00" })?.no).toBe(5);
+  });
+});
+
+describe("a new style's address segment", () => {
+  it("is the name in English letters", () => {
+    expect(productSlug("SỎI")).toBe("soi");
+    expect(productSlug("ĐÁ CUỘI")).toBe("da-cuoi");
+    expect(productSlug("  ")).toBe("");
+  });
+
+  it("is always a segment the database takes", () => {
+    expect(productSlug("Ô")).toBe("mau-o");
+    expect(productSlug("!!!")).toBe("mau");
+    const long = productSlug("MỘT CÁI TÊN RẤT DÀI ĐỂ THỬ XEM ĐỊA CHỈ CÓ BỊ CẮT KHÔNG");
+    expect(long.length).toBeLessThanOrEqual(40);
+    expect(isNewSlug(long)).toBe(true);
+    for (const name of ["SỎI", "Ô", "!!!", "KHÓI 2", "ÁO-KHOÁC"]) expect(isNewSlug(productSlug(name))).toBe(true);
+  });
+
+  it("knows a segment taken by another style's address or by the id it would make", () => {
+    expect(slugTaken("khoi", catalog)).toBe(true);
+    expect(slugTaken("soi", catalog)).toBe(false);
+    // KHÓI's address edited to `khoi-den`: `khoi` would still make its id.
+    const moved = buildCatalog({
+      ...catalog,
+      products: catalog.products.map((p) => (p.id === "p-khoi" ? { ...p, slug: "khoi-den" } : p)),
+      drops: [...catalog.drops],
+      teasers: [...catalog.teasers],
+      promotions: [...catalog.promotions],
+    });
+    expect(slugTaken("khoi", moved)).toBe(true);
+  });
+
+  it("adds -2, -3 until nobody has it", () => {
+    expect(uniqueSlug("soi", catalog)).toBe("soi");
+    expect(uniqueSlug("khoi", catalog)).toBe("khoi-2");
+    const two = buildCatalog({
+      products: [...catalog.products, { ...khoi, id: productId("p-khoi-2"), slug: "khoi-2" }],
+      drops: [...catalog.drops],
+      teasers: [...catalog.teasers],
+      promotions: [...catalog.promotions],
+    });
+    expect(uniqueSlug("khoi", two)).toBe("khoi-3");
+    const full = "a".repeat(40);
+    const taken = buildCatalog({
+      products: [...catalog.products, { ...khoi, id: productId(`p-${full}`), slug: full }],
+      drops: [...catalog.drops],
+      teasers: [...catalog.teasers],
+      promotions: [...catalog.promotions],
+    });
+    expect(uniqueSlug(full, taken)).toBe(`${"a".repeat(38)}-2`);
+  });
+});
+
+describe("readPhotoMap and readColorOrder", () => {
+  const colors = ["black", "cream"] as const;
+
+  it("reads a borrowed frame or an upload's key per colour, leaving out an empty one", () => {
+    expect(readPhotoMap({ black: "khoi", cream: UP }, colors, catalog)).toEqual({
+      ok: true,
+      value: { black: "khoi", cream: UP },
+    });
+    expect(readPhotoMap({ black: " ", cream: "reu" }, colors, catalog)).toEqual({ ok: true, value: { cream: "reu" } });
+    expect(readPhotoMap(undefined, colors, catalog)).toEqual({ ok: true, value: {} });
+  });
+
+  it("refuses a key that is not a photo, naming the colour, and a colour the style does not have", () => {
+    expect(readPhotoMap({ cream: "khong-co" }, colors, catalog)).toEqual({
+      ok: false,
+      error: "Ảnh Kem không còn trên kho, chọn lại",
+    });
+    expect(readPhotoMap({ cream: "up/zz.webp" }, colors, catalog).ok).toBe(false);
+    expect(readPhotoMap({ moss: "khoi" }, colors, catalog).ok).toBe(false);
+    expect(readPhotoMap({ black: 7 }, colors, catalog).ok).toBe(false);
+    expect(readPhotoMap("khoi", colors, catalog).ok).toBe(false);
+  });
+
+  it("takes a new band order of exactly the colours the style has", () => {
+    expect(readColorOrder(["cream", "black"], colors)).toEqual({ ok: true, value: ["cream", "black"] });
+    expect(readColorOrder(["black", "cream"], colors).ok).toBe(true);
+    for (const bad of [["black"], ["black", "black"], ["black", "cream", "moss"], ["black", "moss"], "black", null]) {
+      expect(readColorOrder(bad, colors).ok, JSON.stringify(bad)).toBe(false);
+    }
+    expect(sameOrder(["black", "cream"], colors)).toBe(true);
+    expect(sameOrder(["cream", "black"], colors)).toBe(false);
+  });
+});
+
+describe("readNewProduct — the new-style form, as the database takes it", () => {
+  /** SỎI for issue 06: three colours in band order, two borrowed photos and an upload. */
+  const draft = (over: Record<string, unknown> = {}) => ({
+    name: "sỏi",
+    kind: "Áo khoác dù",
+    fit: "OVERSIZE",
+    slug: "",
+    priceVnd: 420_000,
+    material: "Dù hai lớp",
+    dropNo: 6,
+    colors: ["black", "cream", "moss"],
+    photos: { black: UP, cream: "cat", moss: "tro" },
+    cells: {
+      black: { S: 3, M: 4, L: 4, XL: 1 },
+      cream: { S: 2, M: 4, L: 4, XL: 2 },
+      moss: { S: 3, M: 4, L: 4, XL: 1 },
+    },
+    ...over,
+  });
+
+  it("builds the document: capitals, the kind's family, the name's segment, the cut in band order", () => {
+    const read = readNewProduct(draft(), catalog);
+    expect(read).toEqual({
+      ok: true,
+      value: {
+        name: "SỎI",
+        kind: "Áo khoác dù",
+        family: "JACKET",
+        fit: "OVERSIZE",
+        slug: "soi",
+        priceVnd: 420_000,
+        material: "Dù hai lớp",
+        dropNo: 6,
+        colors: [
+          { color: "black", photoKey: UP },
+          { color: "cream", photoKey: "cat" },
+          { color: "moss", photoKey: "tro" },
+        ],
+        cells: {
+          black: { S: 3, M: 4, L: 4, XL: 1 },
+          cream: { S: 2, M: 4, L: 4, XL: 2 },
+          moss: { S: 3, M: 4, L: 4, XL: 1 },
+        },
+      },
+    });
+    expect(read.ok && cutTotal(read.value.cells)).toBe(36);
+  });
+
+  it("makes the segment unique when the name's is taken, and keeps a typed one that is free", () => {
+    const khoi2 = readNewProduct(draft({ name: "KHÓI" }), catalog);
+    expect(khoi2.ok && khoi2.value.slug).toBe("khoi-2");
+    const typed = readNewProduct(draft({ slug: "soi-du" }), catalog);
+    expect(typed.ok && typed.value.slug).toBe("soi-du");
+  });
+
+  it("refuses a typed segment another style has, or one that is not a segment", () => {
+    expect(readNewProduct(draft({ slug: "khoi" }), catalog)).toEqual({ ok: false, error: SLUG_TAKEN_MESSAGE });
+    expect(readNewProduct(draft({ slug: "Sỏi" }), catalog).ok).toBe(false);
+    expect(readNewProduct(draft({ slug: "-soi" }), catalog).ok).toBe(false);
+    expect(readNewProduct(draft({ slug: "s" }), catalog).ok).toBe(false);
+    expect(readNewProduct(draft({ slug: "s".repeat(41) }), catalog).ok).toBe(false);
+  });
+
+  it("wants a name, a kind the catalogue files, a fit, an issue, a price and a material", () => {
+    const error = (over: Record<string, unknown>) => {
+      const read = readNewProduct(draft(over), catalog);
+      return read.ok ? null : read.error;
+    };
+    expect(error({ name: " " })).toBe("Nhập tên mẫu.");
+    expect(error({ name: "X".repeat(41) })).toBe("Nhập tên mẫu.");
+    expect(error({ kind: "" })).toBe("Chọn loại.");
+    expect(error({ kind: "Áo len" })).toBe("Loại chưa có trong mục lục");
+    expect(error({ fit: "SKINNY" })).toBe("Chọn form.");
+    expect(error({ fit: undefined })).toBe("Chọn form.");
+    expect(error({ dropNo: 9 })).toBe("Chọn một số.");
+    expect(error({ dropNo: "6" })).toBe("Chọn một số.");
+    for (const priceVnd of [0, 999, 100_000_000, 420_000.5, "420000"]) {
+      expect(error({ priceVnd }), String(priceVnd)).toBe("Nhập giá bán từ 1.000₫ đến 99.999.999₫.");
+    }
+    expect(error({ priceVnd: 1_000 })).toBeNull();
+    expect(error({ priceVnd: 99_999_999 })).toBeNull();
+    expect(error({ material: "" })).toBe("Nhập chất liệu.");
+    expect(readNewProduct("SỎI", catalog).ok).toBe(false);
+  });
+
+  it("wants at least one colour, each once, each a colour of the palette", () => {
+    const error = (over: Record<string, unknown>) => {
+      const read = readNewProduct(draft(over), catalog);
+      return read.ok ? null : read.error;
+    };
+    expect(error({ colors: [] })).toBe("Chọn ít nhất một màu");
+    expect(error({ colors: undefined })).toBe("Chọn ít nhất một màu");
+    expect(error({ colors: ["black", "black"] })).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
+    expect(error({ colors: ["black", "pink"] })).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
+    expect(error({ colors: "black" })).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
+  });
+
+  it("wants a cut of 0–999 a cell and at least one piece in every colour", () => {
+    const error = (cells: unknown) => {
+      const read = readNewProduct(draft({ cells }), catalog);
+      return read.ok ? null : read.error;
+    };
+    const full = draft().cells;
+    expect(error({ ...full, cream: { S: 0, M: 0, L: 0, XL: 0 } })).toBe("Điền số cắt cho Kem");
+    expect(error({ black: full.black, cream: full.cream })).toBe("Điền số cắt cho Rêu");
+    expect(error({ ...full, black: { ...full.black, M: 1000 } })).toBe("Số cắt mỗi ô từ 0 đến 999.");
+    expect(error({ ...full, black: { ...full.black, M: -1 } })).toBe("Số cắt mỗi ô từ 0 đến 999.");
+    expect(error({ ...full, black: { ...full.black, M: 1.5 } })).toBe("Số cắt mỗi ô từ 0 đến 999.");
+    expect(error({ ...full, black: "12" })).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
+    expect(error("36")).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
+  });
+
+  it("spells out all four sizes and leaves out a colour the form dropped", () => {
+    const read = readNewProduct(
+      draft({
+        colors: ["black"],
+        photos: { black: "khoi" },
+        cells: { black: { M: 2 }, cream: { S: 9, M: 9, L: 9, XL: 9 } },
+      }),
+      catalog,
+    );
+    expect(read.ok && read.value.cells).toEqual({ black: { S: 0, M: 2, L: 0, XL: 0 } });
+  });
+
+  it("wants a photo for every colour — a borrowed frame or an upload", () => {
+    const error = (photos: unknown) => {
+      const read = readNewProduct(draft({ photos }), catalog);
+      return read.ok ? null : read.error;
+    };
+    expect(error({ black: UP, cream: "cat" })).toBe("Chọn ảnh cho Rêu");
+    expect(error({ black: UP, cream: "cat", moss: "" })).toBe("Chọn ảnh cho Rêu");
+    expect(error(undefined)).toBe("Chọn ảnh cho Đen");
+    expect(error({ black: UP, cream: "cat", moss: "khong-co" })).toBe("Ảnh Rêu không còn trên kho, chọn lại");
+    expect(error({ black: UP, cream: "cat", moss: "tro", navy: "khoi" })).toBe(
+      "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.",
+    );
+  });
+
+  it("files a kind where the catalogue files it, and nowhere for a kind nobody wears", () => {
+    expect(familyOfKind(catalog, "Áo khoác dù")).toBe("JACKET");
+    expect(familyOfKind(catalog, "Áo len")).toBeUndefined();
   });
 });

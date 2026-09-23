@@ -1482,3 +1482,23 @@ ghép 11 lớp nổi admin của B3b (17 lớp) và máy dò `clipped` bỏ qua 
 có thể mở trước Số đang chờ (gộp vào B3c cùng luật chồng lịch); bìa Số vẽ cho 2 teaser, teaser thứ ba rớt xuống một mình (quyết định
 thiết kế, chưa giao); ô Mã chỉ đọc chưa có kiểu riêng (lát 7); nhật ký đóng sớm có hai dòng cùng phút (cửa hàng + hệ thống, đều đúng);
 `SizeGuideSheet` giữ "Số đo mô phỏng" theo ý người dùng.
+
+**Lát B3c ĐẠT (24/09/2026, `backend-implementer` trên Opus 5.5, phiên chính duyệt độc lập).** Ảnh mẫu thật và tạo mẫu. Migration
+`20260924040000_photos.sql`: bucket `product-photos` (công khai đọc, 1,5 MB, chỉ WebP/JPEG, không policy ghi cho vai API),
+`photo_key_ok` (khoá mượn đang có hoặc `up/<32 hex>.webp|jpg` có thật trong `storage.objects`), `admin_add_product` (1–7 màu theo thứ tự
+dải, mỗi màu một ảnh, lưới cắt, `cut_units` = tổng, họ khớp loại, Số chưa đóng, slug/id chưa có), `admin_set_product_photo` (trả khoá
+cũ), `admin_reorder_colors` (hoán vị, ghi hai pha), `admin_add_teaser` v2, `admin_add_drop` v2 (từ chối lịch chồng), `catalog_snapshot`
+v3 (**ẩn mẫu của Số chưa mở với khách**, admin thấy đủ), 3 kind sự kiện mới. TS: `lib/db/service.ts` (khoá bí mật chỉ cho bucket),
+`lib/db/photos.ts` (lưu, xoá, list, purge), route `GET /photos/[...key]` (stream từ bucket, cache một năm bất biến, 404 khoá lạ) —
+`photoUrl("up/…")` → `/photos/…` nên `remotePatterns` không đổi, không biến công khai; action `uploadProductPhoto` / `removeUploadedPhoto`
+/ `createProduct` / `updateProduct` (+ `colors`, `photos`); "Đặt lại dữ liệu mẫu" xoá mọi `up/*`; lịch đề xuất Số mới = ngày sau
+`closes_at` cuối, 14 ngày; `next.config` `bodySizeLimit` 2 MB; `config.toml` bật lại `storage` (8 container, RAM +~110 MB ổn định).
+**Kiểm:** typecheck sạch (`next typegen`, xoá `tsconfig.tsbuildinfo`); `npm test` **56 tệp / 1.202 test**; `npm run test:db` **5 tệp /
+161 test**; build **45 route** (`ƒ /photos/[...key]`); phiên chính tự đi: tải WebP vẽ bằng canvas qua service key → `/photos/<khoá>` 200
+`image/webp` immutable, khoá lạ/khoá mượn 404; `admin_add_product` SỎI cho Số 05 (1 ảnh thật + 2 mượn) → khách thấy SỎI ở `/products`,
+ảnh qua `/_next/image?url=%2Fphotos%2Fup%2F…` 200, PDP 420.000; slug trùng `NOT_ALLOWED`, khoá ma `PHOTO_UNKNOWN`; chuyển SỎI sang Số 06 →
+khách 404, quản lý thấy ở tab Số 06; sheet "Tạo số" đề xuất 20/10 → 03/11; đặt lại → bucket 0, toast "· đã xoá 1 ảnh tải lên";
+0 request ngoài 3200, 0 console. Sweep 78 lượt 0/0/0/0, tồn dư 48 + 2. **Phiên chính sửa thêm:** `ProductsTable` ghi "Sắp mở" (tone
+info) cho mẫu của Số chưa mở thay vì "Đã đóng" (đã kiểm bằng mẫu GẠCH ở Số 06); DESIGN.md §1 ghi ảnh tải lên; brief lát 7 thêm mục 1c.
+**Mở:** dashboard "Còn trong Số 06" khi quản lý có mẫu ở Số chưa mở; ảnh đã tải mà bỏ dở nằm lại bucket tới lần đặt lại (chấp nhận);
+picker teaser vẫn liệt kê ảnh thật của mẫu (lát 7 lọc `!isUploadedKey`); nhánh thiếu `SUPABASE_SECRET_KEY` chỉ kiểm bằng đọc mã.

@@ -1,3 +1,4 @@
+import { COLORS } from "@/data/colors";
 import {
   COLOR_KEYS,
   SIZES,
@@ -10,9 +11,11 @@ import {
   type Size,
 } from "@/data/types";
 import type { Catalog } from "./catalog";
+import { toVnIso } from "./datetime";
 import { onHandOf } from "./inventory";
 import { isStockReason, type InventoryCell } from "./inventory-adjust";
-import { issueLabel } from "./lexicon";
+import { LEX, issueLabel } from "./lexicon";
+import { isUploadedKey } from "./photos";
 import { normalisePromoCode } from "./promotions";
 import { asciiSlug, teaserSlug } from "./teasers";
 
@@ -39,19 +42,36 @@ export type Checked<T> = { ok: true; value: T } | { ok: false; error: string };
 const ok = <T>(value: T): Checked<T> => ({ ok: true, value });
 const no = <T>(error: string): Checked<T> => ({ ok: false, error });
 
-/** The codes the catalogue's `admin_*` functions raise, and nothing else. */
+/**
+ * The codes the catalogue's `admin_*` functions raise, and nothing else.
+ *
+ * Slice B3c added five, for a new style and its photos — an issue that has
+ * closed, no colour, a colour with nothing cut, a colour with no photo, a
+ * photo that is not one. A taken address segment and "nothing to save" kept
+ * the codes slice B3b gave them (`NOT_ALLOWED`, `BAD_INPUT`), and a missing
+ * issue is `NOT_FOUND` as it is for a teaser: the move says which sentence.
+ */
 export const CATALOG_ERROR_CODES = [
   "NOT_ADMIN",
   "NOT_FOUND",
   "NOT_ALLOWED",
   "BAD_INPUT",
   "STALE",
+  "DROP_CLOSED",
+  "NO_COLORS",
+  "COLOR_EMPTY",
+  "PHOTO_MISSING",
+  "PHOTO_UNKNOWN",
 ] as const;
 
 export type CatalogErrorCode = (typeof CATALOG_ERROR_CODES)[number];
 
-/** A refusal the database named, or `UNAVAILABLE` for anything it did not. */
-export type CatalogFailure = CatalogErrorCode | "UNAVAILABLE";
+/**
+ * A refusal the database named; `UPLOAD_BAD` for a file the server would not
+ * store (checked in TypeScript, never raised by SQL); `UNAVAILABLE` for
+ * anything nobody named.
+ */
+export type CatalogFailure = CatalogErrorCode | "UPLOAD_BAD" | "UNAVAILABLE";
 
 /** `raise exception using message = 'STALE'` arrives as SQLSTATE P0001. */
 export function catalogFailureOf(error: { code?: string; message?: string } | null): CatalogFailure {
@@ -60,6 +80,20 @@ export function catalogFailureOf(error: { code?: string; message?: string } | nu
   return error.code === "P0001" && (CATALOG_ERROR_CODES as readonly string[]).includes(message)
     ? (message as CatalogErrorCode)
     : "UNAVAILABLE";
+}
+
+/**
+ * What a refusal is about, when the function said: `raise … using detail =`
+ * arrives as `details` — the colour for `COLOR_EMPTY`, `PHOTO_MISSING` and
+ * `PHOTO_UNKNOWN`, the issue in the way for an overlapping new one.
+ */
+export function failureDetail(error: { details?: string | null } | null): string {
+  return typeof error?.details === "string" ? error.details : "";
+}
+
+/** "Đen" for `black` — how a message names a colour the database named. */
+export function colorLabelOf(key: string): string {
+  return (COLOR_KEYS as readonly string[]).includes(key) ? COLORS[key as ColorKey].label : "";
 }
 
 /** Every move the back office makes on the catalogue. */
@@ -74,7 +108,11 @@ export type CatalogMove =
   | "PAUSE_PROMO"
   | "RAISE_LIMIT"
   | "END_PROMO"
-  | "UPDATE_PRODUCT";
+  | "UPDATE_PRODUCT"
+  | "ADD_PRODUCT"
+  | "SET_PHOTO"
+  | "REORDER_COLORS"
+  | "UPLOAD_PHOTO";
 
 /** The sentence the brief fixed for a shelf that moved under the form. */
 export const STALE_STOCK_MESSAGE = "Tồn kho đã đổi ở nơi khác — tải lại rồi sửa tiếp";
@@ -87,6 +125,11 @@ export const STALE_STOCK_MESSAGE = "Tồn kho đã đổi ở nơi khác — t�
  * `NOT_ALLOWED` almost always means somebody else got there first — another
  * tab took the issue number, raised the limit, paused the code — so the
  * sentence says to look again rather than to try again.
+ *
+ * Slice B3c: for a new style `subject` is the issue ("Số 04") when the issue
+ * is the problem and the colour ("Đen") when a colour is; for a photo upload
+ * it is the colour the photo was for, and the sentence says so first. Every
+ * sentence the brief fixed is what comes back when there is no subject.
  */
 export function catalogFailureMessage(
   move: CatalogMove,
@@ -97,14 +140,38 @@ export function catalogFailureMessage(
     case "NOT_ADMIN":
       return "Phiên quản trị đã hết — đăng nhập lại bằng tài khoản quản trị.";
     case "UNAVAILABLE":
+      if (move === "UPLOAD_PHOTO") {
+        return subject
+          ? `Không tải được ảnh ${subject}. Thử lại sau ít phút.`
+          : "Không tải được ảnh. Thử lại sau ít phút.";
+      }
       return "Chưa lưu được. Thử lại sau ít phút.";
     case "STALE":
       return STALE_STOCK_MESSAGE;
+    case "UPLOAD_BAD":
+      return subject
+        ? `Không tải được ảnh ${subject}: tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB`
+        : "Tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB";
+    case "DROP_CLOSED":
+      return `${subject || LEX.t} đã đóng, không thêm mẫu vào đó`;
+    case "NO_COLORS":
+      return "Chọn ít nhất một màu";
+    case "COLOR_EMPTY":
+      return `Điền số cắt cho ${subject || "từng màu"}`;
+    case "PHOTO_MISSING":
+      return `Chọn ảnh cho ${subject || "từng màu"}`;
+    case "PHOTO_UNKNOWN":
+      return subject ? `Ảnh ${subject} không còn trên kho, chọn lại` : "Ảnh không còn trên kho, chọn lại";
     case "NOT_FOUND":
       switch (move) {
         case "ADJUST_STOCK":
         case "UPDATE_PRODUCT":
+        case "REORDER_COLORS":
           return subject ? `Không tìm thấy mẫu ${subject}.` : "Không tìm thấy mẫu này.";
+        case "SET_PHOTO":
+          return subject ? `Mẫu này không có màu ${subject}.` : "Không tìm thấy mẫu hoặc màu này.";
+        case "ADD_PRODUCT":
+          return subject ? `Chưa có ${subject} — chọn số khác.` : `Chưa có ${LEX.tl} này — chọn ${LEX.tl} khác.`;
         case "SCHEDULE_DROP":
         case "CLOSE_DROP":
           return subject ? `Không tìm thấy ${subject}.` : "Không tìm thấy số này.";
@@ -131,6 +198,8 @@ export function catalogFailureMessage(
           return `${subject} không còn đang chạy — tải lại trang để xem.`;
         case "UPDATE_PRODUCT":
           return `Mã trên địa chỉ "${subject}" đã dùng cho mẫu khác.`;
+        case "ADD_PRODUCT":
+          return SLUG_TAKEN_MESSAGE;
         default:
           return "Thao tác này không còn làm được — tải lại trang để xem.";
       }
@@ -151,11 +220,29 @@ export function catalogFailureMessage(
         case "RAISE_LIMIT":
           return "Giới hạn mới phải lớn hơn giới hạn hiện có.";
         case "UPDATE_PRODUCT":
+        case "ADD_PRODUCT":
           return "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.";
+        case "SET_PHOTO":
+          // The only thing the form can send that the database calls a bad
+          // input: the photo the colour already has.
+          return NO_CHANGE_MESSAGE;
+        case "REORDER_COLORS":
+          return "Thứ tự màu đã đổi ở nơi khác — tải lại trang để xem.";
         default:
           return "Thông tin gửi lên chưa hợp lệ.";
       }
   }
+}
+
+/** A taken address segment, for a new style — the brief's `SLUG_TAKEN`. */
+export const SLUG_TAKEN_MESSAGE = "Mã địa chỉ đã có mẫu khác dùng";
+
+/** A save that would change nothing — the brief's `NO_CHANGE`. */
+export const NO_CHANGE_MESSAGE = "Chưa có thay đổi nào để lưu.";
+
+/** A new issue whose window runs into another one's. */
+export function overlapMessage(no: number): string {
+  return `Lịch chồng lên ${issueLabel(no)}`;
 }
 
 // ──────────────────────────────────────────────────────────── small reads
@@ -283,6 +370,55 @@ export function readDropNo(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) && value > 0 && value <= INT_MAX
     ? value
     : null;
+}
+
+/** How long a new issue runs unless the manager moves its closing day. */
+export const DROP_LENGTH_DAYS = 14;
+
+/** `2026-10-16` plus `days`, as a Vietnamese calendar day. */
+function dayPlus(isoDay: string, days: number): string {
+  return toVnIso(new Date(Date.parse(`${isoDay}T12:00:00+07:00`) + days * 86_400_000)).slice(0, 10);
+}
+
+/**
+ * The window "Tạo số" proposes (slice B3c): opening at the shop's own hour —
+ * the one its issues already open at, 20:00 — on the day after the last one
+ * closes, and closing fourteen days later. Never before tomorrow: a proposal
+ * in the past would be an issue that opened before anybody made it.
+ *
+ * "The last one" is the one that closes last, which is the highest number in
+ * any calendar the shop has run; reading the latest closing hour rather than
+ * the number keeps the proposal clear of every issue even after one was
+ * rescheduled past another. Until this slice the proposal was a week from
+ * now, which could open Số 07 before Số 06 — `admin_add_drop` now refuses an
+ * overlap outright.
+ */
+export function proposedWindow(drops: readonly Drop[], now: Date): Omit<Drop, "no"> {
+  const hour = [...drops].sort((a, b) => a.no - b.no).at(-1)?.opensAt.slice(11, 16) ?? "20:00";
+  const lastClose = drops.reduce((day, d) => (d.closesAt.slice(0, 10) > day ? d.closesAt.slice(0, 10) : day), "");
+  const tomorrow = dayPlus(toVnIso(now).slice(0, 10), 1);
+  const afterLast = lastClose ? dayPlus(lastClose, 1) : tomorrow;
+  const opensDay = afterLast > tomorrow ? afterLast : tomorrow;
+  return {
+    opensAt: `${opensDay}T${hour}:00+07:00`,
+    closesAt: `${dayPlus(opensDay, DROP_LENGTH_DAYS)}T${hour}:00+07:00`,
+  };
+}
+
+/**
+ * The first issue a new window would share an instant with, or undefined.
+ * Open-inclusive, close-exclusive, like `dropState`: an issue opening the
+ * instant another closes does not overlap it. `admin_add_drop` asks the same.
+ */
+export function overlappingDrop(
+  drops: readonly Drop[],
+  window: Omit<Drop, "no">,
+): Drop | undefined {
+  const opens = Date.parse(window.opensAt);
+  const closes = Date.parse(window.closesAt);
+  return [...drops]
+    .sort((a, b) => a.no - b.no)
+    .find((d) => Date.parse(d.opensAt) < closes && Date.parse(d.closesAt) > opens);
 }
 
 // ─────────────────────────────────────────────────────────────── the teasers
@@ -518,3 +654,254 @@ export function isEmptyPatch(patch: ProductPatch): boolean {
 
 /** "Số 07" — how the messages above name an issue. */
 export const dropSubject = (no: number): string => issueLabel(no);
+
+// ───────────────────────────────────────────────────────────── a new style
+/**
+ * The limits of a new style (slice B3c), each restated by
+ * `admin_add_product()`: a price a shop would print, an address segment of
+ * 2–40 characters that starts with a letter or a digit, one to seven colours
+ * (the palette has seven), and at most 999 pieces in one colour and size.
+ */
+export const MIN_PRICE_VND = 1_000;
+export const MAX_PRICE_VND = 99_999_999;
+export const MAX_NEW_SLUG = 40;
+export const MAX_COLORS = COLOR_KEYS.length;
+export const MAX_CUT_PER_CELL = 999;
+
+const NEW_SLUG = /^[a-z0-9][a-z0-9-]{1,39}$/;
+
+/** Whether a segment is one a new style may take — shape only. */
+export function isNewSlug(value: string): boolean {
+  return NEW_SLUG.test(value);
+}
+
+/**
+ * The address segment a name makes: "SỎI" → "soi", "ĐÁ CUỘI" → "da-cuoi" —
+ * `asciiSlug`, cut to 40 characters. A name that leaves fewer than two
+ * letters or digits gets "mau" in front of what it left ("mau" alone for
+ * none), so the segment is always one the database takes. Empty only for an
+ * empty name, so the form's placeholder can follow the name as it is typed.
+ */
+export function productSlug(name: string): string {
+  if (name.trim() === "") return "";
+  const base = asciiSlug(name).slice(0, MAX_NEW_SLUG).replace(/-+$/, "");
+  if (base.length >= 2) return base;
+  return base ? `mau-${base}` : "mau";
+}
+
+/**
+ * Whether a segment is taken: by another style's address, or by the id it
+ * would make (`p-<slug>`) — a style whose address was edited keeps its old
+ * id, and a new style cannot be given that id again.
+ */
+export function slugTaken(slug: string, catalog: Catalog): boolean {
+  return catalog.products.some((p) => p.slug === slug || p.id === `p-${slug}`);
+}
+
+/**
+ * `base` if nobody has it, else `base-2`, `base-3`, … — what an empty
+ * address box becomes. The catalogue passed in has to be the manager's, which
+ * holds the styles of issues that have not opened too.
+ */
+export function uniqueSlug(base: string, catalog: Catalog): string {
+  if (!slugTaken(base, catalog)) return base;
+  for (let n = 2; ; n += 1) {
+    const suffix = `-${n}`;
+    const candidate = `${base.slice(0, MAX_NEW_SLUG - suffix.length).replace(/-+$/, "")}${suffix}`;
+    if (!slugTaken(candidate, catalog)) return candidate;
+  }
+}
+
+/**
+ * Whether a photo key may be sent: a borrowed frame the catalogue uses
+ * (`borrowedPhotoKeys`), or the shape of an upload. Whether an upload really
+ * is in the bucket is the database's to say (`photo_key_ok`), not a form's.
+ */
+export function isPickablePhoto(key: string, catalog: Catalog): boolean {
+  return isUploadedKey(key) || borrowedPhotoKeys(catalog).includes(key);
+}
+
+/**
+ * The photos a form sent, colour → key, for the colours given: absent means
+ * none; an empty key is left out (no photo chosen for that colour); a colour
+ * the style does not have is a bad request; a key that is not a photo is
+ * `PHOTO_UNKNOWN`'s sentence, naming the colour.
+ */
+export function readPhotoMap(
+  value: unknown,
+  colors: readonly ColorKey[],
+  catalog: Catalog,
+): Checked<Partial<Record<ColorKey, string>>> {
+  if (value === undefined || value === null) return ok({});
+  if (!isRecord(value)) return no(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT"));
+  const photos: Partial<Record<ColorKey, string>> = {};
+  for (const [color, raw] of Object.entries(value)) {
+    if (!(colors as readonly string[]).includes(color)) {
+      return no(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT"));
+    }
+    if (raw !== undefined && raw !== null && typeof raw !== "string") {
+      return no(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT"));
+    }
+    const key = text(raw);
+    if (key === "") continue;
+    if (!isPickablePhoto(key, catalog)) {
+      return no(catalogFailureMessage("ADD_PRODUCT", "PHOTO_UNKNOWN", colorLabelOf(color)));
+    }
+    photos[color as ColorKey] = key;
+  }
+  return ok(photos);
+}
+
+/**
+ * A new band order for a style's colours: exactly the colours it has, each
+ * once, in any order. Colours are fixed when the cloth is cut (QĐ-27) — this
+ * never adds or drops one.
+ */
+export function readColorOrder(value: unknown, current: readonly ColorKey[]): Checked<ColorKey[]> {
+  const bad = no<ColorKey[]>("Thứ tự màu phải gồm đúng các màu của mẫu — màu chốt lúc cắt.");
+  if (!Array.isArray(value) || value.length !== current.length) return bad;
+  const seen = new Set<string>();
+  for (const c of value) {
+    if (typeof c !== "string" || !(current as readonly string[]).includes(c) || seen.has(c)) return bad;
+    seen.add(c);
+  }
+  return ok(value as ColorKey[]);
+}
+
+/** Whether two band orders are the same order. */
+export function sameOrder(a: readonly ColorKey[], b: readonly ColorKey[]): boolean {
+  return a.length === b.length && a.every((c, i) => c === b[i]);
+}
+
+/** Pieces to cut, colour by colour, all four sizes spelled out. */
+export type CutGrid = Partial<Record<ColorKey, Record<Size, number>>>;
+
+/** A new style exactly as `admin_add_product()` takes it. */
+export interface NewProductInput {
+  name: string;
+  kind: string;
+  /** Derived from the kind, never taken from the browser (`familyOfKind`). */
+  family: Family;
+  fit: Fit;
+  slug: string;
+  priceVnd: number;
+  material: string;
+  dropNo: number;
+  /** Band order; one photo each, a borrowed key or an upload's. */
+  colors: Array<{ color: ColorKey; photoKey: string }>;
+  cells: CutGrid;
+}
+
+/**
+ * "Tạo mẫu", as the form sends it — `{ name, kind, fit, slug?, priceVnd,
+ * material, dropNo, colors, photos, cells }` (the action's contract) — read
+ * against the manager's catalogue into the document the database writes.
+ *
+ * Every field is checked with the sentence the form shows, in the form's
+ * order; the name is written in capitals like every style's; the family
+ * comes from the kind (a kind no style wears yet is refused — a new kind is
+ * a later change); an empty address box becomes the name's segment, made
+ * unique with `-2`, `-3`; a typed one that is taken is refused. The cut
+ * grid is rebuilt from the colours chosen, four sizes each, so a colour the
+ * form dropped cannot leave numbers behind. Whether the issue is still open
+ * depends on the clock, so the action asks that (`DROP_CLOSED`).
+ */
+export function readNewProduct(value: unknown, catalog: Catalog): Checked<NewProductInput> {
+  const bad = no<NewProductInput>(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT"));
+  if (!isRecord(value)) return bad;
+
+  const name = text(value.name).toLocaleUpperCase("vi");
+  if (name === "" || name.length > MAX_PRODUCT_NAME) return no("Nhập tên mẫu.");
+
+  const kind = text(value.kind);
+  if (kind === "" || kind.length > MAX_KIND) return no("Chọn loại.");
+  const family = familyOfKind(catalog, kind);
+  if (!family) return no("Loại chưa có trong mục lục");
+
+  const fit = value.fit;
+  if (fit !== "OVERSIZE" && fit !== "REGULAR") return no("Chọn form.");
+
+  const dropNo = readDropNo(value.dropNo);
+  if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no(`Chọn một ${LEX.tl}.`);
+
+  const priceVnd = value.priceVnd;
+  if (!isCount(priceVnd) || priceVnd < MIN_PRICE_VND || priceVnd > MAX_PRICE_VND) {
+    return no("Nhập giá bán từ 1.000₫ đến 99.999.999₫.");
+  }
+
+  const material = text(value.material);
+  if (material === "" || material.length > MAX_MATERIAL) return no("Nhập chất liệu.");
+
+  // ── the colours, in band order
+  const sent = value.colors;
+  if (sent !== undefined && !Array.isArray(sent)) return bad;
+  const colors = (Array.isArray(sent) ? sent : []) as unknown[];
+  if (colors.length === 0) return no(catalogFailureMessage("ADD_PRODUCT", "NO_COLORS"));
+  if (colors.length > MAX_COLORS) return bad;
+  for (const [i, c] of colors.entries()) {
+    if (typeof c !== "string" || !(COLOR_KEYS as readonly string[]).includes(c)) return bad;
+    if (colors.indexOf(c) !== i) return bad;
+  }
+  const keys = colors as ColorKey[];
+
+  // ── the cut, colour by colour: 0–999 a cell, at least one piece a colour
+  const grid = value.cells;
+  if (grid !== undefined && grid !== null && !isRecord(grid)) return bad;
+  const cells: CutGrid = {};
+  for (const color of keys) {
+    const sizes = isRecord(grid) ? grid[color] : undefined;
+    if (sizes !== undefined && sizes !== null && !isRecord(sizes)) return bad;
+    const row = {} as Record<Size, number>;
+    let pieces = 0;
+    for (const size of SIZES) {
+      const n = isRecord(sizes) && sizes[size] !== undefined ? sizes[size] : 0;
+      if (!isCount(n) || n > MAX_CUT_PER_CELL) return no(`Số cắt mỗi ô từ 0 đến ${MAX_CUT_PER_CELL}.`);
+      row[size] = n;
+      pieces += n;
+    }
+    if (pieces === 0) return no(catalogFailureMessage("ADD_PRODUCT", "COLOR_EMPTY", COLORS[color].label));
+    cells[color] = row;
+  }
+
+  // ── a photo for every colour
+  const photos = readPhotoMap(value.photos, keys, catalog);
+  if (!photos.ok) return no(photos.error);
+  for (const color of keys) {
+    if (!photos.value[color]) {
+      return no(catalogFailureMessage("ADD_PRODUCT", "PHOTO_MISSING", COLORS[color].label));
+    }
+  }
+
+  // ── the address segment
+  const typed = text(value.slug);
+  let slug: string;
+  if (typed === "") {
+    slug = uniqueSlug(productSlug(name), catalog);
+  } else {
+    if (!isNewSlug(typed)) {
+      return no("Mã trên địa chỉ gồm 2–40 chữ thường không dấu, số và gạch ngang.");
+    }
+    if (slugTaken(typed, catalog)) return no(SLUG_TAKEN_MESSAGE);
+    slug = typed;
+  }
+
+  return ok({
+    name,
+    kind,
+    family,
+    fit,
+    slug,
+    priceVnd,
+    material,
+    dropNo,
+    colors: keys.map((color) => ({ color, photoKey: photos.value[color]! })),
+    cells,
+  });
+}
+
+/** Every piece a new style's grid cuts — its `cutUnits`. */
+export function cutTotal(cells: CutGrid): number {
+  let n = 0;
+  for (const row of Object.values(cells)) for (const size of SIZES) n += row?.[size] ?? 0;
+  return n;
+}

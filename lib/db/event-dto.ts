@@ -28,7 +28,8 @@ import type { InventoryCell } from "@/lib/inventory-adjust";
  * issues, the teasers and the codes. Those rows name what they are about in a
  * column of their own (`product_id`, `promo_code`, `drop_no`), which the
  * table's check constraints require, and that column — not the payload — is
- * where this module reads it from.
+ * where this module reads it from. Slice B3c added three about one style: it
+ * was created, one colour's photo was swapped, its band order changed.
  *
  * Pure and free of `server-only`, for the reason `order-dto.ts` gives: the
  * marker does not resolve under vitest, and a mapper nobody can test is a
@@ -48,6 +49,9 @@ export const EVENT_KINDS = [
   "DEMO_RESET",
   "INVENTORY_ADJUSTED",
   "PRODUCT_EDITED",
+  "PRODUCT_ADDED",
+  "PRODUCT_PHOTO_SET",
+  "PRODUCT_COLORS_REORDERED",
   "DROP_ADDED",
   "DROP_SCHEDULED",
   "TEASER_ADDED",
@@ -129,6 +133,29 @@ export type CatalogEvent =
       delta: number;
     })
   | (EventBase & { kind: "PRODUCT_EDITED"; productId: string; before: ProductFields; after: ProductFields })
+  | (EventBase & {
+      kind: "PRODUCT_ADDED";
+      productId: string;
+      /** As it was created — the style may have been renamed since. */
+      name: string;
+      slug: string;
+      dropNo: number;
+      /** Band order. */
+      colors: ColorKey[];
+      cutUnits: number;
+      /** How many of its photos were uploads, and how many borrowed frames. */
+      uploaded: number;
+      borrowed: number;
+    })
+  | (EventBase & {
+      kind: "PRODUCT_PHOTO_SET";
+      productId: string;
+      color: ColorKey;
+      /** Photo keys: a borrowed frame's (`khoi`) or an upload's (`up/…`). */
+      before: string;
+      after: string;
+    })
+  | (EventBase & { kind: "PRODUCT_COLORS_REORDERED"; productId: string; before: ColorKey[]; after: ColorKey[] })
   | (EventBase & { kind: "DROP_ADDED"; no: number; opensAt: string; closesAt: string })
   | (EventBase & { kind: "DROP_SCHEDULED"; no: number; before: DropWindow; after: DropWindow })
   | (EventBase & {
@@ -344,6 +371,17 @@ function productFields(value: unknown, path: string): ProductFields {
   return out;
 }
 
+/** A band order: a list of colour keys. */
+function colorList(value: unknown, path: string): ColorKey[] {
+  if (!Array.isArray(value)) return fail(path, "must be an array");
+  return value.map((c, i) => {
+    if (typeof c !== "string" || !(COLOR_KEYS as readonly string[]).includes(c)) {
+      return fail(`${path}[${i}]`, `must be one of ${COLOR_KEYS.join(", ")}`);
+    }
+    return c as ColorKey;
+  });
+}
+
 function dropWindow(value: unknown, path: string): DropWindow {
   const source = record(value, path);
   return { opensAt: instantOf(source, "opensAt", path), closesAt: instantOf(source, "closesAt", path) };
@@ -403,6 +441,36 @@ export function toEvent(row: EventRow): AdminEvent {
         productId: column(row.product_id, `${path}.product_id`, "must name the style"),
         before: productFields(payload.before, `${at}.before`),
         after: productFields(payload.after, `${at}.after`),
+      };
+    case "PRODUCT_ADDED":
+      return {
+        ...base,
+        kind: row.kind,
+        productId: column(row.product_id, `${path}.product_id`, "must name the style"),
+        name: text(payload, "name", at),
+        slug: text(payload, "slug", at),
+        dropNo: whole(payload, "dropNo", at),
+        colors: colorList(payload.colors, `${at}.colors`),
+        cutUnits: whole(payload, "cutUnits", at),
+        uploaded: whole(payload, "uploaded", at),
+        borrowed: whole(payload, "borrowed", at),
+      };
+    case "PRODUCT_PHOTO_SET":
+      return {
+        ...base,
+        kind: row.kind,
+        productId: column(row.product_id, `${path}.product_id`, "must name the style"),
+        color: member<ColorKey>(COLOR_KEYS, payload, "color", at),
+        before: text(payload, "before", at),
+        after: text(payload, "after", at),
+      };
+    case "PRODUCT_COLORS_REORDERED":
+      return {
+        ...base,
+        kind: row.kind,
+        productId: column(row.product_id, `${path}.product_id`, "must name the style"),
+        before: colorList(payload.before, `${at}.before`),
+        after: colorList(payload.after, `${at}.after`),
       };
     case "DROP_ADDED":
       return {

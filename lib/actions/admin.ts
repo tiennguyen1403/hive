@@ -17,6 +17,7 @@ import { normalisePhone } from "@/lib/checkout-form";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import type { Json } from "@/lib/db/database.types";
+import { purgeUploadedPhotos } from "@/lib/db/photos";
 import { getSupabase } from "@/lib/db/server";
 import { requireAdmin } from "@/lib/db/session";
 import { isOrderCode } from "@/lib/lookup";
@@ -277,6 +278,13 @@ export async function editAddress(code: unknown, form: unknown): Promise<ActionS
  * "Đặt lại dữ liệu mẫu": the database puts the sample shop back, anchored on
  * the most recent 18:50 in Vietnam (`demo_anchor()`), and logs who did it.
  * Every page reads something it rebuilt, so everything is revalidated.
+ *
+ * Slice B3c: then every uploaded photo goes too (`purgeUploadedPhotos`, the
+ * function the daily cron of slice B4 calls the same way). The sample's
+ * catalogue uses borrowed frames only, so after the reset no row shows an
+ * upload and each one is an object nobody links to. The database part has
+ * already happened when the bucket is emptied, so a bucket that cannot be
+ * emptied does not undo it: the answer says so and the server log says why.
  */
 export async function resetDemo(): Promise<ActionState> {
   await requireAdmin("/admin");
@@ -294,6 +302,15 @@ export async function resetDemo(): Promise<ActionState> {
     return refused("RESET", failure);
   }
 
+  let photos = "";
+  try {
+    const removed = await purgeUploadedPhotos();
+    if (removed > 0) photos = ` · đã xoá ${removed} ảnh tải lên`;
+  } catch (e) {
+    console.error("reset: uploaded photos left in the bucket:", e instanceof Error ? e.message : e);
+    photos = " · ảnh tải lên chưa xoá được";
+  }
+
   revalidatePath("/", "layout");
-  return done("Đã đặt lại dữ liệu mẫu · đơn hàng, tồn kho và nhật ký về như ban đầu");
+  return done(`Đã đặt lại dữ liệu mẫu · đơn hàng, tồn kho và nhật ký về như ban đầu${photos}`);
 }

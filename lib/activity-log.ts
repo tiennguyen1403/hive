@@ -1,5 +1,12 @@
 import { COLORS } from "@/data/colors";
-import { FAMILY_LABELS, type Drop, type OrderState, type PaymentMethod, type Product } from "@/data/types";
+import {
+  FAMILY_LABELS,
+  type ColorKey,
+  type Drop,
+  type OrderState,
+  type PaymentMethod,
+  type Product,
+} from "@/data/types";
 import type { AdminOrder } from "./admin-orders";
 import { orderItemsLabel } from "./admin-rows";
 import type { Catalog } from "./catalog";
@@ -10,6 +17,7 @@ import type { AdminEvent, ProductFields } from "./db/event-dto";
 import { dropSummary } from "./inventory";
 import { LEX, issueLabel } from "./lexicon";
 import { vnd } from "./money";
+import { isUploadedKey } from "./photos";
 import { TRANSFER_HOLD_HOURS, orderTotalVnd } from "./orders";
 import { STATE_LABEL } from "./order-labels";
 
@@ -21,7 +29,8 @@ import { STATE_LABEL } from "./order-labels";
  * delivered, cancelled by the shop, by the shopper or by the twelve-hour
  * clock, a note, a new address (slice B3a) — every move on the catalogue — a
  * shelf adjusted, a style edited, an issue created or rescheduled, a teaser,
- * a code created, edited, paused, raised or ended (slice B3b) — and every
+ * a code created, edited, paused, raised or ended (slice B3b), a style
+ * created, a colour's photo swapped, a band reordered (slice B3c) — and every
  * reset writes a row of `public.events` in the same transaction as the change
  * itself, and `reset_demo()` writes the sample's own history in by the rules
  * this module used to derive it with. So `logRows` reads events and states
@@ -210,6 +219,26 @@ function termsWindow(t: PromoTerms): string {
   return `${dateTimeLabel(t.startsAt)} → ${dateTimeLabel(t.endsAt)}`;
 }
 
+/** What kind of photo a key is, the way the product form labels it. */
+function photoWord(key: string): string {
+  return isUploadedKey(key) ? "ảnh thật" : "ảnh mượn";
+}
+
+/** "Đen · Kem" — a band order. */
+function band(colors: readonly ColorKey[]): string {
+  return colors.map((c) => COLORS[c].label).join(" · ");
+}
+
+/** "1 ảnh tải lên · 2 ảnh mượn" — where a new style's photos came from. */
+function photoSources(uploaded: number, borrowed: number): string {
+  return [
+    uploaded > 0 ? `${uploaded} ảnh tải lên` : "",
+    borrowed > 0 ? `${borrowed} ảnh mượn` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
   const id = eventId(e.id);
   const author = AUTHOR[e.actorRole];
@@ -385,6 +414,45 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
             }),
       };
     }
+    // ── a style's own shape (slice B3c): created, a photo, the band order
+    case "PRODUCT_ADDED": {
+      const sources = photoSources(e.uploaded, e.borrowed);
+      return {
+        id,
+        at: e.at,
+        kind: "stock",
+        author,
+        action: "Thêm mẫu",
+        ...(sources ? { detail: sources } : {}),
+        subject: catalog.byId.get(e.productId as Product["id"])?.name ?? e.name,
+        href: `/admin/products/${e.productId}`,
+        tail: `${issueLabel(e.dropNo)} · ${e.colors.length} màu · ${e.cutUnits} chiếc`,
+      };
+    }
+    case "PRODUCT_PHOTO_SET":
+      return {
+        id,
+        at: e.at,
+        kind: "stock",
+        author,
+        action: `Thay ảnh ${COLORS[e.color].label}`,
+        subject: catalog.byId.get(e.productId as Product["id"])?.name ?? e.productId,
+        href: `/admin/products/${e.productId}`,
+        before: photoWord(e.before),
+        after: photoWord(e.after),
+      };
+    case "PRODUCT_COLORS_REORDERED":
+      return {
+        id,
+        at: e.at,
+        kind: "stock",
+        author,
+        action: "Đổi thứ tự màu",
+        subject: catalog.byId.get(e.productId as Product["id"])?.name ?? e.productId,
+        href: `/admin/products/${e.productId}`,
+        before: band(e.before),
+        after: band(e.after),
+      };
     case "PROMO_ADDED":
       return {
         id,

@@ -900,6 +900,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_add_product: {
+        Args: { p_input: Json; p_now: string }
+        Returns: string
+      }
       admin_add_promo: {
         Args: { p_now: string; p_terms: Json }
         Returns: undefined
@@ -984,6 +988,14 @@ export type Database = {
         Args: { p_after: number; p_code: string; p_now: string }
         Returns: undefined
       }
+      admin_reorder_colors: {
+        Args: {
+          p_colors: Database["public"]["Enums"]["color_key"][]
+          p_id: string
+          p_now: string
+        }
+        Returns: undefined
+      }
       admin_schedule_drop: {
         Args: {
           p_closes_at: string
@@ -992,6 +1004,15 @@ export type Database = {
           p_opens_at: string
         }
         Returns: undefined
+      }
+      admin_set_product_photo: {
+        Args: {
+          p_color: Database["public"]["Enums"]["color_key"]
+          p_id: string
+          p_now: string
+          p_photo_key: string
+        }
+        Returns: string
       }
       admin_update_product: {
         Args: { p_id: string; p_now: string; p_patch: Json }
@@ -1019,6 +1040,7 @@ export type Database = {
       my_orders: { Args: never; Returns: Json }
       order_json: { Args: { p_code: string }; Returns: Json }
       parse_vn_iso: { Args: { p_text: string }; Returns: string }
+      photo_key_ok: { Args: { p_key: string }; Returns: boolean }
       place_order: { Args: { p_input: Json; p_now: string }; Returns: Json }
       read_promo_terms: { Args: { p_terms: Json }; Returns: Json }
       receipt_order: { Args: { p_code: string; p_key: string }; Returns: Json }

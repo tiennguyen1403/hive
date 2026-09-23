@@ -22,6 +22,27 @@ lưới cắt, nút nói việc còn thiếu, tải giả) và `product-crop.js`
 
 **Không dựng:** cắt ảnh cho ảnh mượn (đã 4:5), thêm/bớt màu ở màn sửa, loại mới, ảnh cho teaser (sheet teaser giữ `photopick` như B3b).
 
+## 1c. Từ báo cáo B3c (24/09, ĐẠT) — những gì màn này phải khớp
+
+- Action đúng như §3.5 của `backend-b3c.md`: `uploadProductPhoto(form)` (FormData: `file` + `color`) → `{ ok, key }`;
+  `removeUploadedPhoto(key)`; `createProduct(draft)` → `{ ok, id }`; `updateProduct(id, { …patch, cells?, colors?, photos? })`. Ba action
+  mới chỉ có endpoint khi một component client import chúng (build hiện chưa có) — import từ `ProductForm`.
+- Toast hiện nguyên `message`; lỗi tải ảnh đã có sẵn "Không tải được ảnh {màu}: …", không thêm tiền tố. Hậu tố thành công của hệ là
+  "· đã lưu" (không phải "· ghi nhật ký" như ví dụ ở §2.6 — dùng "· đã lưu").
+- Thân request > 2 MB bị Next chặn trước action → promise reject: luôn `catch` quanh `uploadProductPhoto`.
+- "Đặt lại dữ liệu mẫu" xoá mọi `up/*`, kể cả khoá đang giữ trong form: gặp `PHOTO_UNKNOWN` thì bỏ khoá đó và tải lại ảnh.
+- Placeholder ô "Mã trên địa chỉ" = `uniqueSlug(productSlug(name), catalog)` (`lib/catalog-admin.ts`), khớp slug thật khi `soi` đã có.
+- `photos` phải có đủ khoá cho mọi màu; `cells` thiếu size = 0; `fit` bắt buộc; `dropOptions` vẫn liệt kê Số đã đóng (action từ chối
+  `DROP_CLOSED` — có thể ẩn Số đã đóng khỏi menu ở màn mới). `updateProduct` bỏ qua `colors` giống cũ và ảnh trùng khoá.
+- Picker "Mượn tạm" (form mẫu **và** sheet teaser) lọc `!isUploadedKey(key)`: ảnh mượn là 18 ảnh Unsplash, không phải ảnh thật của mẫu khác.
+- Có sẵn để dùng: `MAX_UPLOAD_BYTES`, `UPLOAD_TYPES`, `MIN_PRICE_VND`, `MAX_CUT_PER_CELL`, `isNewSlug`, `photoUrl("up/…")` → `/photos/…`.
+- Mã lỗi/message máy chủ (không viết lại ở client): NOT_ALLOWED "Mã địa chỉ đã có mẫu khác dùng", DROP_CLOSED "Số đã đóng, không thêm
+  mẫu vào đó", NO_COLORS "Chọn ít nhất một màu", COLOR_EMPTY "Điền số cắt cho {màu}", PHOTO_MISSING "Chọn ảnh cho {màu}", PHOTO_UNKNOWN
+  "Ảnh {màu} không còn trên kho, chọn lại", BAD_INPUT "Chưa có thay đổi nào để lưu.", UPLOAD_BAD "…tệp không phải WebP/JPEG hoặc nặng
+  hơn 1,5 MB". Client chặn trước bằng nút nói việc còn thiếu (§2.5), máy chủ là hàng rào cuối.
+- Việc nhỏ kèm: ô "Mã" chỉ đọc ở sheet sửa mã giảm giá chưa có kiểu riêng → thêm `.field3 .inp[readonly]` nền `--plate` chữ `--ink2`
+  trong `forms.css` (đo lại cặp CSS DESIGN.md §1 nếu chạm).
+
 ## 2. Quyết định đã chốt (áp cho màn này)
 
 1. **QĐ-27**: ảnh lưu Supabase Storage qua máy chủ (đã có ở B3c); **khung kéo chọn vùng cắt** thay cho cắt giữa tự động; **màu chốt lúc

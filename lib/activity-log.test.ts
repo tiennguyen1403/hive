@@ -364,6 +364,100 @@ describe("what the shop did to the catalogue", () => {
     expect(row.tail).toBe("tên KHÓI → KHÓI ĐEN · mã địa chỉ khoi → khoi-den");
   });
 
+  // ── slice B3c: a style created, a colour's photo, the band order. The
+  // brief's own lines: "Thêm mẫu SỎI · Số 06 · 3 màu · 36 chiếc", "Thay ảnh Đen
+  // của KHÓI", "Đổi thứ tự màu KHÓI: Kem · Đen".
+  it("records a new style with its issue, its colours, its cut and where its photos came from", () => {
+    const row = rowsOf(
+      done({
+        kind: "PRODUCT_ADDED",
+        productId: "p-soi",
+        name: "SỎI",
+        slug: "soi",
+        dropNo: 6,
+        colors: ["black", "cream", "moss"],
+        cutUnits: 36,
+        uploaded: 1,
+        borrowed: 2,
+      }),
+    )[0]!;
+    expect(row.kind).toBe("stock");
+    expect(row.author).toBe("Cửa hàng");
+    expect(row.action).toBe("Thêm mẫu");
+    expect(row.detail).toBe("1 ảnh tải lên · 2 ảnh mượn");
+    // Not in the fixture's catalogue: the name it was created with.
+    expect(row.subject).toBe("SỎI");
+    expect(row.href).toBe("/admin/products/p-soi");
+    expect(row.tail).toBe("Số 06 · 3 màu · 36 chiếc");
+    expect(`${row.action} ${row.subject} · ${row.tail}`).toBe("Thêm mẫu SỎI · Số 06 · 3 màu · 36 chiếc");
+    expect(inFilter("stock", row)).toBe(true);
+  });
+
+  it("says only the photo sources a new style has", () => {
+    const row = rowsOf(
+      done({
+        kind: "PRODUCT_ADDED",
+        productId: "p-da",
+        name: "ĐÁ",
+        slug: "da",
+        dropNo: 5,
+        colors: ["grey"],
+        cutUnits: 12,
+        uploaded: 0,
+        borrowed: 1,
+      }),
+    )[0]!;
+    expect(row.detail).toBe("1 ảnh mượn");
+  });
+
+  it("records a photo swap as the colour, the style and what kind of photo it became", () => {
+    const row = rowsOf(
+      done({
+        kind: "PRODUCT_PHOTO_SET",
+        productId: "p-khoi",
+        color: "black",
+        before: "khoi",
+        after: `up/${"b".repeat(32)}.webp`,
+      }),
+    )[0]!;
+    expect(row.kind).toBe("stock");
+    expect(row.action).toBe("Thay ảnh Đen");
+    expect(row.subject).toBe("KHÓI");
+    expect(row.href).toBe("/admin/products/p-khoi");
+    expect(row.before).toBe("ảnh mượn");
+    expect(row.after).toBe("ảnh thật");
+    expect(`${row.action} của ${row.subject}`).toBe("Thay ảnh Đen của KHÓI");
+
+    const again = rowsOf(
+      done({
+        kind: "PRODUCT_PHOTO_SET",
+        productId: "p-khoi",
+        color: "cream",
+        before: `up/${"b".repeat(32)}.webp`,
+        after: `up/${"c".repeat(32)}.jpg`,
+      }),
+    )[0]!;
+    expect(diffText(again)).toBe("ảnh thật → ảnh thật");
+  });
+
+  it("records a new band order as the colours before and after", () => {
+    const row = rowsOf(
+      done({
+        kind: "PRODUCT_COLORS_REORDERED",
+        productId: "p-khoi",
+        before: ["black", "cream"],
+        after: ["cream", "black"],
+      }),
+    )[0]!;
+    expect(row.kind).toBe("stock");
+    expect(row.action).toBe("Đổi thứ tự màu");
+    expect(row.subject).toBe("KHÓI");
+    expect(row.before).toBe("Đen · Kem");
+    expect(row.after).toBe("Kem · Đen");
+    expect(`${row.action} ${row.subject}: ${row.after}`).toBe("Đổi thứ tự màu KHÓI: Kem · Đen");
+    expect(logHaystack(row)).toContain("kem · đen");
+  });
+
   it("records a new code with its run, and an edited one with its new run", () => {
     const made = rowsOf(done({ kind: "PROMO_ADDED", promoCode: "TEST10", terms: TERMS }))[0]!;
     expect(made.action).toBe("Tạo mã");

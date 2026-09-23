@@ -1,20 +1,31 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { productId } from "@/data/types";
+import { COLORS } from "@/data/colors";
+import { productId, type ColorKey } from "@/data/types";
 import {
+  NO_CHANGE_MESSAGE,
   catalogFailureMessage,
   catalogFailureOf,
   checkAdjustment,
+  colorLabelOf,
+  cutTotal,
   dropSubject,
+  failureDetail,
   isEmptyPatch,
   nextDropNo,
+  overlapMessage,
+  overlappingDrop,
   productPatch,
   readCells,
+  readColorOrder,
   readDropNo,
+  readNewProduct,
+  readPhotoMap,
   readPromoDraft,
   readTeaser,
   readWindow,
+  sameOrder,
   sameTerms,
   termsOf,
   type CatalogFailure,
@@ -24,11 +35,24 @@ import { demoNow } from "@/lib/clock";
 import { dateTimeLabel, dayMonthYear, toVnIso } from "@/lib/datetime";
 import { loadCatalog } from "@/lib/db/catalog";
 import type { Json } from "@/lib/db/database.types";
+import {
+  photoKeyInUse,
+  removeLoosePhotos,
+  removeUploadedPhotos,
+  storeUploadedPhoto,
+} from "@/lib/db/photos";
 import { getSupabase } from "@/lib/db/server";
 import { requireAdmin } from "@/lib/db/session";
 import { dropState } from "@/lib/drop";
 import { PRODUCT_EDIT_REASON, cellDelta } from "@/lib/inventory-adjust";
 import { LEX, issueNo } from "@/lib/lexicon";
+import {
+  MAX_UPLOAD_BYTES,
+  isUploadedKey,
+  uploadKey,
+  uploadProblem,
+  type UploadType,
+} from "@/lib/photos";
 import { normalisePromoCode } from "@/lib/promotions";
 import type { ActionState } from "./state";
 
@@ -83,20 +107,35 @@ type CatalogFunction =
   | "admin_pause_promo"
   | "admin_raise_promo_limit"
   | "admin_end_promo"
-  | "admin_update_product";
+  | "admin_update_product"
+  | "admin_add_product"
+  | "admin_set_product_photo"
+  | "admin_reorder_colors";
+
+/** What one call answered: its data, or the failure and what it was about. */
+type Called<T> =
+  | { ok: true; data: T }
+  | { ok: false; failure: CatalogFailure; detail: string };
 
 /**
- * Run one `admin_*` function. Null when it went through, the failure when it
- * did not; a failure the database did not name is logged for the server and
- * reported to the screen only as "chưa lưu được".
+ * Run one `admin_*` function and keep what it returned — the new style's id,
+ * the photo a swap replaced — or the code it refused with and its DETAIL
+ * (the colour, the issue in the way). A failure the database did not name is
+ * logged for the server and reported to the screen only as "chưa lưu được".
  */
-async function run(fn: CatalogFunction, args: Record<string, unknown>): Promise<CatalogFailure | null> {
+async function call<T = unknown>(fn: CatalogFunction, args: Record<string, unknown>): Promise<Called<T>> {
   const supabase = await getSupabase();
-  const { error } = await supabase.rpc(fn as never, args as never);
-  if (!error) return null;
+  const { data, error } = await supabase.rpc(fn as never, args as never);
+  if (!error) return { ok: true, data: data as T };
   const failure = catalogFailureOf(error);
   if (failure === "UNAVAILABLE") console.error(`${fn}:`, error.message);
-  return failure;
+  return { ok: false, failure, detail: failureDetail(error) };
+}
+
+/** `call` for the functions that return nothing: null when it went through. */
+async function run(fn: CatalogFunction, args: Record<string, unknown>): Promise<CatalogFailure | null> {
+  const result = await call(fn, args);
+  return result.ok ? null : result.failure;
 }
 
 /** Every page shows the catalogue: the shop's, the account's, the back office's. */
@@ -160,14 +199,24 @@ export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown):
 
   const catalog = await loadCatalog();
   if (n !== nextDropNo(catalog.drops)) return failed("ADD_DROP", "NOT_ALLOWED", dropSubject(n));
+  // Slice B3c: one issue at a time — the database refuses an overlap too, and
+  // names the issue in the way the same way.
+  const clash = overlappingDrop(catalog.drops, window.value);
+  if (clash) return refused(overlapMessage(clash.no));
 
-  const failure = await run("admin_add_drop", {
+  const result = await call("admin_add_drop", {
     p_no: n,
     p_opens_at: window.value.opensAt,
     p_closes_at: window.value.closesAt,
     p_now: now(),
   });
-  if (failure) return failed("ADD_DROP", failure, dropSubject(n));
+  if (!result.ok) {
+    const other = Number(result.detail);
+    if (result.failure === "NOT_ALLOWED" && Number.isInteger(other) && other > 0) {
+      return refused(overlapMessage(other));
+    }
+    return failed("ADD_DROP", result.failure, dropSubject(n));
+  }
 
   catalogMoved();
   return done(`Đã tạo ${LEX.tl} ${issueNo(n)} (sắp mở) · đã lưu`);
@@ -378,6 +427,21 @@ export async function endPromo(code: unknown): Promise<ActionState> {
  * id, which no edit changes — a new address segment moves the SHOP's page
  * (`/products/<slug>`), and the revalidation below re-renders this one with
  * the saved values in the same response.
+ *
+ * SLICE B3c adds two optional fields, and two more steps after those two:
+ *
+ *   · `colors` — the band order, which must be exactly the colours the style
+ *     has (colours are fixed when the cloth is cut, QĐ-27); the order it
+ *     already has is not a change;
+ *   · `photos` — colour → key, only for the colours whose photo changed (a
+ *     borrowed frame or an upload's key from `uploadProductPhoto`).
+ *
+ * In this order: `admin_update_product` (the fields) → `admin_adjust_stock`
+ * (the grid) → `admin_reorder_colors` (the band) → `admin_set_product_photo`
+ * (each photo) → the replaced uploads nobody shows any more are removed from
+ * the bucket. Each step is its own transaction, so when one fails the answer
+ * names what IS saved and which step is not, and why; nothing before it is
+ * undone.
  */
 export async function updateProduct(id: unknown, form: unknown): Promise<ActionState> {
   await requireAdmin("/admin/products");
@@ -403,10 +467,36 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
     if (blocked) return refused(blocked);
   }
 
-  if (isEmptyPatch(patch) && cells.length === 0) return refused("Chưa có thay đổi nào để lưu.");
+  // The band order, when one was sent and it is not the one the style has.
+  let order: ColorKey[] | null = null;
+  if (fields.colors !== undefined) {
+    const band = readColorOrder(fields.colors, product.colors);
+    if (!band.ok) return refused(band.error);
+    if (!sameOrder(band.value, product.colors)) order = band.value;
+  }
+
+  // The photos that change: a key equal to the colour's own is not a change.
+  const sentPhotos = readPhotoMap(fields.photos, product.colors, catalog);
+  if (!sentPhotos.ok) return refused(sentPhotos.error);
+  const photos = product.colors.flatMap((color, i) => {
+    const after = sentPhotos.value[color];
+    const before = product.photoKeys[i] ?? "";
+    return after && after !== before ? [{ color, before, after }] : [];
+  });
+
+  if (isEmptyPatch(patch) && cells.length === 0 && order === null && photos.length === 0) {
+    return refused(NO_CHANGE_MESSAGE);
+  }
 
   const at = now();
-  let saved = false;
+  const name = patch.name ?? product.name;
+  // What went through, in the words the answer uses.
+  const saved: string[] = [];
+  const stop = (step: string, why: string): ActionState => {
+    if (saved.length > 0) catalogMoved();
+    return refused(saved.length > 0 ? `Đã lưu ${saved.join(", ")} ${name}; ${step} CHƯA lưu: ${why}` : why);
+  };
+
   if (!isEmptyPatch(patch)) {
     const failure = await run("admin_update_product", {
       p_id: product.id,
@@ -416,10 +506,9 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
     if (failure) {
       return failed("UPDATE_PRODUCT", failure, failure === "NOT_ALLOWED" ? (patch.slug ?? product.slug) : product.name);
     }
-    saved = true;
+    saved.push("thông tin");
   }
 
-  const name = patch.name ?? product.name;
   if (cells.length > 0) {
     const failure = await run("admin_adjust_stock", {
       p_product_id: product.id,
@@ -429,17 +518,165 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
       p_note: "",
       p_now: at,
     });
-    if (failure) {
-      if (saved) catalogMoved();
-      const why = catalogFailureMessage("ADJUST_STOCK", failure, name);
-      return refused(saved ? `Đã lưu thông tin ${name}; tồn kho CHƯA lưu: ${why}` : why);
+    if (failure) return stop("tồn kho", catalogFailureMessage("ADJUST_STOCK", failure, name));
+    saved.push("tồn kho");
+  }
+
+  if (order !== null) {
+    const failure = await run("admin_reorder_colors", {
+      p_id: product.id,
+      p_colors: order,
+      p_now: at,
+    });
+    if (failure) return stop("thứ tự dải màu", catalogFailureMessage("REORDER_COLORS", failure, name));
+    saved.push("thứ tự dải màu");
+  }
+
+  // Each photo, then the uploads they replaced — only once none of them is
+  // shown anywhere any more (another style or a teaser may use the same one).
+  const replaced: string[] = [];
+  for (const p of photos) {
+    const label = COLORS[p.color].label;
+    const result = await call<string>("admin_set_product_photo", {
+      p_id: product.id,
+      p_color: p.color,
+      p_photo_key: p.after,
+      p_now: at,
+    });
+    if (!result.ok) {
+      await removeLoosePhotos(replaced);
+      return stop(`ảnh ${label}`, catalogFailureMessage("SET_PHOTO", result.failure, label));
     }
+    saved.push(`ảnh ${label}`);
+    replaced.push(result.data);
+  }
+  await removeLoosePhotos(replaced);
+
+  catalogMoved();
+  const parts = [
+    ...(cells.length > 0 ? [`tồn kho ${signed(cellDelta(cells))} chiếc`] : []),
+    ...(order !== null ? ["thứ tự dải màu"] : []),
+    ...(photos.length > 0 ? [photoSummary(photos)] : []),
+  ];
+  return done(`Đã sửa mẫu ${name}${parts.map((p) => ` · ${p}`).join("")} · đã lưu`);
+}
+
+/**
+ * "1 ảnh thật thay ảnh mượn, 1 ảnh thật mới" — what the photo swaps of one
+ * save amounted to, by what each colour went from and to.
+ */
+function photoSummary(photos: ReadonlyArray<{ before: string; after: string }>): string {
+  const count = (test: (p: { before: string; after: string }) => boolean) => photos.filter(test).length;
+  const real = (key: string) => isUploadedKey(key);
+  return [
+    [count((p) => real(p.after) && !real(p.before)), "ảnh thật thay ảnh mượn"],
+    [count((p) => real(p.after) && real(p.before)), "ảnh thật mới"],
+    [count((p) => !real(p.after)), "ảnh mượn tạm"],
+  ]
+    .filter(([n]) => (n as number) > 0)
+    .map(([n, what]) => `${n} ${what}`)
+    .join(", ");
+}
+
+// ────────────────────────────────────────────────────── a new style (B3c)
+/**
+ * "Tạo mẫu": the form's draft — `{ name, kind, fit, slug?, priceVnd,
+ * material, dropNo, colors, photos, cells }`, with `colors` in band order,
+ * `photos` a borrowed key or an upload's for EVERY colour, `cells` the pieces
+ * to cut per colour and size — read against the manager's catalogue
+ * (`readNewProduct`), then written in one go by `admin_add_product()`.
+ *
+ * The family is the kind's, an empty address box becomes the name's segment
+ * (`-2`, `-3` if taken), and an issue that has closed takes no new style. A
+ * style for an issue that has not opened is created all the same — it is on
+ * the back office's list at once and on the shop from the hour its issue
+ * opens (`catalog_snapshot()`).
+ *
+ * Answers with the new style's id, so the form can go to its page.
+ */
+export async function createProduct(draft: unknown): Promise<ActionState & { id?: string }> {
+  await requireAdmin("/admin/products/new");
+  const catalog = await loadCatalog();
+  const read = readNewProduct(draft, catalog);
+  if (!read.ok) return refused(read.error);
+  const input = read.value;
+
+  const at = now();
+  const drop = catalog.dropByNo.get(input.dropNo);
+  if (!drop) return failed("ADD_PRODUCT", "NOT_FOUND", dropSubject(input.dropNo));
+  if (dropState(drop, new Date(at)) === "CLOSED") {
+    return failed("ADD_PRODUCT", "DROP_CLOSED", dropSubject(input.dropNo));
+  }
+
+  const result = await call<string>("admin_add_product", {
+    p_input: input as unknown as Json,
+    p_now: at,
+  });
+  if (!result.ok) {
+    const subject =
+      result.failure === "NOT_FOUND" || result.failure === "DROP_CLOSED"
+        ? dropSubject(input.dropNo)
+        : colorLabelOf(result.detail);
+    return failed("ADD_PRODUCT", result.failure, subject);
   }
 
   catalogMoved();
-  return done(
-    cells.length > 0
-      ? `Đã sửa mẫu ${name} · tồn kho ${signed(cellDelta(cells))} chiếc · đã lưu`
-      : `Đã sửa mẫu ${name} · đã lưu`,
-  );
+  const uploaded = input.colors.filter((c) => isUploadedKey(c.photoKey)).length;
+  return {
+    ...done(
+      `Đã tạo ${input.name} · ${input.colors.length} màu · ${cutTotal(input.cells)} chiếc` +
+        (uploaded > 0 ? ` · ${uploaded} ảnh tải lên` : "") +
+        " · đã lưu",
+    ),
+    id: result.data,
+  };
+}
+
+// ────────────────────────────────────────────────────────── photos (B3c)
+/**
+ * One photo from the product form, already cropped to 4:5 and shrunk in the
+ * browser: `form.get("file")` a WebP or a JPEG of at most 1,5 MB, and
+ * `form.get("color")` the colour it is for — used only to word a refusal.
+ *
+ * The server does not trust the browser's word for what the file is: it
+ * checks the size, the declared type AND the first bytes (`uploadProblem`),
+ * then stores it in the `product-photos` bucket under a new random key with
+ * the service role, and answers with the key. Nothing shows the photo yet —
+ * `createProduct` or `updateProduct` does that — so nothing is revalidated.
+ * Without `SUPABASE_SECRET_KEY` it says "không tải được" and stores nothing.
+ */
+export async function uploadProductPhoto(form: FormData): Promise<ActionState & { key?: string }> {
+  await requireAdmin("/admin/products");
+  if (!(form instanceof FormData)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD");
+  const color = form.get("color");
+  const label = typeof color === "string" ? colorLabelOf(color) : "";
+
+  const file = form.get("file");
+  if (!(file instanceof Blob)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", label);
+  // The size before the bytes: a file over the limit is not worth reading.
+  if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", label);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (uploadProblem(file.type, bytes.byteLength, bytes)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", label);
+
+  const type = file.type as UploadType;
+  const key = uploadKey(crypto.randomUUID(), type);
+  if (!(await storeUploadedPhoto(key, bytes, type))) return failed("UPLOAD_PHOTO", "UNAVAILABLE", label);
+
+  return { ...done(label ? `Đã tải ảnh ${label} lên` : "Đã tải ảnh lên"), key };
+}
+
+/**
+ * Tidy up after a form: an uploaded photo that was never attached (the form
+ * was closed, the file changed). Only a key of an upload's shape, and only
+ * when no style's colour and no teaser shows it — a photo in use is kept and
+ * the answer says so (the brief's `NO_CHANGE`). A key already gone is fine.
+ */
+export async function removeUploadedPhoto(key: unknown): Promise<ActionState> {
+  await requireAdmin("/admin/products");
+  if (!isUploadedKey(key)) return failed("UPLOAD_PHOTO", "BAD_INPUT");
+  if (await photoKeyInUse(key)) return refused("Ảnh này đang dùng cho một mẫu — giữ lại, không xoá.");
+
+  const { removed, failed: broke } = await removeUploadedPhotos([key]);
+  if (broke) return refused("Chưa xoá được ảnh. Thử lại sau ít phút.");
+  return done(removed > 0 ? "Đã bỏ ảnh vừa tải lên" : "Ảnh này đã không còn trên kho");
 }

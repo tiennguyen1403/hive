@@ -244,8 +244,10 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
                         tone={
                           remaining === 0
                             ? "shut"
-                            : issueState !== "OPEN"
-                              ? "shut"
+                            : issueState === "UPCOMING"
+                              ? "info"
+                              : issueState !== "OPEN"
+                                ? "shut"
                               : remaining <= LOW_STOCK_AT
                                 ? "hot"
                                 : "ok"
@@ -253,8 +255,10 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
                       >
                         {remaining === 0
                           ? "Hết"
-                          : issueState !== "OPEN"
-                            ? "Đã đóng"
+                          : issueState === "UPCOMING"
+                            ? "Sắp mở"
+                            : issueState !== "OPEN"
+                              ? "Đã đóng"
                             : remaining <= LOW_STOCK_AT
                               ? "Sắp hết"
                               : "Đang bán"}

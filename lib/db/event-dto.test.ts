@@ -191,8 +191,9 @@ describe("toEvent — each kind, with the fields its SimAction carried", () => {
 });
 
 describe("toEvent — the catalogue's kinds (slice B3b), named by their own column", () => {
-  it("knows exactly the twenty kinds the table's check constraint allows", () => {
-    expect(EVENT_KINDS).toHaveLength(20);
+  it("knows exactly the twenty-three kinds the table's check constraint allows", () => {
+    // Twenty since slice B3b, three more since B3c (`…_photos.sql`).
+    expect(EVENT_KINDS).toHaveLength(23);
   });
 
   it("INVENTORY_ADJUSTED, with every cell, the reason, the reference, the note and the delta", () => {
@@ -320,6 +321,88 @@ describe("toEvent — the catalogue's kinds (slice B3b), named by their own colu
     expect(isOrderEvent(toEvent(cat({ kind: "DEMO_RESET", payload: { anchor: "2026-09-23T18:50:00+07:00" } })))).toBe(
       false,
     );
+  });
+});
+
+describe("toEvent — a style's own shape (slice B3c), named by product_id", () => {
+  it("PRODUCT_ADDED, with its name, address, issue, band, cut and where its photos came from", () => {
+    const e = toEvent(
+      cat({
+        kind: "PRODUCT_ADDED",
+        product_id: "p-soi",
+        payload: {
+          id: "p-soi",
+          name: "SỎI",
+          slug: "soi",
+          dropNo: 6,
+          colors: ["black", "cream", "moss"],
+          cutUnits: 36,
+          uploaded: 1,
+          borrowed: 2,
+        },
+      }),
+    );
+    expect(e).toEqual({
+      id: 7,
+      at: "2026-09-23T19:05:09+07:00",
+      actorRole: "admin",
+      actor: "quanly@email.com",
+      kind: "PRODUCT_ADDED",
+      productId: "p-soi",
+      name: "SỎI",
+      slug: "soi",
+      dropNo: 6,
+      colors: ["black", "cream", "moss"],
+      cutUnits: 36,
+      uploaded: 1,
+      borrowed: 2,
+    });
+  });
+
+  it("PRODUCT_PHOTO_SET, with the colour and both keys", () => {
+    const up = `up/${"a".repeat(32)}.webp`;
+    const e = toEvent(
+      cat({
+        kind: "PRODUCT_PHOTO_SET",
+        product_id: "p-khoi",
+        payload: { id: "p-khoi", color: "cream", before: "reu", after: up },
+      }),
+    );
+    expect(e).toMatchObject({ kind: "PRODUCT_PHOTO_SET", productId: "p-khoi", color: "cream", before: "reu", after: up });
+  });
+
+  it("PRODUCT_COLORS_REORDERED, with both band orders", () => {
+    const e = toEvent(
+      cat({
+        kind: "PRODUCT_COLORS_REORDERED",
+        product_id: "p-khoi",
+        payload: { id: "p-khoi", before: ["black", "cream"], after: ["cream", "black"] },
+      }),
+    );
+    expect(e).toMatchObject({ productId: "p-khoi", before: ["black", "cream"], after: ["cream", "black"] });
+  });
+
+  it("refuses a style event with no style, a colour that is not one, and a band that is not a list", () => {
+    expect(() =>
+      toEvent(cat({ kind: "PRODUCT_PHOTO_SET", payload: { color: "black", before: "khoi", after: "reu" } })),
+    ).toThrow("product_id must name the style");
+    expect(() =>
+      toEvent(
+        cat({ kind: "PRODUCT_PHOTO_SET", product_id: "p-khoi", payload: { color: "pink", before: "khoi", after: "reu" } }),
+      ),
+    ).toThrow("payload.color must be one of");
+    expect(() =>
+      toEvent(cat({ kind: "PRODUCT_COLORS_REORDERED", product_id: "p-khoi", payload: { before: "black", after: [] } })),
+    ).toThrow("payload.before must be an array");
+    expect(() =>
+      toEvent(
+        cat({
+          kind: "PRODUCT_ADDED",
+          product_id: "p-soi",
+          payload: { name: "SỎI", slug: "soi", dropNo: 6, colors: ["black"], cutUnits: "36", uploaded: 0, borrowed: 1 },
+        }),
+      ),
+    ).toThrow("payload.cutUnits must be a whole number");
   });
 });
 

@@ -6,7 +6,7 @@ import { useMemo, useState, useTransition } from "react";
 import { AdminSheet } from "@/components/admin/AdminSheet";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { useAdminToast } from "@/components/admin/AdminToast";
-import { DropFormModal, atDropHour, dropLengthDays } from "@/components/admin/DropFormModal";
+import { DropFormModal } from "@/components/admin/DropFormModal";
 import { TeaserFormSheet } from "@/components/admin/TeaserFormSheet";
 import { ActionMenu } from "@/components/admin/Table3";
 import { Badge } from "@/components/ui/Badge";
@@ -17,9 +17,9 @@ import { addDrop, addTeaser, closeDropNow, scheduleDrop } from "@/lib/actions/ca
 import type { ActionState } from "@/lib/actions/state";
 import { stockAlerts } from "@/lib/admin-metrics";
 import { DROP_STATE_LABEL, dropRows } from "@/lib/admin-rows";
-import { nextDropNo } from "@/lib/catalog-admin";
+import { nextDropNo, proposedWindow } from "@/lib/catalog-admin";
 import { downloadCsv } from "@/lib/csv";
-import { clockLabel, dateTimeLabel, dayMonth, dayMonthYear, toVnIso } from "@/lib/datetime";
+import { clockLabel, dateTimeLabel, dayMonth, dayMonthYear } from "@/lib/datetime";
 import { closesInLabel, dropState, opensInLabel } from "@/lib/drop";
 import {
   dropRevenueVnd,
@@ -106,6 +106,8 @@ export function AdminDropsScreen({
   const drops = [...catalog.drops].sort((a, b) => b.no - a.no);
   const rows = dropRows(catalog, drops, now);
   const newNo = nextDropNo(drops);
+  // Slice B3c: the day after the last issue closes, at its hour, for 14 days.
+  const proposal = proposedWindow(drops, now);
 
   /** Which issue is open below: the one asked for, else the one selling. */
   const openNo =
@@ -241,8 +243,8 @@ export function AdminDropsScreen({
         }}
         mode="create"
         no={newNo}
-        opensAt={defaultOpening(catalog, nowIso)}
-        closesAt={defaultClosing(catalog, nowIso)}
+        opensAt={proposal.opensAt}
+        closesAt={proposal.closesAt}
         onConfirm={(opensAt, closesAt) =>
           act(
             () => addDrop(newNo, opensAt, closesAt),
@@ -607,21 +609,4 @@ function downloadIssueCsv(catalog: Catalog, no: number, products: readonly Produ
     }
   }
   downloadCsv(`so-${issueNo(no)}.csv`, rows);
-}
-
-/** A new issue opens a week out by default — a date, not a claim. */
-function defaultOpening(catalog: Catalog, nowIso: string): string {
-  return atDay(catalog, nowIso, 7);
-}
-
-function defaultClosing(catalog: Catalog, nowIso: string): string {
-  return atDay(catalog, nowIso, 7 + dropLengthDays(catalog));
-}
-
-/** The shop's own opening hour, read off the issues it has already run. */
-function atDay(catalog: Catalog, nowIso: string, plusDays: number): string {
-  return atDropHour(
-    catalog,
-    toVnIso(new Date(Date.parse(nowIso) + plusDays * 86_400_000)).slice(0, 10),
-  );
 }

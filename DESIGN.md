@@ -288,6 +288,11 @@ chứa) là mọi màn đổi theo, bố cục không đổi. Ảnh tra cứu Un
 19 khoá, 1 bìa + 18 mẫu (Số 03–06). `PHOTO_KEYS` xuất từ cùng bảng để form quản trị và sheet hé lộ
 chỉ chọn được ảnh đã có nguồn.
 
+**Từ B3c (24/09/2026) có ảnh thật do quản trị tải lên:** nằm ở bucket `product-photos` (Supabase Storage, công khai đọc, chỉ máy chủ
+ghi) dưới khoá `up/<32 hex>.webp|jpg`, phục vụ qua route của chính app `/photos/<khoá>` (cache một năm, bất biến) rồi `next/image` như
+mọi ảnh khác, nên trình duyệt vẫn không gọi Supabase. `photoUrl()` phân biệt hai loại khoá; `photo_key` của `product_colors` mang một
+trong hai. Ảnh tải lên là ảnh của cửa hàng, không mang nhãn mượn; "Đặt lại dữ liệu mẫu" xoá mọi ảnh tải lên.
+
 ---
 
 ## 2. Màu
