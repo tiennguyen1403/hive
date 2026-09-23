@@ -83,16 +83,17 @@ export const listMyOrders = cache(async (): Promise<Order[]> => {
  * One of this account's orders, or null — for somebody else's order, an order
  * that does not exist and a code that is not a code alike (QĐ-16). The page
  * turns null into `notFound()`, on the server, before a byte is rendered.
+ *
+ * Looked up in the account's own list, not through `order_json()`: since
+ * slice B3a the manager's session may read EVERY order (the admin read
+ * policy), so "row level security lets me see it" no longer means "it is
+ * mine" — and the manager's own account pages must not show a shopper's
+ * order as theirs. `my_orders()` filters on the owner by name. The list is
+ * cached for the request, and the account layout reads it anyway.
  */
 export const findMyOrder = cache(async (code: string): Promise<Order | null> => {
   if (!isOrderCode(code)) return null;
-  const session = await getSession();
-  if (!session) return null;
-
-  const supabase = await getSupabase();
-  const { data, error } = await supabase.rpc("order_json", { p_code: code });
-  if (error) readFailed("order_json", error);
-  return data === null ? null : toOrder(data);
+  return (await listMyOrders()).find((o) => o.code === code) ?? null;
 });
 
 // ─────────────────────────────────────────────────────── without a session

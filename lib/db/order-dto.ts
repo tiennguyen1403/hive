@@ -14,6 +14,7 @@ import {
   type PaymentMethod,
   type Size,
 } from "@/data/types";
+import type { AdminOrder, OrderOwner } from "@/lib/admin-orders";
 
 /**
  * The border between `order_json()` and `data/types.ts`.
@@ -144,12 +145,20 @@ function readStatus(value: unknown, path: string): OrderStatus {
       return { state };
     case "PAID":
       return { state, paidAt: instant(source, "paidAt", path) };
-    case "SHIPPING":
+    case "SHIPPING": {
+      // Absent on the sample orders, which were handed over before a courier
+      // was recorded; present, it must be words (slice B3a).
+      const carrier = source.carrier;
+      if (carrier !== undefined && carrier !== null && (typeof carrier !== "string" || carrier === "")) {
+        fail(`${path}.carrier`, "must be a non-empty string when present");
+      }
       return {
         state,
         shippedAt: instant(source, "shippedAt", path),
         trackingCode: text(source, "trackingCode", path),
+        ...(typeof carrier === "string" ? { carrier } : {}),
       };
+    }
     case "DELIVERED":
       return { state, deliveredAt: instant(source, "deliveredAt", path) };
     case "CANCELLED":
@@ -206,4 +215,36 @@ export function toOrder(value: unknown): Order {
 /** A list of them, from `my_orders()`, in the order it was returned. */
 export function toOrders(value: unknown): Order[] {
   return list(value, "orders").map(toOrder);
+}
+
+// ──────────────────────────────────────────────────── the back office's read
+/**
+ * The manager's list, from `admin_orders()` (slice B3a): each order in the
+ * same `order_json()` shape the shoppers' doors return — read by the same
+ * `toOrder`, so the back office cannot drift into a fourth shape — beside the
+ * account it belongs to, or null for a guest's.
+ */
+export function toAdminOrders(value: unknown): AdminOrder[] {
+  return list(value, "admin orders").map((item, i) => {
+    const source = record(item, `admin orders[${i}]`);
+    const order = toOrder(source.order);
+    return { ...order, owner: toOwner(source.owner, `order ${order.code}.owner`) };
+  });
+}
+
+function toOwner(value: unknown, path: string): OrderOwner | null {
+  if (value === null || value === undefined) return null;
+  const source = record(value, path);
+  const handle = source.handle;
+  if (handle !== null && handle !== undefined && (typeof handle !== "string" || handle === "")) {
+    fail(`${path}.handle`, "must be a non-empty string or null");
+  }
+  return {
+    id: text(source, "id", path),
+    handle: typeof handle === "string" ? handle : null,
+    name: text(source, "name", path),
+    email: textOrEmpty(source, "email", path),
+    phone: textOrEmpty(source, "phone", path),
+    joinedAt: instant(source, "joinedAt", path),
+  };
 }

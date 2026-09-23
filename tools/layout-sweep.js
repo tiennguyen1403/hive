@@ -1,4 +1,9 @@
 /**
+ * SLICE B3a COPY of tools/layout-sweep.js (which the agent may not edit):
+ * the shop routes as the demo shopper, then the admin routes signed in as
+ * the demo manager (a shopper gets 404 there since B3a), the admin overlays
+ * this slice added, and every request that leaves 3200.
+ *
  * Layout sweep — the separate visual pass QĐ-14 requires.
  *
  * Behavioural tests and "zero horizontal overflow" do not imply "the grid
@@ -67,6 +72,11 @@ async (page) => {
     if (m.type() === "error") consoleErrors.push({ url: page.url(), text: m.text() });
   };
   page.on("console", onConsole);
+  const foreign = [];
+  const onRequest = (r) => {
+    if (!r.url().startsWith(ORIGIN)) foreign.push(r.url());
+  };
+  page.context().on("request", onRequest);
 
   await page.goto(ORIGIN + "/");
   await page.evaluate((seed) => {
@@ -358,7 +368,7 @@ async (page) => {
   const results = [];
   for (const width of WIDTHS) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 800 });
-    for (const route of width >= 900 ? [...ROUTES, ...ADMIN_ROUTES] : ROUTES) {
+    for (const route of ROUTES) {
       const name = (route === "/" ? "home" : route.replace(/[/?=]+/g, "-").replace(/^-/, "")) + `-${width}`;
       const entry = { route, width, name };
       try {
@@ -374,6 +384,7 @@ async (page) => {
       results.push(entry);
     }
   }
+
 
   // Overlays: a menu that is shut measures like a page that has none.
   for (const width of WIDTHS) {
@@ -393,7 +404,66 @@ async (page) => {
     results.push(entry);
   }
 
+
+  const visit = async (route, width, name, open) => {
+    const entry = { route, width, name };
+    try {
+      const response = await page.goto(ORIGIN + route.split("#")[0], { waitUntil: "load" });
+      entry.status = response ? response.status() : null;
+      entry.landedOn = pathOf(page.url());
+      await page.waitForTimeout(250);
+      if (open) {
+        await open();
+        await page.waitForTimeout(450);
+      }
+      await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: !open });
+      entry.findings = await probe(width);
+    } catch (e) {
+      entry.error = String(e).slice(0, 200);
+    }
+    results.push(entry);
+  };
+
+  // The back office, as the demo manager ("Vào quản trị thử"), desktop only.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(ORIGIN + "/sign-in");
+  await page.getByRole("button", { name: "Vào quản trị thử" }).click();
+  await page.waitForURL(ORIGIN + "/admin", { timeout: 20000 });
+  for (const route of ADMIN_ROUTES) {
+    const name = route.replace(/[/?=]+/g, "-").replace(/^-/, "") + "-1280";
+    await visit(route, 1280, name);
+  }
+
+  // The admin overlays and panels slice B3a wired to the database: shut, they
+  // measure like pages that have none.
+  const ADMIN_OVERLAYS = [
+    ["/admin/orders/DH-2429#more", "admin-order-more-menu-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác khác" }).click();
+    }],
+    ["/admin/orders/DH-2429#cancel", "admin-order-cancel-sheet-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác khác" }).click();
+      await page.waitForTimeout(250);
+      await page.getByRole("menuitem", { name: "Huỷ đơn" }).click();
+      await page.waitForTimeout(350);
+      await page.locator(".field3", { hasText: "Lý do" }).first().locator("button.selbtn").click();
+    }],
+    ["/admin/orders/DH-2429#handover", "admin-order-handover-1280", async () => {
+      await page.locator(".nextstep").getByRole("button", { name: "Bàn giao" }).click();
+    }],
+    ["/admin/orders/DH-2431#address", "admin-order-address-form-1280", async () => {
+      await page.locator(".panel3 h2", { hasText: "Giao tới" }).getByRole("button", { name: "Sửa" }).click();
+    }],
+    ["/admin/orders#rowmenu", "admin-orders-row-menu-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác DH-2431" }).click();
+    }],
+    ["/admin#reset", "admin-reset-sheet-1280", async () => {
+      await page.locator(".simbar").getByRole("button", { name: "Đặt lại dữ liệu mẫu" }).click();
+    }],
+  ];
+  for (const [route, name, open] of ADMIN_OVERLAYS) await visit(route, 1280, name, open);
+
   page.off("console", onConsole);
+  page.context().off("request", onRequest);
 
   const counts = {};
   let total = 0;
@@ -411,6 +481,7 @@ async (page) => {
     totalFindings: total,
     byDetector: counts,
     consoleErrors,
+    foreign,
     redirected: results.filter((r) => r.landedOn && r.landedOn !== r.route.split("?")[0].split("#")[0]).map((r) => `${r.route} -> ${r.landedOn}`),
     results: results.filter((r) => r.error || (r.findings && Object.values(r.findings).some((v) => (Array.isArray(v) ? v.length : v)))),
     shots: SHOTS,

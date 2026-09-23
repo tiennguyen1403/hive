@@ -1,23 +1,30 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { CustomerScreen } from "@/components/admin/CustomerScreen";
-import { customerById } from "@/data/customers";
-import { customerId as toCustomerId } from "@/data/types";
-import { toVnIso } from "@/lib/datetime";
+import { ordersOfCustomer } from "@/lib/admin-customers";
 import { demoNow } from "@/lib/clock";
+import { toVnIso } from "@/lib/datetime";
+import { findCustomer, listAllOrders } from "@/lib/db/admin";
+import { requireAdmin } from "@/lib/db/session";
 
 export const metadata = { title: "Hồ sơ khách" };
 
 /**
- * One customer.
+ * One customer, by the key the back office's links use: a demo shopper's
+ * fixture handle (`/admin/customers/c-minhanh`) or a sign-up's uuid.
  *
- * The 404 is decided HERE, on the server, against the fixtures: the overlay
- * records what the shop did to orders, never a person it invented.
+ * `requireAdmin` first, then the profile and its address book from the
+ * database; anything that names no shopper is a 404, decided here on the
+ * server before a byte is rendered.
  */
 export default async function AdminCustomerDetailPage(props: PageProps<"/admin/customers/[id]">) {
-  await connection();
   const { id } = await props.params;
-  if (!customerById.has(toCustomerId(id))) notFound();
+  await requireAdmin(`/admin/customers/${id}`);
+  await connection();
 
-  return <CustomerScreen id={id} nowIso={toVnIso(demoNow())} />;
+  const customer = await findCustomer(id);
+  if (!customer) notFound();
+  const orders = ordersOfCustomer(await listAllOrders(), customer);
+
+  return <CustomerScreen customer={customer} orders={orders} nowIso={toVnIso(demoNow())} />;
 }

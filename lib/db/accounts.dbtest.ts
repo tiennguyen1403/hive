@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CUSTOMERS } from "@/data/customers";
 import { normalisePhone } from "@/lib/checkout-form";
+import { DEMO_ADMIN } from "@/lib/demo-admin";
 import type { Database } from "./database.types";
 
 /**
@@ -36,6 +37,13 @@ if (!url || !publishableKey || !secretKey || !demoPassword) {
 
 /** What a visitor gets: the publishable key, and whatever RLS allows. */
 const anon = createClient<Database>(url, publishableKey);
+
+/**
+ * The instant `data/` was frozen at. Since slice B3a the seed and the app
+ * anchor the sample on the most recent 18:50 instead, so a test that compares
+ * against the fixture's own dates resets onto this one explicitly.
+ */
+const FIXTURE_ANCHOR = "2026-09-20T18:50:00+07:00";
 
 /** The service role. Only a script or a test ever holds this. */
 const admin = createClient<Database>(url, secretKey, {
@@ -251,9 +259,9 @@ describe("reset_demo, with the demo accounts in place", () => {
       .select("id, profile_id, position, line, is_default")
       .order("id");
 
-    const first = await admin.rpc("reset_demo");
+    const first = await admin.rpc("reset_demo", { p_anchor: FIXTURE_ANCHOR });
     expect(first.error).toBeNull();
-    const second = await admin.rpc("reset_demo");
+    const second = await admin.rpc("reset_demo", { p_anchor: FIXTURE_ANCHOR });
     expect(second.error).toBeNull();
 
     const after = await admin
@@ -265,12 +273,14 @@ describe("reset_demo, with the demo accounts in place", () => {
   });
 
   it("puts the eight demo accounts and their nine addresses back", async () => {
-    await admin.rpc("reset_demo");
+    await admin.rpc("reset_demo", { p_anchor: FIXTURE_ANCHOR });
 
+    // Every handled profile but the manager's (slice B3a), who is no shopper.
     const profiles = await admin
       .from("profiles")
       .select("handle, name, email, phone, joined_at")
       .not("handle", "is", null)
+      .neq("handle", DEMO_ADMIN.handle)
       .order("handle");
 
     expect(profiles.data).toHaveLength(CUSTOMERS.length);
@@ -280,7 +290,7 @@ describe("reset_demo, with the demo accounts in place", () => {
       expect(row!.name).toBe(customer.name);
       expect(row!.email).toBe(customer.email);
       expect(row!.phone).toBe(normalisePhone(customer.phone));
-      // The fixture anchor is kept (QĐ-24), so the date is the fixture's.
+      // Reset onto the fixture's own anchor, so the date is the fixture's.
       expect(row!.joined_at.slice(0, 10)).toBe(customer.joinedAt.slice(0, 10));
     }
 
@@ -300,7 +310,7 @@ describe("reset_demo, with the demo accounts in place", () => {
       p_default: false,
     });
 
-    await admin.rpc("reset_demo");
+    await admin.rpc("reset_demo", { p_anchor: FIXTURE_ANCHOR });
 
     const left = await client.from("addresses").select("line");
     expect(left.data!.map((r) => r.line)).not.toContain("Chỗ thêm tay");
@@ -309,10 +319,10 @@ describe("reset_demo, with the demo accounts in place", () => {
 });
 
 describe("npm run seed:users", () => {
-  it("skips all eight on a second run rather than failing", () => {
+  it("skips all nine — eight shoppers and the manager — on a second run rather than failing", () => {
     // The first run already happened — either by hand after `db reset` or in
     // the suite above — so this is the second, whatever the order.
     const out = seedUsers();
-    expect(out).toMatch(/demo accounts: 0 created, 8 already there \(of 8\)/);
+    expect(out).toMatch(/demo accounts: 0 created, 9 already there \(of 9\)/);
   });
 });

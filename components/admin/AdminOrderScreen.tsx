@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AddressEditForm } from "@/components/admin/AddressEditForm";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { CancelOrderModal } from "@/components/admin/CancelOrderModal";
@@ -14,23 +14,27 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { COLORS } from "@/data/colors";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Catalog } from "@/lib/catalog";
-import { customerById } from "@/data/customers";
-import { ORDERS, ordersOf } from "@/data/orders";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
 import type { Order } from "@/data/types";
-import { HANDOVER_LATE_DAYS, orderItemsLabel } from "@/lib/admin-rows";
 import {
-  addressEditReason,
-  carrierOf,
-  simNotes,
-  simOrders,
-  type SimNote,
-} from "@/lib/admin-sim";
+  cancelOrderAdmin,
+  editAddress,
+  handOver,
+  markDelivered,
+  markPaid,
+  noteOrder,
+} from "@/lib/actions/admin";
+import type { ActionState } from "@/lib/actions/state";
+import { customerKey, isShopper } from "@/lib/admin-customers";
+import { canCancel, canEditAddress, isPaidFor, nextMove, type AdminOrder } from "@/lib/admin-orders";
+import { HANDOVER_LATE_DAYS, orderItemsLabel } from "@/lib/admin-rows";
 import { customerFacts, issueOf } from "@/lib/customer-tags";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "@/lib/datetime";
+import type { AdminEvent } from "@/lib/db/event-dto";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { plainVnd, vnd } from "@/lib/money";
+import { addressEditReason, internalNotes } from "@/lib/order-notes";
 import { PAYMENT_LABEL, STATE_LABEL } from "@/lib/order-labels";
 import { orderSubtotalVnd, orderTotalVnd, orderUnits, transferReference } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
@@ -38,16 +42,25 @@ import { photoUrl } from "@/lib/photos";
 import { initialsOf } from "@/lib/initials";
 import { deliveryOption, EXPRESS_FEE_VND } from "@/lib/shipping";
 
+/** Which move is on its way to the server, so only its own button says so. */
+type Busy = "PAY" | "HANDOVER" | "DELIVER" | "CANCEL" | "NOTE" | "ADDRESS" | null;
+
 /**
  * One order, and everything the shop can do to it.
  *
- * The mock put "Đánh dấu đã thanh toán" up here with nothing behind it.
- * There is still no server — but there is now a record of what this browser
- * did (`lib/admin-sim.ts`), so the button marks the order paid FOR REAL as
- * far as this machine is concerned: the state changes, the queue loses a
- * row, the KPI moves, a note is written, the activity log gains a line, and
- * a reload finds it all still true. What it never does is pretend something
- * left the building; the sidebar's counter says where it lives.
+ * SINCE SLICE B3A EVERY BUTTON HERE WRITES TO THE DATABASE. Confirming the
+ * money, handing over, recording the delivery, cancelling, a note, a new
+ * address: each is a Server Action (`lib/actions/admin.ts`) calling an
+ * `admin_*` function with a state guard, and each writes its line in the
+ * `events` table in the same transaction. The shopper's own "Đơn hàng",
+ * receipt and `/track` read the same rows, so what is pressed here is what
+ * they see. The internal notes are this order's events read a second way
+ * (`lib/order-notes.ts`), so they cannot disagree with the status.
+ *
+ * Only the move the guard allows next is drawn (`lib/admin-orders.ts`): a
+ * button the database would refuse is a button that lies (DESIGN.md §9
+ * rule 3). "Gửi lại xác nhận" is drawn disabled and says why — no mail server
+ * is connected, so it has nothing to send with.
  *
  * The strip of black cloth at the top is `.nextstep` — the one dark area on
  * this screen, and it earns it: the next move is the reason the screen was
@@ -55,61 +68,74 @@ import { deliveryOption, EXPRESS_FEE_VND } from "@/lib/shipping";
  * inventing one would put a job on the screen that nobody can do.
  */
 export function AdminOrderScreen({
-  code,
+  order: base,
+  events,
+  customerOrders,
   nowIso,
   openHandover,
 }: {
-  code: string;
+  /** The order as the database has it (`admin_orders()`). */
+  order: AdminOrder;
+  /** Its own events, oldest first — the notes and the address history. */
+  events: AdminEvent[];
+  /** Every order of the account it belongs to, for the customer panel. */
+  customerOrders: AdminOrder[];
   nowIso: string;
   /** Arrived from the queue's "Đóng gói và bàn giao" — open the panel at once. */
   openHandover: boolean;
 }) {
   const catalog = useCatalog();
-  const { sim, run, runMany, say } = useSim();
+  const { say } = useSim();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
-  const [handing, setHanding] = useState(openHandover);
+  const order = effectiveOrder(base, now);
+  const code = String(order.code);
+  const [handing, setHanding] = useState(openHandover && nextMove(order, now) === "HAND_OVER");
   const [editingAddress, setEditingAddress] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [note, setNote] = useState("");
+  const [busy, setBusy] = useState<Busy>(null);
+  const [, startAction] = useTransition();
 
-  const base = ORDERS.find((o) => String(o.code) === code)!;
-  const order = effectiveOrder(simOrders([base], sim)[0]!, now);
-  const customer = customerById.get(order.customerId);
+  /**
+   * Run one Server Action and say what the server answered. The action
+   * revalidates the area, so this screen re-renders with the new state in
+   * the same response. After an `await` the transition has to be restated
+   * (react.dev/reference/react/useTransition).
+   */
+  function act(kind: Exclude<Busy, null>, call: () => Promise<ActionState>, after?: () => void) {
+    if (busy) return;
+    setBusy(kind);
+    startAction(async () => {
+      const result = await call();
+      startAction(() => {
+        setBusy(null);
+        if (result.ok) after?.();
+        say(result.message ?? result.errors.form ?? "");
+      });
+    });
+  }
+
+  const owner = order.owner && isShopper(order.owner) ? order.owner : null;
   const state = STATE_LABEL[order.status.state];
   const subtotal = orderSubtotalVnd(order);
   const total = orderTotalVnd(order);
   const province = findProvince(order.shipTo.provinceCode);
   const ward = findWard(order.shipTo.provinceCode, order.shipTo.wardCode);
-  const carrier = carrierOf(code, sim);
+  const carrier = order.status.state === "SHIPPING" ? order.status.carrier : undefined;
   const delivery = deliveryOption(
     order.shippingFeeVnd === EXPRESS_FEE_VND ? "EXPRESS" : "STANDARD",
   );
-  const editReason = addressEditReason(code, sim);
-  const facts = customer
-    ? customerFacts(catalog, ordersOf(customer.id), catalog.currentDropNo, now)
-    : null;
-
-  const notes = [...baseNotes(base), ...simNotes(code, sim)].sort(
-    (a, b) => Date.parse(a.at) - Date.parse(b.at),
-  );
+  const editReason = addressEditReason(events, code);
+  const facts = owner ? customerFacts(catalog, customerOrders, catalog.currentDropNo, now) : null;
+  const notes = internalNotes(events, order);
 
   /** Before handover, the address can still be changed. After, it cannot. */
-  const beforeHandover =
-    order.status.state === "AWAITING_TRANSFER" || order.status.state === "PAID";
+  const beforeHandover = canEditAddress(order, now);
 
   function addNote() {
     const text = note.trim();
     if (!text) return say("Ghi chú trống thì chưa có gì để lưu");
-    run({ kind: "ORDER_NOTE", code, text }, "Đã thêm ghi chú · lưu trên trình duyệt này");
-    setNote("");
-  }
-
-  function resend() {
-    const email = customer?.email ?? "—";
-    run(
-      { kind: "ORDER_CONFIRMATION_RESENT", code, email },
-      `Đã ghi nhật ký: gửi lại xác nhận ${code} tới ${email} (chưa có máy chủ gửi)`,
-    );
+    act("NOTE", () => noteOrder(code, text), () => setNote(""));
   }
 
   return (
@@ -121,18 +147,21 @@ export function AdminOrderScreen({
         sub={
           <span>
             Đặt {clockLabel(order.placedAt)} · {dayMonth(order.placedAt)}
-            {customer ? ` · ${customer.name} · ${formatPhone(order.shipTo.phone)}` : ""} ·{" "}
+            {owner ? ` · ${owner.name} · ${formatPhone(order.shipTo.phone)}` : ""} ·{" "}
             {PAYMENT_LABEL[order.payment]} · {LEX.t} {issueNo(issueOf(catalog, order) ?? 0)}
           </span>
         }
       >
-        <Button tone="ink sm" icon="send" onClick={resend}>
-          Gửi lại xác nhận
+        {/* No mail server is connected, so nothing can be sent: the button
+            says so rather than pretending (DESIGN.md §9 rule 3), the way the
+            sign-in screen's Google button does. Disabled, so no icon. */}
+        <Button tone="ink sm" disabled>
+          Gửi lại xác nhận · đang chuẩn bị
         </Button>
         <ButtonLink tone="ink sm" icon="printer" href={`/admin/slips?codes=${code}`}>
           In phiếu giao
         </ButtonLink>
-        {order.status.state !== "CANCELLED" && order.status.state !== "DELIVERED" && (
+        {canCancel(order, now) && (
           <ActionMenu
             variant="btn"
             label="Thao tác khác"
@@ -148,36 +177,31 @@ export function AdminOrderScreen({
         )}
       </AdminTop>
 
-      {!handing && <NextStep catalog={catalog} order={order} now={now} onHandover={() => setHanding(true)} onPaid={() =>
-        run({ kind: "ORDER_PAID", code }, `${code} → đã thanh toán · ghi nhật ký`)
-      } />}
+      {!handing && (
+        <NextStep
+          catalog={catalog}
+          order={order}
+          now={now}
+          busy={busy}
+          onPaid={() => act("PAY", () => markPaid([code]))}
+          onHandover={() => setHanding(true)}
+          onDelivered={() => act("DELIVER", () => markDelivered(code))}
+        />
+      )}
 
       {handing && (
         <HandoverForm
           shippingFeeVnd={order.shippingFeeVnd}
           placeholder={`VNP-${code.replace(/\D/g, "")}-01`}
+          pending={busy === "HANDOVER"}
           onCancel={() => setHanding(false)}
-          onConfirm={(who, trackingCode, courierNote) => {
-            // One press, so one write: `run` twice in a handler would close
-            // over the same overlay and the note would overwrite the
-            // handover (`SimContext.runMany`).
-            runMany(
-              [
-                { kind: "ORDER_SHIPPED", code, carrier: who, trackingCode },
-                ...(courierNote
-                  ? [
-                      {
-                        kind: "ORDER_NOTE" as const,
-                        code,
-                        text: `Ghi chú cho khách: ${courierNote}`,
-                      },
-                    ]
-                  : []),
-              ],
-              `${code} → đang giao · ${trackingCode} · mô phỏng, khách chưa thấy mã này`,
-            );
-            setHanding(false);
-          }}
+          onConfirm={(who, trackingCode, courierNote) =>
+            act(
+              "HANDOVER",
+              () => handOver(code, { carrier: who, trackingCode, note: courierNote }),
+              () => setHanding(false),
+            )
+          }
         />
       )}
 
@@ -248,14 +272,16 @@ export function AdminOrderScreen({
             </div>
             <div className="totalbar">
               {/* Three readings, not two. "Tổng đã thanh toán" on an order
-                  that was cancelled before anybody paid is the screen
+                  nobody has paid for yet — a transfer being waited on, a COD
+                  or card order only taken, a COD parcel still on the road —
+                  or on one cancelled before any money came is the screen
                   inventing a payment. */}
               <span>
-                {order.status.state === "AWAITING_TRANSFER"
-                  ? "Tổng cần thu"
-                  : order.status.state === "CANCELLED"
-                    ? "Tổng đơn đã huỷ"
-                    : "Tổng đã thanh toán"}
+                {order.status.state === "CANCELLED"
+                  ? "Tổng đơn đã huỷ"
+                  : isPaidFor(order)
+                    ? "Tổng đã thanh toán"
+                    : "Tổng cần thu"}
               </span>
               <b>{vnd(total)}</b>
             </div>
@@ -280,13 +306,19 @@ export function AdminOrderScreen({
                   placeholder="Thêm ghi chú…"
                   aria-label="Ghi chú nội bộ"
                   value={note}
+                  disabled={busy === "NOTE"}
                   onChange={(e) => setNote(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") addNote();
                   }}
                 />
-                <Button tone="ink sm" icon="send" onClick={addNote}>
-                  Thêm
+                <Button
+                  tone="ink sm"
+                  {...(busy === "NOTE" ? {} : { icon: "send" as const })}
+                  disabled={busy === "NOTE"}
+                  onClick={addNote}
+                >
+                  {busy === "NOTE" ? "Đang lưu…" : "Thêm"}
                 </Button>
               </div>
             </div>
@@ -307,20 +339,15 @@ export function AdminOrderScreen({
               {editingAddress ? (
                 <AddressEditForm
                   value={order.shipTo}
+                  pending={busy === "ADDRESS"}
                   onCancel={() => setEditingAddress(false)}
-                  onSave={(next, reason) => {
-                    run(
-                      {
-                        kind: "ORDER_ADDRESS_EDITED",
-                        code,
-                        before: order.shipTo,
-                        after: next,
-                        reason,
-                      },
-                      `Đã sửa địa chỉ giao ${code} · ghi nhật ký`,
-                    );
-                    setEditingAddress(false);
-                  }}
+                  onSave={(next, reason) =>
+                    act(
+                      "ADDRESS",
+                      () => editAddress(code, { ...next, reason }),
+                      () => setEditingAddress(false),
+                    )
+                  }
                 />
               ) : (
                 <>
@@ -364,19 +391,19 @@ export function AdminOrderScreen({
             </div>
           </section>
 
-          {customer && facts && (
+          {owner && facts && (
             <section className="panel3" style={{ marginTop: 16 }}>
               <h2>
                 Khách
-                <Link className="more" href={`/admin/customers/${customer.id}`}>
+                <Link className="more" href={`/admin/customers/${customerKey(owner)}`}>
                   Hồ sơ
                 </Link>
               </h2>
               <div className="bd ctagrow">
                 <span className="avatar" aria-hidden="true">
-                  {initialsOf(customer.name)}
+                  {initialsOf(owner.name)}
                 </span>
-                <b>{customer.name}</b>
+                <b>{owner.name}</b>
                 {facts.tag && (
                   <span className={`ctag ${facts.tag.tone}`.trim()}>{facts.tag.label}</span>
                 )}
@@ -385,7 +412,7 @@ export function AdminOrderScreen({
                   {facts.issues.length > 0
                     ? `mua ${LEX.tl} ${facts.issues.map((n) => issueNo(n)).join(", ")}`
                     : "chưa có đơn đã thanh toán"}{" "}
-                  · {customer.email}
+                  · {owner.email}
                 </span>
               </div>
             </section>
@@ -395,40 +422,60 @@ export function AdminOrderScreen({
 
       <CancelOrderModal
         order={cancelling ? order : null}
+        pending={busy === "CANCEL"}
         onClose={() => setCancelling(false)}
-        onConfirm={(reason, why) => {
-          run(
-            { kind: "ORDER_CANCELLED", code, reason, note: why },
-            `${code} đã huỷ · lý do: ${reason.toLocaleLowerCase("vi")}`,
-          );
-          setCancelling(false);
-        }}
+        onConfirm={(reason, why) =>
+          act("CANCEL", () => cancelOrderAdmin(code, reason, why), () => setCancelling(false))
+        }
       />
     </>
   );
 }
 
 /**
- * The next move, stated before anybody has to work it out.
+ * The next move, stated before anybody has to work it out — the SQL guard's
+ * own next edge (`nextMove`), so the one button drawn is one that works.
  *
- * Only the three states where the ball is with the shop get one. A delivered
- * order and a cancelled one have no next step HERE, and the strip is simply
- * not drawn — an empty banner saying "nothing to do" is furniture.
+ * A delivered order and a cancelled one have no next step HERE, and the strip
+ * is simply not drawn — an empty banner saying "nothing to do" is furniture.
+ * The button that is waiting on the server is disabled and says so, with no
+ * icon.
  */
 function NextStep({
   catalog,
   order,
   now,
-  onHandover,
+  busy,
   onPaid,
+  onHandover,
+  onDelivered,
 }: {
   catalog: Catalog;
   order: Order;
   now: Date;
-  onHandover: () => void;
+  busy: Busy;
   onPaid: () => void;
+  onHandover: () => void;
+  onDelivered: () => void;
 }) {
-  if (order.status.state === "AWAITING_TRANSFER") {
+  const move = nextMove(order, now);
+  const payButton = (
+    <Button
+      tone="sm"
+      {...(busy === "PAY" ? {} : { icon: "check" as const })}
+      disabled={busy !== null}
+      onClick={onPaid}
+    >
+      {busy === "PAY" ? "Đang lưu…" : "Đã nhận tiền"}
+    </Button>
+  );
+  const handoverButton = (
+    <Button tone="sm" icon="box" disabled={busy !== null} onClick={onHandover}>
+      Bàn giao
+    </Button>
+  );
+
+  if (order.status.state === "AWAITING_TRANSFER" && move === "MARK_PAID") {
     return (
       <div className="nextstep">
         <b>Bước tiếp theo: xác nhận đã nhận tiền</b>
@@ -436,9 +483,33 @@ function NextStep({
           Hạn {dateTimeLabel(order.status.dueAt)} · {vnd(orderTotalVnd(order))} · nội dung{" "}
           {transferReference(order.code)}
         </span>
-        <Button tone="sm" icon="check" onClick={onPaid}>
-          Đã nhận tiền
-        </Button>
+        {payButton}
+      </div>
+    );
+  }
+  // Taken, nobody paid yet (slice B3a). A COD order leaves now and is paid at
+  // the door; a card order waits for the shop to confirm the money by hand,
+  // because no payment gateway is connected to confirm it.
+  if (order.status.state === "RECEIVED") {
+    const days = Math.floor((now.getTime() - Date.parse(order.placedAt)) / 86_400_000);
+    return move === "HAND_OVER" ? (
+      <div className="nextstep">
+        <b>Bước tiếp theo: đóng gói và bàn giao</b>
+        <span>
+          Đã nhận đơn {sinceLabel(order.placedAt, now)} · COD, thu {vnd(orderTotalVnd(order))} khi
+          giao · {orderUnits(order)} chiếc {orderItemsLabel(catalog, order)}
+          {days >= HANDOVER_LATE_DAYS ? ` · trễ ${days} ngày` : ""}
+        </span>
+        {handoverButton}
+      </div>
+    ) : (
+      <div className="nextstep">
+        <b>Bước tiếp theo: xác nhận đã nhận tiền</b>
+        <span>
+          {PAYMENT_LABEL[order.payment]} · chưa nối cổng thanh toán, đối chiếu tay ·{" "}
+          {vnd(orderTotalVnd(order))}
+        </span>
+        {payButton}
       </div>
     );
   }
@@ -452,20 +523,29 @@ function NextStep({
           {orderItemsLabel(catalog, order)}
           {days >= HANDOVER_LATE_DAYS ? ` · trễ ${days} ngày` : ""}
         </span>
-        <Button tone="sm" icon="box" onClick={onHandover}>
-          Bàn giao
-        </Button>
+        {handoverButton}
       </div>
     );
   }
+  // The step the approved mock had no button for: no courier reports a
+  // delivery, so the shop records it by hand (`admin_mark_delivered()`).
   if (order.status.state === "SHIPPING") {
     return (
       <div className="nextstep">
         <b>Bước tiếp theo: chờ khách nhận</b>
         <span>
           Bàn giao {clockLabel(order.status.shippedAt)} · {dayMonth(order.status.shippedAt)} ·{" "}
-          {order.status.trackingCode} · mô phỏng, khách chưa thấy mã này
+          {order.status.carrier ? `${order.status.carrier} · ` : ""}
+          {order.status.trackingCode} · khách thấy mã này ở tra cứu đơn và Đơn hàng
         </span>
+        <Button
+          tone="sm"
+          {...(busy === "DELIVER" ? {} : { icon: "check" as const })}
+          disabled={busy !== null}
+          onClick={onDelivered}
+        >
+          {busy === "DELIVER" ? "Đang lưu…" : "Đã giao"}
+        </Button>
       </div>
     );
   }
@@ -507,10 +587,9 @@ function timelineOf(order: Order, now: Date, carrier?: string): Milestone[] {
         { title: "Đang giao", detail: "sau khi bàn giao", state: "todo" },
         { title: "Đã giao", detail: "2–4 ngày", state: "todo" },
       ];
-    // A COD or card order the shop has taken, with nothing paid. The back
-    // office still reads the fixtures until slice B3 and none of them is in
-    // this state, but `OrderStatus` carries it since B2, so the switch says
-    // what it would draw: the order, then the steps still ahead of it.
+    // A COD or card order the shop has taken, with nothing paid — every one
+    // checkout places since slice B2, and the back office reads them since
+    // B3a. The order, then the steps still ahead of it.
     case "RECEIVED":
       return [
         { ...placed, state: "now" },
@@ -539,7 +618,10 @@ function timelineOf(order: Order, now: Date, carrier?: string): Milestone[] {
     case "SHIPPING":
       return [
         placed,
-        { title: "Đã thanh toán", detail: "", state: "done" },
+        // A COD parcel on the road has collected nothing yet: no "paid" step.
+        ...(order.payment === "COD"
+          ? []
+          : [{ title: "Đã thanh toán", detail: "", state: "done" as const }]),
         { title: "Đã bàn giao", detail: "", state: "done" },
         {
           title: "Đang giao",
@@ -571,33 +653,5 @@ function timelineOf(order: Order, now: Date, carrier?: string): Milestone[] {
           state: "late",
         },
       ];
-  }
-}
-
-/**
- * The notes the order carries before anybody typed one.
- *
- * Derived from the FIXTURE status, never from the merged one: an action taken
- * in this browser already writes its own note (`simNotes`), and deriving a
- * second one from the state it produced would print everything twice.
- */
-function baseNotes(o: Order): SimNote[] {
-  const sys = (text: string, at: string): SimNote => ({ text, author: "", at, system: true });
-  switch (o.status.state) {
-    case "PAID":
-      return [
-        sys(
-          `Chuyển khoản khớp nội dung ${transferReference(o.code)} · ${vnd(orderTotalVnd(o))}`,
-          o.status.paidAt,
-        ),
-      ];
-    case "SHIPPING":
-      return [sys(`Bàn giao · mã vận đơn ${o.status.trackingCode}.`, o.status.shippedAt)];
-    case "DELIVERED":
-      return [sys("Khách đã nhận hàng.", o.status.deliveredAt)];
-    case "CANCELLED":
-      return [sys(`Huỷ đơn · lý do: ${o.status.reason}.`, o.status.cancelledAt)];
-    default:
-      return [];
   }
 }

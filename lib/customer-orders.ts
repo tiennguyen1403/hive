@@ -98,8 +98,10 @@ export function effectiveStatus(o: Order, now: Date = demoNow()): OrderStatus {
 }
 
 /** The same order, with the status the clock says it is in. */
-export function effectiveOrder(o: Order, now: Date = demoNow()): Order {
+export function effectiveOrder<T extends Order>(o: T, now: Date = demoNow()): T {
   const status = effectiveStatus(o, now);
+  // Generic so an order that carries more than `Order` — the back office's,
+  // with its owner — keeps it on the way through.
   return status === o.status ? o : { ...o, status };
 }
 

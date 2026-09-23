@@ -49,7 +49,8 @@ export async function GET(request: NextRequest) {
   // The daily sweep (slice B2): unpaid transfers whose twelve hours ran out
   // put their pieces back on the shelf. `place_order()` does the same at the
   // top of every order; this catches the days nobody orders. The clock is the
-  // app's, like every other business time (QĐ-24), and the function only
+  // app's — the real one since slice B3a, which is the only `p_now` the
+  // database takes from anybody but the service role — and the function only
   // applies the shop's own rule, which is why `anon` may call it.
   const sweep = await supabase.rpc("expire_transfers", { p_now: toVnIso(demoNow()) });
   if (sweep.error) {

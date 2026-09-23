@@ -1,7 +1,7 @@
 import { teasersIn, type Catalog } from "./catalog";
-import { customerById } from "@/data/customers";
 import type { DropState, Order, Promotion } from "@/data/types";
 import { needsAction } from "./admin-metrics";
+import type { AdminOrder } from "./admin-orders";
 import type { SimDrop } from "./admin-sim";
 import { clockLabel, dayMonth, dateTimeLabel, rangeLabel } from "./datetime";
 import { dropState } from "./drop";
@@ -72,6 +72,18 @@ export function orderNote(o: Order, now: Date): OrderNote | null {
         late: days >= HANDOVER_LATE_DAYS,
       };
     }
+    // Taken and not yet paid for (slice B3a brought these to the back
+    // office). A COD order waits to be handed over — its money comes at the
+    // door, so its age counts from the order — and a card order waits for the
+    // shop to confirm the money by hand, with no gateway to do it.
+    case "RECEIVED": {
+      if (o.payment !== "COD") return { text: "chưa thu tiền", late: false };
+      const days = Math.floor((now.getTime() - Date.parse(o.placedAt)) / 86_400_000);
+      return {
+        text: days >= 1 ? `chưa bàn giao · ${days} ngày` : "chưa bàn giao",
+        late: days >= HANDOVER_LATE_DAYS,
+      };
+    }
     case "SHIPPING":
       return { text: o.status.trackingCode, late: false };
     default:
@@ -88,7 +100,11 @@ export interface QueueRow {
   /** "hạn 08:05 ngày 22/09" / "3 ngày", the part rendered as `.due`. */
   due: string | null;
   late: boolean;
-  /** Only an unpaid transfer can be confirmed; only a paid one handed over. */
+  /**
+   * What the guard allows next (`lib/admin-orders.ts#nextMove`): a transfer
+   * or a card order has its money confirmed; a paid or COD order is handed
+   * over.
+   */
   action: "MARK_PAID" | "HAND_OVER";
   items: string;
 }
@@ -101,16 +117,17 @@ export interface QueueRow {
  * were just told about. The lateness is on the row rather than in the
  * ordering, so nothing jumps position while somebody is reading it.
  */
-export function queueRows(catalog: Catalog, orders: Order[], now: Date): QueueRow[] {
+export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date): QueueRow[] {
   return needsAction(orders)
     .slice()
     .sort((a, b) => b.placedAt.localeCompare(a.placedAt))
     .map((o) => {
       const note = orderNote(o, now);
+      const customer = o.owner?.name ?? "—";
       if (o.status.state === "AWAITING_TRANSFER") {
         return {
           code: o.code,
-          customer: customerById.get(o.customerId)?.name ?? "—",
+          customer,
           totalVnd: orderTotalVnd(o),
           standing: "Chờ chuyển khoản",
           due: `hạn ${dateTimeLabel(o.status.dueAt)}`,
@@ -119,10 +136,25 @@ export function queueRows(catalog: Catalog, orders: Order[], now: Date): QueueRo
           items: orderItemsLabel(catalog, o),
         };
       }
+      if (o.status.state === "RECEIVED") {
+        const cod = o.payment === "COD";
+        return {
+          code: o.code,
+          customer,
+          totalVnd: orderTotalVnd(o),
+          standing: cod
+            ? `Đã nhận đơn ${clockLabel(o.placedAt)} ${dayMonth(o.placedAt)} · COD, thu khi giao`
+            : `Đã nhận đơn ${clockLabel(o.placedAt)} ${dayMonth(o.placedAt)} · thẻ, chưa thu tiền`,
+          due: cod && note?.late ? note.text.replace("chưa bàn giao · ", "") : null,
+          late: cod ? (note?.late ?? false) : false,
+          action: cod ? ("HAND_OVER" as const) : ("MARK_PAID" as const),
+          items: orderItemsLabel(catalog, o),
+        };
+      }
       const paidAt = o.status.state === "PAID" ? o.status.paidAt : o.placedAt;
       return {
         code: o.code,
-        customer: customerById.get(o.customerId)?.name ?? "—",
+        customer,
         totalVnd: orderTotalVnd(o),
         standing: `Đã thanh toán ${clockLabel(paidAt)} ${dayMonth(paidAt)} · chưa bàn giao`,
         due: note?.late ? note.text.replace("chưa bàn giao · ", "") : null,

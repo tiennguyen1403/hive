@@ -1431,3 +1431,25 @@ tab thua cuộc đua đứng cuối trang (chỉ thấy toast); đơn chuyển k
 `edge_runtime` (dự án không dùng, QĐ-25 §10); giữ `studio`, `inbucket`. 12 → **7 container**, RAM container ~1,5 GB → **~0,55 GB** (analytics 511 MB
 và vector crash-loop biến mất). Sau tỉa: `db reset`, `seed:users`, `test:db` 66/66, `db:types` không đổi, `/api/health` ok. Máy ảo WSL
 (`.wslconfig` `memory=4GB`) chưa hạ; người dùng có thể đặt 3GB rồi `wsl --shutdown`.
+
+**Lát B3a ĐẠT (24/09/2026, `backend-implementer` trên Opus 5.5, phiên chính duyệt độc lập).** Quản trị thật, phần 1. Vai admin =
+`app_metadata.role` (không hook), `is_admin()` trong RLS và trong mọi hàm `admin_*`; tài khoản `quanly@email.com`/`a-quanly` (9 tài khoản
+thử), nút "Vào quản trị thử"; `requireAdmin` ở layout + 14/14 trang admin + mọi action (khách → sign-in, không phải admin → 404). Migration
+`supabase/migrations/20260924001000_admin.sql`: `demo_anchor()` (18:50 VN gần nhất ≤ now), `assert_now()` kẹp `p_now` ±300 s trừ
+service_role (khép việc mở B2), cột `orders.carrier`, bảng `events` append-only (trigger chặn update/delete, check kind), policy select admin
+trên orders/order_lines/profiles/addresses/events, `admin_orders()`, 6 hàm `admin_mark_paid/hand_over/mark_delivered/cancel_order/
+note_order/edit_address` với bảng guard (mục 4 báo cáo agent), `place_order`/`cancel_order`/`expire_transfers` ghi sự kiện, `reset_demo` bản 4
+(neo, sinh 21 sự kiện mẫu theo luật `fromFixtures` + `DEMO_RESET`, admin gọi được). **QĐ-24 hết hiệu lực:** `demoNow()` trả giờ thật;
+`seed.sql` và `seed:users` neo `reset_demo(demo_anchor())`; test DB so fixture gọi `reset_demo(mốc fixture)` tường minh và trả DB về mốc thật
+khi xong. Khu quản trị đọc DB: tổng quan, hàng đợi (RECEIVED là việc cần xử lý: COD → bàn giao, thẻ → xác nhận tiền), đơn, khách (`profiles`,
+loại `a-quanly`), phiếu giao (ghi chú của khách, địa chỉ đã sửa), nhật ký từ `events` (+ `simLogRows` cho phần B3b còn mô phỏng). Xoá
+kind đơn khỏi `admin-sim.ts`; "Gửi lại xác nhận" thành `disabled` đang chuẩn bị; huỷ bởi cửa hàng trả hàng về kệ. **Kiểm:** typecheck sạch;
+`npm test` **54 tệp / 1.114 test**; `npm run test:db` **4 tệp / 109 test**; build 44 route; phiên chính tự đi hai context: khách → `/admin`
+404, quản lý ghi nhận tiền DH-2430 → khách thấy "Đã thanh toán" ngay, nhật ký có dòng, đặt lại → về chờ chuyển khoản, `DH-9999` 404,
+0 request ngoài 3200; chạy lại kịch bản 16 bước của agent (bàn giao có carrier hiện ở `/track`, đã giao, huỷ COD trả XL về kệ, sửa địa chỉ
+lên phiếu, CSV, đặt lại); sweep **67 lượt** (46 shop + 2 lớp nổi + 13 admin + 6 lớp nổi admin) 0/0/0/0, tồn dư 48 + 2. **Phiên chính sửa
+thêm:** nhãn "Ghi chú cho khách" (hứa quá, khách không thấy) → "Ghi chú nội bộ khi bàn giao", prefix sự kiện "Ghi chú khi bàn giao:";
+`tools/layout-sweep.js` và `tools/backend-shots.js` lấy bản B3a (đăng nhập quản lý cho nửa admin, 6 lớp nổi admin); DESIGN.md §8 và
+`tasks/backend.md` §6.5 cập nhật. **Mở (B3b/B4):** xoá `simLogRows`/`scheduleRows` khi kho/Số/mã lên DB; chuyển hướng sau đăng nhập chưa giữ
+link sâu `/admin/...`; vai trong JWT đổi chậm tới 1 giờ; đơn khách vãng lai hiện "—" ở cột Khách; chưa phân trang (`listEvents` 500);
+chưa có cron nên DH-2430/2431 hết hạn ~25/37 giờ sau neo.

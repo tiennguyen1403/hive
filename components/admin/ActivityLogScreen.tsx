@@ -10,7 +10,6 @@ import { useSim } from "@/components/admin/SimContext";
 import { ChipMenu, ToggleChip } from "@/components/admin/Table3";
 import { Empty } from "@/components/shop/Empty";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { ORDERS } from "@/data/orders";
 import {
   LOG_FILTERS,
   diffText,
@@ -19,9 +18,15 @@ import {
   logHaystack,
   logRows,
   logStamp,
+  mergeLogRows,
+  scheduleRows,
+  simLogRows,
   withinDays,
 } from "@/lib/activity-log";
+import type { AdminOrder } from "@/lib/admin-orders";
 import { hrefWith, type Query } from "@/lib/admin-url";
+import type { AdminEvent } from "@/lib/db/event-dto";
+import { LEX } from "@/lib/lexicon";
 
 const PATH = "/admin/log";
 
@@ -37,33 +42,45 @@ const PATH = "/admin/log";
 const LOG_WINDOW_DAYS = 7;
 
 /**
- * "Nhật ký thao tác" — every operation this browser can account for.
+ * "Nhật ký thao tác" — every operation the shop can account for.
  *
- * Nothing is stored for this screen. Each row is read back out of the two
- * places the truth already lives: `brand.adminSim`, which is itself an event
- * log, and the fixtures plus the clock for the things nobody pressed — a
- * transfer that matched, an issue that opened on schedule, an unpaid order
- * the twelve-hour rule cancelled. `lib/activity-log.ts` holds the rules and
- * is tested without a DOM.
+ * Since slice B3a the record is the `events` table: every move on an order —
+ * the shop's, the shopper's, the twelve-hour clock's — and every reset is a
+ * row written in the same transaction as the change, and the sample's own
+ * history is written in by `reset_demo()`. Beside it, two things read rather
+ * than stored, each saying so: what the clock has decided that nobody wrote
+ * down yet (an issue opening on schedule, a hold that ran out before the
+ * sweep), and what this browser still simulates — stock, issues, codes —
+ * until slice B3b moves them into the table too. `lib/activity-log.ts` holds
+ * the rules and is tested without a DOM.
  *
- * "Ai" is therefore a fact about where the row came from rather than a
- * field: "Cửa hàng" for a recorded action, "Khách" for the one a shopper
- * takes from their own order screen, "Hệ thống" for anything the clock and
- * the data decided. The line under the table says that out loud, because
- * "Hệ thống" reading like a person is how somebody ends up looking for who
- * did it.
+ * "Ai" is the hand that acted: "Cửa hàng" for the manager, "Khách" for the
+ * shopper, "Hệ thống" for the clock and for a reset a script ran. The line
+ * under the table says that out loud, because "Hệ thống" reading like a
+ * person is how somebody ends up looking for who did it.
  */
-export function ActivityLogScreen({ nowIso, query }: { nowIso: string; query: Query }) {
+export function ActivityLogScreen({
+  events,
+  orders,
+  nowIso,
+  query,
+}: {
+  /** The log, newest first, from the database. */
+  events: AdminEvent[];
+  /** The order book, which names each order's customer and contents. */
+  orders: AdminOrder[];
+  nowIso: string;
+  query: Query;
+}) {
   const catalog = useCatalog();
   const { sim } = useSim();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
 
-  const all = logRows(
-    catalog,
-    sim,
-    { orders: ORDERS, drops: catalog.drops, products: catalog.products },
-    now,
+  const all = mergeLogRows(
+    logRows(catalog, events, orders, now),
+    simLogRows(catalog, sim, catalog.products),
+    scheduleRows(catalog, catalog.drops, catalog.products, now),
   );
   const filter = logFilter(query.kind);
   const today = query.today === "1";
@@ -94,7 +111,7 @@ export function ActivityLogScreen({ nowIso, query }: { nowIso: string; query: Qu
     <>
       <AdminTop
         title="Nhật ký thao tác"
-        sub="Đọc từ kho mô phỏng trên trình duyệt này · mỗi thao tác một dòng, có trước và sau"
+        sub={`Đơn hàng: nhật ký trên máy chủ · tồn kho, ${LEX.tl}, mã: mô phỏng trên trình duyệt này`}
       >
         <ExportCsvButton label="Tải CSV" filename="nhat-ky.csv" rows={csvRows} />
       </AdminTop>
@@ -137,7 +154,7 @@ export function ActivityLogScreen({ nowIso, query }: { nowIso: string; query: Qu
             <Empty
               icon="doc"
               title="Chưa có thao tác nào"
-              text="Mọi việc làm trong khu quản trị hiện ở đây, kèm cả những việc suy từ đồng hồ và dữ liệu."
+              text="Mọi thao tác trên đơn hàng hiện ở đây, kèm việc khách tự làm, việc suy từ đồng hồ và dữ liệu, và các thay đổi mô phỏng trên trình duyệt này."
             />
           </div>
         ) : (

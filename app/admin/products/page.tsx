@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { requireAdmin } from "@/lib/db/session";
 import { ProductsTable } from "@/components/admin/ProductsTable";
 import { queryOf } from "@/lib/admin-url";
 import { toVnIso } from "@/lib/datetime";
@@ -14,6 +15,7 @@ export const metadata = { title: "Mẫu" };
  * product card. Dynamic, because which issue is open is the clock's answer.
  */
 export default async function AdminProductsPage(props: PageProps<"/admin/products">) {
+  await requireAdmin("/admin/products");
   await connection();
   const sp = await props.searchParams;
   return <ProductsTable nowIso={toVnIso(demoNow())} query={queryOf(sp)} />;

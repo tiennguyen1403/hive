@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Select } from "@/components/ui/Select";
 import { provincesByName } from "@/data/regions";
-import type { ShipTo } from "@/lib/admin-sim";
+import type { ShipTo } from "@/lib/admin-orders";
 
 /**
  * "Sửa địa chỉ giao" — the one field on an order the shop is allowed to
@@ -30,10 +30,13 @@ import type { ShipTo } from "@/lib/admin-sim";
  */
 export function AddressEditForm({
   value,
+  pending = false,
   onCancel,
   onSave,
 }: {
   value: ShipTo;
+  /** The new address is on its way to the server (slice B3a). */
+  pending?: boolean;
   onCancel: () => void;
   onSave: (next: ShipTo, reason: string) => void;
 }) {
@@ -149,13 +152,13 @@ export function AddressEditForm({
         )}
       </Field3>
       <div className="ft">
-        <Button tone="ink sm" icon="back" onClick={onCancel}>
+        <Button tone="ink sm" icon="back" disabled={pending} onClick={onCancel}>
           Huỷ
         </Button>
         <Button
           tone="sm"
-          {...(ready ? { icon: "check" as const } : {})}
-          disabled={!ready}
+          {...(ready && !pending ? { icon: "check" as const } : {})}
+          disabled={!ready || pending}
           onClick={() => {
             if (!ready) return setError("Điền đủ các ô trước khi lưu.");
             onSave(
@@ -170,7 +173,7 @@ export function AddressEditForm({
             );
           }}
         >
-          {blocker ?? "Lưu địa chỉ"}
+          {pending ? "Đang lưu…" : (blocker ?? "Lưu địa chỉ")}
         </Button>
       </div>
     </div>

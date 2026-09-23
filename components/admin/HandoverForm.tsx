@@ -34,6 +34,8 @@ interface HandoverFormProps {
   shippingFeeVnd: number;
   /** Suggested tracking number, so the box is not a blank the shop invents. */
   placeholder: string;
+  /** The handover is on its way to the server (slice B3a). */
+  pending?: boolean;
   onConfirm: (carrier: string, trackingCode: string, note: string) => void;
   onCancel: () => void;
 }
@@ -46,13 +48,14 @@ interface HandoverFormProps {
  * to stay readable while somebody copies a tracking number onto them.
  *
  * The tracking code is REQUIRED and the button says so while it is empty: a
- * handover with no number is not a handover, the shopper's tracking screen
- * shows this exact string, and `lib/admin-sim.ts` would happily record an
- * empty one.
+ * handover with no number is not a handover, and since slice B3a the
+ * shopper's "Đơn hàng" and `/track` print this exact string — the field says
+ * so underneath. `admin_hand_over()` refuses an empty one as well.
  */
 export function HandoverForm({
   shippingFeeVnd,
   placeholder,
+  pending = false,
   onConfirm,
   onCancel,
 }: HandoverFormProps) {
@@ -87,6 +90,7 @@ export function HandoverForm({
           </Field3>
           <Field3
             label="Mã vận đơn"
+            help="Khách thấy mã này ở tra cứu đơn và Đơn hàng."
             error={error ? "Nhập mã vận đơn để khách tra được đơn." : undefined}
           >
             {({ id, describedBy }) => (
@@ -106,7 +110,7 @@ export function HandoverForm({
             )}
           </Field3>
         </div>
-        <Field3 label={<>Ghi chú cho khách <span className="opt">· không bắt buộc</span></>}>
+        <Field3 label={<>Ghi chú nội bộ khi bàn giao <span className="opt">· không bắt buộc</span></>}>
           {({ id }) => (
             <input
               id={id}
@@ -118,23 +122,23 @@ export function HandoverForm({
           )}
         </Field3>
         <div className="ft">
-          <Button tone="ink sm" icon="back" onClick={onCancel}>
+          <Button tone="ink sm" icon="back" disabled={pending} onClick={onCancel}>
             Để sau
           </Button>
           {/* Disabled, and it says the job that is left rather than the job
               it would do (DESIGN.md §9 rule 3): a handover with no number is
               not a handover, and the shopper's tracking screen prints this
-              exact string. */}
+              exact string. Disabled with no icon while it is being saved. */}
           <Button
             tone="sm"
-            {...(ready ? { icon: "check" as const } : {})}
-            disabled={!ready}
+            {...(ready && !pending ? { icon: "check" as const } : {})}
+            disabled={!ready || pending}
             onClick={() => {
               if (!ready) return setError(true);
               onConfirm(carrier, code.trim(), note.trim());
             }}
           >
-            {ready ? "Xác nhận bàn giao" : "Nhập mã vận đơn"}
+            {pending ? "Đang lưu…" : ready ? "Xác nhận bàn giao" : "Nhập mã vận đơn"}
           </Button>
         </div>
       </div>

@@ -28,10 +28,14 @@ export const listAddresses = cache(async (): Promise<Address[]> => {
   const session = await getSession();
   if (!session) return [];
 
+  // The owner is named, not left to row level security: since slice B3a the
+  // manager may read every book (the admin read policy), and the manager's
+  // own address book is still only theirs.
   const supabase = await getSupabase();
   const { data, error } = await supabase
     .from("addresses")
     .select("id, recipient, phone, line, province_code, ward_code, label, is_default")
+    .eq("profile_id", session.userId)
     .order("position", { ascending: true });
 
   if (error || !data) return [];
@@ -48,6 +52,7 @@ export async function findAddress(id: string): Promise<Address | null> {
     .from("addresses")
     .select("id, recipient, phone, line, province_code, ward_code, label, is_default")
     .eq("id", id)
+    .eq("profile_id", session.userId)
     .maybeSingle();
 
   if (error || !data) return null;

@@ -1,207 +1,85 @@
 import { describe, it, expect } from "vitest";
 import {
-  CUSTOMER_AUTHOR,
-  CUSTOMER_CANCEL_REASON,
   EMPTY_SIM,
-  NOTE_AUTHOR,
-  addressEditReason,
   isSimTeaser,
   nextDropNo,
-  orderPatches,
   parseSim,
   pushSim,
   serializeSim,
   simCount,
   simDrops,
-  simNotes,
-  simOrders,
   simPromotions,
   simTeasers,
   teaserSlug,
-  shopOrders,
   type SimAction,
 } from "./admin-sim";
 import { DROPS, TEASERS } from "@/data/catalog";
-import { ORDERS } from "@/data/orders";
 import { PROMOTIONS } from "@/data/promotions";
-import { needsAction, salesWindow } from "./admin-metrics";
 import { promoState } from "./admin-rows";
 import { dropState } from "./drop";
 
 const AT = "2026-09-20T18:50:00+07:00";
-const NOW = new Date(AT);
 
 function log(...actions: SimAction[]) {
   return actions.reduce(pushSim, EMPTY_SIM);
 }
 
+const PAUSE: SimAction = { kind: "PROMO_PAUSED", at: AT, code: "BANTHAN", paused: true };
+const ADJUST: SimAction = {
+  kind: "INVENTORY_ADJUSTED",
+  at: AT,
+  productId: "p-bui",
+  cells: [{ color: "black", size: "L", before: 1, after: 2 }],
+  reason: "Hàng trả về",
+  ref: "",
+  note: "",
+};
+
 describe("parseSim", () => {
   it("reads back what it wrote", () => {
-    const overlay = log({ kind: "ORDER_PAID", at: AT, code: "DH-2431" });
+    const overlay = log(PAUSE, ADJUST);
     expect(parseSim(serializeSim(overlay))).toEqual(overlay);
   });
 
   it("returns an empty log for nothing, junk, or the wrong version", () => {
     expect(parseSim(null)).toEqual(EMPTY_SIM);
     expect(parseSim("not json")).toEqual(EMPTY_SIM);
-    expect(parseSim(JSON.stringify({ v: 99, actions: [{ kind: "ORDER_PAID" }] }))).toEqual(
-      EMPTY_SIM,
-    );
+    expect(parseSim(JSON.stringify({ v: 99, actions: [PAUSE] }))).toEqual(EMPTY_SIM);
     expect(parseSim(JSON.stringify({ v: 1, actions: "nope" }))).toEqual(EMPTY_SIM);
   });
 
   it("drops a malformed action and keeps the sound ones", () => {
-    // One bad record must not cost the other nineteen: an action missing its
-    // code would render an order in a state nothing can draw.
+    // One bad record must not cost the other nineteen.
+    const raw = JSON.stringify({
+      v: 1,
+      actions: [PAUSE, { kind: "PROMO_PAUSED", at: AT, code: "BANTHAN" }, { kind: "WHAT", at: AT }, ADJUST],
+    });
+    const overlay = parseSim(raw);
+    expect(simCount(overlay)).toBe(2);
+    expect(overlay.actions.map((a) => a.kind)).toEqual(["PROMO_PAUSED", "INVENTORY_ADJUSTED"]);
+  });
+
+  it("drops the order actions a build before slice B3a wrote, and keeps the rest", () => {
+    // Orders live in Postgres now; a browser that still holds their old
+    // simulated moves must not replay them on top of the real ones.
     const raw = JSON.stringify({
       v: 1,
       actions: [
         { kind: "ORDER_PAID", at: AT, code: "DH-2431" },
-        { kind: "ORDER_PAID", at: AT },
-        { kind: "WHAT", at: AT },
+        PAUSE,
         { kind: "ORDER_SHIPPED", at: AT, code: "DH-2429", carrier: "X", trackingCode: "T1" },
+        { kind: "ORDER_CANCELLED_BY_CUSTOMER", at: AT, code: "DH-2430" },
+        { kind: "ORDER_NOTE", at: AT, code: "DH-2430", text: "x" },
+        { kind: "ORDER_CONFIRMATION_RESENT", at: AT, code: "DH-2430", email: "x@y.vn" },
+        ADJUST,
       ],
     });
-    const overlay = parseSim(raw);
-    expect(simCount(overlay)).toBe(2);
-    expect(overlay.actions.map((a) => a.kind)).toEqual(["ORDER_PAID", "ORDER_SHIPPED"]);
-  });
-});
-
-describe("simOrders", () => {
-  it("leaves the fixtures alone when nothing has happened", () => {
-    expect(simOrders(ORDERS, EMPTY_SIM)).toBe(ORDERS);
+    expect(parseSim(raw).actions.map((a) => a.kind)).toEqual(["PROMO_PAUSED", "INVENTORY_ADJUSTED"]);
   });
 
-  it("moves one order and touches no other", () => {
-    const target = ORDERS.find((o) => o.status.state === "AWAITING_TRANSFER")!;
-    const merged = simOrders(ORDERS, log({ kind: "ORDER_PAID", at: AT, code: target.code }));
-
-    expect(merged).toHaveLength(ORDERS.length);
-    expect(merged.find((o) => o.code === target.code)!.status).toEqual({
-      state: "PAID",
-      paidAt: AT,
-    });
-    expect(merged.filter((o) => o.code !== target.code)).toEqual(
-      ORDERS.filter((o) => o.code !== target.code),
-    );
-  });
-
-  it("keeps the last word when one order is acted on twice", () => {
-    const target = ORDERS.find((o) => o.status.state === "AWAITING_TRANSFER")!;
-    const merged = simOrders(
-      ORDERS,
-      log(
-        { kind: "ORDER_PAID", at: AT, code: target.code },
-        {
-          kind: "ORDER_SHIPPED",
-          at: AT,
-          code: target.code,
-          carrier: "Tự giao",
-          trackingCode: "VNP-1",
-        },
-      ),
-    );
-    expect(merged.find((o) => o.code === target.code)!.status).toEqual({
-      state: "SHIPPING",
-      shippedAt: AT,
-      trackingCode: "VNP-1",
-    });
-  });
-
-  it("carries the courier beside the status, not inside it", () => {
-    const patch = orderPatches(
-      log({
-        kind: "ORDER_SHIPPED",
-        at: AT,
-        code: "DH-2429",
-        carrier: "Giao Hàng Nhanh",
-        trackingCode: "VNP-9",
-      }),
-    ).get("DH-2429")!;
-    expect(patch.carrier).toBe("Giao Hàng Nhanh");
-    expect(patch.status).not.toHaveProperty("carrier");
-  });
-
-  it("feeds the queue and the revenue window without either knowing", () => {
-    // The whole point of merging at the order level: every figure already
-    // derived from ORDERS recomputes for free.
-    const target = ORDERS.find((o) => o.status.state === "AWAITING_TRANSFER")!;
-    const overlay = log({ kind: "ORDER_PAID", at: AT, code: target.code });
-    const merged = simOrders(ORDERS, overlay);
-
-    const before = salesWindow(NOW, ORDERS, 14).totalVnd;
-    const after = salesWindow(NOW, merged, 14).totalVnd;
-    expect(after).toBeGreaterThan(before);
-
-    expect(needsAction(merged)).toHaveLength(needsAction(ORDERS).length);
-    expect(
-      needsAction(merged).find((o) => o.code === target.code)!.status.state,
-    ).toBe("PAID");
-  });
-
-  it("takes a cancelled order out of the queue and out of the money", () => {
-    const target = ORDERS.find((o) => o.status.state === "PAID")!;
-    const overlay = log({
-      kind: "ORDER_CANCELLED",
-      at: AT,
-      code: target.code,
-      reason: "khách đổi ý",
-      note: "",
-    });
-    const merged = simOrders(ORDERS, overlay);
-    expect(needsAction(merged)).toHaveLength(needsAction(ORDERS).length - 1);
-    expect(salesWindow(NOW, merged, 30).totalVnd).toBeLessThan(
-      salesWindow(NOW, ORDERS, 30).totalVnd,
-    );
-  });
-});
-
-describe("simNotes", () => {
-  it("writes a system note for every action on that order, and only that order", () => {
-    const overlay = log(
-      { kind: "ORDER_PAID", at: AT, code: "DH-2429" },
-      { kind: "ORDER_NOTE", at: AT, code: "DH-2430", text: "gói riêng" },
-      {
-        kind: "ORDER_SHIPPED",
-        at: AT,
-        code: "DH-2429",
-        carrier: "Tự giao",
-        trackingCode: "VNP-7",
-      },
-    );
-    const notes = simNotes("DH-2429", overlay);
-    expect(notes).toHaveLength(2);
-    expect(notes.every((n) => n.system)).toBe(true);
-    expect(notes[1]!.text).toContain("VNP-7");
-  });
-
-  it("names the shop as the author of a note somebody typed", () => {
-    const notes = simNotes("DH-2429", log({ kind: "ORDER_NOTE", at: AT, code: "DH-2429", text: "gọi trước" }));
-    expect(notes[0]).toMatchObject({ author: NOTE_AUTHOR, system: false, text: "gọi trước" });
-  });
-
-  it("splits a cancellation into what happened and what was written about it", () => {
-    const notes = simNotes(
-      "DH-2429",
-      log({
-        kind: "ORDER_CANCELLED",
-        at: AT,
-        code: "DH-2429",
-        reason: "Khách đổi ý",
-        note: "đã gọi xác nhận",
-      }),
-    );
-    expect(notes.map((n) => n.system)).toEqual([true, false]);
-    expect(notes[1]!.author).toBe(NOTE_AUTHOR);
-  });
-
-  it("drops an empty internal comment rather than adding a blank note", () => {
-    const notes = simNotes(
-      "DH-2429",
-      log({ kind: "ORDER_CANCELLED", at: AT, code: "DH-2429", reason: "Hết hàng", note: "   " }),
-    );
-    expect(notes).toHaveLength(1);
+  it("counts what is left as this browser's changes", () => {
+    expect(simCount(log(PAUSE, ADJUST))).toBe(2);
+    expect(simCount(EMPTY_SIM)).toBe(0);
   });
 });
 
@@ -317,206 +195,6 @@ describe("simPromotions", () => {
     );
     expect(rows[0]!.promo).not.toHaveProperty("minOrderVnd");
     expect(rows[0]!.promo).toMatchObject({ kind: "AMOUNT", amountVnd: 50_000, usageLimit: null });
-  });
-});
-
-describe("a cancellation that came from the shopper", () => {
-  // The store is shared with the back office on purpose: a cancellation the
-  // shop cannot see is a cancellation that did not happen.
-  const sim = () =>
-    log({ kind: "ORDER_CANCELLED_BY_CUSTOMER", at: AT, code: "DH-2430" });
-
-  it("moves the order to cancelled, with the shopper's reason on it", () => {
-    const order = simOrders(ORDERS, sim()).find((o) => o.code === "DH-2430")!;
-    expect(order.status.state).toBe("CANCELLED");
-    expect(order.status.state === "CANCELLED" && order.status.reason).toBe(
-      CUSTOMER_CANCEL_REASON,
-    );
-    expect(order.status.state === "CANCELLED" && order.status.cancelledAt).toBe(AT);
-  });
-
-  it("writes one note, and names the hand that did it", () => {
-    const notes = simNotes("DH-2430", sim());
-    expect(notes).toHaveLength(1);
-    expect(notes[0]!.author).toBe(CUSTOMER_AUTHOR);
-    expect(notes[0]!.author).not.toBe(NOTE_AUTHOR);
-    expect(notes[0]!.text).toContain("Khách huỷ đơn");
-  });
-
-  it("counts as one simulated change in this browser", () => {
-    expect(simCount(sim())).toBe(1);
-  });
-
-  it("survives a round trip through storage", () => {
-    const back = parseSim(serializeSim(sim()));
-    expect(back.actions).toEqual(sim().actions);
-  });
-
-  it("drops a record with no order code rather than half-trusting it", () => {
-    const raw = JSON.stringify({
-      v: 1,
-      actions: [{ kind: "ORDER_CANCELLED_BY_CUSTOMER", at: AT }],
-    });
-    expect(parseSim(raw).actions).toEqual([]);
-  });
-
-  it("leaves every other order where it was", () => {
-    const rows = simOrders(ORDERS, sim());
-    expect(rows).toHaveLength(ORDERS.length);
-    const untouched = rows.find((o) => o.code === "DH-2431")!;
-    expect(untouched.status.state).toBe("AWAITING_TRANSFER");
-  });
-});
-
-describe("shopOrders — the same log, read from the shop", () => {
-  it("shows a handover, because the parcel and its number are real", () => {
-    const sim = log({
-      kind: "ORDER_SHIPPED",
-      at: AT,
-      code: "DH-2429",
-      carrier: "Giao tiêu chuẩn",
-      trackingCode: "VNP-2429-01",
-    });
-    const order = shopOrders(ORDERS, sim).find((o) => o.code === "DH-2429")!;
-    expect(order.status.state).toBe("SHIPPING");
-    expect(order.status.state === "SHIPPING" && order.status.trackingCode).toBe("VNP-2429-01");
-  });
-
-  it("shows a cancellation the shop made, with the reason the sheet promised", () => {
-    const sim = log({
-      kind: "ORDER_CANCELLED",
-      at: AT,
-      code: "DH-2429",
-      reason: "Hết hàng thật",
-      note: "",
-    });
-    const order = shopOrders(ORDERS, sim).find((o) => o.code === "DH-2429")!;
-    expect(order.status.state).toBe("CANCELLED");
-    expect(order.status.state === "CANCELLED" && order.status.reason).toBe("Hết hàng thật");
-  });
-
-  it("carries an edited delivery address with the order it belongs to", () => {
-    const base = ORDERS.find((o) => o.code === "DH-2429")!;
-    const sim = log({
-      kind: "ORDER_ADDRESS_EDITED",
-      at: AT,
-      code: "DH-2429",
-      before: base.shipTo,
-      after: { ...base.shipTo, line: "47 Trần Hưng Đạo" },
-      reason: "khách nhắn đổi số nhà",
-    });
-    const order = shopOrders(ORDERS, sim).find((o) => o.code === "DH-2429")!;
-    expect(order.shipTo.line).toBe("47 Trần Hưng Đạo");
-  });
-
-  it("shows the shopper the order they just called off", () => {
-    const sim = log({ kind: "ORDER_CANCELLED_BY_CUSTOMER", at: AT, code: "DH-2430" });
-    const order = shopOrders(ORDERS, sim).find((o) => o.code === "DH-2430")!;
-    expect(order.status.state).toBe("CANCELLED");
-  });
-
-  it("does NOT show them a state the back office simulated", () => {
-    // Nobody has been paid. A simulated click in the back office must not
-    // tell a shopper their money arrived.
-    const sim = log({ kind: "ORDER_PAID", at: AT, code: "DH-2430" });
-    const order = shopOrders(ORDERS, sim).find((o) => o.code === "DH-2430")!;
-    expect(order.status.state).toBe("AWAITING_TRANSFER");
-  });
-
-  it("returns the fixtures untouched when nothing was cancelled", () => {
-    expect(shopOrders(ORDERS, EMPTY_SIM)).toBe(ORDERS);
-  });
-});
-
-// ───────────────────────────────────────────────────────── v3 slice 5
-describe("ORDER_ADDRESS_EDITED — the parcel goes to the new address", () => {
-  const base = ORDERS.find((o) => o.code === "DH-2429")!;
-  const moved = { ...base.shipTo, line: "47 Trần Hưng Đạo" };
-  const edit: SimAction = {
-    kind: "ORDER_ADDRESS_EDITED",
-    at: AT,
-    code: "DH-2429",
-    before: base.shipTo,
-    after: moved,
-    reason: "khách nhắn đổi số nhà",
-  };
-
-  it("replaces the frozen copy rather than sitting beside it", () => {
-    const order = simOrders(ORDERS, log(edit)).find((o) => o.code === "DH-2429")!;
-    expect(order.shipTo.line).toBe("47 Trần Hưng Đạo");
-    // Everything else on the address is untouched.
-    expect(order.shipTo.recipient).toBe(base.shipTo.recipient);
-    expect(order.shipTo.wardCode).toBe(base.shipTo.wardCode);
-  });
-
-  it("leaves the status alone", () => {
-    const order = simOrders(ORDERS, log(edit)).find((o) => o.code === "DH-2429")!;
-    expect(order.status).toEqual(base.status);
-  });
-
-  it("touches no other order", () => {
-    const after = simOrders(ORDERS, log(edit));
-    for (const o of after) {
-      if (o.code === "DH-2429") continue;
-      expect(o.shipTo).toEqual(ORDERS.find((x) => x.code === o.code)!.shipTo);
-    }
-  });
-
-  it("keeps the last edit when the address is changed twice", () => {
-    const again: SimAction = {
-      ...edit,
-      at: "2026-09-20T19:00:00+07:00",
-      before: moved,
-      after: { ...moved, line: "49 Trần Hưng Đạo" },
-      reason: "gọi lại xác nhận",
-    };
-    const order = simOrders(ORDERS, log(edit, again)).find((o) => o.code === "DH-2429")!;
-    expect(order.shipTo.line).toBe("49 Trần Hưng Đạo");
-    expect(addressEditReason("DH-2429", log(edit, again))).toBe("gọi lại xác nhận");
-  });
-
-  it("writes a note that says why, and the note is the shop's own record", () => {
-    const notes = simNotes("DH-2429", log(edit));
-    expect(notes).toHaveLength(1);
-    expect(notes[0]!.text).toBe("Sửa địa chỉ giao · lý do: khách nhắn đổi số nhà");
-    expect(notes[0]!.system).toBe(true);
-  });
-
-  it("survives a round trip through storage", () => {
-    const back = parseSim(serializeSim(log(edit)));
-    expect(back.actions).toEqual([edit]);
-  });
-
-  it("drops a record whose address is not an address", () => {
-    const bad = JSON.stringify({
-      v: 1,
-      actions: [{ ...edit, after: { line: "47 Trần Hưng Đạo" } }],
-    });
-    expect(parseSim(bad).actions).toEqual([]);
-  });
-});
-
-describe("ORDER_CONFIRMATION_RESENT — a record, not a message", () => {
-  const resend: SimAction = {
-    kind: "ORDER_CONFIRMATION_RESENT",
-    at: AT,
-    code: "DH-2430",
-    email: "minhanh@vidu.vn",
-  };
-
-  it("changes nothing about the order", () => {
-    expect(simOrders(ORDERS, log(resend))).toEqual(ORDERS);
-  });
-
-  it("writes a note that admits nothing was sent", () => {
-    const note = simNotes("DH-2430", log(resend))[0]!;
-    expect(note.text).toContain("Đã ghi nhật ký");
-    expect(note.text).toContain("chưa có máy chủ gửi");
-    expect(note.text).not.toContain("Đã gửi ");
-  });
-
-  it("still counts as a change on this browser", () => {
-    expect(simCount(log(resend))).toBe(1);
   });
 });
 

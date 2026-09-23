@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { requireAdmin } from "@/lib/db/session";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { loadCatalog } from "@/lib/db/catalog";
@@ -16,6 +17,7 @@ export const metadata = { title: "Thêm mẫu" };
  * first time somebody adds a style the menu has never heard of.
  */
 export default async function AdminNewProductPage() {
+  await requireAdmin("/admin/products/new");
   await connection();
   const now = demoNow();
   const catalog = await loadCatalog();

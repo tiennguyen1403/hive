@@ -1,6 +1,6 @@
 import "server-only";
 
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { getSupabase } from "./server";
 
@@ -25,6 +25,16 @@ export interface SessionInfo {
   userId: string;
   /** The auth email, which is what a re-authentication has to sign in with. */
   email: string;
+  /**
+   * Slice B3a: `app_metadata.role` from the verified token — "admin" for the
+   * shop's manager, "customer" for everybody else. `app_metadata` is written
+   * only with the service role ("raw_app_meta_data — cannot be updated by the
+   * user, so it's a good place to store authorization data",
+   * https://supabase.com/docs/guides/database/postgres/row-level-security),
+   * and Postgres reads the very same claim in `public.is_admin()`, so the app
+   * and the database cannot disagree about who is one.
+   */
+  role: "admin" | "customer";
 }
 
 export const getSession = cache(async (): Promise<SessionInfo | null> => {
@@ -33,10 +43,14 @@ export const getSession = cache(async (): Promise<SessionInfo | null> => {
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data) return null;
 
-  const { sub, email } = data.claims;
+  const { sub, email, app_metadata } = data.claims;
   if (typeof sub !== "string" || sub === "") return null;
 
-  return { userId: sub, email: typeof email === "string" ? email : "" };
+  return {
+    userId: sub,
+    email: typeof email === "string" ? email : "",
+    role: app_metadata?.role === "admin" ? "admin" : "customer",
+  };
 });
 
 /**
@@ -51,5 +65,25 @@ export const getSession = cache(async (): Promise<SessionInfo | null> => {
 export async function requireSession(nextPath: string): Promise<SessionInfo> {
   const session = await getSession();
   if (!session) redirect(`/sign-in?next=${encodeURIComponent(nextPath)}`);
+  return session;
+}
+
+/**
+ * The back office's door, asked by the admin layout, by EVERY admin page and
+ * by EVERY admin Server Action — the Next guide is explicit that a layout is
+ * not a boundary ("Due to Partial Rendering, be cautious when doing checks in
+ * Layouts as these don't re-render on navigation") and that "a page-level
+ * authentication check does not extend to the Server Actions defined within
+ * it" (`02-guides/authentication.md`, `02-guides/data-security.md`). The
+ * `admin_*` functions in Postgres ask a fourth time.
+ *
+ * Nobody signed in: off to sign in, and back here afterwards. Signed in but
+ * not the manager: 404 — the back office is not a place a shopper is told
+ * exists (QĐ-16, applied to the admin area). Both `redirect` and `notFound`
+ * throw, so the return type can promise an admin session.
+ */
+export async function requireAdmin(nextPath: string): Promise<SessionInfo> {
+  const session = await requireSession(nextPath);
+  if (session.role !== "admin") notFound();
   return session;
 }

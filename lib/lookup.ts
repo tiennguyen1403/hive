@@ -138,6 +138,11 @@ export interface TrackedOrder {
   payment: PaymentMethod;
   /** The courier's number, on the states that have one. */
   trackingCode?: string;
+  /**
+   * The delivery service the handover recorded, beside the number (slice
+   * B3a). Absent on the sample's parcels, which recorded none.
+   */
+  carrier?: string;
   steps: TrackStep[];
   /** Money has actually been received. False for a `RECEIVED` order. */
   paid: boolean;
@@ -250,6 +255,7 @@ export function trackedOfOrder(
     ...(o.promo ? { promo: o.promo } : {}),
     payment: o.payment,
     ...(status.state === "SHIPPING" ? { trackingCode: status.trackingCode } : {}),
+    ...(status.state === "SHIPPING" && status.carrier ? { carrier: status.carrier } : {}),
     steps: trackSteps(o),
     paid: isPaid(state),
   };

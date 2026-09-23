@@ -6,54 +6,52 @@ import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import type { Order } from "@/data/types";
-import { useCatalog } from "@/components/shop/CatalogContext";
-import { orderItemsLabel } from "@/lib/admin-rows";
+import { CANCEL_REASONS } from "@/lib/admin-orders";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd } from "@/lib/orders";
 
 /**
  * Why an order was cancelled, in the shop's own words.
  *
- * Four reasons, fixed (user, 22/09). Three of them are what the order book
- * has actually recorded; "Hết hàng thật" is the one addition, and it is the
- * state the rest of the app already names everywhere.
+ * Four reasons, fixed (user, 22/09) and kept in `lib/admin-orders.ts`, where
+ * the Server Action checks the one sent against the same list. Three of them
+ * are what the order book has actually recorded; "Hết hàng thật" is the one
+ * addition, and it is the state the rest of the app already names everywhere.
  */
-export const CANCEL_REASONS: SelectOption[] = [
-  { value: "Khách đổi ý", label: "Khách đổi ý" },
-  { value: "Quá hạn chuyển khoản", label: "Quá hạn chuyển khoản" },
-  { value: "Hết hàng thật", label: "Hết hàng thật" },
-  { value: "Khác", label: "Khác" },
-];
+const REASON_OPTIONS: SelectOption[] = CANCEL_REASONS.map((r) => ({ value: r, label: r }));
 
 /**
  * "Huỷ đơn", with the reason the shopper will be given.
  *
  * A sheet rather than an inline form, because this is the one action on the
- * screen that cannot be undone in the simulation and the reason is required:
- * an order cancelled with no reason tells the next person nothing, and it is
- * what the shopper is shown on their own order screen.
+ * screen that cannot be undone and the reason is required: an order
+ * cancelled with no reason tells the next person nothing, and it is what the
+ * shopper is shown on their own order screen.
+ *
+ * SINCE SLICE B3A IT IS REAL: `admin_cancel_order()` cancels the order in the
+ * database and puts its pieces back on the shelf in the same transaction —
+ * the same rule the shopper's own cancellation follows — and the shopper's
+ * "Đơn hàng", receipt and `/track` all read the reason. The sheet says both,
+ * and no longer points at a stock adjustment to do by hand.
  *
  * THE CONFIRM BUTTON IS THE HONEY ONE, not a red one. Red is the colour of
  * the MENU ITEM that opens this sheet — the warning belongs where somebody is
  * still choosing. Inside the sheet the decision is already made, and every
  * confirm in this system looks the same.
- *
- * The copy does not promise the pieces go back on the shelf. Stock here is a
- * fixture field rather than something derived from the order book, so
- * cancelling moves nothing — and the line points at the action that does
- * ("Điều chỉnh tồn kho") instead of claiming it happened by itself.
  */
 export function CancelOrderModal({
   order,
+  pending = false,
   onClose,
   onConfirm,
 }: {
   /** The order being cancelled, or null when the sheet is shut. */
   order: Order | null;
+  /** The cancellation is on its way to the server. */
+  pending?: boolean;
   onClose: () => void;
   onConfirm: (reason: string, note: string) => void;
 }) {
-  const catalog = useCatalog();
   const [reason, setReason] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState(false);
@@ -66,13 +64,17 @@ export function CancelOrderModal({
     setError(false);
   }, [order]);
 
-  const paid = order !== null && order.status.state !== "AWAITING_TRANSFER";
+  // Money has arrived only on a PAID order: a transfer still waiting and a
+  // COD or card order the shop has merely taken have nothing to refund.
+  const paid = order !== null && order.status.state === "PAID";
   const total = order ? orderTotalVnd(order) : 0;
 
   return (
     <AdminSheet
       open={order !== null}
-      onClose={onClose}
+      onClose={() => {
+        if (!pending) onClose();
+      }}
       title={`Huỷ đơn ${order?.code ?? ""}?`}
       sub={
         order && (
@@ -80,29 +82,29 @@ export function CancelOrderModal({
             {paid
               ? `Đơn đã thanh toán ${vnd(total)}. Huỷ thì phải hoàn tiền tay — chưa nối cổng thanh toán nào.`
               : `Đơn ${vnd(total)} chưa nhận được tiền. Huỷ là đóng lại, không có gì phải hoàn.`}{" "}
-            Mô phỏng: khách chưa thấy lý do này. Tồn kho không tự đổi: muốn đưa{" "}
-            {orderItemsLabel(catalog, order)} lại lên kệ thì dùng Điều chỉnh tồn kho ở Mẫu.
+            Khách thấy lý do ở màn đơn của họ. Hàng về kệ ngay.
           </>
         )
       }
       footer={
         <>
-          <Button tone="ink sm" icon="back" onClick={onClose}>
+          <Button tone="ink sm" icon="back" disabled={pending} onClick={onClose}>
             Giữ đơn
           </Button>
           {/* Disabled until a reason is chosen, and it says which job is
               left — the same rule as every other confirm in the back office
-              (DESIGN.md §9 rule 3). */}
+              (DESIGN.md §9 rule 3). Disabled, with no icon, while the
+              cancellation is on its way. */}
           <Button
             tone="sm"
-            {...(reason ? { icon: "check" as const } : {})}
-            disabled={!reason}
+            {...(reason && !pending ? { icon: "check" as const } : {})}
+            disabled={!reason || pending}
             onClick={() => {
               if (!reason) return setError(true);
               onConfirm(reason, note.trim());
             }}
           >
-            {reason ? "Huỷ đơn" : "Chọn lý do"}
+            {pending ? "Đang huỷ…" : reason ? "Huỷ đơn" : "Chọn lý do"}
           </Button>
         </>
       }
@@ -115,7 +117,7 @@ export function CancelOrderModal({
         {({ id }) => (
           <Select
             id={id}
-            options={CANCEL_REASONS}
+            options={REASON_OPTIONS}
             value={reason}
             placeholder="Chọn lý do"
             onChange={(v) => {

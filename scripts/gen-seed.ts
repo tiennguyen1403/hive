@@ -415,7 +415,14 @@ export function renderSeedSql(
     ),
   );
 
-  parts.push("-- Build the live tables from the mirrors just filled.\nselect public.reset_demo();\n");
+  // Anchored on the real clock since slice B3a: `demo_anchor()` is the most
+  // recent 18:50 in Vietnam, so the sample shop is shifted by whole days and
+  // every hour in `data/` survives while its past stays in the past.
+  parts.push(
+    "-- Build the live tables from the mirrors just filled, anchored on the most\n" +
+      "-- recent 18:50 Vietnamese time (the fixture's own minute, shifted by whole days).\n" +
+      "select public.reset_demo(public.demo_anchor());\n",
+  );
 
   return parts.filter((part) => part !== "").join("\n");
 }

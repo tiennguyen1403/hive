@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { RevenueChart } from "@/components/admin/RevenueChart";
@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/icon/Icon";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { customerById } from "@/data/customers";
-import { ORDERS } from "@/data/orders";
+import { markPaid } from "@/lib/actions/admin";
+import type { AdminOrder } from "@/lib/admin-orders";
 import {
   WINDOW_CHOICES,
   customerSplit,
@@ -23,7 +23,7 @@ import {
   type WindowDays,
 } from "@/lib/admin-metrics";
 import { queueRows } from "@/lib/admin-rows";
-import { simDrops, simOrders, simProducts } from "@/lib/admin-sim";
+import { simDrops, simProducts } from "@/lib/admin-sim";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { closesInLabel, dropState, opensInLabel } from "@/lib/drop";
@@ -37,8 +37,9 @@ import { photoUrl } from "@/lib/photos";
 /**
  * The back office's front page.
  *
- * EVERY NUMBER HERE IS DERIVED, from `ORDERS` and `CATALOG` plus whatever
- * this browser has done on top of them. The approved mock drew this screen
+ * EVERY NUMBER HERE IS DERIVED — from the order book in the database (slice
+ * B3a) and the catalogue, plus what this browser still simulates on top of
+ * the catalogue (stock, issues). The approved mock drew this screen
  * with invented figures — page views, a conversion rate, "+12% so với kỳ
  * trước" — and PRODUCT.md forbids presenting invented sales as real, so:
  *
@@ -55,22 +56,53 @@ import { photoUrl } from "@/lib/photos";
  * prop means the first client render is identical to the HTML that was sent,
  * which is what keeps hydration quiet and the clock honest.
  */
-export function DashboardScreen({ nowIso, days }: { nowIso: string; days: WindowDays }) {
+export function DashboardScreen({
+  orders: book,
+  nowIso,
+  days,
+}: {
+  /** The order book, from the database (`admin_orders()`). */
+  orders: AdminOrder[];
+  nowIso: string;
+  days: WindowDays;
+}) {
   const catalog = useCatalog();
   const currentDropNo = catalog.currentDropNo;
-  const { sim, run } = useSim();
+  const { sim, say } = useSim();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
-  /** Rows just acted on, kept lit until the operator leaves the screen. */
+  /** Rows just confirmed, kept disabled until the answer re-renders the queue. */
   const [done, setDone] = useState<string[]>([]);
+  /** The row whose confirmation is on its way to the server. */
+  const [busy, setBusy] = useState<string | null>(null);
+  const [, startPaying] = useTransition();
 
-  // Two lenses over the same book, in this order: what this browser did, then
-  // what the twelve-hour clock has already decided about what is left.
-  const orders = simOrders(ORDERS, sim).map((o) => effectiveOrder(o, now));
+  // The book as the database has it, read through what the twelve-hour clock
+  // has already decided about it.
+  const orders = book.map((o) => effectiveOrder(o, now));
   const products = simProducts(catalog.products, sim);
+
+  /**
+   * "Đã nhận tiền" on a queue row: `markPaid` → `admin_mark_paid()`. The
+   * action revalidates the area, so the answer arrives with the queue already
+   * one row shorter; the toast says what the server said.
+   */
+  function confirmPaid(code: string) {
+    if (busy) return;
+    setBusy(code);
+    startPaying(async () => {
+      const result = await markPaid([code]);
+      startPaying(() => {
+        setBusy(null);
+        if (result.ok) setDone((d) => [...d, code]);
+        say(result.message ?? result.errors.form ?? "");
+      });
+    });
+  }
 
   const window = salesWindow(now, orders, days);
   const queue = queueRows(catalog, orders, now);
   const awaiting = queue.filter((q) => q.action === "MARK_PAID").length;
+  const toHandOver = queue.length - awaiting;
   const drop = simDrops(catalog.drops, sim).find((d) => d.no === currentDropNo);
   const state = drop ? dropState(drop, now) : "CLOSED";
   const summary = dropSummary(catalog, currentDropNo, products);
@@ -146,7 +178,7 @@ export function DashboardScreen({ nowIso, days }: { nowIso: string; days: Window
         <div className="kpi3">
           <span className="k">Cần xử lý</span>
           <b>{queue.length}</b>
-          {awaiting} chờ chuyển khoản · {queue.length - awaiting} đã trả, chưa giao
+          {awaiting} chờ tiền · {toHandOver} chờ bàn giao
           {queue.length > 0 && (
             <>
               {" · "}
@@ -215,17 +247,17 @@ export function DashboardScreen({ nowIso, days }: { nowIso: string; days: Window
                     {q.action === "MARK_PAID" ? (
                       <Button
                         tone={i === 0 ? "sm" : "ink sm"}
-                        icon="check"
-                        disabled={done.includes(q.code)}
-                        onClick={() => {
-                          run(
-                            { kind: "ORDER_PAID", code: q.code },
-                            `${q.code} → đã thanh toán · ghi nhật ký`,
-                          );
-                          setDone((d) => [...d, q.code]);
-                        }}
+                        {...(busy === q.code || done.includes(q.code)
+                          ? {}
+                          : { icon: "check" as const })}
+                        disabled={busy !== null || done.includes(q.code)}
+                        onClick={() => confirmPaid(q.code)}
                       >
-                        {done.includes(q.code) ? "Đã ghi" : "Đã nhận tiền"}
+                        {busy === q.code
+                          ? "Đang lưu…"
+                          : done.includes(q.code)
+                            ? "Đã lưu"
+                            : "Đã nhận tiền"}
                       </Button>
                     ) : (
                       /* The handover form lives on the order, because it
@@ -309,7 +341,7 @@ export function DashboardScreen({ nowIso, days }: { nowIso: string; days: Window
                     <td>
                       <Link href={`/admin/orders/${o.code}`}>{o.code}</Link>
                     </td>
-                    <td className="nw">{customerById.get(o.customerId)?.name ?? "—"}</td>
+                    <td className="nw">{o.owner?.name ?? "—"}</td>
                     <td className="nw">
                       {dayMonth(o.placedAt)} · {clockLabel(o.placedAt)}
                     </td>
@@ -388,8 +420,9 @@ export function DashboardScreen({ nowIso, days }: { nowIso: string; days: Window
       </div>
 
       <p className="fine3">
-        <Icon name="info" className="ic sm" /> Dữ liệu mô phỏng: {ORDERS.length} đơn,{" "}
-        {summary.styles} mẫu · thao tác lưu trên trình duyệt này ·{" "}
+        <Icon name="info" className="ic sm" /> Dữ liệu mẫu: {book.length} đơn, {summary.styles}{" "}
+        mẫu · đơn hàng lưu trên máy chủ; tồn kho, {LEX.tl} và mã còn mô phỏng trên trình duyệt
+        này ·{" "}
         <Link className="lnk" href="/admin/log">
           Chi tiết
         </Link>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toAddress, toMe, type AddressRow, type ProfileRow } from "./account-dto";
+import { toAddress, toAdminCustomer, toMe, type AddressRow, type ProfileRow } from "./account-dto";
 
 /**
  * The mappers, on their own. They are the seam between a Postgres row and
@@ -82,5 +82,40 @@ describe("toAddress", () => {
     for (const label of ["Nhà", "Công ty", "Khác"]) {
       expect(toAddress({ ...ADDRESS, label }).label).toBe(label);
     }
+  });
+});
+
+describe("toAdminCustomer (slice B3a)", () => {
+  it("reads a profile to the second, on the Vietnamese wall clock", () => {
+    expect(
+      toAdminCustomer({
+        id: "0b6f5a4e-1d2c-4b3a-9f8e-7d6c5b4a3f21",
+        handle: null,
+        name: "Người Mới",
+        email: "moi@example.test",
+        phone: "",
+        joined_at: "2026-09-23T13:05:37.52+00:00",
+      }),
+    ).toEqual({
+      id: "0b6f5a4e-1d2c-4b3a-9f8e-7d6c5b4a3f21",
+      handle: null,
+      name: "Người Mới",
+      email: "moi@example.test",
+      phone: "",
+      joinedAt: "2026-09-23T20:05:37+07:00",
+    });
+  });
+
+  it("keeps a demo shopper's handle", () => {
+    expect(
+      toAdminCustomer({
+        id: "x",
+        handle: "c-minhanh",
+        name: "Trần Minh Anh",
+        email: "minhanh@email.com",
+        phone: "0912345678",
+        joined_at: "2026-03-08T14:14:00+00:00",
+      }).handle,
+    ).toBe("c-minhanh");
   });
 });

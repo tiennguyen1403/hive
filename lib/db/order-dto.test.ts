@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ORDERS } from "@/data/orders";
 import type { Order } from "@/data/types";
-import { toOrder, toOrders } from "./order-dto";
+import { toAdminOrders, toOrder, toOrders } from "./order-dto";
 
 /**
  * JSON exactly as `order_json()` writes it (`supabase/migrations/…_orders.sql`):
@@ -90,6 +90,42 @@ describe("toOrder — all six states", () => {
       trackingCode: "VD-8842-1907",
     } as const;
     expect(toOrder(json(status))).toEqual(expected(status));
+  });
+
+  it("reads the courier beside the number when the handover recorded one (slice B3a)", () => {
+    const status = {
+      state: "SHIPPING",
+      shippedAt: "2026-09-21T07:15:00+07:00",
+      trackingCode: "VNP-2430-01",
+      carrier: "Giao tiêu chuẩn",
+    } as const;
+    expect(toOrder(json(status))).toEqual(expected(status));
+  });
+
+  it("leaves the courier off a sample order that never had one, null or absent", () => {
+    const got = toOrder(
+      json({ state: "SHIPPING", shippedAt: "2026-09-21T07:15:00+07:00", trackingCode: "VD-1", carrier: null }),
+    );
+    expect(got.status).toEqual({
+      state: "SHIPPING",
+      shippedAt: "2026-09-21T07:15:00+07:00",
+      trackingCode: "VD-1",
+    });
+  });
+
+  it("refuses a courier that is not words", () => {
+    for (const carrier of ["", 7, {}]) {
+      expect(() =>
+        toOrder(
+          json({ state: "SHIPPING", shippedAt: "2026-09-21T07:15:00+07:00", trackingCode: "VD-1", carrier }),
+        ),
+      ).toThrow("order DH-2432.status.carrier");
+    }
+  });
+
+  it("keeps the courier to SHIPPING: no other state carries one", () => {
+    const got = toOrder(json({ state: "DELIVERED", deliveredAt: "2026-09-23T10:05:00+07:00", carrier: "x" }));
+    expect(got.status).toEqual({ state: "DELIVERED", deliveredAt: "2026-09-23T10:05:00+07:00" });
   });
 
   it("reads a delivered order", () => {
@@ -215,5 +251,38 @@ describe("toOrder — the twenty-four sample orders survive the trip", () => {
       const back = toOrder(JSON.parse(JSON.stringify(wire)));
       expect(back).toEqual({ ...o, shipTo: wire.shipTo });
     }
+  });
+});
+
+describe("toAdminOrders — the back office's list (slice B3a)", () => {
+  const owner = {
+    id: "0b6f5a4e-1d2c-4b3a-9f8e-7d6c5b4a3f21",
+    handle: "c-minhanh",
+    name: "Trần Minh Anh",
+    email: "minhanh@email.com",
+    phone: "0912345678",
+    joinedAt: "2026-03-08T21:14:00+07:00",
+  };
+
+  it("reads each order through toOrder, with the account beside it", () => {
+    const [got] = toAdminOrders([{ order: json({ state: "RECEIVED" }), owner }]);
+    expect(got).toEqual({ ...expected({ state: "RECEIVED" }), owner });
+  });
+
+  it("reads a guest's order with no account, and a real sign-up's with no handle", () => {
+    const got = toAdminOrders([
+      { order: json({ state: "RECEIVED" }), owner: null },
+      { order: json({ state: "RECEIVED" }, { code: "DH-2433" }), owner: { ...owner, handle: null } },
+    ]);
+    expect(got[0]!.owner).toBeNull();
+    expect(got[1]!.owner?.handle).toBeNull();
+    expect(got[1]!.owner?.id).toBe(owner.id);
+  });
+
+  it("names the field when an account is not one", () => {
+    expect(() =>
+      toAdminOrders([{ order: json({ state: "RECEIVED" }), owner: { ...owner, joinedAt: "hôm qua" } }]),
+    ).toThrow("order DH-2432.owner.joinedAt");
+    expect(() => toAdminOrders({})).toThrow("admin orders must be an array");
   });
 });

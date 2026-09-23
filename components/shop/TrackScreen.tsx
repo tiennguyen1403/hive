@@ -257,6 +257,9 @@ function Result({
                 <>
                   <dt>Mã vận đơn</dt>
                   <dd>
+                    {/* The service the shop handed it to, when the handover
+                        recorded one (slice B3a). */}
+                    {order.carrier && <span className="muted">{order.carrier} · </span>}
                     <b ref={trackingRef}>{order.trackingCode}</b>
                     <CopyButton value={order.trackingCode} selectRef={trackingRef} />
                   </dd>

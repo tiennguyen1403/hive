@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { requireAdmin } from "@/lib/db/session";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { SIZES, productId } from "@/data/types";
@@ -19,8 +20,9 @@ export const metadata = { title: "Sửa mẫu" };
  * catalogue rather than from a second copy of the numbers.
  */
 export default async function AdminEditProductPage(props: PageProps<"/admin/products/[id]">) {
-  await connection();
   const { id } = await props.params;
+  await requireAdmin(`/admin/products/${id}`);
+  await connection();
   const catalog = await loadCatalog();
   const product = catalog.byId.get(productId(id));
   if (!product) notFound();

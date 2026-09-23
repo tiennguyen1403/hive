@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { requireAdmin } from "@/lib/db/session";
 import { AdminPromotionsScreen } from "@/components/admin/AdminPromotionsScreen";
 import { queryOf } from "@/lib/admin-url";
 import { toVnIso } from "@/lib/datetime";
@@ -13,6 +14,7 @@ export const metadata = { title: "Mã giảm giá" };
  * window, not a stored flag — the same rule the issues follow.
  */
 export default async function AdminPromotionsPage(props: PageProps<"/admin/promotions">) {
+  await requireAdmin("/admin/promotions");
   await connection();
   const sp = await props.searchParams;
   return <AdminPromotionsScreen nowIso={toVnIso(demoNow())} query={queryOf(sp)} />;

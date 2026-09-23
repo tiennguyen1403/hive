@@ -340,5 +340,6 @@ insert into public.seed_order_lines (order_code, position, product_id, color, si
   ('DH-2430', 1, 'p-than', 'black', 'L', 1, 1350000),
   ('DH-2431', 0, 'p-cat', 'brown', 'XL', 1, 420000);
 
--- Build the live tables from the mirrors just filled.
-select public.reset_demo();
+-- Build the live tables from the mirrors just filled, anchored on the most
+-- recent 18:50 Vietnamese time (the fixture's own minute, shifted by whole days).
+select public.reset_demo(public.demo_anchor());

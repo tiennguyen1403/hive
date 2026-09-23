@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
-import { useSim } from "@/components/admin/SimContext";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { customerById } from "@/data/customers";
-import { ORDERS } from "@/data/orders";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
-import { customerId as toCustomerId } from "@/data/types";
-import { simOrders } from "@/lib/admin-sim";
+import { customerKey, type AdminCustomerDetail } from "@/lib/admin-customers";
+import type { AdminOrder } from "@/lib/admin-orders";
 import { customerFacts, issueOf, issuesLabel } from "@/lib/customer-tags";
 import { clockLabel, dayMonth, dayMonthYear } from "@/lib/datetime";
 import { dropState } from "@/lib/drop";
@@ -34,20 +31,26 @@ import { formatPhone } from "@/lib/phone";
  * "Đơn" counts everything they placed, cancelled included — this is a record
  * of who ordered what. "Tổng chi" counts only money that arrived. The two
  * columns deliberately disagree, and the screen says why.
+ *
+ * Since slice B3a the person is a row of `public.profiles` (a demo shopper or
+ * somebody who signed up), their address book is theirs in the database, and
+ * the orders are theirs by account.
  */
-export function CustomerScreen({ id, nowIso }: { id: string; nowIso: string }) {
+export function CustomerScreen({
+  customer,
+  orders,
+  nowIso,
+}: {
+  customer: AdminCustomerDetail;
+  /** Every order this account placed, from the database. */
+  orders: AdminOrder[];
+  nowIso: string;
+}) {
   const catalog = useCatalog();
-  const { sim } = useSim();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
-  const customer = customerById.get(toCustomerId(id))!;
 
   const openIssue = catalog.drops.find((d) => dropState(d, now) === "OPEN")?.no ?? null;
-  const facts = customerFacts(
-    catalog,
-    simOrders(ORDERS, sim).filter((o) => o.customerId === customer.id),
-    openIssue,
-    now,
-  );
+  const facts = customerFacts(catalog, orders, openIssue, now);
   const home = customer.addresses.find((a) => a.isDefault) ?? customer.addresses[0];
   const province = home ? findProvince(home.provinceCode) : undefined;
   const ward = home ? findWard(home.provinceCode, home.wardCode) : undefined;
@@ -69,7 +72,7 @@ export function CustomerScreen({ id, nowIso }: { id: string; nowIso: string }) {
           </span>
         }
       >
-        <ButtonLink tone="ink sm" icon="bag" href={`/admin/orders?customer=${customer.id}`}>
+        <ButtonLink tone="ink sm" icon="bag" href={`/admin/orders?customer=${customerKey(customer)}`}>
           Đơn của khách
         </ButtonLink>
       </AdminTop>
@@ -155,7 +158,9 @@ export function CustomerScreen({ id, nowIso }: { id: string; nowIso: string }) {
               </span>
               <b>{customer.name}</b>
               <span className="sub">
-                {formatPhone(customer.phone)} · {customer.email}
+                {/* A sign-up gives no number (the form does not ask). */}
+                {customer.phone ? `${formatPhone(customer.phone)} · ` : ""}
+                {customer.email}
               </span>
             </div>
           </section>

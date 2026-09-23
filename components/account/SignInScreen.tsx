@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Icon } from "@/components/icon/Icon";
 import { ShopFrame } from "@/components/shop/ShopFrame";
-import { demoSignIn, signIn } from "@/lib/actions/auth";
+import { demoAdminSignIn, demoSignIn, signIn } from "@/lib/actions/auth";
 import { IDLE } from "@/lib/actions/state";
 
 interface SignInScreenProps {
@@ -14,6 +14,8 @@ interface SignInScreenProps {
   next?: string;
   /** The published demo account, read from the environment by the page. */
   demoEmail?: string;
+  /** The published back-office account (slice B3a), on the same password. */
+  demoAdminEmail?: string;
   demoPassword?: string;
 }
 
@@ -41,18 +43,27 @@ interface SignInScreenProps {
  * missing piece is more honest than a button that opens nothing, and a
  * disabled button carries no icon (DESIGN.md §9 rule 3).
  */
-export function SignInScreen({ next, demoEmail, demoPassword }: SignInScreenProps) {
+export function SignInScreen({
+  next,
+  demoEmail,
+  demoAdminEmail,
+  demoPassword,
+}: SignInScreenProps) {
   const [state, submit, pending] = useActionState(signIn, IDLE);
   const [demoState, submitDemo, demoPending] = useActionState(demoSignIn, IDLE);
+  const [adminState, submitAdmin, adminPending] = useActionState(demoAdminSignIn, IDLE);
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
 
-  // Whichever of the two forms was last pressed is the one with something to
-  // say; neither can be pending while the other is.
-  const failed = state.errors.form ?? demoState.errors.form;
+  // Whichever of the three forms was last pressed is the one with something
+  // to say; none can be pending while another is.
+  const failed = state.errors.form ?? demoState.errors.form ?? adminState.errors.form;
+  const busy = pending || demoPending || adminPending;
   // No account to offer means no button offering it (DESIGN.md §9 rule 3).
   const demo = demoEmail && demoPassword ? { email: demoEmail, password: demoPassword } : null;
+  const demoAdmin =
+    demoAdminEmail && demoPassword ? { email: demoAdminEmail, password: demoPassword } : null;
 
   return (
     <ShopFrame>
@@ -69,6 +80,12 @@ export function SignInScreen({ next, demoEmail, demoPassword }: SignInScreenProp
               <span>
                 Bản demo công khai: ai cũng đăng ký được. Tài khoản thử sẵn{" "}
                 <b>{demo.email}</b> · mật khẩu <b>{demo.password}</b>.
+                {demoAdmin && (
+                  <>
+                    <br />
+                    Quản trị thử: <b>{demoAdmin.email}</b> · mật khẩu <b>{demoAdmin.password}</b>.
+                  </>
+                )}
               </span>
             </p>
           )}
@@ -123,8 +140,8 @@ export function SignInScreen({ next, demoEmail, demoPassword }: SignInScreenProp
             <Button
               tone="wide"
               type="submit"
-              disabled={pending || demoPending}
-              {...(pending || demoPending ? {} : { icon: "login" as const })}
+              disabled={busy}
+              {...(busy ? {} : { icon: "login" as const })}
             >
               {pending ? "Đang đăng nhập…" : "Đăng nhập"}
             </Button>
@@ -138,10 +155,26 @@ export function SignInScreen({ next, demoEmail, demoPassword }: SignInScreenProp
               <Button
                 tone="ink wide"
                 type="submit"
-                disabled={pending || demoPending}
-                {...(pending || demoPending ? {} : { icon: "user" as const })}
+                disabled={busy}
+                {...(busy ? {} : { icon: "user" as const })}
               >
                 {demoPending ? "Đang mở tài khoản thử…" : "Đăng nhập thử"}
+              </Button>
+            </form>
+          )}
+
+          {/* The back office, in one press (slice B3a): the manager's account
+              printed above, landing on /admin. */}
+          {demoAdmin && (
+            <form action={submitAdmin} style={{ marginTop: 14 }}>
+              <input type="hidden" name="next" value={next ?? ""} />
+              <Button
+                tone="ink wide"
+                type="submit"
+                disabled={busy}
+                {...(busy ? {} : { icon: "chart" as const })}
+              >
+                {adminPending ? "Đang mở khu quản trị…" : "Vào quản trị thử"}
               </Button>
             </form>
           )}

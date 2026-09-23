@@ -32,8 +32,9 @@ import {
  * browser is the order number, or a sentence and the reason it was chosen
  * (`02-guides/data-security.md`, "Controlling return values").
  *
- * The clock is the app's (QĐ-24): `toVnIso(demoNow())` is what the database
- * stamps the order with and judges the issue, the code and the hold against.
+ * The clock is the app's — the real one since slice B3a: `toVnIso(demoNow())`
+ * is what the database stamps the order with and judges the issue, the code
+ * and the hold against, and the only `p_now` it accepts from a shopper.
  */
 
 /**

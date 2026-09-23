@@ -118,8 +118,13 @@ export function customerFacts(
     streak,
     spentVnd: booked.reduce((n, o) => n + orderTotalVnd(o), 0),
     ...(orders[0] ? { last: orders[0] } : {}),
+    // Waiting on the shop: a transfer to confirm, a paid order to hand over,
+    // and since slice B3a an order taken and not yet paid for (RECEIVED).
     pending: orders.some(
-      (o) => o.status.state === "AWAITING_TRANSFER" || o.status.state === "PAID",
+      (o) =>
+        o.status.state === "AWAITING_TRANSFER" ||
+        o.status.state === "RECEIVED" ||
+        o.status.state === "PAID",
     ),
     tag: tagOf(catalog, booked.length, streak, oldest, openIssueNo),
   };

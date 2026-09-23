@@ -251,12 +251,18 @@ export type DeliveryMethod = "STANDARD" | "EXPRESS";
  * connected. Until then only an order kept in the browser could be in it;
  * now the database issues it, and calling such an order `PAID` would be the
  * screen claiming money changed hands.
+ *
+ * `carrier` joined `SHIPPING` at slice B3a, when the back office's handover
+ * started writing to the database: the delivery service the parcel went by,
+ * typed at handover (no shipping partner is signed, so it is one of the
+ * services the shop sells, not a courier's name). Optional, because the
+ * sample orders were handed over before anybody recorded one.
  */
 export type OrderStatus =
   | { state: "AWAITING_TRANSFER"; dueAt: string }
   | { state: "RECEIVED" }
   | { state: "PAID"; paidAt: string }
-  | { state: "SHIPPING"; shippedAt: string; trackingCode: string }
+  | { state: "SHIPPING"; shippedAt: string; trackingCode: string; carrier?: string }
   | { state: "DELIVERED"; deliveredAt: string }
   | { state: "CANCELLED"; cancelledAt: string; reason: string };
 

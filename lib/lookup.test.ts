@@ -145,6 +145,25 @@ describe("trackedOfOrder", () => {
     expect(tracked.state).toBe("SHIPPING");
   });
 
+  it("names no courier for a sample parcel that recorded none", () => {
+    expect("carrier" in tracked).toBe(false);
+  });
+
+  it("names the courier beside the number once a handover recorded one (slice B3a)", () => {
+    const handed = {
+      ...order,
+      status: {
+        state: "SHIPPING" as const,
+        shippedAt: "2026-09-20T09:00:00+07:00",
+        trackingCode: "VNP-2425-01",
+        carrier: "Giao tiêu chuẩn · 2–4 ngày",
+      },
+    };
+    const t = trackedOfOrder(FIXTURE_CATALOG, handed, "x", DURING_5);
+    expect(t.trackingCode).toBe("VNP-2425-01");
+    expect(t.carrier).toBe("Giao tiêu chuẩn · 2–4 ngày");
+  });
+
   it("totals the order from its own lines, never from a typed figure", () => {
     // 390.000 + 450.000 goods, 30.000 delivery, CHAOBAN takes 50.000 off.
     expect(tracked.subtotalVnd).toBe(840_000);

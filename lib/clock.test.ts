@@ -5,6 +5,7 @@ import { DROPS, CATALOG } from "@/data/catalog";
 import { ORDERS } from "@/data/orders";
 import { PROMOTIONS } from "@/data/promotions";
 import { DEMO_ANCHOR, demoNow, demoNowMs } from "./clock";
+import { toVnIso } from "./datetime";
 import { dropState } from "./drop";
 import { effectiveStatus } from "./customer-orders";
 import { promoState } from "./admin-rows";
@@ -15,85 +16,81 @@ const DAY = 86_400_000;
 /** Pretend the real wall clock reads `realIso`. */
 function atRealTime(realIso: string) {
   vi.useFakeTimers();
-  vi.setSystemTime(new Date(realIso));
+  vi.setSystemTime(Date.parse(realIso));
 }
 
 afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("demoNow keeps the time of day and pins the date", () => {
-  it("is the anchor itself at the anchor instant", () => {
-    atRealTime(DEMO_ANCHOR);
-    expect(demoNow().toISOString()).toBe(new Date(ANCHOR).toISOString());
-  });
-
-  it("keeps the real time of day, whatever the real date is", () => {
-    // Four real days later, at 09:15 Vietnamese time.
-    atRealTime("2026-09-24T09:15:00+07:00");
-    const now = demoNow();
-    expect(now.getTime() - ANCHOR).toBeGreaterThanOrEqual(0);
-    expect(now.getTime() - ANCHOR).toBeLessThan(DAY);
-    // 09:15 on the demo day is 09:15 on the real one.
-    const vn = new Date(now.getTime() + 7 * 3_600_000).toISOString();
-    expect(vn.slice(11, 16)).toBe("09:15");
-  });
-
-  it("lands only on 20 or 21 September 2026, whatever day it really is", () => {
+/**
+ * Slice B3a retired the QĐ-24 demo clock: "now" is the real one, and it is
+ * the DATA that moves — `reset_demo(demo_anchor())` shifts the sample onto
+ * the most recent 18:50 in Vietnam by a whole number of days.
+ */
+describe("demoNow is the real clock", () => {
+  it("reads the wall clock, whatever the date", () => {
     for (const real of [
-      "2026-09-20T19:00:00+07:00",
-      "2026-09-21T00:30:00+07:00",
-      "2026-09-23T04:02:00+07:00",
-      "2026-11-01T12:00:00+07:00",
+      "2026-09-20T18:50:00+07:00",
+      "2026-09-24T09:15:00+07:00",
       "2027-03-08T23:59:00+07:00",
     ]) {
       atRealTime(real);
-      const vnDay = new Date(demoNow().getTime() + 7 * 3_600_000).toISOString().slice(0, 10);
-      expect(["2026-09-20", "2026-09-21"]).toContain(vnDay);
+      expect(demoNowMs()).toBe(Date.parse(real));
+      expect(demoNow().getTime()).toBe(Date.parse(real));
       vi.useRealTimers();
     }
   });
 
-  it("runs forward inside one demo day", () => {
-    atRealTime("2026-10-05T09:00:00+07:00");
-    const a = demoNowMs();
-    vi.setSystemTime(new Date("2026-10-05T11:30:00+07:00"));
-    const b = demoNowMs();
-    expect(b).toBeGreaterThan(a);
-    expect(b - a).toBe(2.5 * 3_600_000);
+  it("no longer wraps the date back to 20/09 at 18:50", () => {
+    atRealTime("2026-10-05T18:51:00+07:00");
+    expect(toVnIso(demoNow())).toBe("2026-10-05T18:51:00+07:00");
   });
 
-  it("turns the day over at 18:50 real time, and only then", () => {
-    atRealTime("2026-10-05T18:49:00+07:00");
-    const before = new Date(demoNow().getTime() + 7 * 3_600_000).toISOString();
-    vi.setSystemTime(new Date("2026-10-05T18:51:00+07:00"));
-    const after = new Date(demoNow().getTime() + 7 * 3_600_000).toISOString();
-
-    expect(before.slice(0, 10)).toBe("2026-09-21");
-    expect(after.slice(0, 10)).toBe("2026-09-20");
-    // The time of day is continuous across the wrap: 18:49 → 18:51.
-    expect(before.slice(11, 16)).toBe("18:49");
-    expect(after.slice(11, 16)).toBe("18:51");
-  });
-
-  it("never runs backwards from a real clock set before the anchor", () => {
-    atRealTime("2026-01-01T00:00:00+07:00");
-    const now = demoNowMs();
-    expect(now).toBeGreaterThanOrEqual(ANCHOR);
-    expect(now).toBeLessThan(ANCHOR + DAY);
+  it("keeps DEMO_ANCHOR as the minute the fixture was frozen at", () => {
+    expect(DEMO_ANCHOR).toBe("2026-09-20T18:50:00+07:00");
   });
 });
 
-// ────────────────────────────────────────────── the data the clock relies on
 /**
- * The demo day only holds still if the fixtures bracket it: everything the
- * screens report as HAVING HAPPENED is at or before the anchor, and every
- * deadline they count DOWN to is more than a demo day away from it. Miss
- * either and a state flips halfway through an afternoon — an issue closes,
- * an unpaid order cancels itself — which is the exact decay QĐ-24 exists to
- * stop.
+ * Why a shift by whole days is the right one: every hour and minute the
+ * sample records survives it, so "hạn 19:50", "đóng lúc 20:00" and the
+ * reviewed screens keep their times on whatever date the reset lands.
  */
-describe("the fixtures bracket the demo day", () => {
+describe("the sample survives a shift by whole days", () => {
+  const stamps = ORDERS.flatMap((o) => {
+    const s = o.status;
+    const at =
+      s.state === "AWAITING_TRANSFER" ? s.dueAt
+      : s.state === "PAID" ? s.paidAt
+      : s.state === "SHIPPING" ? s.shippedAt
+      : s.state === "DELIVERED" ? s.deliveredAt
+      : s.state === "CANCELLED" ? s.cancelledAt
+      : null;
+    return [o.placedAt, ...(at ? [at] : [])];
+  });
+
+  it("keeps every hour and minute, whatever the number of days", () => {
+    for (const days of [1, 3, 30, 365]) {
+      for (const iso of stamps) {
+        const moved = toVnIso(new Date(Date.parse(iso) + days * DAY));
+        expect(moved.slice(11, 16), `${iso} + ${days}d`).toBe(iso.slice(11, 16));
+      }
+    }
+  });
+});
+
+// ────────────────────────────────────────── the data the anchoring relies on
+/**
+ * A reset lands the sample on the most recent 18:50, so for up to a day
+ * after it the real clock sits between the anchor and anchor + 24h. The
+ * screens only stay truthful across that day if the fixtures bracket it:
+ * everything they report as HAVING HAPPENED is at or before the anchor, and
+ * every deadline they count DOWN to is more than a day away from it. Miss
+ * either and a state flips halfway through an afternoon — an issue closes,
+ * an unpaid order cancels itself — on the very day it was reset.
+ */
+describe("the fixtures bracket the day after any reset", () => {
   it("records nothing after the anchor", () => {
     for (const o of ORDERS) {
       expect(Date.parse(o.placedAt)).toBeLessThanOrEqual(ANCHOR);

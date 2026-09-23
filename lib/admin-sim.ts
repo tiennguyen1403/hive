@@ -2,8 +2,6 @@ import type {
   ColorKey,
   Drop,
   Family,
-  Order,
-  OrderStatus,
   Product,
   Promotion,
   PromoCode,
@@ -12,31 +10,33 @@ import type {
   Teaser,
 } from "@/data/types";
 import { promoCode } from "@/data/types";
-import { CUSTOMER_CANCEL_REASON } from "./customer-orders";
 
 /** The three shapes a code can take, named once so the log can store it. */
 export type PromoKind = Promotion["kind"];
 
 /**
- * What the back office did on THIS BROWSER, and nothing else.
+ * What the back office did on THIS BROWSER to what is still simulated —
+ * stock, issues, teasers and discount codes — and nothing else.
  *
- * There is no server. The user's decision (question 3 of the v2 round) was
- * that a simulated action must nevertheless be REAL STATE: marking an order
- * paid has to move it out of the queue, change its badge on the orders table,
- * recount the tabs and the KPIs, survive a reload — and still never pretend
- * that anything left this machine. So every admin action is recorded here as
- * an event, the events live in one versioned `localStorage` key, and every
- * admin screen renders `fixtures + overlay` through the pure functions below.
+ * SINCE SLICE B3A AN ORDER IS NOT IN HERE. Every move the shop makes on an
+ * order — confirming the money, the handover, the delivery, a cancellation,
+ * a note, a new address — is a Postgres function with a guard and an entry
+ * in the `events` table (`supabase/migrations/…_admin.sql`), and the order
+ * screens read the database. What is left in this file is the part slice
+ * B3b moves next, and until then it keeps working the way it always has.
  *
- * An EVENT LOG rather than a patched copy of the fixtures, for three reasons
- * that all showed up while building it:
+ * The user's decision (question 3 of the v2 round) still holds for what is
+ * left: a simulated action must nevertheless be REAL STATE — adjusting a
+ * shelf has to change the numbers, survive a reload, and never pretend that
+ * anything left this machine. So each action is recorded here as an event,
+ * the events live in one versioned `localStorage` key, and the screens render
+ * `catalogue + overlay` through the pure functions below.
  *
- *   · the `.simbar` has to say how many changes live in this browser, and
- *     that is `actions.length` — a patched copy cannot tell you how it got
- *     there;
- *   · the order's internal notes and its timeline are the same actions read
- *     a second way, so they cannot drift from the status;
- *   · "Đặt lại dữ liệu mẫu" is `delete the key`, with nothing to undo.
+ * An EVENT LOG rather than a patched copy, for the reasons that held when it
+ * was built: the sidebar has to say how many changes live in this browser,
+ * and that is `actions.length`; the activity log reads the same actions a
+ * second way (`lib/activity-log.ts#simLogRows`); and wiping the key is all a
+ * reset of this browser's half needs.
  *
  * Nothing in here touches `window`. The React shell is
  * `components/admin/SimContext.tsx`; the rules are testable without a DOM
@@ -44,44 +44,14 @@ export type PromoKind = Promotion["kind"];
  */
 
 export const SIM_STORAGE_KEY = "brand.adminSim";
+/**
+ * Still 1: a record written before slice B3a stays readable. The order
+ * actions it may hold are simply not kinds this file knows any more, so
+ * `parseSim` drops them and keeps the rest.
+ */
 const SCHEMA_VERSION = 1;
 
-/** Who a note came from. The shop's own hand, or a recorded action. */
-export const NOTE_AUTHOR = "Cửa hàng";
-
-/**
- * The other hand that can now write in here — added at v3 slice 4, when the
- * user decided a shopper may cancel their own unpaid order.
- *
- * The store is shared on purpose. A cancellation the shop cannot see is a
- * cancellation that did not happen: the back office reads `fixtures +
- * overlay`, so writing the shopper's action into the same log is what makes
- * `/admin/orders` show "Đã huỷ · khách huỷ" a reload later. It is still
- * simulation, it still lives in one browser, and `SimBar` still counts it.
- */
-export const CUSTOMER_AUTHOR = "Khách";
-
-/**
- * The reason recorded on an order the shopper called off themselves. Defined
- * beside `OVERDUE_REASON` since slice B2, where `cancel_order()` in the
- * database writes the same words; re-exported so this log keeps its name.
- */
-export { CUSTOMER_CANCEL_REASON };
-
 export type SimAction =
-  | { kind: "ORDER_PAID"; at: string; code: string }
-  | {
-      kind: "ORDER_SHIPPED";
-      at: string;
-      code: string;
-      /** Shown as-is: no courier has been signed, so it is typed in. */
-      carrier: string;
-      trackingCode: string;
-    }
-  | { kind: "ORDER_CANCELLED"; at: string; code: string; reason: string; note: string }
-  /** The shopper's own hand, from their order screen. It carries no note. */
-  | { kind: "ORDER_CANCELLED_BY_CUSTOMER"; at: string; code: string }
-  | { kind: "ORDER_NOTE"; at: string; code: string; text: string }
   | { kind: "DROP_ADDED"; at: string; no: number; opensAt: string; closesAt: string }
   | { kind: "DROP_SCHEDULED"; at: string; no: number; opensAt: string; closesAt: string }
   | {
@@ -99,22 +69,10 @@ export type SimAction =
     }
   | { kind: "PROMO_PAUSED"; at: string; code: string; paused: boolean }
   /**
-   * v3 slice 5. Seven more hands the back office has, every one of them the
-   * same shape as the six above: an EVENT, with what it was and what it
-   * became, so the activity log can read the store a second way instead of
-   * keeping a second copy (`lib/activity-log.ts`).
+   * v3 slice 5. The same shape as the rest: an EVENT, with what it was and
+   * what it became, so the activity log can read the store a second way
+   * instead of keeping a second copy (`lib/activity-log.ts`).
    */
-  | {
-      kind: "ORDER_ADDRESS_EDITED";
-      at: string;
-      code: string;
-      before: ShipTo;
-      after: ShipTo;
-      /** Required by the form: it goes in the log and on the slip. */
-      reason: string;
-    }
-  /** No server sends anything. The action IS the record that it was asked for. */
-  | { kind: "ORDER_CONFIRMATION_RESENT"; at: string; code: string; email: string }
   | {
       kind: "INVENTORY_ADJUSTED";
       at: string;
@@ -157,9 +115,6 @@ export type SimAction =
 
 export type SimActionKind = SimAction["kind"];
 
-/** The frozen delivery address an order carries. */
-export type ShipTo = Order["shipTo"];
-
 export interface InventoryCell {
   color: ColorKey;
   size: Size;
@@ -197,10 +152,11 @@ export function serializeSim(overlay: SimOverlay): string {
  *
  * Never throws and never half-trusts a record: what is in storage came from
  * another tab, an older build or devtools, and a malformed action would show
- * up on screen as an order in a state nothing can render. A record of the
- * wrong version is dropped whole; inside a valid record, only the actions
- * that type-check survive, because losing one simulated click is better than
- * losing the other nineteen.
+ * up on screen as a shelf or a code in a state nothing can render. A record
+ * of the wrong version is dropped whole; inside a valid record, only the
+ * actions that type-check survive, because losing one simulated click is
+ * better than losing the other nineteen — and an action of a kind this build
+ * no longer keeps here (an order's, from before slice B3a) is one of those.
  */
 export function parseSim(raw: string | null): SimOverlay {
   if (!raw) return EMPTY_SIM;
@@ -229,16 +185,6 @@ const num = (v: unknown) => typeof v === "number" && Number.isFinite(v);
 function isAction(v: unknown): v is SimAction {
   if (!isRecord(v) || !str(v.kind) || !str(v.at)) return false;
   switch (v.kind) {
-    case "ORDER_PAID":
-      return str(v.code);
-    case "ORDER_SHIPPED":
-      return str(v.code) && str(v.carrier) && str(v.trackingCode);
-    case "ORDER_CANCELLED":
-      return str(v.code) && str(v.reason) && str(v.note);
-    case "ORDER_CANCELLED_BY_CUSTOMER":
-      return str(v.code);
-    case "ORDER_NOTE":
-      return str(v.code) && str(v.text);
     case "DROP_ADDED":
     case "DROP_SCHEDULED":
       return num(v.no) && str(v.opensAt) && str(v.closesAt);
@@ -258,10 +204,6 @@ function isAction(v: unknown): v is SimAction {
       );
     case "PROMO_PAUSED":
       return str(v.code) && typeof v.paused === "boolean";
-    case "ORDER_ADDRESS_EDITED":
-      return str(v.code) && isShipTo(v.before) && isShipTo(v.after) && str(v.reason);
-    case "ORDER_CONFIRMATION_RESENT":
-      return str(v.code) && str(v.email);
     case "INVENTORY_ADJUSTED":
       return (
         str(v.productId) &&
@@ -297,280 +239,8 @@ function isAction(v: unknown): v is SimAction {
   }
 }
 
-function isShipTo(v: unknown): v is ShipTo {
-  return (
-    isRecord(v) &&
-    str(v.recipient) &&
-    str(v.phone) &&
-    str(v.line) &&
-    str(v.provinceCode) &&
-    str(v.wardCode)
-  );
-}
-
 function isCell(v: unknown): v is InventoryCell {
   return isRecord(v) && str(v.color) && str(v.size) && num(v.before) && num(v.after);
-}
-
-// ─────────────────────────────────────────────────────────────────── orders
-/**
- * The status an order ends up in, and the courier that carried it.
- *
- * `carrier` cannot live in `OrderStatus`: that type is the wire format
- * (`data/types.ts`) and the fixtures have no courier field, because no
- * shipping partner has been signed. It travels beside the status instead of
- * being smuggled into it.
- */
-export interface OrderPatch {
-  status: OrderStatus;
-  carrier?: string;
-}
-
-export function orderPatches(overlay: SimOverlay): Map<string, OrderPatch> {
-  const patches = new Map<string, OrderPatch>();
-  for (const a of overlay.actions) {
-    switch (a.kind) {
-      case "ORDER_PAID":
-        patches.set(a.code, { status: { state: "PAID", paidAt: a.at } });
-        break;
-      case "ORDER_SHIPPED":
-        patches.set(a.code, {
-          status: { state: "SHIPPING", shippedAt: a.at, trackingCode: a.trackingCode },
-          carrier: a.carrier,
-        });
-        break;
-      case "ORDER_CANCELLED":
-        patches.set(a.code, {
-          status: { state: "CANCELLED", cancelledAt: a.at, reason: a.reason },
-        });
-        break;
-      case "ORDER_CANCELLED_BY_CUSTOMER":
-        patches.set(a.code, {
-          status: {
-            state: "CANCELLED",
-            cancelledAt: a.at,
-            reason: CUSTOMER_CANCEL_REASON,
-          },
-        });
-        break;
-      default:
-        break;
-    }
-  }
-  return patches;
-}
-
-/**
- * The order book as this browser has it.
- *
- * The array keeps its order and its length: an overlay can move an order
- * between states, never add or remove one. Everything downstream — the
- * queue, the tabs, the KPIs, the chart — is the existing derivation run over
- * this list instead of over `ORDERS`.
- */
-export function simOrders(base: Order[], overlay: SimOverlay): Order[] {
-  const patches = orderPatches(overlay);
-  const addresses = addressPatches(overlay);
-  if (patches.size === 0 && addresses.size === 0) return base;
-  return base.map((o) => {
-    const patch = patches.get(o.code);
-    const shipTo = addresses.get(o.code);
-    if (!patch && !shipTo) return o;
-    return {
-      ...o,
-      ...(patch ? { status: patch.status } : {}),
-      ...(shipTo ? { shipTo } : {}),
-    };
-  });
-}
-
-/**
- * Where each edited order is going now.
- *
- * The LAST edit wins, and it replaces the frozen copy on the order rather
- * than sitting beside it: the table, the slip and the courier all have to
- * read one address, and two of them reading the old one is the failure this
- * whole feature exists to prevent.
- */
-export function addressPatches(overlay: SimOverlay): Map<string, ShipTo> {
-  const at = new Map<string, ShipTo>();
-  for (const a of overlay.actions) {
-    if (a.kind === "ORDER_ADDRESS_EDITED") at.set(a.code, a.after);
-  }
-  return at;
-}
-
-/** Why this order's address was last changed, for the slip and the log. */
-export function addressEditReason(code: string, overlay: SimOverlay): string | undefined {
-  let reason: string | undefined;
-  for (const a of overlay.actions) {
-    if (a.kind === "ORDER_ADDRESS_EDITED" && a.code === code) reason = a.reason;
-  }
-  return reason;
-}
-
-/**
- * The same log read from the SHOP side — NARROWER than the back office's.
- *
- * DESIGN.md §8 records that the overlay lives in the back office and that
- * the shop reads the fixtures as they are. The reason behind that rule is
- * one specific lie, and it is worth stating precisely rather than applying
- * the rule by its shape: **the mock must never tell a shopper that money
- * arrived**. `ORDER_PAID` is a claim about a bank this build has no
- * connection to, so it stops at the back office.
- *
- * Three actions do cross, because each is a real thing that happened to the
- * ORDER rather than a claim about a payment:
- *
- *   · `ORDER_CANCELLED_BY_CUSTOMER` — they pressed the button, on this
- *     device, a moment ago (v3 slice 4, the user's decision).
- *   · `ORDER_SHIPPED` — a parcel was handed over and given a number, and
- *     that number is the shopper's to read. The handover form promises them
- *     exactly that ("khách thấy mã này ở tra cứu đơn"), so `/track` and
- *     "Đơn của tôi" have to show it or the promise is false.
- *   · `ORDER_CANCELLED` — the shop called it off, and the cancel sheet says
- *     in as many words that the shopper will see the reason.
- *
- * An address edit rides along with the order it belongs to, for the same
- * reason: the shopper asked for it.
- */
-const SHOP_VISIBLE = new Set<SimActionKind>([
-  "ORDER_CANCELLED_BY_CUSTOMER",
-  "ORDER_SHIPPED",
-  "ORDER_CANCELLED",
-]);
-
-export function shopOrders(base: Order[], overlay: SimOverlay): Order[] {
-  const patches = new Map<string, OrderPatch>();
-  for (const a of overlay.actions) {
-    if (!SHOP_VISIBLE.has(a.kind)) continue;
-    switch (a.kind) {
-      case "ORDER_CANCELLED_BY_CUSTOMER":
-        patches.set(a.code, {
-          status: { state: "CANCELLED", cancelledAt: a.at, reason: CUSTOMER_CANCEL_REASON },
-        });
-        break;
-      case "ORDER_CANCELLED":
-        patches.set(a.code, {
-          status: { state: "CANCELLED", cancelledAt: a.at, reason: a.reason },
-        });
-        break;
-      case "ORDER_SHIPPED":
-        patches.set(a.code, {
-          status: { state: "SHIPPING", shippedAt: a.at, trackingCode: a.trackingCode },
-          carrier: a.carrier,
-        });
-        break;
-      default:
-        break;
-    }
-  }
-  const addresses = addressPatches(overlay);
-  if (patches.size === 0 && addresses.size === 0) return base;
-  return base.map((o) => {
-    const patch = patches.get(o.code);
-    const shipTo = addresses.get(o.code);
-    if (!patch && !shipTo) return o;
-    return {
-      ...o,
-      ...(patch ? { status: patch.status } : {}),
-      ...(shipTo ? { shipTo } : {}),
-    };
-  });
-}
-
-export function carrierOf(code: string, overlay: SimOverlay): string | undefined {
-  return orderPatches(overlay).get(code)?.carrier;
-}
-
-// ──────────────────────────────────────────────────────────────────── notes
-export interface SimNote {
-  /** Shown as-is. */
-  text: string;
-  /** "Cửa hàng", or empty for a note the system wrote. */
-  author: string;
-  at: string;
-  /** A note nobody typed — rendered quieter, `.ni.sys`. */
-  system: boolean;
-}
-
-/**
- * The internal notes an order has picked up in this browser.
- *
- * An action writes its own note, which is why the timeline and the notes can
- * never disagree: they are the same log read twice. A cancellation with an
- * internal comment produces two notes — what happened, and what the shop
- * wrote about it — because they have different authors.
- */
-export function simNotes(code: string, overlay: SimOverlay): SimNote[] {
-  const notes: SimNote[] = [];
-  for (const a of overlay.actions) {
-    if (!("code" in a) || a.code !== code) continue;
-    switch (a.kind) {
-      case "ORDER_PAID":
-        notes.push({
-          text: "Đã ghi nhận tiền về · đơn chuyển sang Đã thanh toán.",
-          author: "",
-          at: a.at,
-          system: true,
-        });
-        break;
-      case "ORDER_SHIPPED":
-        notes.push({
-          text: `Bàn giao · ${a.carrier} · mã vận đơn ${a.trackingCode}.`,
-          author: "",
-          at: a.at,
-          system: true,
-        });
-        break;
-      case "ORDER_CANCELLED":
-        notes.push({
-          text: `Huỷ đơn · lý do: ${a.reason}.`,
-          author: "",
-          at: a.at,
-          system: true,
-        });
-        if (a.note.trim()) {
-          notes.push({ text: a.note.trim(), author: NOTE_AUTHOR, at: a.at, system: false });
-        }
-        break;
-      case "ORDER_CANCELLED_BY_CUSTOMER":
-        // Two notes would be one too many: nobody typed anything, and the
-        // line has to say WHO, because "Huỷ đơn" with no hand named reads
-        // as the shop's own doing.
-        notes.push({
-          text: "Khách huỷ đơn · đơn chưa thanh toán, hàng về kệ.",
-          author: CUSTOMER_AUTHOR,
-          at: a.at,
-          system: false,
-        });
-        break;
-      case "ORDER_NOTE":
-        notes.push({ text: a.text, author: NOTE_AUTHOR, at: a.at, system: false });
-        break;
-      case "ORDER_ADDRESS_EDITED":
-        notes.push({
-          text: `Sửa địa chỉ giao · lý do: ${a.reason}`,
-          author: "",
-          at: a.at,
-          system: true,
-        });
-        break;
-      case "ORDER_CONFIRMATION_RESENT":
-        // "Đã ghi", not "đã gửi". Nothing left the building, and a note
-        // claiming otherwise is the one thing this store must never write.
-        notes.push({
-          text: `Đã ghi nhật ký: gửi lại xác nhận tới ${a.email} · chưa có máy chủ gửi.`,
-          author: "",
-          at: a.at,
-          system: true,
-        });
-        break;
-      default:
-        break;
-    }
-  }
-  return notes;
 }
 
 // ──────────────────────────────────────────────────────────────────── drops

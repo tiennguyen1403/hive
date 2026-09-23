@@ -4,6 +4,8 @@ import { CUSTOMERS } from "@/data/customers";
 import { ORDERS, ordersOf } from "@/data/orders";
 import { PROMOTIONS } from "@/data/promotions";
 import type { Order, Promotion } from "@/data/types";
+import { demoNow } from "@/lib/clock";
+import { toVnIso } from "@/lib/datetime";
 import { orderSubtotalVnd, orderTotalVnd } from "@/lib/orders";
 import { checkoutTotals } from "@/lib/shipping";
 import type { Database, Json } from "./database.types";
@@ -27,6 +29,16 @@ import { toOrder, toOrders } from "./order-dto";
  * Every business instant is passed in (`p_now`), never read from Postgres'
  * own clock — which is what lets this file ask "and twelve hours later?"
  * without waiting twelve hours.
+ *
+ * SINCE SLICE B3A the database refuses a `p_now` more than five minutes off
+ * its own clock from anybody but the service role, and the app runs on the
+ * real clock. So the orders this file places at the fixture's own moments
+ * (20/09/2026, 19:00) are placed through the service role, as a guest — the
+ * same pricing, locking and sweeping code runs either way — and every reset
+ * names the fixture's anchor explicitly, because the seed and the app now
+ * anchor on the most recent 18:50 instead. The tests that need a signed-in
+ * shopper's own hand (cancelling, filing an order under an account) start
+ * from `reset_demo(demo_anchor())` and use the real clock, as the app does.
  *
  * Needs a running stack, `.env.local` and the demo accounts
  * (`npm run seed:users`). EVERY TEST starts from the seed (`reset_demo()` in
@@ -63,6 +75,22 @@ const anon = fresh();
 const admin = createClient<Database>(url, secretKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+
+/**
+ * Another service-role client with its own connection, for the races in (b):
+ * two clients, two requests, two transactions at once.
+ */
+function serviceClient(): Client {
+  return createClient<Database>(url!, secretKey!, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+/** The instant `data/` was frozen at — what the fixture-comparing tests reset onto. */
+const FIXTURE_ANCHOR = "2026-09-20T18:50:00+07:00";
+
+/** The real clock, the way a Server Action sends it (slice B3a). */
+const realNow = () => toVnIso(demoNow());
 
 async function signedIn(email: string): Promise<Client> {
   const client = fresh();
@@ -168,7 +196,15 @@ async function stateOf(code: string) {
 }
 
 async function reset() {
-  const { error } = await admin.rpc("reset_demo");
+  const { error } = await admin.rpc("reset_demo", { p_anchor: FIXTURE_ANCHOR });
+  if (error) throw new Error(`reset_demo failed: ${error.message}`);
+}
+
+/** The shop as the app sees it: anchored on the most recent 18:50, on the real clock. */
+async function resetToRealAnchor() {
+  const anchor = await admin.rpc("demo_anchor");
+  if (anchor.error) throw new Error(`demo_anchor failed: ${anchor.error.message}`);
+  const { error } = await admin.rpc("reset_demo", { p_anchor: anchor.data });
   if (error) throw new Error(`reset_demo failed: ${error.message}`);
 }
 
@@ -178,8 +214,11 @@ beforeEach(async () => {
   await reset();
 });
 
+// Leave the shop the way the app expects to find it: on the real clock's
+// anchor, not on the fixture's (slice B3a) — otherwise a preview opened after
+// `npm run test:db` shows the sample's transfers four days past their hold.
 afterAll(async () => {
-  await reset();
+  await resetToRealAnchor();
 });
 
 /**
@@ -244,7 +283,7 @@ describe("(a) place_order() prices a basket exactly as checkoutTotals() does", (
     it(c.name, async () => {
       await setPrice("p-khoi", c.khoiPrice ?? 390_000);
       const order = await placeAndRead(
-        anon,
+        admin,
         input(c.lines, {
           delivery: c.delivery ?? "STANDARD",
           payment: c.payment ?? "BANK_TRANSFER",
@@ -286,7 +325,7 @@ describe("(a) place_order() prices a basket exactly as checkoutTotals() does", (
 
   it("prices from the database, not from anything the request says", async () => {
     const order = await placeAndRead(
-      anon,
+      admin,
       input([khoi()], { unitPriceVnd: 1, totalVnd: 1, discountVnd: 999_999, shippingFeeVnd: 0 }),
     );
     expect(order.lines[0]!.unitPriceVnd).toBe(390_000);
@@ -295,11 +334,11 @@ describe("(a) place_order() prices a basket exactly as checkoutTotals() does", (
   });
 
   it("issues a transfer the twelve-hour hold, and a COD order no deadline", async () => {
-    const transfer = await placeAndRead(anon, input([khoi()]));
+    const transfer = await placeAndRead(admin, input([khoi()]));
     expect(transfer.status).toEqual({ state: "AWAITING_TRANSFER", dueAt: "2026-09-21T07:00:00+07:00" });
     expect(transfer.placedAt).toBe(NOW);
 
-    const cod = await placeAndRead(anon, input([khoi()], { payment: "COD" }));
+    const cod = await placeAndRead(admin, input([khoi()], { payment: "COD" }));
     expect(cod.status).toEqual({ state: "RECEIVED" });
   });
 });
@@ -313,7 +352,7 @@ describe("(b) two orders racing for the last piece of a cell", () => {
 
       // Two separate clients, two connections, two transactions at once.
       const body = input([bui()], { promoCode: "DOT05" });
-      const [a, b] = await Promise.all([place(fresh(), body), place(fresh(), body)]);
+      const [a, b] = await Promise.all([place(serviceClient(), body), place(serviceClient(), body)]);
 
       const wins = [a, b].filter((r) => r.error === null);
       const losses = [a, b].filter((r) => r.error !== null);
@@ -331,8 +370,8 @@ describe("(b) two orders racing for the last piece of a cell", () => {
     await plentyOfStock();
     for (let round = 0; round < 10; round += 1) {
       const [a, b] = await Promise.all([
-        place(fresh(), input([khoi(), cat()])),
-        place(fresh(), input([cat(), khoi()])),
+        place(serviceClient(), input([khoi(), cat()])),
+        place(serviceClient(), input([cat(), khoi()])),
       ]);
       // Both have stock to spare, so both must go through: a deadlock would
       // surface here as SQLSTATE 40P01 on one of them.
@@ -346,7 +385,7 @@ describe("(b) two orders racing for the last piece of a cell", () => {
 describe("(c) a closed issue and an unusable code are refused", () => {
   it("refuses an order once issue 05 has closed — and changes nothing on the way", async () => {
     const before = await onHand("p-khoi", "black", "M");
-    const { error } = await place(anon, input([khoi()]), "2026-09-26T10:00:00+07:00");
+    const { error } = await place(admin, input([khoi()]), "2026-09-26T10:00:00+07:00");
     expect(error?.message).toBe("DROP_CLOSED");
     expect(await onHand("p-khoi", "black", "M")).toBe(before);
     // The sweep at the top of place_order() ran inside the same transaction
@@ -369,7 +408,7 @@ describe("(c) a closed issue and an unusable code are refused", () => {
       [[khoi()], "KHONGCO"],
       [[khoi()], "CHAOBAN"],
     ] as const) {
-      const { error } = await place(anon, input([...lines], { promoCode: code }));
+      const { error } = await place(admin, input([...lines], { promoCode: code }));
       expect(error?.message, code).toBe("PROMO_INVALID");
     }
 
@@ -380,7 +419,7 @@ describe("(c) a closed issue and an unusable code are refused", () => {
 
   it("spends a code exactly once for an order that goes through", async () => {
     const before = await usedCount("CHAOBAN");
-    await placeAndRead(anon, input([cat()], { promoCode: "chaoban" }));
+    await placeAndRead(admin, input([cat()], { promoCode: "chaoban" }));
     expect(await usedCount("CHAOBAN")).toBe(before + 1);
   });
 
@@ -399,13 +438,21 @@ describe("(c) a closed issue and an unusable code are refused", () => {
       [{ lines: "khoi" }, "EMPTY_ORDER"],
     ];
     for (const [body, code] of cases) {
-      const { error } = await place(anon, body);
+      const { error } = await place(admin, body);
       expect(error?.message, JSON.stringify(body).slice(0, 80)).toBe(code);
     }
   });
 });
 
 // ───────────────────────────────────────────────────── (d) cancelling
+/**
+ * A shopper's own hand, so the shopper's own session — and since slice B3a a
+ * signed-in caller's `p_now` has to be the real clock. These tests therefore
+ * start from the shop as the app sees it (`reset_demo(demo_anchor())`, where
+ * issue 05 is open and the sample transfers are inside their hold) and act at
+ * `realNow()`. A hold that has already run out is made by moving the order's
+ * deadline back through the service role, not by naming a later instant.
+ */
 describe("(d) cancel_order()", () => {
   let minhanh: Client;
   let namle: Client;
@@ -415,20 +462,24 @@ describe("(d) cancel_order()", () => {
     namle = await signedIn(NAMLE.email);
   });
 
+  beforeEach(resetToRealAnchor);
+
   it("puts the pieces back, says who cancelled, and keeps the code spent", async () => {
     await setOnHand("p-cat", "cream", "S", 5);
     const used = await usedCount("CHAOBAN");
 
-    const placed = await place(minhanh, input([cat(2)], { payment: "COD", promoCode: "CHAOBAN" }));
+    const placed = await place(
+      minhanh,
+      input([cat(2)], { payment: "COD", promoCode: "CHAOBAN" }),
+      realNow(),
+    );
     expect(placed.error).toBeNull();
     const { code } = placed.data as { code: string };
     expect(await onHand("p-cat", "cream", "S")).toBe(3);
     expect(await usedCount("CHAOBAN")).toBe(used + 1);
 
-    const cancelled = await minhanh.rpc("cancel_order", {
-      p_code: code,
-      p_now: "2026-09-20T19:30:00+07:00",
-    });
+    const at = realNow();
+    const cancelled = await minhanh.rpc("cancel_order", { p_code: code, p_now: at });
     expect(cancelled.error).toBeNull();
 
     expect(await onHand("p-cat", "cream", "S")).toBe(5);
@@ -436,37 +487,38 @@ describe("(d) cancel_order()", () => {
     const row = await stateOf(code);
     expect(row.state).toBe("CANCELLED");
     expect(row.cancel_reason).toBe("khách huỷ");
-    expect(Date.parse(row.cancelled_at!)).toBe(Date.parse("2026-09-20T19:30:00+07:00"));
+    expect(Date.parse(row.cancelled_at!)).toBe(Date.parse(at));
 
     // Twice is not a second cancellation.
-    const again = await minhanh.rpc("cancel_order", { p_code: code, p_now: NOW });
+    const again = await minhanh.rpc("cancel_order", { p_code: code, p_now: realNow() });
     expect(again.error?.message).toBe("NOT_CANCELLABLE");
   });
 
   it("cancels a transfer still inside its hold, and not one past it", async () => {
-    const inside = await place(minhanh, input([khoi()]));
+    const inside = await place(minhanh, input([khoi()]), realNow());
     const code = (inside.data as { code: string }).code;
-
-    const late = await minhanh.rpc("cancel_order", {
-      p_code: code,
-      p_now: "2026-09-21T07:00:00+07:00",
-    });
-    expect(late.error?.message).toBe("NOT_CANCELLABLE");
-
-    const inTime = await minhanh.rpc("cancel_order", {
-      p_code: code,
-      p_now: "2026-09-21T06:59:00+07:00",
-    });
+    const inTime = await minhanh.rpc("cancel_order", { p_code: code, p_now: realNow() });
     expect(inTime.error).toBeNull();
+
+    const late = await place(minhanh, input([khoi()]), realNow());
+    const lateCode = (late.data as { code: string }).code;
+    // Twelve hours are up: the deadline is moved to a minute ago.
+    const moved = await admin
+      .from("orders")
+      .update({ due_at: toVnIso(new Date(Date.now() - 60_000)) })
+      .eq("code", lateCode);
+    expect(moved.error).toBeNull();
+    const refused = await minhanh.rpc("cancel_order", { p_code: lateCode, p_now: realNow() });
+    expect(refused.error?.message).toBe("NOT_CANCELLABLE");
   });
 
   it("answers somebody else's order and a made-up one alike: NOT_OWNER", async () => {
-    const placed = await place(minhanh, input([khoi()], { payment: "COD" }));
+    const placed = await place(minhanh, input([khoi()], { payment: "COD" }), realNow());
     const code = (placed.data as { code: string }).code;
 
-    const theirs = await namle.rpc("cancel_order", { p_code: code, p_now: NOW });
+    const theirs = await namle.rpc("cancel_order", { p_code: code, p_now: realNow() });
     expect(theirs.error?.message).toBe("NOT_OWNER");
-    const nobody = await namle.rpc("cancel_order", { p_code: "DH-9999", p_now: NOW });
+    const nobody = await namle.rpc("cancel_order", { p_code: "DH-9999", p_now: realNow() });
     expect(nobody.error?.message).toBe("NOT_OWNER");
 
     // …and minhanh's order is untouched.
@@ -475,13 +527,13 @@ describe("(d) cancel_order()", () => {
 
   it("will not cancel an order that has been paid for", async () => {
     const hapham = await signedIn(HAPHAM.email);
-    const { error } = await hapham.rpc("cancel_order", { p_code: "DH-2427", p_now: NOW });
+    const { error } = await hapham.rpc("cancel_order", { p_code: "DH-2427", p_now: realNow() });
     expect(error?.message).toBe("NOT_CANCELLABLE");
     expect((await stateOf("DH-2427")).state).toBe("PAID");
   });
 
   it("is not open to a visitor with no session at all", async () => {
-    const { error } = await anon.rpc("cancel_order", { p_code: "DH-2430", p_now: NOW });
+    const { error } = await anon.rpc("cancel_order", { p_code: "DH-2430", p_now: realNow() });
     expect(error).not.toBeNull();
     expect((await stateOf("DH-2430")).state).toBe("AWAITING_TRANSFER");
   });
@@ -493,16 +545,16 @@ describe("(e) expire_transfers()", () => {
     await setOnHand("p-bui", "black", "L", 3);
 
     // Placed 19:00 on the 20th, so the hold runs to 07:00 on the 21st.
-    const placed = await place(anon, input([bui(2)]));
+    const placed = await place(admin, input([bui(2)]));
     const code = (placed.data as { code: string }).code;
     expect(await onHand("p-bui", "black", "L")).toBe(1);
 
     // A minute early: nothing, not even the two sample transfers.
-    const early = await anon.rpc("expire_transfers", { p_now: "2026-09-21T06:59:00+07:00" });
+    const early = await admin.rpc("expire_transfers", { p_now: "2026-09-21T06:59:00+07:00" });
     expect(early.data).toBe(0);
 
     // On the minute: this one, and only this one.
-    const due = await anon.rpc("expire_transfers", { p_now: "2026-09-21T07:00:00+07:00" });
+    const due = await admin.rpc("expire_transfers", { p_now: "2026-09-21T07:00:00+07:00" });
     expect(due.error).toBeNull();
     expect(due.data).toBe(1);
     expect(await onHand("p-bui", "black", "L")).toBe(3);
@@ -512,7 +564,7 @@ describe("(e) expire_transfers()", () => {
     expect(Date.parse(row.cancelled_at!)).toBe(Date.parse(row.due_at!));
 
     // Run again with the same clock: nothing left to release.
-    const twice = await anon.rpc("expire_transfers", { p_now: "2026-09-21T07:00:00+07:00" });
+    const twice = await admin.rpc("expire_transfers", { p_now: "2026-09-21T07:00:00+07:00" });
     expect(twice.data).toBe(0);
     expect(await onHand("p-bui", "black", "L")).toBe(3);
   });
@@ -523,7 +575,7 @@ describe("(e) expire_transfers()", () => {
     const cat = await onHand("p-cat", "brown", "XL");
 
     // DH-2430 (due 21/09 19:50) and DH-2431 (due 22/09 08:05).
-    const swept = await anon.rpc("expire_transfers", { p_now: "2026-09-22T09:00:00+07:00" });
+    const swept = await admin.rpc("expire_transfers", { p_now: "2026-09-22T09:00:00+07:00" });
     expect(swept.data).toBe(2);
 
     expect(await onHand("p-suong", "moss", "M")).toBe(suong + 1);
@@ -537,12 +589,12 @@ describe("(e) expire_transfers()", () => {
     // DH-2430 holds one SƯƠNG M moss until 21/09 19:50. An order placed after
     // that minute finds the piece back on the shelf.
     await setOnHand("p-suong", "moss", "M", 0);
-    const blocked = await place(anon, input([{ productId: "p-suong", color: "moss", size: "M", qty: 1 }]));
+    const blocked = await place(admin, input([{ productId: "p-suong", color: "moss", size: "M", qty: 1 }]));
     expect(blocked.error?.message).toBe("OUT_OF_STOCK");
 
     // Issue 05 is still open at 20:00 on the 21st, and DH-2430's hold is over.
     const after = await place(
-      anon,
+      admin,
       input([{ productId: "p-suong", color: "moss", size: "M", qty: 1 }]),
       "2026-09-21T20:00:00+07:00",
     );
@@ -650,7 +702,7 @@ describe("(f) row level security and the two guest doors", () => {
   });
 
   it("receipt_order(): the key opens the guest's order, another key does not", async () => {
-    const placed = await place(anon, input([khoi()]));
+    const placed = await place(admin, input([khoi()]));
     const { code, accessKey } = placed.data as { code: string; accessKey: string };
 
     const own = await anon.rpc("receipt_order", { p_code: code, p_key: accessKey });
@@ -669,11 +721,13 @@ describe("(f) row level security and the two guest doors", () => {
   });
 
   it("files a guest's order under nobody, and a demo account's under its handle", async () => {
-    const guest = await placeAndRead(anon, input([khoi()]));
+    // A signed-in shopper orders on the real clock, so the shop is anchored on it too.
+    await resetToRealAnchor();
+    const guest = await placeAndRead(admin, input([khoi()]), realNow());
     expect(guest.customerId).toBe("");
 
     const minhanh = await signedIn(MINHANH.email);
-    const placed = await place(minhanh, input([khoi()], { payment: "COD" }));
+    const placed = await place(minhanh, input([khoi()], { payment: "COD" }), realNow());
     const code = (placed.data as { code: string }).code;
     const mine = toOrders((await minhanh.rpc("my_orders")).data);
     const row = mine.find((o) => o.code === code)!;
@@ -686,13 +740,19 @@ describe("(f) row level security and the two guest doors", () => {
 // ──────────────────────────────────────────────────────── (g) the reset
 describe("(g) reset_demo() after orders were placed and cancelled", () => {
   it("puts back exactly the twenty-four sample orders and the numbering", async () => {
-    // Something to undo: an order placed and one cancelled.
+    // Something to undo: an order placed and one cancelled — on the real
+    // clock, since a signed-in shopper's hand is part of it.
+    await resetToRealAnchor();
     await setOnHand("p-khoi", "black", "M", 10);
     const minhanh = await signedIn(MINHANH.email);
-    const a = await place(anon, input([khoi()]));
-    const b = await place(minhanh, input([khoi()], { payment: "COD" }));
+    const a = await place(admin, input([khoi()]), realNow());
+    const b = await place(minhanh, input([khoi()], { payment: "COD" }), realNow());
     expect(a.error).toBeNull();
-    await minhanh.rpc("cancel_order", { p_code: (b.data as { code: string }).code, p_now: NOW });
+    const undone = await minhanh.rpc("cancel_order", {
+      p_code: (b.data as { code: string }).code,
+      p_now: realNow(),
+    });
+    expect(undone.error).toBeNull();
 
     await reset();
 
@@ -702,7 +762,7 @@ describe("(g) reset_demo() after orders were placed and cancelled", () => {
     expect(lines.count).toBe(33);
     expect((await stateOf("DH-2430")).state).toBe("AWAITING_TRANSFER");
 
-    const next = await place(anon, input([khoi()]));
+    const next = await place(admin, input([khoi()]));
     expect((next.data as { code: string }).code).toBe("DH-2432");
   });
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { CancelOrderModal } from "@/components/admin/CancelOrderModal";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
@@ -13,14 +13,14 @@ import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Catalog } from "@/lib/catalog";
-import { customerById } from "@/data/customers";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
-import { ORDERS } from "@/data/orders";
 import type { Order, OrderState } from "@/data/types";
+import { cancelOrderAdmin, markPaid } from "@/lib/actions/admin";
+import type { ActionState } from "@/lib/actions/state";
 import { needsAction, recentOrders } from "@/lib/admin-metrics";
+import { canCancel, nextMove, type AdminOrder } from "@/lib/admin-orders";
 import { orderItemsLabel, orderNote } from "@/lib/admin-rows";
 import { hrefWith, pageOf, paginate, perPageOf, type Query } from "@/lib/admin-url";
-import { simOrders } from "@/lib/admin-sim";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { LEX, issueNo } from "@/lib/lexicon";
@@ -36,6 +36,8 @@ const PATH = "/admin/orders";
 const TABS: Array<{ value: OrderState | null; label: string }> = [
   { value: null, label: "Tất cả" },
   { value: "AWAITING_TRANSFER", label: STATE_LABEL.AWAITING_TRANSFER.text },
+  // Slice B3a: a COD or card order checkout took, waiting on the shop.
+  { value: "RECEIVED", label: STATE_LABEL.RECEIVED.text },
   { value: "PAID", label: STATE_LABEL.PAID.text },
   { value: "SHIPPING", label: STATE_LABEL.SHIPPING.text },
   { value: "DELIVERED", label: STATE_LABEL.DELIVERED.text },
@@ -59,11 +61,14 @@ const COLS = [
 const COLS_DEFAULT = ["items", "payment"];
 
 /**
- * Every order in the book, and the five things the shop can do to one.
+ * Every order in the book, and what the shop can do to one.
  *
- * `data/orders.ts` is explicit that its rows are a recent SAMPLE rather than
- * the full ledger — the line under the title says the same thing, because a
- * table that looks complete IS a claim that it is.
+ * The book is the database's since slice B3a (`admin_orders()`): the
+ * sample's twenty-four — a recent SAMPLE rather than the full ledger, which
+ * the line under the title says, because a table that looks complete IS a
+ * claim that it is — and whatever the demo's visitors ordered. Every button
+ * that moves an order is a Server Action with a guard in Postgres; the row
+ * menu only offers the moves the guard allows (`lib/admin-orders.ts`).
  *
  * EVERY FILTER IS IN THE ADDRESS (QĐ-8): the tab, the search, the payment
  * method, the issue, the page and the rows per page. Which columns are drawn
@@ -74,17 +79,44 @@ const COLS_DEFAULT = ["items", "payment"];
  * transfer past its twelve-hour deadline is Đã huỷ here, in its tab count,
  * and in the sidebar's badge, whether or not anybody wrote it down.
  */
-export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Query }) {
+export function AdminOrdersScreen({
+  orders: book,
+  nowIso,
+  query,
+}: {
+  /** The order book, from the database (`admin_orders()`). */
+  orders: AdminOrder[];
+  nowIso: string;
+  query: Query;
+}) {
   const catalog = useCatalog();
-  const { sim, run, runMany, say } = useSim();
+  const { say } = useSim();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [picked, setPicked] = useState<string[]>([]);
   const [cancelling, setCancelling] = useState<Order | null>(null);
+  const [pending, startAction] = useTransition();
   const { cols, toggle } = useAdminCols(COLS_DEFAULT);
 
-  const orders = simOrders(ORDERS, sim).map((o) => effectiveOrder(o, now));
+  const orders = useMemo(() => book.map((o) => effectiveOrder(o, now)), [book, now]);
   const all = useMemo(() => recentOrders(orders, orders.length), [orders]);
+
+  /**
+   * Run one Server Action and say what the server answered. The action
+   * revalidates the area, so the table in its response is already the new
+   * one. After an `await` the transition has to be restated
+   * (react.dev/reference/react/useTransition).
+   */
+  function act(call: () => Promise<ActionState>, after?: () => void) {
+    if (pending) return;
+    startAction(async () => {
+      const result = await call();
+      startAction(() => {
+        if (result.ok) after?.();
+        say(result.message ?? result.errors.form ?? "");
+      });
+    });
+  }
 
   // ── the filters, all of them read off the address ──────────────────────
   const tab = (query.state as OrderState | undefined) ?? null;
@@ -94,17 +126,25 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
   const text = (query.q ?? "").trim().toLocaleLowerCase("vi");
 
   const issues = useMemo(
-    () => [...new Set(ORDERS.map((o) => issueOfOrder(catalog, o)))].sort((a, b) => b - a),
-    [catalog],
+    () => [...new Set(book.map((o) => issueOfOrder(catalog, o)))].sort((a, b) => b - a),
+    [catalog, book],
   );
 
-  const matches = (o: Order) => {
+  const matches = (o: AdminOrder) => {
     if (pay && o.payment !== pay) return false;
     if (dropNo !== null && issueOfOrder(catalog, o) !== dropNo) return false;
-    if (customer && String(o.customerId) !== customer) return false;
+    // `?customer=` is the account's key: its fixture handle, or its uuid.
+    if (customer && o.owner?.handle !== customer && o.owner?.id !== customer) return false;
     if (!text) return true;
-    const person = customerById.get(o.customerId);
-    return [String(o.code), person?.name, person?.phone, person?.email]
+    return [
+      String(o.code),
+      o.owner?.name,
+      o.owner?.phone,
+      o.owner?.email,
+      // An order placed signed out has no account: its own name and number.
+      o.shipTo.recipient,
+      o.shipTo.phone,
+    ]
       .filter(Boolean)
       .some((v) => v!.toLocaleLowerCase("vi").includes(text));
   };
@@ -128,11 +168,11 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
   const headState: boolean | "mixed" =
     picked.length === 0 ? false : picked.length === page.rows.length ? true : "mixed";
 
-  const csvRows = (list: Order[]) => [
+  const csvRows = (list: AdminOrder[]) => [
     ["Mã đơn", "Khách", "Điện thoại", "Thời gian", "Món", "Giá trị (VND)", "Thanh toán", "Trạng thái"],
     ...list.map((o) => [
       String(o.code),
-      customerById.get(o.customerId)?.name ?? "—",
+      o.owner?.name ?? "—",
       o.shipTo.phone,
       `${dayMonth(o.placedAt)} ${clockLabel(o.placedAt)}`,
       orderItemsLabel(catalog, o),
@@ -151,7 +191,7 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
     <>
       <AdminTop
         title="Đơn hàng"
-        sub={`${ORDERS.length} đơn trong dữ liệu mẫu · ${waiting} cần xử lý`}
+        sub={`${book.length} đơn trong dữ liệu mẫu · ${waiting} cần xử lý`}
       >
         <ExportCsvButton label="Tải CSV" filename="don-hang.csv" rows={csvRows(shown)} />
         {readyToPack.length > 0 && (
@@ -184,27 +224,26 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
             <b>{picked.length} đơn đã chọn</b>
             <Button
               tone="ink sm"
-              icon="check"
+              {...(pending ? {} : { icon: "check" as const })}
+              disabled={pending}
               onClick={() => {
-                /* Only an unpaid transfer can be confirmed. The button does
-                   not disappear when the selection holds none — it says
-                   which rows it would have applied to, because a control
-                   that vanishes as rows are ticked is harder to read than
-                   one that explains itself. */
-                const unpaid = chosen.filter((o) => o.status.state === "AWAITING_TRANSFER");
+                /* Only an order whose money is still to come can be
+                   confirmed — a transfer inside its hold, a card order taken
+                   (`nextMove`). The button does not disappear when the
+                   selection holds none — it says which rows it would have
+                   applied to, because a control that vanishes as rows are
+                   ticked is harder to read than one that explains itself. */
+                const unpaid = chosen.filter((o) => nextMove(o, now) === "MARK_PAID");
                 if (unpaid.length === 0) {
-                  return say(
-                    "Chỉ đơn chờ chuyển khoản mới đánh dấu được — chưa chọn đơn nào như vậy",
-                  );
+                  return say("Chỉ đơn đang chờ tiền mới đánh dấu được — chưa chọn đơn nào như vậy");
                 }
-                runMany(
-                  unpaid.map((o) => ({ kind: "ORDER_PAID" as const, code: String(o.code) })),
-                  `${unpaid.length} đơn → đã thanh toán · ghi nhật ký`,
+                act(
+                  () => markPaid(unpaid.map((o) => String(o.code))),
+                  () => setPicked([]),
                 );
-                setPicked([]);
               }}
             >
-              Đã nhận tiền
+              {pending ? "Đang lưu…" : "Đã nhận tiền"}
             </Button>
             <ButtonLink
               tone="ink sm"
@@ -287,7 +326,6 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
           <tbody>
             {page.rows.map((o) => {
               const code = String(o.code);
-              const person = customerById.get(o.customerId);
               const s = STATE_LABEL[o.status.state];
               const note = orderNote(o, now);
               const on = picked.includes(code);
@@ -312,9 +350,9 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
                   </td>
                   <td className="nw">
                     <span className="avatar" aria-hidden="true">
-                      {initialsOf(person?.name ?? "?")}
+                      {initialsOf(o.owner?.name ?? "?")}
                     </span>
-                    {person?.name ?? "—"}
+                    {o.owner?.name ?? "—"}
                     <span className="sub" style={{ paddingLeft: 36 }}>
                       {formatPhone(o.shipTo.phone)}
                     </span>
@@ -341,16 +379,12 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
                       label={`Thao tác ${code}`}
                       items={[
                         { label: "Mở chi tiết", icon: "eye", href: `/admin/orders/${code}` },
-                        ...(o.status.state === "AWAITING_TRANSFER"
+                        ...(nextMove(o, now) === "MARK_PAID"
                           ? [
                               {
                                 label: "Đã nhận tiền",
                                 icon: "check" as const,
-                                onRun: () =>
-                                  run(
-                                    { kind: "ORDER_PAID", code },
-                                    `${code} → đã thanh toán · ghi nhật ký`,
-                                  ),
+                                onRun: () => act(() => markPaid([code])),
                               },
                             ]
                           : []),
@@ -359,18 +393,10 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
                           icon: "printer",
                           href: `/admin/slips?codes=${code}`,
                         },
-                        {
-                          label: "Gửi lại xác nhận",
-                          icon: "send",
-                          onRun: () => {
-                            const email = person?.email ?? "—";
-                            run(
-                              { kind: "ORDER_CONFIRMATION_RESENT", code, email },
-                              `Đã ghi nhật ký: gửi lại xác nhận ${code} tới ${email} (chưa có máy chủ gửi)`,
-                            );
-                          },
-                        },
-                        ...(o.status.state === "CANCELLED" || o.status.state === "DELIVERED"
+                        // No "Gửi lại xác nhận" here: no mail server is
+                        // connected, so it could only pretend. The order's
+                        // own screen draws it disabled and says why.
+                        ...(!canCancel(o, now)
                           ? []
                           : [
                               {
@@ -399,14 +425,15 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
 
       <CancelOrderModal
         order={cancelling}
+        pending={pending}
         onClose={() => setCancelling(null)}
         onConfirm={(reason, note) => {
           if (!cancelling) return;
-          run(
-            { kind: "ORDER_CANCELLED", code: String(cancelling.code), reason, note },
-            `${cancelling.code} đã huỷ · lý do: ${reason.toLocaleLowerCase("vi")}`,
+          const code = String(cancelling.code);
+          act(
+            () => cancelOrderAdmin(code, reason, note),
+            () => setCancelling(null),
           );
-          setCancelling(null);
         }}
       />
     </>
@@ -438,10 +465,19 @@ function paymentCell(o: Order) {
     );
   }
   if (o.payment === "CARD") {
+    // "Chưa thu tiền" only while it is true: since slice B3a the shop marks
+    // a card order paid by hand, and a delivered card order was paid.
     return (
       <>
         {label}
-        <span className="sub">chưa thu tiền · chưa nối cổng</span>
+        {o.status.state === "RECEIVED" && (
+          <span className="sub">chưa thu tiền · chưa nối cổng</span>
+        )}
+        {o.status.state === "PAID" && (
+          <span className="sub">
+            nhận {clockLabel(o.status.paidAt)} · {dayMonth(o.status.paidAt)}
+          </span>
+        )}
       </>
     );
   }

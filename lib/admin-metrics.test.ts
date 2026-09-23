@@ -11,7 +11,9 @@ import {
   stockAlerts,
   windowDays,
 } from "./admin-metrics";
+import { CUSTOMERS } from "@/data/customers";
 import { ORDERS } from "@/data/orders";
+import type { AdminOrder } from "./admin-orders";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import type { Order, OrderStatus } from "@/data/types";
 import { customerId, orderCode } from "@/data/types";
@@ -179,6 +181,11 @@ describe("needsAction", () => {
     expect(needsAction(os).map((o) => o.status.state)).toEqual(["AWAITING_TRANSFER", "PAID"]);
   });
 
+  it("counts a COD or card order the shop has taken and not handled (slice B3a)", () => {
+    const received = order("2026-09-20T06:00:00+07:00", { state: "RECEIVED" }, 600_000);
+    expect(needsAction([received]).map((o) => o.status.state)).toEqual(["RECEIVED"]);
+  });
+
   it("finds them in the real fixtures", () => {
     expect(needsAction(ORDERS).length).toBe(5);
   });
@@ -246,26 +253,40 @@ describe("windowDays", () => {
 
 describe("customerSplit", () => {
   const OPENS = "2026-09-11T20:00:00+07:00";
+  /** The sample orders as the back office reads them: each with its account. */
+  const BOOK: AdminOrder[] = ORDERS.map((o) => {
+    const c = CUSTOMERS.find((x) => x.id === o.customerId)!;
+    return {
+      ...o,
+      owner: { id: `uuid-${c.id}`, handle: String(c.id), name: c.name, email: c.email, phone: "", joinedAt: c.joinedAt },
+    };
+  });
 
   it("counts people, not orders", () => {
-    const split = customerSplit(NOW, ORDERS, 30, OPENS);
+    const split = customerSplit(NOW, BOOK, 30, OPENS);
+    expect(split.total).toBeGreaterThan(0);
     expect(split.total).toBeLessThanOrEqual(ORDERS.length);
     expect(split.fresh + split.returning).toBe(split.total);
   });
 
   it("ignores orders nobody paid for", () => {
-    const only = ORDERS.filter((o) => o.status.state === "AWAITING_TRANSFER");
+    const only = BOOK.filter((o) => o.status.state === "AWAITING_TRANSFER");
     expect(customerSplit(NOW, only, 30, OPENS).total).toBe(0);
   });
 
   it("calls somebody new when they joined inside the drop", () => {
     // The cut is the drop's opening instant: joined before it, they came
     // back for this one; joined after it, this drop is how they found us.
-    const allFresh = customerSplit(NOW, ORDERS, 30, "2000-01-01T00:00:00+07:00");
+    const allFresh = customerSplit(NOW, BOOK, 30, "2000-01-01T00:00:00+07:00");
     expect(allFresh.returning).toBe(0);
     expect(allFresh.fresh).toBe(allFresh.total);
-    const noneFresh = customerSplit(NOW, ORDERS, 30, "2099-01-01T00:00:00+07:00");
+    const noneFresh = customerSplit(NOW, BOOK, 30, "2099-01-01T00:00:00+07:00");
     expect(noneFresh.fresh).toBe(0);
+  });
+
+  it("counts nobody for an order placed signed out, rather than inventing a person", () => {
+    const guests = BOOK.map((o) => ({ ...o, owner: null }));
+    expect(customerSplit(NOW, guests, 30, OPENS)).toEqual({ total: 0, fresh: 0, returning: 0 });
   });
 });
 

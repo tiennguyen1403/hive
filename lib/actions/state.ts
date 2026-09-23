@@ -20,6 +20,12 @@ export interface ActionState {
   errors: Record<string, string>;
   /** Set once the action has done what the button says. */
   ok?: boolean;
+  /**
+   * The sentence a toast shows once it has — "DH-2430 → đã thanh toán · đã
+   * lưu". The back office's actions (slice B3a) say what they did in their
+   * own words, because only the server knows what actually went through.
+   */
+  message?: string;
 }
 
 /** The state before the first submit. */

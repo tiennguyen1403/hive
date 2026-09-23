@@ -10,7 +10,9 @@ import {
 import { EMPTY_SIM, pushSim, simDrops } from "./admin-sim";
 import { DROPS } from "@/data/catalog";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
+import { CUSTOMERS } from "@/data/customers";
 import { ORDERS } from "@/data/orders";
+import type { AdminOrder } from "./admin-orders";
 import { promoCode, type Order, type OrderStatus, type Promotion } from "@/data/types";
 
 /** The smallest order the row builders read: a state, a time and a line. */
@@ -128,6 +130,17 @@ describe("orderNote", () => {
     ).toBe("VNP-8842377");
   });
 
+  it("ages a COD order taken from its placing, and says a card order's money is not in", () => {
+    const cod = { ...testOrder({ state: "RECEIVED" }), payment: "COD" as const };
+    expect(orderNote({ ...cod, placedAt: at }, NOW)).toEqual({ text: "chưa bàn giao", late: false });
+    expect(orderNote({ ...cod, placedAt: "2026-09-17T10:00:00+07:00" }, NOW)).toEqual({
+      text: "chưa bàn giao · 3 ngày",
+      late: true,
+    });
+    const card = { ...testOrder({ state: "RECEIVED" }), payment: "CARD" as const };
+    expect(orderNote(card, NOW)).toEqual({ text: "chưa thu tiền", late: false });
+  });
+
   it("says nothing about an order that is finished", () => {
     expect(orderNote(testOrder({ state: "DELIVERED", deliveredAt: at }), NOW)).toBeNull();
     expect(
@@ -136,9 +149,18 @@ describe("orderNote", () => {
   });
 });
 
+/** The sample orders as the back office reads them: each with its account. */
+const BOOK: AdminOrder[] = ORDERS.map((o) => {
+  const c = CUSTOMERS.find((x) => x.id === o.customerId)!;
+  return {
+    ...o,
+    owner: { id: `uuid-${c.id}`, handle: String(c.id), name: c.name, email: c.email, phone: "", joinedAt: c.joinedAt },
+  };
+});
+
 describe("queueRows", () => {
   it("holds exactly the orders waiting on the shop, newest first", () => {
-    const rows = queueRows(FIXTURE_CATALOG, ORDERS, NOW);
+    const rows = queueRows(FIXTURE_CATALOG, BOOK, NOW);
     expect(rows).toHaveLength(
       ORDERS.filter((o) => ["AWAITING_TRANSFER", "PAID"].includes(o.status.state)).length,
     );
@@ -147,7 +169,7 @@ describe("queueRows", () => {
   });
 
   it("offers the one action that state allows", () => {
-    for (const row of queueRows(FIXTURE_CATALOG, ORDERS, NOW)) {
+    for (const row of queueRows(FIXTURE_CATALOG, BOOK, NOW)) {
       const order = ORDERS.find((o) => o.code === row.code)!;
       expect(row.action).toBe(
         order.status.state === "AWAITING_TRANSFER" ? "MARK_PAID" : "HAND_OVER",
@@ -156,15 +178,32 @@ describe("queueRows", () => {
   });
 
   it("names what is in the box and what it came to", () => {
-    const row = queueRows(FIXTURE_CATALOG, ORDERS, NOW)[0]!;
+    const row = queueRows(FIXTURE_CATALOG, BOOK, NOW)[0]!;
     const order = ORDERS.find((o) => o.code === row.code)!;
     expect(row.items).toBe(orderItemsLabel(FIXTURE_CATALOG, order));
     expect(row.totalVnd).toBeGreaterThan(0);
     expect(row.customer).not.toBe("—");
   });
 
+  it("hands a COD order over from RECEIVED, and asks for a card order's money first (slice B3a)", () => {
+    const base = BOOK.find((o) => o.code === "DH-2429")!;
+    const cod: AdminOrder = { ...base, code: "DH-2432" as AdminOrder["code"], payment: "COD", placedAt: "2026-09-17T09:00:00+07:00", status: { state: "RECEIVED" } };
+    const card: AdminOrder = { ...base, code: "DH-2433" as AdminOrder["code"], payment: "CARD", status: { state: "RECEIVED" } };
+    const [c2, c1] = queueRows(FIXTURE_CATALOG, [cod, card], NOW);
+    expect(c2).toMatchObject({ code: "DH-2433", action: "MARK_PAID", late: false, due: null });
+    expect(c2!.standing).toMatch(/^Đã nhận đơn .* · thẻ, chưa thu tiền$/);
+    expect(c1).toMatchObject({ code: "DH-2432", action: "HAND_OVER", late: true, due: "3 ngày" });
+    expect(c1!.standing).toBe("Đã nhận đơn 09:00 17/09 · COD, thu khi giao");
+    expect(c1!.customer).toBe(base.owner!.name);
+  });
+
+  it("names nobody for an order placed signed out", () => {
+    const guest: AdminOrder = { ...BOOK.find((o) => o.code === "DH-2429")!, owner: null };
+    expect(queueRows(FIXTURE_CATALOG, [guest], NOW)[0]!.customer).toBe("—");
+  });
+
   it("marks only a paid order that has waited too long", () => {
-    const rows = queueRows(FIXTURE_CATALOG, ORDERS, NOW).filter((r) => r.action === "HAND_OVER");
+    const rows = queueRows(FIXTURE_CATALOG, BOOK, NOW).filter((r) => r.action === "HAND_OVER");
     for (const r of rows) expect(r.due === null).toBe(!r.late);
   });
 });

@@ -1,5 +1,5 @@
-import { customerById } from "@/data/customers";
-import type { CustomerId, Order, OrderState, Product } from "@/data/types";
+import type { Order, OrderState, Product } from "@/data/types";
+import type { AdminOrder } from "./admin-orders";
 import type { Catalog } from "./catalog";
 import { toVnIso } from "./datetime";
 import {
@@ -15,17 +15,19 @@ import { orderTotalVnd } from "./orders";
 /**
  * What the admin dashboard is allowed to say.
  *
- * Every figure here is DERIVED from the fixtures — none is typed in. That is
- * not tidiness, it is the whole point: PRODUCT.md forbids inventing sales,
- * and the approved mock's dashboard was drawn with invented ones (88,3tr of
- * revenue, 2.850 page views, +12% on the period before). Numbers that come
- * out of `ORDERS` and `CATALOG` cannot drift from what the rest of the app
- * shows, and where the fixtures hold nothing — nobody ever recorded a page
+ * Every figure here is DERIVED from the orders and the catalogue it is handed
+ * — the database's, since slice B3a — and none is typed in. That is not
+ * tidiness, it is the whole point: PRODUCT.md forbids inventing sales, and the
+ * approved mock's dashboard was drawn with invented ones (88,3tr of revenue,
+ * 2.850 page views, +12% on the period before). Numbers that come out of the
+ * same orders and catalogue the rest of the app reads cannot drift from what
+ * it shows, and where the data holds nothing — nobody ever recorded a page
  * view — this file offers nothing rather than a plausible number.
  *
- * `data/orders.ts` is also explicit that its 24 orders are a RECENT SAMPLE,
- * not the full ledger. Screens reading this module must say so; that is what
- * `AdminTop`'s "dữ liệu mô phỏng" badge is for.
+ * The 24 sample orders are a RECENT SAMPLE, not the full ledger, and since
+ * slice B3a they share the book with whatever the demo's visitors order.
+ * Screens reading this module must say so; that is what `AdminTop`'s "Dữ
+ * liệu mẫu" badge is for.
  */
 
 /**
@@ -39,8 +41,15 @@ import { orderTotalVnd } from "./orders";
 export const BOOKED_STATES = ["PAID", "SHIPPING", "DELIVERED"] as const;
 const BOOKED = new Set<OrderState>(BOOKED_STATES);
 
-/** Orders still waiting on the shop, rather than on the courier or the shopper. */
-const ACTIONABLE: OrderState[] = ["AWAITING_TRANSFER", "PAID"];
+/**
+ * Orders still waiting on the shop, rather than on the courier or the shopper.
+ *
+ * `RECEIVED` joined at slice B3a, when the back office started reading the
+ * orders checkout places: a COD order the shop has taken is waiting to be
+ * handed over, a card order to have its money confirmed by hand — both the
+ * shop's move (`lib/admin-orders.ts#nextMove`).
+ */
+const ACTIONABLE: OrderState[] = ["AWAITING_TRANSFER", "RECEIVED", "PAID"];
 
 export interface DayPoint {
   /** `YYYY-MM-DD`, Vietnamese calendar day. */
@@ -124,12 +133,12 @@ export function averageOrderVnd(orders: Order[]): number {
  * a screen somebody works from, "what do I have to do now" beats a number
  * nobody can act on anyway.
  */
-export function needsAction(orders: Order[]): Order[] {
+export function needsAction<T extends Order>(orders: T[]): T[] {
   return orders.filter((o) => ACTIONABLE.includes(o.status.state));
 }
 
 /** Newest first, capped. Cancelled ones stay: an admin list is a ledger. */
-export function recentOrders(orders: Order[], n: number): Order[] {
+export function recentOrders<T extends Order>(orders: T[], n: number): T[] {
   return [...orders].sort((a, b) => b.placedAt.localeCompare(a.placedAt)).slice(0, n);
 }
 
@@ -159,27 +168,32 @@ export interface CustomerSplit {
  * new whose first order simply falls outside this sample of twenty-four.
  * Cancelled and unpaid orders do not count anybody: a name is counted when
  * money is.
+ *
+ * Since slice B3a the people are ACCOUNTS, read off each order's owner
+ * (`admin_orders()`), joining date included. An order placed signed out has
+ * no account and no joining date, so it counts nobody here — neither new nor
+ * returning, rather than one invented person standing in for every guest.
  */
 export function customerSplit(
   now: Date,
-  orders: Order[],
+  orders: AdminOrder[],
   days: number,
   joinedSince: string,
 ): CustomerSplit {
   const from = Date.parse(`${stepDay(dayOf(toVnIso(now)), -(days - 1))}T00:00:00+07:00`);
-  const ids = new Set<CustomerId>();
+  const joined = new Map<string, string>();
   for (const o of orders) {
+    if (!o.owner) continue;
     if (!BOOKED.has(o.status.state)) continue;
     if (Date.parse(o.placedAt) < from) continue;
-    ids.add(o.customerId);
+    joined.set(o.owner.id, o.owner.joinedAt);
   }
 
   let fresh = 0;
-  for (const id of ids) {
-    const c = customerById.get(id);
-    if (c && Date.parse(c.joinedAt) >= Date.parse(joinedSince)) fresh += 1;
+  for (const at of joined.values()) {
+    if (Date.parse(at) >= Date.parse(joinedSince)) fresh += 1;
   }
-  return { total: ids.size, fresh, returning: ids.size - fresh };
+  return { total: joined.size, fresh, returning: joined.size - fresh };
 }
 
 export interface SellerRank {

@@ -6,6 +6,7 @@ import { CUSTOMERS } from "@/data/customers";
 import { validateChangePassword, validateSignUp, type SignUpDraft } from "@/lib/account-form";
 import { getSupabase, supabaseEnv } from "@/lib/db/server";
 import { getSession } from "@/lib/db/session";
+import { DEMO_ADMIN } from "@/lib/demo-admin";
 import { safeNext, type ActionState } from "./state";
 
 /**
@@ -80,6 +81,28 @@ export async function demoSignIn(_prev: ActionState, form: FormData): Promise<Ac
   if (error) return { errors: { form: SIGN_IN_FAILED } };
 
   redirect(safeNext(field(form, "next")));
+}
+
+/**
+ * "Vào quản trị thử": the published back-office account, in one press (slice
+ * B3a).
+ *
+ * The same reasoning as `demoSignIn`: the sign-in screen prints this email and
+ * the password, so the button is a shortcut past typing them, not a back door
+ * — what makes the account a manager is `app_metadata.role`, which only the
+ * service role can write (`scripts/seed-users.ts`). It lands on the back
+ * office, or on the admin page that sent the visitor here.
+ */
+export async function demoAdminSignIn(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const password = process.env.DEMO_PASSWORD;
+  if (!password) return { errors: { form: SIGN_IN_FAILED } };
+
+  const supabase = await getSupabase();
+  const { error } = await supabase.auth.signInWithPassword({ email: DEMO_ADMIN.email, password });
+  if (error) return { errors: { form: SIGN_IN_FAILED } };
+
+  const next = safeNext(field(form, "next"), "/admin");
+  redirect(next === "/admin" || next.startsWith("/admin/") ? next : "/admin");
 }
 
 // ──────────────────────────────────────────────────────────────── sign up

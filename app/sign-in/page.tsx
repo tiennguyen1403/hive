@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SignInScreen } from "@/components/account/SignInScreen";
 import { CUSTOMERS } from "@/data/customers";
+import { DEMO_ADMIN } from "@/lib/demo-admin";
 
 export const metadata: Metadata = { title: "Đăng nhập" };
 
@@ -16,6 +17,9 @@ export const metadata: Metadata = { title: "Đăng nhập" };
  * — but a password written into a committed file is a habit, so it comes
  * from the environment even here. Unset means no button and no line: a
  * control that cannot do what it says is not rendered (DESIGN.md §9 rule 3).
+ *
+ * Slice B3a adds the back office's account beside the shopper's, on the same
+ * password and the same terms (`lib/demo-admin.ts`).
  */
 export default async function SignInPage(props: PageProps<"/sign-in">) {
   const sp = await props.searchParams;
@@ -25,7 +29,9 @@ export default async function SignInPage(props: PageProps<"/sign-in">) {
   return (
     <SignInScreen
       {...(raw ? { next: raw } : {})}
-      {...(demoPassword ? { demoEmail: CUSTOMERS[0]!.email, demoPassword } : {})}
+      {...(demoPassword
+        ? { demoEmail: CUSTOMERS[0]!.email, demoAdminEmail: DEMO_ADMIN.email, demoPassword }
+        : {})}
     />
   );
 }

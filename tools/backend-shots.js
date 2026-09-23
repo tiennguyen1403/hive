@@ -1,11 +1,16 @@
 /**
+ * SLICE B3a COPY of tools/backend-shots.js: OUT is …/b3a/after, the two
+ * admin shots are taken as the demo manager ("Vào quản trị thử") because a
+ * shopper gets 404 at /admin since B3a, and the two shop overlays are taken
+ * first, while the shopper is still signed in.
+ *
  * Backend slice acceptance shots (first used for B0a/B0b) — the same sixteen states B0a captured, so the
  * two sets can be laid side by side. Same seeds, same routes, same widths,
  * same full-page/viewport choice per shot.
  */
 async (page) => {
   const ORIGIN = "http://127.0.0.1:3200";
-  const OUT = ".playwright-cli/shots/backend/b1/after";
+  const OUT = ".playwright-cli/shots/backend/b3a/after";
 
   // Slice B1: the session is an auth cookie, not a `brand.session` key, so it
   // is opened by pressing the sign-in screen's own "Đăng nhập thử".
@@ -75,8 +80,6 @@ async (page) => {
     ["search-1280", "/search?q=áo", 1280],
     ["cart-1280", "/cart", 1280],
     ["account-1280", "/account", 1280],
-    ["admin-1280", "/admin", 1280],
-    ["admin-products-1280", "/admin/products", 1280],
   ]) {
     results.push(await shot(name, route, width));
   }
@@ -94,6 +97,14 @@ async (page) => {
       viaAbout: true,
     }),
   );
+
+  // The back office, as the demo manager.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(ORIGIN + "/sign-in");
+  await page.getByRole("button", { name: "Vào quản trị thử" }).click();
+  await page.waitForURL(ORIGIN + "/admin", { timeout: 20000 });
+  results.push(await shot("admin-1280", "/admin", 1280));
+  results.push(await shot("admin-products-1280", "/admin/products", 1280));
 
   return { shots: results.length, consoleErrors, results };
 }

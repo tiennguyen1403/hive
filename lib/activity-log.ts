@@ -1,16 +1,12 @@
 import { COLORS } from "@/data/colors";
-import { customerById } from "@/data/customers";
-import type { Catalog } from "./catalog";
-import type { Drop, Order, OrderState, Product } from "@/data/types";
-import {
-  cellDelta,
-  simOrders,
-  type SimAction,
-  type SimOverlay,
-} from "./admin-sim";
+import type { Drop, OrderState, PaymentMethod, Product } from "@/data/types";
+import type { AdminOrder } from "./admin-orders";
+import { cellDelta, type SimAction, type SimOverlay } from "./admin-sim";
 import { orderItemsLabel } from "./admin-rows";
-import { OVERDUE_REASON, effectiveStatus } from "./customer-orders";
+import type { Catalog } from "./catalog";
+import { effectiveStatus } from "./customer-orders";
 import { clockLabel, dateTimeLabel, dayMonth } from "./datetime";
+import type { AdminEvent } from "./db/event-dto";
 import { dropSummary } from "./inventory";
 import { LEX, issueLabel } from "./lexicon";
 import { vnd } from "./money";
@@ -18,38 +14,46 @@ import { TRANSFER_HOLD_HOURS, orderTotalVnd } from "./orders";
 import { STATE_LABEL } from "./order-labels";
 
 /**
- * "Nhật ký thao tác" — the back office's own record, read out of the two
- * places the truth already lives.
+ * "Nhật ký thao tác" — the back office's record, read out of the places the
+ * truth lives.
  *
- * NOTHING IS STORED FOR THIS SCREEN. A log table would be a second copy of
- * the same facts, and a second copy is a copy that goes stale: the day a
- * button forgot to write its line, the log would quietly stop being the
- * record. So every row here is DERIVED —
+ * SINCE SLICE B3A THE RECORD IS A TABLE. Every order move — placed, paid,
+ * handed over, delivered, cancelled by the shop, by the shopper or by the
+ * twelve-hour clock, a note, a new address — and every reset writes a row of
+ * `public.events` in the same transaction as the change itself, and
+ * `reset_demo()` writes the sample's own history in by the rules this module
+ * used to derive it with. So `logRows` reads events and states nothing it
+ * could not point at a row for.
  *
- *   · from `brand.adminSim`, which is already an event log (`lib/admin-sim.ts`);
- *   · from the fixtures themselves, for the things nobody pressed: a transfer
- *     that matched, an issue that opened on its own schedule, an unpaid order
- *     the twelve-hour clock cancelled.
+ * Two things are still derived here, and say so:
  *
- * WHO is therefore a fact about where a row came from rather than a field:
- * "Cửa hàng" for a recorded action, "Khách" for the one a shopper takes from
- * their own order screen, "Hệ thống" for anything derived from the clock and
- * the data. The screen prints that distinction under the table, because "Hệ
- * thống" reading like a person is how somebody ends up looking for who did it.
+ *   · WHAT THE CLOCK DECIDED before anybody wrote it down. A transfer whose
+ *     hold ran out is cancelled on every screen the moment it runs out
+ *     (`effectiveStatus`), but the sweep that writes `ORDER_EXPIRED` runs at
+ *     the next order or the daily health check. Until then this module reads
+ *     it off the order, so the log never disagrees with the table beside it;
+ *     once swept, the event takes the row's place. An issue opening and
+ *     closing on its schedule is the same kind of fact (`scheduleRows`).
+ *   · WHAT IS STILL SIMULATED. Stock adjustments, issues, teasers and codes
+ *     move to Postgres in slice B3b; until then they live in this browser
+ *     (`lib/admin-sim.ts`) and `simLogRows` reads them from there, so the
+ *     "ghi nhật ký" their buttons promise stays true.
+ *
+ * WHO is "Cửa hàng" for the manager's hand, "Khách" for the shopper's, and
+ * "Hệ thống" for the clock and for a reset a script ran. The screen prints
+ * that under the table, because "Hệ thống" reading like a person is how
+ * somebody ends up looking for who did it.
  *
  * WHAT IS NOT HERE, and why. A code running out of uses ("Hết lượt") is a
  * STATE the promotions table already reports; `usedCount` is a stored figure
  * with no redemption behind it, so the hour it was reached exists nowhere and
- * printing one would be inventing a fact (DESIGN.md §9 rule 1). Same for the
- * hour an issue was created: the fixtures record when one OPENS, not when
- * somebody scheduled it, so only issues created in this browser carry a "Tạo
- * số" row.
+ * printing one would be inventing a fact (DESIGN.md §9 rule 1).
  */
 
 export type LogAuthor = "Cửa hàng" | "Khách" | "Hệ thống";
 
-/** What the row is about — the filter menu's five choices, minus "Hệ thống". */
-export type LogKind = "order" | "stock" | "promo" | "drop";
+/** What the row is about — the filter menu's choices, plus the demo's own reset. */
+export type LogKind = "order" | "stock" | "promo" | "drop" | "demo";
 
 export interface LogRow {
   /** Stable across renders so React can key on it. */
@@ -83,168 +87,244 @@ function stateWord(state: OrderState): string {
   return STATE_LABEL[state].text.toLocaleLowerCase("vi");
 }
 
+const AUTHOR: Record<AdminEvent["actorRole"], LogAuthor> = {
+  admin: "Cửa hàng",
+  customer: "Khách",
+  system: "Hệ thống",
+};
+
+/** How an order is being paid, mid-sentence. */
+const PAYMENT_WORD: Record<PaymentMethod, string> = {
+  BANK_TRANSFER: "chuyển khoản",
+  CARD: "thẻ",
+  COD: "COD",
+};
+
 /** The order book, indexed once per call and handed down — no module state. */
-type Book = Map<string, Order>;
+type Book = Map<string, AdminOrder>;
 
 function orderSubject(book: Book, code: string): { subject: string; href: string } {
-  const name = customerById.get(book.get(code)?.customerId as never)?.name;
+  const name = book.get(code)?.owner?.name;
   return {
     subject: name ? `${code} · ${name}` : code,
     href: `/admin/orders/${code}`,
   };
 }
 
+function totalTail(book: Book, code: string): { tail?: string } {
+  const order = book.get(code);
+  return order ? { tail: vnd(orderTotalVnd(order)) } : {};
+}
+
+/** "CÁT ×1" — what was in the box. */
+function itemsTail(catalog: Catalog, book: Book, code: string): { tail?: string } {
+  const order = book.get(code);
+  return order ? { tail: orderItemsLabel(catalog, order) } : {};
+}
+
+/** Newest first, ties on the id — larger first, which is the later one. */
+function byNewest(a: LogRow, b: LogRow): number {
+  return Date.parse(b.at) - Date.parse(a.at) || b.id.localeCompare(a.id);
+}
+
+/** Several lists of rows as one, newest first. */
+export function mergeLogRows(...lists: LogRow[][]): LogRow[] {
+  return lists.flat().sort(byNewest);
+}
+
+// ───────────────────────────────────────────────────────── what was recorded
 /**
- * Every operation this browser can account for, newest first.
+ * Every recorded event, plus the holds the clock has let go of that the sweep
+ * has not written down yet, newest first.
  *
- * `orders`, `drops` and `products` are passed in rather than imported so the
- * module stays pure and the test can feed it three rows instead of the whole
- * fixture set. The screen hands it `ORDERS` and the catalogue's own drops and
- * products — overlaid with whatever this browser adjusted.
+ * `orders` is the book as the database has it (`admin_orders()`); it names
+ * the customer, prices the payment and lists what was in the box. `now`
+ * decides which unswept holds have already run out.
  */
 export function logRows(
   catalog: Catalog,
-  overlay: SimOverlay,
-  fixtures: { orders: Order[]; drops: readonly Drop[]; products: readonly Product[] },
+  events: AdminEvent[],
+  orders: AdminOrder[],
   now: Date,
 ): LogRow[] {
-  const book: Book = new Map(fixtures.orders.map((o) => [String(o.code), o]));
-  const rows = [
-    ...fromOverlay(catalog, overlay, book, fixtures.products),
-    ...fromFixtures(catalog, overlay, book, fixtures, now),
-  ];
+  const book: Book = new Map(orders.map((o) => [String(o.code), o]));
+  const rows = events.map((e) => eventRow(catalog, book, e));
 
-  // Newest first, and ties broken on the id so two events stamped at the
-  // same minute do not swap places between renders.
-  return rows.sort((a, b) => Date.parse(b.at) - Date.parse(a.at) || a.id.localeCompare(b.id));
+  // The twelve-hour clock, read over the orders the database still has as
+  // waiting: past the deadline they are cancelled on every screen already.
+  for (const o of orders) {
+    if (o.status.state !== "AWAITING_TRANSFER") continue;
+    const status = effectiveStatus(o, now);
+    if (status.state !== "CANCELLED") continue;
+    rows.push(expiredRow(catalog, book, `due-${o.code}`, String(o.code), status.cancelledAt));
+  }
+
+  return rows.sort(byNewest);
 }
 
-// ─────────────────────────────────────────────────────────── what was pressed
-function fromOverlay(
-  catalog: Catalog,
-  overlay: SimOverlay,
-  book: Book,
-  products: readonly Product[],
-): LogRow[] {
-  /** The state each order was in as the log is replayed forward. */
-  const state = new Map<string, OrderState>(
-    [...book.values()].map((o) => [String(o.code), o.status.state]),
-  );
-  const rows: LogRow[] = [];
+/** The row id of an event: padded, so a later one sorts after an earlier one. */
+const eventId = (id: number) => `ev-${String(id).padStart(12, "0")}`;
 
-  overlay.actions.forEach((a, i) => {
-    const row = overlayRow(catalog, a, `sim-${i}`, state, book, products);
-    if (row) rows.push(row);
-  });
-  return rows;
+function expiredRow(catalog: Catalog, book: Book, id: string, code: string, at: string): LogRow {
+  return {
+    id,
+    at,
+    kind: "order",
+    author: "Hệ thống",
+    action: "Huỷ đơn",
+    detail: `quá ${TRANSFER_HOLD_HOURS} giờ chưa chuyển khoản`,
+    ...orderSubject(book, code),
+    before: stateWord("AWAITING_TRANSFER"),
+    after: stateWord("CANCELLED"),
+    ...itemsTail(catalog, book, code),
+  };
 }
 
-function overlayRow(
-  catalog: Catalog,
-  a: SimAction,
-  id: string,
-  state: Map<string, OrderState>,
-  book: Book,
-  products: readonly Product[],
-): LogRow | null {
-  switch (a.kind) {
-    case "ORDER_PAID": {
-      const before = state.get(a.code);
-      state.set(a.code, "PAID");
+function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
+  const id = eventId(e.id);
+  const author = AUTHOR[e.actorRole];
+  const from = (s: OrderState | undefined) => (s ? { before: stateWord(s) } : {});
+
+  switch (e.kind) {
+    case "ORDER_PLACED": {
+      const payment = book.get(e.code)?.payment;
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "order",
-        author: "Cửa hàng",
-        action: "Đã nhận tiền",
-        detail: "đánh dấu tay",
-        ...orderSubject(book, a.code),
-        ...(before ? { before: stateWord(before) } : {}),
+        author,
+        action: "Đặt đơn",
+        ...(payment ? { detail: PAYMENT_WORD[payment] } : {}),
+        ...orderSubject(book, e.code),
+        ...(payment
+          ? { after: stateWord(payment === "BANK_TRANSFER" ? "AWAITING_TRANSFER" : "RECEIVED") }
+          : {}),
+        ...totalTail(book, e.code),
+      };
+    }
+    case "ORDER_PAID":
+      // Only a transfer MATCHES, and only the system matches one: the
+      // sample's history says so. A payment the manager confirms is a hand.
+      return {
+        id,
+        at: e.at,
+        kind: "order",
+        author,
+        ...(e.actorRole === "system"
+          ? { action: "Khớp chuyển khoản", detail: "tự động theo nội dung" }
+          : { action: "Đã nhận tiền", detail: "đánh dấu tay" }),
+        ...orderSubject(book, e.code),
+        ...from(e.from),
         after: stateWord("PAID"),
-        ...totalTail(book, a.code),
+        ...totalTail(book, e.code),
       };
-    }
-    case "ORDER_SHIPPED": {
-      const before = state.get(a.code);
-      state.set(a.code, "SHIPPING");
+    case "ORDER_SHIPPED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "order",
-        author: "Cửa hàng",
+        author,
         action: "Bàn giao",
-        ...orderSubject(book, a.code),
-        ...(before ? { before: stateWord(before) } : {}),
+        ...orderSubject(book, e.code),
+        ...from(e.from),
         after: stateWord("SHIPPING"),
-        tail: `${a.carrier} · ${a.trackingCode}`,
+        tail: e.carrier ? `${e.carrier} · ${e.trackingCode}` : e.trackingCode,
       };
-    }
-    case "ORDER_CANCELLED": {
-      const before = state.get(a.code);
-      state.set(a.code, "CANCELLED");
+    case "ORDER_DELIVERED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "order",
-        author: "Cửa hàng",
+        author,
+        action: "Giao thành công",
+        detail: e.actorRole === "system" ? "theo ghi nhận của đơn" : "đánh dấu tay",
+        ...orderSubject(book, e.code),
+        before: stateWord("SHIPPING"),
+        after: stateWord("DELIVERED"),
+      };
+    case "ORDER_CANCELLED":
+      return {
+        id,
+        at: e.at,
+        kind: "order",
+        author,
         action: "Huỷ đơn",
-        detail: a.reason.toLocaleLowerCase("vi"),
-        ...orderSubject(book, a.code),
-        ...(before ? { before: stateWord(before) } : {}),
+        detail: e.reason.toLocaleLowerCase("vi"),
+        ...orderSubject(book, e.code),
+        ...from(e.from),
         after: stateWord("CANCELLED"),
-        ...backOnShelfTail(catalog, book, a.code),
+        ...itemsTail(catalog, book, e.code),
       };
-    }
-    case "ORDER_CANCELLED_BY_CUSTOMER": {
-      const before = state.get(a.code);
-      state.set(a.code, "CANCELLED");
+    case "ORDER_CANCELLED_BY_CUSTOMER":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "order",
-        author: "Khách",
+        author,
         action: "Huỷ đơn",
         detail: "khách huỷ",
-        ...orderSubject(book, a.code),
-        ...(before ? { before: stateWord(before) } : {}),
+        ...orderSubject(book, e.code),
+        ...from(e.from),
         after: stateWord("CANCELLED"),
-        ...backOnShelfTail(catalog, book, a.code),
+        ...itemsTail(catalog, book, e.code),
       };
-    }
+    case "ORDER_EXPIRED":
+      return { ...expiredRow(catalog, book, id, e.code, e.at), author };
     case "ORDER_NOTE":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "order",
-        author: "Cửa hàng",
+        author,
         action: "Ghi chú nội bộ",
-        ...orderSubject(book, a.code),
-        tail: `"${a.text}"`,
+        ...orderSubject(book, e.code),
+        tail: `"${e.text}"`,
       };
     case "ORDER_ADDRESS_EDITED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "order",
-        author: "Cửa hàng",
+        author,
         action: "Sửa địa chỉ giao",
         detail: "trước khi bàn giao",
-        ...orderSubject(book, a.code),
-        before: a.before.line,
-        after: a.after.line,
-        tail: `"${a.reason}"`,
+        ...orderSubject(book, e.code),
+        before: e.before.line,
+        after: e.after.line,
+        tail: `"${e.reason}"`,
       };
-    case "ORDER_CONFIRMATION_RESENT":
+    case "DEMO_RESET":
       return {
         id,
-        at: a.at,
-        kind: "order",
-        author: "Cửa hàng",
-        action: "Gửi lại xác nhận",
-        detail: "chưa có máy chủ gửi, chỉ ghi",
-        ...orderSubject(book, a.code),
-        tail: `tới ${a.email}`,
+        at: e.at,
+        kind: "demo",
+        author,
+        action: "Đặt lại dữ liệu mẫu",
+        detail: `neo ${logStamp(e.anchor)}`,
+        subject: "Dữ liệu mẫu",
       };
+  }
+}
+
+// ─────────────────────────────────────────────────── what is still simulated
+/**
+ * The actions this browser recorded on what is still simulated — stock,
+ * issues, teasers, codes — newest first. Slice B3b turns each kind into an
+ * event and this function goes; until then these rows are what makes the
+ * "ghi nhật ký" on those buttons true.
+ */
+export function simLogRows(
+  catalog: Catalog,
+  overlay: SimOverlay,
+  products: readonly Product[],
+): LogRow[] {
+  return overlay.actions
+    .map((a, i) => simRow(a, `sim-${String(i).padStart(6, "0")}`, products))
+    .sort(byNewest);
+}
+
+function simRow(a: SimAction, id: string, products: readonly Product[]): LogRow {
+  switch (a.kind) {
     case "INVENTORY_ADJUSTED": {
       const product = products.find((p) => String(p.id) === a.productId);
       const one = a.cells.length === 1 ? a.cells[0] : undefined;
@@ -376,106 +456,21 @@ function overlayRow(
   }
 }
 
-function totalTail(book: Book, code: string): { tail?: string } {
-  const order = book.get(code);
-  return order ? { tail: vnd(orderTotalVnd(order)) } : {};
-}
-
+// ─────────────────────────────────────────────── what the schedule did
 /**
- * "CÁT ×1" — what was in the box.
- *
- * NOT "CÁT ×1 về kệ", which is what the mock wrote. Stock in this build is a
- * fixture field, not something derived from the order book, so cancelling an
- * order moves nothing on the shelf — and a log line saying it did would send
- * the operator looking for a unit that is not there. Putting it back is its
- * own action ("Điều chỉnh tồn kho"), with its own row.
+ * An issue opens and closes on its own schedule. Both instants are stored
+ * facts, so both are real events; nothing else about an issue is. Read at
+ * `now`, so an issue that has not opened yet has no row.
  */
-function backOnShelfTail(catalog: Catalog, book: Book, code: string): { tail?: string } {
-  const order = book.get(code);
-  return order ? { tail: orderItemsLabel(catalog, order) } : {};
-}
-
-// ───────────────────────────────────────────── what the clock and the data did
-function fromFixtures(
+export function scheduleRows(
   catalog: Catalog,
-  overlay: SimOverlay,
-  book: Book,
-  fixtures: { orders: Order[]; drops: readonly Drop[]; products: readonly Product[] },
+  drops: readonly Drop[],
+  products: readonly Product[],
   now: Date,
 ): LogRow[] {
   const rows: LogRow[] = [];
-
-  for (const o of fixtures.orders) {
-    const code = String(o.code);
-    const subject = orderSubject(book, code);
-    switch (o.status.state) {
-      case "PAID":
-        // Only a transfer MATCHES: a card or a COD order reaches PAID some
-        // other way, and naming the wrong mechanism is worse than silence.
-        if (o.payment === "BANK_TRANSFER") {
-          rows.push({
-            id: `fix-paid-${code}`,
-            at: o.status.paidAt,
-            kind: "order",
-            author: "Hệ thống",
-            action: "Khớp chuyển khoản",
-            detail: "tự động theo nội dung",
-            ...subject,
-            before: stateWord("AWAITING_TRANSFER"),
-            after: stateWord("PAID"),
-            tail: vnd(orderTotalVnd(o)),
-          });
-        }
-        break;
-      case "SHIPPING":
-        rows.push({
-          id: `fix-ship-${code}`,
-          at: o.status.shippedAt,
-          kind: "order",
-          author: "Cửa hàng",
-          action: "Bàn giao",
-          ...subject,
-          before: stateWord("PAID"),
-          after: stateWord("SHIPPING"),
-          tail: o.status.trackingCode,
-        });
-        break;
-      case "DELIVERED":
-        rows.push({
-          id: `fix-done-${code}`,
-          at: o.status.deliveredAt,
-          kind: "order",
-          author: "Hệ thống",
-          action: "Giao thành công",
-          detail: "theo ghi nhận của đơn",
-          ...subject,
-          before: stateWord("SHIPPING"),
-          after: stateWord("DELIVERED"),
-        });
-        break;
-      case "CANCELLED":
-        rows.push(
-          cancelRow(catalog, book, `fix-cancel-${code}`, o, o.status.cancelledAt, o.status.reason),
-        );
-        break;
-      default:
-        break;
-    }
-  }
-
-  // The twelve-hour clock, read over the orders AS THIS BROWSER HAS THEM: an
-  // order marked paid here never reached its deadline, so it gets no row.
-  for (const o of simOrders(fixtures.orders, overlay)) {
-    if (o.status.state !== "AWAITING_TRANSFER") continue;
-    const status = effectiveStatus(o, now);
-    if (status.state !== "CANCELLED") continue;
-    rows.push(cancelRow(catalog, book, `due-${o.code}`, o, status.cancelledAt, OVERDUE_REASON));
-  }
-
-  // An issue opens and closes on its own schedule. Both instants are stored
-  // facts, so both are real events; nothing else about an issue is.
-  for (const d of fixtures.drops) {
-    const summary = dropSummary(catalog, d.no, fixtures.products);
+  for (const d of drops) {
+    const summary = dropSummary(catalog, d.no, products);
     const href = `/admin/drops/${String(d.no).padStart(2, "0")}`;
     if (Date.parse(d.opensAt) <= now.getTime()) {
       rows.push({
@@ -504,40 +499,12 @@ function fromFixtures(
       });
     }
   }
-
-  return rows;
-}
-
-function cancelRow(
-  catalog: Catalog,
-  book: Book,
-  id: string,
-  o: Order,
-  at: string,
-  reason: string,
-): LogRow {
-  const overdue = reason.toLocaleLowerCase("vi") === OVERDUE_REASON;
-  return {
-    id,
-    at,
-    kind: "order",
-    // Nobody pressed anything when the deadline passed. Any other reason was
-    // a decision somebody made, whether or not this browser recorded it.
-    author: overdue ? "Hệ thống" : "Cửa hàng",
-    action: "Huỷ đơn",
-    detail: overdue
-      ? `quá ${TRANSFER_HOLD_HOURS} giờ chưa chuyển khoản`
-      : reason.toLocaleLowerCase("vi"),
-    ...orderSubject(book, String(o.code)),
-    before: stateWord(overdue ? "AWAITING_TRANSFER" : o.status.state),
-    after: stateWord("CANCELLED"),
-    tail: orderItemsLabel(catalog, o),
-  };
+  return rows.sort(byNewest);
 }
 
 // ────────────────────────────────────────────────────────────────── filtering
 /** The filter menu. "Hệ thống" asks about the HAND, not about the object. */
-export type LogFilter = "all" | LogKind | "system";
+export type LogFilter = "all" | Exclude<LogKind, "demo"> | "system";
 
 export const LOG_FILTERS: Array<{ value: LogFilter; label: string }> = [
   { value: "all", label: "Tất cả" },

@@ -84,8 +84,9 @@ qua server.**
    trong DB, `due_at = now + 12h`. `cancel_order()` trả hàng về kệ. **Quá hạn chuyển khoản
    vẫn suy khi đọc** như `effectiveStatus` hiện tại → không cần cron nghiệp vụ.
 5. **Auth**: email + mật khẩu, **tắt xác nhận email** (SMTP mặc định 2 thư/giờ, chỉ tới team).
-   Đăng nhập qua Server Action, lỗi chung → thoả QĐ-15. **Admin** = claim `user_role` qua
-   Custom Access Token Hook + hàm `authorize()` trong RLS; một tài khoản admin seed.
+   Đăng nhập qua Server Action, lỗi chung → thoả QĐ-15. **Admin** = `app_metadata.role = 'admin'` trên `auth.users` (chốt ở B3a 23/09 thay cho
+   Custom Access Token Hook: ít mảnh ghép, chỉ service role ghi được, luôn trong JWT) + `is_admin()` trong RLS và trong
+   mọi hàm `admin_*`; một tài khoản admin seed (`quanly@email.com`).
 6. **RLS**: catalog đọc công khai; khách chỉ thấy đơn/địa chỉ của mình (QĐ-16 → `notFound()`);
    ghi chỉ qua hàm SQL hoặc role admin. `/track` mã + SĐT qua hàm `security definer` với
    `search_path` cố định.

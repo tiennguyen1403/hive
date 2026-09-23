@@ -99,6 +99,45 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          actor: string
+          actor_role: string
+          at: string
+          drop_no: number | null
+          id: number
+          kind: string
+          order_code: string | null
+          payload: Json
+          product_id: string | null
+          promo_code: string | null
+        }
+        Insert: {
+          actor?: string
+          actor_role: string
+          at: string
+          drop_no?: number | null
+          id?: never
+          kind: string
+          order_code?: string | null
+          payload?: Json
+          product_id?: string | null
+          promo_code?: string | null
+        }
+        Update: {
+          actor?: string
+          actor_role?: string
+          at?: string
+          drop_no?: number | null
+          id?: never
+          kind?: string
+          order_code?: string | null
+          payload?: Json
+          product_id?: string | null
+          promo_code?: string | null
+        }
+        Relationships: []
+      }
       order_lines: {
         Row: {
           color: Database["public"]["Enums"]["color_key"]
@@ -149,6 +188,7 @@ export type Database = {
           access_key: string
           cancel_reason: string | null
           cancelled_at: string | null
+          carrier: string | null
           cod_fee_vnd: number
           code: string
           customer_handle: string | null
@@ -177,6 +217,7 @@ export type Database = {
           access_key?: string
           cancel_reason?: string | null
           cancelled_at?: string | null
+          carrier?: string | null
           cod_fee_vnd: number
           code: string
           customer_handle?: string | null
@@ -205,6 +246,7 @@ export type Database = {
           access_key?: string
           cancel_reason?: string | null
           cancelled_at?: string | null
+          carrier?: string | null
           cod_fee_vnd?: number
           code?: string
           customer_handle?: string | null
@@ -843,11 +885,54 @@ export type Database = {
         }
         Returns: string
       }
+      admin_cancel_order: {
+        Args: {
+          p_code: string
+          p_note: string
+          p_now: string
+          p_reason: string
+        }
+        Returns: undefined
+      }
+      admin_edit_address: {
+        Args: {
+          p_code: string
+          p_now: string
+          p_reason: string
+          p_ship_to: Json
+        }
+        Returns: undefined
+      }
+      admin_hand_over: {
+        Args: {
+          p_carrier: string
+          p_code: string
+          p_note: string
+          p_now: string
+          p_tracking_code: string
+        }
+        Returns: undefined
+      }
+      admin_mark_delivered: {
+        Args: { p_code: string; p_now: string }
+        Returns: undefined
+      }
+      admin_mark_paid: {
+        Args: { p_code: string; p_now: string }
+        Returns: undefined
+      }
+      admin_note_order: {
+        Args: { p_code: string; p_now: string; p_text: string }
+        Returns: undefined
+      }
+      admin_orders: { Args: never; Returns: Json }
+      assert_now: { Args: { p_now: string }; Returns: undefined }
       cancel_order: {
         Args: { p_code: string; p_now: string }
         Returns: undefined
       }
       catalog_snapshot: { Args: never; Returns: Json }
+      demo_anchor: { Args: { p_at?: string }; Returns: string }
       expire_and_lock: {
         Args: {
           p_colors: Database["public"]["Enums"]["color_key"][]
@@ -858,6 +943,7 @@ export type Database = {
         Returns: number
       }
       expire_transfers: { Args: { p_now: string }; Returns: number }
+      is_admin: { Args: never; Returns: boolean }
       my_orders: { Args: never; Returns: Json }
       order_json: { Args: { p_code: string }; Returns: Json }
       place_order: { Args: { p_input: Json; p_now: string }; Returns: Json }

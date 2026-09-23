@@ -5,8 +5,10 @@ import {
   type Address,
   type AddressLabel,
 } from "@/data/types";
+import type { AdminCustomer } from "@/lib/admin-customers";
 import { toVnIso } from "@/lib/datetime";
 import type { Me } from "@/lib/me";
+import { vnIso as exactVnIso } from "./event-dto";
 
 /**
  * Postgres rows → the shapes in `data/types.ts`.
@@ -84,5 +86,21 @@ export function toAddress(row: AddressRow): Address {
     wardCode: row.ward_code,
     label: labelOf(row.label),
     isDefault: row.is_default,
+  };
+}
+
+/**
+ * A profile as the back office lists it (slice B3a) — every account, read by
+ * the manager through the admin read policy. To the second, like every other
+ * instant the back office reads (`event-dto.ts#vnIso`).
+ */
+export function toAdminCustomer(row: ProfileRow): AdminCustomer {
+  return {
+    id: row.id,
+    handle: row.handle,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    joinedAt: exactVnIso(row.joined_at, `profile ${row.id}.joined_at`),
   };
 }

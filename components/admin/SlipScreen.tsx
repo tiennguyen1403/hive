@@ -1,14 +1,12 @@
 "use client";
 
 import { AdminTop } from "@/components/admin/AdminTop";
-import { useSim } from "@/components/admin/SimContext";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Empty } from "@/components/shop/Empty";
 import { COLORS } from "@/data/colors";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { ORDERS } from "@/data/orders";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
-import { addressEditReason, carrierOf, simOrders } from "@/lib/admin-sim";
+import { isPaidFor, type AdminOrder } from "@/lib/admin-orders";
 import { issueOf } from "@/lib/customer-tags";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { LEX, issueNo } from "@/lib/lexicon";
@@ -20,37 +18,37 @@ import { deliveryOption, COD_SURCHARGE_VND, EXPRESS_FEE_VND } from "@/lib/shippi
 /**
  * "In phiếu giao" — a real document, on real paper.
  *
- * The one back-office action a browser can genuinely carry out with no
- * server behind it. It is a ROUTE rather than a dialog so it can be opened
- * for one order or for a whole selection, linked to, and reloaded; the print
- * rules in `admin.css` drop the sidebar and the heading, because on paper
- * they are noise, and two slips fit one A4 sheet.
+ * It is a ROUTE rather than a dialog so it can be opened for one order or
+ * for a whole selection, linked to, and reloaded; the print rules in
+ * `admin.css` drop the sidebar and the heading, because on paper they are
+ * noise, and two slips fit one A4 sheet.
+ *
+ * Since slice B3a the orders are the database's, chosen on the server
+ * (`app/admin/slips/page.tsx`): the address printed is the one the parcel
+ * carries — an address the shop edited has replaced the order's own copy,
+ * and the reason is printed beside it — and the shopper's note for the
+ * courier, typed at checkout, is on the slip where the courier will read it.
  *
  * COD is the one line that changes the parcel's handling, so it is stated in
  * full where the courier will look — including the surcharge, which is what
  * they actually collect (`lib/shipping.ts`).
  *
- * The shopper's delivery note is not printed yet: it lives on the order in
- * the database since slice B2, and this screen still reads the fixtures —
- * putting it on the slip is the back office's slice (B3).
- *
  * The QR box is EMPTY and says so. There is no encoder in this build and no
  * bank account behind one; a drawn square pretending to be scannable would
  * be the worst kind of placeholder, because somebody would try it.
  */
-export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string }) {
+export function SlipScreen({
+  orders,
+  editReasons,
+  nowIso,
+}: {
+  /** The orders to print, already chosen — the ticked codes, or every paid order. */
+  orders: AdminOrder[];
+  /** Why an order's address was last edited, by code, for the ones that were. */
+  editReasons: Record<string, string>;
+  nowIso: string;
+}) {
   const catalog = useCatalog();
-  const { sim } = useSim();
-  const book = simOrders(ORDERS, sim);
-  /**
-   * When `?codes=` is missing, print what is waiting to be packed. That is
-   * the only selection the screen can make on its own that is also the one
-   * somebody arriving without a selection meant.
-   */
-  const orders =
-    codes.length > 0
-      ? book.filter((o) => codes.includes(String(o.code)))
-      : book.filter((o) => o.status.state === "PAID");
 
   return (
     <>
@@ -88,12 +86,16 @@ export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string 
             const province = findProvince(o.shipTo.provinceCode);
             const ward = findWard(o.shipTo.provinceCode, o.shipTo.wardCode);
             const tracking = o.status.state === "SHIPPING" ? o.status.trackingCode : null;
-            const carrier = carrierOf(code, sim);
+            const carrier = o.status.state === "SHIPPING" ? o.status.carrier : undefined;
             const delivery = deliveryOption(
               o.shippingFeeVnd === EXPRESS_FEE_VND ? "EXPRESS" : "STANDARD",
             );
             const cod = o.payment === "COD";
-            const edited = addressEditReason(code, sim);
+            const edited = editReasons[code];
+            // What the courier collects. An order placed since slice B2
+            // already carries the COD surcharge in its total; the sample's
+            // were never charged it, and the slip adds it as it always did.
+            const collect = orderTotalVnd(o) + (o.codFeeVnd > 0 ? 0 : COD_SURCHARGE_VND);
             return (
               <section className="slip" key={code}>
                 <div className="hd">
@@ -115,6 +117,12 @@ export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string 
                       <>
                         <br />
                         <span className="muted">Địa chỉ đã sửa · {edited}</span>
+                      </>
+                    )}
+                    {o.note && (
+                      <>
+                        <br />
+                        <span className="muted">Ghi chú của khách: {o.note}</span>
                       </>
                     )}
                   </div>
@@ -146,11 +154,7 @@ export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string 
                 <div className="totalbar">
                   <span>
                     {orderUnits(o)} chiếc ·{" "}
-                    {cod
-                      ? "thu khi giao"
-                      : o.status.state === "AWAITING_TRANSFER"
-                        ? "chưa thanh toán"
-                        : "đã thanh toán"}
+                    {cod ? "thu khi giao" : isPaidFor(o) ? "đã thanh toán" : "chưa thanh toán"}
                   </span>
                   <b>{vnd(orderTotalVnd(o))}</b>
                 </div>
@@ -158,7 +162,7 @@ export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string 
                 {cod && (
                   <div className="cod">
                     <span>Thu hộ khi giao</span>
-                    <b>{vnd(orderTotalVnd(o) + COD_SURCHARGE_VND)}</b>
+                    <b>{vnd(collect)}</b>
                   </div>
                 )}
 
@@ -176,7 +180,8 @@ export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string 
         <p className="fine3 noprint">
           Đơn COD in thêm ô “Thu hộ” đậm ở cuối phiếu, gồm cả phụ thu{" "}
           {vnd(COD_SURCHARGE_VND)}. Khi in, thanh bên và tiêu đề ẩn; hai phiếu một trang. Phiếu in
-          từ dữ liệu mô phỏng trên trình duyệt này — không hệ thống vận đơn nào nhận bản in này.
+          từ đơn hàng trên máy chủ — chưa nối đơn vị vận chuyển nào, nên không hệ thống vận đơn nào
+          nhận bản in này.
         </p>
       )}
     </>

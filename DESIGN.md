@@ -619,7 +619,7 @@ thủ): `brand.session` (bỏ ở B1: phiên là cookie Supabase Auth) · `brand
 · `brand.promo` mã đang áp · `brand.wishlist` · `brand.orders` (bỏ ở B2: đơn nằm trong Postgres; người vãng lai giữ khoá biên nhận trong cookie httpOnly `guest_orders`) · `brand.addresses`
 sổ địa chỉ · `brand.reminder` nhắc Số · `brand.searches` tìm gần đây ·
 `brand.prefs` công tắc · `brand.notif.read` thông báo đã đọc · `brand.adminSim`
-nhật ký sự kiện của khu quản trị (**một chiều từ B2**: chỉ khu quản trị đọc; màn khách đọc Postgres, nên nhận tiền / bàn giao / huỷ mô phỏng chưa tới khách cho tới B3)
+nhật ký mô phỏng của khu quản trị — **từ B3a chỉ còn tồn kho, Số, teaser và mã giảm giá** (B3b đưa nốt lên Postgres); mọi thao tác trên đơn hàng đã ghi vào bảng `events` trên máy chủ
 · `brand.adminCols` cột bảng. Không khoá nào ở `sessionStorage`.
 
 **Đồng hồ mẫu (QĐ-24).** App sống trong 24 giờ sau mốc

@@ -43,20 +43,31 @@ interface SimApi {
    * events appended at once.
    */
   runMany: (actions: SimActionInput[], message: string) => void;
-  /** Say something without recording anything — a download, a copy, a print. */
+  /**
+   * Say something without recording anything — a download, a copy, a print,
+   * and since slice B3a what a Server Action answered for an order.
+   */
   say: (message: string) => void;
+  /**
+   * Forget what this browser recorded. Silent: the back office's reset is the
+   * database's (`resetDemo()`), and the button that calls both says what
+   * happened once the server has answered (`SimBar`).
+   */
   reset: () => void;
 }
 
 const SimCtx = createContext<SimApi | null>(null);
 
 /**
- * Everything the back office did in this browser, in one place.
+ * Everything the back office did in this browser, in one place — since slice
+ * B3a only what is still simulated (stock, issues, teasers, codes); every
+ * move on an order is a Server Action now. It also carries the one toast the
+ * whole area shares, which is how an order screen reports what the server
+ * answered.
  *
- * Mounted once by the admin layout so the sidebar's counter, the queue, the
- * tables and the order screen all read the same log — two copies of this
- * state would disagree the first time a screen pushed an action without the
- * sidebar hearing about it.
+ * Mounted once by the admin layout so the sidebar's counter and every screen
+ * read the same log — two copies of this state would disagree the first time
+ * a screen pushed an action without the sidebar hearing about it.
  *
  * The first render deliberately shows the FIXTURES ALONE: the pages are
  * server-rendered and `localStorage` does not exist there, so reading it
@@ -129,7 +140,6 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
       // Nothing was stored, so nothing is left behind.
     }
     setSim(EMPTY_SIM);
-    setMessage("Đã đặt lại dữ liệu mẫu · mọi thay đổi trên trình duyệt này đã xoá");
   }, []);
 
   const api = useMemo<SimApi>(
@@ -158,7 +168,7 @@ export function SimProvider({ children }: { children: React.ReactNode }) {
  * because the page still thought it was 03:56.
  *
  * Reading the clock again during render would not help: `nowIso` is already
- * the demo clock's answer (QĐ-24) and a second reading a few milliseconds
+ * the clock's answer (`demoNow()`) and a second reading a few milliseconds
  * later is still before the press. Taking the LATEST OF THE TWO is what
  * moves it — an empty store leaves `nowIso` untouched, so the first render
  * stays identical to the HTML, and the clock only jumps when something

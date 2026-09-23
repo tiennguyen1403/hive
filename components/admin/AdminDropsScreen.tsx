@@ -35,7 +35,7 @@ import { photoUrl } from "@/lib/photos";
 import { soldOutTimes } from "@/lib/sold-out-times";
 import { COLORS } from "@/data/colors";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { ORDERS } from "@/data/orders";
+import type { AdminOrder } from "@/lib/admin-orders";
 import { orderTotalVnd } from "@/lib/orders";
 import { LOW_STOCK_AT } from "@/lib/inventory";
 import { demoNow } from "@/lib/clock";
@@ -55,7 +55,20 @@ import { demoNow } from "@/lib/clock";
  * (`lib/drop.ts`), which is why "đóng sớm" is a changed closing hour rather
  * than a fourth state, exactly as the mock's own footnote says.
  */
-export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: string }) {
+export function AdminDropsScreen({
+  no,
+  nowIso,
+  orders,
+}: {
+  no: number | null;
+  nowIso: string;
+  /**
+   * The order book, from the database since slice B3a: what an issue's
+   * order count and its sold-out hours are read from. The issues themselves
+   * are still simulated here until slice B3b.
+   */
+  orders: AdminOrder[];
+}) {
   const catalog = useCatalog();
   const { sim, run } = useSim();
   const now = useSimNow(nowIso);
@@ -198,6 +211,7 @@ export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: st
         <IssueDetail
           no={drop.no}
           nowIso={nowIso}
+          orders={orders}
           products={products}
           opensAt={drop.opensAt}
           closesAt={drop.closesAt}
@@ -301,6 +315,7 @@ export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: st
 function IssueDetail({
   no,
   nowIso,
+  orders,
   products,
   opensAt,
   closesAt,
@@ -311,6 +326,7 @@ function IssueDetail({
 }: {
   no: number;
   nowIso: string;
+  orders: AdminOrder[];
   products: readonly Product[];
   opensAt: string;
   closesAt: string;
@@ -334,15 +350,17 @@ function IssueDetail({
   const gone = alerts.filter((a) => a.left === 0);
   const low = alerts.filter((a) => a.left > 0);
   /**
-   * The orders in the SAMPLE that carry a style from this issue.
+   * The orders in the book that carry a style from this issue.
    *
-   * `data/orders.ts` is twenty-four recent orders, not the ledger the 108
-   * units sold imply, so this count and the revenue beside it come from
-   * different places on purpose: revenue is arithmetic over the catalogue
-   * (price × gone), this is a count of rows that really exist. Each KPI says
-   * which, because averaging one by the other would invent an order value.
+   * The book is the sample's twenty-four recent orders plus whatever the
+   * demo's visitors ordered (the database, since slice B3a) — not the ledger
+   * the 108 units sold imply, so this count and the revenue beside it come
+   * from different places on purpose: revenue is arithmetic over the
+   * catalogue (price × gone), this is a count of rows that really exist. Each
+   * KPI says which, because averaging one by the other would invent an order
+   * value.
    */
-  const issueOrders = ORDERS.filter((o) =>
+  const issueOrders = orders.filter((o) =>
     o.lines.some((l) => products.find((p) => p.id === l.productId)?.dropNo === no),
   );
   const booked = issueOrders.filter((o) =>
@@ -355,7 +373,7 @@ function IssueDetail({
       : Math.round(booked.reduce((n, o) => n + orderTotalVnd(o), 0) / booked.length);
   // When the shelf emptied, preferring what the orders can prove over what
   // the shop wrote down, and printing nothing when neither can say.
-  const soldOut = soldOutTimes(styles, ORDERS, closesAt).filter((r) => isSoldOut(r.product));
+  const soldOut = soldOutTimes(styles, orders, closesAt).filter((r) => isSoldOut(r.product));
 
   return (
     <section className="detail3" id="detail">

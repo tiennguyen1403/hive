@@ -3,14 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon/Icon";
-import { ORDERS } from "@/data/orders";
-import { needsAction } from "@/lib/admin-metrics";
-import { simOrders } from "@/lib/admin-sim";
-import { effectiveOrder } from "@/lib/customer-orders";
 import { LEX } from "@/lib/lexicon";
 import { SimBar } from "./SimBar";
-import { useSim } from "./SimContext";
-import { demoNow } from "@/lib/clock";
 
 /**
  * The admin sidebar — black cloth, honey thread, 208px.
@@ -21,7 +15,10 @@ import { demoNow } from "@/lib/clock";
  * theme: everything to the right of it is light ground with ink on it.
  *
  * A client component only because it has to know which route is open.
- * Everything else in the area stays on the server.
+ * Everything it counts comes from the server (slice B3a): the admin layout
+ * reads the order book and the log and hands down the three facts the rail
+ * prints — who is signed in, how many orders wait on the shop, when the
+ * sample was last put back.
  */
 const LINKS: Array<{ href: string; label: string; icon: IconName }> = [
   { href: "/admin", label: "Tổng quan", icon: "chart" },
@@ -45,27 +42,27 @@ function isOpen(pathname: string, href: string): boolean {
   return href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 }
 
-export function AdminNav() {
-  const pathname = usePathname();
-  const { sim, ready } = useSim();
-
+export function AdminNav({
+  me,
+  waiting,
+  lastResetAt,
+}: {
+  /** Who is signed in — the manager's name and email. */
+  me: { name: string; email: string };
   /**
-   * How many orders are waiting on the shop, counted the same way the
-   * overview's queue counts them and read through the same two lenses: what
-   * this browser has done (`simOrders`) and what the twelve-hour clock has
-   * already decided (`effectiveOrder`). Mark one paid and the number drops
-   * here too; let one run past its deadline and it drops as well, because
-   * that order is cancelled whether or not anybody wrote it down.
+   * How many orders are waiting on the shop, counted on the server the same
+   * way the overview's queue counts them — through `effectiveOrder`, so an
+   * unpaid transfer past its deadline has already dropped out. Every admin
+   * action revalidates the layout, so the number moves with the queue.
    *
    * Nothing else in the sidebar carries a count: a number beside "Mẫu" or
    * "Khách hàng" would be a total, and a total is not something anybody has
-   * to do. Before storage answers this is the fixtures' own figure, which is
-   * what the server rendered.
+   * to do.
    */
-  const now = demoNow();
-  const waiting = needsAction(
-    (ready ? simOrders(ORDERS, sim) : ORDERS).map((o) => effectiveOrder(o, now)),
-  ).length;
+  waiting: number;
+  lastResetAt: string | null;
+}) {
+  const pathname = usePathname();
 
   return (
     <aside className="side">
@@ -94,7 +91,7 @@ export function AdminNav() {
           );
         })}
       </nav>
-      <SimBar />
+      <SimBar me={me} lastResetAt={lastResetAt} />
     </aside>
   );
 }

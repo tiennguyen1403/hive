@@ -9,14 +9,16 @@ import { SearchBox } from "@/components/admin/AdminOrdersScreen";
 import { useSim } from "@/components/admin/SimContext";
 import { ActionMenu, Stabs, TableFoot } from "@/components/admin/Table3";
 import { Badge } from "@/components/ui/Badge";
-import { CUSTOMERS } from "@/data/customers";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { ORDERS } from "@/data/orders";
-import type { Customer } from "@/data/types";
-import { simOrders } from "@/lib/admin-sim";
+import {
+  customerKey,
+  customerRows,
+  sampleAccounts,
+  type AdminCustomer,
+} from "@/lib/admin-customers";
+import type { AdminOrder } from "@/lib/admin-orders";
 import { hrefWith, pageOf, paginate, perPageOf, type Query } from "@/lib/admin-url";
 import {
-  customerFacts,
   customerGroup,
   inGroup,
   issuesLabel,
@@ -45,29 +47,34 @@ const PATH = "/admin/customers";
  *
  * Nothing here is aggregated into a "segment" or a score: the fixtures hold
  * no behaviour to score.
+ *
+ * Since slice B3a the rows are the database's accounts — the eight demo
+ * shoppers and everybody who signed up (`lib/admin-customers.ts`) — each
+ * matched to its orders by account rather than by fixture id.
  */
-export function CustomersTable({ nowIso, query }: { nowIso: string; query: Query }) {
+export function CustomersTable({
+  customers,
+  orders,
+  nowIso,
+  query,
+}: {
+  customers: AdminCustomer[];
+  /** The order book, from the database (`admin_orders()`). */
+  orders: AdminOrder[];
+  nowIso: string;
+  query: Query;
+}) {
   const catalog = useCatalog();
-  const { sim, say } = useSim();
+  const { say } = useSim();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
 
-  const orders = simOrders(ORDERS, sim);
   const openIssue = catalog.drops.find((d) => dropState(d, now) === "OPEN")?.no ?? null;
-
-  const all = CUSTOMERS.map((c) => ({
-    customer: c,
-    facts: customerFacts(
-      catalog,
-      orders.filter((o) => o.customerId === c.id),
-      openIssue,
-      now,
-    ),
-  }));
+  const all = customerRows(catalog, customers, orders, openIssue, now);
 
   const group = customerGroup(query.group);
   const text = (query.q ?? "").trim().toLocaleLowerCase("vi");
-  const matches = ({ customer }: { customer: Customer }) =>
+  const matches = ({ customer }: { customer: AdminCustomer }) =>
     !text ||
     [customer.name, customer.phone, customer.email].some((v) =>
       v.toLocaleLowerCase("vi").includes(text),
@@ -109,7 +116,7 @@ export function CustomersTable({ nowIso, query }: { nowIso: string; query: Query
     <>
       <AdminTop
         title="Khách hàng"
-        sub={`${CUSTOMERS.length} khách trong dữ liệu mẫu · nhãn suy từ đơn đã thanh toán, không gõ tay`}
+        sub={`${all.length} khách · ${sampleAccounts(customers)} tài khoản mẫu và người đăng ký thật · nhãn suy từ đơn đã thanh toán`}
       >
         <ExportCsvButton label="Tải CSV" filename="khach-hang.csv" rows={csvRows} />
       </AdminTop>
@@ -189,11 +196,11 @@ export function CustomersTable({ nowIso, query }: { nowIso: string; query: Query
                   <ActionMenu
                     label={`Thao tác ${customer.name}`}
                     items={[
-                      { label: "Hồ sơ", icon: "user", href: `/admin/customers/${customer.id}` },
+                      { label: "Hồ sơ", icon: "user", href: `/admin/customers/${customerKey(customer)}` },
                       {
                         label: "Đơn của khách",
                         icon: "bag",
-                        href: `/admin/orders?customer=${customer.id}`,
+                        href: `/admin/orders?customer=${customerKey(customer)}`,
                       },
                       {
                         label: "Chép email",

@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { SIZES } from "@/data/types";
 import { buildCatalog } from "@/lib/catalog";
@@ -46,10 +46,44 @@ async function countOf(table: "drops" | "products" | "product_colors" | "stock_c
   return count;
 }
 
+/**
+ * The instant `data/` was frozen at. Since slice B3a the seed, the app and
+ * `npm run seed:users` anchor the sample on the most recent 18:50 instead, so
+ * this file — which compares the database with the fixture date for date —
+ * first puts the catalogue back on the fixture's own anchor, explicitly.
+ */
+const FIXTURE_ANCHOR = "2026-09-20T18:50:00+07:00";
+
+async function resetToFixture() {
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+  if (!secretKey) throw new Error("SUPABASE_SECRET_KEY must be in .env.local — see .env.example.");
+  const service = createClient<Database>(url!, secretKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error } = await service.rpc("reset_demo", { p_anchor: FIXTURE_ANCHOR });
+  if (error) throw new Error(`reset_demo failed: ${error.message}`);
+}
+
+/** And back to the real clock's anchor when the file is done, as the app expects. */
+async function resetToRealAnchor() {
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+  if (!secretKey) throw new Error("SUPABASE_SECRET_KEY must be in .env.local — see .env.example.");
+  const service = createClient<Database>(url!, secretKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const anchor = await service.rpc("demo_anchor");
+  if (anchor.error) throw new Error(`demo_anchor failed: ${anchor.error.message}`);
+  const { error } = await service.rpc("reset_demo", { p_anchor: anchor.data });
+  if (error) throw new Error(`reset_demo failed: ${error.message}`);
+}
+
+afterAll(resetToRealAnchor);
+
 describe("the catalogue in Postgres", () => {
   let catalog: Awaited<ReturnType<typeof snapshot>>;
 
   beforeAll(async () => {
+    await resetToFixture();
     catalog = await snapshot();
   });
 
@@ -143,7 +177,7 @@ describe("reset_demo", () => {
   it("is idempotent: rebuilding the demo leaves the same catalogue", async () => {
     const before = await snapshot();
 
-    const { error } = await service.rpc("reset_demo", {});
+    const { error } = await service.rpc("reset_demo", { p_anchor: FIXTURE_ANCHOR });
     expect(error, error?.message).toBeNull();
 
     const after = await snapshot();
