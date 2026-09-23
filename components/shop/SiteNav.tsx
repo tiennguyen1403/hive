@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icon/Icon";
 import { useCart } from "@/components/cart/CartContext";
-import { useSession } from "@/components/account/SessionContext";
+import { useMe } from "@/components/account/MeContext";
 import { useWishlist } from "@/components/account/WishlistContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { FAMILY_SHORT_LABELS, type Family } from "@/data/types";
@@ -53,7 +53,7 @@ export interface SiteNavProps {
 export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
   const { units, ready: cartReady } = useCart();
   const { list, ready: wishReady } = useWishlist();
-  const { me, ready: meReady } = useSession();
+  const me = useMe();
   const catalog = useCatalog();
 
   const { drop, state } = featuredDrop(catalog, undefined);
@@ -138,13 +138,14 @@ export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
 
           {/* Where the account icon leads depends on who is here: sending a
               signed-out visitor to /account only to bounce them is a wasted
-              tap. */}
+              tap. Since slice B1 the answer comes from the server with the
+              page, so the icon is never briefly wrong. */}
           <Link
             className="ib"
             href={me ? "/account" : "/sign-in"}
             aria-label={me ? `Tài khoản của ${me.name}` : "Đăng nhập"}
           >
-            <Icon name="user" bulk={meReady && me !== null} className="ic" />
+            <Icon name="user" bulk={me !== null} className="ic" />
           </Link>
 
           {/* The bag has no label beside it, so "there is something in here"

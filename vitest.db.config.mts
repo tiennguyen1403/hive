@@ -17,12 +17,26 @@ import { defineConfig } from "vitest/config";
  * what vitest sets. Twelve lines of parser cost less than an undeclared package
  * plus a borrowed `NODE_ENV`.
  *
- * Only the two names the tests need cross into the worker; the rest of
+ * `scripts/env-local.ts` is the same parser for `tsx` scripts, and this file
+ * deliberately does NOT import it: Vite warns that a config importing a `.ts`
+ * module without an extension will stop loading under the native config loader
+ * it plans to default to. A future Vite that broke `npm run test:db` would cost
+ * more than fifteen duplicated lines.
+ *
+ * Only the four names the tests need cross into the worker; the rest of
  * `.env.local` is none of a test runner's business. A missing file leaves them
- * unset and `catalog.dbtest.ts` says so by name.
+ * unset and each suite says which one by name.
  */
 function readEnvLocal(): Record<string, string> {
-  const wanted = ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY"];
+  const wanted = [
+    "SUPABASE_URL",
+    "SUPABASE_PUBLISHABLE_KEY",
+    // The service role, for the half of `accounts.dbtest.ts` that has to
+    // create and delete users — and, right beside it, for proving that the
+    // publishable key cannot.
+    "SUPABASE_SECRET_KEY",
+    "DEMO_PASSWORD",
+  ];
   const env: Record<string, string> = {};
   let text: string;
   try {
@@ -48,5 +62,7 @@ export default defineConfig({
     environment: "node",
     env: readEnvLocal(),
     include: ["lib/db/**/*.dbtest.ts"],
+    // Both db test files rebuild the same local database through reset_demo(); run them one after another.
+    fileParallelism: false,
   },
 });

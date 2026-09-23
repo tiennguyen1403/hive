@@ -118,7 +118,7 @@ GHN/GHTK API. Schema đã chừa chỗ.
 
 - [ ] **A1** Ping hằng ngày đủ chống tạm dừng. Kiểm: 8 ngày không đụng tay, dự án còn sống.
 - [ ] **A2** Vercel Hobby (phi thương mại) hợp lệ cho portfolio. Kiểm: fair-use guidelines.
-- [ ] **A3** Tắt xác nhận email chấp nhận được với người xem demo.
+- [ ] **A3** Tắt xác nhận email chấp nhận được với người xem demo. Áp dụng từ B1 23/09 (`enable_confirmations = false`, tài khoản thử công khai); chờ phản hồi người xem để tick.
 - [ ] **A4** Đăng ký/đặt đơn tự do + reset hằng ngày là đủ vệ sinh; rate limit mặc định của
   Supabase Auth (30 yêu cầu/5 phút/IP) đủ. Kiểm: chạy demo 1 tuần.
 - [x] **A5** Docker Desktop chạy được để `supabase start` — kiểm ở B0b 23/09: lần đầu 9 phút 29

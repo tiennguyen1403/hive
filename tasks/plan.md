@@ -1380,3 +1380,27 @@ chữ H và con ong là **một hình**; wordmark HIVE giữ như `prototype/nam
 **[mark] HIVE.05**, số là ô dữ liệu. Phiên chính đã đưa mô tả phong cách (con dấu tròn, monogram, flat vector một màu, cấm lục giác /
 vương miện / vệt bay / gradient) và một prompt tiếng Anh; người dùng tự tạo. **Logo tạm gác**, không dựng thêm bảng. Khi có tệp logo: vòng
 mock app (nav, favicon, bìa, tem in) → agent → finish review → DESIGN.md, thay chỗ giữ "BRAND". Backend tiếp tục B1 ngay.
+
+**Lát B1 ĐẠT (23/09/2026, `backend-implementer` trên Opus 5, phiên chính duyệt độc lập).** Tài khoản thật: Supabase Auth email + mật
+khẩu qua Server Actions (`lib/actions/auth.ts`: `signIn`, `demoSignIn`, `signUp`, `signOut`, `changePassword`; `lib/actions/addresses.ts`;
+`lib/actions/state.ts` với `safeNext` chặn open-redirect), `proxy.ts` chỉ làm mới token bằng `getClaims()` (không redirect), DAL
+`lib/db/session.ts` / `profiles.ts` / `addresses.ts` / `account-dto.ts`, `lib/me.ts` (DTO `Me`, `fixtureOrdersOf`), migration
+`supabase/migrations/20260923124500_accounts.sql` (`profiles` 1–1 `auth.users` có `handle`, `addresses` với chỉ mục một-mặc-định, RLS 10 policy
+`to authenticated` dùng `(select auth.uid())`, 0 policy `anon`, trigger `handle_new_user` + đồng bộ email, 4 hàm ghi sổ địa chỉ `security invoker`,
+`reset_demo` bản 2 upsert hồ sơ/địa chỉ theo fixture), `scripts/seed-users.ts` (8 tài khoản thử qua admin API, mật khẩu công khai
+`DEMO_PASSWORD=xemthu-2026`, idempotent: 8 tạo / 0 rồi 0 / 8), `supabase/README.md`, `config.toml` (`site_url` 3200, mật khẩu ≥ 8, xác nhận
+email tắt có chú giải). Màn: `MeProvider`/`useMe()` thay `SessionContext`, xoá `AccountGuard` + `lib/session.ts`, `app/account/layout.tsx`, mọi
+trang `/account/*` gọi `requireMe()`, nút "Đăng nhập thử" + dòng tài khoản thử do server render, sổ địa chỉ và checkout đọc DB khi đã đăng
+nhập, mọi câu "chưa có máy chủ / đừng nhập mật khẩu thật" bỏ trừ Quên mật khẩu (vẫn đúng). **Quyết định kèm:** đổi mật khẩu bằng xác thực
+lại (`signInWithPassword` trên client vứt đi, khoá publishable) rồi `updateUser` — agent đo được `current_password` bị GoTrue bỏ qua ở cấu
+hình mặc định; `updateMe` không dựng vì hồ sơ chỉ-đọc (form sửa là đổi thiết kế, để mở); 404 phía server cho đơn mẫu của người khác (QĐ-16),
+mã không tồn tại vẫn 200-rồi-404 sau hydrate tới B2. **Phiên chính sửa thêm:** `vitest.db.config.mts` `fileParallelism: false` (hai tệp dbtest
+cùng gọi `reset_demo` → chạy song song làm test idempotent của catalog đọc bảng rỗng, tái hiện 1/2 lần); `tools/layout-sweep.js` và
+`tools/backend-shots.js` lấy bản vá của agent (mở phiên bằng nút "Đăng nhập thử" thay khoá `brand.session` đã chết; sweep thêm hai lượt lớp
+nổi menu tỉnh); xoá export chết `SIGNED_IN_CUSTOMER`. **Kiểm:** typecheck sạch; `npm test` **49 tệp / 1.058 test**; `npm run test:db` **24 test**;
+build sạch 43 route `ƒ` + `ƒ Proxy`; preview 3200; script riêng của phiên chính: `/account` khách → `/sign-in?next=%2Faccount`, sai mật khẩu →
+một câu chung, "Đăng nhập thử" → `/account` Trần Minh Anh, 2 địa chỉ / 1 mặc định, 5 đơn mẫu, đơn của mình 200, đăng xuất về `/`, **0 request
+ngoài 3200**, 0 lỗi console; sweep **61 lượt** 0 console / 0 tràn / 0 chữ nhỏ / 0 cắt, còn `smallTarget 48` + `loneButton 2` tồn dư từ 20/09;
+44 ảnh kịch bản `.playwright-cli/shots/backend/b1/` + 16 ảnh `b1/after/` so `b0b/after/` chỉ lệch ở đồng hồ mẫu (agent đo pixel). Không gói mới.
+**Mở:** form sửa hồ sơ; `joined_at` người mới là `now()`; mỗi lần đổi mật khẩu để lại một phiên ngắn hạn 1 giờ không thu hồi (cố ý); chưa đo hai
+tab cùng làm mới token.

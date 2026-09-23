@@ -45,12 +45,28 @@ function required(name: "SUPABASE_URL" | "SUPABASE_PUBLISHABLE_KEY"): string {
   return value;
 }
 
+/**
+ * The two values, read once and named once.
+ *
+ * `proxy.ts` builds a client of its own — it has a request and a response to
+ * hang the cookies on, which `cookies()` cannot give it — and this is what
+ * keeps the two from disagreeing about what the variables are called or what
+ * to say when one is missing.
+ */
+export function supabaseEnv(): { url: string; publishableKey: string } {
+  return {
+    url: required("SUPABASE_URL"),
+    publishableKey: required("SUPABASE_PUBLISHABLE_KEY"),
+  };
+}
+
 export async function getSupabase(): Promise<SupabaseClient<Database>> {
   const cookieStore = await cookies();
+  const { url, publishableKey } = supabaseEnv();
 
   return createServerClient<Database>(
-    required("SUPABASE_URL"),
-    required("SUPABASE_PUBLISHABLE_KEY"),
+    url,
+    publishableKey,
     {
       cookies: {
         getAll() {

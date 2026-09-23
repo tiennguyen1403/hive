@@ -1,55 +1,58 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Icon } from "@/components/icon/Icon";
 import { ShopFrame } from "@/components/shop/ShopFrame";
-import { CUSTOMERS } from "@/data/customers";
-import { useSession } from "./SessionContext";
+import { demoSignIn, signIn } from "@/lib/actions/auth";
+import { IDLE } from "@/lib/actions/state";
+
+interface SignInScreenProps {
+  /** Where to land afterwards. Only ever a path of this app's own. */
+  next?: string;
+  /** The published demo account, read from the environment by the page. */
+  demoEmail?: string;
+  demoPassword?: string;
+}
 
 /**
  * The sign-in screen.
  *
  * `next` arrives as a prop rather than through `useSearchParams`, which
  * would pull this whole tree out of the static shell and demand a Suspense
- * boundary around it. The server page already has the search params.
+ * boundary around it. The server page already has the search params, and it
+ * rides along in a hidden field so the Server Action gets it too — the
+ * action re-checks that it is a path and not a URL, because a hidden field
+ * is a thing anyone can edit.
  *
- * It says on its face that the check is simulated. There is no auth server
- * behind this build, and a login form that looks real while verifying
- * nothing invites somebody to type a password they use elsewhere. Naming a
- * demo account is what makes the screen usable AND honest at once.
+ * Since slice B1 the check is REAL: Supabase Auth, email and password, over
+ * a Server Action. The note that used to warn there was no auth server behind
+ * this form, and that nobody should type a password they actually use, is gone
+ * with the reason for it. What stands in its place is the thing that is still
+ * true — this is a public demo, and here is the account to try it with.
+ *
+ * One sentence for every failure (QĐ-15). Naming the field would answer a
+ * question nobody asked: which addresses have accounts here.
  *
  * "Tiếp tục với Google" is DISABLED and says why. The approved design offers
  * it and there is no provider behind it; a greyed control that states the
  * missing piece is more honest than a button that opens nothing, and a
  * disabled button carries no icon (DESIGN.md §9 rule 3).
  */
-export function SignInScreen({ next }: { next?: string }) {
-  const { signIn } = useSession();
-  const router = useRouter();
+export function SignInScreen({ next, demoEmail, demoPassword }: SignInScreenProps) {
+  const [state, submit, pending] = useActionState(signIn, IDLE);
+  const [demoState, submitDemo, demoPending] = useActionState(demoSignIn, IDLE);
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<{ field: string; message: string } | null>(null);
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const result = signIn(identifier, password);
-    if (!result.ok) {
-      setError({ field: result.field, message: result.message });
-      return;
-    }
-    setError(null);
-    // `replace`, not `push`: Back from the account page should go where they
-    // came from, not to a sign-in form they have already been through.
-    // Only a path of our own — a full URL in `?next=` would turn sign-in
-    // into an open redirect pointing anywhere.
-    const dest = next && next.startsWith("/") && !next.startsWith("//") ? next : "/account";
-    router.replace(dest);
-  }
+  // Whichever of the two forms was last pressed is the one with something to
+  // say; neither can be pending while the other is.
+  const failed = state.errors.form ?? demoState.errors.form;
+  // No account to offer means no button offering it (DESIGN.md §9 rule 3).
+  const demo = demoEmail && demoPassword ? { email: demoEmail, password: demoPassword } : null;
 
   return (
     <ShopFrame>
@@ -60,50 +63,51 @@ export function SignInScreen({ next }: { next?: string }) {
             Để xem đơn, địa chỉ đã lưu và mã đang chạy. Mua không cần tài khoản vẫn được.
           </p>
 
-          {/* Not decoration. This build has no authentication — saying so is
-              the difference between a demo and a form that fishes for
-              passwords. */}
-          <p className="note3">
-            <Icon name="info" className="ic sm" />
-            <span>
-              Chưa có máy chủ xác thực. Dùng email của một khách trong dữ liệu mẫu — ví
-              dụ <b>{CUSTOMERS[0]!.email}</b> — với mật khẩu bất kỳ. Không nhập mật khẩu
-              thật.
-            </span>
-          </p>
+          {demo && (
+            <p className="note3">
+              <Icon name="info" className="ic sm" />
+              <span>
+                Bản demo công khai: ai cũng đăng ký được. Tài khoản thử sẵn{" "}
+                <b>{demo.email}</b> · mật khẩu <b>{demo.password}</b>.
+              </span>
+            </p>
+          )}
 
-          <form onSubmit={submit}>
-            <Field3
-              label="Email"
-              {...(error?.field === "identifier" ? { error: error.message } : {})}
-            >
+          {failed && (
+            <p className="note3 hot" role="alert">
+              <Icon name="danger" className="ic sm" />
+              <span>{failed}</span>
+            </p>
+          )}
+
+          <form action={submit}>
+            <input type="hidden" name="next" value={next ?? ""} />
+
+            <Field3 label="Email">
               {({ id, describedBy }) => (
                 <input
                   id={id}
-                  className={error?.field === "identifier" ? "inp bad" : "inp"}
+                  name="email"
+                  className="inp"
                   type="email"
                   inputMode="email"
                   autoComplete="username"
                   aria-describedby={describedBy}
-                  aria-invalid={error?.field === "identifier" || undefined}
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                 />
               )}
             </Field3>
 
-            <Field3
-              label="Mật khẩu"
-              {...(error?.field === "password" ? { error: error.message } : {})}
-            >
+            <Field3 label="Mật khẩu">
               {({ id, describedBy }) => (
                 <input
                   id={id}
-                  className={error?.field === "password" ? "inp bad" : "inp"}
+                  name="password"
+                  className="inp"
                   type="password"
                   autoComplete="current-password"
                   aria-describedby={describedBy}
-                  aria-invalid={error?.field === "password" || undefined}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -116,12 +120,31 @@ export function SignInScreen({ next }: { next?: string }) {
               </Link>
             </p>
 
-            <Button tone="wide" icon="login" type="submit">
-              Đăng nhập
+            <Button
+              tone="wide"
+              type="submit"
+              disabled={pending || demoPending}
+              {...(pending || demoPending ? {} : { icon: "login" as const })}
+            >
+              {pending ? "Đang đăng nhập…" : "Đăng nhập"}
             </Button>
           </form>
 
           <div className="divider3">hoặc</div>
+
+          {demo && (
+            <form action={submitDemo} style={{ marginTop: 14 }}>
+              <input type="hidden" name="next" value={next ?? ""} />
+              <Button
+                tone="ink wide"
+                type="submit"
+                disabled={pending || demoPending}
+                {...(pending || demoPending ? {} : { icon: "user" as const })}
+              >
+                {demoPending ? "Đang mở tài khoản thử…" : "Đăng nhập thử"}
+              </Button>
+            </form>
+          )}
 
           <p style={{ marginTop: 14 }}>
             <Button tone="ink wide" disabled>

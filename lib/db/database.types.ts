@@ -34,6 +34,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      addresses: {
+        Row: {
+          id: string
+          is_default: boolean
+          label: string
+          line: string
+          phone: string
+          position: number
+          profile_id: string
+          province_code: string
+          recipient: string
+          ward_code: string
+        }
+        Insert: {
+          id?: string
+          is_default?: boolean
+          label: string
+          line: string
+          phone: string
+          position: number
+          profile_id: string
+          province_code: string
+          recipient: string
+          ward_code: string
+        }
+        Update: {
+          id?: string
+          is_default?: boolean
+          label?: string
+          line?: string
+          phone?: string
+          position?: number
+          profile_id?: string
+          province_code?: string
+          recipient?: string
+          ward_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addresses_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drops: {
         Row: {
           closes_at: string
@@ -134,6 +181,33 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          email: string
+          handle: string | null
+          id: string
+          joined_at: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          email: string
+          handle?: string | null
+          id: string
+          joined_at?: string
+          name: string
+          phone: string
+        }
+        Update: {
+          email?: string
+          handle?: string | null
+          id?: string
+          joined_at?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
       promotions: {
         Row: {
           amount_vnd: number | null
@@ -173,6 +247,74 @@ export type Database = {
           starts_at?: string
           usage_limit?: number | null
           used_count?: number
+        }
+        Relationships: []
+      }
+      seed_addresses: {
+        Row: {
+          handle: string
+          is_default: boolean
+          label: string
+          line: string
+          phone: string
+          position: number
+          province_code: string
+          recipient: string
+          ward_code: string
+        }
+        Insert: {
+          handle: string
+          is_default: boolean
+          label: string
+          line: string
+          phone: string
+          position: number
+          province_code: string
+          recipient: string
+          ward_code: string
+        }
+        Update: {
+          handle?: string
+          is_default?: boolean
+          label?: string
+          line?: string
+          phone?: string
+          position?: number
+          province_code?: string
+          recipient?: string
+          ward_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seed_addresses_handle_fkey"
+            columns: ["handle"]
+            isOneToOne: false
+            referencedRelation: "seed_customers"
+            referencedColumns: ["handle"]
+          },
+        ]
+      }
+      seed_customers: {
+        Row: {
+          email: string
+          handle: string
+          joined_at: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          email: string
+          handle: string
+          joined_at: string
+          name: string
+          phone: string
+        }
+        Update: {
+          email?: string
+          handle?: string
+          joined_at?: string
+          name?: string
+          phone?: string
         }
         Relationships: []
       }
@@ -425,8 +567,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_address: {
+        Args: {
+          p_default: boolean
+          p_label: string
+          p_line: string
+          p_phone: string
+          p_province_code: string
+          p_recipient: string
+          p_ward_code: string
+        }
+        Returns: string
+      }
       catalog_snapshot: { Args: never; Returns: Json }
+      remove_address: { Args: { p_id: string }; Returns: boolean }
       reset_demo: { Args: { p_anchor?: string }; Returns: undefined }
+      set_default_address: { Args: { p_id: string }; Returns: boolean }
+      update_address: {
+        Args: {
+          p_default: boolean
+          p_id: string
+          p_label: string
+          p_line: string
+          p_phone: string
+          p_province_code: string
+          p_recipient: string
+          p_ward_code: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       color_key:

@@ -1,4 +1,3 @@
-import { CUSTOMERS } from "@/data/customers";
 import { findWard } from "@/data/regions";
 import type { AddressLabel } from "@/data/types";
 import { normalisePhone } from "./checkout-form";
@@ -32,21 +31,19 @@ export function validateSignUp(d: SignUpDraft): SignUpErrors {
 
   if (!d.name.trim()) e.name = "Cần họ và tên.";
 
+  // SHAPE ONLY. Whether the address is already taken is a question for the
+  // auth server, and slice B1 made it one that must not be answered out
+  // loud: "email này đã có tài khoản" is how somebody finds out which
+  // addresses are registered here. `signUp` returns one sentence for every
+  // way it can fail (QĐ-15), and this validator stopped consulting
+  // `data/customers.ts` when the fixture stopped being the account list.
   const email = d.email.trim().toLowerCase();
   if (!email) e.email = "Cần email để nhận xác nhận đơn.";
   else if (!looksLikeEmail(email)) e.email = "Email này thiếu phần sau dấu chấm.";
-  else if (CUSTOMERS.some((c) => c.email.toLowerCase() === email)) {
-    // No server to ask, but the data is right here. Letting someone
-    // "create" an account that already exists is a lie the next screen
-    // would have to keep.
-    e.email = "Email này đã có tài khoản. Đăng nhập thay vì tạo mới.";
-  }
 
-  const phone = normalisePhone(d.phone);
   if (!d.phone.trim()) e.phone = "Cần số điện thoại để người giao gọi.";
-  else if (!phone) e.phone = "Số điện thoại chưa đúng — 10 số, bắt đầu bằng 0.";
-  else if (CUSTOMERS.some((c) => normalisePhone(c.phone) === phone)) {
-    e.phone = "Số này đã có tài khoản.";
+  else if (!normalisePhone(d.phone)) {
+    e.phone = "Số điện thoại chưa đúng — 10 số, bắt đầu bằng 0.";
   }
 
   if (!d.password) e.password = "Cần mật khẩu.";

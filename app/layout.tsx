@@ -2,10 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, Unbounded } from "next/font/google";
 import { CartProvider } from "@/components/cart/CartContext";
 import { AddressBookProvider } from "@/components/account/AddressBookContext";
-import { SessionProvider } from "@/components/account/SessionContext";
+import { MeProvider } from "@/components/account/MeContext";
 import { WishlistProvider } from "@/components/account/WishlistContext";
 import { CatalogProvider } from "@/components/shop/CatalogContext";
 import { catalogInput, loadCatalog } from "@/lib/db/catalog";
+import { loadMe } from "@/lib/db/profiles";
 import "./globals.css";
 
 // Self-hosted by next/font — no runtime call to fonts.googleapis.com.
@@ -72,7 +73,13 @@ export default async function RootLayout({
   // One read of the catalogue per render, at the top of the tree. Server
   // Components below get theirs from `loadCatalog()` too; Client Components
   // get this one through the provider, because they cannot read a database.
-  const catalog = await loadCatalog();
+  //
+  // The signed-in account arrives the same way, and in the same round: both
+  // are wrapped in `React.cache`, so a page below that asks again is asking
+  // for the answer already in hand. Null means nobody is signed in — which
+  // the bar and the account screens are entitled to know before the first
+  // paint rather than one commit later.
+  const [catalog, me] = await Promise.all([loadCatalog(), loadMe()]);
 
   return (
     <html
@@ -86,16 +93,16 @@ export default async function RootLayout({
             page is already there when the cart route renders — no round
             trip. Catalog is outermost because it is the only one that is not
             the device's: the other three read storage, this one reads the
-            shop. Session then wraps the last two, which are readable signed
-            out: a shortlist and a basket are not an account. */}
+            shop. The account then wraps the last two, which are readable
+            signed out: a shortlist and a basket are not an account. */}
         <CatalogProvider input={catalogInput(catalog)}>
-          <SessionProvider>
+          <MeProvider me={me}>
             <AddressBookProvider>
               <WishlistProvider>
                 <CartProvider>{children}</CartProvider>
               </WishlistProvider>
             </AddressBookProvider>
-          </SessionProvider>
+          </MeProvider>
         </CatalogProvider>
       </body>
     </html>

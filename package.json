@@ -10,6 +10,7 @@
     "test:watch": "vitest",
     "test:db": "vitest run --config vitest.db.config.mts",
     "seed:gen": "tsx scripts/gen-seed.ts",
+    "seed:users": "tsx scripts/seed-users.ts",
     "db:types": "supabase gen types typescript --local > lib/db/database.types.ts",
     "typecheck": "tsc --noEmit",
     "preview": "next build && next start -p 3200",

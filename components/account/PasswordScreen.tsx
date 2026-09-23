@@ -1,37 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Icon } from "@/components/icon/Icon";
+import { changePassword } from "@/lib/actions/auth";
+import { IDLE } from "@/lib/actions/state";
 import {
   passwordChecks,
   validateChangePassword,
   type ChangePasswordDraft,
 } from "@/lib/account-form";
-import { AccountGuard } from "./AccountGuard";
 
 const EMPTY: ChangePasswordDraft = { current: "", next: "", confirm: "" };
 
 /**
- * Changing the password, in the v3 frame.
+ * Changing the password. It changes the password.
  *
- * The three rules update as the shopper types, each passing or failing on
- * its own. "Mật khẩu không hợp lệ" after a submit makes somebody guess which
- * rule they broke; a live list means they never have to.
+ * The three rules still update as the shopper types, each passing or failing
+ * on its own — "Mật khẩu không hợp lệ" after a submit makes somebody guess
+ * which rule they broke, and a live list means they never have to. What is
+ * new in slice B1 is that the button at the bottom does the thing it names:
+ * the form posts to a Server Action, the action re-runs the same rules from
+ * `lib/account-form.ts` (a validator that only ran in the browser is a
+ * validator anyone can skip), checks the CURRENT password by signing in with
+ * it, and then asks Supabase to set the new one.
  *
- * Nothing is saved — there is no password store to save into, and this
- * screen never writes what is typed anywhere. It says so where the shopper
- * will read it BEFORE typing, and the button stays disabled and says why,
- * rather than accepting a password it would drop.
+ * The warning that used to sit above these fields — the one telling people
+ * not to type a password they actually use — is gone with the reason for it.
  */
 export function PasswordScreen() {
+  const [state, submit, pending] = useActionState(changePassword, IDLE);
   const [draft, setDraft] = useState<ChangePasswordDraft>(EMPTY);
   const [touched, setTouched] = useState<Set<string>>(new Set());
 
   const checks = passwordChecks(draft.next, draft.current);
-  const errors = validateChangePassword(draft);
-  const ready = Object.keys(errors).length === 0;
+  const local = validateChangePassword(draft);
+  const ready = Object.keys(local).length === 0;
+
+  // A password that has been changed is not a password to leave on screen.
+  useEffect(() => {
+    if (state.ok) {
+      setDraft(EMPTY);
+      setTouched(new Set());
+    }
+  }, [state.ok]);
+
+  /** Shown once, and only until the next keystroke starts a new attempt. */
+  const done = state.ok === true && draft.next === "" && draft.current === "";
 
   function set<K extends keyof ChangePasswordDraft>(k: K, v: string) {
     setDraft((d) => ({ ...d, [k]: v }));
@@ -39,114 +55,120 @@ export function PasswordScreen() {
   function mark(k: keyof ChangePasswordDraft) {
     setTouched((t) => (t.has(k) ? t : new Set(t).add(k)));
   }
+  /** The server's answer wins; the local rule fills in until there is one. */
+  function errorFor(k: keyof ChangePasswordDraft): string | undefined {
+    return state.errors[k] ?? (touched.has(k) ? local[k] : undefined);
+  }
 
   return (
-    <AccountGuard title="Đổi mật khẩu" active="profile">
-      {() => (
-        <>
-          <div className="pghead">
-            <h1>Đổi mật khẩu</h1>
-            <span className="meta">chưa nối máy chủ</span>
-          </div>
+    <>
+      <div className="pghead">
+        <h1>Đổi mật khẩu</h1>
+      </div>
 
-          <p className="note3">
-            <Icon name="info" className="ic sm" />
-            <span>
-              Bản dựng này chưa có máy chủ xác thực. Màn hình kiểm đủ điều kiện nhưng
-              không ghi mật khẩu đi đâu — đừng nhập mật khẩu thật.
-            </span>
-          </p>
+      <form className="panel3" action={submit} style={{ marginTop: 16, maxWidth: 460 }}>
+        <h3>Mật khẩu</h3>
 
-          <section className="panel3" style={{ marginTop: 16, maxWidth: 460 }}>
-            <h3>Mật khẩu</h3>
+        <Field3
+          label="Mật khẩu hiện tại"
+          {...(errorFor("current") ? { error: errorFor("current")! } : {})}
+        >
+          {({ id, describedBy }) => (
+            <input
+              id={id}
+              name="current"
+              className={errorFor("current") ? "inp bad" : "inp"}
+              type="password"
+              autoComplete="current-password"
+              aria-describedby={describedBy}
+              aria-invalid={errorFor("current") !== undefined || undefined}
+              value={draft.current}
+              onChange={(e) => set("current", e.target.value)}
+              onBlur={() => mark("current")}
+            />
+          )}
+        </Field3>
 
-            <Field3
-              label="Mật khẩu hiện tại"
-              {...(touched.has("current") && errors.current
-                ? { error: errors.current }
-                : {})}
-            >
-              {({ id, describedBy }) => (
-                <input
-                  id={id}
-                  className={
-                    touched.has("current") && errors.current ? "inp bad" : "inp"
-                  }
-                  type="password"
-                  autoComplete="current-password"
-                  aria-describedby={describedBy}
-                  value={draft.current}
-                  onChange={(e) => set("current", e.target.value)}
-                  onBlur={() => mark("current")}
-                />
-              )}
-            </Field3>
+        <Field3 label="Mật khẩu mới" {...(state.errors.next ? { error: state.errors.next } : {})}>
+          {({ id }) => (
+            <input
+              id={id}
+              name="next"
+              className={state.errors.next ? "inp bad" : "inp"}
+              type="password"
+              autoComplete="new-password"
+              aria-describedby="pw-rules"
+              value={draft.next}
+              onChange={(e) => set("next", e.target.value)}
+            />
+          )}
+        </Field3>
 
-            <Field3 label="Mật khẩu mới">
-              {({ id }) => (
-                <input
-                  id={id}
-                  className="inp"
-                  type="password"
-                  autoComplete="new-password"
-                  aria-describedby="pw-rules"
-                  value={draft.next}
-                  onChange={(e) => set("next", e.target.value)}
-                />
-              )}
-            </Field3>
+        {/* Each rule carries an icon as well as a colour, and its own
+            word. A row of green and red dots alone is a puzzle. */}
+        <ul className="checks3" id="pw-rules">
+          {checks.map((c) => (
+            <li key={c.label} className={c.ok ? "ok" : undefined}>
+              <Icon name={c.ok ? "confirm" : "x"} className="ic sm" />
+              {c.label}
+            </li>
+          ))}
+        </ul>
 
-            {/* Each rule carries an icon as well as a colour, and its own
-                word. A row of green and red dots alone is a puzzle. */}
-            <ul className="checks3" id="pw-rules">
-              {checks.map((c) => (
-                <li key={c.label} className={c.ok ? "ok" : undefined}>
-                  <Icon name={c.ok ? "confirm" : "x"} className="ic sm" />
-                  {c.label}
-                </li>
-              ))}
-            </ul>
+        <Field3
+          label="Nhập lại mật khẩu mới"
+          {...(errorFor("confirm") ? { error: errorFor("confirm")! } : {})}
+        >
+          {({ id, describedBy }) => (
+            <input
+              id={id}
+              name="confirm"
+              className={errorFor("confirm") ? "inp bad" : "inp"}
+              type="password"
+              autoComplete="new-password"
+              aria-describedby={describedBy}
+              aria-invalid={errorFor("confirm") !== undefined || undefined}
+              value={draft.confirm}
+              onChange={(e) => set("confirm", e.target.value)}
+              onBlur={() => mark("confirm")}
+            />
+          )}
+        </Field3>
 
-            <Field3
-              label="Nhập lại mật khẩu mới"
-              {...(touched.has("confirm") && errors.confirm
-                ? { error: errors.confirm }
-                : {})}
-            >
-              {({ id, describedBy }) => (
-                <input
-                  id={id}
-                  className={
-                    touched.has("confirm") && errors.confirm ? "inp bad" : "inp"
-                  }
-                  type="password"
-                  autoComplete="new-password"
-                  aria-describedby={describedBy}
-                  value={draft.confirm}
-                  onChange={(e) => set("confirm", e.target.value)}
-                  onBlur={() => mark("confirm")}
-                />
-              )}
-            </Field3>
+        <div className="acts3">
+          {/* Live only when all three rules pass: a control that scolds
+              after the press is a control that wasted one. And a disabled
+              button carries no icon — the icon names an action, and there is
+              no action to name yet. */}
+          <Button
+            tone="wide"
+            type="submit"
+            disabled={!ready || pending}
+            {...(!ready || pending ? {} : { icon: "confirm" as const })}
+          >
+            {pending ? "Đang đổi…" : "Đổi mật khẩu"}
+          </Button>
+          <ButtonLink tone="quiet" icon="back" href="/account/profile">
+            Về hồ sơ
+          </ButtonLink>
+        </div>
+      </form>
 
-            <div className="acts3">
-              {/* A disabled button carries no icon: the icon names an action,
-                  and there is no action to name. */}
-              <Button tone="wide" disabled>
-                {ready ? "Đổi mật khẩu — chưa nối máy chủ" : "Đổi mật khẩu"}
-              </Button>
-              <ButtonLink tone="quiet" icon="back" href="/account/profile">
-                Về hồ sơ
-              </ButtonLink>
-            </div>
-          </section>
-
-          <p className="fine3">
-            Khi có máy chủ: đổi xong sẽ bị đăng xuất khỏi các thiết bị khác. Thiết bị này
-            vẫn giữ đăng nhập.
-          </p>
-        </>
+      {done && (
+        <p className="note3" role="status" style={{ marginTop: 14 }}>
+          <Icon name="confirm" className="ic sm" />
+          <span>Đã đổi mật khẩu. Lần đăng nhập sau dùng mật khẩu mới.</span>
+        </p>
       )}
-    </AccountGuard>
+
+      {/* Measured on this build, not assumed: the device that changes the
+          password keeps its session, and every other device loses its
+          refresh token — so it drops out at the next renewal rather than
+          instantly. */}
+      <p className="fine3">
+        Đổi xong, thiết bị này vẫn giữ đăng nhập. Các thiết bị khác bị đăng xuất ở lần
+        làm mới phiên kế tiếp.
+      </p>
+    </>
   );
 }

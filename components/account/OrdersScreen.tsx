@@ -8,9 +8,8 @@ import { Empty } from "@/components/shop/Empty";
 import { usePlacedOrders } from "@/components/shop/placed-order";
 import { useSimOverlay } from "@/components/shop/sim-store";
 import { Toast } from "@/components/shop/Toast";
-import { ordersOf } from "@/data/orders";
 import { formatAddressLine } from "@/data/regions";
-import type { Customer } from "@/data/types";
+import type { Order } from "@/data/types";
 import { shopOrders } from "@/lib/admin-sim";
 import {
   ORDER_TABS,
@@ -30,12 +29,14 @@ import {
   visibleDeviceOrder,
 } from "@/lib/order-rows";
 import { transferDeadlineIso } from "@/lib/placed-order";
-import { AccountGuard } from "./AccountGuard";
+import { fixtureOrdersOf, type Me } from "@/lib/me";
 import { OrderDetailScreen } from "./OrderDetailScreen";
 import { OrderRow3 } from "./OrderRow3";
 import { demoNow } from "@/lib/clock";
 
 interface OrdersScreenProps {
+  /** Read on the server; the page redirects when nobody is signed in. */
+  me: Me;
   /** The issue selling now — the rows date themselves against it. */
   currentDropNo: number;
   /** `?tab=`, so a filtered list is a URL somebody can come back to (QĐ-8). */
@@ -61,7 +62,7 @@ interface OrdersScreenProps {
  *
  * The tab lives in the URL (QĐ-8), like the listing's filters.
  */
-export function OrdersScreen({ currentDropNo, tab, openCode }: OrdersScreenProps) {
+export function OrdersScreen({ me, currentDropNo, tab, openCode }: OrdersScreenProps) {
   const catalog = useCatalog();
   const { orders: placed, ready } = usePlacedOrders();
   const { sim, ready: simReady } = useSimOverlay();
@@ -81,82 +82,76 @@ export function OrdersScreen({ currentDropNo, tab, openCode }: OrdersScreenProps
     document.getElementById(openCode)?.scrollIntoView({ block: "start" });
   }, [openCode, ready]);
 
+  const mine = shopOrders(fixtureOrdersOf(me), sim);
+  const rows = orderRows(catalog, mine, deviceOrdersOf(me.id, placed), now);
+  const shown = rowsForTab(rows, current);
+  const waiting = rows.filter((r) => r.state === "AWAITING_TRANSFER").length;
+
   return (
-    <AccountGuard title="Đơn hàng" active="orders">
-      {(me) => {
-        const mine = shopOrders(ordersOf(me.id), sim);
-        const rows = orderRows(catalog, mine, deviceOrdersOf(me.id, placed), now);
-        const shown = rowsForTab(rows, current);
-        const waiting = rows.filter((r) => r.state === "AWAITING_TRANSFER").length;
+    <>
+      <div className="pghead">
+        <h1>Đơn hàng</h1>
+        <span className="meta">
+          {rows.length} đơn
+          {waiting > 0 ? ` · ${waiting} chờ chuyển khoản` : ""}
+        </span>
+      </div>
 
-        return (
-          <>
-            <div className="pghead">
-              <h1>Đơn hàng</h1>
-              <span className="meta">
-                {rows.length} đơn
-                {waiting > 0 ? ` · ${waiting} chờ chuyển khoản` : ""}
-              </span>
-            </div>
+      {rows.length > 0 && (
+        <nav className="tabs3" aria-label="Lọc đơn" style={{ marginTop: 4 }}>
+          {ORDER_TABS.map((t) => (
+            <Link
+              key={t.key}
+              href={t.key === "all" ? "/account/orders" : `/account/orders?tab=${t.key}`}
+              className={t.key === current ? "on" : undefined}
+              aria-current={t.key === current ? "page" : undefined}
+            >
+              {t.label}
+              <span className="cnt">{rowCount(rows, t.key)}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
 
-            {rows.length > 0 && (
-              <nav className="tabs3" aria-label="Lọc đơn" style={{ marginTop: 4 }}>
-                {ORDER_TABS.map((t) => (
-                  <Link
-                    key={t.key}
-                    href={t.key === "all" ? "/account/orders" : `/account/orders?tab=${t.key}`}
-                    className={t.key === current ? "on" : undefined}
-                    aria-current={t.key === current ? "page" : undefined}
-                  >
-                    {t.label}
-                    <span className="cnt">{rowCount(rows, t.key)}</span>
-                  </Link>
-                ))}
-              </nav>
-            )}
+      {rows.length === 0 ? (
+        <Empty
+          icon="bag"
+          title="Chưa có đơn nào"
+          text="Đơn đặt trên thiết bị này cũng hiện ở đây, với nhãn “lưu trên thiết bị này”."
+          action={
+            <ButtonLink icon="grid" href="/products">
+              Xem {LEX.tl} {issueNo(currentDropNo)}
+            </ButtonLink>
+          }
+        />
+      ) : shown.length === 0 ? (
+        <p className="fine3">Không có đơn nào ở mục này.</p>
+      ) : (
+        <div className="rows3">
+          {shown.map((row) => (
+            <OrderRow3
+              key={row.code}
+              row={row}
+              currentDropNo={currentDropNo}
+              open={row.code === openCode}
+            />
+          ))}
+        </div>
+      )}
 
-            {rows.length === 0 ? (
-              <Empty
-                icon="bag"
-                title="Chưa có đơn nào"
-                text="Đơn đặt trên thiết bị này cũng hiện ở đây, với nhãn “lưu trên thiết bị này”."
-                action={
-                  <ButtonLink icon="grid" href="/products">
-                    Xem {LEX.tl} {issueNo(currentDropNo)}
-                  </ButtonLink>
-                }
-              />
-            ) : shown.length === 0 ? (
-              <p className="fine3">Không có đơn nào ở mục này.</p>
-            ) : (
-              <div className="rows3">
-                {shown.map((row) => (
-                  <OrderRow3
-                    key={row.code}
-                    row={row}
-                    currentDropNo={currentDropNo}
-                    open={row.code === openCode}
-                  />
-                ))}
-              </div>
-            )}
+      {openCode && ready && simReady && (
+        <OpenOrder
+          me={me}
+          code={openCode}
+          orders={mine}
+          placed={placed}
+          now={now}
+          onCancelled={setToast}
+        />
+      )}
 
-            {openCode && ready && simReady && (
-              <OpenOrder
-                me={me}
-                code={openCode}
-                orders={mine}
-                placed={placed}
-                now={now}
-                onCancelled={setToast}
-              />
-            )}
-
-            <Toast message={toast} onDone={() => setToast(null)} />
-          </>
-        );
-      }}
-    </AccountGuard>
+      <Toast message={toast} onDone={() => setToast(null)} />
+    </>
   );
 }
 
@@ -179,9 +174,9 @@ function OpenOrder({
   now,
   onCancelled,
 }: {
-  me: Customer;
+  me: Me;
   code: string;
-  orders: ReturnType<typeof ordersOf>;
+  orders: Order[];
   placed: ReturnType<typeof usePlacedOrders>["orders"];
   now: Date;
   onCancelled: (message: string) => void;

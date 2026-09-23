@@ -5,8 +5,7 @@ import { usePlacedOrders } from "@/components/shop/placed-order";
 import { usePrefs } from "@/components/shop/prefs";
 import { useReminders } from "@/components/shop/reminders";
 import { useSimOverlay } from "@/components/shop/sim-store";
-import { ordersOf } from "@/data/orders";
-import type { Customer } from "@/data/types";
+import { fixtureOrdersOf, type Me } from "@/lib/me";
 import { teasersIn, type Catalog } from "@/lib/catalog";
 import { shopOrders } from "@/lib/admin-sim";
 import { effectiveOrder } from "@/lib/customer-orders";
@@ -75,7 +74,7 @@ export interface NotifCenter {
   markAllRead: () => void;
 }
 
-export function useNotifCenter(catalog: Catalog, me: Customer | null): NotifCenter {
+export function useNotifCenter(catalog: Catalog, me: Me | null): NotifCenter {
   const { orders: placed, ready: placedReady } = usePlacedOrders();
   const { list: reminders, ready: remindersReady } = useReminders();
   const { prefs, ready: prefsReady } = usePrefs();
@@ -104,7 +103,7 @@ export function useNotifCenter(catalog: Catalog, me: Customer | null): NotifCent
 
     // The shopper's own orders, from both places they can live. The overlay
     // is read for ONE thing only: an order they cancelled themselves.
-    const mine = shopOrders(ordersOf(me.id), sim).map((o) =>
+    const mine = shopOrders(fixtureOrdersOf(me), sim).map((o) =>
       effectiveOrder(o, now),
     );
     const fixtures: NotifOrder[] = mine.map((o) => ({

@@ -11,8 +11,7 @@ import { useReminders, writeReminders } from "@/components/shop/reminders";
 import { useSimOverlay } from "@/components/shop/sim-store";
 import { Toast } from "@/components/shop/Toast";
 import { useDropLabel } from "@/components/shop/useDropLabel";
-import { ordersOf } from "@/data/orders";
-import type { Customer, Drop, DropState } from "@/data/types";
+import type { Drop, DropState } from "@/data/types";
 import { shopOrders } from "@/lib/admin-sim";
 import { dayMonth } from "@/lib/datetime";
 import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
@@ -24,7 +23,7 @@ import { setPref, setSizePref, type PrefKey } from "@/lib/prefs";
 import { hasReminder, toggleReminder } from "@/lib/reminder";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { resolveWishlist } from "@/lib/wishlist";
-import { AccountGuard } from "./AccountGuard";
+import { fixtureOrdersOf, type Me } from "@/lib/me";
 import { useNotifCenter } from "./notif-center";
 import { OrderRow3 } from "./OrderRow3";
 import { useWishlist } from "./WishlistContext";
@@ -40,6 +39,8 @@ export interface LiveCode {
 }
 
 interface AccountHomeProps {
+  /** Read on the server; the page redirects when nobody is signed in. */
+  me: Me;
   drop: Drop;
   dropState: DropState;
   dropLabel: string;
@@ -71,6 +72,7 @@ interface AccountHomeProps {
  * "chưa có mã nào" is a row that costs a scroll to read.
  */
 export function AccountHome({
+  me,
   drop,
   dropState: state,
   dropLabel,
@@ -97,208 +99,202 @@ export function AccountHome({
     writePrefs(setPref(prefs, key, !prefs[key]));
   }
 
+  const rows = orderRows(
+    catalog,
+    shopOrders(fixtureOrdersOf(me), sim),
+    deviceOrdersOf(me.id, placed),
+    now,
+  );
+  const bought = boughtByIssue(rows);
+
   return (
-    <AccountGuard title="Tổng quan" active="home">
-      {(me) => {
-        const rows = orderRows(
-          catalog,
-          shopOrders(ordersOf(me.id), sim),
-          deviceOrdersOf(me.id, placed),
-          now,
-        );
-        const bought = boughtByIssue(rows);
+    <>
+      <div className="pghead">
+        <h1>Tổng quan</h1>
+        <span className="meta">
+          {issueLabel(drop.no)}{" "}
+          {state === "OPEN" ? "đang bán" : state === "UPCOMING" ? "sắp mở" : "đã đóng"}{" "}
+          · {label}
+        </span>
+      </div>
 
-        return (
-          <>
-            <div className="pghead">
-              <h1>Tổng quan</h1>
+      <p className="note3">
+        <Icon name="info" className="ic sm" />
+        <span>
+          Đơn đặt trên thiết bị này hiện trong Đơn hàng với nhãn “lưu trên thiết bị
+          này”.
+        </span>
+      </p>
+
+      <div className="acctgrid3" style={{ marginTop: 16 }}>
+        {rows.length > 0 && (
+          <section className="panel3">
+            <h3>
+              Đơn gần nhất
+              <Link className="more" href="/account/orders">
+                Xem cả {rows.length}
+              </Link>
+            </h3>
+            <div className="rows3">
+              {rows.slice(0, 3).map((row) => (
+                <OrderRow3
+                  key={row.code}
+                  row={row}
+                  currentDropNo={drop.no}
+                  variant="compact"
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {codes.length > 0 && (
+          <section className="panel3">
+            <h3>
+              Mã đang chạy
               <span className="meta">
-                {issueLabel(drop.no)}{" "}
-                {state === "OPEN" ? "đang bán" : state === "UPCOMING" ? "sắp mở" : "đã đóng"}{" "}
-                · {label}
+                {codesIssueNo !== undefined
+                  ? `trong ${LEX.tl} ${issueNo(codesIssueNo)}`
+                  : codesWindow}
               </span>
+            </h3>
+            <div className="codes">
+              {codes.map((c) => (
+                <CodeRow key={c.code} code={c} />
+              ))}
             </div>
+            {codesEndLabel && (
+              <p className="fine3" style={{ marginTop: 8 }}>
+                Mã hết hạn {codesEndLabel}
+                {codesIssueNo !== undefined
+                  ? ` cùng ${LEX.tl} ${issueNo(codesIssueNo)}.`
+                  : "."}
+              </p>
+            )}
+          </section>
+        )}
 
-            <p className="note3">
-              <Icon name="info" className="ic sm" />
-              <span>
-                Đăng nhập mô phỏng, chưa có máy chủ. Đơn đặt trên thiết bị này hiện trong
-                Đơn hàng với nhãn “lưu trên thiết bị này”.
-              </span>
-            </p>
+        <NewNotifications me={me} now={now} />
 
-            <div className="acctgrid3" style={{ marginTop: 16 }}>
-              {rows.length > 0 && (
-                <section className="panel3">
-                  <h3>
-                    Đơn gần nhất
-                    <Link className="more" href="/account/orders">
-                      Xem cả {rows.length}
-                    </Link>
-                  </h3>
-                  <div className="rows3">
-                    {rows.slice(0, 3).map((row) => (
-                      <OrderRow3
-                        key={row.code}
-                        row={row}
-                        currentDropNo={drop.no}
-                        variant="compact"
+        {wishReady && saved.items.length > 0 && (
+          <section className="panel3">
+            <h3>
+              Đã lưu
+              <Link className="more" href="/account/wishlist">
+                Xem cả {saved.items.length}
+              </Link>
+            </h3>
+            <div className="rows3">
+              {saved.items.slice(0, 2).map((item) => (
+                <Link
+                  className="row"
+                  key={item.product.id}
+                  href={`/products/${item.product.slug}`}
+                >
+                  <b>
+                    <span className="nm">{item.product.name}</span>
+                  </b>
+                  <span className="sub">
+                    {item.soldOut ? (
+                      <span style={{ color: "var(--hot)" }}>đã hết</span>
+                    ) : (
+                      <span style={item.low ? { color: "var(--hot)" } : undefined}>
+                        còn {item.onHand}
+                      </span>
+                    )}
+                    {" · "}
+                    {vnd(item.product.priceVnd)}
+                    {item.savedAt ? ` · lưu ${dayMonth(item.savedAt)}` : ""}
+                  </span>
+                  <span className="right">
+                    <span className="thumbs3">
+                      <Image
+                        src={photoUrl(item.product.photoKeys[0]!, 120, 60)}
+                        alt=""
+                        width={120}
+                        height={150}
                       />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {codes.length > 0 && (
-                <section className="panel3">
-                  <h3>
-                    Mã đang chạy
-                    <span className="meta">
-                      {codesIssueNo !== undefined
-                        ? `trong ${LEX.tl} ${issueNo(codesIssueNo)}`
-                        : codesWindow}
                     </span>
-                  </h3>
-                  <div className="codes">
-                    {codes.map((c) => (
-                      <CodeRow key={c.code} code={c} />
-                    ))}
-                  </div>
-                  {codesEndLabel && (
-                    <p className="fine3" style={{ marginTop: 8 }}>
-                      Mã hết hạn {codesEndLabel}
-                      {codesIssueNo !== undefined
-                        ? ` cùng ${LEX.tl} ${issueNo(codesIssueNo)}.`
-                        : "."}
-                    </p>
-                  )}
-                </section>
-              )}
-
-              <NewNotifications me={me} now={now} />
-
-              {wishReady && saved.items.length > 0 && (
-                <section className="panel3">
-                  <h3>
-                    Đã lưu
-                    <Link className="more" href="/account/wishlist">
-                      Xem cả {saved.items.length}
-                    </Link>
-                  </h3>
-                  <div className="rows3">
-                    {saved.items.slice(0, 2).map((item) => (
-                      <Link
-                        className="row"
-                        key={item.product.id}
-                        href={`/products/${item.product.slug}`}
-                      >
-                        <b>
-                          <span className="nm">{item.product.name}</span>
-                        </b>
-                        <span className="sub">
-                          {item.soldOut ? (
-                            <span style={{ color: "var(--hot)" }}>đã hết</span>
-                          ) : (
-                            <span style={item.low ? { color: "var(--hot)" } : undefined}>
-                              còn {item.onHand}
-                            </span>
-                          )}
-                          {" · "}
-                          {vnd(item.product.priceVnd)}
-                          {item.savedAt ? ` · lưu ${dayMonth(item.savedAt)}` : ""}
-                        </span>
-                        <span className="right">
-                          <span className="thumbs3">
-                            <Image
-                              src={photoUrl(item.product.photoKeys[0]!, 120, 60)}
-                              alt=""
-                              width={120}
-                              height={150}
-                            />
-                          </span>
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              <section className="panel3 full">
-                <h3>
-                  Tuỳ chọn
-                  <span className="meta">lưu trên thiết bị này</span>
-                </h3>
-
-                {/* The reminder is the one switch here that DOES something
-                    beyond being kept: the home page reads the same key and
-                    shows its band in the last two hours before the issue
-                    opens, and the notifications screen counts it. */}
-                <PrefRow
-                  title={`Nhắc giờ mở ${LEX.tl} mới`}
-                  detail={
-                    nextDropNo !== undefined
-                      ? "Hiện dải nhắc ở trang chủ khi còn 2 giờ, và một thông báo ở đây."
-                      : `Chưa có ${LEX.tl} nào sắp mở.`
-                  }
-                  {...(nextDropNo !== undefined && remindersReady
-                    ? {
-                        on: hasReminder(reminders, nextDropNo),
-                        onFlip: () => {
-                          const next = toggleReminder(reminders, nextDropNo);
-                          writeReminders(next);
-                          setToast(
-                            hasReminder(next, nextDropNo)
-                              ? `Đã đặt nhắc · ${nextDropLine ?? issueLabel(nextDropNo)}`
-                              : "Đã bỏ nhắc",
-                          );
-                        },
-                      }
-                    : {})}
-                />
-
-                <PrefRow
-                  title="Email khi đơn đổi trạng thái"
-                  detail="Đã thanh toán, đã bàn giao, đã giao. Gửi thư cần máy chủ, đang chuẩn bị."
-                  on={prefsReady && prefs.emailOnStatus}
-                  onFlip={() => flip("emailOnStatus")}
-                />
-
-                <PrefRow
-                  title={prefs.size ? `Size ghi nhớ · ${prefs.size}` : "Chưa ghi nhớ size nào"}
-                  detail={
-                    prefs.size
-                      ? `Chọn sẵn size ${prefs.size} ở trang sản phẩm và sheet chọn size.`
-                      : "Bật ở trang sản phẩm, sau khi chọn một size."
-                  }
-                  {...(prefsReady && prefs.size
-                    ? {
-                        on: true,
-                        onFlip: () => {
-                          writePrefs(setSizePref(prefs, null));
-                          setToast("Đã bỏ ghi nhớ size");
-                        },
-                      }
-                    : {})}
-                />
-
-                <div className="prefrow" style={{ borderBottom: 0 }}>
-                  <div>
-                    <b>Đã mua</b>
-                    <span>
-                      {bought.length > 0
-                        ? bought.map((b) => `${issueLabel(b.no)} · ${b.orders} đơn`).join(" · ")
-                        : "Chưa có đơn nào."}
-                    </span>
-                  </div>
-                </div>
-              </section>
+                  </span>
+                </Link>
+              ))}
             </div>
+          </section>
+        )}
 
-            <Toast message={toast} onDone={() => setToast(null)} />
-          </>
-        );
-      }}
-    </AccountGuard>
+        <section className="panel3 full">
+          <h3>
+            Tuỳ chọn
+            <span className="meta">lưu trên thiết bị này</span>
+          </h3>
+
+          {/* The reminder is the one switch here that DOES something
+              beyond being kept: the home page reads the same key and
+              shows its band in the last two hours before the issue
+              opens, and the notifications screen counts it. */}
+          <PrefRow
+            title={`Nhắc giờ mở ${LEX.tl} mới`}
+            detail={
+              nextDropNo !== undefined
+                ? "Hiện dải nhắc ở trang chủ khi còn 2 giờ, và một thông báo ở đây."
+                : `Chưa có ${LEX.tl} nào sắp mở.`
+            }
+            {...(nextDropNo !== undefined && remindersReady
+              ? {
+                  on: hasReminder(reminders, nextDropNo),
+                  onFlip: () => {
+                    const next = toggleReminder(reminders, nextDropNo);
+                    writeReminders(next);
+                    setToast(
+                      hasReminder(next, nextDropNo)
+                        ? `Đã đặt nhắc · ${nextDropLine ?? issueLabel(nextDropNo)}`
+                        : "Đã bỏ nhắc",
+                    );
+                  },
+                }
+              : {})}
+          />
+
+          <PrefRow
+            title="Email khi đơn đổi trạng thái"
+            detail="Đã thanh toán, đã bàn giao, đã giao. Gửi thư cần máy chủ, đang chuẩn bị."
+            on={prefsReady && prefs.emailOnStatus}
+            onFlip={() => flip("emailOnStatus")}
+          />
+
+          <PrefRow
+            title={prefs.size ? `Size ghi nhớ · ${prefs.size}` : "Chưa ghi nhớ size nào"}
+            detail={
+              prefs.size
+                ? `Chọn sẵn size ${prefs.size} ở trang sản phẩm và sheet chọn size.`
+                : "Bật ở trang sản phẩm, sau khi chọn một size."
+            }
+            {...(prefsReady && prefs.size
+              ? {
+                  on: true,
+                  onFlip: () => {
+                    writePrefs(setSizePref(prefs, null));
+                    setToast("Đã bỏ ghi nhớ size");
+                  },
+                }
+              : {})}
+          />
+
+          <div className="prefrow" style={{ borderBottom: 0 }}>
+            <div>
+              <b>Đã mua</b>
+              <span>
+                {bought.length > 0
+                  ? bought.map((b) => `${issueLabel(b.no)} · ${b.orders} đơn`).join(" · ")
+                  : "Chưa có đơn nào."}
+              </span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <Toast message={toast} onDone={() => setToast(null)} />
+    </>
   );
 }
 
@@ -308,7 +304,7 @@ export function AccountHome({
  * It reads the same module the notifications screen does, so the two can
  * never disagree about what is new.
  */
-function NewNotifications({ me, now }: { me: Customer; now: Date }) {
+function NewNotifications({ me, now }: { me: Me; now: Date }) {
   const catalog = useCatalog();
   const { list, ready } = useNotifCenter(catalog, me);
   if (!ready) return null;

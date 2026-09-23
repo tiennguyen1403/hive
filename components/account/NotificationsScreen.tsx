@@ -7,16 +7,17 @@ import { Icon } from "@/components/icon/Icon";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { usePrefs, writePrefs } from "@/components/shop/prefs";
 import { useReminders, writeReminders } from "@/components/shop/reminders";
-import type { Customer } from "@/data/types";
+import type { Me } from "@/lib/me";
 import { LEX } from "@/lib/lexicon";
 import { groupNotifications, stampLabel, type Notif } from "@/lib/notifications";
 import { setPref, type PrefKey } from "@/lib/prefs";
 import { hasReminder, toggleReminder } from "@/lib/reminder";
-import { AccountGuard } from "./AccountGuard";
 import { useNotifCenter } from "./notif-center";
 import { demoNow } from "@/lib/clock";
 
 interface NotificationsScreenProps {
+  /** Read on the server; the page redirects when nobody is signed in. */
+  me: Me;
   /** The issue about to open — the only one a reminder can be set for. */
   nextDropNo?: number;
 }
@@ -36,23 +37,15 @@ interface NotificationsScreenProps {
  * The three switches turn SOURCES off: a source that is off is not counted
  * anywhere, the rail included.
  */
-export function NotificationsScreen({ nextDropNo }: NotificationsScreenProps) {
-  return (
-    <AccountGuard title="Thông báo" active="notifications">
-      {(me) => (
-        <NotificationsBody me={me} {...(nextDropNo !== undefined ? { nextDropNo } : {})} />
-      )}
-    </AccountGuard>
-  );
+export function NotificationsScreen({ me, nextDropNo }: NotificationsScreenProps) {
+  return <NotificationsBody me={me} {...(nextDropNo !== undefined ? { nextDropNo } : {})} />;
 }
 
 /**
- * A component of its own, not a function inside the render prop: React
- * identifies a component by its identity, and one declared inside another
- * render is a NEW component on every pass — it would unmount the list, and
- * with it every piece of state the hooks below keep.
+ * A component of its own, so the optional `nextDropNo` can be narrowed once
+ * at the boundary and the hooks below can be read without it.
  */
-function NotificationsBody({ me, nextDropNo }: { me: Customer; nextDropNo?: number }) {
+function NotificationsBody({ me, nextDropNo }: { me: Me; nextDropNo?: number }) {
   const catalog = useCatalog();
   const { prefs, ready: prefsReady } = usePrefs();
   const { list: reminders, ready: remindersReady } = useReminders();

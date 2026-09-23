@@ -1,14 +1,15 @@
 "use client";
 
-import type { Customer } from "@/data/types";
+import type { Me } from "@/lib/me";
 import { AccountRail, type RailKey } from "./AccountRail";
 
 export type { RailKey };
 
 interface AccountLayoutProps {
   /** Nobody signed in means no rail, and the screen keeps its plain column. */
-  me: Customer | null;
-  active?: RailKey;
+  me: Me | null;
+  /** Counted on the server — a Client Component cannot read the database. */
+  addressCount?: number;
   children: React.ReactNode;
 }
 
@@ -28,8 +29,12 @@ interface AccountLayoutProps {
  * Signed out, this is a pass-through. The wishlist is readable without an
  * account — saving something is not a reason to demand one — and an empty
  * 240px column beside it would be a rail for nobody.
+ *
+ * Which door is lit is no longer a prop: `AccountRail` reads the path. Slice
+ * B1 moved the frame into `app/account/layout.tsx`, and a layout cannot know
+ * which of its children is rendering.
  */
-export function AccountLayout({ me, active, children }: AccountLayoutProps) {
+export function AccountLayout({ me, addressCount, children }: AccountLayoutProps) {
   if (!me) {
     return <div className="wrap3">{children}</div>;
   }
@@ -37,7 +42,7 @@ export function AccountLayout({ me, active, children }: AccountLayoutProps) {
   return (
     <div className="wrap3">
       <div className="acct3">
-        <AccountRail me={me} {...(active ? { active } : {})} />
+        <AccountRail me={me} {...(addressCount !== undefined ? { addressCount } : {})} />
         <div className="content">{children}</div>
       </div>
     </div>

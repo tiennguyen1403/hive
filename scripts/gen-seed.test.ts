@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { SEED_PATH, fixtureInput, renderSeedSql } from "./gen-seed";
+import { SEED_PATH, fixtureCustomers, fixtureInput, renderSeedSql } from "./gen-seed";
+
+/** The one call every assertion below compares against. */
+const render = () => renderSeedSql(fixtureInput(), fixtureCustomers());
 
 /**
  * The anti-drift catch.
@@ -18,7 +21,7 @@ describe("supabase/seed.sql", () => {
   const onDisk = readFileSync(SEED_PATH, "utf8");
 
   it("is exactly what the generator produces from data/*.ts", () => {
-    expect(onDisk).toBe(renderSeedSql(fixtureInput()));
+    expect(onDisk).toBe(render());
   });
 
   it("says it is generated, so nobody edits it by hand", () => {
@@ -31,9 +34,9 @@ describe("supabase/seed.sql", () => {
 });
 
 describe("the generator itself", () => {
-  const sql = renderSeedSql(fixtureInput());
+  const sql = render();
 
-  it("writes one row per fixture entry — 21 · 38 · 152 · 4 · 2 · 6", () => {
+  it("writes one row per fixture entry — 21 · 38 · 152 · 4 · 2 · 6 · 8 · 9", () => {
     const rowsOf = (table: string) => {
       const start = sql.indexOf(`insert into public.${table} (`);
       expect(start, `no insert for ${table}`).toBeGreaterThan(-1);
@@ -47,6 +50,16 @@ describe("the generator itself", () => {
     expect(rowsOf("seed_stock_cells")).toBe(152);
     expect(rowsOf("seed_teasers")).toBe(2);
     expect(rowsOf("seed_promotions")).toBe(6);
+    expect(rowsOf("seed_customers")).toBe(8);
+    expect(rowsOf("seed_addresses")).toBe(9);
+  });
+
+  it("stores every phone as ten digits, however the fixture punctuates it", () => {
+    const start = sql.indexOf("insert into public.seed_customers (");
+    const block = sql.slice(start, sql.indexOf(";\n", start));
+    for (const quoted of block.match(/'0[^']*'/g) ?? []) {
+      expect(quoted).toMatch(/^'0\d{9}'$/);
+    }
   });
 
   it("writes every instant as a literal that still carries +07:00", () => {
@@ -58,15 +71,18 @@ describe("the generator itself", () => {
   });
 
   it("is deterministic: the same fixture renders the same bytes", () => {
-    expect(renderSeedSql(fixtureInput())).toBe(sql);
+    expect(render()).toBe(sql);
   });
 
   it("escapes a quote in a name instead of ending the literal", () => {
     const input = fixtureInput();
-    const quoted = renderSeedSql({
-      ...input,
-      products: [{ ...input.products[0]!, name: "KH'ÓI" }, ...input.products.slice(1)],
-    });
+    const quoted = renderSeedSql(
+      {
+        ...input,
+        products: [{ ...input.products[0]!, name: "KH'ÓI" }, ...input.products.slice(1)],
+      },
+      fixtureCustomers(),
+    );
     expect(quoted).toContain("'KH''ÓI'");
   });
 });

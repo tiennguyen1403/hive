@@ -9,7 +9,7 @@ import { CopyButton } from "@/components/shop/CopyButton";
 import { Empty } from "@/components/shop/Empty";
 import { ShopFrame } from "@/components/shop/ShopFrame";
 import { Steps } from "@/components/shop/Steps";
-import { useSession } from "@/components/account/SessionContext";
+import { useMe } from "@/components/account/MeContext";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { trackHref } from "@/lib/lookup";
@@ -57,7 +57,7 @@ interface OrderConfirmedProps {
 export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
   const { orders, ready } = usePlacedOrders();
   const order = orders[0] ?? null;
-  const { me } = useSession();
+  const me = useMe();
   const codeRef = useRef<HTMLElement>(null);
   const amountRef = useRef<HTMLElement>(null);
   const refRef = useRef<HTMLElement>(null);

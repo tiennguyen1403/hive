@@ -1,20 +1,16 @@
-import type { Customer } from "@/data/types";
 import { ADDRESS_LABELS } from "@/data/types";
 import type { AddressDraft } from "./account-form";
 
 /**
- * The address book: the ones the account came with, plus the ones this
- * device has saved.
+ * The GUEST address book: what this browser has saved, for somebody who is
+ * not signed in.
  *
- * Two sources on purpose. The seeded addresses belong to the fixture
- * customer and cannot be written to — there is no server behind them. What
- * somebody adds here is theirs and lives in `localStorage`, which is a real
- * place, so the screen can say "lưu trên thiết bị này" and mean it.
- *
- * A device entry sharing a seeded entry's id REPLACES it. That is what
- * editing a seeded address does: the original stays in the fixture, the
- * overlay wins on screen. Showing both would leave the shopper looking at
- * two versions of one place.
+ * It used to be two sources — the fixture customer's addresses overlaid
+ * with whatever `localStorage` held — and every screen that showed it had
+ * to say which half each row came from. Slice B1 gave an account a real
+ * book in Postgres (`lib/db/addresses.ts`), so the merge went with the
+ * fixture: signed in, the book is the account's; signed out, it is this
+ * one, and "lưu trên thiết bị này" is still exactly true of it.
  */
 
 export type AddressSource = "account" | "device";
@@ -26,50 +22,6 @@ export interface SavedAddress extends AddressDraft {
 
 export const ADDRESS_BOOK_STORAGE_KEY = "brand.addresses";
 const SCHEMA_VERSION = 1;
-
-/**
- * Whatever the account shipped with, in a shape the screens can render.
- *
- * The label is the address's OWN (`data/customers.ts`) since v3 slice 3.
- * Before that every seeded entry was stamped "Nhà", so an account holding
- * two of them showed "Nhà · Trần Minh Anh · 0912 345 678" twice and the
- * picker gave no way to tell one from the other.
- */
-function seeded(customer: Customer): SavedAddress[] {
-  return customer.addresses.map((a) => ({
-    id: a.id,
-    recipient: a.recipient,
-    phone: a.phone,
-    provinceCode: a.provinceCode,
-    wardCode: a.wardCode,
-    line: a.line,
-    label: a.label,
-    isDefault: a.isDefault,
-    source: "account" as const,
-  }));
-}
-
-export function addressBookFor(customer: Customer, device: SavedAddress[]): SavedAddress[] {
-  const overlay = new Map(device.map((a) => [a.id, a]));
-  const merged = seeded(customer).map((a) => overlay.get(a.id) ?? a);
-  const usedIds = new Set(merged.map((a) => a.id));
-  const book = [...merged, ...device.filter((a) => !usedIds.has(a.id))];
-
-  /**
-   * One default across the WHOLE book, not one per source.
-   *
-   * `saveAddress` clears the flag inside the device list, but the seeded
-   * address carries `isDefault` from the fixture and is not in that list —
-   * so both survived, and `defaultAddress` returned the seeded one. Saving
-   * a new default then looked like it had done nothing: the address screen
-   * showed two "Mặc định" badges and checkout still prefilled the old one.
-   *
-   * A device choice wins, because it is the one somebody actually made.
-   */
-  const chosen = book.find((a) => a.source === "device" && a.isDefault);
-  if (!chosen) return book;
-  return book.map((a) => ({ ...a, isDefault: a.id === chosen.id }));
-}
 
 /** The one checkout prefills. Falls back to the first rather than to none. */
 export function defaultAddress(book: SavedAddress[]): SavedAddress | undefined {

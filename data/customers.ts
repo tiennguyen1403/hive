@@ -134,6 +134,3 @@ export const CUSTOMERS: Customer[] = [
 ];
 
 export const customerById = new Map(CUSTOMERS.map((c) => [c.id, c]));
-
-/** Whoever the mock treats as signed in on the account screens. */
-export const SIGNED_IN_CUSTOMER = CUSTOMERS[0]!;

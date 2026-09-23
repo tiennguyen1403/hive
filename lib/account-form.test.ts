@@ -32,15 +32,18 @@ describe("validateSignUp", () => {
     expect(validateSignUp({ ...GOOD_SIGNUP, email: "minhanh@email" }).email).toBeTruthy();
   });
 
-  it("refuses an email that already belongs to a seeded account", () => {
-    // There is no server to ask, but the data is right here, and letting
-    // someone "create" an account that exists would be a lie the next
-    // screen has to keep.
-    expect(validateSignUp({ ...GOOD_SIGNUP, email: "minhanh@email.com" }).email).toBeTruthy();
+  it("does NOT say whether an address already has an account", () => {
+    // It used to, from the fixture. Slice B1 put a real auth server behind
+    // this form, and "email này đã có tài khoản" is how somebody finds out
+    // which addresses are registered here — so the answer moved to the
+    // server, where it comes back as one sentence for every failure (QĐ-15).
+    expect(validateSignUp({ ...GOOD_SIGNUP, email: "minhanh@email.com" })).toEqual({});
+    expect(validateSignUp({ ...GOOD_SIGNUP, phone: "0912345678" })).toEqual({});
   });
 
-  it("refuses a phone that already belongs to a seeded account", () => {
-    expect(validateSignUp({ ...GOOD_SIGNUP, phone: "0912345678" }).phone).toBeTruthy();
+  it("still catches a phone that is not ten digits starting with zero", () => {
+    expect(validateSignUp({ ...GOOD_SIGNUP, phone: "12345" }).phone).toBeTruthy();
+    expect(validateSignUp({ ...GOOD_SIGNUP, phone: "  " }).phone).toBeTruthy();
   });
 
   it("needs a password that meets every published rule", () => {

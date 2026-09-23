@@ -5,13 +5,11 @@
  */
 async (page) => {
   const ORIGIN = "http://127.0.0.1:3200";
-  const OUT = ".playwright-cli/shots/backend/b0b/after";
+  const OUT = ".playwright-cli/shots/backend/b1/after";
 
+  // Slice B1: the session is an auth cookie, not a `brand.session` key, so it
+  // is opened by pressing the sign-in screen's own "Đăng nhập thử".
   const SEED = {
-    "brand.session": JSON.stringify({
-      v: 1,
-      session: { customerId: "c-minhanh", since: "2026-09-20T00:00:00+07:00" },
-    }),
     "brand.cart": JSON.stringify({
       v: 1,
       lines: [{ productId: "p-khoi", size: "M", color: "black", qty: 1 }],
@@ -31,6 +29,10 @@ async (page) => {
     // code banner on the cart that has nothing to do with this slice.
     localStorage.removeItem("brand.promo");
   }, SEED);
+  await page.context().clearCookies();
+  await page.goto(ORIGIN + "/sign-in");
+  await page.getByRole("button", { name: "Đăng nhập thử" }).click();
+  await page.waitForURL("**/account", { timeout: 20000 });
 
   // Lazy images only load once they have been near the viewport, so a full-page
   // shot taken without scrolling is a page of grey boxes.

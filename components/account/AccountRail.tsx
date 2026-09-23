@@ -1,20 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon/Icon";
 import { usePlacedOrders } from "@/components/shop/placed-order";
-import { ordersOf } from "@/data/orders";
-import type { Customer } from "@/data/types";
-import { addressBookFor } from "@/lib/address-book";
 import { initialsOf } from "@/lib/initials";
 import { deviceOrdersOf } from "@/lib/order-rows";
 import { formatPhone } from "@/lib/phone";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { resolveWishlist } from "@/lib/wishlist";
-import { useAddressBook } from "./AddressBookContext";
+import { signOut } from "@/lib/actions/auth";
+import { fixtureOrdersOf, type Me } from "@/lib/me";
 import { useNotifCenter } from "./notif-center";
-import { useSession } from "./SessionContext";
 import { useWishlist } from "./WishlistContext";
 import { demoNow } from "@/lib/clock";
 
@@ -28,6 +25,27 @@ export type RailKey =
   | "profile";
 
 /**
+ * Which of the six the current URL is behind.
+ *
+ * Read here rather than passed down by each page: the rail moved into
+ * `app/account/layout.tsx` at slice B1, and a layout does not know which
+ * child is rendering. `usePathname` costs this component the static shell,
+ * which it had already left — every account screen reads a session cookie.
+ */
+function railKeyOf(path: string): RailKey | undefined {
+  if (path === "/account") return "home";
+  if (path.startsWith("/account/orders")) return "orders";
+  if (path.startsWith("/account/notifications")) return "notifications";
+  if (path.startsWith("/account/wishlist")) return "wishlist";
+  if (path.startsWith("/account/addresses")) return "addresses";
+  // The password screen is reached from the profile and belongs to it.
+  if (path.startsWith("/account/profile") || path.startsWith("/account/password")) {
+    return "profile";
+  }
+  return undefined;
+}
+
+/**
  * The account's six doors — a row that scrolls on a phone, a column from
  * 900px.
  *
@@ -39,27 +57,27 @@ export type RailKey =
  * Every number beside a door is COUNTED, not typed: orders from the fixtures
  * plus whatever was placed in this browser, unread notifications from
  * `lib/notifications.ts`, saved styles from the device list, addresses from
- * the book. A count that is written down is a count that goes wrong the
- * first time somebody uses the screen under it.
+ * the book in Postgres — that last one counted on the server and passed in,
+ * because a Client Component cannot read a database. A count that is written
+ * down is a count that goes wrong the first time somebody uses the screen
+ * under it.
  *
- * Sign-out is a `<button>` among six `<a>`s on purpose. It does something
- * rather than going somewhere, and a link that logs you out is a link a
- * browser may prefetch.
+ * Sign-out is a form and not a link on purpose: it does something rather than
+ * going somewhere, a link that logs you out is a link a browser may prefetch,
+ * and the something is now a Server Action that clears a cookie the browser
+ * cannot touch.
  */
-export function AccountRail({ me, active }: { me: Customer; active?: RailKey }) {
-  const { signOut } = useSession();
+export function AccountRail({ me, addressCount }: { me: Me; addressCount?: number }) {
   const catalog = useCatalog();
   const { list, ready: wishReady } = useWishlist();
-  const { device, ready: bookReady } = useAddressBook();
   const { orders: placed } = usePlacedOrders();
   const { unread, ready: notifReady } = useNotifCenter(catalog, me);
-  const router = useRouter();
+  const active = railKeyOf(usePathname());
 
-  const orders = ordersOf(me.id).length + deviceOrdersOf(me.id, placed).length;
-  // `ready` is false for one paint on each of these. Nothing beats a zero:
-  // "0 mẫu đã lưu" is a claim, and it would be wrong for that paint.
+  const orders = fixtureOrdersOf(me).length + deviceOrdersOf(me.id, placed).length;
+  // `ready` is false for one paint here. Nothing beats a zero: "0 mẫu đã lưu"
+  // is a claim, and it would be wrong for that paint.
   const saved = wishReady ? resolveWishlist(catalog, demoNow(), list).items.length : undefined;
-  const addresses = bookReady ? addressBookFor(me, device).length : undefined;
 
   return (
     <aside className="acctrail3">
@@ -71,9 +89,12 @@ export function AccountRail({ me, active }: { me: Customer; active?: RailKey }) 
           <b>{me.name}</b>
           {/* One token: the email and the number are read together, and the
               non-breaking spaces inside the number (lib/phone.ts) keep it
-              from breaking mid-run. */}
+              from breaking mid-run. An account made a minute ago has no
+              number yet — the first order is where one comes from — so the
+              separator goes with it rather than trailing into nothing. */}
           <span>
-            {me.email} · {formatPhone(me.phone)}
+            {me.email}
+            {me.phone ? ` · ${formatPhone(me.phone)}` : ""}
           </span>
         </span>
       </div>
@@ -105,7 +126,7 @@ export function AccountRail({ me, active }: { me: Customer; active?: RailKey }) 
           href="/account/addresses"
           icon="pin"
           on={active === "addresses"}
-          {...(addresses !== undefined ? { count: addresses } : {})}
+          {...(addressCount !== undefined ? { count: addressCount } : {})}
         >
           Địa chỉ
         </RailLink>
@@ -114,19 +135,16 @@ export function AccountRail({ me, active }: { me: Customer; active?: RailKey }) 
         </RailLink>
       </nav>
 
-      <p className="out">
-        <button
-          type="button"
-          className="lnk tap"
-          style={{ fontSize: "var(--fs-sm)" }}
-          onClick={() => {
-            signOut();
-            router.replace("/");
-          }}
-        >
-          Đăng xuất
-        </button>
-      </p>
+      {/* A div and not a `<p>`: a form is flow content and a paragraph may
+          only hold phrasing content. `.out` is a class, so the spacing rule
+          in account.css lands either way. */}
+      <div className="out">
+        <form action={signOut}>
+          <button type="submit" className="lnk tap" style={{ fontSize: "var(--fs-sm)" }}>
+            Đăng xuất
+          </button>
+        </form>
+      </div>
     </aside>
   );
 }

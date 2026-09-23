@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Icon } from "@/components/icon/Icon";
 import { ShopFrame } from "@/components/shop/ShopFrame";
-import { findAccount } from "@/lib/session";
 
 /**
  * Asking for a reset link.
@@ -36,8 +35,6 @@ export function ForgotPasswordScreen() {
     }
     setError(null);
     setAsked(value);
-    // Looked up and deliberately not reported — see the note above.
-    void findAccount(value);
   }
 
   return (

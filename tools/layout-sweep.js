@@ -48,12 +48,10 @@ async (page) => {
   ];
 
   // Account routes redirect when nobody is signed in, and checkout needs a
-  // cart. Seed both so every route renders the screen it is meant to render.
+  // cart. Slice B1 made the session a real auth cookie, so it is opened by
+  // pressing the sign-in screen's own "Đăng nhập thử" rather than by writing
+  // a `brand.session` key that no longer exists.
   const SEED = {
-    "brand.session": JSON.stringify({
-      v: 1,
-      session: { customerId: "c-minhanh", since: "2026-09-20T00:00:00+07:00" },
-    }),
     "brand.cart": JSON.stringify({
       v: 1,
       lines: [{ productId: "p-khoi", size: "M", color: "black", qty: 1 }],
@@ -74,6 +72,10 @@ async (page) => {
   await page.evaluate((seed) => {
     for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
   }, SEED);
+  await page.context().clearCookies();
+  await page.goto(ORIGIN + "/sign-in");
+  await page.getByRole("button", { name: "Đăng nhập thử" }).click();
+  await page.waitForURL("**/account", { timeout: 20000 });
 
   // Everything below runs inside the page: only a real viewport knows which
   // media query won, what the computed cursor is, and what is actually
@@ -373,6 +375,24 @@ async (page) => {
     }
   }
 
+  // Overlays: a menu that is shut measures like a page that has none.
+  for (const width of WIDTHS) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 800 });
+    const entry = { route: "/account/addresses/new#province", width, name: `account-addresses-new-province-${width}` };
+    try {
+      const response = await page.goto(ORIGIN + "/account/addresses/new", { waitUntil: "load" });
+      entry.status = response ? response.status() : null;
+      entry.landedOn = "/account/addresses/new";
+      await page.locator(".field3", { hasText: "Tỉnh / thành" }).first().locator("button.selbtn").click();
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: `${SHOTS}/${entry.name}.png`, fullPage: false });
+      entry.findings = await probe(width);
+    } catch (e) {
+      entry.error = String(e).slice(0, 200);
+    }
+    results.push(entry);
+  }
+
   page.off("console", onConsole);
 
   const counts = {};
@@ -391,7 +411,7 @@ async (page) => {
     totalFindings: total,
     byDetector: counts,
     consoleErrors,
-    redirected: results.filter((r) => r.landedOn && r.landedOn !== r.route.split("?")[0]).map((r) => `${r.route} -> ${r.landedOn}`),
+    redirected: results.filter((r) => r.landedOn && r.landedOn !== r.route.split("?")[0].split("#")[0]).map((r) => `${r.route} -> ${r.landedOn}`),
     results: results.filter((r) => r.error || (r.findings && Object.values(r.findings).some((v) => (Array.isArray(v) ? v.length : v)))),
     shots: SHOTS,
   };

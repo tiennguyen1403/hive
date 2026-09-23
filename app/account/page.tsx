@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AccountHome, type LiveCode } from "@/components/account/AccountHome";
 import { loadCatalog } from "@/lib/db/catalog";
+import { requireMe } from "@/lib/db/profiles";
 import { clockLabel, dayMonth, openingLabel } from "@/lib/datetime";
 import { dropBandLabel, dropCalendar, featuredDrop } from "@/lib/drop";
 import { issueLabel } from "@/lib/lexicon";
@@ -14,8 +15,8 @@ import { demoNow } from "@/lib/clock";
 
 export const metadata: Metadata = {
   title: "Tổng quan",
-  // An account page is personal and renders client-side behind a session
-  // check. Nothing here belongs in a search index.
+  // An account page is personal and is rendered behind a server-side
+  // session check. Nothing here belongs in a search index.
   robots: { index: false, follow: false },
 };
 
@@ -28,6 +29,10 @@ export const metadata: Metadata = {
  * `Promotion` rows the screen would have to re-judge against the clock.
  */
 export default async function AccountPage() {
+  // The session check, on the server and before anything is rendered. A
+  // visitor with no session lands on the sign-in form with this page in
+  // `?next=`, rather than on a screen that flashes and then bounces.
+  const me = await requireMe("/account");
   const now = demoNow();
   const catalog = await loadCatalog();
   const { drop, state } = featuredDrop(catalog, undefined, now);
@@ -61,6 +66,7 @@ export default async function AccountPage() {
 
   return (
     <AccountHome
+      me={me}
       drop={drop}
       dropState={state}
       dropLabel={dropBandLabel(drop, state, now)}

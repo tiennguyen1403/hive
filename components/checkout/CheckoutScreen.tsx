@@ -14,7 +14,7 @@ import { Toast } from "@/components/shop/Toast";
 import { useCart } from "@/components/cart/CartContext";
 import { PromoBox } from "@/components/cart/PromoBox";
 import { useAddressBook } from "@/components/account/AddressBookContext";
-import { useSession } from "@/components/account/SessionContext";
+import { useMe } from "@/components/account/MeContext";
 import { AddressPicker } from "./AddressPicker";
 import { OrderBox } from "./OrderBox";
 import { WardSelect } from "./WardSelect";
@@ -22,7 +22,9 @@ import { useWardLabels } from "./wards";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { COLORS } from "@/data/colors";
 import { ADDRESS_LABELS, type AddressLabel } from "@/lib/account-form";
-import { addressBookFor, defaultAddress, type SavedAddress } from "@/lib/address-book";
+import { defaultAddress, type SavedAddress } from "@/lib/address-book";
+import { rememberAddress } from "@/lib/actions/addresses";
+import type { Address } from "@/data/types";
 import { cartSubtotalVnd, cartUnits, hasBlockingIssue, resolveCart } from "@/lib/cart";
 import {
   EMPTY_DRAFT,
@@ -62,6 +64,33 @@ export interface ProvinceOption {
 
 interface CheckoutScreenProps {
   provinces: ProvinceOption[];
+  /**
+   * The signed-in shopper's address book, read from Postgres by the page.
+   * Empty for a guest, who has the one in this browser instead.
+   */
+  accountAddresses?: Address[];
+}
+
+/**
+ * An account address in the shape the picker renders.
+ *
+ * `source` is what the row used to be labelled with — "từ tài khoản mẫu" or
+ * "lưu trên thiết bị này". Only the second label survives slice B1, on the
+ * guest book, which really is this browser's; an account's addresses are the
+ * account's wherever it is opened.
+ */
+function asSaved(a: Address): SavedAddress {
+  return {
+    id: String(a.id),
+    recipient: a.recipient,
+    phone: a.phone,
+    provinceCode: a.provinceCode,
+    wardCode: a.wardCode,
+    line: a.line,
+    label: a.label,
+    isDefault: a.isDefault,
+    source: "account",
+  };
 }
 
 /** Everything the courier needs. Used to decide whether to open the form. */
@@ -95,11 +124,11 @@ const ADDRESS_FIELDS: FieldName[] = [
  * From 900px the panels and the money become two columns (`.two3`), with the
  * money sticky on the right.
  */
-export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
+export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScreenProps) {
   const router = useRouter();
   const catalog = useCatalog();
   const { cart, ready, clear, promoCode } = useCart();
-  const { me, ready: sessionReady } = useSession();
+  const me = useMe();
   const { device, ready: bookReady, save } = useAddressBook();
 
   const [draft, setDraft] = useState<CheckoutDraft>(EMPTY_DRAFT);
@@ -116,9 +145,14 @@ export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
   const [adding, setAdding] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
 
+  // Signed in, the book is the account's, read from Postgres by the page
+  // above and handed down; signed out, it is whatever this device saved.
+  // Two sources, never merged: slice B1 moved the account's addresses into
+  // their own table, and an entry that lived in both would be one place
+  // shown twice.
   const book = useMemo<SavedAddress[]>(
-    () => (me ? addressBookFor(me, device) : device),
-    [me, device],
+    () => (me ? accountAddresses.map(asSaved) : device),
+    [me, accountAddresses, device],
   );
   const provinceName = useMemo(() => {
     const m = new Map(provinces.map((p) => [p.code, p.label]));
@@ -144,7 +178,7 @@ export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
    * opens straight away.
    */
   useEffect(() => {
-    if (prefilled || !bookReady || !sessionReady) return;
+    if (prefilled || !bookReady) return;
     setPrefilled(true);
 
     const home = defaultAddress(book);
@@ -163,7 +197,7 @@ export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
       wardCode: home.wardCode,
       line: home.line,
     }));
-  }, [prefilled, bookReady, sessionReady, book, me]);
+  }, [prefilled, bookReady, book, me]);
 
   // One instant for the whole render. Nothing below `ready` is server-
   // rendered, so reading the clock here cannot desync a hydration.
@@ -305,7 +339,7 @@ export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
     // navigation rather than being a sentence nothing backs up — and it
     // only happens when the box is ticked.
     if (!pickedId && saveToBook) {
-      save({
+      const entry = {
         recipient: order.recipient,
         phone: order.phone,
         provinceCode: draft.provinceCode,
@@ -313,7 +347,12 @@ export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
         line: draft.line.trim(),
         label: addressLabel,
         isDefault: book.length === 0,
-      });
+      };
+      // Where it goes depends on who is here, and the checkbox says which
+      // of the two it will be. A signed-in shopper's book is in Postgres;
+      // a guest's is this browser.
+      if (me) void rememberAddress(entry);
+      else save(entry);
     }
 
     // On the DEVICE, not in the tab: the account lists this order as one of
@@ -430,10 +469,15 @@ export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
             <section className="panel3">
               <h3>
                 Giao tới
+                {/* Where the book lives depends on who is here, and the line
+                    says which: an account's is in the shop's database, a
+                    guest's is this browser and nowhere else. */}
                 <span className="meta">
-                  {book.length > 0
-                    ? `${book.length} địa chỉ đã lưu trên thiết bị`
-                    : "chưa có địa chỉ lưu"}
+                  {book.length === 0
+                    ? "chưa có địa chỉ lưu"
+                    : me
+                      ? `${book.length} địa chỉ trong tài khoản`
+                      : `${book.length} địa chỉ đã lưu trên thiết bị`}
                 </span>
               </h3>
 
@@ -572,7 +616,11 @@ export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
                     <span className="box">
                       <Tick />
                     </span>
-                    <span>Lưu địa chỉ này vào sổ trên thiết bị</span>
+                    <span>
+                      {me
+                        ? "Lưu địa chỉ này vào sổ địa chỉ của tài khoản"
+                        : "Lưu địa chỉ này vào sổ trên thiết bị"}
+                    </span>
                   </button>
                 </div>
               )}
