@@ -1,0 +1,209 @@
+/* What a control does when you point at it, press it, or reach it with a
+   finger.
+
+   PORTED LATE. These rules live in `prototype/shell.css`, below a banner
+   that reads "TỪ ĐÂY TRỞ XUỐNG LÀ BÊN TRONG `.s`" — everything under it is
+   app CSS that happened to be filed with the viewer chrome. Phase 0 ported
+   `app.css` and skipped `shell.css` wholesale, so the whole hover/press/
+   touch-target layer was missing from every shopper-facing screen: buttons
+   with no hover, size cells with no cursor, text links 15px tall.
+
+   Two translations were needed. The mock had no real controls, so it hung
+   behaviour on `[data-go]` / `[data-act]` attributes; here the elements are
+   real links and buttons, so the selectors name those instead. And two rules
+   are deliberately NOT ported:
+
+     `.cartdot .bag0/.bag1` — the mock kept both bag icons in the DOM and
+       hid one with CSS because it was static. This build renders whichever
+       one the count calls for.
+     `select.inp` — there is no native `<select>` anywhere in this app, by
+       decision. `components/ui/Select.tsx` explains why.
+
+   The v2 controls this file also dressed — the size cell (`.sz`), the chip
+   row (`.chips` / `.chip`), the cart line (`.cartline`) and the quantity
+   stepper (`.qb`) — went at v3 slice 6 with their classes. Each v3
+   replacement states its own hover, cursor and target where it is drawn. */
+
+/* ─────────────────────────────────────────────────────────── button width
+   A <div> fills its container; a <button> shrinks to its text, because
+   `width:auto` on a form control means fit-content. Every button that was a
+   lone <div> in the mock has to stretch again. Small buttons, and buttons
+   standing beside something else in a row, keep their content width. */
+.s div > button.btn:only-child:not(.sm) {
+  width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────── the real controls
+   Border follows background, as the system already decided elsewhere. */
+.s .btn {
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.s .btn:hover:not(:disabled) {
+  background: var(--gold-400);
+  border-color: var(--gold-400);
+}
+.s .btn.ghost:hover:not(:disabled) {
+  background: var(--gold-50);
+  border-color: var(--fill);
+}
+.s .btn.quiet:hover:not(:disabled) {
+  background: var(--gold-100);
+  border-color: var(--gold-100);
+}
+.s .btn:disabled,
+.s .btn[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+.s .btn:disabled:hover,
+.s .btn[aria-disabled="true"]:hover {
+  background: var(--gold-50);
+  border-color: var(--line);
+}
+.s .btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* A browser gives <a> the hand and <button> the arrow. A text-styled link is
+   a thing the shopper presses, whichever element it happens to be. (Swept
+   for: these were the only controls on the whole buying flow still showing
+   the arrow.) */
+.s a.lnk,
+.s button.lnk {
+  cursor: pointer;
+}
+
+/* A row that is a radio or a checkbox is pressable along its whole length,
+   so the pointer has to say so anywhere on it — not only over the dot.
+
+   `[role="switch"]` joined them at v2 slice 4: the account's preference
+   toggles are bare `<button>`s, and a bare button gets the ARROW. Found by
+   `tools/layout-sweep.js`, not by eye — the whole reason that detector
+   exists.
+
+   The two `⋯` openers joined at v2 slice 6, from the same detector once the
+   sweep walked the 12 admin routes: `.rowmenu` in a table cell and `.more`
+   beside an order's title, 17 findings between them. Scoped to `.s` and not
+   to the table: the OPENER sits in the page, only its panel portals to
+   `body`, and the same control is one screen away from being used outside a
+   table. */
+.s [role="radio"]:not(:disabled),
+.s [role="checkbox"]:not(:disabled),
+.s [role="switch"]:not(:disabled),
+.s button.rowmenu,
+.s button.more {
+  cursor: pointer;
+}
+
+/* ──────────────────────────────────────────────── things that lead onward */
+.s a.lnk:hover,
+.s button.lnk:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+/* `.s .nav a:hover` REMOVED at v2 slice 1 with the rest of the Phase 3 bar;
+   `.nav3 .ib:hover` and `.nav3 .links a:hover` carry it now. */
+
+/* ─────────────────────────────────────────────────────────── real inputs
+   The mock drew these as <div>s. They are `<input>` and `<textarea>` here,
+   which arrive wearing the browser's own appearance. */
+.s input.inp,
+.s textarea.inp {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: #fff;
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+}
+/* 4.94:1 — a placeholder is still text somebody has to read. */
+.s input.inp::placeholder,
+.s textarea.inp::placeholder {
+  color: #7a6f5a;
+  opacity: 1;
+}
+.s textarea.inp {
+  line-height: 1.55;
+  padding: 11px 12px;
+  resize: vertical;
+}
+.s .inp:focus {
+  border-color: var(--fill);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s .btn {
+    transition: none;
+  }
+  .s .btn:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ───────────────────────────────────────── 44px targets for small text
+   A text link inside a sentence is exempt from the floor; one standing on
+   its own as a control is not, and these are the second kind — "Xoá",
+   "Huỷ", "Bảng size", "Đổi sang size L".
+
+   The box is 44px CENTRED on the text rather than an even inset on all four
+   sides: the labels are different lengths, so an even inset leaves the short
+   ones short. `max(100%, 44px)` keeps a long label's own width. */
+@media (max-width: 460px) {
+  .s a.lnk,
+  .s button.lnk {
+    position: relative;
+    display: inline-block;
+  }
+  .s a.lnk::after,
+  .s button.lnk::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: max(100%, 44px);
+    height: 44px;
+  }
+}
+
+/* ─────────────────────────────────── the breadcrumb's touch target
+   Found by sweeping every control on every route at 390px, measuring the
+   HIT area rather than the box. The overlay is sized to the gap it has: a
+   target that overlaps its neighbour steals the neighbour's taps, which is
+   worse than being small.
+
+   The v2 controls this section also covered — the filter chip, the quantity
+   stepper's `.qty` clip, the cart line's title link, the wrapping chip row,
+   the tickbox row and the scrolling family tabs — went with their classes
+   at v3 slice 6. Each v3 replacement (`.chip3`, `.qty3`, `.card3`,
+   `.chips3.wrapped`, `.checks3`, `.tabs3`) carries its own target.
+
+   The breadcrumb is 17px of text, and unlike "Xoá" or "Huỷ" these are plain
+   `<a>`, so the text-link rule above does not reach them. The overlay takes
+   exactly the row's own padding — 13 above, 14 below — which is 44 around a
+   17px line and not one pixel more: above the row is the sticky nav, below
+   it the photo, and an overlay that reached into either would be taking a
+   tap that belongs to someone else. The trap this avoids is DESIGN.md §5's
+   third: the row being 44px tall does NOT mean the link inside it is, and
+   only the link is worth tapping. */
+@media (max-width: 460px) {
+  .s .crumbs a {
+    position: relative;
+  }
+  .s .crumbs a::after {
+    content: "";
+    position: absolute;
+    inset: -13px 0 -14px;
+  }
+}
+
+/* The v2 menu panels (`.selm`, `.menu`) took their 44px phone rule here,
+   added in Phase 6 after opening every floating layer. `.menu3` replaced
+   both at v3 slice 2 and states its own floor, in sheet.css and admin.css. */
+
+/* A disabled dropdown still wore the hand. "Chọn tỉnh trước" is a button you
+   genuinely cannot press yet, and the cursor was the only part of it that
+   disagreed. `.btn:disabled` already says this; `.selbtn` is not a `.btn`. */
+.s .selbtn:disabled {
+  cursor: not-allowed;
+}

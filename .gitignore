@@ -1,0 +1,20 @@
+node_modules/
+.next/
+out/
+build/
+.DS_Store
+*.pem
+npm-debug.log*
+.env*
+next-env.d.ts
+.impeccable/config.local.json
+.playwright-cli/
+
+# local tooling and crash dumps (added 23/09/2026 with git init)
+tsconfig.tsbuildinfo
+sh.exe.stackdump
+.claude/settings.local.json
+.claude/skills/
+.impeccable/hook.cache.json
+.agents/skills/impeccable/scripts/bin/
+supabase/.temp/

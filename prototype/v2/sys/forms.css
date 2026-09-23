@@ -1,0 +1,55 @@
+/* Text inputs, the system dropdown, the size table.
+   Lifted verbatim from `prototype/app.css` — the approved mock is the
+   REFERENCE. Change anything here and you owe a screenshot comparison
+   against http://127.0.0.1:4321. */
+
+/* ------------------------------------------------------------ text inputs */
+.s .field{ padding:13px 18px 0; }
+.s .field label{ display:block; font-size:11px; color:var(--ink2); margin-bottom:5px; }
+.s .inp{ width:100%; height:44px; border:1px solid var(--line); border-radius:var(--r);
+  background:#fff; padding:0 12px; font-size:13px; color:var(--ink);
+  display:flex; align-items:center; }
+.s .inp.ph2{ color:#7A6F5A; }   /* 4.94:1 — placeholder text still has to be readable */
+.s .inp.area{ height:78px; align-items:flex-start; padding-top:11px; }
+.s .inp.sel{ justify-content:space-between; }
+/* ── the form select ─────────────────────────────────────────────────────
+   Same menu panel as the table's dropdown — same tick, same shadow, same way
+   of opening. But the BUTTON has to look like a text input, because it
+   stands beside Name, Price and SKU rather than beside a filter chip. */
+.s .selwrap{ display:block; }
+.s button.selbtn{ width:100%; justify-content:space-between; gap:8px;
+  font:inherit; text-align:left; cursor:pointer; }
+.s .selbtn .t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.s .selbtn > svg{ width:14px; height:14px; flex:none; color:var(--ink2);
+  transition:transform .16s cubic-bezier(.16,1,.3,1); }
+.s .selbtn[aria-expanded="true"] > svg{ transform:rotate(180deg); }
+.s .selbtn:hover{ background:var(--gold-50); }
+.s .selbtn[aria-expanded="true"]{ border-color:var(--fill-bd); }
+@media (prefers-reduced-motion:reduce){ .s .selbtn > svg{ transition:none; } }
+.s .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.s .err{ font-size:10.5px; color:var(--hot); margin-top:5px; display:flex; gap:5px; align-items:center; }
+.s .inp.bad{ border-color:var(--hot); border-width:1.5px; }
+.s .check{ display:flex; gap:9px; align-items:flex-start; padding:13px 18px 0; font-size:12px; }
+.s .box{ width:17px; height:17px; border:1px solid var(--line); border-radius:var(--r-sm);
+  flex:none; margin-top:1px; }
+.s .box.on{ background:var(--fill); border-color:var(--fill); position:relative; }
+.s .box.on::after{ content:""; position:absolute; left:5px; top:2px; width:4px; height:8px;
+  border:solid var(--fill-ink); border-width:0 2px 2px 0; transform:rotate(43deg); }
+.s .radio{ width:17px; height:17px; border:1px solid var(--line); border-radius:99px; flex:none;
+  margin-top:1px; }
+.s .radio.on{ border:5px solid var(--fill); }
+
+/* ------------------------------------------------------------- size table */
+.s .szrow{ display:flex; gap:7px; padding:9px 18px 0; }
+.s .szrow.w{ padding:0; gap:8px; }
+.s .sz{ flex:1; border:1px solid var(--fill); background:#fff; border-radius:var(--r);
+  text-align:center; padding:9px 2px; }
+.s .szrow.w .sz{ flex:0 0 68px; }
+.s .sz b{ display:block; font-size:13px; font-weight:600; }
+.s .sz i{ font-style:normal; font-size:10px; color:var(--ink2); }
+.s .sz.low i{ color:var(--hot); }
+.s .sz.gone{ background:var(--gold-50); border-color:var(--line); border-style:dashed; }
+.s .sz.gone b{ color:var(--ink2); text-decoration:line-through; }
+.s .sz.gone i{ color:var(--ink2); }
+.s .sz.on{ background:var(--fill); border-color:var(--fill); }
+.s .sz.on b, .s .sz.on i{ color:var(--fill-ink); }

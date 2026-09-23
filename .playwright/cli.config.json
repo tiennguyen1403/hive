@@ -1,0 +1,32 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "launchOptions": {
+      "channel": "chrome",
+      "headless": false,
+      "slowMo": 300
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "locale": "vi-VN",
+      "timezoneId": "Asia/Ho_Chi_Minh"
+    }
+  },
+  "outputDir": ".playwright-cli",
+  "network": {
+    "allowedOrigins": [
+      "http://127.0.0.1:3200",
+      "http://localhost:3200",
+      "http://127.0.0.1:3100",
+      "http://localhost:3100"
+    ]
+  },
+  "timeouts": {
+    "action": 5000,
+    "navigation": 60000,
+    "settle": 500
+  }
+}

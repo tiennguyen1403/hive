@@ -1,0 +1,179 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/home.html"
+        ],
+        "createdAt": "2026-09-20T12:12:35.231Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ ProductView.tsx/AccountHome.tsx đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/home-states.html"
+        ],
+        "createdAt": "2026-09-20T12:12:35.398Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ ProductView.tsx/AccountHome.tsx đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/products.html"
+        ],
+        "createdAt": "2026-09-20T12:12:35.589Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ ProductView.tsx/AccountHome.tsx đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/product.html"
+        ],
+        "createdAt": "2026-09-20T12:12:35.772Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ ProductView.tsx/AccountHome.tsx đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/cart.html"
+        ],
+        "createdAt": "2026-09-20T12:17:46.891Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ component đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/checkout.html"
+        ],
+        "createdAt": "2026-09-20T12:17:47.034Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ component đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/order-confirmed.html"
+        ],
+        "createdAt": "2026-09-20T12:17:47.191Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ component đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/account.html"
+        ],
+        "createdAt": "2026-09-20T12:17:47.350Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ component đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/account-orders.html"
+        ],
+        "createdAt": "2026-09-20T12:17:47.501Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ component đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/auth.html"
+        ],
+        "createdAt": "2026-09-20T12:17:47.657Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px là thang đã đo và đã duyệt của hệ; cỡ inline trong mock chép nguyên từ component đang chạy"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/admin-dashboard.html"
+        ],
+        "createdAt": "2026-09-20T12:19:02.486Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px của khu quản trị (kpinote 10,5px, note 11px) là thang đã đo và đã duyệt; mock chép nguyên từ admin.css"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/admin-orders.html"
+        ],
+        "createdAt": "2026-09-20T12:19:02.635Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px của khu quản trị (kpinote 10,5px, note 11px) là thang đã đo và đã duyệt; mock chép nguyên từ admin.css"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/admin-order.html"
+        ],
+        "createdAt": "2026-09-20T12:19:02.784Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px của khu quản trị (kpinote 10,5px, note 11px) là thang đã đo và đã duyệt; mock chép nguyên từ admin.css"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/admin-drops.html"
+        ],
+        "createdAt": "2026-09-20T12:19:02.936Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px của khu quản trị (kpinote 10,5px, note 11px) là thang đã đo và đã duyệt; mock chép nguyên từ admin.css"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v2/admin-drop.html"
+        ],
+        "createdAt": "2026-09-20T12:19:03.084Z",
+        "reason": "DESIGN.md §3: thang chữ 10–14px của khu quản trị (kpinote 10,5px, note 11px) là thang đã đo và đã duyệt; mock chép nguyên từ admin.css"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "prototype/v2/admin-orders.html"
+        ],
+        "createdAt": "2026-09-20T12:19:03.229Z",
+        "reason": "Máy dò bắt nhãn .note màu --ink2 (#71674e) trên #fff = 5,6:1, đạt AA theo bảng đo trong DESIGN.md §2; chưa mở được giá trị cụ thể nên khoanh theo file"
+      },
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "prototype/v2/index.html"
+        ],
+        "createdAt": "2026-09-20T13:35:20.727Z",
+        "reason": "Review board for the v2 mock, not a product surface: deliberately compact type so 17 screens fit; headings 16px on a 13px body."
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "prototype/v3/badges.html"
+        ],
+        "createdAt": "2026-09-21T17:42:55.560Z",
+        "reason": "Review board page: 11px labels are the sanctioned floor (QD-22), same exception as the v2 mock pages"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          "prototype/v2/*.html"
+        ],
+        "createdAt": "2026-09-23T01:51:03.291Z",
+        "reason": "prototype/v2 is the archived mock of the previous round (Familjen Grotesk); DESIGN.md now documents v3 (Unbounded + Be Vietnam Pro); not a shipping surface"
+      }
+    ]
+  }
+}

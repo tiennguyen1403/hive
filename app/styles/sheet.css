@@ -1,0 +1,283 @@
+/* The bottom sheet's own chrome — scrim, panel, the rise.
+
+   Lifted from `prototype/shell.css` rather than `app.css`. In the prototype
+   this lived with the viewer's furniture because the viewer was what opened
+   sheets, but it was never viewer furniture: the scrim and the panel are the
+   product. The design is the approved one; only the file it sits in changed.
+
+   Change anything here and you owe a screenshot comparison against
+   http://127.0.0.1:4321. */
+
+.sheetwrap {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  /* Portalled to `<body>`, so it inherits nothing from `.s` (DESIGN.md §6)
+     and has to state its own type. The PANEL carries `.s` as well, which is
+     what makes the buttons, chips and tables inside it the system's. */
+  font-family: var(--font-sans);
+  font-size: var(--fs-ui);
+  line-height: 1.55;
+  color: var(--ink);
+}
+.sheetwrap[hidden] {
+  display: none;
+}
+.sheetwrap .scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(23, 20, 16, 0.5);
+}
+/* v3: the panel is the bottom of the screen, edge to edge, with the page's
+   own gutter inside it and the top two corners rounded to the system's 4px.
+   `env(safe-area-inset-bottom)` keeps the last control clear of the home
+   indicator. */
+.sheetwrap .sheetbody {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 86dvh;
+  overflow: auto;
+  padding: 12px var(--gut) calc(24px + env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-radius: var(--r) var(--r) 0 0;
+  outline: none;
+  animation: rise 0.22s cubic-bezier(0.2, 0.75, 0.3, 1);
+}
+@keyframes rise {
+  from {
+    transform: translateY(20px);
+  }
+  to {
+    transform: none;
+  }
+}
+/* The rise is the sheet saying where it came from. Someone who has asked not
+   to see motion still needs the sheet — they just get it already there. */
+@media (prefers-reduced-motion: reduce) {
+  .sheetwrap .sheetbody {
+    animation: none;
+  }
+}
+.sheetwrap .grab {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 12px;
+  border-radius: 99px;
+  background: var(--hair);
+}
+/* The head: the photo, the name, what it is, the price, and the way out.
+   An ink rule under it, because this is the sheet's own masthead. */
+.sheetwrap .shead {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ink);
+}
+.sheetwrap .shead img {
+  width: 56px;
+  height: 70px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  background: var(--plate);
+}
+.sheetwrap .shead h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h3);
+  letter-spacing: var(--ls-display);
+}
+.sheetwrap .shead .muted {
+  font-size: var(--fs-sm);
+  color: var(--ink2);
+}
+.sheetwrap .shead .p {
+  font-variant-numeric: tabular-nums;
+}
+.sheetwrap .shead .x {
+  margin-left: auto;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.sheetwrap .shead .x:hover {
+  background: var(--plate);
+}
+.sheetwrap .sact {
+  margin-top: 16px;
+}
+/* On a pointer the sheet is a box in the middle of the screen: there is no
+   thumb at the bottom edge to reach for, and 520px is the measure the mock
+   gives it. The grab handle goes with the gesture it stood for. */
+@media (min-width: 900px) {
+  .sheetwrap .sheetbody {
+    left: 50%;
+    right: auto;
+    top: 50%;
+    bottom: auto;
+    width: 520px;
+    max-width: calc(100% - 48px);
+    transform: translate(-50%, -50%);
+    padding: 20px 24px 24px;
+    border-radius: var(--r);
+    /* `rise` moves the panel on the Y axis, which would fight the centring
+       transform above. Centred, the sheet fades in instead. */
+    animation: sheetfade 0.18s ease;
+  }
+  .sheetwrap .grab {
+    display: none;
+  }
+}
+@keyframes sheetfade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── the dropdown menu, v3 ───────────────────────────────────────────────
+   `prototype/v3/v3-pages.css`, `.menu3`. The shop's own menu: the sort
+   control opens it, and it is the FOURTH layer portalled to `<body>`, so the
+   rule DESIGN.md §6 records applies again — every selector starts at
+   `.menu3`, and the panel declares its own font, size, line height and ink.
+
+   `position:fixed` is not a preference: the phone's control row is a scroll
+   container, and `overflow-x:auto` silently clips the vertical axis too, so
+   an absolutely-positioned panel would be swallowed whole.
+
+   No shadow. The v3 world draws a 1px ink border instead — the same line the
+   section heads and the size tables are ruled with. */
+.menu3 {
+  position: fixed;
+  z-index: 55;
+  min-width: 200px;
+  overflow: auto;
+  padding: 6px 0;
+  background: var(--bg);
+  border: 1px solid var(--ink);
+  border-radius: var(--r);
+  font-family: var(--font-sans);
+  font-size: var(--fs-ui);
+  line-height: 1.5;
+  color: var(--ink);
+}
+.menu3 button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.menu3 button:hover,
+.menu3 button[data-active] {
+  background: var(--plate);
+}
+.menu3 .ticked {
+  font-weight: 600;
+}
+/* A count or a hint at the end of a row — the province menu prints how many
+   communes each one holds. `margin-left:auto` rather than a column, because
+   most menus carry none. */
+.menu3 .tally {
+  margin-left: auto;
+  padding-left: 12px;
+  font-style: normal;
+  font-size: var(--fs-xs);
+  color: var(--ink2);
+  font-variant-numeric: tabular-nums;
+}
+/* The tick keeps its column whether or not it is drawn, so the labels line
+   up. `<Tick>` is cropped to the ink, so these are the visible numbers. */
+.menu3 .mk {
+  width: 15px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-text);
+}
+.menu3 .mk svg {
+  width: 13px;
+  height: 8.7px;
+  fill: none;
+}
+/* 40px is the right density under a pointer; a finger gets the floor. */
+@media (max-width: 460px) {
+  .menu3 button {
+    min-height: 44px;
+  }
+}
+
+/* ── the toast, ADDED for the v2 home ────────────────────────────────────
+   A short confirmation that something was recorded, then gone. It is the
+   second layer in this build that is PORTALLED to `document.body`, so the
+   rule DESIGN.md §6 records applies: it inherits nothing from `.s`, and it
+   has to state its own font, size, line height and colour or it arrives in
+   the browser's default serif at 16px.
+
+   Dark ground with light text is the one place this system allows it — a
+   12px strip on screen for 2.6 seconds is not a "large colour area", and it
+   has to read over whatever it is covering. 16.8:1. */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translate(-50%, 20px);
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 36px);
+  padding: 10px 14px;
+  border-radius: var(--r);
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.toast svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: none;
+  color: var(--gold-400);
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition: none;
+  }
+}
+
+/* The v2 back office's modal (`.modalwrap` / `.modal`) stood here until v3
+   slice 6. `components/ui/Modal.tsx` went at slice 5, when `AdminSheet`
+   took over every confirm and short form the admin opens; nothing rendered
+   the old panel afterwards. */

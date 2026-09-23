@@ -1,0 +1,585 @@
+/* The back office, and six shop-facing blocks that were filed here with it.
+
+   THE WHOLE v2 BACK OFFICE WENT AT v3 SLICE 6 — the `.s.adm` shell, the
+   sidebar, the stat tiles, the chart, the v2 data table's skin, the product
+   candidate cards, the visual lab (`.vlab`) and the spec page
+   (`.s.specpage`), which went with the `/system` route itself. What is left
+   above the v3 block is what the SHOP renders and has always rendered from
+   this file: the details disclosure, the cart line's snag row, the slot
+   whose copy is not written yet, and the password checklist. The FAQ
+   accordion (`.qa`) went with `components/shop/Faq.tsx` at slice 6 — the
+   questions are `<details>` inside `.faq3` (pages.css) since slice 4.
+
+   They stay in this file rather than moving to one that fits them better:
+   moving a rule moves it in SOURCE ORDER too, and `globals.css` records
+   what that costs. A file this round does not have to reorder is a file
+   whose specificity ties do not have to be re-measured.
+
+   Lifted from `prototype/app.css` — the approved mock is the REFERENCE.
+   Change anything here and you owe a screenshot comparison against
+   http://127.0.0.1:4321. */
+
+.s details{ margin-top:14px; font-size:11.5px; }
+.s details summary{ color:var(--link); cursor:pointer; font-weight:500; }
+
+/* a cart line with something wrong with it */
+.s .row.snag{ background:var(--hot-bg); }
+.s .row.snag .amt{ text-decoration:line-through; color:var(--ink2); }
+.s .fixes{ display:flex; gap:14px; margin-top:8px; }
+
+/* a slot whose copy is not written yet (named `.needwrite` because `.todo`
+   collides with the step bar's `.st.todo`) — it states what belongs here
+   rather than inventing something to fill the space */
+.s .needwrite{ margin:14px 18px 0; border:1px dashed var(--line); border-radius:var(--r);
+  background:var(--gold-50); padding:12px 14px; }
+.s .needwrite .lb{ display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700;
+  color:var(--warn); letter-spacing:.06em; }
+.s .needwrite .lb svg{ width:13px; height:13px; color:var(--warn); }
+.s .needwrite p{ margin:7px 0 0; font-size:12px; color:var(--ink2); line-height:1.55; }
+
+/* password requirements */
+.s .rules{ padding:10px 18px 0; }
+.s .rules div{ display:flex; gap:8px; align-items:center; font-size:11.5px;
+  color:var(--ink2); padding:3px 0; }
+.s .rules svg{ width:14px; height:14px; flex:none; }
+.s .rules .ok{ color:var(--ok); }
+.s .rules .no{ color:var(--hot); }
+
+/* ============================================================================
+   THE v3 ROUND — the back office
+   ============================================================================
+   Ported from `prototype/v3/v3-pages.css`, block ADMIN (`.s.adm3 .side
+   .simbar .main .top .seg3 .kpis3 .kpi3 .panel3 .split3 .chart3 .axis
+   .queue3 .rank3 .dt3 .bar .stabs .cb .rowmenu .foot .avatar .nextstep
+   .fgrid .totalbar .addrblock .notes3 .invgrid .delta .log3 .ctag .slips
+   .slip` + `@media print`), the approved mock. Every number below is the
+   mock's; change one and you owe a screenshot comparison against
+   `prototype/v3/admin-*.html` at 1280.
+
+   THE FRAME IS `.s.adm3`, NOT `.s.adm.v3`. Two class names on one element is
+   how the v2 `.s.adm.v2` had to undo `.s.v2`'s column direction; a single
+   name the shop never wears needs no undoing, and it keeps every rule here
+   from racing the shop's on specificity. Everything below is 0,3,0 or
+   deeper, so `.s .panel3` (checkout.css), `.s .meter` (product.css) and
+   `.s .chip3` (listing.css) all load LATER and still lose, which is what
+   lets the back office restate them without touching the shop.
+
+   Names greped across `app/styles/` and `prototype/v2/` first. Three needed
+   a different word from the mock's:
+   · the mock's `.grow` is `.fill` — `grow` is a Tailwind utility name and
+     `lib/classnames.test.ts` refuses it (the same rule that renamed `.grid`).
+   · the mock's `.tag3` is `.badge`, family B, chosen by the user on 22/09;
+     the back office has no second badge.
+   · the mock's `.btn3.sec` is `.btn.ink` (QĐ-23), `.inp3` is `.inp`,
+     `.selbtn3` is `.selbtn`. One button, one box, one menu for both
+     surfaces. */
+
+/* -- the frame ----------------------------------------------------------- */
+/* The back office is a DESKTOP surface and stays one: the mock draws every
+   admin screen at 1280 and none at phone width, and an eight-column table
+   has no honest phone layout (DESIGN.md §7). The floor keeps it a shrunken
+   desktop that scrolls sideways rather than a broken one. */
+.s.adm3{ display:flex; flex-direction:row; min-height:100dvh; min-width:1180px;
+  background:var(--plate); font-size:var(--fs-ui); }
+.s.adm3 .side{ width:208px; flex:none; position:sticky; top:0; height:100dvh;
+  background:var(--stage); color:var(--stage-ink); display:flex; flex-direction:column;
+  padding:18px 12px 16px; }
+.s.adm3 .side .wm{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:.14em; color:var(--brand); font-size:13px; padding:4px 10px 18px; }
+.s.adm3 .side nav a{ display:flex; align-items:center; gap:10px; min-height:44px;
+  padding:0 10px; border-radius:var(--r); font-size:var(--fs-ui); color:var(--stage-ink2);
+  position:relative; }
+.s.adm3 .side nav a:hover{ color:var(--stage-ink); }
+.s.adm3 .side nav a.on{ background:rgba(255,255,255,.08); color:var(--stage-ink);
+  font-weight:600; }
+.s.adm3 .side nav a.on .ic{ color:var(--brand); }
+/* The count is a badge like the shop's bag bubble (user, 22/09): honey with
+   dark digits while the item rests, black cloth with honey digits on the
+   item that is open, so the number never dissolves into the lit row. */
+.s.adm3 .side nav a .cnt{ margin-left:auto; min-width:18px; height:18px; padding:0 5px;
+  border-radius:99px; display:inline-flex; align-items:center; justify-content:center;
+  background:var(--brand); color:var(--brand-ink); font-size:var(--fs-xs); font-weight:700;
+  line-height:1; font-variant-numeric:tabular-nums; }
+.s.adm3 .side nav a.on .cnt{ background:var(--stage); color:var(--brand); }
+/* The foot of the sidebar: where the back office says what it is. A stitched
+   honey edge, the badge in the cloth's own pair (`--stage-hair` under honey
+   thread — the paper hairline would vanish here), and the count of what this
+   browser is carrying. */
+.s.adm3 .side .simbar{ margin-top:auto; padding:12px 10px 0;
+  border-top:1px dashed var(--brand); font-size:var(--fs-xs); color:var(--stage-ink2);
+  line-height:1.5; }
+.s.adm3 .side .simbar .badge{ background:var(--stage-hair); color:var(--brand);
+  margin-bottom:6px; }
+.s.adm3 .side .simbar b{ color:var(--stage-ink); font-variant-numeric:tabular-nums; }
+.s.adm3 .side .simbar .lnk{ color:var(--brand); display:inline-flex; min-height:36px;
+  align-items:center; background:none; border:0; padding:0; cursor:pointer;
+  font:inherit; font-weight:500; text-decoration:underline; text-underline-offset:3px;
+  position:relative; }
+.s.adm3 .side .simbar .lnk::after{ content:""; position:absolute; inset:-5px 0; }
+.s.adm3 .main{ flex:1; min-width:0; padding:18px 28px 64px; }
+
+/* -- `.sub`, reset once ---------------------------------------------------
+   `.s .sub` in `nav.css` is the v2 SUB-NAVIGATION BAR — a flex row with a
+   hairline under it and 13/18 of padding. The v3 mock calls every quiet
+   second line `.sub` as well (under a heading, in a table cell, under an
+   order code), and at 0,2,0 the bar's rule reaches all of them: measured on
+   `/admin`, the queue's second line came out `display:flex` and broke into
+   three columns.
+
+   One reset at the top of the frame rather than `display:block` restated in
+   eleven rules — and `.s.adm3 .top .sub` below is 0,4,0, so the heading
+   strip's own flex row still wins. */
+.s.adm3 .sub{ display:block; padding:0; gap:0; border-bottom:0; align-items:normal; }
+
+/* -- the heading strip --------------------------------------------------- */
+.s.adm3 .top{ display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  margin-bottom:16px; }
+.s.adm3 .top h1{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h2); letter-spacing:var(--ls-display); margin:0; }
+.s.adm3 .top .sub{ font-size:var(--fs-sm); color:var(--ink2); display:flex; gap:8px;
+  align-items:center; flex-wrap:wrap; }
+.s.adm3 .top .sub a, .s.adm3 .top .crumb a{ color:var(--ink2); }
+.s.adm3 .top .crumb{ font-size:var(--fs-sm); color:var(--ink2); margin-bottom:4px; }
+/* The way back is a 15px line of text. Measured with `elementFromPoint` on
+   `/admin/slips` it answered 40; the overlay reaches into the margin above
+   and the heading below, neither of which is a control. */
+.s.adm3 .top .crumb a{ position:relative; }
+.s.adm3 .top .crumb a::after{ content:""; position:absolute; inset:-15px 0; }
+.s.adm3 .top .acts{ margin-left:auto; display:flex; gap:8px; align-items:center;
+  flex-wrap:wrap; }
+/* 34px buttons in a 44px row: `buttons.css` cancels the overlay on `.sm`
+   because on the phone a small button always sits inside something that
+   supplies the target. Here it stands alone in the heading strip. */
+/* NOMINAL 46, not 44. `elementFromPoint` stops a pixel inside each edge, so
+   a 44px box measures 42 from its centre out — the same reading that widened
+   `.btn` from 44 to 46 at v3 slice 1. Every short control below follows it. */
+.s.adm3 .btn.sm{ height:36px; font-size:var(--fs-sm); white-space:nowrap; }
+.s.adm3 .btn.sm::after{ content:""; position:absolute; inset:-5px 0; }
+/* NO `overflow:hidden` on the group. It was there to clip the lit segment's
+   black ground into the rounded corner — and it clipped the segments' touch
+   overlays with it, holding them at 37 (DESIGN.md §5, trap 1: a parent with
+   `overflow:hidden` eats the overlay). The two end segments round their own
+   outer corners instead, which draws the same shape and clips nothing. */
+.s.adm3 .seg3{ display:inline-flex; border:1px solid var(--line);
+  border-radius:var(--r); }
+.s.adm3 .seg3 a:first-child{ border-radius:var(--r) 0 0 var(--r); }
+.s.adm3 .seg3 a:last-child{ border-radius:0 var(--r) var(--r) 0; }
+.s.adm3 .seg3 a{ display:inline-flex; align-items:center; min-height:36px; padding:0 12px;
+  font-size:var(--fs-sm); color:var(--ink2); border-right:1px solid var(--line);
+  position:relative; }
+.s.adm3 .seg3 a:last-child{ border-right:0; }
+.s.adm3 .seg3 a.on{ background:var(--sel); color:var(--sel-ink); font-weight:600; }
+.s.adm3 .seg3 a::after{ content:""; position:absolute; inset:-5px 0; }
+
+/* -- the figures --------------------------------------------------------- */
+.s.adm3 .kpis3{ display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;
+  margin-bottom:16px; }
+.s.adm3 .kpis3.five{ grid-template-columns:repeat(5, 1fr); }
+.s.adm3 .kpi3{ background:var(--bg); border:1px solid var(--hair); border-radius:var(--r);
+  padding:12px 14px; font-size:var(--fs-sm); color:var(--ink2); }
+.s.adm3 .kpi3 .k{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+.s.adm3 .kpi3 b{ display:block; font-family:var(--font-display);
+  font-weight:var(--fw-display); font-size:22px; color:var(--ink);
+  letter-spacing:var(--ls-display); font-variant-numeric:tabular-nums; margin:2px 0 4px; }
+.s.adm3 .kpi3 .meter{ margin-top:8px; }
+/* An inline link inside a KPI keeps its line box; the hit zone grows into
+   the margins instead of pushing the sentence apart. */
+.s.adm3 .kpi3 a{ color:var(--brand-text); text-decoration:underline;
+  text-underline-offset:3px; position:relative; }
+.s.adm3 .kpi3 a::after{ content:""; position:absolute; inset:-14px 0; }
+.s.adm3 .meter{ height:4px; background:var(--plate); margin-top:8px; position:relative;
+  border-radius:99px; overflow:hidden; }
+.s.adm3 .meter i{ position:absolute; left:0; top:0; bottom:0; background:var(--brand-text); }
+.s.adm3 .meter.hot i{ background:var(--hot); }
+/* A shelf that is empty is not "nearly full": the bar goes to ink, the one
+   reading in this palette that means over. */
+.s.adm3 .meter.gone, .s.adm3 .meter.gone i{ background:var(--ink); }
+
+/* -- panels -------------------------------------------------------------- */
+/* The shop's `.panel3` is a padded card; the back office's is a container
+   whose heading is ruled across the full width and whose body brings its own
+   padding — so a table can run edge to edge inside one. */
+.s.adm3 .panel3{ padding:0; }
+.s.adm3 .panel3 > h2, .s.adm3 .panel3 > h3{ padding:12px 16px; margin:0;
+  border-bottom:1px solid var(--hair); font-size:var(--fs-h3); }
+.s.adm3 .panel3 .bd{ padding:12px 16px 14px; }
+.s.adm3 .panel3 > h2 .more, .s.adm3 .panel3 > h3 .more{ margin-left:auto;
+  font-family:var(--font-sans); font-weight:500; font-size:var(--fs-sm);
+  letter-spacing:0; color:var(--brand-text); text-decoration:underline;
+  text-underline-offset:3px; background:none; border:0; cursor:pointer;
+  position:relative; }
+.s.adm3 .panel3 > h2 .more::after, .s.adm3 .panel3 > h3 .more::after{ content:"";
+  position:absolute; inset:-13px 0; }
+.s.adm3 .split3{ display:grid; grid-template-columns:1.6fr 1fr; gap:16px;
+  align-items:start; margin-top:16px; }
+.s.adm3 .split3 > div > .panel3 + .panel3{ margin-top:16px; }
+.s.adm3 .fine3{ font-size:var(--fs-sm); color:var(--ink2); margin-top:12px; }
+/* A text link standing on its own line IS a control, so it gets the row
+   rather than an overlay that would reach into the paragraph above it. */
+.s.adm3 .fine3 .lnk, .s.adm3 .panel3 .lnk{ display:inline-flex; align-items:center;
+  min-height:44px; position:relative; }
+.s.adm3 .fine3 .lnk::after, .s.adm3 .panel3 .lnk::after{ content:""; position:absolute;
+  inset:-1px 0; }
+.s.adm3 .fine3 .ic{ vertical-align:-3px; }
+
+/* -- the chart ----------------------------------------------------------- */
+/* 22px of head room, not 10: the tallest bar carries its own value label
+   above it, and at 10 the label sat on top of the total in the line above. */
+.s.adm3 .chart3{ display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:6px;
+  align-items:end; height:140px; padding:22px 0 0; }
+.s.adm3 .chart3 i{ display:block; background:var(--brand-text); border-radius:2px 2px 0 0;
+  position:relative; }
+.s.adm3 .chart3 i.hi{ background:var(--brand); }
+/* A day that took nothing keeps its slot and draws a hairline: between two
+   issues this shop sells zero, and that flat stretch is the business, not
+   missing data. */
+.s.adm3 .chart3 i.zero{ background:var(--hair); height:2px; }
+/* NOT `.lbl`: `.s .lbl` (checkout.css) is the form label, in upper case with
+   .06em of tracking — measured on the chart, "2,7tr₫" came out "2,7TR₫". */
+.s.adm3 .chart3 .peak{ position:absolute; bottom:calc(100% + 4px); left:50%;
+  transform:translateX(-50%); font-size:var(--fs-xs); color:var(--ink);
+  white-space:nowrap; font-variant-numeric:tabular-nums; }
+.s.adm3 .axis{ display:flex; justify-content:space-between; font-size:var(--fs-xs);
+  color:var(--ink2); margin-top:6px; font-variant-numeric:tabular-nums; gap:8px; }
+.s.adm3 .axis b{ color:var(--ink); }
+.s.adm3 .daytable{ margin-top:12px; }
+.s.adm3 .daytable summary{ list-style:none; display:inline-flex; align-items:center;
+  gap:6px; min-height:36px; color:var(--brand-text); cursor:pointer; position:relative;
+  font-size:var(--fs-sm); text-decoration:underline; text-underline-offset:3px; }
+.s.adm3 .daytable summary::after{ content:""; position:absolute; inset:-5px 0; }
+.s.adm3 .daytable summary::-webkit-details-marker{ display:none; }
+.s.adm3 .daytable table{ margin-top:6px; }
+
+/* -- the queue and the ranking ------------------------------------------- */
+/* 12px of row padding, and a 12px link overlay rather than 14. Measured on
+   `/admin`: the NEXT row's order-code overlay reached up into this row's
+   "Đóng gói và bàn giao" and took it from 44 to 34 — two targets cannot
+   share a 20px gap (DESIGN.md §5, trap 2). The row grows 4px; both clear. */
+.s.adm3 .queue3 .q{ display:grid; grid-template-columns:1fr auto; gap:2px 14px;
+  align-items:center; padding:12px 0; border-bottom:1px solid var(--hair); }
+.s.adm3 .queue3 .q:last-child{ border-bottom:0; }
+.s.adm3 .queue3 .q b{ font-weight:600; }
+.s.adm3 .queue3 .q b a{ color:var(--brand-text); text-decoration:underline;
+  text-underline-offset:3px; position:relative; }
+.s.adm3 .queue3 .q b a::after{ content:""; position:absolute; inset:-12px 0; }
+.s.adm3 .queue3 .q .sub{ grid-column:1; font-size:var(--fs-sm); color:var(--ink2);
+  font-variant-numeric:tabular-nums; }
+.s.adm3 .queue3 .q .sub .late{ color:var(--hot); font-weight:500; }
+.s.adm3 .queue3 .q .act{ grid-column:2; grid-row:1 / 3; }
+.s.adm3 .rank3 .r{ display:grid; grid-template-columns:20px 36px 1fr 120px auto; gap:10px;
+  align-items:center; padding:8px 0; border-bottom:1px solid var(--hair);
+  font-variant-numeric:tabular-nums; }
+.s.adm3 .rank3 .r:last-child{ border-bottom:0; }
+.s.adm3 .rank3 .r img{ width:36px; height:45px; object-fit:cover; border-radius:2px;
+  background:var(--plate); display:block; }
+.s.adm3 .rank3 .r b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-ui); letter-spacing:var(--ls-display); }
+.s.adm3 .rank3 .r .no{ color:var(--ink2); font-size:var(--fs-sm); }
+.s.adm3 .rank3 .r .meter{ margin:0; }
+.s.adm3 .rank3 .r .n{ font-size:var(--fs-sm); color:var(--ink2); white-space:nowrap; }
+.s.adm3 .rank3 .r .n b{ color:var(--ink); font-family:var(--font-sans); font-weight:600;
+  font-size:var(--fs-sm); letter-spacing:0; }
+/* The low-stock rows carry no rank and no bar: a photo, a name, what went. */
+.s.adm3 .rank3 .r.two{ grid-template-columns:36px 1fr auto; }
+.s.adm3 .rank3 .r .sub{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+
+/* -- the data table ------------------------------------------------------ */
+.s.adm3 .dt3{ background:var(--bg); border:1px solid var(--hair); border-radius:var(--r); }
+.s.adm3 .dt3 .bar{ display:flex; align-items:center; gap:8px; padding:10px 12px;
+  border-bottom:1px solid var(--hair); flex-wrap:wrap; }
+.s.adm3 .dt3 .bar .fill{ flex:1; }
+/* One toolbar height: the search box is 44, so the chips beside it are too. */
+.s.adm3 .dt3 .bar .inp{ max-width:280px; height:44px; font-size:var(--fs-ui); }
+.s.adm3 .dt3 .bar .chip3, .s.adm3 .dt3 .bar .selbtn{ height:44px; }
+.s.adm3 .dt3 .bar .legend{ font-size:var(--fs-sm); color:var(--ink2); }
+/* The bulk bar REPLACES the tools bar rather than stacking under it, so the
+   table never moves down the screen as rows are ticked. Black cloth, because
+   this strip is about the selection and not about the page. */
+.s.adm3 .dt3 .bar.bulk{ background:var(--stage); color:var(--stage-ink); }
+.s.adm3 .dt3 .bar.bulk b{ font-variant-numeric:tabular-nums; }
+.s.adm3 .dt3 .bar.bulk .btn.ink{ color:var(--stage-ink); border-color:var(--stage-ink2);
+  background:transparent; }
+.s.adm3 .dt3 .bar.bulk .btn.ink:hover:not(:disabled){ background:rgba(255,255,255,.1);
+  color:var(--stage-ink); border-color:var(--stage-ink2); }
+.s.adm3 .stabs{ display:flex; gap:0; padding:0 12px; border-bottom:1px solid var(--hair);
+  flex-wrap:wrap; }
+.s.adm3 .stabs a{ display:inline-flex; align-items:center; gap:6px; min-height:44px;
+  padding:0 12px; font-size:var(--fs-ui); color:var(--ink2); position:relative; }
+.s.adm3 .stabs a .cnt{ font-size:var(--fs-xs); font-variant-numeric:tabular-nums; }
+.s.adm3 .stabs a.on{ color:var(--ink); font-weight:600; }
+.s.adm3 .stabs a.on::after{ content:""; position:absolute; left:12px; right:12px;
+  bottom:-1px; height:2px; background:var(--brand); }
+.s.adm3 table{ width:100%; border-collapse:collapse; font-size:var(--fs-ui);
+  font-variant-numeric:tabular-nums; }
+.s.adm3 th{ text-align:left; font-size:var(--fs-xs); letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink2); padding:10px 12px;
+  border-bottom:1px solid var(--ink); white-space:nowrap; font-weight:600; }
+.s.adm3 th.right, .s.adm3 td.right{ text-align:right; }
+.s.adm3 td{ padding:10px 12px; border-bottom:1px solid var(--hair); vertical-align:middle; }
+.s.adm3 tbody tr:hover td{ background:var(--plate); }
+.s.adm3 tr.on td{ background:var(--brand-soft); }
+.s.adm3 tr.paused td{ color:var(--ink2); }
+.s.adm3 td a{ color:var(--brand-text); text-decoration:underline; text-underline-offset:3px;
+  position:relative; }
+.s.adm3 td a::after{ content:""; position:absolute; inset:-14px 0; }
+.s.adm3 td .sub{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+.s.adm3 td .sub.late{ color:var(--hot); }
+.s.adm3 td .nm{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:var(--ls-display); }
+/* `display:inline-block` is not decoration: Tailwind's preflight makes every
+   `<img>` a BLOCK, so the style name beside the thumbnail dropped onto its
+   own line in every table cell. Measured on `/admin/orders/DH-2429`. */
+.s.adm3 td img.th{ display:inline-block; width:36px; height:45px; object-fit:cover;
+  border-radius:2px; vertical-align:middle; margin-right:8px; background:var(--plate); }
+.s.adm3 td .cellmeter{ display:flex; align-items:center; gap:8px; min-width:140px; }
+.s.adm3 td .cellmeter .meter{ flex:1; margin:0; }
+.s.adm3 td .cellmeter span{ white-space:nowrap; }
+/* Short columns hold their line; long ones wrap. The table must not push
+   past 1265px at 1280. */
+.s.adm3 th, .s.adm3 td.nw, .s.adm3 td.right,
+.s.adm3 td > a, .s.adm3 td > b > a{ white-space:nowrap; }
+.s.adm3 .cb{ width:20px; height:20px; border:1px solid var(--line);
+  border-radius:var(--r-sm); display:flex; align-items:center; justify-content:center;
+  color:transparent; cursor:pointer; position:relative; background:none; padding:0; }
+.s.adm3 .cb::after{ content:""; position:absolute; inset:-13px; }
+.s.adm3 .cb svg{ width:12px; height:9px; fill:none; }
+.s.adm3 .cb .dash{ width:10px; height:2px; background:currentColor; border-radius:1px; }
+.s.adm3 .cb[aria-checked="true"], .s.adm3 .cb[aria-checked="mixed"]{ background:var(--ink);
+  border-color:var(--ink); color:var(--brand); }
+.s.adm3 .rowmenu{ width:36px; height:36px; display:inline-flex; align-items:center;
+  justify-content:center; border-radius:var(--r); color:var(--ink2); cursor:pointer;
+  position:relative; background:none; border:0; }
+.s.adm3 .rowmenu::after{ content:""; position:absolute; inset:-4px; }
+.s.adm3 .rowmenu:hover{ background:var(--plate); color:var(--ink); }
+.s.adm3 .rowmenu .ic{ width:15px; height:15px; font-size:15px; }
+.s.adm3 .dt3 .foot{ display:flex; align-items:center; gap:12px; padding:10px 12px;
+  font-size:var(--fs-sm); color:var(--ink2); flex-wrap:wrap; }
+.s.adm3 .dt3 .foot .pages{ margin-left:auto; display:flex; gap:4px; }
+.s.adm3 .dt3 .foot .pages a{ min-width:36px; height:36px; display:inline-flex;
+  align-items:center; justify-content:center; border:1px solid var(--hair);
+  border-radius:var(--r); color:var(--ink); position:relative;
+  font-variant-numeric:tabular-nums; }
+.s.adm3 .dt3 .foot .pages a::after{ content:""; position:absolute; inset:-5px 0; }
+.s.adm3 .dt3 .foot .pages a.on{ background:var(--sel); color:var(--sel-ink);
+  border-color:var(--sel); }
+.s.adm3 .dt3 .empty3{ padding:var(--s5) 16px; }
+.s.adm3 .dt3 .none{ padding:14px 12px; font-size:var(--fs-sm); color:var(--ink2); }
+.s.adm3 .avatar{ width:28px; height:28px; border-radius:99px; background:var(--stage);
+  color:var(--brand); display:inline-grid; place-items:center;
+  font-family:var(--font-display); font-weight:var(--fw-display); font-size:11px;
+  margin-right:8px; vertical-align:middle; }
+
+/* -- one order ----------------------------------------------------------- */
+/* The one strip of cloth on this screen, and it earns it: the next move is
+   the reason the screen was opened. */
+.s.adm3 .nextstep{ display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  padding:14px 16px; background:var(--stage); color:var(--stage-ink);
+  border-radius:var(--r); border-top:1px dashed var(--brand); margin-bottom:16px; }
+.s.adm3 .nextstep b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:var(--ls-display); }
+.s.adm3 .nextstep > span{ font-size:var(--fs-sm); color:var(--stage-ink2); }
+.s.adm3 .nextstep .btn{ margin-left:auto; }
+.s.adm3 .fgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.s.adm3 .fgrid > .field3{ margin-top:0; }
+.s.adm3 .sum3{ margin-top:0; border-top:0; padding-top:0; }
+.s.adm3 .totalbar{ display:flex; justify-content:space-between; align-items:baseline;
+  padding:12px 16px; border-top:1px solid var(--ink); font-size:var(--fs-ui); gap:12px; }
+.s.adm3 .totalbar b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:20px; letter-spacing:var(--ls-display); font-variant-numeric:tabular-nums; }
+.s.adm3 .addrblock{ font-size:var(--fs-ui); line-height:1.6; }
+.s.adm3 .addrblock b{ font-weight:600; }
+.s.adm3 .addrblock .muted{ color:var(--ink2); }
+.s.adm3 .notes3 .ni{ padding:10px 0; border-bottom:1px solid var(--hair);
+  font-size:var(--fs-ui); }
+.s.adm3 .notes3 .ni .meta{ font-size:var(--fs-xs); color:var(--ink2); margin-bottom:2px;
+  font-variant-numeric:tabular-nums; }
+.s.adm3 .notes3 .ni.sys{ color:var(--ink2); }
+.s.adm3 .notes3 .add{ display:flex; gap:8px; padding-top:12px; }
+.s.adm3 .notes3 .add .inp{ height:44px; }
+.s.adm3 .ctagrow{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.s.adm3 .ctagrow .sub{ width:100%; padding-left:36px; font-size:var(--fs-sm);
+  color:var(--ink2); }
+
+/* -- the inventory grid -------------------------------------------------- */
+/* Rows are colours and columns are sizes, because that is the shape the
+   catalogue really stores (`Stock` in data/types.ts). A grid that could only
+   say "hết XL" would be unable to edit what the shop keeps. */
+.s .invgrid{ width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+.s .invgrid th, .s .invgrid td{ text-align:center; padding:8px 6px; }
+.s .invgrid th{ font-size:var(--fs-xs); letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink2); border-bottom:1px solid var(--ink); font-weight:600; }
+.s .invgrid td{ border-bottom:1px solid var(--hair); }
+.s .invgrid th:first-child, .s .invgrid td:first-child{ text-align:left; }
+.s .invgrid .swatch{ display:inline-block; width:10px; height:10px; border-radius:99px;
+  margin-right:6px; vertical-align:middle; border:1px solid var(--hair); }
+/* 44, not the mock's 36. An `<input>` is a replaced element and cannot carry
+   the `::after` overlay the rest of the system uses (DESIGN.md §5, trap 5),
+   so the box itself has to be the target — and every other box in this sheet
+   (Tham chiếu, Ghi chú) is already 44. */
+.s .invgrid .cell{ display:inline-flex; align-items:center; border:1px solid var(--line);
+  border-radius:var(--r); height:46px; }
+.s .invgrid .cell button{ width:32px; height:44px; cursor:pointer; position:relative;
+  color:var(--ink); background:none; border:0; display:inline-flex; align-items:center;
+  justify-content:center; }
+.s .invgrid .cell button:disabled{ color:var(--ink2); cursor:not-allowed; }
+.s .invgrid .cell button .ic{ width:12px; height:12px; font-size:12px; }
+.s .invgrid .cell button::after{ content:""; position:absolute; inset:-5px 0; }
+.s .invgrid .cell input{ width:40px; height:44px; text-align:center; border:0;
+  border-left:1px solid var(--hair); border-right:1px solid var(--hair); font:inherit;
+  background:transparent; color:var(--ink); }
+.s .invgrid .cell.changed input{ color:var(--brand-text); font-weight:600; }
+.s .delta{ font-size:var(--fs-xs); color:var(--brand-text); font-weight:600; }
+
+/* -- the activity log ---------------------------------------------------- */
+/* 12px of cell padding, not 10. Half the log's rows are a single line, which
+   put the row pitch at 41px — and two 44px overlays cannot share a 41px
+   pitch, so the order code in one row was measured at 41 with the row below
+   it taking the rest (DESIGN.md §5, trap 2). The rows that already carry a
+   second line were over 44 either way. */
+.s.adm3 .log3 td{ padding-top:12px; padding-bottom:12px; }
+.s.adm3 .log3 td .what b{ font-weight:600; }
+.s.adm3 .log3 td .what span{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+.s.adm3 .log3 td .diff{ font-size:var(--fs-sm); color:var(--ink2); }
+.s.adm3 .log3 td .diff b{ color:var(--ink); font-weight:600; }
+
+/* -- the customer label -------------------------------------------------- */
+/* A NAME, not a state: sentence case, no dot, pale honey. Derived from the
+   orders (`lib/customer-tags.ts`) and never typed. Not scoped to the admin
+   frame on purpose — it is a shop atom, and the badge board renders it. */
+.s .ctag{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 8px;
+  border-radius:var(--r-sm); background:var(--brand-soft); color:var(--ink);
+  font-size:var(--fs-xs); font-weight:600; white-space:nowrap; }
+.s .ctag.new{ background:var(--info-bg); color:var(--info); }
+.s .ctag.back{ background:var(--ok-bg); color:var(--ok); }
+
+/* -- the delivery slips -------------------------------------------------- */
+.s.adm3 .slips{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.s.adm3 .slip{ background:var(--bg); border:1px solid var(--ink); border-radius:var(--r);
+  padding:16px 18px; font-size:var(--fs-ui); break-inside:avoid; }
+.s.adm3 .slip .hd{ display:flex; justify-content:space-between; align-items:baseline;
+  padding-bottom:10px; border-bottom:2px solid var(--ink); }
+.s.adm3 .slip .hd .wm{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:.14em; }
+.s.adm3 .slip .hd .code{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h3); letter-spacing:var(--ls-display); }
+.s.adm3 .slip .grid2{ display:grid; grid-template-columns:1fr 100px; gap:12px;
+  padding:12px 0; border-bottom:1px solid var(--hair); }
+.s.adm3 .slip .lbl{ margin-bottom:2px; }
+.s.adm3 .slip .qrph{ padding:0; border:0; display:grid; grid-template-columns:1fr;
+  gap:6px; align-content:start; justify-items:center; text-align:center; }
+.s.adm3 .slip .qrph .cells{ width:100px; height:100px; }
+.s.adm3 .slip .qrph span{ font-size:var(--fs-xs); }
+.s.adm3 .slip table td{ padding:6px 0; border-bottom:0; }
+.s.adm3 .slip .totalbar{ padding:10px 0 0; }
+.s.adm3 .slip .totalbar b{ font-size:16px; }
+.s.adm3 .slip .cod{ margin-top:10px; padding:10px 12px; background:var(--brand-soft);
+  border-radius:var(--r); font-weight:600; display:flex; justify-content:space-between;
+  gap:12px; }
+.s.adm3 .slip .foot{ font-size:var(--fs-xs); color:var(--ink2); margin-top:8px; }
+@media print{
+  .s.adm3 .side, .s.adm3 .top, .s.adm3 .noprint, .toast{ display:none !important; }
+  .s.adm3{ min-width:0; background:#fff; }
+  .s.adm3 .main{ padding:0; }
+  .s.adm3 .slips{ grid-template-columns:1fr 1fr; gap:8mm; }
+}
+
+/* -- the admin sheet ----------------------------------------------------- */
+/* The same panel as the shop's, wearing a form: a display-face title, a
+   quiet line under it, and a footer ruled off with the way out to the left
+   of the honey confirm. `.wide` is the 680px form; 520 is the default. */
+.sheetwrap .sheetbody h3.title{ font-family:var(--font-display);
+  font-weight:var(--fw-display); font-size:var(--fs-h3);
+  letter-spacing:var(--ls-display); margin:0; }
+.sheetwrap .sheetbody > .sub{ font-size:var(--fs-sm); color:var(--ink2); margin-top:4px; }
+.sheetwrap .sheetbody .ft{ display:flex; gap:8px; justify-content:flex-end;
+  margin-top:18px; padding-top:14px; border-top:1px solid var(--hair); flex-wrap:wrap; }
+/* The panel is PORTALLED to `<body>`, so `.s.adm3 .btn.sm` never reaches it
+   and the footer buttons fell back to the shop's 34px with no overlay at all
+   (`buttons.css` cancels it on `.sm`). Measured 35 in the cancel sheet. */
+.sheetwrap .sheetbody .ft .btn.sm{ height:36px; font-size:var(--fs-sm); }
+.sheetwrap .sheetbody .ft .btn.sm::after{ content:""; position:absolute; inset:-5px 0; }
+.sheetwrap .sheetbody .fgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  margin-top:12px; }
+.sheetwrap .sheetbody .fgrid > .field3{ margin-top:0; }
+@media (min-width:900px){
+  .sheetwrap .sheetbody.wide{ width:680px; }
+}
+
+/* -- the actions menu ----------------------------------------------------
+   `.menu3` is portalled to `<body>`, so these selectors start at the panel
+   itself and never travel through `.s` (DESIGN.md §6). `sheet.css` already
+   declares the panel, its font and its 40px button rows; what the back
+   office adds is the LINK row, the rule between groups, and the one
+   destructive item.
+
+   An icon here NAMES THE ACTION — that is the whole difference between this
+   menu and the shop's, whose rows are choices with a tick. */
+.menu3 a{ display:flex; align-items:center; gap:10px; width:100%; min-height:40px;
+  padding:0 14px; color:inherit; text-decoration:none; cursor:pointer; }
+.menu3 a:hover, .menu3 a[data-active]{ background:var(--plate); }
+.menu3 .sep{ height:1px; background:var(--hair); margin:6px 0; }
+.menu3 .hot{ color:var(--hot); }
+.menu3 .ic{ width:15px; height:15px; font-size:15px; color:var(--ink2); flex:none; }
+.menu3 .hot .ic{ color:currentColor; }
+@media (max-width:460px){ .menu3 a{ min-height:44px; } }
+
+/* The rows-per-page chip stands in the table's own 44px rhythm. */
+.s.adm3 .dt3 .foot .chip3{ height:44px; }
+
+/* The figure over the chart: the total in the display face, the window and
+   the best day beside it in the secondary ink. */
+.s.adm3 .heroline{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+.s.adm3 .heroline b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:24px; letter-spacing:var(--ls-display); font-variant-numeric:tabular-nums; }
+.s.adm3 .heroline span{ font-size:var(--fs-sm); color:var(--ink2);
+  font-variant-numeric:tabular-nums; }
+
+/* -- the issue detail, under its own table ------------------------------
+   The same shape the shopper's order list uses: the row stays on screen and
+   the detail opens beneath it, so nobody loses the list to read one line of
+   it. A 2px ink rule under the head, because this is a second masthead on
+   the page rather than a panel inside it. */
+.s.adm3 .detail3{ margin-top:28px; scroll-margin-top:12px; }
+.s.adm3 .detail3 > .hd{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+  padding-bottom:10px; border-bottom:2px solid var(--ink); margin-bottom:16px; }
+.s.adm3 .detail3 > .hd h2{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h2); letter-spacing:var(--ls-display); margin:0; }
+.s.adm3 .detail3 > .hd .meta{ font-size:var(--fs-sm); color:var(--ink2); }
+.s.adm3 .detail3 > .hd .acts{ margin-left:auto; display:flex; gap:8px; align-items:center;
+  flex-wrap:wrap; }
+/* The teaser strip: a borrowed photo, a name, and what it is. No price and
+   no count — both are published at the hour the issue opens. */
+.s.adm3 .teasers{ display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+.s.adm3 .teasers .t{ display:flex; gap:10px; align-items:center; }
+.s.adm3 .teasers .t img{ width:44px; height:55px; object-fit:cover; border-radius:2px;
+  background:var(--plate); display:block; }
+.s.adm3 .teasers .t b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:var(--ls-display); }
+.s.adm3 .teasers .t .sub{ font-size:var(--fs-sm); color:var(--ink2); }
+.s.adm3 .teasers .btn{ margin-left:auto; }
+
+/* The borrowed-photo picker on the teaser sheet. No upload box: there is no
+   product photography at all (PRODUCT.md), so a file field would be a
+   control with nowhere to put a file. */
+.s .photopick{ display:flex; gap:8px; flex-wrap:wrap; }
+.s .photopick button{ padding:2px; border:1px solid var(--hair); border-radius:var(--r);
+  background:none; cursor:pointer; line-height:0; position:relative; }
+.s .photopick button::after{ content:""; position:absolute; inset:-2px; }
+.s .photopick button img{ display:block; border-radius:2px; }
+.s .photopick button:hover{ border-color:var(--line); }
+.s .photopick button.on{ border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+
+/* The bar under a form: what it currently holds, then the way out and the
+   confirm. It sits at the end of the page rather than sticking to the
+   bottom — the form is short enough to read whole, and a floating bar over
+   a two-column layout covers the column it belongs to. */
+.s.adm3 .formbar3{ display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  margin-top:16px; padding:12px 16px; background:var(--bg);
+  border:1px solid var(--hair); border-radius:var(--r); font-size:var(--fs-sm);
+  color:var(--ink2); }
+.s.adm3 .formbar3 > span{ margin-right:auto; }
+.s.adm3 .formbar3 b{ color:var(--ink); font-variant-numeric:tabular-nums; }
+/* The colour swatches and the borrowed photos sit in the same strip. */
+.s.adm3 .teasers .t .swatch{ display:inline-block; width:10px; height:10px;
+  border-radius:99px; margin-right:6px; vertical-align:middle;
+  border:1px solid var(--hair); }

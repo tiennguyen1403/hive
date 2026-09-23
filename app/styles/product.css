@@ -1,0 +1,265 @@
+/* The product page.
+
+   The v2 page — the two-column split (`.pdp2`), the gallery (`.shots`), the
+   colour picker (`.swa2`), the size row (`.szrow`) and the sticky buy bar
+   (`.buybar`) — stood at the top of this file until v3 slice 6, when the
+   sweep removed it. The v3 page is `.pdp3` and THE TICKET, below.
+
+   Two rules outlived it because the cart line still wears them: the stock
+   sentence and the meter under it (`CartLineRow`). `.s .meter` is the
+   shop's 4px bar; the back office keeps its own 3px one inside `.s.adm3`. */
+
+.s .stockline{ margin-top:10px; font-size:11.5px; color:var(--ink2); }
+.s .stockline b{ color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
+.s .meter{ height:4px; border-radius:99px; background:var(--gold-200); overflow:hidden;
+  margin-top:6px; }
+.s .meter i{ display:block; height:100%; background:var(--mark); border-radius:99px; }
+.s .meter.hot i{ background:var(--hot); }
+.s .meter.ok i{ background:var(--ok); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE PRODUCT PAGE, v3 — the trail, the gallery, and THE TICKET: one column
+   holding the name, the price, what is left, the colour, the sizes and one
+   action.
+
+   Ported from `prototype/v3/v3.css` (blocks: product page, size table, size
+   chart, buy bar) with the two skins the shop ships written straight in.
+
+   COLLISIONS measured first (DESIGN.md §8):
+   · `.kick` WAS the v2 home hero's status line (home.css). Scoping ours to
+     `.s .ticket .kick` (0,3,0) was not enough — the properties we do not
+     restate (upper case, tracking, and a green 7px dot on `.kick i`) still
+     leaked through — so the four dead rules were deleted there instead.
+   · `.cta` is the cover's button row (home.css, 0,2,0); ours is
+     `.s .ticket .cta` (0,3,0).
+   · `.meter` is also the bare `.s .meter` above, the cart line's bar; ours
+     is `.s .stock .meter` and lands nowhere near it.
+   · `.sz` in `forms.css` WAS the v2 size chip and would have painted a
+     border and a white ground on any element carrying that class — so the
+     v3 size letter is a bare `<b>` inside `.sizes` instead. The chip itself
+     went at slice 6; the name stays free.
+   · `.switch3` and not `.switch`: the account's switch (account.css) is the
+     same control at the same size, but it belongs to a screen this slice
+     does not touch, and one rule serving two screens is how `.sub` and
+     `.box` cost an afternoon each.
+   · `.fld`, `.sw`, `.sizes`, `.stock`, `.ticket`, `.gal`, `.galbar`, `.pdp3`,
+     `.mysize`, `.info3`, `.buybar3`, `.fit`, `.note3` are new to app/styles/.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── the trail ───────────────────────────────────────────────────────────
+   12px of text, 36px of row, 44px of finger. The separator is a slash in
+   `--line`, not an icon: it is punctuation, and it carries `aria-hidden`. */
+.s .crumbs{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 0;
+  font-size:var(--fs-sm); color:var(--ink2); }
+.s .crumbs a{ position:relative; display:inline-flex; align-items:center; min-height:36px; }
+.s .crumbs a::after{ content:""; position:absolute; inset:-4px 0; }
+.s .crumbs a:hover{ color:var(--brand-text); text-decoration:underline; text-underline-offset:3px; }
+.s .crumbs .sep{ color:var(--line); }
+.s .crumbs b{ color:var(--ink); font-weight:600; }
+
+/* ── the gallery ─────────────────────────────────────────────────────────
+   On a phone it is a swipe: full-bleed frames that snap, with the count and
+   the dots under them. It runs to both edges by cancelling the page gutter,
+   which is why the margin is negative and not a padding. */
+.s .pdp3{ display:block; }
+.s .gal{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none;
+  margin:0 calc(-1 * var(--gut)); }
+.s .gal::-webkit-scrollbar{ width:0; height:0; display:none; }
+.s .gal figure{ position:relative; flex:none; width:100%; margin:0; aspect-ratio:4/5;
+  scroll-snap-align:start; background:var(--plate); }
+.s .gal img{ display:block; width:100%; height:100%; object-fit:cover; }
+.s .galbar{ display:flex; align-items:center; justify-content:space-between; padding:8px 0 0;
+  font-size:var(--fs-xs); color:var(--ink2); font-variant-numeric:tabular-nums; }
+.s .galbar .dots{ display:flex; gap:6px; }
+.s .galbar .dots i{ width:6px; height:6px; border-radius:99px; background:var(--hair); }
+.s .galbar .dots i.on{ background:var(--ink); }
+
+/* ── the ticket ─────────────────────────────────────────────────────────── */
+.s .ticket{ margin-top:var(--s4); }
+.s .ticket .kick{ display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+  font-size:var(--fs-sm); color:var(--ink2); font-variant-numeric:tabular-nums; }
+.s .ticket h1{ margin:6px 0 0; font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-disp); letter-spacing:-.025em; line-height:1; }
+.s .ticket .kind{ margin:6px 0 0; font-size:var(--fs-ui); color:var(--ink2); }
+.s .ticket .price{ margin:var(--s3) 0 0; font-family:var(--font-display);
+  font-weight:var(--fw-display); font-size:24px; letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums; }
+
+/* What was cut, what is left, and a bar reading the same fact a second way.
+   An ink rule above it: this is where the page stops describing and starts
+   counting. */
+.s .stock{ margin-top:var(--s4); padding-top:12px; border-top:1px solid var(--ink);
+  font-size:var(--fs-ui); font-variant-numeric:tabular-nums; }
+.s .stock b{ font-weight:600; }
+.s .stock .cd{ color:var(--ink2); }
+.s .stock .meter{ position:relative; height:4px; margin-top:8px; border-radius:99px;
+  background:var(--plate); overflow:hidden; }
+/* Honey as a FILL is 1.9:1 on the plate behind it; the bar is a meaningful
+   graphic, so it takes the darker honey the system reserves for ink. */
+.s .stock .meter i{ position:absolute; left:0; top:0; bottom:0; background:var(--brand-text); }
+.s .stock .meter.hot i{ background:var(--hot); }
+/* Nothing left: the bar is full and black. The cut is spent, not running out. */
+.s .stock .meter.gone i{ background:var(--ink); }
+
+/* ── a field: a label row, then the control ─────────────────────────────── */
+.s .fld{ margin-top:var(--s4); }
+/* The trailing half of the label — "ĐEN · CÒN 10", "M · CÒN 4" — is the
+   system's small-caps label voice, the same one the rail's group titles and
+   the table headers wear. The name and the link opt out of it: one is the
+   field's title, the other is a control. */
+.s .fld .lbl{ display:flex; align-items:baseline; gap:8px; margin-bottom:8px;
+  font-size:var(--fs-xs); font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink2); font-variant-numeric:tabular-nums; }
+.s .fld .lbl b{ color:var(--ink); font-size:var(--fs-ui); font-weight:600;
+  letter-spacing:0; text-transform:none; }
+.s .fld .lbl .lnk{ margin-left:auto; font-size:var(--fs-sm); font-weight:500;
+  letter-spacing:0; text-transform:none; white-space:nowrap; }
+
+/* ── the colourways ──────────────────────────────────────────────────────
+   A 32px disc with a white bead inside it, the name and the count under it.
+   The ring is `--line` and not the mock's hairline: a Trắng or Kem disc on a
+   white ground is nothing BUT its ring, and a ring that carries meaning has
+   to clear WCAG 1.4.11's 3:1 (cards.css records the same call for `.swa`). */
+.s .sw{ display:flex; flex-wrap:wrap; gap:12px; }
+.s .sw button{ display:flex; flex-direction:column; align-items:center; gap:6px;
+  min-width:48px; min-height:44px; padding:0; border:0; background:none; font:inherit;
+  font-size:var(--fs-xs); color:var(--ink2); cursor:pointer;
+  font-variant-numeric:tabular-nums; }
+.s .sw button i{ display:block; width:32px; height:32px; border-radius:99px;
+  border:1px solid var(--line); box-shadow:inset 0 0 0 2px #fff; }
+.s .sw button[aria-pressed="true"]{ color:var(--ink); font-weight:500; }
+.s .sw button[aria-pressed="true"] i{ box-shadow:inset 0 0 0 2px #fff, 0 0 0 1.5px var(--ink); }
+.s .sw button.gone span{ text-decoration:line-through; }
+
+/* ── the size table ──────────────────────────────────────────────────────
+   One row per size, the count set on a dotted leader, a box at the end to
+   tick. The selected row inverts into the issue's own cloth — black ground,
+   white type, and the tick in honey, which is the one thread on it. */
+.s .sizes{ width:100%; border-collapse:collapse; border-top:1px solid var(--ink); }
+.s .sizes tr{ border-bottom:1px solid var(--hair); }
+.s .sizes td{ padding:0; }
+.s .sizes button{ display:grid; grid-template-columns:40px minmax(0,1fr) auto 22px;
+  align-items:center; gap:10px; width:100%; min-height:44px; padding:0 2px 0 4px;
+  border:0; border-radius:var(--r-sm); background:none; font:inherit; font-size:var(--fs-ui);
+  color:inherit; text-align:left; cursor:pointer; font-variant-numeric:tabular-nums; }
+.s .sizes b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-body); }
+.s .sizes .ld{ min-width:16px; border-bottom:1px dotted var(--line); transform:translateY(-3px); }
+.s .sizes .left{ font-size:var(--fs-sm); color:var(--ink2); }
+.s .sizes .left.low{ color:var(--hot); font-weight:500; }
+.s .sizes .mk{ display:flex; align-items:center; justify-content:center; width:20px; height:20px;
+  border:1px solid var(--line); border-radius:var(--r-sm); color:transparent; }
+.s .sizes .mk svg{ width:12px; height:8px; fill:none; }
+/* `:not([aria-pressed="true"])` is load-bearing: a hover rule at (0,4,1)
+   out-ranks the pressed rule at (0,3,1), so without it the row under the
+   pointer went plate-with-white-type the moment it was chosen — the one
+   pair in the table that fails contrast. Measured, not guessed. */
+.s .sizes button:hover:not(:disabled):not([aria-pressed="true"]){ background:var(--plate); }
+/* The chosen row IS the woven label: black cloth, honey thread — the same
+   pair `--sel` / `--sel-ink` the applied chips wear, so one selected thing
+   looks like every other selected thing. The leader and the count step back
+   inside it rather than changing colour. */
+.s .sizes button[aria-pressed="true"]{ background:var(--sel); color:var(--sel-ink); }
+.s .sizes button[aria-pressed="true"] .left{ color:inherit; opacity:.85; }
+.s .sizes button[aria-pressed="true"] .ld{ border-color:currentColor; opacity:.5; }
+.s .sizes button[aria-pressed="true"] .mk{ color:var(--brand); border-color:currentColor; }
+/* A size that has gone is drawn, struck, and is not a control. */
+.s .sizes button.gone{ color:var(--ink2); cursor:default; }
+.s .sizes button.gone:hover{ background:transparent; }
+.s .sizes button.gone b{ text-decoration:line-through; }
+/* The issue has closed: every row still says what is left, nothing is
+   pressable, and the rows do not pretend otherwise by going grey. */
+.s .sizes button:disabled:not(.gone){ cursor:default; }
+
+/* ── the size this device remembers ─────────────────────────────────────── */
+.s .mysize{ display:flex; align-items:center; gap:12px; min-height:44px; margin-top:var(--s3);
+  padding:6px 0; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair);
+  font-size:var(--fs-sm); color:var(--ink2); }
+.s .mysize b{ display:block; font-size:var(--fs-ui); font-weight:600; color:var(--ink); }
+.s .mysize .switch3{ margin-left:auto; }
+.s .switch3{ position:relative; width:40px; height:24px; flex:none; padding:0; border:0;
+  border-radius:99px; background:var(--line); cursor:pointer;
+  transition:background-color .15s ease; }
+.s .switch3::before{ content:""; position:absolute; top:3px; left:3px; width:18px; height:18px;
+  border-radius:99px; background:#fff; box-shadow:0 1px 2px rgba(23,20,16,.25);
+  transition:transform .15s ease; }
+/* 40×24 of control, 44×44 of finger — the same overlay `.switch` wears. */
+.s .switch3::after{ content:""; position:absolute; inset:-10px -2px; }
+.s .switch3[aria-checked="true"]{ background:var(--brand); }
+.s .switch3[aria-checked="true"]::before{ transform:translateX(16px); }
+@media (prefers-reduced-motion:reduce){
+  .s .switch3, .s .switch3::before{ transition:none; }
+}
+
+/* ── the action, and the small print under it ───────────────────────────── */
+.s .ticket .cta{ display:grid; gap:8px; margin-top:var(--s4); }
+.s .ticket .fine{ margin:10px 0 0; font-size:var(--fs-sm); color:var(--ink2); }
+
+/* ── the five questions, as a definition list ───────────────────────────── */
+.s .info3{ margin-top:var(--s5); border-top:1px solid var(--ink); }
+.s .info3 .r{ display:grid; grid-template-columns:96px minmax(0,1fr); gap:12px; padding:10px 0;
+  border-bottom:1px solid var(--hair); font-size:var(--fs-ui); }
+.s .info3 dt{ margin:0; padding-top:1px; font-size:var(--fs-sm); color:var(--ink2); }
+.s .info3 dd{ margin:0; }
+.s .info3 dd span{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+
+/* ── the sticky buy bar, phone only ──────────────────────────────────────
+   It rises once the real button has scrolled off the top, so the two are
+   never on screen together asking for the same tap. `visibility` on top of
+   the transform is not belt and braces: a bar hidden by transform alone is
+   still a painted element just below the fold, which is why a full-page
+   screenshot catches it halfway up the page. */
+.s .buybar3{ position:fixed; left:0; right:0; bottom:0; z-index:30; display:flex;
+  align-items:center; gap:12px;
+  padding:10px var(--gut) calc(10px + env(safe-area-inset-bottom));
+  background:var(--bg); border-top:1px solid var(--ink);
+  transform:translateY(110%); visibility:hidden;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), visibility 0s linear .25s; }
+.s .buybar3.show{ transform:none; visibility:visible;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+.s .buybar3 .who{ flex:1; min-width:0; }
+.s .buybar3 .who b{ display:block; font-family:var(--font-display);
+  font-weight:var(--fw-display); font-size:var(--fs-body); }
+.s .buybar3 .who span{ display:block; font-size:var(--fs-sm); color:var(--ink2);
+  font-variant-numeric:tabular-nums; }
+.s .buybar3 .btn{ flex:none; min-width:150px; }
+@media (prefers-reduced-motion:reduce){
+  .s .buybar3, .s .buybar3.show{ transition:none; }
+}
+
+/* ── the size chart, inside its sheet ───────────────────────────────────── */
+.s .fit{ width:100%; margin-top:14px; border-collapse:collapse; border-top:1px solid var(--ink);
+  font-size:var(--fs-ui); font-variant-numeric:tabular-nums; }
+.s .fit th{ padding:8px 6px 6px 0; border-bottom:1px solid var(--hair); text-align:left;
+  font-size:var(--fs-xs); font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink2); }
+.s .fit td{ padding:9px 6px 9px 0; border-bottom:1px solid var(--hair); }
+.s .fit td:first-child{ font-family:var(--font-display); font-weight:var(--fw-display); }
+.s .fit tr.on td{ background:var(--brand-soft); }
+
+/* ── a note with an icon in its own column ──────────────────────────────── */
+.s .note3{ display:flex; align-items:flex-start; gap:10px; padding:10px 12px;
+  border-radius:var(--r); background:var(--brand-soft); color:var(--ink);
+  font-size:var(--fs-sm); line-height:1.5; }
+.s .note3 > .ic{ flex:none; margin-top:1px; color:var(--brand-text); }
+
+/* ── 900px and up, v3 ───────────────────────────────────────────────────── */
+@media (min-width:900px){
+  .s .pdp3{ display:grid; grid-template-columns:minmax(0,7fr) minmax(0,5fr); gap:var(--s7);
+    align-items:start; margin-top:var(--s2); }
+  /* The swipe becomes a column: every frame at once, nothing to snap. */
+  .s .gal{ display:grid; grid-template-columns:1fr; gap:var(--s3); margin:0; overflow:visible; }
+  .s .gal figure{ width:auto; border-radius:var(--r); overflow:hidden; }
+  .s .galbar{ display:none; }
+  .s .ticket{ margin-top:0; }
+  .s .buybar3{ display:none; }
+  /* The related row is four across on a monitor — a glance, not a second
+     listing. Beats `.s .grid3` (home.css, 0,2,0) on class count. */
+  .s .grid3.four{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+}
+/* The ticket sticks only when the viewport can show all of it. On a shorter
+   screen it scrolls with the page instead of clipping its own bottom — the
+   save button and the five rows under it are the part that would go. */
+@media (min-width:900px) and (min-height:860px){
+  .s .ticket{ position:sticky; top:84px; }
+}

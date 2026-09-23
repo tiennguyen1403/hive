@@ -1,0 +1,397 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { AdminTop } from "@/components/admin/AdminTop";
+import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { RevenueChart } from "@/components/admin/RevenueChart";
+import { useSim } from "@/components/admin/SimContext";
+import { Badge } from "@/components/ui/Badge";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { Icon } from "@/components/icon/Icon";
+import { CATALOG, CURRENT_DROP_NO, DROPS } from "@/data/catalog";
+import { customerById } from "@/data/customers";
+import { ORDERS } from "@/data/orders";
+import {
+  WINDOW_CHOICES,
+  customerSplit,
+  dropRanking,
+  recentOrders,
+  salesWindow,
+  stockAlerts,
+  type WindowDays,
+} from "@/lib/admin-metrics";
+import { queueRows } from "@/lib/admin-rows";
+import { simDrops, simOrders, simProducts } from "@/lib/admin-sim";
+import { effectiveOrder } from "@/lib/customer-orders";
+import { clockLabel, dayMonth } from "@/lib/datetime";
+import { closesInLabel, dropState, opensInLabel } from "@/lib/drop";
+import { LOW_STOCK_AT, dropSummary } from "@/lib/inventory";
+import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
+import { compactVnd, plainVnd, vnd } from "@/lib/money";
+import { STATE_LABEL } from "@/lib/order-labels";
+import { orderTotalVnd } from "@/lib/orders";
+import { photoUrl } from "@/lib/photos";
+
+/**
+ * The back office's front page.
+ *
+ * EVERY NUMBER HERE IS DERIVED, from `ORDERS` and `CATALOG` plus whatever
+ * this browser has done on top of them. The approved mock drew this screen
+ * with invented figures — page views, a conversion rate, "+12% so với kỳ
+ * trước" — and PRODUCT.md forbids presenting invented sales as real, so:
+ *
+ *   · the conversion rate is GONE. Nothing in this codebase records a page
+ *     view. In its place "Cần xử lý", which is both real and the thing
+ *     somebody opening this screen actually wants.
+ *   · "so với kỳ trước" is GONE too: the fourteen days before this window
+ *     fall between two issues and took nothing, so the percentage would
+ *     divide by zero. The chart shows that gap directly, which says it
+ *     better.
+ *
+ * `nowIso` comes from the server rather than from `demoNow()` here. The page
+ * is dynamic, so it is the current instant either way — but taking it as a
+ * prop means the first client render is identical to the HTML that was sent,
+ * which is what keeps hydration quiet and the clock honest.
+ */
+export function DashboardScreen({ nowIso, days }: { nowIso: string; days: WindowDays }) {
+  const { sim, run } = useSim();
+  const now = useMemo(() => new Date(nowIso), [nowIso]);
+  /** Rows just acted on, kept lit until the operator leaves the screen. */
+  const [done, setDone] = useState<string[]>([]);
+
+  // Two lenses over the same book, in this order: what this browser did, then
+  // what the twelve-hour clock has already decided about what is left.
+  const orders = simOrders(ORDERS, sim).map((o) => effectiveOrder(o, now));
+  const products = simProducts(CATALOG, sim);
+
+  const window = salesWindow(now, orders, days);
+  const queue = queueRows(orders, now);
+  const awaiting = queue.filter((q) => q.action === "MARK_PAID").length;
+  const drop = simDrops(DROPS, sim).find((d) => d.no === CURRENT_DROP_NO);
+  const state = drop ? dropState(drop, now) : "CLOSED";
+  const summary = dropSummary(CURRENT_DROP_NO, products);
+  const soldPercent =
+    summary.cutUnits === 0 ? 0 : Math.round((summary.soldUnits / summary.cutUnits) * 100);
+  const alerts = stockAlerts(CURRENT_DROP_NO, products);
+  const ranking = dropRanking(CURRENT_DROP_NO, products);
+  const latest = recentOrders(orders, 5);
+  const split = customerSplit(now, orders, days, drop?.opensAt ?? nowIso);
+
+  return (
+    <>
+      <AdminTop
+        title="Tổng quan"
+        sub={
+          drop && (
+            <>
+              <span>
+                {issueLabel(drop.no)} · {dayMonth(drop.opensAt)} → {dayMonth(drop.closesAt)}
+              </span>
+              <Badge tone={state === "OPEN" ? "ok" : state === "UPCOMING" ? "info" : "shut"}>
+                {state === "OPEN" ? "Đang bán" : state === "UPCOMING" ? "Sắp mở" : "Đã đóng"}
+              </Badge>
+              <span>
+                {state === "OPEN"
+                  ? closesInLabel(drop.closesAt, now)
+                  : state === "UPCOMING"
+                    ? opensInLabel(drop.opensAt, now)
+                    : `đóng ${dayMonth(drop.closesAt)}`}
+              </span>
+            </>
+          )
+        }
+      >
+        {/* Links, not buttons: the range is part of what the screen is
+            showing, so it belongs in the address bar where Back and a
+            reload can both find it (QĐ-8). */}
+        <span className="seg3" role="group" aria-label="Kỳ xem">
+          {WINDOW_CHOICES.map((n) => (
+            <Link
+              key={n}
+              href={n === 14 ? "/admin" : `/admin?days=${n}`}
+              className={n === days ? "on" : undefined}
+              aria-current={n === days ? "true" : undefined}
+            >
+              {n} ngày
+            </Link>
+          ))}
+        </span>
+        <ExportCsvButton
+          label={`Tải CSV ${days} ngày`}
+          filename={`doanh-thu-${days}-ngay.csv`}
+          rows={[
+            ["Ngày", "Doanh thu (VND)", "Số đơn"],
+            ...window.points.map((p) => [p.day, p.vnd, p.orders]),
+          ]}
+        />
+      </AdminTop>
+
+      <div className="kpis3">
+        <div className="kpi3">
+          <span className="k">Doanh thu {days} ngày</span>
+          <b>{compactVnd(window.totalVnd)}</b>
+          {vnd(window.totalVnd)} · chỉ tính đơn đã thanh toán
+        </div>
+        <div className="kpi3">
+          <span className="k">Đơn trong {days} ngày</span>
+          <b>{window.orders}</b>
+          {window.orders > 0
+            ? `trung bình ${vnd(window.averageOrderVnd)} mỗi đơn · ${split.total} khách`
+            : "chưa có đơn nào trong kỳ"}
+        </div>
+        <div className="kpi3">
+          <span className="k">Cần xử lý</span>
+          <b>{queue.length}</b>
+          {awaiting} chờ chuyển khoản · {queue.length - awaiting} đã trả, chưa giao
+          {queue.length > 0 && (
+            <>
+              {" · "}
+              <a href="#queue">xử lý ngay</a>
+            </>
+          )}
+        </div>
+        <div className="kpi3">
+          <span className="k">
+            Còn trong {LEX.tl} {issueNo(CURRENT_DROP_NO)}
+          </span>
+          <b>{summary.onHand} chiếc</b>
+          {summary.soldUnits} / {summary.cutUnits} đã bán · {soldPercent}% · {summary.styles} mẫu
+          <div className="meter" aria-hidden="true">
+            <i style={{ width: `${soldPercent}%` }} />
+          </div>
+        </div>
+      </div>
+
+      <section className="panel3">
+        <h2>
+          Doanh thu {days} ngày gần nhất
+          <span className="meta">cột trống = ngày không có đơn đã thanh toán</span>
+        </h2>
+        <RevenueChart points={window.points} totalVnd={window.totalVnd} peak={window.peak} />
+      </section>
+
+      <div className="split3">
+        <section className="panel3" id="queue">
+          <h2>
+            Cần xử lý
+            <span className="meta">
+              {queue.length} đơn · việc của cửa hàng, không phải của khách hay bên vận chuyển
+            </span>
+          </h2>
+          <div className="bd queue3">
+            {queue.length === 0 ? (
+              <p className="none">Không còn đơn nào chờ cửa hàng. Đơn mới sẽ hiện ở đây.</p>
+            ) : (
+              queue.map((q, i) => (
+                <div className="q" key={q.code}>
+                  <b>
+                    <Link href={`/admin/orders/${q.code}`}>{q.code}</Link> · {q.customer} ·{" "}
+                    {vnd(q.totalVnd)}
+                  </b>
+                  <span className="sub">
+                    {q.standing}
+                    {q.due && (
+                      <>
+                        {" · "}
+                        {q.late ? <span className="late">{q.due}</span> : q.due}
+                      </>
+                    )}
+                    {" · "}
+                    {q.items}
+                  </span>
+                  {/* ONE HONEY BUTTON IN THE PANEL, and it is the top row.
+                      The queue is already sorted into the order it should be
+                      worked, so "one primary action per screen" means the
+                      first job — the rest carry the ink outline. Five honey
+                      buttons down a list is a list of equals, which is the
+                      opposite of what a queue says, and on this screen they
+                      were also competing with the chart, the badges and the
+                      stamp for the same colour. */}
+                  <span className="act">
+                    {q.action === "MARK_PAID" ? (
+                      <Button
+                        tone={i === 0 ? "sm" : "ink sm"}
+                        icon="check"
+                        disabled={done.includes(q.code)}
+                        onClick={() => {
+                          run(
+                            { kind: "ORDER_PAID", code: q.code },
+                            `${q.code} → đã thanh toán · ghi nhật ký`,
+                          );
+                          setDone((d) => [...d, q.code]);
+                        }}
+                      >
+                        {done.includes(q.code) ? "Đã ghi" : "Đã nhận tiền"}
+                      </Button>
+                    ) : (
+                      /* The handover form lives on the order, because it
+                         needs a tracking number. The link opens it there. */
+                      <ButtonLink
+                        tone={i === 0 ? "sm" : "ink sm"}
+                        icon="box"
+                        href={`/admin/orders/${q.code}?handover=1#handover`}
+                      >
+                        Đóng gói và bàn giao
+                      </ButtonLink>
+                    )}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="panel3">
+          <h2>
+            Bán chạy trong {LEX.tl} {issueNo(CURRENT_DROP_NO)}
+            <span className="meta">đã bán / đã cắt</span>
+          </h2>
+          <div className="bd rank3">
+            {ranking.slice(0, 5).map((r, i) => (
+              <div className="r" key={r.product.id}>
+                <span className="no">{i + 1}</span>
+                <Image
+                  src={photoUrl(r.product.photoKeys[0]!, 120)}
+                  alt=""
+                  width={36}
+                  height={45}
+                />
+                <b>{r.product.name}</b>
+                <div
+                  className={
+                    r.left === 0 ? "meter gone" : r.percent >= 85 ? "meter hot" : "meter"
+                  }
+                  aria-hidden="true"
+                >
+                  <i style={{ width: `${r.percent}%` }} />
+                </div>
+                <span className="n">
+                  <b>{r.sold}</b> / {r.cut} · {r.left === 0 ? "hết" : `${r.percent}%`}
+                </span>
+              </div>
+            ))}
+            <p className="fine3">
+              <Link className="lnk" href={`/admin/drops/${issueNo(CURRENT_DROP_NO)}`}>
+                Xem cả {ranking.length} mẫu của {LEX.tl}
+              </Link>
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <div className="split3">
+        <section className="panel3">
+          <h2>
+            Đơn mới nhất
+            <Link className="more" href="/admin/orders">
+              Xem tất cả
+            </Link>
+          </h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Khách</th>
+                <th>Thời gian</th>
+                <th className="right">Giá trị</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              {latest.map((o) => {
+                const s = STATE_LABEL[o.status.state];
+                return (
+                  <tr key={o.code}>
+                    <td>
+                      <Link href={`/admin/orders/${o.code}`}>{o.code}</Link>
+                    </td>
+                    <td className="nw">{customerById.get(o.customerId)?.name ?? "—"}</td>
+                    <td className="nw">
+                      {dayMonth(o.placedAt)} · {clockLabel(o.placedAt)}
+                    </td>
+                    <td className="right">{plainVnd(orderTotalVnd(o))}</td>
+                    <td>
+                      <Badge tone={s.tone}>{s.text}</Badge>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </section>
+
+        <div>
+          <section className="panel3">
+            <h2>
+              Sắp hết<span className="meta">{alerts.length} mẫu</span>
+            </h2>
+            <div className="bd rank3">
+              {alerts.length === 0 ? (
+                <p className="none">
+                  Chưa mẫu nào trong {LEX.tl} {issueNo(CURRENT_DROP_NO)} xuống tới {LOW_STOCK_AT}{" "}
+                  chiếc.
+                </p>
+              ) : (
+                alerts.map((a) => (
+                  <div className="r two" key={a.product.id}>
+                    <Image
+                      src={photoUrl(a.product.photoKeys[0]!, 120)}
+                      alt=""
+                      width={36}
+                      height={45}
+                    />
+                    <span>
+                      <b>{a.product.name}</b>
+                      <span className="sub">{a.note}</span>
+                    </span>
+                    <Badge tone={a.left === 0 ? "hot" : "warn"}>
+                      {a.left === 0 ? "Hết" : `Còn ${a.left}`}
+                    </Badge>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="panel3">
+            <h2>
+              Khách trong {days} ngày
+              <span className="meta">
+                {split.total} khách đặt {window.orders} đơn
+              </span>
+            </h2>
+            <div className="bd">
+              {split.total === 0 ? (
+                <p className="none">Chưa có đơn đã thanh toán nào trong kỳ này.</p>
+              ) : (
+                <>
+                  <div className="meter" style={{ height: 8, marginTop: 0 }} aria-hidden="true">
+                    <i style={{ width: `${(split.fresh / split.total) * 100}%` }} />
+                  </div>
+                  <div className="axis">
+                    <span>
+                      <b>{split.fresh}</b> khách mới (tham gia trong {LEX.tl})
+                    </span>
+                    <span>
+                      <b>{split.returning}</b> khách quay lại
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <p className="fine3">
+        <Icon name="info" className="ic sm" /> Dữ liệu mô phỏng: {ORDERS.length} đơn,{" "}
+        {summary.styles} mẫu · thao tác lưu trên trình duyệt này ·{" "}
+        <Link className="lnk" href="/admin/log">
+          Chi tiết
+        </Link>
+      </p>
+    </>
+  );
+}

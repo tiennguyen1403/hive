@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="vi" data-dir="so" data-spot="off" data-lex="so">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đề xuất nâng cấp UI · v3 · bước 1 · BRAND</title>
+<link rel="stylesheet" href="../v2/fonts.css"><link rel="stylesheet" href="fonts-trial.css"><link rel="stylesheet" href="../v2/reset.css"><link rel="stylesheet" href="v3.css">
+<script src="../v2/icons.js"></script><script src="v3.js" defer></script>
+<style>
+  /* The review board: a tool for reading the mock, not a screen of the product.
+     It borrows the active direction's tokens so its accents follow the switch. */
+  body{ font-family:var(--font-sans); color:var(--ink); font-size:14px; line-height:1.6; background:var(--bg); }
+  .board{ max-width:1480px; margin:0 auto; padding:28px 32px 90px; }
+  h1{ font-family:var(--font-display); font-weight:700; font-size:32px; letter-spacing:-.025em; line-height:1.05; }
+  h2{ font-family:var(--font-display); font-weight:700; font-size:22px; letter-spacing:-.015em; margin:56px 0 8px; padding-top:22px; border-top:2px solid var(--ink); }
+  h3{ font-family:var(--font-display); font-weight:700; font-size:17px; letter-spacing:-.01em; }
+  p{ max-width:80ch; text-wrap:pretty; }
+  .muted{ color:var(--ink2); }
+  code{ font-family:ui-monospace,Consolas,monospace; font-size:12px; color:var(--ink2); }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border:1px solid var(--ink); border-radius:var(--r-sm); font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
+  .pill.brand{ background:var(--brand); color:var(--brand-ink); border-color:var(--brand); }
+  .kv{ display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:12px; font-size:13px; color:var(--ink2); }
+  .kv b{ color:var(--ink); font-weight:600; }
+  .steps{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px; margin-top:16px; }
+  .steps div{ border:1px solid var(--hair); border-radius:var(--r); padding:12px 14px; font-size:13px; color:var(--ink2); }
+  .steps b{ display:block; color:var(--ink); font-weight:600; margin-bottom:2px; }
+  .steps .now{ border-color:var(--ink); }
+  .bar{ position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin:22px -32px 0; padding:10px 32px; background:rgba(255,255,255,.94); backdrop-filter:blur(6px); border-bottom:1px solid var(--hair); font-size:12.5px; }
+  .bar nav{ display:flex; flex-wrap:wrap; gap:4px 14px; }
+  .bar nav a{ color:var(--ink2); display:inline-flex; align-items:center; min-height:36px; position:relative; }
+  .bar nav a::after{ content:""; position:absolute; inset:-4px 0; }
+  .bar nav a:hover{ color:var(--ink); text-decoration:underline; text-underline-offset:3px; }
+  .bar .sw{ display:inline-flex; gap:4px; align-items:center; }
+  .bar .sw span{ color:var(--ink2); margin-right:4px; }
+  .bar .sw button{ height:36px; padding:0 10px; position:relative; border:1px solid var(--line); border-radius:var(--r); font-size:12px; color:var(--ink); background:var(--bg); cursor:pointer; }
+  .bar .sw button::after{ content:""; position:absolute; inset:-5px 0; }
+  .bar .sw button.on{ background:var(--sel); color:var(--sel-ink); border-color:var(--sel); }
+  .bar .right{ margin-left:auto; display:flex; align-items:center; gap:12px; }
+  .bar .btnx{ display:inline-flex; align-items:center; gap:6px; height:44px; padding:0 14px; border-radius:var(--r); background:var(--brand); color:var(--brand-ink); font-weight:600; border:1px solid var(--brand); cursor:pointer; font-size:12.5px; }
+  .bar .btnx svg{ width:15px; height:15px; }
+  pre#out{ display:none; white-space:pre-wrap; font:12px/1.5 ui-monospace,Consolas,monospace; background:var(--plate); border:1px solid var(--hair); border-radius:var(--r); padding:12px; margin-top:12px; }
+  table.t{ width:100%; border-collapse:collapse; font-size:13px; margin-top:14px; }
+  table.t th{ text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); padding:8px 10px; border-bottom:1px solid var(--ink); }
+  table.t td{ padding:9px 10px; border-bottom:1px solid var(--hair); vertical-align:top; }
+  table.t td:first-child{ white-space:nowrap; font-weight:600; }
+  table.t td.n{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .links{ display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:12px; font-size:12.5px; }
+  .links a{ color:var(--brand-text); text-decoration:underline; text-underline-offset:3px; display:inline-flex; align-items:center; min-height:44px; }
+  /* direction cards */
+  .cards{ display:grid; grid-template-columns:1fr; gap:16px; margin-top:16px; }
+  @media (min-width:1100px){ .cards{ grid-template-columns:repeat(3, 1fr); } }
+  .dcard{ border:1px solid var(--line); border-radius:var(--r); padding:18px 18px 16px; display:flex; flex-direction:column; gap:10px; font-size:13px; }
+  .dcard.lead{ border-color:var(--ink); border-width:2px; }
+  .dcard .kick{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .dcard h3{ font-size:22px; letter-spacing:-.02em; line-height:1.1; }
+  .dcard h3 small{ display:block; font-family:var(--font-sans); font-weight:500; font-size:12.5px; color:var(--ink2); letter-spacing:0; margin-top:2px; }
+  .dcard .pal{ display:flex; gap:4px; }
+  .dcard .pal i{ flex:1; height:26px; border:1px solid rgba(0,0,0,.08); display:block; }
+  .dcard dl{ display:grid; grid-template-columns:96px 1fr; gap:6px 10px; }
+  .dcard dt{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); padding-top:2px; }
+  .dcard dd{ color:var(--ink); }
+  .dcard dd.risk{ color:var(--hot); }
+  .dcard ul.raise{ padding-left:14px; list-style:disc; margin:0; color:var(--ink2); }
+  .dcard ul.raise li{ margin:2px 0; }
+  .dcard ul.raise b{ color:var(--ink); font-weight:600; }
+  .dcard .go{ margin-top:auto; display:flex; gap:8px; flex-wrap:wrap; }
+  .dcard .go button{ height:34px; padding:0 12px; border:1px solid var(--line); border-radius:var(--r); font-size:12.5px; background:var(--bg); cursor:pointer; }
+  .dcard .go button.on{ background:var(--sel); color:var(--sel-ink); border-color:var(--sel); }
+  .alt{ margin-top:16px; border:1px dashed var(--line); border-radius:var(--r); padding:16px 18px; font-size:13px; display:grid; grid-template-columns:1fr; gap:12px; }
+  @media (min-width:1100px){ .alt{ grid-template-columns:1.2fr 1fr; } }
+  .declined{ margin-top:12px; display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; font-size:12px; color:var(--ink2); }
+  .declined div{ border:1px solid var(--hair); border-radius:var(--r); padding:8px 10px; }
+  .declined b{ color:var(--ink); font-weight:600; display:block; }
+  .canon{ margin-top:12px; border:1px solid var(--hair); border-radius:var(--r); padding:12px 14px; font-size:12.5px; color:var(--ink2); }
+  .canon b{ color:var(--ink); }
+  /* screens */
+  .screen{ display:grid; grid-template-columns:320px 1fr; gap:26px; padding:26px 0 34px; border-top:1px solid var(--hair); }
+  .screen:first-of-type{ border-top:0; }
+  .screen .meta h3{ margin-bottom:6px; }
+  .screen .meta ul{ margin:10px 0 0; padding-left:16px; list-style:disc; font-size:13px; color:var(--ink2); }
+  .screen .meta li{ margin:4px 0; }
+  .screen .meta li b{ color:var(--ink); font-weight:600; }
+  .frames{ display:grid; grid-template-columns:406px 1fr; gap:22px; align-items:start; }
+  .frames.deskonly{ grid-template-columns:1fr; }
+  .phone{ width:406px; border:8px solid var(--ink); border-radius:26px; overflow:hidden; background:#fff; box-shadow:0 10px 30px rgba(0,0,0,.12); }
+  .phone iframe{ width:390px; height:760px; border:0; display:block; }
+  .desk{ position:relative; width:100%; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:#fff; aspect-ratio:1280/800; }
+  .desk.tall{ aspect-ratio:1280/1400; }
+  .desk iframe{ position:absolute; left:0; top:0; width:1280px; height:800px; border:0; transform-origin:0 0; }
+  .desk.tall iframe{ height:1400px; }
+  .caption{ font-size:11.5px; color:var(--ink2); margin-top:6px; }
+  .review{ margin-top:14px; padding:12px; border:1px dashed var(--line); border-radius:var(--r); background:var(--plate); }
+  .review .opts{ display:flex; gap:6px; flex-wrap:wrap; }
+  .review label{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; padding:6px 10px; border:1px solid var(--line); border-radius:var(--r); background:#fff; cursor:pointer; }
+  .review label:has(input:checked){ background:var(--sel); color:var(--sel-ink); border-color:var(--sel); font-weight:600; }
+  .review input[type=radio], .review input[type=checkbox]{ appearance:none; width:0; height:0; margin:0; }
+  .review textarea{ width:100%; margin-top:8px; min-height:56px; padding:8px 10px; border:1px solid var(--line); border-radius:var(--r); font:inherit; font-size:12.5px; resize:vertical; background:#fff; }
+  .q{ border:1px solid var(--hair); border-radius:var(--r); padding:12px 14px; margin-top:10px; font-size:13.5px; }
+  .q b{ display:block; font-weight:600; }
+  .q span{ color:var(--ink2); }
+  .feat{ display:grid; grid-template-columns:1fr; gap:10px; margin-top:14px; }
+  @media (min-width:1100px){ .feat{ grid-template-columns:1fr 1fr; } }
+  .feat .f{ border:1px solid var(--hair); border-radius:var(--r); padding:12px 14px; font-size:13px; }
+  .feat .f b{ display:block; font-weight:600; }
+  .feat .f .w{ color:var(--ink2); font-size:12.5px; margin-top:2px; }
+  .feat .f .opts{ margin-top:8px; }
+  @media (max-width:1100px){ .screen{ grid-template-columns:1fr; } .frames{ grid-template-columns:1fr; } .phone{ width:406px; max-width:100%; } .bar{ margin:22px -16px 0; padding:10px 16px; } .board{ padding:20px 16px 80px; } }
+  @media (max-width:700px){ .frames{ overflow-x:auto; } .frames > div{ min-width:406px; } .bar{ position:static; } }
+</style>
+</head>
+<body>
+<div class="board">
+  <span class="pill brand">Mock v3 · bước 2: 17 màn còn lại · chờ duyệt</span>
+  <h1 style="margin-top:12px">Đề xuất nâng cấp UI — v3</h1>
+  <p class="muted" style="margin-top:8px">Sau v2, đây là bước đầu của v3: <b>chọn thế giới hình ảnh, màu thương hiệu, từ vựng và giọng chữ</b> trên ba màn quan trọng nhất (trang chủ, danh mục, trang sản phẩm) và một bộ thành phần. Bạn chốt xong, bước 2 dựng đủ 14 màn còn lại trong cùng ngôn ngữ, rồi agent thực thi từng lát như v2. Chưa một dòng nào trong <code>app/</code> thay đổi.</p>
+  <div class="kv">
+    <span><b>Đồng hồ đóng băng</b> 18:50 · 20/09/2026 như v2 — mọi con số của v2 vẫn đúng</span>
+    <span><b>Bốn con số mới</b> (NGUỘI 6 · THAN 5 · GIÓ 4 · ĐÁ 9) chọn để cộng đúng 73 còn — khi thực thi đọc từ fixture</span>
+    <span><b>Ảnh</b> vẫn mượn tạm</span>
+    <span><b>Công tắc</b> trên thanh dính đổi hướng và từ cho mọi khung bên dưới cùng lúc</span>
+  </div>
+  <div class="steps" style="margin-top:14px"><div class="now" style="grid-column:1 / -1"><b>Đã chốt 22:38 · 21/09/2026</b>Hướng <b>NHÃN</b> (vải đen, chỉ mật ong; toàn bộ màu thương hiệu là mật ong, không đổi màu theo số) · từ thay "đợt": <b>Số</b> · giọng trung tính đã duyệt · bộ thành phần và ba màn đã duyệt · giữ <b>thanh nút dưới thẻ</b> (mock đã đổi: viền mực, vàng chỉ cho hành động chính) · bỏ "Báo khi có lại", giữ mục Thông báo · số đo mô phỏng có nhãn · "đang chuẩn bị" cho trang công khai · 12 chức năng giữ nguyên. Bộ chữ <b>D · Unbounded + Be Vietnam Pro</b> chốt 22/09 và đã áp lên mọi màn; viền ô nhập hạ tới <code>#9c937f</code> (3,05:1, mức nhạt nhất còn đạt 3:1); header có bóng. Công tắc hướng, từ, chữ vẫn còn để đối chiếu; mặc định là NHÃN · Số · D.</div></div>
+  <div class="steps" style="margin-top:10px"><div class="now" style="grid-column:1 / -1"><b>Đã chốt 01:02 · 22/09/2026</b>21 khung bước 2 <b>Duyệt</b> · badge <b>B · Vải đen</b> · sáu câu: thanh bên quản trị đen giữ, <b>số đếm trên thanh bên thành badge</b> (vàng chữ đen khi thường, đen chữ vàng khi đang mở, như bong bóng giỏ); chưa có tài khoản ngân hàng, giữ mock; giữ cả hai danh sách Giữ lại sau và Đã lưu; <b>khách được huỷ đơn chưa thanh toán</b>; ngưỡng nhãn khách giữ; sáu lát theo thứ tự đề xuất · dấu HẾT trên ảnh đổi thành <b>SOLD OUT</b> · 12 chức năng giữ. Câu đề bìa: <b>giữ như hiện tại</b>, chưa chốt (22/09).</div></div>
+  <div class="steps">
+    <div><b>Bước 1 · bảng này</b>Ba hướng trên cùng bộ thành phần + ba màn chính + từ vựng. Bạn chốt hướng, từ, giọng, chức năng.</div>
+    <div><b>Bước 1b · bộ chữ</b>Đã chốt D · Unbounded + Be Vietnam Pro.</div>
+    <div><b>Bước 2 · 17 màn còn lại</b>Đã duyệt 01:02 · 22/09: 21 / 21 khung, sáu câu đã chốt, rà khoảng cách, canh hàng, cỡ icon xong.</div>
+    <div><b>Bước 2b · badge</b>Đã chốt <b>B · Vải đen</b> (mục <a href="#badge">Badge</a>); dấu trên ảnh mẫu đã hết là <b>SOLD OUT</b>.</div>
+    <div class="now"><b>Bước 3 · thực thi</b>Lát 0–3 đã đạt, lát 4 đang chạy. Câu đề bìa: người dùng chưa muốn chốt (22/09), giữ câu A hiện tại; bốn phương án vẫn ở mục <a href="#hero">câu đề bìa</a> để xem sau.</div>
+  </div>
+
+  <div class="bar">
+    <nav><a href="#hero">Câu đề bìa</a><a href="#diag">Chẩn đoán</a><a href="#dirs">Ba hướng</a><a href="#kit">Bộ thành phần</a><a href="#voice">Giọng chữ</a><a href="#type">Bộ chữ</a><a href="#s-home">Ba màn chính</a><a href="#step2">Bước 2</a><a href="#s-admin">Quản trị</a><a href="#ask2">Chốt bước 2</a><a href="#badge">Badge</a><a href="#s-home-x" hidden>Trang chủ</a><a href="#s-products">Danh mục</a><a href="#s-product">Sản phẩm</a><a href="#feat">Chức năng</a><a href="#ask">Cần bạn chốt</a></nav>
+    <span class="sw"><span>Hướng</span><button type="button" data-set="dir" data-val="so">SỐ</button><button type="button" data-set="dir" data-val="phieu">PHIẾU</button><button type="button" data-set="dir" data-val="nhan">NHÃN</button></span>
+    <span class="sw"><span>Màu theo số</span><button type="button" data-set="spot" data-val="off">tắt</button><button type="button" data-set="spot" data-val="on">bật</button></span>
+    <span class="sw"><span>Chữ</span><button type="button" data-set="type" data-val="a">A</button><button type="button" data-set="type" data-val="b">B</button><button type="button" data-set="type" data-val="c">C</button><button type="button" data-set="type" data-val="d">D</button><button type="button" data-set="type" data-val="e">E</button></span>
+    <span class="sw"><span>Câu đề</span><button type="button" data-set="hero" data-val="a">A</button><button type="button" data-set="hero" data-val="b">B</button><button type="button" data-set="hero" data-val="c">C</button><button type="button" data-set="hero" data-val="d">D</button></span>
+    <span class="sw"><span>Badge</span><button type="button" data-set="badge" data-val="a">A</button><button type="button" data-set="badge" data-val="b">B</button><button type="button" data-set="badge" data-val="c">C</button></span>
+    <span class="sw"><span>Từ</span><button type="button" data-set="lex" data-val="so">Số</button><button type="button" data-set="lex" data-val="phien">Phiên</button><button type="button" data-set="lex" data-val="tap">Tập</button><button type="button" data-set="lex" data-val="drop">Drop</button><button type="button" data-set="lex" data-val="dot">Đợt</button></span>
+    <span class="right"><span class="muted" id="prog">0 / 5 mục đã duyệt</span><button type="button" class="btnx" id="copy"><svg data-i="doc" data-raw></svg>Sao chép kết quả duyệt</button></span>
+  </div>
+  <pre id="out"></pre>
+
+  <h2 id="hero">Câu đề bìa · giữ câu hiện tại, xem lại sau</h2>
+  <p class="muted">Bạn thấy "Mười mẫu. Cắt một lần. Hết là hết." tự cao với một brand mới mở. Tôi đồng ý một nửa: hai vế đầu là sự thật của mô hình (mỗi mẫu cắt một lần) và phải giữ, còn "Hết là hết" là câu ra điều kiện với người mua, nhịp ba vế cụt làm nó thành khẩu hiệu. Áp lực mua đã có đồng hồ, số còn và mục "Còn ít" lo rồi, câu đề không cần gánh. Bốn phương án dưới đây đổi trực tiếp trên bìa (nút A–D trên thanh dính hoặc "Xem trên bìa"); mỗi phương án kèm câu dẫn đi cùng.</p>
+  <section class="screen" id="s-hero">
+    <div class="meta">
+      <h3>Bốn câu đề</h3>
+      <ul>
+        <li><b>A · giữ nguyên</b> "Mười mẫu. Cắt một lần. Hết là hết." — mạnh, nhưng là câu ra điều kiện.</li>
+        <li><b>B</b> "Mười mẫu, mỗi mẫu cắt đúng một lần." — một câu bình thản, chỉ nói sự thật; câu dẫn nói "không may thêm".</li>
+        <li><b>C</b> "Mười mẫu. Cắt một lần. Không may thêm." — giữ nhịp ba vế nhưng vế cuối là lời hứa thay vì điều kiện.</li>
+        <li><b>D</b> "Mười mẫu, cắt một lần. Số còn là số thật." — vế cuối là điều brand mới có thể tự tin nói: minh bạch, đúng quy tắc 3 đã có ở trang chủ. <b>Đề xuất của tôi.</b></li>
+        <li>Chọn xong, câu giới thiệu ở trang Giới thiệu ("…cắt đúng một lần, hết là hết") đổi theo cùng giọng.</li>
+      </ul>
+      <div class="links"><button type="button" class="btnx" data-set="hero" data-val="d" style="height:34px;padding:0 12px;border:1px solid var(--line);border-radius:var(--r);background:#fff;font:600 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer">Xem D trên bìa</button></div>
+      <div class="review" data-screen="cau-de"><b style="font-size:13px">Chốt câu đề bìa</b><div class="opts" style="margin-top:6px"><label><input type="radio" name="r-hero" value="A · giữ nguyên">A</label><label><input type="radio" name="r-hero" value="B · Mười mẫu, mỗi mẫu cắt đúng một lần.">B</label><label><input type="radio" name="r-hero" value="C · Mười mẫu. Cắt một lần. Không may thêm.">C</label><label><input type="radio" name="r-hero" value="D · Mười mẫu, cắt một lần. Số còn là số thật.">D</label></div><textarea placeholder="Hoặc viết câu của bạn…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="home.html" title="Trang chủ · điện thoại"></iframe></div><div class="caption">390 px · bấm "Thêm vào giỏ" trên thẻ để mở sheet chọn size</div></div>
+      <div><div class="desk"><iframe loading="lazy" src="home.html" title="Trang chủ · desktop"></iframe></div><div class="caption">1280 px thu nhỏ</div></div>
+    </div>
+  
+  </section>
+
+  <h2 id="diag">Chẩn đoán bản v2 đang chạy</h2>
+  <p class="muted">Đo trên bản build ở <code>http://127.0.0.1:3200</code> sáng 21/09, ở 390 và 1280. v2 sạch về kỹ thuật (0 tràn, 0 chữ nhỏ, 0 lỗi); cái thiếu là thứ máy dò không bắt được: màu không có kỷ luật, bố cục là khuôn, chữ một giọng, từ vựng chưa của riêng ai.</p>
+  <table class="t">
+    <thead><tr><th>Gì</th><th>Đo được</th><th>Vì sao là vấn đề</th><th>v3 làm gì</th></tr></thead>
+    <tbody>
+      <tr><td>Vàng bị tiêu tốn</td><td class="n">Trang chủ 6–7 mảng vàng, danh mục 10 (9 là nút), PDP 5; 2–4 mảng ngay khung nhìn đầu</td><td>Màu thương hiệu phủ lên mọi thẻ nên không còn chỉ được "hành động chính"; vàng trên trắng đọc như sàn thương mại điện tử, không như một nhãn hàng.</td><td>Một mảng màu thương hiệu mỗi màn hình. Nút trên thẻ thu thành nút túi ở góc ảnh. Ba hướng màu để so, mỗi hướng có vùng riêng cho màu.</td></tr>
+      <tr><td>Bố cục là khuôn</td><td class="n">Trang chủ 14 khối, 2 hàng "4 thẻ icon + tiêu đề + chữ" giống nhau; hero là ảnh trong ô lưới</td><td>Mọi mục cùng một nhịp "tiêu đề + hàng thẻ bằng nhau"; số đợt — cơ chế của brand — chỉ là một dòng kicker 11px.</td><td>Số phát hành làm hình: 96px điện thoại, 168px desktop. Bìa, mục lục có dấu dẫn, chỉ mục theo loại dạng dòng, quy tắc dạng danh sách. Ảnh tràn lề.</td></tr>
+      <tr><td>Chữ một giọng</td><td class="n">17 cỡ chữ rải rác 11–54px; h1 trang chủ 28 / 44px; lề trang có 17–28 giá trị khác nhau mỗi trang</td><td>Không có đỉnh cho thang chữ và không có nhịp cho khoảng cách; mọi thứ đều "vừa vừa".</td><td>Chín vai chữ có tên, chín bậc khoảng cách nền 4px (đo lại trên mock: 11–16 giá trị lề mỗi trang). Sàn 11px giữ nguyên.</td></tr>
+      <tr><td>Từ vựng và giọng</td><td class="n">1.410 chuỗi; 12 khái niệm có 2–4 tên; "bạn" 18 · "tôi" 11 · "chúng tôi" 8; 9 câu "chờ chốt" trên trang công khai</td><td>"Đợt" là từ hành chính không của riêng ai; COD có bốn cách gọi; ba ngôi trộn trong một luồng mua.</td><td>Từ mới cho cơ chế bán (5 ứng viên, đổi trực tiếp), giọng trung tính, bảng thuật ngữ một-từ-một-khái-niệm, 30 câu viết lại — xem <a href="voice.html" target="_blank">trang giọng chữ</a>.</td></tr>
+    </tbody>
+  </table>
+  <div class="links"><a href="before/home-390.png" target="_blank">v2 · trang chủ 390</a><a href="before/home-1280.png" target="_blank">v2 · trang chủ 1280</a><a href="before/products-1280.png" target="_blank">v2 · danh mục 1280</a><a href="before/products-khoi-390.png" target="_blank">v2 · PDP 390</a><a href="before/products-khoi-1280.png" target="_blank">v2 · PDP 1280</a><a href="before/admin-1280.png" target="_blank">v2 · quản trị</a></div>
+
+  <h2 id="dirs">Ba hướng · cùng bố cục, khác thế giới</h2>
+  <p class="muted">Cả ba dùng chung một bố cục biên tập (bìa số, mục lục, bảng size) và chung hai họ chữ đang có. Khác nhau ở bảng màu, chất liệu và vài chi tiết đặc trưng. Thẻ dẫn đầu là hướng bộ gieo của quy trình chỉ định từ danh sách bảy thế giới tôi xếp theo độ cộng hưởng với khách 18–28 và với cơ chế "cắt một lần"; thẻ thứ hai là ứng viên tôi xếp đầu; thẻ thứ ba là mật ong bạn ghim. Bấm "Xem hướng này" để đổi mọi khung bên dưới.</p>
+  <div class="cards">
+    <div class="dcard lead">
+      <div class="kick"><span class="pill brand">Hướng được chỉ định</span><span class="pill">Đề xuất</span></div>
+      <h3>SỐ <small>Tạp chí số · mực tím học trò trên giấy trắng</small></h3>
+      <div class="pal" aria-hidden="true"><i style="background:#ffffff"></i><i style="background:#16141a"></i><i style="background:#4b34a3"></i><i style="background:#ece7fb"></i><i style="background:#f1eff6"></i><i style="background:#eba400"></i></div>
+      <dl>
+        <dt>Luận đề</dt><dd>Mỗi lần mở bán là một số báo: có bìa, có số thứ tự, có mục lục, có ngày phát hành. Từ chối khuôn "ảnh lifestyle tràn màn + lưới thẻ + nút màu" của mọi shop streetwear.</dd>
+        <dt>Bảng màu</dt><dd>Giấy trắng bóng, mực đen <code>#16141a</code>, <b>mực tím</b> <code>#4b34a3</code> (mực bút máy thời đi học, "tuổi mực tím" — của đúng thế hệ khách) cho hành động chính và masthead, tint <code>#ece7fb</code>. Tuỳ chọn <b>màu theo số</b>: mỗi số mang một màu bìa riêng, Số 05 giữ mật ong.</dd>
+        <dt>Chất liệu</dt><dd>Nét kẻ mảnh, kẻ 2px dưới tiêu đề mục, dấu chấm dẫn trong mục lục, thẻ trạng thái kiểu folio (chữ hoa nhỏ, viền mảnh), góc vuông 2px, số bìa in đè lên ảnh (multiply).</dd>
+        <dt>Khung nhìn đầu</dt><dd>Điện thoại: ảnh bìa tràn lề, "SỐ 05" 96px in đè mép dưới ảnh, dòng trạng thái, đồng hồ, câu đề, một nút. Desktop: cột trái 5/12 là bìa chữ, ảnh 7/12 tràn mép phải, số bìa lấn sang ảnh 118px.</dd>
+        <dt>Tương tác ký</dt><dd>Mục lục: rê vào dòng, dấu dẫn chạy tới giá; số bìa "in" lên ảnh khi tải trang (một chuyển động duy nhất).</dd>
+        <dt>Lan toả</dt><dd>Tài khoản là "hộp thư người đọc" (thông báo, số đã mua); quản trị là "toà soạn": bảng biên tập số, kỳ tới; phiếu giao là trang cuối của số.</dd>
+        <dt>Rủi ro thật</dt><dd class="risk">Mục lục và folio có thể đọc là "văn" với người mua vội; tím có thể bị đọc là nữ tính hoặc học trò; màu theo số cần kỷ luật kẻo mỗi số một giao diện.</dd>
+      </dl>
+      <ul class="raise">
+        <li><b>Nâng từ bàn dựng Raygun:</b> mảnh to nhất dẫn mắt — số bìa được phép in đè lên ảnh.</li>
+        <li><b>Nâng từ bàn cắt phim:</b> màu nhấn sở hữu cả một vùng (dải bìa), không rắc lên nút.</li>
+        <li><b>Nâng từ desktop một-bit:</b> trạng thái là dấu, không phải màu — dòng size đang chọn đảo màu và có tick.</li>
+        <li><b>Nâng từ cyclorama:</b> ba trạng thái số là ba bố cục bìa, không phải đổi badge.</li>
+        <li><b>Nâng từ terminal:</b> số đang bán in đậm, số cũ mờ; <b>từ rừng dạ quang:</b> mỗi khung nhìn chỉ một phần tử mang màu nhấn đầy đủ.</li>
+      </ul>
+      <div class="go"><button type="button" data-set="dir" data-val="so">Xem hướng này</button></div>
+    </div>
+
+    <div class="dcard">
+      <div class="kick"><span class="pill">Ứng viên tôi xếp đầu</span></div>
+      <h3>PHIẾU <small>Phiếu cắt của xưởng · mực than xanh, liên hồng và vàng</small></h3>
+      <div class="pal" aria-hidden="true"><i style="background:#ffffff"></i><i style="background:#141516"></i><i style="background:#2743b8"></i><i style="background:#f9d9dc"></i><i style="background:#fbe9a8"></i><i style="background:#c0392b"></i></div>
+      <dl>
+        <dt>Luận đề</dt><dd>Tờ lệnh cắt: mỗi mẫu một dòng, mỗi size một ô đếm, đóng dấu khi hết. "Số còn lại là số thật" trở thành hình thức của trang, không phải chú thích.</dd>
+        <dt>Bảng màu</dt><dd>Giấy trắng, mực in đen, <b>mực than xanh</b> <code>#2743b8</code> cho lớp dữ liệu và hành động, <b>liên hồng</b> <code>#f9d9dc</code> cho đã đóng / đã hết, <b>liên vàng</b> <code>#fbe9a8</code> cho sắp mở; đỏ dấu <code>#c0392b</code> chỉ cho con dấu SOLD OUT.</dd>
+        <dt>Chất liệu</dt><dd>Kẻ đôi, ô đóng khung, gạch đếm (tally) cạnh số còn, dấu xoay nghiêng, ảnh hết hàng in mờ trên liên hồng, góc vuông tuyệt đối.</dd>
+        <dt>Khung nhìn đầu</dt><dd>Ô "PHIẾU 05" đóng khung chồng lên mép ảnh, dấu "ĐANG BÁN" xanh nghiêng ở góc ảnh, đồng hồ, câu đề, một nút xanh; dòng còn ít là các dòng của phiếu.</dd>
+        <dt>Tương tác ký</dt><dd>Chọn size là đánh dấu ô trên phiếu; số còn hiện bằng gạch đếm, hết thì đóng dấu.</dd>
+        <dt>Rủi ro thật</dt><dd class="risk">Cảm giác giấy tờ; xanh mực là hue phổ biến của sàn (Tiki) nếu thiếu chất liệu giấy; hồng có thể bị đọc là ngọt. Đây cũng là nơi nhiều bản chạy khác sẽ đổ về: "bảng biểu = số thật" là liên tưởng quen.</dd>
+      </dl>
+      <div class="go"><button type="button" data-set="dir" data-val="phieu">Xem hướng này</button></div>
+    </div>
+
+    <div class="dcard">
+      <div class="kick"><span class="pill">Mật ong bạn ghim</span></div>
+      <h3>NHÃN <small>Nhãn dệt · vải đen, chỉ mật ong</small></h3>
+      <div class="pal" aria-hidden="true"><i style="background:#ffffff"></i><i style="background:#171410"></i><i style="background:#eba400"></i><i style="background:#9e6817"></i><i style="background:#f4efe6"></i><i style="background:#b9b0a0"></i></div>
+      <dl>
+        <dt>Luận đề</dt><dd>Giữ vàng mật ong làm sợi chỉ nhận diện nhưng dệt lên nền vải đen: vàng chỉ xuất hiện ở một hành động mỗi màn và ở khối của số đang bán.</dd>
+        <dt>Bảng màu</dt><dd>Vải đen <code>#171410</code> cho khối số và bìa, chỉ mật ong <code>#eba400</code>, nền trắng cửa hàng, ghi ấm <code>#6b6250</code>, chữ liên kết <code>#9e6817</code>. Chữ trên vàng vẫn là mực đen (vàng không mang nổi chữ trắng).</dd>
+        <dt>Chất liệu</dt><dd>Đường may đứt nét bằng chỉ vàng viền khối đen, thẻ trạng thái như tem dệt (đen, chữ vàng), ô size như tem size, bo 4px.</dd>
+        <dt>Khung nhìn đầu</dt><dd>Ảnh bìa rồi nhãn đen tràn lề: "SỐ 05" chỉ vàng 96px, đồng hồ trắng, câu đề trắng, nút vàng duy nhất; desktop: nhãn đen 5/12 may vào ảnh 7/12.</dd>
+        <dt>Tương tác ký</dt><dd>Tem size lật mặt sau ra bảng số đo (tính năng size & vừa vặn).</dd>
+        <dt>Rủi ro thật</dt><dd class="risk">Đen + vàng dễ thành băng cảnh báo nếu quá tay; gần bản v2 nhất nên ít bất ngờ nhất.</dd>
+      </dl>
+      <div class="go"><button type="button" data-set="dir" data-val="nhan">Xem hướng này</button></div>
+    </div>
+  </div>
+
+  <div class="alt">
+    <div>
+      <div class="kick"><span class="pill">Thách thức từ catalog · cạnh tranh</span></div>
+      <h3 style="margin-top:6px">Bàn dựng tạp chí Raygun <span class="muted" style="font-family:var(--font-sans);font-weight:400;font-size:12.5px">chữ va vào nhau, in đè lên ảnh, một màu spot mỗi trang</span></h3>
+      <p style="margin-top:6px">Đúng nhà của streetwear (zine lướt sóng, skate) nên thắng ở trục "khách nhận ra mình"; nhưng thứ tự đọc phải "giành" — với số còn và đồng hồ đếm ngược thì không chấp nhận được, nên thua ở trục "sản phẩm rõ ràng". Giữ làm phương án nếu bạn muốn bạo hơn: tôi dựng nó thành hướng thứ tư ở bước 2. Đã lấy của nó một kỷ luật: mảnh to nhất dẫn mắt.</p>
+      <div class="links"><a href="https://impeccable.style/worlds/cards/design-canon-raygun-layout-desk.webp" target="_blank">Bảng chất lượng của thế giới này</a><a href="https://impeccable.style/worlds/cards/design-canon-raygun-layout-desk-hero.webp" target="_blank">Trang mẫu</a></div>
+    </div>
+    <div>
+      <div class="kick"><span class="pill">Đã cân và loại</span></div>
+      <div class="declined">
+        <div><b>Desktop một-bit (dither đen trắng)</b>Thua cả hai trục; giữ kỷ luật "trạng thái là dấu".</div>
+        <div><b>Bàn cắt phim (cam trên đen, rail đục lỗ)</b>Thua cả hai; giữ "màu chiếm cả một vùng".</div>
+        <div><b>Terminal mưa ký tự</b>Thua cả hai; giữ "cái đang bán sáng nhất".</div>
+        <div><b>Cyclorama sân khấu</b>Thua cả hai; giữ "trạng thái có tên và hình, không chỉ màu".</div>
+        <div><b>Rừng dạ quang</b>Thua cả hai; giữ "một điểm sáng mỗi khung".</div>
+      </div>
+      <div class="canon" style="margin-top:12px"><b>Cửa thoát luôn mở — chuẩn ngành chơi thẳng:</b> đen–trắng, grotesk nén viết hoa, hero ảnh lifestyle tràn màn, dấu SOLD OUT đỏ, dải chữ chạy. Nếu bạn muốn cái quen, nói tên hai ba shop bạn muốn đứng cạnh và tôi dựng đúng chuẩn đó, không mỉa. Cũng có thể yêu cầu <b>gieo lại</b> (thường / an toàn hơn / bạo hơn).</div>
+    </div>
+  </div>
+  <div class="review" data-screen="huong" style="margin-top:14px">
+    <b style="font-size:13px">Chốt hướng</b>
+    <div class="opts" style="margin-top:6px">
+      <label><input type="radio" name="r-huong" value="SỐ">SỐ</label><label><input type="radio" name="r-huong" value="PHIẾU">PHIẾU</label><label><input type="radio" name="r-huong" value="NHÃN">NHÃN</label><label><input type="radio" name="r-huong" value="Raygun (dựng ở bước 2)">Raygun</label><label><input type="radio" name="r-huong" value="Chuẩn ngành">Chuẩn ngành</label><label><input type="radio" name="r-huong" value="Gieo lại">Gieo lại</label>
+    </div>
+    <textarea placeholder="Ghi chú về hướng: màu, chất liệu, thứ muốn giữ từ hướng khác…"></textarea>
+  </div>
+
+  <h2 id="kit">Bộ thành phần · ba hướng trên cùng một bộ</h2>
+  <p class="muted">Đúng điều bạn yêu cầu: cùng nút, chip, thẻ, bảng size, bìa, một góc quản trị — đổi hướng bằng công tắc trên thanh dính. Bảng tương phản tính ngay trên trình duyệt từ token đang hiển thị; mọi cặp chữ/nền của cả ba hướng đạt AA.</p>
+  <section class="screen" id="s-kit">
+    <div class="meta">
+      <h3>Bảng màu, chữ, khoảng cách, thành phần</h3>
+      <ul>
+        <li><b>Token ngữ nghĩa</b> dùng chung: đổi hướng là đổi giá trị, không đổi tên — code sau này chỉ có một bộ class.</li>
+        <li><b>Chín vai chữ</b> thay 17 cỡ; <b>chín bậc khoảng cách</b> nền 4px.</li>
+        <li><b>Nút vô hiệu</b> ghi việc cần làm; <b>thẻ trạng thái</b> luôn có chấm và chữ.</li>
+        <li><b>Quản trị</b> nhận token và từ vựng, giữ khung (kỷ luật).</li>
+      </ul>
+      <div class="links"><a href="brand.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="bo-thanh-phan"><div class="opts"><label><input type="radio" name="r-kit" value="Duyệt">Duyệt</label><label><input type="radio" name="r-kit" value="Sửa">Sửa</label><label><input type="radio" name="r-kit" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho bộ thành phần…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="brand.html" title="Bộ thành phần"></iframe></div><div class="caption">1280 px thu nhỏ · cuộn được trong khung · công tắc ở đầu khung cũng đổi được</div></div></div>
+  </section>
+
+  <h2 id="voice">Giọng chữ và từ vựng</h2>
+  <p class="muted">Từ thay cho "đợt" (năm ứng viên, đổi trực tiếp), sáu nguyên tắc của giọng trung tính bạn chọn, bảng thuật ngữ một-từ-một-khái-niệm, và 30 câu viết lại từ bản v2 có dẫn nguồn.</p>
+  <section class="screen" id="s-voice">
+    <div class="meta">
+      <h3>Trang giọng chữ</h3>
+      <ul>
+        <li><b>Đề xuất:</b> "Số" đi với hướng SỐ; "Phiên" là phương án mạnh nhất nếu chọn PHIẾU hoặc NHÃN. "Drop" giữ như cửa thoát.</li>
+        <li><b>Giọng:</b> không xưng hô, số trước tính từ, nút là động từ, mỗi khái niệm một từ, trạng thái là thông tin, ngắn và phẳng.</li>
+        <li><b>Phát hiện đáng chú ý:</b> v2 có 0 dấu chấm than nhưng 12 khái niệm mang 2–4 tên; "checkout", "Ship", "500k – 1tr" lọt vào chữ khách đọc.</li>
+      </ul>
+      <div class="links"><a href="voice.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="giong-chu"><div class="opts"><label><input type="radio" name="r-voice" value="Duyệt">Duyệt</label><label><input type="radio" name="r-voice" value="Sửa">Sửa</label><label><input type="radio" name="r-voice" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho giọng chữ, thuật ngữ, câu cụ thể…"></textarea></div>
+      <div class="review" data-screen="tu-thay-dot" style="margin-top:10px"><b style="font-size:13px">Từ thay "đợt"</b><div class="opts" style="margin-top:6px"><label><input type="radio" name="r-lex" value="Số">Số</label><label><input type="radio" name="r-lex" value="Phiên">Phiên</label><label><input type="radio" name="r-lex" value="Tập">Tập</label><label><input type="radio" name="r-lex" value="Drop">Drop</label><label><input type="radio" name="r-lex" value="Giữ Đợt">Giữ Đợt</label></div><textarea placeholder="Hoặc một từ khác bạn nghĩ tới…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="voice.html" title="Giọng chữ"></iframe></div></div></div>
+  </section>
+
+  <h2 id="type">Bước 1b · Bộ chữ</h2>
+  <p class="muted">Bạn nói đúng: cặp hiện tại rất ổn và an toàn. Bảng dưới đặt bốn cặp có cá tính cạnh nó, cùng một mẫu thử trên nhãn đen; mọi ứng viên đều có bộ tiếng Việt thật và đã tải về máy (không gọi Google lúc chạy). Bấm "Xem trên ba màn" trong bảng, hoặc nút A–E trên thanh dính, để áp cặp đó lên trang chủ, danh mục và trang sản phẩm bên dưới, rồi chốt ở khung bên trái.</p>
+  <section class="screen" id="s-type">
+    <div class="meta">
+      <h3>Năm cặp chữ</h3>
+      <ul>
+        <li><b>A</b> Familjen Grotesk + Be Vietnam Pro: đang dùng, an toàn.</li>
+        <li><b>B</b> Big Shoulders Display: biển hiệu Chicago, nén có nét tay; số rất khoẻ.</li>
+        <li><b>C</b> Bricolage Grotesque cho cả tiêu đề lẫn thân: cặp "ấn tượng" nhất, một họ có cỡ quang học.</li>
+        <li><b>D</b> Unbounded: rộng, kỹ thuật, số như con dấu.</li>
+        <li><b>E</b> Alfa Slab One: slab như chữ dệt trên nhãn áo.</li>
+        <li>Đề xuất của tôi: <b>B</b> nếu muốn "phố", <b>C</b> nếu muốn "ấn tượng mà vẫn đọc tốt"; E hợp nhất với thế giới nhãn dệt nhưng nặng tay ở tiêu đề dài.</li>
+      </ul>
+      <div class="links"><a href="type.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="bo-chu"><b style="font-size:13px">Chốt bộ chữ</b><div class="opts" style="margin-top:6px"><label><input type="radio" name="r-type" value="A · Familjen + Be Vietnam Pro">A</label><label><input type="radio" name="r-type" value="B · Big Shoulders">B</label><label><input type="radio" name="r-type" value="C · Bricolage">C</label><label><input type="radio" name="r-type" value="D · Unbounded">D</label><label><input type="radio" name="r-type" value="E · Alfa Slab">E</label></div><textarea placeholder="Ghi chú về chữ: cặp muốn xem thêm, cỡ, cảm giác…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="type.html" title="Bộ chữ"></iframe></div><div class="caption">1280 px thu nhỏ · cuộn được trong khung</div></div></div>
+  </section>
+
+  <h2 id="screens">Ba màn chính</h2>
+  <p class="muted">Điện thoại 390 và desktop 1280, cuộn được trong khung. Mỗi khung đổi theo công tắc trên thanh dính. Các lớp nổi (chọn size từ thẻ, bảng số đo, thanh mua dính khi cuộn) mở được ngay trong khung.</p>
+
+  <section class="screen" id="s-home">
+    <div class="meta">
+      <h3>Trang chủ · bìa số</h3>
+      <ul>
+        <li><b>Khung nhìn đầu là luận đề:</b> số phát hành làm hình, trạng thái + đồng hồ, câu đề, một nút.</li>
+        <li><b>Còn ít</b> nằm ngay trong bìa như một mục lục nhỏ (BỤI còn 2 · SƯƠNG còn 3).</li>
+        <li><b>Trong số này:</b> lưới 6 mẫu, mỗi thẻ là dòng mục lục (tên … giá) + dòng số còn; thanh nút dưới thẻ giữ như bạn chốt, viền mực; thẻ hết có dấu SOLD OUT và "Xem chi tiết".</li>
+        <li><b>Theo loại</b> là chỉ mục dạng dòng với giá từ; <b>Bốn quy tắc</b> là danh sách, không icon, không thẻ.</li>
+        <li><b>Số 06</b> là bìa thứ hai ở trạng thái sắp mở; hai mẫu hé lộ nằm trên liên vàng (PHIẾU) / nền tối (NHÃN).</li>
+        <li>Chân trang: lịch ra số, hỗ trợ, giao & thanh toán, về BRAND — cùng nội dung đúng như v2, đổi từ.</li>
+      </ul>
+      <div class="links"><a href="home.html" target="_blank">Mở toàn màn</a><a href="home.html#sizesheet" target="_blank">Mở sẵn sheet chọn size</a><a href="before/home-390.png" target="_blank">v2 · 390</a><a href="before/home-1280.png" target="_blank">v2 · 1280</a></div>
+      <div class="review" data-screen="trang-chu"><div class="opts"><label><input type="radio" name="r-home" value="Duyệt">Duyệt</label><label><input type="radio" name="r-home" value="Sửa">Sửa</label><label><input type="radio" name="r-home" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="home.html" title="Trang chủ · điện thoại"></iframe></div><div class="caption">390 px · bấm "Thêm vào giỏ" trên thẻ để mở sheet chọn size</div></div>
+      <div><div class="desk"><iframe loading="lazy" src="home.html" title="Trang chủ · desktop"></iframe></div><div class="caption">1280 px thu nhỏ</div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-products">
+    <div class="meta">
+      <h3>Danh mục · mục lục của số</h3>
+      <ul>
+        <li><b>Đầu trang</b> là một dòng chạy: Số 05 · 10 mẫu · 73 / 181 còn · đóng sau…; tab loại có đếm; chip lọc nhanh trên điện thoại.</li>
+        <li><b>Desktop:</b> rail lọc 232px (Loại · Form · Còn size · Màu · Khoảng giá viết đủ đơn vị), lưới 3 cột, sắp xếp là một nút mở menu.</li>
+        <li>Thẻ như trang chủ; MUỐI hết có dấu; GIÓ ghi "hết XL" bằng gạch, không đỏ vì còn 4.</li>
+        <li>Cuối trang: "Đã hiện cả 10 mẫu · 73 / 181 còn" và xem lại Số 04 · 03.</li>
+      </ul>
+      <div class="links"><a href="products.html" target="_blank">Mở toàn màn</a><a href="before/products-390.png" target="_blank">v2 · 390</a><a href="before/products-1280.png" target="_blank">v2 · 1280</a></div>
+      <div class="review" data-screen="danh-muc"><div class="opts"><label><input type="radio" name="r-products" value="Duyệt">Duyệt</label><label><input type="radio" name="r-products" value="Sửa">Sửa</label><label><input type="radio" name="r-products" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="products.html" title="Danh mục · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="products.html" title="Danh mục · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-product">
+    <div class="meta">
+      <h3>Trang sản phẩm · phiếu của một mẫu</h3>
+      <ul>
+        <li><b>Điện thoại:</b> ảnh tràn lề vuốt ngang có đếm 1 / 2, rồi "phiếu": tên 30px, giá, còn 17 / 35 + thanh đo, màu có số, <b>bảng size</b> (một dòng một size, số còn trên dấu dẫn, ô đánh dấu; chọn thì dòng đảo màu).</li>
+        <li><b>Size ghi nhớ</b> (công tắc, lưu trên thiết bị) và <b>Bảng số đo</b> (tấm trượt, dòng size đang chọn được tô) — nhóm "Size & vừa vặn".</li>
+        <li>Nút chính ghi <b>Chọn size</b> khi chưa chọn, đổi thành <b>Thêm vào giỏ · 390.000₫</b> khi chọn; thanh mua dính hiện khi nút chính cuộn khỏi màn và đồng bộ size đã chọn.</li>
+        <li><b>Desktop:</b> ảnh xếp dọc bên trái (không thumbnail), phiếu dính bên phải.</li>
+        <li>Thông tin là danh sách định nghĩa; "Cùng số 05" 4 thẻ.</li>
+      </ul>
+      <div class="links"><a href="product.html" target="_blank">Mở toàn màn</a><a href="product.html#fit" target="_blank">Mở sẵn bảng số đo</a><a href="before/products-khoi-390.png" target="_blank">v2 · 390</a><a href="before/products-khoi-1280.png" target="_blank">v2 · 1280</a></div>
+      <div class="review" data-screen="san-pham"><div class="opts"><label><input type="radio" name="r-product" value="Duyệt">Duyệt</label><label><input type="radio" name="r-product" value="Sửa">Sửa</label><label><input type="radio" name="r-product" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="product.html" title="Sản phẩm · điện thoại"></iframe></div><div class="caption">390 px · chọn một size rồi cuộn xuống để thấy thanh mua dính</div></div>
+      <div><div class="desk"><iframe loading="lazy" src="product.html" title="Sản phẩm · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <h2 id="step2">Bước 2 · 17 màn còn lại</h2>
+  <p class="muted">Cùng hướng NHÃN, chữ D, từ "Số", giọng đã duyệt. Mọi số liệu nối tiếp fixture của v2 (đơn DH-24xx, mã DOT05, Số 04 đã đóng); các con số mới đều được ghi là mô phỏng ngay trên màn. Chức năng bạn chốt được đánh dấu <b>Tính năng</b> trong ghi chú từng màn. Các lớp nổi (sheet, menu ⋯, form ẩn) mở được trong khung.</p>
+
+  <section class="screen" id="s-search">
+    <div class="meta">
+      <h3>Tìm kiếm · gợi ý khi gõ</h3>
+      <ul><li>Thanh tìm với nút xoá, kết quả cho “áo” (8 mẫu) trên lưới thẻ v3.</li><li><b>Tính năng · Gợi ý khi gõ:</b> từ 2 ký tự, danh sách mẫu · loại · màu khớp từ catalog, mỗi dòng dẫn thẳng; dựng ở cuối trang trong trạng thái đang gõ “kh”.</li><li>Có thể tìm (chip có đếm) và Tìm gần đây (lưu trên thiết bị, có xoá).</li></ul>
+      <div class="links"><a href="search.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="search"><div class="opts"><label><input type="radio" name="r-search" value="Duyệt">Duyệt</label><label><input type="radio" name="r-search" value="Sửa">Sửa</label><label><input type="radio" name="r-search" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="search.html" title="Tìm kiếm · gợi ý khi gõ · điện thoại"></iframe></div></div><div><div class="desk tall"><iframe loading="lazy" src="search.html" title="Tìm kiếm · gợi ý khi gõ · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-cart">
+    <div class="meta">
+      <h3>Giỏ</h3>
+      <ul><li>Dải miễn phí giao đổi màu xanh khi đủ điều kiện; dòng giỏ có ảnh 72×90, màu · size, bộ đếm chặn ở số còn (thử bấm + ở BỤI), dòng tồn kho một dòng, “chiếc cuối” màu đỏ.</li><li><b>Tính năng · Giữ lại sau:</b> chuyển món sang danh sách riêng, giữ size, đưa lại vào giỏ một chạm.</li><li>Mã giảm giá: nhập rồi Áp dụng → chip mã có “Bỏ mã”. Tổng, dự kiến nhận, một nút vàng “Thanh toán · 1.152.000₫”, hàng cam kết.</li><li>Desktop: 7/5, cột phụ dính.</li></ul>
+      <div class="links"><a href="cart.html" target="_blank">Mở toàn màn</a><a href="before/cart-390.png" target="_blank">v2 · 390</a></div>
+      <div class="review" data-screen="cart"><div class="opts"><label><input type="radio" name="r-cart" value="Duyệt">Duyệt</label><label><input type="radio" name="r-cart" value="Sửa">Sửa</label><label><input type="radio" name="r-cart" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="cart.html" title="Giỏ · điện thoại"></iframe></div></div><div><div class="desk"><iframe loading="lazy" src="cart.html" title="Giỏ · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-checkout">
+    <div class="meta">
+      <h3>Thanh toán</h3>
+      <ul><li>Bốn khối: Liên hệ · Giao tới (sổ địa chỉ dạng hàng chọn; “Giao tới địa chỉ khác” mở form tại chỗ) · Giao hàng (hai cách, ngày nhận tính từ đồng hồ) · Thanh toán (Chuyển khoản · COD +15.000₫ · Thẻ chưa nối cổng, nói thẳng).</li><li><b>Tính năng · Ghi chú cho người giao:</b> một ô, in lên phiếu giao và lưu cùng đơn.</li><li>Hộp “Đơn của bạn” gập trên điện thoại, mở sẵn từ 900px; ô đồng ý đổi trả; một nút vàng “Đặt hàng · 1.152.000₫”.</li></ul>
+      <div class="links"><a href="checkout.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="checkout"><div class="opts"><label><input type="radio" name="r-checkout" value="Duyệt">Duyệt</label><label><input type="radio" name="r-checkout" value="Sửa">Sửa</label><label><input type="radio" name="r-checkout" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="checkout.html" title="Thanh toán · điện thoại"></iframe></div></div><div><div class="desk tall"><iframe loading="lazy" src="checkout.html" title="Thanh toán · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-confirmed">
+    <div class="meta">
+      <h3>Xác nhận đơn</h3>
+      <ul><li>Câu đầu nói việc cần làm: chuyển khoản trong 12 giờ. Nhãn đen với đồng hồ vàng đếm ngược tới hạn giữ hàng (chạy thật từ đồng hồ đóng băng).</li><li>Khối chuyển khoản: số tiền, nội dung có nút Chép; tài khoản ngân hàng ghi “đang chuẩn bị”, không bịa.</li><li><b>Tính năng · QR của đơn:</b> ô QR tra cứu đơn cạnh ô QR nhận tiền (cả hai là ô chờ, tạo khi thực thi).</li><li>Cột phụ: đơn, giao tới, ba lối ra (tài khoản · tra cứu · về Số 05).</li></ul>
+      <div class="links"><a href="order-confirmed.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="confirmed"><div class="opts"><label><input type="radio" name="r-confirmed" value="Duyệt">Duyệt</label><label><input type="radio" name="r-confirmed" value="Sửa">Sửa</label><label><input type="radio" name="r-confirmed" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="order-confirmed.html" title="Xác nhận đơn · điện thoại"></iframe></div></div><div><div class="desk"><iframe loading="lazy" src="order-confirmed.html" title="Xác nhận đơn · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-track">
+    <div class="meta">
+      <h3>Tra cứu đơn</h3>
+      <ul><li><b>Tính năng:</b> mã đơn + số điện thoại đặt hàng, không cần đăng nhập; kết quả là hành trình (dòng thời gian), món, giao tới, mã vận đơn có Chép.</li><li><b>Tính năng · Hoá đơn:</b> nút “Tải hoá đơn” mở bản in, lưu PDF từ trình duyệt.</li><li>Ví dụ DH-2425 đang giao, khớp với nhật ký quản trị.</li></ul>
+      <div class="links"><a href="track.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="track"><div class="opts"><label><input type="radio" name="r-track" value="Duyệt">Duyệt</label><label><input type="radio" name="r-track" value="Sửa">Sửa</label><label><input type="radio" name="r-track" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="track.html" title="Tra cứu đơn · điện thoại"></iframe></div></div><div><div class="desk"><iframe loading="lazy" src="track.html" title="Tra cứu đơn · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-auth">
+    <div class="meta">
+      <h3>Đăng nhập · đăng ký · quên mật khẩu</h3>
+      <ul><li>Ba thẻ 460px xếp dọc để duyệt một lượt (trong app là ba route). Ghi chú mô phỏng là note vàng nhạt, không phải cảnh báo đỏ.</li><li>Đăng ký có ví dụ lỗi thật: email thiếu đuôi, thông báo nói cách sửa.</li><li>Giọng trung tính: “Mua không cần tài khoản vẫn được”, “Không nhập mật khẩu thật”.</li></ul>
+      <div class="links"><a href="auth.html" target="_blank">Mở toàn màn</a><a href="before/sign-in-390.png" target="_blank">v2 · 390</a></div>
+      <div class="review" data-screen="auth"><div class="opts"><label><input type="radio" name="r-auth" value="Duyệt">Duyệt</label><label><input type="radio" name="r-auth" value="Sửa">Sửa</label><label><input type="radio" name="r-auth" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="auth.html" title="Đăng nhập · đăng ký · quên mật khẩu · điện thoại"></iframe></div></div><div><div class="desk tall"><iframe loading="lazy" src="auth.html" title="Đăng nhập · đăng ký · quên mật khẩu · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-account">
+    <div class="meta">
+      <h3>Tài khoản · tổng quan</h3>
+      <ul><li>Rail trái (desktop) / dải tab (điện thoại): Tổng quan · Đơn hàng 4 · Thông báo (chấm mới) · Đã lưu · Địa chỉ · Hồ sơ; avatar chữ tắt trên nền đen chỉ vàng.</li><li>Panel: đơn gần nhất (có đơn “lưu trên thiết bị này”), mã đang chạy có Chép, thông báo mới, đã lưu, tuỳ chọn (công tắc thật, size ghi nhớ M), số đã mua.</li></ul>
+      <div class="links"><a href="account.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="account"><div class="opts"><label><input type="radio" name="r-account" value="Duyệt">Duyệt</label><label><input type="radio" name="r-account" value="Sửa">Sửa</label><label><input type="radio" name="r-account" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="account.html" title="Tài khoản · tổng quan · điện thoại"></iframe></div></div><div><div class="desk tall"><iframe loading="lazy" src="account.html" title="Tài khoản · tổng quan · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-account-orders">
+    <div class="meta">
+      <h3>Đơn hàng · chi tiết</h3>
+      <ul><li>Tab đếm, mỗi dòng có ảnh nhỏ các món, thẻ trạng thái có chấm và chữ.</li><li>Chi tiết DH-2430 mở bên dưới: nhãn đen đếm ngược hạn giữ hàng, hành trình, món, giao tới, “Tải hoá đơn”, “Huỷ đơn này” (chỉ khi chưa thanh toán).</li></ul>
+      <div class="links"><a href="account-orders.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="account-orders"><div class="opts"><label><input type="radio" name="r-account-orders" value="Duyệt">Duyệt</label><label><input type="radio" name="r-account-orders" value="Sửa">Sửa</label><label><input type="radio" name="r-account-orders" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="account-orders.html" title="Đơn hàng · chi tiết · điện thoại"></iframe></div></div><div><div class="desk tall"><iframe loading="lazy" src="account-orders.html" title="Đơn hàng · chi tiết · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-account-notifications">
+    <div class="meta">
+      <h3>Thông báo</h3>
+      <ul><li><b>Tính năng · mục Thông báo:</b> gom nhắc giờ mở, trạng thái đơn, mã sắp hết hạn; nhóm theo Hôm nay · Tuần này · Cũ hơn; chấm vàng = chưa đọc; mỗi thông báo có một hành động.</li><li>Không có máy chủ đẩy: tính từ đồng hồ và kho trên thiết bị mỗi lần mở, nên không có thông báo bịa.</li><li>Công tắc chọn nhận gì.</li></ul>
+      <div class="links"><a href="account-notifications.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="account-notifications"><div class="opts"><label><input type="radio" name="r-account-notifications" value="Duyệt">Duyệt</label><label><input type="radio" name="r-account-notifications" value="Sửa">Sửa</label><label><input type="radio" name="r-account-notifications" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="account-notifications.html" title="Thông báo · điện thoại"></iframe></div></div><div><div class="desk"><iframe loading="lazy" src="account-notifications.html" title="Thông báo · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-account-saved">
+    <div class="meta">
+      <h3>Đã lưu</h3>
+      <ul><li>Danh sách “Đã lưu” (thay tên “Yêu thích”): lưới thẻ v3 với thanh nút và “Bỏ lưu”.</li><li>Sheet chọn size của SƯƠNG chọn sẵn M theo Size ghi nhớ; size hết chỉ ghi “hết” (không còn “báo khi có lại”).</li></ul>
+      <div class="links"><a href="account-saved.html" target="_blank">Mở toàn màn</a><a href="account-saved.html#sizesheet" target="_blank">Mở sẵn sheet</a></div>
+      <div class="review" data-screen="account-saved"><div class="opts"><label><input type="radio" name="r-account-saved" value="Duyệt">Duyệt</label><label><input type="radio" name="r-account-saved" value="Sửa">Sửa</label><label><input type="radio" name="r-account-saved" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="account-saved.html" title="Đã lưu · điện thoại"></iframe></div></div><div><div class="desk"><iframe loading="lazy" src="account-saved.html" title="Đã lưu · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-pages">
+    <div class="meta">
+      <h3>Giới thiệu · FAQ · Đổi trả · Liên hệ · 404</h3>
+      <ul><li>Năm route xếp dọc để duyệt một lượt. Chỗ chưa có sự thật dùng khối “đang chuẩn bị” (giọng khách), thay cho “chờ bạn viết”.</li><li>FAQ là <code>&lt;details&gt;</code> gập, chỉ nói điều code đang thực thi; câu “hết size có về lại không” nói thẳng cơ chế.</li><li>404: số 404 bằng Unbounded, hai lối ra.</li></ul>
+      <div class="links"><a href="pages.html" target="_blank">Mở toàn màn</a><a href="pages.html#404" target="_blank">Xem 404</a></div>
+      <div class="review" data-screen="pages"><div class="opts"><label><input type="radio" name="r-pages" value="Duyệt">Duyệt</label><label><input type="radio" name="r-pages" value="Sửa">Sửa</label><label><input type="radio" name="r-pages" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="pages.html" title="Giới thiệu · FAQ · Đổi trả · Liên hệ · 404 · điện thoại"></iframe></div></div><div><div class="desk tall"><iframe loading="lazy" src="pages.html" title="Giới thiệu · FAQ · Đổi trả · Liên hệ · 404 · desktop"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-so">
+    <div class="meta">
+      <h3>Sổ tay các số · Số 04</h3>
+      <ul><li><b>Tính năng · Sổ tay các số:</b> mỗi số đã đóng là một trang thật: bìa ở trạng thái đã đóng (ảnh ngả xám, số mờ), bảng “Hết lúc nào” suy từ đơn, sáu mẫu với dấu SOLD OUT, lối sang Số 03.</li><li>Số liệu Số 04 (30/30, hết lúc nào) là mô phỏng, ghi rõ; khi thực thi đọc từ đơn.</li></ul>
+      <div class="links"><a href="so.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="so"><div class="opts"><label><input type="radio" name="r-so" value="Duyệt">Duyệt</label><label><input type="radio" name="r-so" value="Sửa">Sửa</label><label><input type="radio" name="r-so" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames"><div><div class="phone"><iframe loading="lazy" src="so.html" title="Sổ tay các số · Số 04 · điện thoại"></iframe></div></div><div><div class="desk tall"><iframe loading="lazy" src="so.html" title="Sổ tay các số · Số 04 · desktop"></iframe></div></div></div>
+  </section>
+  <h2 id="s-admin">Khu quản trị · giữ khung, nhận token và từ vựng, đủ việc còn thiếu</h2>
+  <p class="muted">Thanh bên 208px giữ nguyên vị trí và kích thước, đổi chất liệu thành vải đen chỉ vàng; nội dung trên nền ấm nhạt với panel trắng, bảng kẻ mảnh, một nút vàng cho hành động chính mỗi màn. Từ “đợt” thành “Số” ở mọi chỗ (cả tên tệp CSV). Chỉ desktop 1280.</p>
+
+  <section class="screen" id="s-admin-dashboard">
+    <div class="meta">
+      <h3>Tổng quan</h3>
+      <ul><li>Bốn KPI, biểu đồ cột 14 ngày (cột vàng đậm cho ngày cao nhất), hàng đợi cần xử lý với hành động theo trạng thái và ngày trễ đỏ, bán chạy có thanh đo, đơn mới nhất, sắp hết, khách.</li><li>Thanh bên đen: mục đang chọn có icon vàng; chân thanh là chế độ mô phỏng với “Đặt lại dữ liệu mẫu” (modal xác nhận).</li></ul>
+      <div class="links"><a href="admin-dashboard.html" target="_blank">Mở toàn màn</a><a href="before/admin-1280.png" target="_blank">v2</a></div>
+      <div class="review" data-screen="admin-dashboard"><div class="opts"><label><input type="radio" name="r-admin-dashboard" value="Duyệt">Duyệt</label><label><input type="radio" name="r-admin-dashboard" value="Sửa">Sửa</label><label><input type="radio" name="r-admin-dashboard" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-dashboard.html" title="Tổng quan"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-admin-orders">
+    <div class="meta">
+      <h3>Đơn hàng</h3>
+      <ul><li>Tab trạng thái có đếm, thanh công cụ (tìm, lọc thanh toán, lọc Số, chọn cột), chọn dòng → thanh hàng loạt đen (Đã nhận tiền · In phiếu · Tải CSV), menu ⋯ từng dòng (mở chi tiết, đã nhận tiền, in phiếu, gửi lại xác nhận, huỷ).</li><li>Cột thanh toán ghi hạn giữ hàng hoặc giờ nhận tiền; đơn thẻ ghi “chưa thu tiền · chưa nối cổng”.</li></ul>
+      <div class="links"><a href="admin-orders.html" target="_blank">Mở toàn màn</a><a href="before/admin-orders-1280.png" target="_blank">v2</a></div>
+      <div class="review" data-screen="admin-orders"><div class="opts"><label><input type="radio" name="r-admin-orders" value="Duyệt">Duyệt</label><label><input type="radio" name="r-admin-orders" value="Sửa">Sửa</label><label><input type="radio" name="r-admin-orders" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-orders.html" title="Đơn hàng"></iframe></div><div class="caption">Bấm ô vuông đầu dòng để thấy thanh hàng loạt; bấm ⋯ để mở menu</div></div></div>
+  </section>
+  <section class="screen" id="s-admin-order">
+    <div class="meta">
+      <h3>Chi tiết đơn · DH-2429</h3>
+      <ul><li>Dải “Bước tiếp theo” đen: bấm Bàn giao mở form (hình thức giao, mã vận đơn bắt buộc) tại chỗ.</li><li><b>Tính năng · Sửa địa chỉ giao:</b> nút Sửa trong panel Giao tới mở form với lý do bắt buộc, ghi nhật ký, chỉ trước khi bàn giao.</li><li><b>Tính năng · Gửi lại xác nhận:</b> ghi nhật ký vì chưa có máy chủ gửi, nói thẳng trong toast.</li><li>Món, ghi chú nội bộ (hệ thống / cửa hàng), hành trình, khách với nhãn “quay lại”; Huỷ đơn mở modal đòi lý do.</li></ul>
+      <div class="links"><a href="admin-order.html" target="_blank">Mở toàn màn</a><a href="before/admin-orders-DH-2429-1280.png" target="_blank">v2</a></div>
+      <div class="review" data-screen="admin-order"><div class="opts"><label><input type="radio" name="r-admin-order" value="Duyệt">Duyệt</label><label><input type="radio" name="r-admin-order" value="Sửa">Sửa</label><label><input type="radio" name="r-admin-order" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-order.html" title="Chi tiết đơn · DH-2429"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-admin-so">
+    <div class="meta">
+      <h3>Các số · chi tiết Số 05</h3>
+      <ul><li>Bảng bốn Số với trạng thái suy từ giờ; chi tiết Số 05: năm KPI, bảng theo mẫu có thanh đo và size hết, dải mẫu hé lộ của Số 06.</li><li><b>Tính năng · Tải CSV Số này</b> (theo size và màu); Đóng sớm và Tạo Số là modal nói rõ cơ chế; “Thêm mẫu hé lộ” là form thật: chỉ tên, loại, ảnh.</li></ul>
+      <div class="links"><a href="admin-so.html" target="_blank">Mở toàn màn</a><a href="before/admin-drops-05-1280.png" target="_blank">v2</a></div>
+      <div class="review" data-screen="admin-so"><div class="opts"><label><input type="radio" name="r-admin-so" value="Duyệt">Duyệt</label><label><input type="radio" name="r-admin-so" value="Sửa">Sửa</label><label><input type="radio" name="r-admin-so" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-so.html" title="Các số · chi tiết Số 05"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-admin-promotions">
+    <div class="meta">
+      <h3>Mã giảm giá · form sửa</h3>
+      <ul><li>Bảng có tab trạng thái (đang chạy, tạm dừng, hết hạn, hết lượt) và thanh đo lượt.</li><li><b>Tính năng · Sửa mã:</b> menu ⋯ → Sửa mở form đầy đủ (loại, giá trị, tối đa, đơn từ, giới hạn lượt, hiệu lực) với ba việc kèm: Nâng giới hạn +50, Nhân bản thành SO06, Kết thúc sớm.</li></ul>
+      <div class="links"><a href="admin-promotions.html" target="_blank">Mở toàn màn</a><a href="admin-promotions.html#editsheet" target="_blank">Mở sẵn form sửa</a></div>
+      <div class="review" data-screen="admin-promotions"><div class="opts"><label><input type="radio" name="r-admin-promotions" value="Duyệt">Duyệt</label><label><input type="radio" name="r-admin-promotions" value="Sửa">Sửa</label><label><input type="radio" name="r-admin-promotions" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-promotions.html" title="Mã giảm giá · form sửa"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-admin-products">
+    <div class="meta">
+      <h3>Mẫu · điều chỉnh tồn kho</h3>
+      <ul><li>Bảng theo Số với ảnh, loại · form, màu, thanh đo tồn kho, size hết, trạng thái.</li><li><b>Tính năng · Điều chỉnh tồn kho:</b> menu ⋯ → lưới size × màu với +/−, ô đổi tô vàng nâu, lý do (hàng trả về / kiểm kê / hư hỏng), tham chiếu đơn; không cho vượt số đã cắt; ghi nhật ký.</li></ul>
+      <div class="links"><a href="admin-products.html" target="_blank">Mở toàn màn</a><a href="admin-products.html#invsheet" target="_blank">Mở sẵn lưới tồn kho</a></div>
+      <div class="review" data-screen="admin-products"><div class="opts"><label><input type="radio" name="r-admin-products" value="Duyệt">Duyệt</label><label><input type="radio" name="r-admin-products" value="Sửa">Sửa</label><label><input type="radio" name="r-admin-products" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-products.html" title="Mẫu · điều chỉnh tồn kho"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-admin-customers">
+    <div class="meta">
+      <h3>Khách hàng · nhãn thân thiết</h3>
+      <ul><li><b>Tính năng · Nhãn suy từ đơn:</b> “3 số liên tiếp” (thân thiết), “quay lại” (≥ 2 đơn), “mới” (đơn đầu trong số này); tab lọc theo nhóm; tổng chi tính từ đơn đã thanh toán.</li><li>Không có điểm, hạng hay “VIP” gõ tay.</li></ul>
+      <div class="links"><a href="admin-customers.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="admin-customers"><div class="opts"><label><input type="radio" name="r-admin-customers" value="Duyệt">Duyệt</label><label><input type="radio" name="r-admin-customers" value="Sửa">Sửa</label><label><input type="radio" name="r-admin-customers" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-customers.html" title="Khách hàng · nhãn thân thiết"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-admin-log">
+    <div class="meta">
+      <h3>Nhật ký thao tác</h3>
+      <ul><li><b>Tính năng · Nhật ký:</b> mỗi thao tác một dòng với trước → sau, đối tượng có liên kết, ai làm (Cửa hàng / Hệ thống). Đọc từ kho mô phỏng; tải CSV.</li><li>Là nơi các việc “ghi nhật ký” của các màn khác đổ về: sửa địa chỉ, điều chỉnh tồn kho, gửi lại xác nhận, nâng giới hạn mã.</li></ul>
+      <div class="links"><a href="admin-log.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="admin-log"><div class="opts"><label><input type="radio" name="r-admin-log" value="Duyệt">Duyệt</label><label><input type="radio" name="r-admin-log" value="Sửa">Sửa</label><label><input type="radio" name="r-admin-log" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-log.html" title="Nhật ký thao tác"></iframe></div></div></div>
+  </section>
+  <section class="screen" id="s-admin-slips">
+    <div class="meta">
+      <h3>Phiếu giao</h3>
+      <ul><li>Hai phiếu một trang A4, in được; địa chỉ đã sửa của DH-2429 hiện đúng.</li><li><b>Tính năng · QR của đơn</b> trên phiếu (ô chờ, tạo khi thực thi).</li></ul>
+      <div class="links"><a href="admin-slips.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="admin-slips"><div class="opts"><label><input type="radio" name="r-admin-slips" value="Duyệt">Duyệt</label><label><input type="radio" name="r-admin-slips" value="Sửa">Sửa</label><label><input type="radio" name="r-admin-slips" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk"><iframe loading="lazy" src="admin-slips.html" title="Phiếu giao"></iframe></div></div></div>
+  </section>
+  <h2 id="ask2">Cần bạn chốt · bước 2</h2>
+  <div class="q"><b>1 · Thanh bên quản trị đen chỉ vàng</b><span>Giữ khung 208px, đổi chất liệu. Ổn, hay muốn thanh bên sáng như v2?</span></div>
+  <div class="q"><b>2 · Tài khoản ngân hàng và QR nhận tiền</b><span>Màn xác nhận ghi “đang chuẩn bị”. Khi có số tài khoản thật, mock chỉ cần điền; QR sinh từ chuẩn VietQR khi thực thi. Bạn đã có tài khoản để đưa vào chưa?</span></div>
+  <div class="q"><b>3 · “Giữ lại sau” và “Đã lưu” là hai danh sách</b><span>Giữ lại sau có size, sống trong giỏ; Đã lưu là mẫu, sống trong tài khoản. Giữ hai, hay gộp một?</span></div>
+  <div class="q"><b>4 · Huỷ đơn từ phía khách</b><span>Mock cho khách tự huỷ khi chưa thanh toán (trong 12 giờ). Đồng ý, hay chỉ cửa hàng mới huỷ?</span></div>
+  <div class="q"><b>5 · Nhãn khách “3 số liên tiếp”</b><span>Ngưỡng thân thiết là mua ba Số liên tiếp; quay lại là từ 2 đơn. Đúng ý bạn chưa?</span></div>
+  <div class="q"><b>6 · Thứ tự thực thi</b><span>Đề xuất sáu lát như v2: (0) token, chữ, từ “Số”, nav/footer, thẻ; (1) trang chủ; (2) danh mục, PDP, tìm kiếm; (3) giỏ, thanh toán, xác nhận, tra cứu; (4) tài khoản, thông báo, đăng nhập, trang nội dung, sổ các số; (5) quản trị. Mỗi lát agent thực thi, phiên chính đo lại rồi mới sang lát sau.</span></div>
+  <div class="review" data-screen="tra-loi-2"><b style="font-size:13px">Trả lời các câu trên</b><textarea placeholder="1: … 2: … (viết tự do)" style="min-height:96px"></textarea></div>
+
+  <h2 id="badge">Bước 2b · Badge của cửa hàng</h2>
+  <p class="muted">Badge là mọi nhãn nhỏ mang trạng thái, con số hay danh tính: thẻ trạng thái, dấu SOLD OUT, nhãn CHƯA MỞ, tem Số trên nav, bong bóng đếm, nhãn khách, tem mô phỏng, vòng bước. Ba họ dưới đây áp lên cả tám chỗ cùng lúc; nút A–B–C trên thanh dính (hoặc "Xem trên các màn" trong trang) đổi họ cho mọi khung của bảng này.</p>
+  <section class="screen" id="s-badge">
+    <div class="meta">
+      <h3>Ba họ badge</h3>
+      <ul>
+        <li><b>A · Chỉ viền</b> đang dùng, đã chỉnh: cao 24px, viền màu trạng thái, chấm. Nhẹ nhất cho bảng.</li>
+        <li><b>B · Vải đen</b> nhãn đặc: trạng thái sống là vải đen chỉ vàng, chờ và đóng là vải mộc; dấu SOLD OUT có đường may; đếm đảo đen chữ vàng. Cùng chất liệu với bìa Số.</li>
+        <li><b>C · Con dấu</b> chữ Unbounded 11px cách rộng, viền 1,5px, góc vuông; dấu SOLD OUT đóng nghiêng bằng mực. Nhiều cá tính phố nhất, rộng gần gấp rưỡi A nên ồn hơn trong bảng và phải xếp dòng riêng trên điện thoại.</li>
+        <li>Đề xuất của tôi: <b>B</b> cho cửa hàng vì nó là chính cái nhãn dệt của hướng đã chốt; nếu bảng quản trị thấy nặng thì ghép B cho cửa hàng và A cho quản trị.</li>
+      </ul>
+      <div class="links"><a href="badges.html" target="_blank">Mở toàn màn</a></div>
+      <div class="review" data-screen="badge"><b style="font-size:13px">Chốt họ badge</b><div class="opts" style="margin-top:6px"><label><input type="radio" name="r-badge" value="A · Chỉ viền">A</label><label><input type="radio" name="r-badge" value="B · Vải đen">B</label><label><input type="radio" name="r-badge" value="C · Con dấu">C</label><label><input type="radio" name="r-badge" value="Ghép (ghi rõ)">Ghép</label></div><textarea placeholder="Ghi chú: ghép thế nào, có đặt nhãn còn 2 lên ảnh không…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="badges.html" title="Badge"></iframe></div><div class="caption">1280 px thu nhỏ · cuộn được trong khung</div></div></div>
+  </section>
+
+  <h2 id="feat">Chức năng mới cho v3</h2>
+  <p class="muted">Bốn nhóm bạn chọn và các đề xuất thêm của tôi. Cái nào có mặt ở bước 1 thì ghi rõ; còn lại dựng ở bước 2. Không cái nào cần máy chủ: tất cả sống trên thiết bị hoặc suy từ dữ liệu đang có. Bỏ tick cái không muốn.</p>
+  <div class="feat review" data-screen="chuc-nang" data-multi>
+    <div class="f"><label><input type="checkbox" name="f" value="Size & vừa vặn" checked>Size & vừa vặn</label><span class="w">Bảng số đo theo form (cm, có nhãn "số đo mô phỏng" tới khi có số thật), "Size ghi nhớ" lưu trên thiết bị và chọn sẵn ở PDP và sheet, gợi ý size theo chiều cao đã nhập. <b>Có ở bước 1</b> (PDP, bảng số đo, công tắc).</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Báo khi có lại + Thông báo" checked>Báo khi có lại + mục Thông báo</label><span class="w">"Báo khi có lại" trên size đã hết (một size chỉ có lại khi một đơn bị huỷ hoặc trả — đúng mô hình không may thêm); mục Thông báo trong tài khoản gom nhắc giờ mở, hàng có lại, trạng thái đơn. <b>Có ở bước 1</b> (sheet BỤI); mục Thông báo ở bước 2.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Tra cứu đơn sâu hơn" checked>Tra cứu đơn sâu hơn</label><span class="w">Trang tra cứu bằng mã đơn + số điện thoại không cần đăng nhập, hành trình vận chuyển chi tiết, hoá đơn in/tải, mã QR của đơn trên phiếu giao và trang xác nhận. Bước 2.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Quản trị đủ việc còn thiếu" checked>Quản trị đủ việc còn thiếu</label><span class="w">Sửa mã giảm giá (nâng giới hạn, nhân bản, kết thúc sớm), sửa địa chỉ giao trong đơn, điều chỉnh tồn kho theo size×màu có lý do, nhật ký thao tác (đọc từ kho mô phỏng), xuất CSV theo số, gửi lại xác nhận (ghi nhật ký vì chưa có máy chủ gửi). Bước 2.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Sổ tay các số" checked>Đề xuất thêm · Sổ tay các số</label><span class="w">Trang <code>/so/04</code> cho mỗi số đã đóng: bìa, 6 mẫu, hết size nào lúc nào (suy từ đơn), "xem lại" trở thành trang thật thay vì tham số. Rất hợp thế giới tạp chí.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Giữ lại sau" checked>Đề xuất thêm · Giữ lại sau trong giỏ</label><span class="w">Chuyển một món từ giỏ sang Đã lưu và ngược lại, không mất size đã chọn; giỏ ghi rõ món nào đang có nguy cơ hết.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Ghi chú giao hàng" checked>Đề xuất thêm · Ghi chú cho người giao</label><span class="w">Một ô ở thanh toán (lưu vào đơn trên thiết bị, in lên phiếu giao). Nhỏ nhưng là câu hỏi khách hay nhắn.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Chia sẻ mẫu" checked>Đề xuất thêm · Chia sẻ mẫu</label><span class="w">Nút chia sẻ trên PDP dùng Web Share của điện thoại (hoặc chép liên kết), mang theo size đang chọn trong liên kết.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Gợi ý khi gõ tìm kiếm" checked>Đề xuất thêm · Gợi ý khi gõ tìm kiếm</label><span class="w">Gõ 2 ký tự là hiện mẫu, loại, màu khớp từ catalog; kết quả không có thì gợi ý từ gần nhất.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Thêm vào màn hình chính" checked>Đề xuất thêm · Thêm vào màn hình chính</label><span class="w">Manifest + icon để lưu app lên màn hình chính điện thoại; nhắc giờ mở dùng được thông báo trình duyệt khi tab còn mở.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Khách thân thiết (suy từ đơn)" checked>Đề xuất thêm · Nhãn khách thân thiết ở quản trị</label><span class="w">Suy từ số đơn đã thanh toán (không bịa): "mua 3 số liên tiếp", "quay lại". Lọc và xuất được.</span></div>
+    <div class="f"><label><input type="checkbox" name="f" value="Bảng size chung /size" checked>Đề xuất thêm · Trang bảng size chung</label><span class="w">Liên kết "Bảng số đo" ở chân trang trỏ tới trang thật thay vì mẫu đầu đợt (việc tạm của v2).</span></div>
+    <textarea placeholder="Chức năng khác bạn muốn có, hoặc lý do bỏ một cái…" style="grid-column:1 / -1"></textarea>
+  </div>
+
+  <h2 id="ask">Cần bạn chốt</h2>
+  <div class="q"><b>1 · Hướng thế giới hình ảnh</b><span>SỐ (được chỉ định, tôi đề xuất) · PHIẾU · NHÃN · Raygun · chuẩn ngành · gieo lại. Chọn ở khung "Chốt hướng" phía trên.</span></div>
+  <div class="q"><b>2 · Từ thay "đợt"</b><span>Số · Phiên · Tập · Drop · giữ Đợt. Từ này đi vào mọi màn, tên tệp CSV, mã giảm giá mẫu (SO06), khu quản trị.</span></div>
+  <div class="q"><b>3 · Màu theo số (chỉ hướng SỐ)</b><span>Mỗi số một màu bìa, Số 05 giữ mật ong; hay một màu cố định cho mọi số? Bật/tắt trên thanh dính để xem.</span></div>
+  <div class="q"><b>4 · Nút "Thêm vào giỏ" trên thẻ</b><span>Thu thành nút túi ở góc ảnh (mở sheet chọn size như v2). Đồng ý, hay muốn giữ thanh nút dưới thẻ?</span></div>
+  <div class="q"><b>5 · "Báo khi có lại" có đúng mô hình không</b><span>Không may thêm, nên hàng chỉ "có lại" khi một đơn size đó bị huỷ hoặc trả trong 7 ngày. Mock nói thẳng điều này trong sheet. Giữ, hay bỏ tính năng vì hiếm khi xảy ra?</span></div>
+  <div class="q"><b>6 · Số đo trên bảng size</b><span>Dùng số đo mô phỏng có nhãn (như giá và tồn kho hiện nay) để dựng, thay bằng số thật khi có; hay để trống ô chờ người viết?</span></div>
+  <div class="q"><b>7 · Giọng "chờ chốt" trên trang công khai</b><span>9 câu tự thú "chưa chốt" hiện với khách. Đề xuất: khách thấy "đang chuẩn bị", còn "chờ người viết" chỉ hiện ở quản trị. Đồng ý?</span></div>
+  <div class="q"><b>8 · Phạm vi bước 2</b><span>14 màn còn lại (giỏ, thanh toán, xác nhận, 8 màn tài khoản, 3 màn auth) và 12 màn quản trị nhận token + từ vựng + việc còn thiếu, giữ khung. Có màn nào bạn muốn đổi bố cục mạnh như ba màn này không?</span></div>
+  <div class="review" data-screen="tra-loi"><b style="font-size:13px">Trả lời các câu trên</b><textarea placeholder="1: … 2: … 3: … (viết tự do, tôi đọc được)" style="min-height:96px"></textarea></div>
+
+  <p class="muted" style="margin-top:40px;font-size:12.5px">Mở bằng <code>cd prototype && python serve.py 3100</code> → <code>http://127.0.0.1:3100/v3/</code>. Kết quả duyệt lưu trong trình duyệt này; bấm "Sao chép kết quả duyệt" rồi dán lại cho tôi, hoặc trả lời bằng lời.</p>
+</div>
+
+<script>
+(function () {
+  function fit() {
+    document.querySelectorAll(".desk").forEach(function (d) { var f = d.querySelector("iframe"); if (!f) return; f.style.transform = "scale(" + (d.clientWidth / 1280) + ")"; });
+  }
+  window.addEventListener("resize", fit); fit();
+  // direction / spot / lexicon switches: write the shared setting; every frame listens to `storage`
+  function markSet() { document.querySelectorAll("[data-set]").forEach(function (b) { var k = b.getAttribute("data-set"); b.classList.toggle("on", window.V3.setting(k, k === "spot" ? "off" : k === "type" ? "d" : k === "dir" ? "nhan" : k === "badge" ? "b" : k === "hero" ? "a" : "so") === b.getAttribute("data-val")); }); }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-set]"); if (!b) return;
+    try { localStorage.setItem("v3." + b.getAttribute("data-set"), b.getAttribute("data-val")); } catch (x) {}
+    window.V3.apply(); markSet();
+    if (b.closest(".dcard")) document.getElementById("kit").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  document.addEventListener("DOMContentLoaded", function () { setTimeout(markSet, 0); });
+  // review state, per box, in this browser
+  var KEY = "v3.review"; var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+  var boxes = document.querySelectorAll(".review");
+  var COUNTED = ["search", "cart", "checkout", "confirmed", "track", "auth", "account", "account-orders", "account-notifications", "account-saved", "pages", "so", "admin-dashboard", "admin-orders", "admin-order", "admin-so", "admin-promotions", "admin-products", "admin-customers", "admin-log", "admin-slips"];
+  function read(b) {
+    var multi = b.hasAttribute("data-multi");
+    var v = multi ? Array.prototype.map.call(b.querySelectorAll("input:checked"), function (i) { return i.value; }).join(", ") : (b.querySelector("input:checked") ? b.querySelector("input:checked").value : "");
+    var ta = b.querySelector("textarea");
+    return { v: v, n: ta ? ta.value : "" };
+  }
+  function prog() {
+    var n = 0; COUNTED.forEach(function (id) { if (state[id] && state[id].v) n++; });
+    document.getElementById("prog").textContent = n + " / " + COUNTED.length + " màn bước 2 đã duyệt";
+  }
+  boxes.forEach(function (b) {
+    var id = b.getAttribute("data-screen"); var s = state[id];
+    if (s) {
+      if (b.hasAttribute("data-multi")) { var vals = (s.v || "").split(", "); b.querySelectorAll("input").forEach(function (i) { i.checked = vals.indexOf(i.value) >= 0; }); }
+      else if (s.v) { var r = b.querySelector('input[value="' + s.v + '"]'); if (r) r.checked = true; }
+      var ta = b.querySelector("textarea"); if (ta && s.n) ta.value = s.n;
+    }
+    var save = function () { state[id] = read(b); localStorage.setItem(KEY, JSON.stringify(state)); prog(); };
+    b.addEventListener("change", save);
+    var t = b.querySelector("textarea"); if (t) t.addEventListener("input", save);
+  });
+  prog();
+  document.getElementById("copy").addEventListener("click", function () {
+    var lines = [];
+    boxes.forEach(function (b) { var id = b.getAttribute("data-screen"); var s = state[id] || read(b); lines.push(id + ": " + (s.v || "(chưa chọn)") + (s.n ? " — " + s.n : "")); });
+    lines.push("hướng đang xem: " + window.V3.setting("dir", "nhan") + " · chữ: " + window.V3.setting("type", "d") + " · từ: " + window.V3.setting("lex", "so"));
+    var text = "Kết quả duyệt mock v3 (" + new Date().toLocaleString("vi-VN") + ")\n" + lines.join("\n");
+    var out = document.getElementById("out"); out.textContent = text; out.style.display = "block";
+    try { navigator.clipboard.writeText(text); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+import { connection } from "next/server";
+import { AdminTop } from "@/components/admin/AdminTop";
+import { ProductForm } from "@/components/admin/ProductForm";
+import { kindOptions, dropOptions } from "@/lib/admin-options";
+import { LEX } from "@/lib/lexicon";
+import { demoNow } from "@/lib/clock";
+
+export const metadata = { title: "Thêm mẫu" };
+
+/**
+ * A blank style.
+ *
+ * The kind and issue menus are DERIVED from the catalogue and the issue
+ * list, not typed out here — a hard-coded list of kinds would drift the
+ * first time somebody adds a style the menu has never heard of.
+ */
+export default async function AdminNewProductPage() {
+  await connection();
+  const now = demoNow();
+
+  return (
+    <>
+      <AdminTop
+        crumb={{ label: "Mẫu", href: "/admin/products", here: "Thêm mẫu" }}
+        title="Thêm mẫu"
+        sub={`Số lượng điền ở đây là số sẽ cắt. Một ${LEX.tl} cắt một lần và không may thêm, nên con số này là toàn bộ số hàng sẽ tồn tại.`}
+      />
+      <ProductForm
+        mode="new"
+        kindOptions={kindOptions()}
+        dropOptions={dropOptions(now)}
+        values={{
+          name: "",
+          kind: "",
+          slug: "",
+          priceVnd: 0,
+          dropNo: Math.max(...dropOptions(now).map((o) => Number(o.value))),
+          material: "",
+          colors: [],
+          stock: {},
+          photoKeys: [],
+        }}
+      />
+    </>
+  );
+}

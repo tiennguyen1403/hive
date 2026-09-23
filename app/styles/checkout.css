@@ -1,0 +1,525 @@
+/* The cart, the checkout, the confirmation and the order lookup.
+
+   The v2 half of this file — the free-shipping bar (`.shipbar`), the cart
+   line (`.cartline`), the promo row (`.promorow` / `.promoon`), the order
+   box (`.orderbox`), the promises strip (`.promises`) and the two-column
+   desktop layouts (`.cart2` / `.checkout2`) — went at v3 slice 6, once
+   nothing rendered it. Every one of them has a v3 name in the block below.
+
+   Two rules outlived it: the address picker's radio alignment and the
+   delivery date inside a picked row. `AddressPicker` still renders
+   `.row.pick`, which is `lists.css`'s list row with a radio in it.
+
+   Loaded after `product.css` and before `interaction.css` / `desktop.css`,
+   so the two breakpoint files still come last. */
+
+.s .row.pick .radio{ align-self:flex-start; margin-top:2px; }
+/* The delivery date inside the quiet line: same size, full ink, because it
+   is the fact the row is being chosen on. */
+.s .row.pick .d b{ color:var(--ink); font-weight:500; }
+
+/* ============================================================================
+   THE v3 ROUND — cart, checkout, confirmation, order lookup
+   ============================================================================
+   Ported from `prototype/v3/v3-pages.css` (`.pghead .two3 .steps3 .cartlist
+   .cartline3 .qty3 .later .shipbar3 .promo3 .promoon3 .sum3 .promises3
+   .fine3 .field .row2 .selbtn3 .picks3 .consent .addrform .orderbox3 .ol
+   .done3 .deadline .bank .qrrow .qrph .tl3 .lookup .result3 .kvs .panel3`),
+   the approved mock. Every number below is the mock's; change one and you
+   owe a screenshot comparison against `prototype/v3/cart.html`,
+   `checkout.html`, `order-confirmed.html` and `track.html` at the same
+   width.
+
+   Names greped across `app/styles/` and `prototype/v2/` before they were
+   introduced. Four needed a different word from the mock's, and one is
+   reused on purpose:
+
+   - the mock's `.field` is `.field3` here. `.s .field` (forms.css) carries
+     the v2 page gutter as padding, and inside `.wrap3` — which already
+     supplies it — every form row would be indented twice.
+   - the mock's `.later .row` is `.later .item`. `.s .row` (lists.css) is the
+     v2 list row and would land its own hairline and padding on a grid that
+     draws both itself.
+   - the mock's `.qrph .cardgrid` is `.qrph .cells`. `.s .cardgrid` was the
+     v2 product grid, with columns and a gap of its own; it went at slice 6
+     and the name stays free.
+   - the mock's `.row3` is not ported at all: the address form has TWO tiers,
+     not three (`data/regions.ts` — the district level was abolished on
+     1/7/2025), so there is no three-column row to draw.
+   - `.chip3` is `listing.css`'s, unchanged: the label chips in the address
+     form are the same control as the filter chips, at the same 36px with
+     the same black-cloth `.on`.
+
+   `.stockline` (product.css, 0,2,0) is reached here as
+   `.cartline3 .stockline` (0,3,0), which wins and means the same thing: how
+   much of this exact size and colour is left. */
+
+/* -- the page head ------------------------------------------------------- */
+.s .pghead{ display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px;
+  padding:var(--s4) 0 var(--s3); }
+.s .pghead h1{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h1); letter-spacing:var(--ls-display); }
+.s .pghead .meta{ font-size:var(--fs-sm); color:var(--ink2);
+  font-variant-numeric:tabular-nums; }
+/* The way back is a 36px line of text; the overlay takes the target to 44
+   without moving the baseline the heading sits on. */
+.s .pghead .back{ display:inline-flex; align-items:center; gap:4px; min-height:36px;
+  font-size:var(--fs-sm); color:var(--ink2); position:relative; margin-right:4px; }
+.s .pghead .back::after{ content:""; position:absolute; inset:-5px -3px; }
+.s .pghead .back:hover{ color:var(--ink); }
+
+/* -- the two-column frame ------------------------------------------------
+   One column on the phone; 7fr of goods beside 5fr of money from 900px,
+   with the money sticky under the bar. The markup order IS the phone order,
+   so nothing moves in the reading order to get here. */
+.s .two3{ display:block; }
+@media (min-width:900px){
+  .s .two3{ display:grid; grid-template-columns:minmax(0,7fr) minmax(0,5fr);
+    gap:var(--s7); align-items:start; }
+  .s .two3 > .aside3{ position:sticky; top:84px; }
+}
+
+/* -- the step bar -------------------------------------------------------- */
+.s .steps3{ display:flex; margin:var(--s2) 0 var(--s5); position:relative; }
+/* The connecting rule runs between the first and last circle, not edge to
+   edge: it joins the steps rather than underlining the row. */
+.s .steps3::before{ content:""; position:absolute; left:12.5%; right:12.5%; top:14px;
+  height:1px; background:var(--hair); }
+.s .steps3 .st{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+  font-size:var(--fs-xs); color:var(--ink2); position:relative; }
+.s .steps3 .st b{ width:28px; height:28px; border-radius:99px; border:1px solid var(--line);
+  background:var(--bg); color:var(--ink); display:flex; align-items:center;
+  justify-content:center; font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:11px; font-variant-numeric:tabular-nums; }
+.s .steps3 .st.done b{ background:var(--ink); border-color:var(--ink); color:var(--brand); }
+.s .steps3 .st.done b svg{ width:11px; height:8px; }
+.s .steps3 .st.on b{ background:var(--brand); border-color:var(--brand); color:var(--brand-ink); }
+.s .steps3 .st.on{ color:var(--ink); font-weight:600; }
+
+/* -- the cart's lines ---------------------------------------------------- */
+.s .cartlist{ border-top:1px solid var(--ink); margin-top:var(--s4); }
+.s .cartline3{ display:grid; grid-template-columns:72px 1fr auto; gap:6px 12px;
+  padding:14px 0; border-bottom:1px solid var(--hair); }
+.s .cartline3 .thumb{ grid-row:1 / 4; width:72px; height:90px; border-radius:var(--r-sm);
+  background:var(--plate); overflow:hidden; }
+.s .cartline3 .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.s .cartline3 .n{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-ui); letter-spacing:var(--ls-display); }
+/* The name is a link to the style; the overlay reaches into the row gap
+   above and below it, which is all the room there is. */
+.s .cartline3 .n a{ position:relative; }
+/* The style name is the only way from a cart line to its page — the photo
+   beside it is not a link — so it carries the floor on BOTH axes: ±14 down
+   the row gap, and `max(100%, 44px)` across. "BỤI" is 27px wide and grows
+   8.5px each way, into the 12px grid gap on one side and free space in its
+   own column on the other; no other control is in reach. */
+.s .cartline3 .n a::after{ content:""; position:absolute; top:-14px; bottom:-14px;
+  left:50%; transform:translateX(-50%); width:max(100%, 44px); }
+.s .cartline3 .n a:hover{ color:var(--brand-text); }
+.s .cartline3 .kind{ grid-column:2; font-size:var(--fs-sm); color:var(--ink2); }
+/* The colourway is named in words AND shown as a swatch; the hairline ring
+   keeps a pale colourway (Kem, Trang) visible on white. */
+.s .cartline3 .kind i{ width:10px; height:10px; border-radius:99px;
+  border:1px solid var(--hair); display:inline-block; vertical-align:-1px;
+  margin-right:4px; }
+.s .cartline3 .p{ grid-column:3; grid-row:1; font-variant-numeric:tabular-nums;
+  font-weight:600; text-align:right; font-size:var(--fs-ui); }
+.s .cartline3 .ctl{ grid-column:2 / 4; display:flex; align-items:center; gap:14px;
+  flex-wrap:wrap; margin-top:4px; }
+.s .cartline3 .stockline{ grid-column:2 / 4; font-size:var(--fs-sm); color:var(--ink2);
+  margin-top:0; }
+.s .cartline3 .stockline.hot{ color:var(--hot); }
+.s .cartline3 .acts{ margin-left:auto; display:flex; gap:14px; }
+/* 36px of text with a 4px overlay top and bottom is 44. The horizontal inset
+   is ZERO on purpose: two 44px targets cannot share a 14px gap (DESIGN.md
+   section 5, trap 2), and these two stand 14px apart. The four longhands
+   after `inset` undo the centred box `interaction.css` gives a lone `.lnk`
+   below 460px, which would do exactly that. */
+.s .cartline3 .acts .lnk, .s .cartline3 .fixes .lnk{ font-size:var(--fs-sm);
+  display:inline-flex; align-items:center; min-height:36px; position:relative;
+  font-weight:500; text-decoration:underline; text-underline-offset:3px; }
+.s .cartline3 .acts .lnk{ color:var(--ink2); }
+.s .cartline3 .acts .lnk:hover{ color:var(--ink); }
+/* 36px of text with 5px of overlay above and below is 46, and 46 is the
+   number a probe can confirm: `elementFromPoint` stops one pixel inside each
+   far edge, so an exactly-44 box measures 43 (the same reason `.btn::after`
+   went to -3 at slice 1). The WIDTH is the one the rest of the system gives
+   a lone text link — `max(100%, 44px)`, centred. "Bỏ" is 16px wide and grows
+   14px each way; the gap to "Giữ lại sau" is 14px, so the two boxes meet and
+   neither steals from the other (DESIGN.md §5, trap 2). */
+.s .cartline3 .acts .lnk::after, .s .cartline3 .fixes .lnk::after{ content:"";
+  position:absolute; left:50%; transform:translateX(-50%);
+  width:max(100%, 44px); top:-5px; bottom:-5px; height:auto; }
+.s .cartline3 .fixes{ grid-column:2 / 4; display:flex; flex-wrap:wrap; gap:14px;
+  align-items:center; margin-top:4px; }
+
+/* the quantity stepper: 46px tall so its two buttons clear 44 INSIDE the box
+   (a rounded border clips an overlay that reaches outside it) */
+.s .qty3{ display:inline-flex; align-items:center; border:1px solid var(--line);
+  border-radius:var(--r); height:46px; }
+.s .qty3 button{ width:40px; height:44px; display:flex; align-items:center;
+  justify-content:center; color:var(--ink); background:none; border:0; padding:0;
+  cursor:pointer; }
+.s .qty3 button:disabled{ color:var(--line); cursor:not-allowed; }
+.s .qty3 button:hover:not(:disabled){ background:var(--plate); }
+.s .qty3 .qntap{ display:flex; height:44px; }
+.s .qty3 .qntap::after{ content:none; }
+.s .qty3 input{ width:40px; height:44px; text-align:center; border:0;
+  border-left:1px solid var(--hair); border-right:1px solid var(--hair);
+  font:inherit; font-size:var(--fs-ui); font-variant-numeric:tabular-nums;
+  color:var(--ink); background:transparent; padding:0; appearance:none; }
+.s .qty3 input:focus{ background:var(--brand-soft); }
+
+/* -- giu lai sau --------------------------------------------------------
+   A line taken out of the basket without losing the size and colour behind
+   it. The row is a grid of its own, which is why it is `.item` and not the
+   v2 `.row`. */
+.s .later{ margin-top:var(--s5); }
+.s .later .hd{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px;
+  padding-bottom:8px; border-bottom:1px solid var(--ink); }
+.s .later .hd h2{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h2); letter-spacing:var(--ls-display); }
+.s .later .hd .meta{ font-size:var(--fs-sm); color:var(--ink2); }
+.s .later .item{ display:grid; grid-template-columns:48px 1fr auto; gap:12px;
+  align-items:center; padding:10px 0; border-bottom:1px solid var(--hair);
+  font-size:var(--fs-ui); }
+.s .later .item .thumb{ width:48px; height:60px; border-radius:var(--r-sm);
+  background:var(--plate); overflow:hidden; }
+.s .later .item .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.s .later .item b{ display:block; font-family:var(--font-display);
+  font-weight:var(--fw-display); font-size:var(--fs-ui); letter-spacing:var(--ls-display); }
+.s .later .item .sub{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+.s .later .item .sub .gone{ color:var(--hot); }
+.s .later .acts{ display:flex; gap:8px; align-items:center; }
+/* The "Bo" beside "Dua vao gio" is a control standing on its own. */
+.s .later .acts .lnk{ font-size:var(--fs-sm); min-height:44px; display:inline-flex;
+  align-items:center; }
+
+/* -- how far this basket is from free delivery --------------------------- */
+.s .shipbar3{ padding:12px 14px; background:var(--brand-soft); border-radius:var(--r);
+  font-size:var(--fs-sm); color:var(--ink); }
+.s .shipbar3 b{ font-weight:600; font-variant-numeric:tabular-nums; }
+.s .shipbar3 .bar{ height:4px; background:rgba(23,20,16,.08); border-radius:99px;
+  margin-top:8px; overflow:hidden; }
+.s .shipbar3 .bar i{ display:block; height:100%; background:var(--brand-text); }
+.s .shipbar3.ok{ background:var(--ok-bg); }
+
+/* -- the discount code --------------------------------------------------- */
+.s .promo3{ display:flex; gap:8px; align-items:center; }
+.s .promo3 .inp{ flex:1; height:44px; font-size:var(--fs-body);
+  text-transform:uppercase; letter-spacing:.04em; }
+/* Level with the 44px box beside it. A four-pixel step between two controls
+   in one row reads as a mistake. */
+.s .promo3 .btn{ flex:none; height:44px; }
+.s .promoon3{ display:flex; align-items:center; gap:10px; padding:10px 12px;
+  border:1px dashed var(--line); border-radius:var(--r); font-size:var(--fs-sm);
+  margin-top:8px; }
+.s .promoon3 b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:.04em; }
+.s .promoon3 > span{ color:var(--ink2); min-width:0; }
+.s .promoon3 .lnk{ margin-left:auto; min-height:36px; display:inline-flex;
+  align-items:center; position:relative; white-space:nowrap; font-size:var(--fs-sm); }
+.s .promoon3 .lnk::after{ content:""; position:absolute; left:50%;
+  transform:translateX(-50%); width:max(100%, 44px); top:-5px; bottom:-5px;
+  height:auto; }
+
+/* -- the money ----------------------------------------------------------- */
+.s .sum3{ display:grid; gap:8px; padding:14px 0 0; border-top:1px solid var(--ink);
+  margin-top:var(--s4); }
+.s .sum3 .r{ display:flex; justify-content:space-between; gap:12px; font-size:var(--fs-ui);
+  color:var(--ink2); font-variant-numeric:tabular-nums; }
+.s .sum3 .r.total{ color:var(--ink); padding-top:10px; border-top:1px solid var(--hair);
+  align-items:baseline; }
+.s .sum3 .r.total b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:20px; letter-spacing:var(--ls-display); }
+.s .promises3{ display:flex; flex-wrap:wrap; gap:6px 16px; font-size:var(--fs-xs);
+  color:var(--ink2); margin-top:12px; }
+.s .promises3 span{ display:inline-flex; gap:6px; align-items:center; }
+.s .fine3{ font-size:var(--fs-sm); color:var(--ink2); margin-top:12px; }
+/* A text link standing on its own line is a control, so it gets the 44px
+   row rather than an overlay that would reach into what is above it. */
+.s .lnk.tap{ display:inline-flex; align-items:center; min-height:44px; position:relative; }
+
+/* -- form rows ----------------------------------------------------------- */
+.s .field3{ margin-top:14px; }
+.s .field3:first-child{ margin-top:0; }
+.s .lbl{ display:block; font-size:var(--fs-xs); font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink2); margin-bottom:6px; }
+.s .lbl .opt{ text-transform:none; letter-spacing:0; font-weight:400; }
+.s .field3 .inp{ height:44px; font-size:var(--fs-body); }
+.s .field3 .inp:focus{ border-color:var(--brand); }
+.s .field3 .inp::placeholder{ color:var(--ink2); }
+.s .field3 .inp.area{ height:auto; min-height:88px; padding:10px 12px; resize:vertical;
+  line-height:1.5; align-items:flex-start; }
+.s .field3 .help{ font-size:var(--fs-sm); color:var(--ink2); margin-top:6px; }
+.s .field3 .err{ font-size:var(--fs-sm); color:var(--hot); margin-top:6px; display:flex;
+  gap:6px; align-items:flex-start; }
+/* The icon sits on the FIRST line when the message wraps, not centred on the
+   block. */
+.s .field3 .err .ic{ margin-top:2px; }
+.s .field3 .inp.bad{ border-color:var(--hot); }
+/* A refusal under the code box sits in the same rhythm as the chip. */
+.s .field3 .note3{ margin-top:8px; }
+.s .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+/* Both halves start at the top of the row: the rhythm between rows is the
+   grid's gap, not a margin the second cell would carry on its own. */
+.s .row2 > .field3{ margin-top:0; }
+/* Narrow phones: a paired row stacks, so a long label never pushes one input
+   below the other. */
+@media (max-width:480px){ .s .row2{ grid-template-columns:1fr; } }
+/* The custom <Select> wearing the v3 input skin: same 44px box, same 14px
+   type, the chevron at the small icon size in the secondary ink. */
+.s .field3 .selbtn{ height:44px; font-size:var(--fs-body); }
+.s .field3 .selbtn > svg{ width:15px; height:15px; }
+.s .field3 .selbtn .t[data-ph]{ color:var(--ink2); }
+
+/* ── under the sticky bar ────────────────────────────────────────────────
+   The bar at the top of the page is sticky and 56px tall (64 from 900px).
+   Anything the BROWSER scrolls to on its own — a field reached with Tab, the
+   first error after a refused submit — lands flush with the top edge of the
+   viewport, which is underneath it. MEASURED at 390px: the province button
+   came out at y=-0.09 and `elementFromPoint` at its centre answered with the
+   nav, so the control could not be clicked at all once scrolled to.
+
+   `scroll-margin-top` belongs on the element being scrolled TO, not on a
+   block around it — which is why this names the controls themselves. Scoped
+   to the shop frame: the back office has a sticky sidebar, not a sticky
+   header, and needs no offset. */
+.s.v3 input, .s.v3 textarea, .s.v3 button, .s.v3 summary,
+.s.v3 a, .s.v3 [tabindex]{ scroll-margin-top:72px; }
+
+/* -- pick rows: radios that are whole rows ------------------------------- */
+.s .picks3 .pick{ display:grid; grid-template-columns:24px 1fr auto; gap:6px 12px;
+  align-items:start; width:100%; padding:12px 0; border-bottom:1px solid var(--hair);
+  background:none; border-left:0; border-right:0; border-top:0; cursor:pointer;
+  text-align:left; font:inherit; font-size:var(--fs-ui); color:inherit; }
+.s .picks3 .pick:disabled{ cursor:not-allowed; color:var(--ink2); }
+.s .picks3 .pick .radio{ width:20px; height:20px; border-radius:99px;
+  border:1px solid var(--line); margin-top:1px; position:relative; }
+.s .picks3 .pick[aria-checked="true"] .radio{ border-color:var(--ink); }
+.s .picks3 .pick[aria-checked="true"] .radio::after{ content:""; position:absolute;
+  inset:5px; border-radius:99px; background:var(--ink); }
+.s .picks3 .pick .t b{ display:block; font-weight:600; font-size:var(--fs-body); }
+.s .picks3 .pick .t > span{ display:block; color:var(--ink2); font-size:var(--fs-sm); }
+.s .picks3 .pick .p{ font-variant-numeric:tabular-nums; white-space:nowrap; }
+/* The chosen row is washed from the plate towards nothing: a tint, not a
+   block of colour. */
+.s .picks3 .pick[aria-checked="true"]{
+  background:linear-gradient(to right, var(--plate), transparent 60%); }
+.s .picks3 .pick:hover:not(:disabled):not([aria-checked="true"]){ background:var(--plate); }
+
+/* -- consent: a checkbox that is the whole sentence ---------------------- */
+.s .consent{ display:flex; gap:10px; align-items:flex-start; font-size:var(--fs-sm);
+  color:var(--ink2); padding:12px 0; min-height:44px; cursor:pointer; text-align:left;
+  width:100%; background:none; border:0; font-family:inherit; line-height:1.5; }
+.s .consent .box{ width:20px; height:20px; border:1px solid var(--line);
+  border-radius:var(--r-sm); flex:none; display:flex; align-items:center;
+  justify-content:center; color:transparent; margin-top:1px; }
+.s .consent .box svg{ width:12px; height:9px; }
+.s .consent[aria-checked="true"] .box{ background:var(--ink); border-color:var(--ink);
+  color:var(--brand); }
+.s .consent[aria-checked="true"]{ color:var(--ink); }
+.s .addrform{ margin-top:8px; padding:14px; border:1px dashed var(--line);
+  border-radius:var(--r); }
+.s .addrform .chips3{ display:flex; gap:6px; flex-wrap:wrap; }
+
+/* -- checkout: what is being paid for ------------------------------------ */
+.s .orderbox3{ border:1px solid var(--hair); border-radius:var(--r); }
+/* `color` is stated because `admin.css` carries
+   `.s details summary{ color:var(--link) }` (0,1,2) for the back office's
+   open questions, and without it this summary inherited the link brown.
+   Found at v3 slice 4, on the FAQ, and fixed in both places at once. */
+.s .orderbox3 summary{ list-style:none; display:flex; align-items:center;
+  justify-content:space-between; gap:10px; min-height:48px; padding:0 14px;
+  font-weight:600; font-size:var(--fs-ui); color:var(--ink); cursor:pointer; }
+.s .orderbox3 summary::-webkit-details-marker{ display:none; }
+.s .orderbox3 summary .amt{ display:flex; gap:10px; align-items:center;
+  font-variant-numeric:tabular-nums; }
+.s .orderbox3 summary .ic{ transition:transform .2s; color:var(--ink2); }
+.s .orderbox3[open] summary .ic{ transform:rotate(180deg); }
+@media (prefers-reduced-motion:reduce){ .s .orderbox3 summary .ic{ transition:none; } }
+.s .orderbox3 .lines{ padding:0 14px 6px; }
+.s .orderbox3 .sum3{ margin:0 14px; padding-bottom:12px; }
+.s .ol{ display:grid; grid-template-columns:44px 1fr auto; gap:10px; align-items:center;
+  padding:8px 0; border-top:1px solid var(--hair); font-size:var(--fs-sm); }
+.s .ol .thumb{ width:44px; height:55px; border-radius:var(--r-sm); background:var(--plate);
+  overflow:hidden; }
+.s .ol .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.s .ol b{ display:block; font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-sm); letter-spacing:var(--ls-display); }
+.s .ol .g span{ color:var(--ink2); }
+.s .ol .p{ font-variant-numeric:tabular-nums; }
+.s .ol.first{ border-top:0; }
+
+/* -- panels -------------------------------------------------------------- */
+.s .panel3{ border:1px solid var(--hair); border-radius:var(--r); padding:14px 16px 16px;
+  background:var(--bg); }
+.s .panel3 > h2, .s .panel3 > h3{ display:flex; flex-wrap:wrap; align-items:baseline;
+  gap:10px; font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h3); letter-spacing:var(--ls-display); padding-bottom:8px;
+  border-bottom:1px solid var(--ink); margin-bottom:10px; }
+.s .panel3 > h2 .meta, .s .panel3 > h3 .meta{ font-family:var(--font-sans);
+  font-weight:400; font-size:var(--fs-sm); color:var(--ink2); letter-spacing:0;
+  font-variant-numeric:tabular-nums; }
+/* The panel's heading already draws the rule the pick list would draw again. */
+.s .panel3 > .picks3{ border-top:0; }
+.s .panels3 > * + *{ margin-top:var(--s4); }
+
+/* -- the confirmation ---------------------------------------------------- */
+.s .done3{ padding:var(--s4) 0 0; }
+.s .done3 .big{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-disp); letter-spacing:var(--ls-display); line-height:1.05;
+  max-width:14ch; }
+.s .done3 .code{ display:inline-flex; align-items:center; gap:8px; margin-top:10px;
+  font-size:var(--fs-ui); flex-wrap:wrap; }
+.s .done3 .code b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:.04em; }
+
+/* The one black surface on these four screens: the hold on the goods, which
+   is the issue's own promise and wears the issue's own cloth. The honey
+   stitch along the top is the same thread as the cover. */
+.s .deadline{ margin-top:var(--s4); padding:16px; background:var(--stage);
+  color:var(--stage-ink); border-radius:var(--r); border-top:1px dashed var(--brand); }
+.s .deadline .lh{ font-size:var(--fs-xs); letter-spacing:.06em; text-transform:uppercase;
+  color:var(--stage-ink2); }
+.s .deadline .clock{ display:flex; align-items:baseline; flex-wrap:wrap; gap:0 6px;
+  margin-top:6px; font-family:var(--font-display); font-weight:var(--fw-display); }
+.s .deadline .clock b{ font-size:28px; color:var(--brand);
+  font-variant-numeric:tabular-nums; line-height:1.1; }
+/* Before the browser has read the clock the figures are a hidden "00" rather
+   than nothing: two real glyphs cannot mismeasure their own width, so the
+   units beside them do not slide when the numbers land. */
+.s .deadline .clock b.wait{ visibility:hidden; }
+.s .deadline .clock span{ font-family:var(--font-sans); font-size:var(--fs-xs);
+  letter-spacing:.06em; text-transform:uppercase; color:var(--stage-ink2);
+  margin-right:12px; font-weight:400; }
+.s .deadline .clock .over{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h3); color:var(--brand); letter-spacing:var(--ls-display);
+  text-transform:none; margin-right:0; }
+.s .deadline p{ font-size:var(--fs-sm); color:var(--stage-ink2); margin-top:8px;
+  max-width:44ch; }
+
+.s .bank{ margin-top:var(--s4); border:1px solid var(--ink); border-radius:var(--r); }
+.s .bank .r{ display:grid; grid-template-columns:104px 1fr auto; gap:10px;
+  align-items:center; min-height:56px; padding:10px 12px; border-bottom:1px solid var(--hair);
+  font-size:var(--fs-ui); }
+.s .bank .r:last-child{ border-bottom:0; }
+.s .bank dt{ color:var(--ink2); font-size:var(--fs-sm); }
+.s .bank dd{ margin:0; min-width:0; }
+.s .bank dd b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:.02em; font-variant-numeric:tabular-nums; }
+
+/* The two QR slots. Neither draws a code: there is no bank account yet, and
+   no encoder in this build. The frame says which one it is and what has to
+   happen before it can be filled - and the lookup slot prints the real link
+   with a way to copy it, so it is a working thing rather than a promise. */
+.s .qrrow{ display:grid; grid-template-columns:1fr; gap:14px; margin-top:var(--s4); }
+@media (min-width:600px){ .s .qrrow{ grid-template-columns:1fr 1fr; } }
+.s .qrph{ border:1px dashed var(--line); border-radius:var(--r); padding:14px;
+  display:grid; grid-template-columns:96px 1fr; gap:12px; align-items:center;
+  font-size:var(--fs-sm); color:var(--ink2); }
+.s .qrph .cells{ width:96px; height:96px; border:1px solid var(--hair); border-radius:2px;
+  background:
+    repeating-linear-gradient(90deg, var(--hair) 0 8px, transparent 8px 16px),
+    repeating-linear-gradient(0deg, var(--hair) 0 8px, transparent 8px 16px); }
+.s .qrph b{ display:block; color:var(--ink); font-weight:600; }
+.s .qrph .link{ display:block; margin-top:6px; word-break:break-all; color:var(--ink); }
+.s .qrph .btn.sm{ margin-top:8px; }
+
+/* Buttons stacked as a block of choices: one decision per row. */
+.s .acts3{ display:grid; gap:8px; margin-top:var(--s4); }
+/* The third of them is the quiet one - no ground, no border, just the word
+   and its underline. `.btn.quiet` is still the v2 pale plate elsewhere, so
+   the v3 reading is scoped to this block rather than swapped underneath the
+   account screens that have not been rebuilt yet. */
+.s .acts3 .btn.quiet{ background:transparent; border-color:transparent; color:var(--ink);
+  text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
+.s .acts3 .btn.quiet:hover:not(:disabled){ background:transparent; border-color:transparent;
+  color:var(--brand-text); }
+
+/* -- the timeline -------------------------------------------------------- */
+.s .tl3{ margin:12px 0 0 6px; padding-left:20px; border-left:2px solid var(--hair); }
+.s .tl3 .m{ position:relative; padding:0 0 16px; }
+.s .tl3 .m:last-child{ padding-bottom:0; }
+.s .tl3 .m::before{ content:""; position:absolute; left:-27px; top:4px; width:12px;
+  height:12px; border-radius:99px; background:var(--bg); border:2px solid var(--line); }
+.s .tl3 .m.done::before{ background:var(--ink); border-color:var(--ink); }
+.s .tl3 .m.now::before{ background:var(--brand); border-color:var(--brand); }
+.s .tl3 .m.late::before{ border-color:var(--hot); }
+.s .tl3 .m b{ display:block; font-weight:600; font-size:var(--fs-ui); }
+.s .tl3 .m > span{ display:block; font-size:var(--fs-sm); color:var(--ink2);
+  font-variant-numeric:tabular-nums; }
+.s .tl3 .m.todo b{ color:var(--ink2); font-weight:400; }
+.s .tl3 .m.late b{ color:var(--hot); }
+
+/* -- looking an order up ------------------------------------------------- */
+.s .lookup{ max-width:520px; }
+.s .lookup .act{ margin-top:16px; }
+/* A lone call to action fills the column on a phone — the rule
+   `interaction.css` already gives a lone `div > button.btn`, which does not
+   reach this one because its wrapper is a `<p>` and a `<button>` takes its
+   intrinsic width. From 461px it goes back to its own width: the form is a
+   520px block up there and a 520px button would be a poster. */
+@media (max-width:460px){ .s .lookup .act .btn{ width:100%; } }
+@media (min-width:461px){ .s .lookup .act .btn{ display:inline-flex; width:auto; } }
+.s .result3{ margin-top:var(--s5); border-top:2px solid var(--ink); padding-top:14px; }
+.s .result3 .pghead{ padding-top:0; }
+.s .result3 .pghead h2{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h2); letter-spacing:var(--ls-display); }
+.s .kvs{ display:grid; grid-template-columns:110px 1fr; gap:8px 12px; font-size:var(--fs-ui); }
+.s .kvs dt{ color:var(--ink2); font-size:var(--fs-sm); }
+.s .kvs dd{ margin:0; min-width:0; }
+.s .kvs dd b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:.02em; }
+.s .kvs dd .btn{ margin-left:8px; vertical-align:middle; }
+
+/* -- small buttons on these four screens --------------------------------
+   36px, as the mock draws them, with the 4px overlay that takes the target
+   to 44. Scoped to the blocks that hold them: `.btn.sm` is 34px across the
+   back office, where the toolbars are dense enough that a global overlay
+   would have neighbours stepping on each other. */
+.s .later .btn.sm, .s .done3 .btn.sm, .s .bank .btn.sm, .s .kvs .btn.sm,
+.s .qrph .btn.sm{ height:36px; position:relative; }
+.s .later .btn.sm::after, .s .done3 .btn.sm::after, .s .bank .btn.sm::after,
+.s .kvs .btn.sm::after, .s .qrph .btn.sm::after{ content:""; position:absolute;
+  inset:-5px 0; }
+
+/* -- the printed bill ---------------------------------------------------
+   Off screen entirely, and the only thing on the page when the sheet goes
+   to paper. `window.print()` is the whole feature: a browser has no PDF
+   writer a page can call, and the print dialog already offers "Save as PDF"
+   on every desktop platform. */
+.s .invoice{ display:none; }
+@media print{
+  .s .nav3, .s .foot3, .s .noprint{ display:none !important; }
+  .s .invoice{ display:block; color:#000; padding:0 6mm; }
+  .s{ max-width:none; }
+  /* The sheet is a document, so it gets a document's margin. Chrome's own
+     default is narrower and lets a long style name run into the edge of the
+     paper. */
+  @page{ margin:12mm; }
+}
+.s .invoice .ihd{ display:flex; justify-content:space-between; align-items:baseline;
+  gap:16px; padding-bottom:10px; border-bottom:2px solid var(--ink); }
+.s .invoice .ihd .wm{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:.14em; font-size:var(--fs-h3); }
+.s .invoice .ihd .code{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h3); letter-spacing:var(--ls-display); }
+.s .invoice .kvs{ margin-top:12px; }
+.s .invoice table{ width:100%; margin-top:16px; border-collapse:collapse;
+  font-size:var(--fs-ui); font-variant-numeric:tabular-nums; }
+.s .invoice th{ text-align:left; font-size:var(--fs-xs); letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink2); padding:6px 0;
+  border-bottom:1px solid var(--ink); }
+.s .invoice th.right, .s .invoice td.right{ text-align:right; }
+.s .invoice td{ padding:8px 0; border-bottom:1px solid var(--hair); vertical-align:top; }
+.s .invoice td b{ font-family:var(--font-display); font-weight:var(--fw-display); }
+.s .invoice td .sub{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+.s .invoice .isum{ display:grid; gap:6px; margin-top:12px; margin-left:auto;
+  max-width:320px; font-size:var(--fs-ui); font-variant-numeric:tabular-nums; }
+.s .invoice .isum .r{ display:flex; justify-content:space-between; gap:16px;
+  color:var(--ink2); }
+.s .invoice .isum .r.total{ color:var(--ink); font-weight:600; padding-top:8px;
+  border-top:1px solid var(--ink); }
+.s .invoice .ifoot{ margin-top:16px; font-size:var(--fs-sm); color:var(--ink2);
+  display:grid; gap:4px; }

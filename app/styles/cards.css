@@ -1,0 +1,139 @@
+/* The product card, and nothing else.
+
+   The image plate (`.ph`), the hero (`.hero`), the product grid
+   (`.cardgrid`, with its `three` / `four` / `sixup` variants) and the v2
+   swipe card (`.card`) all stood in this file and all went at v3 slice 6,
+   once nothing rendered them. The grid is `.grid3` in listing.css and the
+   plate is `.card3 .img` below — one card, one grid, one plate. */
+
+/* ══ PRODUCT CARD, v3 — an entry in a table of contents ══════════════════
+   `prototype/v3/home.html` and `products.html`, class `.card3`.
+
+   The card is a photo, a CONTENTS LINE (name · dotted leader · price), a
+   count, and one button. The leader is the whole idea: it sets the style
+   name against its price the way a table of contents sets a chapter against
+   a page number, which is what makes a grid of these read as the index of
+   an issue rather than as a shelf of tiles.
+
+   The colour band the v2 card swiped through is GONE, with its pips and its
+   tap-versus-swipe gesture. One photo per card, and colour is chosen in the
+   sheet the button opens — the mock made that call, and a horizontal scroll
+   area inside every cell of a vertically scrolling grid was paying for
+   itself in exactly one place.
+
+   `.card3`, not `.card`: the home page's teaser tiles still wear `.card`
+   above, and two different cards under one class name is how `.sub`, `.box`
+   and `.drop` each cost an afternoon. */
+.s .card3{ position:relative; display:flex; flex-direction:column; }
+.s .card3 .imgbox{ position:relative; }
+.s .card3 .img{ display:block; position:relative; aspect-ratio:4/5;
+  background:var(--plate); overflow:hidden; border-radius:var(--r); }
+/* `display:block` is load-bearing on an <a>: inline elements drop both
+   `aspect-ratio` and a percentage width without a word, and every plate in
+   the row then takes its height from whatever photo it got (DESIGN.md §4). */
+.s .card3 .img img{ width:100%; height:100%; object-fit:cover; display:block;
+  transition:transform .5s cubic-bezier(.2,.8,.2,1); }
+.s .card3 .img:hover img{ transform:scale(1.02); }
+@media (prefers-reduced-motion:reduce){
+  .s .card3 .img img{ transition:none; }
+  .s .card3 .img:hover img{ transform:none; }
+}
+/* A style that has gone keeps its photo, dimmed and half drained, so the
+   grid still reads as ten styles rather than nine and a hole. */
+.s .card3.sold .img{ background:var(--plate); }
+.s .card3.sold .img img{ opacity:.5; filter:grayscale(.5); }
+
+/* The stamp: black cloth, honey thread, and a honey seam stitched 4px
+   inside the edge — the same construction as the label on the cover. */
+.s .card3 .stamp{ position:absolute; left:10px; top:10px; padding:6px 10px;
+  background:var(--stage); color:var(--brand); border:1.5px solid var(--stage);
+  border-radius:var(--r-sm);
+  font-family:var(--font-display); font-weight:var(--fw-display); font-size:var(--fs-sm);
+  letter-spacing:.12em; }
+/* The seam was `outline:1px dashed` with `outline-offset:-4px` until v3
+   slice 4. Same drawing, as a real box: 2.5px inside the padding box is
+   4px inside the outer edge (the border is 1.5), and an inward outline
+   offset flattens the corner radius to nothing, which `1px` matches.
+   `outline` now appears in exactly two places in this system — the keyboard
+   focus ring, and the switch that turns it off while a pointer is driving
+   (DESIGN.md §6). Anything else that wants a line draws one. */
+.s .card3 .stamp::after{ content:""; position:absolute; inset:2.5px;
+  border:1px dashed var(--brand); border-radius:1px; pointer-events:none; }
+
+/* Text block. One link covers the name, the price and the count, and its
+   own overlay reaches into the gaps either side so the whole block is the
+   target rather than the line of type inside it. */
+.s .card3 .meta{ display:block; position:relative; padding-top:10px; color:inherit; }
+.s .card3 .meta::after{ content:""; position:absolute; inset:-2px 0 -4px; }
+.s .card3 .meta:hover .n{ color:var(--brand-text); }
+.s .card3 .toc{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; }
+.s .card3 .toc .n{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-body); letter-spacing:-.01em; }
+/* The leader takes the slack between name and price, and never less than
+   12px — a two-dot leader reads as a typo, not as a rule. */
+.s .card3 .toc .ld{ flex:1; min-width:12px; border-bottom:1px dotted var(--line);
+  transform:translateY(-4px); }
+.s .card3 .toc .p{ font-size:var(--fs-ui); font-variant-numeric:tabular-nums;
+  margin-left:auto; }
+.s .card3 .ct{ margin-top:4px; font-size:var(--fs-sm); color:var(--ink2);
+  display:flex; flex-wrap:wrap; align-items:center; gap:4px;
+  font-variant-numeric:tabular-nums; }
+/* Red is spent on ONE thing: a count a shopper can still act on. Sold-out
+   sizes are struck grey, because "hết S" is a fact, not an alarm. */
+.s .card3 .ct .low{ color:var(--hot); font-weight:500; }
+.s .card3 .ct s{ text-decoration:line-through; }
+.s .card3 .kind{ display:block; font-size:var(--fs-sm); color:var(--ink2); margin-top:2px; }
+
+/* The button bar. Ink outline on white, inverting to black-and-honey on
+   hover — the card's action borrows the issue's material instead of
+   putting a honey slab on every tile in the grid. */
+.s .card3 .act{ position:relative; margin-top:auto; padding-top:8px; }
+.s .card3 .addbtn3{ position:relative; display:flex; align-items:center;
+  justify-content:center; gap:6px; width:100%; height:40px;
+  border:1px solid var(--ink); border-radius:var(--r); font:inherit;
+  font-size:var(--fs-sm); font-weight:600; color:var(--ink); background:var(--bg);
+  cursor:pointer; text-decoration:none;
+  transition:background-color .15s ease, color .15s ease; }
+/* 40px tall, 44px of finger: the same invisible overlay the rest of the
+   system uses, and just as free for the layout. */
+.s .card3 .addbtn3::after{ content:""; position:absolute; inset:-3px 0; }
+.s .card3 .addbtn3:hover{ background:var(--ink); color:var(--brand); border-color:var(--ink); }
+/* A sold-out style is not an offer, so its control is quiet: control-border
+   grey and secondary ink, saying the one thing still true — there is a page
+   about it. */
+.s .card3 .addbtn3.view{ border-color:var(--line); color:var(--ink2); font-weight:500; }
+.s .card3 .addbtn3.view:hover{ background:var(--plate); color:var(--ink);
+  border-color:var(--line); }
+@media (prefers-reduced-motion:reduce){ .s .card3 .addbtn3{ transition:none; } }
+
+/* ── the unsave button, ADDED in Phase 4 ─────────────────────────────────
+   Only on a card standing in the saved list. It sits on the plate so the
+   card keeps ONE action row, and so the list needs no wrapper to align a
+   control underneath — which is what it used to need, and what left the
+   old text link measurably closer to the card below it (20px above, 16px
+   below) than to the card it belonged to.
+
+   7px in from the corner. 32px looks light on a 4:5 plate, and the overlay
+   below takes a finger to 44. */
+.s .card3 .unsave{ position:absolute; right:7px; top:7px; width:32px; height:32px;
+  padding:0; border:0; border-radius:99px; display:flex; align-items:center;
+  justify-content:center; background:rgba(255,255,255,.94); color:var(--ink);
+  cursor:pointer; box-shadow:0 1px 3px rgba(23,20,16,.20);
+  transition:background-color .12s ease, color .12s ease; }
+.s .card3 .unsave::after{ content:""; position:absolute; inset:-6px; }
+.s .card3 .unsave:hover{ background:#fff; color:var(--brand-text); }
+
+/* ── two things `.cardcell` taught before it went in Phase 4 ─────────────
+   It wrapped a card plus a control of its own underneath — the wishlist's
+   "Bỏ khỏi yêu thích" — and pushed that control to the bottom so it sat
+   level across a row. `.unsave` above moved the control onto the plate, so
+   there was nothing left to wrap. Both lessons still apply to anything
+   stacked under a card:
+
+   · The gap has to be a MARGIN on the card, not padding on the thing below.
+     A box starting at the card's edge paints over the add button's touch
+     overlay, and the button measures 34px instead of 44.
+   · Two 44px targets cannot share a 6px gap. The lower one's overlay
+     reached 6px up and won the hit test. 18px was the smallest gap where
+     both kept their full target — which is also why the old link ended up
+     20px below its own card and only 16px above the next one. */

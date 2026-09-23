@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>DH-2429 · Quản trị · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+<style>.s.adm .grid2.detail{ grid-template-columns:1.6fr 1fr; }</style>
+</head>
+<body>
+<div class="s adm v2">
+<nav class="side" aria-label="Khu quản trị" data-adminnav data-active="orders"></nav>
+<main class="main">
+  <header class="top">
+    <h1>DH-2429</h1>
+    <div class="rt">
+      <span class="sim"><svg data-i="eye" class="ic sm"></svg>dữ liệu mô phỏng</span>
+      <button type="button" class="btn ghost sm" data-sim="Đã in phiếu giao DH-2429"><svg data-i="printer" class="ic sm"></svg>In phiếu giao</button>
+      <button type="button" class="btn sm" id="btn-handover" data-show="#handover" data-hide="#btn-handover,#nextstep"><svg data-i="truck" class="ic sm"></svg>Đóng gói & bàn giao</button>
+      <button type="button" class="more" data-menu="#moremenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác khác"><svg data-i="more" data-raw></svg></button>
+    </div>
+  </header>
+  <p class="subhead">Đặt 18/09/2026 · 22:15 · Chuyển khoản · <a class="lnk" href="#">Hoàng Mỹ Linh</a> · khách quay lại, 2 đơn
+    <span id="state-paid"><span class="badge"><i></i>Đã thanh toán</span></span>
+    <span id="state-shipping" hidden><span class="badge"><i></i>Đang giao</span> · VNP-8842401</span>
+  </p>
+
+  <div class="grid2 detail">
+    <div>
+      <section class="panel">
+        <!-- the next move, stated; the form appears in place of the strip -->
+        <div class="nextstep" id="nextstep"><svg data-i="box" data-raw></svg><span><b>Bước tiếp theo:</b> đóng gói và bàn giao vận chuyển. Tiền đã về từ 07:52 ngày 19/09 — 1 ngày 11 giờ trước.</span></div>
+        <div class="handover" id="handover" hidden>
+          <div class="fgrid">
+            <div><label style="display:block;font-size:11px;color:var(--ink2);margin-bottom:5px">Đơn vị vận chuyển</label><button type="button" class="inp sel selbtn" style="height:34px;font-size:12px"><span class="t">Chưa chốt đối tác — nhập tay</span><svg data-i="down" data-raw></svg></button></div>
+            <div><label style="display:block;font-size:11px;color:var(--ink2);margin-bottom:5px">Mã vận đơn</label><input class="inp" value="VNP-8842401" aria-label="Mã vận đơn"></div>
+            <button type="button" class="btn sm" data-sim="DH-2429 → Đang giao · mã vận đơn VNP-8842401 · khách sẽ thấy ở Theo dõi đơn" data-hide="#handover,#state-paid" data-show="#state-shipping,#tl-ship,#note-ship"><svg data-i="confirm" class="ic sm"></svg>Xác nhận bàn giao</button>
+            <button type="button" class="btn ghost sm" data-hide="#handover" data-show="#btn-handover,#nextstep">Huỷ</button>
+          </div>
+        </div>
+        <div class="hd"><h2>Món trong đơn</h2><div class="rt"><span class="note">2 chiếc · 1 mẫu</span></div></div>
+        <table>
+          <thead><tr><th>Sản phẩm</th><th>Màu</th><th>Size</th><th class="num">SL</th><th class="num">Đơn giá ₫</th><th class="num">Thành tiền ₫</th></tr></thead>
+          <tbody><tr><td><span class="cellrow"><span class="pill"><img src="img/muoi.webp" alt=""></span><b class="nm">MUỐI</b></span></td><td><span class="cellrow"><span class="dotcolor" style="background:#8C8C8C"></span>Xám</span></td><td>M</td><td class="num">2</td><td class="num">690.000</td><td class="num">1.380.000</td></tr></tbody>
+        </table>
+        <div class="totalbar"><span class="note">Tạm tính 1.380.000₫ · Ship 30.000₫ · Giảm −138.000₫ (DOT05)</span><b>Tổng 1.272.000₫</b></div>
+      </section>
+
+      <section class="panel">
+        <div class="hd"><h2>Lịch sử đơn</h2></div>
+        <div class="pad16">
+          <ol class="tl" style="list-style:none;padding:0;margin:0">
+            <li class="tlitem done"><span class="gut" aria-hidden="true"><span class="dot"></span><span class="stem"></span></span><span class="bd"><span class="t">Đã nhận đơn</span><span class="d">18/09 · 22:15</span></span></li>
+            <li class="tlitem done"><span class="gut" aria-hidden="true"><span class="dot"></span><span class="stem"></span></span><span class="bd"><span class="t">Đã thanh toán · chuyển khoản khớp 1.272.000₫</span><span class="d">19/09 · 07:52</span></span></li>
+            <li class="tlitem now" id="tl-pack"><span class="gut" aria-hidden="true"><span class="dot"></span><span class="stem"></span></span><span class="bd"><span class="t">Đóng gói & bàn giao</span><span class="d">chờ cửa hàng</span></span></li>
+            <li class="tlitem todo" id="tl-ship"><span class="gut" aria-hidden="true"><span class="dot"></span><span class="stem"></span></span><span class="bd"><span class="t">Đang trên đường giao</span><span class="d">—</span></span></li>
+            <li class="tlitem todo"><span class="gut" aria-hidden="true"><span class="dot"></span></span><span class="bd"><span class="t">Giao thành công</span><span class="d">—</span></span></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="panel notes">
+        <div class="hd"><h2>Ghi chú nội bộ</h2><div class="rt"><span class="note">khách không thấy</span></div></div>
+        <div class="ni sys">Hệ thống · Thanh toán khớp 1.272.000₫, nội dung "DH2429".<span class="meta">19/09 · 07:52</span></div>
+        <div class="ni">Khách nhắn Instagram: gói riêng hai chiếc, tặng bạn.<span class="meta">Bạn · 19/09 · 09:10</span></div>
+        <div class="ni" id="note-ship" hidden>Bàn giao vận chuyển, mã VNP-8842401.<span class="meta">Bạn · vừa xong</span></div>
+        <div class="add"><input class="inp" placeholder="Thêm ghi chú…" aria-label="Thêm ghi chú"><button type="button" class="btn ghost sm" data-sim="Đã thêm ghi chú (lưu trên trình duyệt này)">Lưu</button></div>
+      </section>
+    </div>
+
+    <div>
+      <section class="panel">
+        <div class="hd"><h2>Giao đến</h2><div class="rt"><button type="button" class="lnk" style="font-size:11.5px" data-sim="Sửa địa chỉ giao (mô phỏng)">Sửa</button></div></div>
+        <div class="addrblock"><b>Hoàng Mỹ Linh</b><span class="note">0385 907 264</span><span>6 Lê Đại Hành, Phường Khương Đình, Hà Nội</span><span class="note">Giao tiêu chuẩn · 2–4 ngày · ngoài vùng giao nhanh</span></div>
+      </section>
+      <section class="panel">
+        <div class="hd"><h2>Thanh toán</h2></div>
+        <div class="setrow"><span class="grow"><span class="lb">Hình thức</span><span class="vl">Chuyển khoản ngân hàng</span></span></div>
+        <div class="setrow"><span class="grow"><span class="lb">Đã nhận</span><span class="vl">1.272.000₫ · 19/09 07:52</span></span><span class="badge ok"><i></i>khớp</span></div>
+        <div class="setrow"><span class="grow"><span class="lb">Mã giảm giá</span><span class="vl">DOT05 · −138.000₫ (10%, tối đa 150.000₫)</span></span></div>
+      </section>
+      <section class="panel">
+        <div class="hd"><h2>Khách hàng</h2><div class="rt"><a class="lnk" style="font-size:11.5px" href="#">Hồ sơ</a></div></div>
+        <div class="setrow"><span class="grow"><span class="lb">Hoàng Mỹ Linh</span><span class="vl">linh.hoang@email.com</span></span></div>
+        <div class="setrow"><span class="grow"><span class="lb">Lịch sử</span><span class="vl">2 đơn · 2.517.000₫ đã chi · tham gia 15/09/2026</span></span></div>
+      </section>
+    </div>
+  </div>
+</main>
+</div>
+
+<div class="menu" id="moremenu" role="menu" aria-label="Thao tác khác" hidden>
+  <h5>DH-2429</h5>
+  <button type="button" role="menuitem" data-sim="Đã gửi lại email xác nhận (mô phỏng)"><svg data-i="sms" data-raw></svg>Gửi lại xác nhận cho khách</button>
+  <button type="button" role="menuitem" data-sim="Sửa địa chỉ giao (mô phỏng)"><svg data-i="pin" data-raw></svg>Sửa địa chỉ giao</button>
+  <hr>
+  <button type="button" role="menuitem" class="bad" data-open="#cancelmodal"><svg data-i="x" data-raw></svg>Huỷ đơn…</button>
+</div>
+
+<div class="modalwrap" id="cancelmodal" hidden>
+  <div class="scrim"></div>
+  <div class="modal s" role="dialog" aria-modal="true" aria-labelledby="cm-t">
+    <div class="hd"><h2 id="cm-t">Huỷ đơn DH-2429?</h2><button type="button" class="x" data-close aria-label="Đóng"><svg data-i="x" data-raw></svg></button></div>
+    <div class="bd">
+      <p>Đơn đã thanh toán 1.272.000₫. Huỷ nghĩa là phải hoàn tiền về nguồn ban đầu và 2 chiếc MUỐI size M màu Xám quay lại kệ.</p>
+      <div class="fgrid" style="margin-top:12px;grid-template-columns:1fr">
+        <div><label>Lý do huỷ (khách sẽ thấy)</label><button type="button" class="inp sel selbtn" style="height:36px;font-size:12.5px"><span class="t">Khách đổi ý</span><svg data-i="down" data-raw></svg></button></div>
+        <div><label>Ghi chú nội bộ</label><input class="inp" placeholder="Không bắt buộc"></div>
+      </div>
+    </div>
+    <div class="ft"><button type="button" class="btn ghost sm" data-close>Giữ đơn</button><button type="button" class="btn sm" data-sim="DH-2429 đã huỷ · lý do: khách đổi ý · 2 chiếc MUỐI M Xám về kệ">Huỷ đơn</button></div>
+  </div>
+</div>
+</body>
+</html>

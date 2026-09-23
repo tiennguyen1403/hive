@@ -1,0 +1,959 @@
+
+/* =========================================================================
+   HỆ THIẾT KẾ — nền trắng, element màu da trời, bo góc 6px
+   Mọi cặp chữ/nền trong file này đã được tính tay và đạt WCAG AA.
+   ========================================================================= */
+:root{
+  /* thang màu chủ đạo — MẬT ONG (primary ramp) */
+  --gold-50:#FDF9F2;  --gold-100:#FBF1DA; --gold-200:#FBE8BC; --gold-300:#F7D98E;
+  --gold-400:#F1C04A; --gold-500:#EBA400; --gold-600:#C28800; --gold-700:#9E6817;
+  --gold-800:#6E4A12; --gold-900:#211D12;
+
+  /* màu chủ đạo tách theo vai trò */
+  --fill:#EBA400;      /* MẢNG: nút, chip đang chọn, chấm giỏ — mật ong */
+  --fill-bd:#C28800;   /* dự phòng — không còn dùng làm viền nút nữa */
+  --fill-ink:#211D12;  /* chữ đặt trên mảng, 7,88:1 — vàng không mang nổi chữ trắng */
+  --band:#FBE8BC;      /* dải thông tin đợt */
+  --band-ink:#211D12;  /* 13,9:1 trên dải */
+  --mark:#C28800;      /* cột biểu đồ, chấm mốc, vòng chọn — chỉ cần 3:1 */
+  --link:#9E6817;      /* chữ & liên kết: nâu mật, 4,72:1 — bậc sáng nhất còn đọc được */
+
+  --ink:#211D12;      /* chữ chính     16,8:1 trên trắng */
+  --ink2:#71674E;     /* chữ phụ        5,6:1 */
+  --hair:#F4EBD7;     /* đường kẻ mảnh */
+  --line:#968B73;     /* viền ô nhập    3,4:1 — đạt chuẩn viền điều khiển */
+  --bg:#FFFFFF;
+  --plate:#FBF1DA;    /* nền chỗ đặt ảnh */
+
+  --hot:#B61E32;    --hot-bg:#FBEAEC;   /* sắp hết / huỷ — đỏ, tách hẳn khỏi họ vàng */
+  --ok:#1B6B3A;     --ok-bg:#E6F4EA;    /* xong */
+  --warn:#44505E;   --warn-bg:#EAEDF1;  /* chờ — xám, vì vàng nay là màu thương hiệu */
+  --info:#0C6289;   --info-bg:#DCEFFA;  /* đang chạy */
+
+  --r:6px;          /* bo góc chuẩn */
+  --r-sm:4px;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+.s{
+  background:var(--bg); color:var(--ink);
+  font-family:"Be Vietnam Pro",system-ui,sans-serif;
+  font-size:13px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+.s .nm{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; letter-spacing:-.015em; }
+.s a{ color:inherit; text-decoration:none; }
+/* Vòng focus là `outline` DUY NHẤT còn lại. Nó chỉ hiện khi đi bằng bàn phím,
+   không bao giờ hiện với chuột — bỏ nó là không dùng được trang bằng Tab.
+
+   ĐỪNG tin `:focus-visible` một mình để giữ lời hứa đó. Đã đo trên bản chạy
+   thử: với phần tử được cấp `tabindex`, và với cả `<button>` thật khi bị
+   focus bằng script, Chrome vẫn bật `:focus-visible` sau một cú chuột. Nên
+   trang phải tự đánh dấu đang dùng chuột hay bàn phím, và luật ngay dưới
+   tắt sạch vòng focus trong lúc dùng chuột:
+
+       var de = document.documentElement;
+       de.setAttribute('data-chuot','');                       // mặc định
+       addEventListener('pointerdown', () => de.setAttribute('data-chuot',''), true);
+       addEventListener('keydown', e => { if (e.key === 'Tab')
+                                            de.removeAttribute('data-chuot'); }, true);
+
+   `!important` là cố ý: đây là công tắc tắt, phải thắng mọi luật khác. */
+html[data-chuot] :focus,
+html[data-chuot] :focus-visible{ outline:none !important; }
+
+.s :focus-visible{ outline:2px solid var(--mark); outline-offset:2px;
+  border-radius:var(--r-sm); }
+
+/* ── Những bề mặt trình duyệt tự vẽ. Không nhận lấy thì chúng mang mặc định
+      của hệ điều hành, tức là không thuộc hệ thiết kế nào. ── */
+.s ::selection{ background:var(--gold-300); color:var(--ink); }
+.s{ caret-color:var(--fill); }
+.s ::-webkit-scrollbar{ width:10px; height:10px; }
+.s ::-webkit-scrollbar-track{ background:var(--gold-50); }
+.s ::-webkit-scrollbar-thumb{ background:var(--gold-300); border-radius:99px;
+  border:3px solid var(--gold-50); }
+.s ::-webkit-scrollbar-thumb:hover{ background:var(--fill); }
+
+/* Chữ số phải thẳng cột thì con số mới so sánh được bằng mắt. */
+.s .p, .s .amt, .s .sum, .s .band .cd, .s .card .st, .s .sz i,
+.s .steps .n, .s.adm .kpi .vl, .s.adm td.num, .s.adm th.num,
+.s .chart .heroN, .s .xax span, .s .tl .d, .s .row .d{
+  font-variant-numeric:tabular-nums; }
+
+/* Tiêu đề không nên rơi một chữ xuống dòng cuối. */
+.s h1, .s .h2, .s .empty h3, .s.adm h1{ text-wrap:balance; }
+.s p, .s .lead, .s .note, .s .empty p{ text-wrap:pretty; }
+
+/* ----------------------------------------------------------------- thanh nav */
+.s .nav{ display:flex; align-items:center; gap:15px; padding:14px 18px;
+  border-bottom:1px solid var(--hair); background:#fff; }
+.s .wm{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:14px;
+  letter-spacing:.2em; margin-right:auto; }
+.s .nav a{ font-size:11.5px; color:var(--ink2); }
+.s .nav a.on{ color:var(--link); font-weight:500; }
+/* Icon: Iconsax Linear. Path mang sẵn stroke=currentColor và stroke-width=1.5,
+   nên ở đây chỉ đặt kích thước — không ghi đè nét.
+   Màu thì THỪA HƯỞNG: icon luôn cùng màu với chữ đứng cạnh nó. Muốn khác thì
+   đặt `color` ở chính chỗ chứa nó, đừng đặt vào icon. */
+.s .ic{ width:18px; height:18px; font-size:18px;
+  color:inherit; fill:none; flex:none; }
+/* Duotone (Iconsax Bulk) — chỉ dùng cho trạng thái ĐANG BẬT. Nó tô mảng chứ
+   không kẻ nét, nên phải mở fill lại. Màu vẫn thừa hưởng như icon nét: đặc hay
+   rỗng là kênh phân biệt, không cần thêm kênh màu riêng. */
+.s .ic.duo{ fill:currentColor; }
+
+/* ── Icon đứng cạnh chữ: cắt phần trống trong suốt hai bên khỏi hộp bố trí ──
+   Iconsax vẽ mỗi hình trong ô 24×24 nhưng mỗi hình chiếm một phần khác nhau
+   của ô (`chev` rộng 7,1 đơn vị, `truck` rộng 21,75). Xếp bằng `gap` là xếp
+   hai cái HỘP, nên khoảng cách thấy được phình theo phần trống: đo được từ
+   6,9px tới 12px cho cùng `gap:7px`, và cả cụm icon+chữ lệch phải tới 5,6px.
+
+   Lề âm ở đây kéo hộp về đúng mép mực. Hình vẫn vẽ y nguyên — chỉ cái hộp
+   co lại. KHÔNG áp cho icon đứng một mình (thanh điều hướng, nút quay lại,
+   ô chọn): ở đó hộp vuông chính là vùng chạm 44px.
+
+   `--il` / `--ir` do `mocklib.icon()` gắn vào từng SVG; `1em` = bề ngang
+   icon vì `.ic` có font-size bằng width. Thiếu biến thì mặc định 0. */
+.s .btn > .ic,
+.s .card.vuot .qbtn > .ic,
+.s .chip > .ic,
+.s .badge > .ic,
+.s .side a > .ic,
+.s .sim > .ic,
+.dt .facet > svg{
+  margin-left:calc(var(--il, 0) * -1em);
+  margin-right:calc(var(--ir, 0) * -1em);
+}
+/* Thực đơn KHÔNG nằm trong luật trên: ở đó icon xếp thành một CỘT, mà cắt
+   mỗi hình một kiểu thì nhãn bên cạnh so le nhau. Cột icon phải rộng bằng
+   nhau, kể cả khi hình bên trong to nhỏ khác nhau. */
+.s .ic.sm{ width:15px; height:15px; font-size:15px; }
+.s .cartdot{ position:relative; display:flex; }
+/* Túi ở thanh nav không có nhãn đi kèm, nên trạng thái "giỏ có món" phải tự
+   mang màu: đặc + màu thương hiệu. */
+.s .cartdot svg.duo{ color:var(--link); }
+.s .cartdot b{ position:absolute; top:-7px; right:-9px; background:var(--fill);
+  color:var(--fill-ink);
+  font-size:9px; line-height:1; padding:2.5px 4px; border-radius:99px; font-weight:600; }
+
+/* thanh phụ: quay lại + tiêu đề màn */
+.s .sub{ display:flex; align-items:center; gap:10px; padding:13px 18px;
+  border-bottom:1px solid var(--hair); }
+.s .sub h1{ margin:0; font-size:15px; font-weight:600; }
+.s .sub .rt{ margin-left:auto; font-size:11.5px; color:var(--link); font-weight:500; }
+.s .sub .rt.plain{ color:var(--ink2); font-weight:400; }
+
+/* --------------------------------------------------------------------- dải */
+.s .band{ margin:14px 18px 0; background:var(--band); border-radius:var(--r);
+  padding:10px 13px; display:flex; align-items:baseline; gap:9px; font-size:11.5px;
+  color:var(--band-ink); }
+.s .band b{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; color:var(--ink);
+  font-size:12.5px; letter-spacing:.02em; }
+.s .band .sep{ color:#D4B268; }
+.s .band .cd{ color:var(--ink); font-weight:500; margin-left:auto; }
+
+/* ------------------------------------------------------------------- chữ/lề */
+.s .pad{ padding-left:18px; padding-right:18px; }
+.s .lead{ padding:11px 18px 0; font-size:12.5px; line-height:1.55; color:var(--ink2); max-width:46ch; }
+.s .h2{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:16px;
+  margin:22px 18px 0; letter-spacing:-.01em; }
+.s .note{ font-size:11px; color:var(--ink2); }
+.s .hr{ height:1px; background:var(--hair); margin:18px 0 0; }
+
+/* ------------------------------------------------------------------- nút */
+.s .btn{ display:flex; align-items:center; justify-content:center; gap:7px;
+  background:var(--fill); color:var(--fill-ink); border:1px solid var(--fill);
+  border-radius:var(--r); height:40px; font-size:13px; font-weight:500;
+  letter-spacing:.01em; cursor:pointer; position:relative; }
+/* Nút cao 40px cho nhẹ mắt, nhưng ngón tay vẫn được 44px: lớp phủ vô hình
+   nới vùng chạm ra 2px mỗi bên. Không ảnh hưởng bố cục. */
+.s .btn::after{ content:""; position:absolute; inset:-2px 0; }
+.s .btn.sm::after{ content:none; }
+.s .btn.ghost{ background:#fff; color:var(--link); border-color:var(--fill); }
+.s .btn.quiet{ background:var(--gold-50); color:var(--ink2);
+  border-color:var(--gold-50); }
+.s .btn.sm{ height:34px; font-size:12px; padding:0 14px; display:inline-flex; }
+.s .btn.off{ background:var(--gold-50); color:var(--ink2); border-color:var(--line);
+  border-style:dashed; }
+.s .btn.wide{ margin:0 18px; }
+.s .lnk{ color:var(--link); font-weight:500; text-decoration:underline;
+  text-decoration-thickness:1px; text-underline-offset:3px;
+  text-decoration-color:color-mix(in srgb, var(--link) 45%, transparent); }
+
+/* ------------------------------------------------------------------- ảnh */
+.s .ph{ width:100%; aspect-ratio:4/5; background:var(--plate); border-radius:var(--r);
+  overflow:hidden; }
+.s .ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+.s .hero{ width:100%; background:var(--plate); overflow:hidden; }
+.s .hero img{ width:100%; height:100%; object-fit:cover; display:block; object-position:50% 18%; }
+
+/* ------------------------------------------------------------------ lưới */
+.s .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 12px; padding:16px 18px 0; }
+.s .grid.three{ grid-template-columns:repeat(3,1fr); gap:22px 20px; }
+.s .grid.four{ grid-template-columns:repeat(4,1fr); gap:22px 18px; }
+.s .card h3{ margin:8px 0 0; font-size:13.5px; }
+.s .card .k{ font-size:11px; color:var(--ink2); margin-top:1px; }
+.s .card .p{ font-size:12.5px; margin-top:3px; font-weight:500; }
+.s .card .st{ font-size:10.5px; color:var(--ink2); margin-top:4px; }
+.s .card .st .gone{ text-decoration:line-through; }
+.s .card .st .low{ color:var(--hot); font-weight:500; }
+.s .card .wrap{ position:relative; }
+.s .card .flag{ position:absolute; left:7px; top:7px; background:#fff; color:var(--ink);
+  font-size:9.5px; font-weight:600; padding:3px 6px; border-radius:var(--r-sm);
+  letter-spacing:.02em; }
+.s .card .sold{ position:absolute; inset:0; background:rgba(255,255,255,.72);
+  display:flex; align-items:center; justify-content:center; border-radius:var(--r);
+  font-size:11px; font-weight:600; letter-spacing:.06em; color:var(--ink); }
+
+/* ══ THẺ SẢN PHẨM — băng ảnh vuốt theo màu ═══════════════════════════════
+   Ô ảnh không còn là một tấm: nó là băng ngang, mỗi màu một tấm. Băng này là
+   VÙNG CUỘN THẬT (`overflow-x:auto` + `scroll-snap`) chứ không phải hiệu ứng
+   JS — nên ngón tay, bàn di, con lăn và phím mũi tên đều đi được, và nó không
+   nuốt cú vuốt dọc của trang. JS chỉ tô chấm và phân biệt chạm với vuốt.
+
+   Thẻ để trống chỗ của size và màu, đổi lại giữ đúng hai thứ PRODUCT.md dòng
+   86 gọi là nội dung: dòng "hết XL" khi có size đã hết, và số còn lại khi đã
+   xuống ≤3 chiếc. Cả hai im lặng ở phần lớn thẻ.
+
+   Thẻ là cột dọc và nút bị đẩy xuống đáy: lưới đã kéo mọi thẻ cùng hàng cao
+   bằng nhau, nên không đẩy thì thẻ có dòng "hết XL" sẽ có nút thấp hơn thẻ
+   không có — bốn nút lệch nhau trên cùng một hàng. */
+.s .card.vuot{ display:flex; flex-direction:column; }
+.s .card.vuot .wrap{ border-radius:var(--r); overflow:hidden; }
+.s .card.vuot .slide{ display:flex; overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory; scrollbar-width:none; -ms-overflow-style:none; }
+.s .card.vuot .slide::-webkit-scrollbar{ width:0; height:0; display:none; }
+.s .card.vuot .sl{ flex:0 0 100%; scroll-snap-align:center; scroll-snap-stop:always;
+  background:var(--plate); cursor:pointer; }
+.s .card.vuot .sl img{ width:100%; aspect-ratio:4/5; object-fit:cover; display:block;
+  pointer-events:none; }
+/* Chấm chỉ vị trí phân biệt bằng VÒNG + CỠ, không chỉ bằng màu — màu chấm chỉ
+   để đoán trước trong thẻ có màu gì. */
+.s .card.vuot .cham{ position:absolute; left:0; right:0; bottom:8px;
+  display:flex; justify-content:center; gap:6px; pointer-events:none; }
+.s .card.vuot .cham i{ width:8px; height:8px; border-radius:99px; display:block;
+  box-shadow:inset 0 0 0 1px var(--line), 0 0 0 2px rgba(255,255,255,.92);
+  transition:box-shadow .16s ease, transform .16s ease; }
+.s .card.vuot .cham i.on{ transform:scale(1.3);
+  box-shadow:inset 0 0 0 1px var(--line), 0 0 0 2px #fff,
+             0 0 0 3.5px var(--ink); }
+@media (prefers-reduced-motion:reduce){
+  .s .card.vuot .cham i{ transition:none; }
+  .s .card.vuot .slide{ scroll-behavior:auto; }
+}
+/* hàng giá; số còn lại chỉ nói khi đã xuống ≤3 */
+.s .card .gia2{ display:flex; align-items:baseline; gap:8px; margin-top:4px; }
+.s .card .gia2 .p{ margin:0; }
+.s .card .gia2 .con{ margin-left:auto; font-size:10.5px; color:var(--ink2); }
+.s .card .gia2 .con.it{ color:var(--hot); font-weight:500; }
+/* dòng size đã hết — chỉ hiện khi thật sự có size đã hết */
+.s .card.vuot .thieu{ font-size:10.5px; color:var(--hot); margin-top:3px; }
+.s .card.vuot .thieu s{ text-decoration:line-through; }
+.s .card.vuot .act{ position:relative; margin-top:auto; padding-top:8px; }
+.s .card.vuot .qbtn{ display:flex; align-items:center; justify-content:center; gap:6px;
+  width:100%; height:36px; font:inherit; font-size:12px; font-weight:500;
+  letter-spacing:.01em; color:var(--fill-ink); background:var(--fill);
+  border:1px solid var(--fill); border-radius:var(--r); cursor:pointer;
+  position:relative; }
+/* Nút cao 36px cho thẻ nhẹ, ngón tay vẫn được 44px — cùng mẹo lớp phủ vô hình
+   như `.btn`, không đụng gì tới bố cục. */
+.s .card.vuot .qbtn::after{ content:""; position:absolute; inset:-4px 0; }
+.s .card.vuot .qbtn:hover{ background:var(--gold-400); border-color:var(--gold-400); }
+.s .card.vuot .qbtn.xong{ background:var(--ok-bg); border-color:var(--ok-bg);
+  color:var(--ok); }
+
+/* ── tấm trượt chọn size ─────────────────────────────────────────────────
+   Nút trên thẻ không tự đoán size. Nó mở tấm này — chỗ duy nhất đủ rộng để
+   nói số còn lại của TỪNG size, và cũng là chỗ duy nhất nhắc lại màu người
+   mua vừa vuốt tới. */
+.s .chonsize .dau{ display:flex; gap:12px; align-items:flex-start;
+  padding:2px 18px 0; }
+.s .chonsize .dau img{ width:64px; height:80px; object-fit:cover;
+  border-radius:var(--r); background:var(--plate); flex:none; }
+.s .chonsize .dau .nm{ margin:0; font-size:16px; }
+.s .chonsize .dau .k{ font-size:11px; color:var(--ink2); margin-top:2px; }
+.s .chonsize .dau .p{ font-size:14px; font-weight:500; margin-top:5px; }
+.s .chonsize .nhan{ font-size:11px; color:var(--ink2); padding:16px 18px 7px; }
+.s .chonsize .nhan b{ color:var(--ink); font-weight:600; }
+.s .chonsize .swa{ display:flex; gap:10px; padding:0 18px; }
+.s .chonsize .swa button{ width:34px; height:34px; border-radius:99px; padding:0;
+  border:0; background:none; position:relative; cursor:pointer; flex:none; }
+/* vòng chạm 44px, không đổi bố cục */
+.s .chonsize .swa button::after{ content:""; position:absolute; inset:-5px; }
+/* Ô màu Trắng/Kem trên nền trắng chỉ còn cái viền để nhận ra, nên viền phải
+   đạt 3:1 của WCAG 1.4.11. `--line` là token dành đúng cho việc đó (3,37:1);
+   viền 18% alpha trước đây chỉ được 1,49:1. */
+.s .chonsize .swa i{ display:block; width:100%; height:100%; border-radius:99px;
+  box-shadow:inset 0 0 0 1px var(--line); }
+.s .chonsize .swa button[aria-pressed="true"] i{
+  box-shadow:inset 0 0 0 1px var(--line), 0 0 0 2px #fff,
+             0 0 0 3.5px var(--ink); }
+/* Hàng size ở đây là hàng thường (ô `flex:1`, trải hết bề ngang), KHÔNG
+   phải biến thể `.szrow.w` của bố cục máy tính — `.w` khoá ô ở 68px và xoá
+   lề, nên trên tấm rộng 390px nó dồn hết sang trái.
+   Luật này (0,3,0) thắng `.s .szrow` (0,2,0); nếu có ngày phải đè cả
+   `.s .szrow.w` (0,3,0) thì phải viết `.s .chonsize .szrow.w`, viết sau
+   không đủ. */
+.s .chonsize .szrow{ padding:0 18px; }
+.s .chonsize .thieu{ font-size:11px; color:var(--hot); padding:9px 18px 0; }
+.s .chonsize .thieu s{ text-decoration:line-through; }
+.s .chonsize .nut{ padding:18px; }
+
+/* ------------------------------------------------------------------ nhãn */
+.s .badge{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:500;
+  white-space:nowrap;
+  padding:3px 8px; border-radius:var(--r-sm); background:var(--info-bg); color:var(--info); }
+.s .badge.ok{ background:var(--ok-bg); color:var(--ok); }
+.s .badge.warn{ background:var(--warn-bg); color:var(--warn); }
+.s .badge.hot{ background:var(--hot-bg); color:var(--hot); }
+.s .badge.flat{ background:var(--gold-50); color:var(--ink2); }
+.s .badge i{ width:5px; height:5px; border-radius:99px; background:currentColor; flex:none;
+  font-style:normal; }
+
+/* -------------------------------------------------------------- bộ lọc/chip */
+.s .chips{ display:flex; gap:7px; padding:12px 18px 0; overflow:hidden; }
+.s .chip{ border:1px solid var(--fill); background:#fff; border-radius:var(--r);
+  padding:6px 11px; font-size:11.5px; color:var(--ink2); white-space:nowrap; }
+.s .chip.on{ background:var(--fill); border-color:var(--fill); color:var(--fill-ink);
+  font-weight:500; }
+.s .chip.icon{ display:inline-flex; align-items:center; gap:5px; }
+
+/* --------------------------------------------------------------- ô nhập */
+.s .field{ padding:13px 18px 0; }
+.s .field label{ display:block; font-size:11px; color:var(--ink2); margin-bottom:5px; }
+.s .inp{ width:100%; height:44px; border:1px solid var(--line); border-radius:var(--r);
+  background:#fff; padding:0 12px; font-size:13px; color:var(--ink);
+  display:flex; align-items:center; }
+.s .inp.ph2{ color:#7A6F5A; }   /* 4,94:1 — chữ gợi ý vẫn phải đọc được */
+.s .inp.area{ height:78px; align-items:flex-start; padding-top:11px; }
+.s .inp.sel{ justify-content:space-between; }
+/* ── ô chọn của biểu mẫu ───────────────────────────────────────────────
+   Cùng một tấm thực đơn với nút thả xuống của bảng — cùng dấu tích, cùng
+   bóng, cùng cách mở. Nhưng CÁI NÚT thì phải trông như một ô nhập, vì nó
+   đứng cạnh các ô Tên, Giá, SKU chứ không đứng cạnh chip lọc. */
+.s .selwrap{ display:block; }
+.s button.selbtn{ width:100%; justify-content:space-between; gap:8px;
+  font:inherit; text-align:left; cursor:pointer; }
+.s .selbtn .t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.s .selbtn > svg{ width:14px; height:14px; flex:none; color:var(--ink2);
+  transition:transform .16s cubic-bezier(.16,1,.3,1); }
+.s .selbtn[aria-expanded="true"] > svg{ transform:rotate(180deg); }
+.s .selbtn:hover{ background:var(--gold-50); }
+.s .selbtn[aria-expanded="true"]{ border-color:var(--fill-bd); }
+@media (prefers-reduced-motion:reduce){ .s .selbtn > svg{ transition:none; } }
+.s .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.s .err{ font-size:10.5px; color:var(--hot); margin-top:5px; display:flex; gap:5px; align-items:center; }
+.s .inp.bad{ border-color:var(--hot); border-width:1.5px; }
+.s .check{ display:flex; gap:9px; align-items:flex-start; padding:13px 18px 0; font-size:12px; }
+.s .box{ width:17px; height:17px; border:1px solid var(--line); border-radius:var(--r-sm);
+  flex:none; margin-top:1px; }
+.s .box.on{ background:var(--fill); border-color:var(--fill); position:relative; }
+.s .box.on::after{ content:""; position:absolute; left:5px; top:2px; width:4px; height:8px;
+  border:solid var(--fill-ink); border-width:0 2px 2px 0; transform:rotate(43deg); }
+.s .radio{ width:17px; height:17px; border:1px solid var(--line); border-radius:99px; flex:none;
+  margin-top:1px; }
+.s .radio.on{ border:5px solid var(--fill); }
+
+/* --------------------------------------------------------------- chọn size */
+.s .szrow{ display:flex; gap:7px; padding:9px 18px 0; }
+.s .szrow.w{ padding:0; gap:8px; }
+.s .sz{ flex:1; border:1px solid var(--fill); background:#fff; border-radius:var(--r);
+  text-align:center; padding:9px 2px; }
+.s .szrow.w .sz{ flex:0 0 68px; }
+.s .sz b{ display:block; font-size:13px; font-weight:600; }
+.s .sz i{ font-style:normal; font-size:10px; color:var(--ink2); }
+.s .sz.low i{ color:var(--hot); }
+.s .sz.gone{ background:var(--gold-50); border-color:var(--line); border-style:dashed; }
+.s .sz.gone b{ color:var(--ink2); text-decoration:line-through; }
+.s .sz.gone i{ color:var(--ink2); }
+.s .sz.on{ background:var(--fill); border-color:var(--fill); }
+.s .sz.on b, .s .sz.on i{ color:var(--fill-ink); }
+
+/* ------------------------------------------------------------------- hàng */
+.s .rows{ margin:12px 18px 0; border:1px solid var(--hair); border-radius:var(--r);
+  overflow:hidden; }
+.s .row{ display:flex; gap:12px; align-items:center; padding:13px 14px;
+  border-top:1px solid var(--hair); }
+.s .rows .row:first-child{ border-top:0; }
+.s .row .grow{ flex:1; min-width:0; }
+.s .row .t{ font-size:12.5px; font-weight:500; display:block; }
+.s .row .d, .s .tl .t, .s .tl .d{ display:block; }
+.s .row .d{ font-size:11px; color:var(--ink2); margin-top:2px; }
+.s .row .amt{ font-size:12.5px; font-weight:500; white-space:nowrap; }
+.s .row .thumb{ width:52px; height:65px; border-radius:var(--r-sm); background:var(--plate);
+  overflow:hidden; flex:none; }
+.s .row .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.s .chev{ width:15px; height:15px; color:var(--ink2); fill:none; flex:none; }
+
+/* ------------------------------------------------------- một dòng trong giỏ
+   Ba cột: ảnh · tên và số lượng · tiền. Cột phải giãn hết chiều cao dòng nên
+   giá bám mép trên, nút Xoá bám mép dưới. Mắt đi thẳng một đường từ tên sang
+   giá rồi xuống hành động, thay vì zig-zag qua giữa dòng. */
+.s .row.cartline{ align-items:stretch; }
+.s .cartline .thumb{ align-self:flex-start; }
+.s .cartline .grow{ display:flex; flex-direction:column; }
+.s .cartline .side{ display:flex; flex-direction:column; align-items:flex-end;
+  justify-content:space-between; gap:8px; flex:none; }
+.s .cartline .amt{ font-variant-numeric:tabular-nums; }
+.s .cartline .rm{ background:none; border:0; padding:0; font:inherit; font-size:11.5px;
+  color:var(--link); font-weight:500; text-decoration:underline; text-underline-offset:2px;
+  cursor:pointer; }
+/* Nhắn khi số vừa gõ vượt quá số đã cắt cho đợt. Đợt đã cắt là cắt một lần —
+   gõ 99 vào ô không sinh thêm áo, nên nói thẳng thay vì im lặng sửa số. */
+.s .cartline .cap{ display:block; font-size:10.5px; color:var(--hot); margin-top:6px;
+  max-width:19ch; line-height:1.4; }
+.s .cartline .cap[hidden]{ display:none; }
+
+/* ô số lượng: gõ được, không chỉ bấm tăng giảm từng nấc */
+.s .qty{ display:inline-flex; align-items:center; align-self:flex-start; margin-top:9px;
+  height:36px; background:#fff; border:1px solid var(--fill); border-radius:var(--r);
+  overflow:hidden; }
+.s .qb{ position:relative; width:32px; height:100%; flex:none; display:flex;
+  align-items:center; justify-content:center; padding:0; background:none; border:0;
+  color:var(--ink); cursor:pointer; }
+/* Nút trông 32×34 nhưng vùng chạm đủ 44×44 — đã đo, không ước lượng. */
+.s .qb::after{ content:""; position:absolute; inset:-5px -6px; }
+.s .qb:hover:not(:disabled){ background:var(--gold-50); }
+.s .qb:disabled{ color:var(--line); cursor:not-allowed; }
+.s .qn{ width:40px; height:100%; padding:0; text-align:center; background:#fff;
+  border:0; border-left:1px solid var(--hair); border-right:1px solid var(--hair);
+  font-family:inherit; font-size:12.5px; font-weight:500; color:var(--ink);
+  font-variant-numeric:tabular-nums; -webkit-appearance:none; appearance:none; }
+.s .qn:focus{ background:var(--gold-50); }
+
+/* ---------------------------------------------------------------- tổng tiền */
+.s .sum{ margin:14px 18px 0; background:var(--gold-50); border-radius:var(--r); padding:13px 14px; }
+.s .sum div{ display:flex; justify-content:space-between; font-size:12px; padding:4px 0;
+  color:var(--ink2); }
+.s .sum div.tot{ border-top:1px solid var(--gold-200); margin-top:6px; padding-top:9px;
+  color:var(--ink); font-size:14px; font-weight:600; }
+
+/* ------------------------------------------------------------------- bước */
+.s .steps{ display:flex; align-items:flex-start; padding:15px 18px 0; }
+.s .steps .st{ display:flex; flex-direction:column; align-items:center; gap:7px; flex:none; }
+.s .steps .n{ width:28px; height:28px; border-radius:var(--r); display:flex;
+  align-items:center; justify-content:center; font-size:12px; font-weight:600;
+  background:var(--gold-100); color:var(--ink2); }
+.s .steps .st.done .n, .s .steps .st.now .n{ background:var(--fill); color:var(--fill-ink); }
+.s .steps .n svg{ width:13px; height:8.7px; color:var(--fill-ink); fill:none; }
+.s .steps .t{ font-size:10px; color:var(--ink2); white-space:nowrap; }
+.s .steps .st.now .t{ color:var(--ink); font-weight:600; }
+.s .steps .ln{ flex:1; height:2px; background:var(--hair); margin:13px 3px 0;
+  border-radius:99px; min-width:14px; }
+.s .steps .ln.on{ background:var(--mark); }
+
+/* ------------------------------------------------------------- dòng thời gian */
+.s .tl{ margin:14px 18px 0; }
+.s .tl .it{ display:flex; gap:12px; }
+.s .tl .gut{ display:flex; flex-direction:column; align-items:center; flex:none; width:16px; }
+.s .tl .dot{ width:10px; height:10px; border-radius:99px; background:var(--hair); margin-top:4px; }
+.s .tl .it.done .dot{ background:var(--mark); }
+.s .tl .it.now .dot{ background:var(--mark); box-shadow:0 0 0 4px var(--gold-100); }
+.s .tl .stem{ width:2px; flex:1; background:var(--hair); margin:3px 0; }
+.s .tl .it.done .stem{ background:var(--mark); }
+.s .tl .bd{ padding-bottom:16px; }
+.s .tl .t{ font-size:12.5px; font-weight:500; }
+.s .tl .d{ font-size:11px; color:var(--ink2); margin-top:1px; }
+.s .tl .it.todo .t{ color:var(--ink2); font-weight:400; }
+
+/* ------------------------------------------------------------- trạng thái rỗng */
+.s .empty{ padding:46px 30px; text-align:center; }
+.s .empty .ring{ width:56px; height:56px; border-radius:99px; background:var(--gold-50);
+  display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+.s .empty .ring svg{ width:24px; height:24px; color:var(--link); fill:none; }
+.s .empty h3{ font-size:14.5px; margin:0 0 5px; font-family:"Familjen Grotesk",sans-serif;
+  font-weight:700; }
+.s .empty p{ font-size:12px; color:var(--ink2); margin:0 0 16px; line-height:1.55; }
+
+/* ------------------------------------------------------------------- tab bar */
+.s .tabs{ display:flex; border-bottom:1px solid var(--hair); padding:0 18px; gap:18px; }
+.s .tabs span{ font-size:12px; color:var(--ink2); padding:11px 0; border-bottom:2px solid transparent;
+  margin-bottom:-1px; }
+.s .tabs span.on{ color:var(--ink); font-weight:500; border-bottom-color:var(--fill); }
+
+/* ====================================================== khu quản trị (desktop) */
+.s.adm{ display:flex; min-height:100%; background:var(--gold-50); }
+.s.adm .side{ width:208px; flex:none; background:#fff; border-right:1px solid var(--hair);
+  padding:18px 0; }
+.s.adm .side .wm{ padding:0 18px 16px; display:block; }
+.s.adm .side a{ display:flex; align-items:center; gap:9px; padding:9px 18px; font-size:12.5px;
+  color:var(--ink2); }
+.s.adm .side a.on{ color:var(--gold-800); font-weight:600; background:var(--gold-50);
+  box-shadow:inset 2px 0 0 var(--mark); }
+.s.adm .main{ flex:1; min-width:0; padding:20px 24px 26px; }
+.s.adm .top{ display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+.s.adm h1{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:21px; margin:0;
+  letter-spacing:-.01em; }
+.s.adm .top .rt{ margin-left:auto; display:flex; gap:9px; align-items:center; }
+.s.adm .sim{ display:inline-flex; align-items:center; gap:6px; font-size:10.5px; color:var(--warn);
+  background:var(--warn-bg); padding:4px 9px; border-radius:var(--r); font-weight:500; }
+.s.adm .panel{ background:#fff; border:1px solid var(--hair); border-radius:var(--r);
+  margin-top:16px; }
+.s.adm .panel > .hd{ display:flex; align-items:center; gap:10px; padding:13px 16px;
+  border-bottom:1px solid var(--hair); }
+.s.adm .panel > .hd h2{ font-size:13.5px; margin:0; font-weight:600; }
+.s.adm .panel > .hd .rt{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+.s.adm .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:16px; }
+.s.adm .kpi{ background:#fff; border:1px solid var(--hair); border-radius:var(--r); padding:14px 15px; }
+.s.adm .kpi .lb{ font-size:11px; color:var(--ink2); }
+.s.adm .kpi .vl{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:23px;
+  margin-top:5px; letter-spacing:-.02em; }
+.s.adm .kpi .ghi{ font-size:10.5px; color:var(--ink2); margin-top:4px; }
+/* Bảng thường của khu quản trị (bảng số trong biểu đồ, tồn kho theo size,
+   món trong đơn…). `:not(.dtt)` là bắt buộc: bảng của component `.dt` cũng nằm
+   trong `.s.adm`, mà `.s.adm th` (0,2,1) thắng `.dt th` (0,1,1) nên nếu không
+   loại ra thì nhãn tiêu đề bị cộng dồn hai lớp padding và lệch 14px so với ô
+   bên dưới — đã đo, đã dính. */
+.s.adm table:not(.dtt){ width:100%; border-collapse:collapse; }
+.s.adm table:not(.dtt) th{ text-align:left; font-size:10.5px; font-weight:500;
+  color:var(--ink2); padding:9px 16px; border-bottom:1px solid var(--hair);
+  white-space:nowrap; }
+.s.adm table:not(.dtt) td{ font-size:12px; padding:11px 16px;
+  border-bottom:1px solid var(--hair); vertical-align:middle; }
+.s.adm table:not(.dtt) td b{ white-space:nowrap; }
+.s.adm table:not(.dtt) tr:last-child td{ border-bottom:0; }
+.s.adm table:not(.dtt) td.num, .s.adm table:not(.dtt) th.num{ text-align:right;
+  font-variant-numeric:tabular-nums; }
+.s.adm .pill, .dt .pill{ width:34px; height:42px; border-radius:var(--r-sm); background:var(--plate);
+  overflow:hidden; }
+.s.adm .pill img, .dt .pill img{ width:100%; height:100%; object-fit:cover; display:block; }
+.s.adm .cellrow, .dt .cellrow{ display:flex; align-items:center; gap:10px; }
+.s.adm .inp{ height:34px; font-size:12px; }
+.s.adm .field{ padding:0; }
+.s.adm .fgrid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:16px; }
+.s.adm .fgrid .full{ grid-column:1 / -1; }
+.s.adm .fgrid label{ display:block; font-size:11px; color:var(--ink2); margin-bottom:5px; }
+
+/* ═════════════════════════════════════════════════════ BẢNG DỮ LIỆU (.dt)
+
+   Bộ mặt cho TanStack Table. TanStack không vẽ gì cả — nó chỉ trả về model
+   đã lọc / sắp xếp / phân trang / chọn. Vẽ ra sao là việc của chỗ này.
+   Mỗi mảnh dưới đây là phần nhìn thấy được của đúng một model, và mang tên
+   theo API sinh ra nó, để lúc dựng thật chỉ việc tra:
+
+     .bar .find        globalFilter
+     .bar .facet       columnFilters  +  getFacetedUniqueValues
+     .bar .colsbtn     columnVisibility
+     .bar.bulk         getSelectedRowModel()
+     th .sortb         sorting  +  getSortedRowModel
+     .ck               rowSelection  (getToggleAllRowsSelectedHandler)
+     .expb             expanded  +  getExpandedRowModel
+     th .grip          columnSizing
+     .pin              columnPinning
+     .foot .pager      pagination  +  getPaginationRowModel
+
+   Thứ TanStack KHÔNG lo, phải tự làm: ba trạng thái rỗng (chưa có gì · lọc
+   không ra · lỗi) — ba câu khác nhau, đừng gộp làm một.
+
+   Mọi thứ nằm gọn trong .dt, không dính vào .s.adm, nên đặt ở trang nào
+   cũng chạy. */
+.dt{ background:#fff; border:1px solid var(--hair); border-radius:var(--r);
+  margin-top:16px; }
+
+/* ── thanh công cụ ─────────────────────────────────────────────────────── */
+.dt .bar{ display:flex; align-items:center; gap:8px; padding:11px 12px;
+  border-bottom:1px solid var(--hair); min-height:58px; flex-wrap:wrap; }
+.dt .bar[hidden]{ display:none; }
+.dt .find{ position:relative; display:flex; align-items:center; }
+.dt .find > svg{ position:absolute; left:10px; width:15px; height:15px;
+  color:var(--ink2); pointer-events:none; }
+.dt .find input{ height:34px; width:232px; padding:0 12px 0 32px; font:inherit;
+  font-size:12px; color:var(--ink); background:#fff; border:1px solid var(--line);
+  border-radius:var(--r); -webkit-appearance:none; appearance:none; }
+.dt .find input::placeholder{ color:#7A6F5A; }
+.dt .find input:focus{ border-color:var(--fill); }
+
+/* ── Căn chữ theo NÉT, không theo hộp font ──────────────────────────────────
+   Hộp dòng của font này có phần trên cao hơn phần dưới (nó chừa chỗ cho dấu
+   tiếng Việt xếp tầng). Nên căn giữa hộp dòng KHÔNG phải là căn giữa chữ: đo
+   được nhãn trong nút thả xuống nằm 10,8px dưới mép trên nhưng 12,3px trên mép
+   dưới — cao hơn tâm 0,75px, đủ để mắt thấy gợn.
+
+   `text-box` cắt hộp dòng về đúng dải chữ hoa → chân chữ, nên `align-items:
+   center` căn đúng cái mắt nhìn. Đo lại sau khi áp: 11,54 / 11,56.
+
+   Cố ý cắt tới `alphabetic` chứ không tới đáy nét: nếu tính cả phần đuôi chữ
+   (dấu nặng, chữ g) thì nhãn có đuôi sẽ nhảy so với nhãn không có đuôi.
+   Chrome 133+; trình duyệt chưa hỗ trợ thì bỏ qua luật này và giữ như cũ. */
+.dt .facet .t, .dt .find input,
+.dt th .sortb > span, .dt th .lb{ text-box: trim-both cap alphabetic; }
+
+/* Nút thả xuống — kiểu C, chốt 20/09/2026.
+
+   Mảng vàng nhạt, viền cùng họ vàng nhưng ở bậc `gold-600`: 3,08:1 trên nền
+   trắng, tức vẫn là một ranh giới nhìn thấy được chứ không chỉ là mảng màu.
+   Bốn trạng thái đi lên dần theo độ đậm của mảng — rảnh, di chuột, đang mở,
+   đang lọc — nên không trạng thái nào phải dựa vào riêng màu để phân biệt. */
+.dt .facet{ display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 11px;
+  font:inherit; font-size:12px; color:var(--ink2); background:var(--gold-100);
+  border:1px solid var(--gold-600); border-radius:var(--r); cursor:pointer;
+  white-space:nowrap; }
+.dt .facet svg{ width:14px; height:14px; font-size:14px; flex:none;
+  transition:transform .16s cubic-bezier(.16,1,.3,1); }
+/* Mũi tên quay xuống khi thực đơn đang mở. Icon của nút "Cột" nằm TRƯỚC nhãn và
+   không phải mũi tên, nên nó đứng yên. */
+.dt .facet:not(.colsbtn)[aria-expanded="true"] svg{ transform:rotate(180deg); }
+@media (prefers-reduced-motion:reduce){ .dt .facet svg{ transition:none; } }
+/* Đang mở thực đơn phải trông ít nhất bằng lúc di chuột — nếu không, rời
+   chuột ra là chip trông như đang rảnh dù thực đơn vẫn bày ra. */
+.dt .facet:hover, .dt .facet[aria-expanded="true"]{ background:var(--gold-200); }
+/* Lọc đang bật đổi bốn thứ cùng lúc: nền đậm thêm, viền đậm thêm, chữ đậm
+   thêm, và mọc ra con số đếm. Không dựa vào riêng màu để nói "đang bật". */
+.dt .facet.on{ background:var(--gold-200); border-color:var(--gold-700);
+  color:var(--ink); font-weight:600; }
+.dt .facet.on:hover, .dt .facet.on[aria-expanded="true"]{ background:var(--gold-300); }
+.dt .facet .n[hidden]{ display:none; }
+/* Huy hiệu số đếm dùng MỰC chứ không dùng mật ong: đặt mật ong lên chính nền
+   vàng của nút thì nó tan vào nền. */
+.dt .facet .n{ display:inline-flex; align-items:center; justify-content:center;
+  min-width:18px; height:18px; padding:0 5px; border-radius:var(--r-sm);
+  background:var(--ink); color:var(--gold-100); font-size:10.5px; font-weight:600;
+  font-variant-numeric:tabular-nums; }
+.dt .clearf{ font:inherit; font-size:11.5px; color:var(--link); background:none;
+  border:0; padding:6px 4px; cursor:pointer; text-decoration:underline;
+  text-underline-offset:2px; white-space:nowrap; }
+/* Đẩy phần còn lại sang phải. KHÔNG dùng lại tên này cho việc khác:
+   `querySelector('.bar .spacer')` phải chỉ trúng đúng một thứ. */
+.dt .spacer{ margin-left:auto; }
+.dt .fwrap{ position:relative; display:inline-flex; }
+.dt .menu .dem{ margin-left:auto; color:var(--ink2); font-size:11px;
+  font-variant-numeric:tabular-nums; }
+.dt .foot .rt{ margin-left:auto; display:flex; align-items:center; gap:14px; }
+
+
+/* ── thanh thao tác hàng loạt ──────────────────────────────────────────────
+   Chọn dòng thì thanh công cụ ĐỔI VAI ngay tại chỗ chứ không mọc thêm một
+   thanh nổi: bảng không nhảy, và mắt không phải đi tìm chỗ mới. Đây là
+   khoảnh khắc chuyển động duy nhất của bảng. */
+.dt .bar.bulk{ background:var(--gold-100); border-bottom-color:var(--gold-200);
+  animation:dtbulk .24s cubic-bezier(.16,1,.3,1); }
+@keyframes dtbulk{ from{ opacity:0; transform:translateY(-4px) }
+                   to{ opacity:1; transform:none } }
+.dt .bar.bulk .cnt{ font-size:12.5px; font-weight:600; color:var(--ink);
+  font-variant-numeric:tabular-nums; }
+
+/* ── bảng ──────────────────────────────────────────────────────────────── */
+.dt .scroll{ overflow-x:auto; }
+.dt table{ width:100%; border-collapse:separate; border-spacing:0; }
+.dt th{ position:sticky; top:0; z-index:2; background:#fff; text-align:left;
+  padding:0; height:38px; white-space:nowrap; border-bottom:1px solid var(--hair); }
+.dt td{ padding:11px 14px; font-size:12px; color:var(--ink); background:#fff;
+  vertical-align:middle; border-bottom:1px solid var(--hair); }
+.dt tbody tr:last-child td{ border-bottom:0; }
+.dt th.num, .dt td.num{ text-align:right; }
+.dt td.num, .dt .tnum{ font-variant-numeric:tabular-nums; }
+.dt td .note{ font-size:10.5px; color:var(--ink2); }
+.dt tbody tr:hover td{ background:var(--gold-50); }
+.dt tbody tr.on td{ background:var(--gold-100); }
+.dt tbody tr.on:hover td{ background:var(--gold-200); }
+.dt tbody tr[hidden]{ display:none; }
+.dt tbody tr.norow td{ padding:0; border-bottom:0; }
+.dt tbody tr.norow:hover td{ background:#fff; }
+
+.dt th .lb{ display:flex; align-items:center; height:100%; padding:0 14px;
+  font-size:10.5px; font-weight:500; color:var(--ink2); }
+.dt th.num .lb{ justify-content:flex-end; }
+.dt th .sortb{ display:flex; align-items:center; gap:5px; width:100%; height:100%;
+  padding:0 14px; font:inherit; font-size:10.5px; font-weight:500; color:var(--ink2);
+  background:none; border:0; cursor:pointer; }
+.dt th.num .sortb{ justify-content:flex-end; }
+.dt th .sortb:hover{ color:var(--ink); background:var(--gold-50); }
+/* Chỗ của mũi tên luôn được giữ sẵn, nên bấm sắp xếp không làm cột nhảy sang
+   trái phải một nhịp. */
+.dt th .ar{ width:12px; height:12px; flex:none; color:var(--line); opacity:0;
+  transition:opacity .12s ease, transform .18s cubic-bezier(.16,1,.3,1); }
+.dt th .sortb:hover .ar{ opacity:.85; }
+.dt th.srt .sortb{ color:var(--ink); font-weight:600; }
+.dt th.srt .ar{ opacity:1; color:var(--mark); }
+.dt th.srt.asc .ar{ transform:rotate(180deg); }
+.dt th .grip{ position:absolute; right:0; top:9px; bottom:9px; width:5px;
+  border-radius:3px; cursor:col-resize; }
+.dt th .grip:hover{ background:var(--fill); }
+
+/* ô đánh dấu — cả hàng đầu (chọn tất cả, có trạng thái nửa vời) lẫn từng dòng */
+.dt .selc{ width:42px; padding-right:0; }
+.dt th.selc .lb{ padding-right:0; }
+.dt .ck{ position:relative; width:16px; height:16px; flex:none; padding:0;
+  display:inline-flex; align-items:center; justify-content:center; cursor:pointer;
+  background:#fff; border:1px solid var(--line); border-radius:var(--r-sm); }
+.dt .ck::after{ content:""; position:absolute; inset:-14px; }
+/* Ô vẽ đã cắt sát nét (xem `tick()`), nên đây là cỡ THẬT của dấu tích:
+   11 × 7,3px trong ô 16px — lấp 69% thay vì 24% như trước. */
+.dt .ck svg{ width:11px; height:7.3px; color:var(--fill-ink); opacity:0; }
+.dt .ck[aria-checked="true"], .dt .ck[aria-checked="mixed"]{
+  background:var(--fill); border-color:var(--fill); }
+.dt .ck[aria-checked="true"] svg{ opacity:1; }
+.dt .ck[aria-checked="mixed"]::before{ content:""; position:absolute; left:3px; right:3px;
+  height:2px; border-radius:1px; background:var(--fill-ink); }
+
+/* mở rộng dòng — dùng đúng một chỗ, ở bảng đơn, để xem món trong đơn mà
+   không phải rời danh sách */
+.dt .expc{ width:34px; padding-left:10px; padding-right:0; }
+.dt .expb{ position:relative; width:24px; height:24px; padding:0; display:flex;
+  align-items:center; justify-content:center; background:none; border:0;
+  border-radius:var(--r-sm); color:var(--ink2); cursor:pointer; }
+.dt .expb::after{ content:""; position:absolute; inset:-10px; }
+.dt .expb:hover{ background:var(--gold-100); color:var(--ink); }
+.dt .expb svg{ width:14px; height:14px;
+  transition:transform .18s cubic-bezier(.16,1,.3,1); }
+.dt tr.open .expb svg{ transform:rotate(90deg); }
+.dt tr.dtsub td{ background:var(--gold-50); padding:0 14px 14px 48px; }
+.dt tr.dtsub .inner{ background:#fff; border:1px solid var(--hair); border-radius:var(--r);
+  padding:11px 13px; }
+.dt tr.dtsub .il{ display:flex; align-items:center; gap:10px; font-size:11.5px;
+  padding:5px 0; }
+.dt tr.dtsub .il + .il{ border-top:1px solid var(--hair); }
+.dt tr.dtsub .il .g{ flex:1; }
+.dt tr.dtsub .il .a{ font-variant-numeric:tabular-nums; font-weight:500; }
+
+/* thao tác trên từng dòng */
+.dt .actc{ width:1%; white-space:nowrap; text-align:right; }
+.dt .actc .wrap{ display:inline-flex; align-items:center; gap:2px;
+  justify-content:flex-end; }
+.dt .more{ position:relative; width:26px; height:26px; padding:0; display:inline-flex;
+  align-items:center; justify-content:center; background:none; border:0;
+  border-radius:var(--r-sm); color:var(--ink2); cursor:pointer; }
+.dt .more::after{ content:""; position:absolute; inset:-9px; }
+.dt .more:hover{ background:var(--gold-100); color:var(--ink); }
+.dt .more svg{ width:16px; height:16px; }
+
+/* cột ghim: bảng đơn rộng hơn cửa sổ hẹp, ghim cột đầu để cuộn ngang vẫn
+   biết đang đọc dòng nào. Bóng chỉ hiện khi đã cuộn, không vẽ sẵn. */
+.dt .pin{ position:sticky; left:0; z-index:1; }
+.dt th.pin{ z-index:3; }
+.dt.slid .pin::after{ content:""; position:absolute; top:0; bottom:-1px; right:-15px;
+  width:15px; pointer-events:none;
+  background:linear-gradient(90deg, rgba(33,29,18,.10), rgba(33,29,18,0)); }
+
+/* thực đơn thả xuống — dùng cho chọn cột và cho thao tác dòng */
+/* `fixed`, không phải `absolute`.
+
+   Thực đơn của một dòng nằm trong `.scroll`, mà `.scroll` có `overflow-x:auto`
+   — theo chuẩn CSS, một trục khác `visible` thì trục kia tự thành `auto`. Nên
+   nó cắt cả CHIỀU DỌC dù mình không hề đặt, và thực đơn của dòng cuối bảng bị
+   nuốt sạch. `fixed` thoát khỏi mọi vùng cắt của tổ tiên.
+
+   Toạ độ do app.js tính lúc mở, kèm lật trái/lên khi chạm mép khung. Đổi lại:
+   cuộn thì thực đơn không đi theo nút, nên cuộn là đóng. */
+.dt .menu, .s .selm{ position:fixed; z-index:65; min-width:196px; padding:5px; background:#fff;
+  border:1px solid var(--hair); border-radius:var(--r);
+  box-shadow:0 12px 28px rgba(33,29,18,.15), 0 2px 6px rgba(33,29,18,.07); }
+.dt .menu[hidden], .s .selm[hidden]{ display:none; }
+.dt .menu h5, .s .selm h5{ margin:0; padding:7px 9px 5px; font-size:10px; font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); }
+.dt .menu button, .s .selm button{ display:flex; align-items:center; gap:9px; width:100%; padding:7px 9px;
+  font:inherit; font-size:12px; color:var(--ink); background:none; border:0;
+  border-radius:var(--r-sm); cursor:pointer; text-align:left; }
+.dt .menu button:hover, .s .selm button:hover{ background:var(--gold-50); }
+.dt .menu button > svg, .s .selm button > svg{ width:14px; height:14px; flex:none; color:var(--mark); }
+/* Thực đơn có mục đánh dấu (lọc theo mặt, chọn cột, số dòng mỗi trang) dùng
+   cột icon 20px: dấu tích của Iconsax chỉ chiếm 8,5/24 bề ngang ô vẽ, nên ở
+   14px nó bé như hạt gạo. Cả cột cùng 20px để nhãn vẫn thẳng hàng. */
+/* Cột dấu tích rộng 20px để nhãn thẳng hàng, nhưng NÉT tích chỉ vẽ
+   10 × 6,7px bên trong (ô vẽ đã cắt sát nét — xem `tick()`, và SVG tự canh
+   giữa phần thừa). Hai con số này là cỡ THẬT, nét dày 1,76px: đọc rõ cạnh
+   chữ 12px mà không đè lên nó. Đặt 20×20 thì nét thành 3,5px — đậm hơn cả
+   chữ bên cạnh. */
+.dt .menu.dau button > svg, .s .selm button > svg{ width:20px; height:6.7px; }
+.dt .menu button[aria-checked="false"] > svg, .s .selm button[aria-checked="false"] > svg{ visibility:hidden; }
+.dt .menu button.bad{ color:var(--hot); }
+.dt .menu button.bad > svg{ color:var(--hot); visibility:visible; }
+.dt .menu hr, .s .selm hr{ margin:5px 0; border:0; border-top:1px solid var(--hair); }
+
+/* ── chân bảng ─────────────────────────────────────────────────────────── */
+.dt .foot{ display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  min-height:50px; padding:10px 14px; border-top:1px solid var(--hair);
+  font-size:11.5px; color:var(--ink2); }
+.dt .foot .tnum{ color:var(--ink); font-weight:500; }
+/* Số dòng mỗi trang trước đây là `<select>` của trình duyệt — lạc lõng giữa
+   các nút thả xuống khác. Nay là ĐÚNG component `.facet` + `.menu`, chỉ hạ
+   xuống 30px cho khớp thang của chân bảng. */
+.dt .foot .perlb{ display:inline-flex; align-items:center; gap:7px; }
+.dt .foot .facet{ height:30px; font-size:11.5px; padding:0 9px; }
+.dt .foot .facet .t{ font-variant-numeric:tabular-nums; }
+.dt .foot .menu{ min-width:132px; }
+.dt .pager{ display:flex; gap:3px; }
+/* `gold-600` là màu ranh giới duy nhất của component này — nút thả xuống và
+   nút chuyển trang cùng dùng một mã. */
+.dt .pager button{ width:30px; height:30px; padding:0; display:flex; align-items:center;
+  justify-content:center; background:#fff; border:1px solid var(--gold-600);
+  border-radius:var(--r-sm); color:var(--ink); cursor:pointer; }
+.dt .pager button:hover:not(:disabled){ background:var(--gold-50); }
+.dt .pager button:disabled{ color:var(--line); border-color:var(--hair);
+  cursor:not-allowed; }
+.dt .pager svg{ width:14px; height:14px; }
+.dt .pager .prev svg{ transform:rotate(180deg); }
+
+/* ── ba trạng thái rỗng và một trạng thái đang tải ─────────────────────── */
+.dt .blank{ padding:48px 24px; text-align:center; }
+.dt .blank .ring{ width:46px; height:46px; margin:0 auto 13px; border-radius:99px;
+  background:var(--gold-100); display:flex; align-items:center; justify-content:center; }
+.dt .blank .ring svg{ width:22px; height:22px; color:var(--link); fill:currentColor; }
+.dt .blank.bad .ring{ background:var(--hot-bg); }
+.dt .blank.bad .ring svg{ color:var(--hot); }
+.dt .blank h4{ margin:0 0 6px; font-size:13.5px; font-weight:600; color:var(--ink); }
+.dt .blank p{ margin:0 auto 15px; max-width:44ch; font-size:12px; color:var(--ink2);
+  line-height:1.62; text-wrap:pretty; }
+.dt .blank .go{ display:inline-flex; gap:8px; justify-content:center; }
+.dt .skel td{ padding-top:14px; padding-bottom:14px; }
+.dt .skel i{ display:block; height:10px; border-radius:3px; background:var(--hair);
+  animation:dtpulse 1.6s ease-in-out infinite; }
+.dt .skel tr:nth-child(2) i{ animation-delay:.12s; }
+.dt .skel tr:nth-child(3) i{ animation-delay:.24s; }
+.dt .skel tr:nth-child(4) i{ animation-delay:.36s; }
+@keyframes dtpulse{ 0%,100%{ opacity:1 } 50%{ opacity:.4 } }
+@media (prefers-reduced-motion:reduce){
+  .dt .bar.bulk, .dt .skel i{ animation:none; }
+  .dt th .ar, .dt .expb svg{ transition:none; }
+}
+
+/* thanh cuộn ngang của bảng — không nhận thì nó mang mặc định của hệ điều hành */
+.dt .scroll::-webkit-scrollbar{ height:9px; }
+.dt .scroll::-webkit-scrollbar-track{ background:var(--gold-50); }
+.dt .scroll::-webkit-scrollbar-thumb{ background:var(--gold-300); border-radius:99px;
+  border:2px solid var(--gold-50); }
+.dt .scroll::-webkit-scrollbar-thumb:hover{ background:var(--fill); }
+
+/* ------------------------------------------------------------------ biểu đồ */
+.s .chart{ padding:16px; }
+.s .chart .heroN{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:28px;
+  letter-spacing:-.02em; }
+.s .chart .heroL{ font-size:11px; color:var(--ink2); margin-top:2px; }
+.s .plot{ display:flex; align-items:flex-end; gap:6px; height:132px; margin-top:16px;
+  border-bottom:1px solid var(--hair); }
+.s .plot .b{ flex:1; background:var(--mark); border-radius:4px 4px 0 0; position:relative; }
+.s .plot .b.peak{ background:var(--link); }
+.s .plot .b .lbl{ position:absolute; top:-17px; left:50%; transform:translateX(-50%);
+  font-size:10px; color:var(--ink); font-weight:600; white-space:nowrap; }
+.s .xax{ display:flex; gap:6px; margin-top:6px; }
+.s .xax span{ flex:1; font-size:9.5px; color:var(--ink2); text-align:center; }
+.s details{ margin-top:14px; font-size:11.5px; }
+.s details summary{ color:var(--link); cursor:pointer; font-weight:500; }
+
+/* dải cảnh báo — dùng cho món vừa hết trong giỏ */
+.s .alert{ margin:14px 18px 0; background:var(--hot-bg); border-radius:var(--r);
+  padding:11px 13px; display:flex; gap:10px; align-items:flex-start; }
+.s .alert svg{ width:17px; height:17px; color:var(--hot); flex:none; margin-top:1px; }
+.s .alert .t{ font-size:12.5px; font-weight:600; color:var(--hot); display:block; }
+.s .alert .d{ font-size:11.5px; color:var(--ink2); display:block; margin-top:2px;
+  line-height:1.5; }
+
+/* hàng trong giỏ đang vướng */
+.s .row.snag{ background:var(--hot-bg); }
+.s .row.snag .amt{ text-decoration:line-through; color:var(--ink2); }
+.s .fixes{ display:flex; gap:14px; margin-top:8px; }
+
+/* bảng size */
+.s .gtable{ margin:14px 18px 0; border:1px solid var(--hair); border-radius:var(--r);
+  overflow:hidden; }
+.s .gtable table{ width:100%; border-collapse:collapse; }
+.s .gtable th{ text-align:left; font-size:10.5px; font-weight:500; color:var(--ink2);
+  padding:9px 13px; border-bottom:1px solid var(--hair); background:var(--gold-50); }
+.s .gtable td{ font-size:12.5px; padding:10px 13px; border-bottom:1px solid var(--hair);
+  font-variant-numeric:tabular-nums; }
+.s .gtable tr:last-child td{ border-bottom:0; }
+.s .gtable tr.gone td{ color:var(--ink2); }
+.s .gtable td:first-child{ font-weight:600; }
+
+/* tấm trượt từ dưới lên */
+.s .sheet{ border-top:1px solid var(--hair); }
+.s .sheet .grab{ width:34px; height:4px; border-radius:99px; background:var(--hair);
+  margin:9px auto 0; }
+.s .fgroup{ padding:16px 18px 0; }
+.s .fgroup h4{ margin:0 0 9px; font-size:12px; font-weight:600; }
+.s .fgroup .chips{ padding:0; flex-wrap:wrap; gap:7px; }
+.s .bar-bottom{ position:sticky; bottom:0; background:#fff; border-top:1px solid var(--hair);
+  padding:12px 18px; margin-top:18px; display:flex; gap:10px; }
+.s .bar-bottom .btn{ flex:1; }
+
+/* danh sách cài đặt có giá trị bên phải */
+.s .setrow{ display:flex; align-items:center; gap:12px; padding:13px 14px;
+  border-top:1px solid var(--hair); }
+.s .rows .setrow:first-child{ border-top:0; }
+.s .setrow .grow{ flex:1; min-width:0; }
+.s .setrow .lb{ font-size:11px; color:var(--ink2); display:block; }
+.s .setrow .vl{ font-size:12.5px; display:block; margin-top:2px; }
+
+/* ô nội dung chưa chốt (tên riêng: `.todo` đụng với trạng thái .st.todo của thanh bước) — không bịa, mà nói rõ chỗ này cần gì */
+.s .needwrite{ margin:14px 18px 0; border:1px dashed var(--line); border-radius:var(--r);
+  background:var(--gold-50); padding:12px 14px; }
+.s .needwrite .lb{ display:flex; align-items:center; gap:6px; font-size:10px; font-weight:700;
+  color:var(--warn); letter-spacing:.06em; }
+.s .needwrite .lb svg{ width:13px; height:13px; color:var(--warn); }
+.s .needwrite p{ margin:7px 0 0; font-size:12px; color:var(--ink2); line-height:1.55; }
+
+/* hỏi đáp */
+.s .qa{ margin:14px 18px 0; border:1px solid var(--hair); border-radius:var(--r);
+  overflow:hidden; }
+.s .qa .q{ padding:13px 14px; border-top:1px solid var(--hair); }
+.s .qa .q:first-child{ border-top:0; }
+.s .qa .q.open{ background:var(--gold-50); }
+.s .qa .hd{ display:flex; gap:12px; align-items:flex-start; }
+.s .qa .t{ flex:1; font-size:12.5px; font-weight:600; }
+.s .qa .hd svg{ width:15px; height:15px; color:var(--ink2); flex:none; margin-top:1px; }
+.s .qa .q.open .hd svg{ transform:rotate(90deg); color:var(--link); }
+.s .qa .a{ font-size:12px; color:var(--ink2); line-height:1.62; margin-top:8px; }
+.s .qa .q:not(.open) .a{ display:none; }
+.s .qa .hd svg{ transition:transform .16s ease; }
+@media (prefers-reduced-motion:reduce){ .s .qa .hd svg{ transition:none; } }
+.s .qa .a b{ color:var(--ink); font-weight:600; }
+
+/* danh sách có đánh số */
+.s .steps-num{ margin:12px 18px 0; }
+.s .steps-num .it{ display:flex; gap:11px; padding:9px 0; }
+.s .steps-num .n{ width:20px; height:20px; border-radius:99px; background:var(--gold-100);
+  color:var(--ink2); font-size:11px; font-weight:600; display:flex; align-items:center;
+  justify-content:center; flex:none; margin-top:1px; }
+.s .steps-num .bd{ flex:1; font-size:12.5px; line-height:1.55; }
+.s .steps-num .bd b{ display:block; font-weight:600; }
+.s .steps-num .bd span{ color:var(--ink2); font-size:12px; }
+
+/* điều kiện mật khẩu */
+.s .rules{ padding:10px 18px 0; }
+.s .rules div{ display:flex; gap:8px; align-items:center; font-size:11.5px;
+  color:var(--ink2); padding:3px 0; }
+.s .rules svg{ width:14px; height:14px; flex:none; }
+.s .rules .ok{ color:var(--ok); }
+.s .rules .no{ color:var(--hot); }
+
+/* khối 404 */
+.s .void{ margin:26px 18px 0; border:1px dashed var(--line); border-radius:var(--r);
+  background:var(--gold-50); aspect-ratio:4/3; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:10px; text-align:center; padding:20px; }
+.s .void svg{ width:34px; height:34px; color:var(--link); }
+.s .void .t{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:16px; }
+.s .void .d{ font-size:12px; color:var(--ink2); line-height:1.55; max-width:30ch; }
+
+/* ô thả ảnh lớn cho sản phẩm chưa có ảnh nào */
+.s .drop{ border:1px dashed var(--line); border-radius:var(--r); background:var(--gold-50);
+  padding:30px 20px; display:flex; flex-direction:column; align-items:center; gap:8px;
+  text-align:center; }
+.s .drop svg{ width:26px; height:26px; color:var(--link); }
+.s .drop .t{ font-size:12.5px; font-weight:600; }
+.s .drop .d{ font-size:11px; color:var(--ink2); line-height:1.5; }
+
+/* Trang đặc tả bảng — chỉ dùng ở màn "Hệ bảng dữ liệu", không phải màn sản phẩm. */
+.s.adm .spec > p{ font-size:12.5px; color:var(--ink2); line-height:1.65; max-width:70ch;
+  margin:6px 0 0; }
+.s.adm .spec > p b{ color:var(--ink); font-weight:600; }
+.s.adm .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+.s.adm .cap2{ font-size:11px; color:var(--ink2); margin:7px 2px 0; line-height:1.5; }
+.s.adm .cap2 code, .s.adm .ref code{ font-family:ui-monospace,Consolas,monospace;
+  font-size:10.5px; color:var(--gold-800); background:var(--gold-50);
+  padding:1.5px 5px; border-radius:var(--r-sm); }
+.s.adm .ref table{ width:100%; border-collapse:separate; border-spacing:0; }
+.s.adm .ref th{ text-align:left; font-size:10.5px; font-weight:500; color:var(--ink2);
+  padding:9px 16px; border-bottom:1px solid var(--hair); }
+.s.adm .ref td{ font-size:12px; padding:9px 16px; border-bottom:1px solid var(--hair);
+  vertical-align:top; }
+.s.adm .ref tr:last-child td{ border-bottom:0; }
+.s.adm .ref td:first-child{ white-space:nowrap; }
+.s.adm .ref td .n{ color:var(--ink2); font-size:11px; line-height:1.55; }
+.s.adm .swatchrow{ display:flex; flex-wrap:wrap; gap:10px; padding:16px; }
+.s.adm .swatchrow > span{ display:inline-flex; }
+.dt .ava{ width:30px; height:30px; flex:none; border-radius:99px;
+  background:var(--gold-100); color:var(--gold-800); display:flex;
+  align-items:center; justify-content:center; font-size:11px; font-weight:600; }
+/* Mẫu trưng bày ở trang đặc tả: nhìn thì thật, bấm thì chỉ nói ra nó là mẫu. */
+.dt.demo{ }

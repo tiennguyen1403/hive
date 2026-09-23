@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi" data-dir="nhan" data-spot="off" data-lex="so" data-type="d" data-badge="b">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Đăng nhập · BRAND</title>
+<link rel="stylesheet" href="../v2/fonts.css"><link rel="stylesheet" href="fonts-trial.css"><link rel="stylesheet" href="../v2/reset.css"><link rel="stylesheet" href="v3.css"><link rel="stylesheet" href="v3-pages.css">
+<script src="../v2/icons.js"></script><script src="v3.js" defer></script>
+<style>.s .authcard3 + .authcard3{ margin-top:var(--s7); }</style>
+</head>
+<body data-title="Đăng nhập · BRAND">
+<div class="s v3">
+<header class="nav3" data-nav data-active="" data-cart="2" data-wish="0" data-state="open"></header>
+<main>
+  <div class="wrap">
+    <section class="authcard3" id="signin" aria-labelledby="h-in">
+      <h1 id="h-in">Đăng nhập</h1>
+      <p class="lead">Để xem đơn, địa chỉ đã lưu và mã đang chạy. Mua không cần tài khoản vẫn được.</p>
+      <p class="note3" style="margin-top:12px"><svg data-i="info" class="ic sm"></svg><span>Chưa có máy chủ xác thực. Dùng email của một khách trong dữ liệu mẫu với mật khẩu bất kỳ. Không nhập mật khẩu thật.</span></p>
+      <div class="field"><label class="lbl" for="l-email">Email</label><input class="inp3" id="l-email" type="email" value="minhanh@vidu.vn" autocomplete="email"></div>
+      <div class="field"><label class="lbl" for="l-pass">Mật khẩu</label><input class="inp3" id="l-pass" type="password" value="••••••••" autocomplete="current-password"></div>
+      <div class="forgot"><a class="lnk" href="#forgot">Quên mật khẩu</a></div>
+      <a class="btn3 wide" href="account.html" style="margin-top:0"><svg data-i="login" class="ic sm"></svg>Đăng nhập</a>
+      <div class="divider3">hoặc</div>
+      <button type="button" class="btn3 sec wide" data-sim="Đăng nhập Google chưa nối · mô phỏng" style="margin-top:14px"><svg data-i="google" class="ic sm"></svg>Tiếp tục với Google</button>
+      <p class="alt">Chưa có tài khoản? <a class="lnk" href="#signup">Đăng ký</a> · <a class="lnk" href="cart.html">Mua không cần tài khoản</a></p>
+    </section>
+
+    <section class="authcard3" id="signup" aria-labelledby="h-up">
+      <h1 id="h-up">Đăng ký</h1>
+      <p class="lead">Một email, một mật khẩu. Số điện thoại lấy từ đơn đầu tiên.</p>
+      <div class="field"><label class="lbl" for="s-name">Tên</label><input class="inp3" id="s-name" placeholder="Tên hiện trên đơn" autocomplete="name"></div>
+      <div class="field"><label class="lbl" for="s-email">Email</label><input class="inp3 bad" id="s-email" type="email" value="minhanh@vidu" autocomplete="email" aria-describedby="s-email-err"><p class="err" id="s-email-err"><svg data-i="danger" class="ic sm"></svg>Email thiếu phần sau dấu chấm, ví dụ minhanh@vidu.vn</p></div>
+      <div class="field"><label class="lbl" for="s-pass">Mật khẩu <span class="opt">· từ 8 ký tự</span></label><input class="inp3" id="s-pass" type="password" autocomplete="new-password"></div>
+      <button type="button" class="consent" role="checkbox" aria-checked="true"><span class="box"><svg data-i="tick" data-raw></svg></span><span>Nhận email khi <span class="tm" data-k="tl">số</span> mới mở và khi đơn đổi trạng thái. Tắt được trong tài khoản.</span></button>
+      <button type="button" class="btn3 wide" data-sim="Đăng ký chưa nối máy chủ · mô phỏng" style="margin-top:4px">Tạo tài khoản</button>
+      <p class="alt">Đã có tài khoản? <a class="lnk" href="#signin">Đăng nhập</a></p>
+    </section>
+
+    <section class="authcard3" id="forgot" aria-labelledby="h-fg">
+      <h1 id="h-fg">Quên mật khẩu</h1>
+      <p class="lead">Nhập email đã đăng ký. Liên kết đặt lại có hiệu lực 30 phút.</p>
+      <div class="field"><label class="lbl" for="f-email">Email</label><input class="inp3" id="f-email" type="email" autocomplete="email"></div>
+      <button type="button" class="btn3 wide" data-sim="Đã gửi liên kết đặt lại (mô phỏng) · kiểm tra hộp thư, cả mục thư rác">Gửi liên kết đặt lại</button>
+      <p class="alt"><a class="lnk" href="#signin">Về đăng nhập</a></p>
+    </section>
+  </div>
+</main>
+<footer class="foot3" data-footer></footer>
+</div>
+</body>
+</html>

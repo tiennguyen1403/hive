@@ -1,0 +1,336 @@
+/* The account screens and the two auth screens.
+
+   The v2 block that opened this file — the rail (`.acctrail`), the panel
+   grid (`.acctgrid`), the preference switches (`.switch`), the running
+   discount codes (`.promo`), the stacked order thumbnails (`.thumbs`) and
+   the auth card (`.authcard`) — went at v3 slice 6, once nothing rendered
+   it. Every one of them has a v3 name below: `.acctrail3`, `.acctgrid3`,
+   `.prefrow`, `.codes`, `.thumbs3`, `.authcard3`.
+
+   Loaded after `checkout.css` and before `interaction.css` / `desktop.css`,
+   so the two breakpoint files still come last. */
+
+/* ============================================================================
+   THE v3 ROUND — the account frame, its panels, the notifications, the auth
+   card
+   ============================================================================
+   Ported from `prototype/v3/v3-pages.css` (`.acct3 .acctrail3 .acctgrid3
+   .rows3 .codes .prefrow .thumbs3 .notif .authcard3 .divider3 .forgot`), the
+   approved mock — `account.html`, `account-orders.html`,
+   `account-notifications.html`, `account-saved.html`, `auth.html`. Every
+   number below is the mock's; change one and you owe a screenshot comparison
+   against those files at the same width.
+
+   Names greped across `app/styles/` and `prototype/v2/` before they were
+   introduced. Three needed care:
+
+   · `.sub` was also `.s .sub` in nav.css (0,2,0) — the v2 sub-bar, a
+     13px/18px flex row. The `.sub` here restates `display` and `padding` for
+     that reason, exactly as `.later .item .sub` does in checkout.css; the
+     bar itself went at slice 6 and the restatement stays, because it is
+     what makes this row's own box explicit.
+   · `.cnt` is also `.s .chip3 .cnt` (listing.css, 0,3,0). The rail's is
+     0,4,0 and lands on neither.
+   · `.who`, `.ava`, `.out`, `.act`, `.right`, `.more` only ever appear here
+     under `.acctrail3`, `.rows3`, `.notif` or `.panel3`, each of which is
+     new this slice.
+
+   `.panel3`, `.pghead`, `.two3`, `.tl3`, `.kvs`, `.ol`, `.sum3`, `.fine3`,
+   `.field3` and `.deadline` are slice 3's, in checkout.css, and are reused
+   here rather than redrawn. This file loads after it, so the two additions
+   below (`.panel3 > h3 .more`, and the row's own `.sub`) win on source order
+   without needing a deeper selector. */
+
+/* -- the frame ----------------------------------------------------------- */
+.s .acct3{ display:block; }
+.s .acct3 .content{ padding-top:var(--s4); }
+/* A section INSIDE the account column, not a section of a page: 32px, not
+   the 48 `home.css` gives `.s .sec` between two full-width blocks. */
+.s .acct3 .content .sec{ margin-top:var(--s6); }
+.s .acct3 .content .pghead{ padding-top:0; }
+
+/* -- who is signed in ---------------------------------------------------- */
+/* The avatar is the issue's own cloth, which is the one place the account
+   screens carry it: black ground, honey monogram, 44px round. */
+.s .acctrail3 .who{ display:flex; gap:12px; align-items:center;
+  padding:var(--s4) 0 14px; border-bottom:1px solid var(--ink); }
+.s .acctrail3 .who .ava{ width:44px; height:44px; border-radius:99px;
+  background:var(--stage); color:var(--brand); display:grid; place-items:center;
+  font-family:var(--font-display); font-weight:var(--fw-display); font-size:13px;
+  flex:none; }
+.s .acctrail3 .who .txt{ min-width:0; }
+.s .acctrail3 .who b{ display:block; font-weight:600; font-size:var(--fs-body); }
+/* The email and the number WRAP rather than truncate: in a 240px rail the
+   line is longer than the column, and an address cut off mid-domain is an
+   address nobody can read back. `anywhere` because an email has no spaces
+   to break on. */
+.s .acctrail3 .who span{ display:block; font-size:var(--fs-sm); color:var(--ink2);
+  overflow-wrap:anywhere; }
+
+/* -- the doors ----------------------------------------------------------- */
+/* On a phone they are a row that scrolls past the page gutter — the negative
+   margin puts the first item on the page's left edge and lets the last one
+   run off the right, which is what says "there is more this way".
+   `overflow-x` CLIPS what leaves the box, so nothing inside may rely on an
+   overlay reaching outside it; every item is a real 44px instead. */
+.s .acctrail3 nav{ display:flex; overflow-x:auto; scrollbar-width:none;
+  margin:0 calc(-1 * var(--gut)); padding:0 var(--gut);
+  border-bottom:1px solid var(--hair); }
+.s .acctrail3 nav::-webkit-scrollbar{ display:none; }
+.s .acctrail3 nav a{ display:inline-flex; align-items:center; gap:8px;
+  min-height:44px; padding:0 12px 0 0; margin-right:14px; font-size:var(--fs-ui);
+  color:var(--ink2); white-space:nowrap; position:relative; }
+.s .acctrail3 nav a:hover{ color:var(--ink); }
+.s .acctrail3 nav a.on{ color:var(--ink); font-weight:600; }
+/* The honey thread under the door you are standing in. It stops 12px short
+   of the item's own right edge, which is the gap to the next label. */
+.s .acctrail3 nav a.on::after{ content:""; position:absolute; left:0; right:12px;
+  bottom:-1px; height:2px; background:var(--brand); }
+.s .acctrail3 nav a .ic{ flex:none; }
+.s .acctrail3 nav a .cnt{ font-size:var(--fs-xs); color:var(--ink2);
+  font-variant-numeric:tabular-nums; }
+.s .acctrail3 nav a.on .cnt{ color:var(--ink); }
+/* Something unread, said twice: a dot AND the number beside it. */
+.s .acctrail3 nav a .dotn{ width:8px; height:8px; border-radius:99px;
+  background:var(--brand); flex:none; }
+.s .acctrail3 .out{ margin-top:14px; }
+
+@media (min-width:900px){
+  .s .acct3{ display:grid; grid-template-columns:240px minmax(0,1fr);
+    gap:var(--s7); align-items:start; }
+  /* 84px: the bar is 64px tall up here, plus the 20px the page breathes
+     under it. */
+  .s .acctrail3{ position:sticky; top:84px; }
+  .s .acctrail3 nav{ display:block; margin:0; padding:0; border-bottom:0;
+    overflow:visible; }
+  .s .acctrail3 nav a{ display:flex; padding:0; margin:0;
+    border-bottom:1px solid var(--hair); }
+  .s .acctrail3 nav a .cnt{ margin-left:auto; }
+  .s .acctrail3 nav a .dotn{ margin-left:auto; }
+  .s .acctrail3 nav a .dotn + .cnt{ margin-left:0; }
+  .s .acctrail3 nav a.on::after{ content:none; }
+}
+
+/* -- the panels ---------------------------------------------------------- */
+.s .acctgrid3{ display:grid; gap:16px; }
+@media (min-width:900px){
+  .s .acctgrid3{ grid-template-columns:1fr 1fr; align-items:start; }
+  .s .acctgrid3 > .full{ grid-column:1 / -1; }
+}
+/* A panel heading that also carries a way out of the panel. The overlay
+   takes a 17px line of type to 44 without moving the baseline the heading
+   sits on; `inset:-12px 0` is the room the 8px padding under the heading
+   plus its rule leave. */
+.s .panel3 > h2 .more, .s .panel3 > h3 .more{ margin-left:auto;
+  font-family:var(--font-sans); font-weight:500; font-size:var(--fs-sm);
+  letter-spacing:0; text-decoration:underline; text-underline-offset:3px;
+  position:relative; white-space:nowrap; }
+.s .panel3 > h2 .more::after, .s .panel3 > h3 .more::after{ content:"";
+  position:absolute; inset:-12px 0; }
+.s .panel3 > h2 .more:hover, .s .panel3 > h3 .more:hover{ color:var(--brand-text); }
+
+/* -- a list of rows ------------------------------------------------------ */
+.s .rows3 .row{ display:grid; grid-template-columns:minmax(0,1fr) auto;
+  gap:2px 12px; align-items:center; min-height:56px; padding:10px 0;
+  border-bottom:1px solid var(--hair); font-size:var(--fs-ui); }
+.s .rows3 .row:last-child{ border-bottom:0; }
+.s .rows3 .row b{ font-weight:600; display:flex; flex-wrap:wrap;
+  align-items:center; gap:6px; }
+/* Order codes and style names are the display face wherever they are read
+   as a name rather than as a word in a sentence. */
+.s .rows3 .row b .nm{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-ui); letter-spacing:var(--ls-display); }
+.s .rows3 .row .sub{ grid-column:1; display:block; padding:0; border:0;
+  font-size:var(--fs-sm); color:var(--ink2); font-variant-numeric:tabular-nums; }
+.s .rows3 .row .right{ grid-column:2; grid-row:1 / 3; justify-self:end;
+  display:flex; flex-direction:column; align-items:flex-end; gap:4px;
+  text-align:right; font-variant-numeric:tabular-nums; }
+.s .rows3 a.row:hover b{ color:var(--brand-text); }
+/* The row that is open below the list. A tint, not a block of colour. */
+.s .rows3 .row.on{ background:var(--plate); }
+.s .rows3 a.row.on:hover b{ color:var(--ink); }
+/* The thumbnails take the whole width under the text, so a two-item order
+   does not squeeze its own detail line. */
+.s .rows3 .row .thumbs3{ grid-column:1 / -1; }
+.s .thumbs3{ display:flex; gap:6px; margin-top:6px; }
+.s .thumbs3 img{ width:36px; height:45px; object-fit:cover; border-radius:2px;
+  background:var(--plate); display:block; }
+
+/* -- the codes that are running ------------------------------------------ */
+.s .codes .code{ display:grid; grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center; gap:10px; padding:10px 0;
+  border-bottom:1px solid var(--hair); font-size:var(--fs-sm); }
+.s .codes .code:last-child{ border-bottom:0; }
+.s .codes .code b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:.04em; font-size:var(--fs-ui); }
+.s .codes .code > span{ color:var(--ink2); }
+/* 36px with a 5px overlay is 46, and 46 is the number a probe can confirm
+   (checkout.css says why). Its neighbour is the code's own description,
+   which is text, so nothing is stolen. */
+.s .codes .code .btn.sm{ height:36px; position:relative; margin-left:auto; }
+.s .codes .code .btn.sm::after{ content:""; position:absolute; inset:-5px 0; }
+
+/* -- a preference -------------------------------------------------------- */
+.s .prefrow{ display:flex; align-items:center; gap:12px; min-height:52px;
+  padding:8px 0; border-bottom:1px solid var(--hair); font-size:var(--fs-ui); }
+.s .prefrow:last-child{ border-bottom:0; }
+.s .prefrow b{ display:block; font-weight:600; }
+.s .prefrow > div{ min-width:0; }
+.s .prefrow > div > span{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+.s .prefrow .switch3{ margin-left:auto; flex:none; }
+
+/* -- a notification ------------------------------------------------------ */
+/* 12px of dot column, the text, and the stamp — the dot is a column rather
+   than a marker in the sentence so the second and third lines keep one
+   straight left edge. */
+.s .notif{ display:grid; grid-template-columns:12px minmax(0,1fr) auto;
+  gap:4px 12px; padding:12px 0; border-bottom:1px solid var(--hair);
+  font-size:var(--fs-ui); align-items:start; }
+.s .notif:last-child{ border-bottom:0; }
+/* Colour is never the only channel: an unread row is also 600 weight, and
+   the screen prints the count in words above the list. */
+.s .notif > i{ width:8px; height:8px; border-radius:99px; background:var(--brand);
+  margin-top:6px; }
+.s .notif.read > i{ background:var(--hair); }
+.s .notif b{ display:block; font-weight:600; }
+.s .notif.read b{ font-weight:500; }
+.s .notif > div{ min-width:0; }
+.s .notif > div > span{ display:block; color:var(--ink2); font-size:var(--fs-sm); }
+.s .notif time{ font-size:var(--fs-xs); color:var(--ink2); white-space:nowrap;
+  font-variant-numeric:tabular-nums; }
+.s .notif .act{ grid-column:2; margin-top:4px; }
+.s .notif .act .lnk{ font-size:var(--fs-sm); min-height:36px;
+  display:inline-flex; align-items:center; position:relative; }
+
+/* -- auth ---------------------------------------------------------------- */
+/* On a phone the form IS the screen. On a monitor a 1320px-wide password
+   field is not a password field, so the same markup gets the mock's 460px
+   card around it. */
+.s .authcard3{ max-width:460px; margin:var(--s5) auto 0; }
+@media (min-width:900px){
+  .s .authcard3{ border:1px solid var(--hair); border-radius:var(--r);
+    padding:28px; margin-top:var(--s7); }
+}
+.s .authcard3 h1{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h1); letter-spacing:var(--ls-display); }
+.s .authcard3 .lead{ padding:0; max-width:none; font-size:var(--fs-ui);
+  color:var(--ink2); margin-top:6px; }
+.s .authcard3 .note3{ margin-top:12px; }
+.s .authcard3 form{ margin-top:var(--s4); }
+.s .authcard3 .btn.wide{ margin-top:var(--s4); }
+.s .authcard3 .alt{ text-align:center; font-size:var(--fs-sm); color:var(--ink2);
+  margin-top:16px; }
+.s .authcard3 .alt .lnk{ min-height:36px; display:inline-flex; align-items:center;
+  position:relative; }
+.s .divider3{ display:flex; align-items:center; gap:10px; font-size:var(--fs-xs);
+  color:var(--ink2); margin:16px 0 0; }
+.s .divider3::before, .s .divider3::after{ content:""; flex:1; height:1px;
+  background:var(--hair); }
+/* "Quên mật khẩu" is a lone text control sandwiched between an input and a
+   button, both of which own the pixels they cover. Two 44px targets cannot
+   share a 12px gap (DESIGN.md §5, trap 6), so the ROW carries the height —
+   12 above, 16 below — and the overlay only takes the link to 44. */
+.s .forgot{ display:flex; justify-content:flex-end; margin-top:12px;
+  margin-bottom:16px; }
+.s .forgot .lnk{ font-size:var(--fs-sm); min-height:36px; display:inline-flex;
+  align-items:center; position:relative; }
+
+/* ── the three text links that stand as controls on these screens ────────
+   36px of type with 5px of overlay above and below is 46, and 46 is the
+   number a probe can confirm: `elementFromPoint` stops one pixel inside
+   each far edge, so an exactly-44 box measures 43.
+
+   EVERY LONGHAND IS WRITTEN OUT, and that is the point. Below 460px
+   `interaction.css` gives a lone `a.lnk` a CENTRED 44px box —
+   `top:50%; left:50%; transform:translate(-50%,-50%); width:max(100%,44px);
+   height:44px`. A rule that only says `inset:-4px 0` wins on specificity
+   for `top` and `bottom` but inherits that `height` and that `transform`,
+   which leaves an over-constrained 44px box shifted 22px UP the page.
+   Measured on `/sign-in` at 390: "Đăng ký" reachable over 40px, 4 short.
+   `checkout.css` hit the same trap at slice 3 and answers it the same way. */
+.s .authcard3 .alt .lnk::after, .s .forgot .lnk::after,
+.s .notif .act .lnk::after{ content:""; position:absolute; left:50%;
+  transform:translateX(-50%); width:max(100%, 44px); top:-5px; bottom:-5px;
+  height:auto; }
+
+/* -- the hold, on an order that is already placed ------------------------
+   `.deadline` is slice 3's (checkout.css): black cloth, honey stitch, the
+   clock in the display face. The order screen adds two things the
+   confirmation did not need — the amount and the reference set INSIDE the
+   sentence so a copy button has something real to select, and the two
+   buttons themselves, which have to be legible on the cloth.
+
+   `.btn.ink` is ink type on an ink border, which on this ground would be a
+   button drawn in the dark. Here it is the honey thread and the cloth's own
+   hairline, which is the same pair the cover uses for its quiet action. */
+.s .deadline p b{ color:var(--stage-ink); font-weight:600;
+  font-variant-numeric:tabular-nums; }
+.s .deadline .copies{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.s .deadline .btn.ink{ background:transparent; color:var(--brand);
+  border-color:var(--stage-ink2); }
+.s .deadline .btn.ink:hover:not(:disabled){ background:var(--stage-hair);
+  color:var(--brand); border-color:var(--brand); }
+/* 36px with a 5px overlay is 46 — the number a probe can confirm. The pair
+   stands 8px apart, and two overlays cannot share that, so the inset is
+   vertical only (DESIGN.md §5, trap 2). */
+.s .deadline .btn.sm{ height:36px; position:relative; }
+.s .deadline .btn.sm::after{ content:""; position:absolute; inset:-5px 0; }
+/* The hold has run out. Said in the state's own red, lifted until it clears
+   AA on the cloth — `--stage-hot` exists for exactly this. */
+.s .deadline .late{ margin-top:6px; font-family:var(--font-display);
+  font-weight:var(--fw-display); font-size:var(--fs-h3);
+  letter-spacing:var(--ls-display); color:var(--stage-hot); }
+
+/* -- the order detail, opened under the list ----------------------------- */
+/* The section lands below a sticky 56px bar, so the heading needs room above
+   it when the browser scrolls to the id. */
+.s .acct3 .content .sec.anchor{ scroll-margin-top:72px; }
+
+/* "Đóng chi tiết" shares a wrapped line with the order's own meta on a
+   phone, so its overlay cannot reach past it — `elementFromPoint` answers
+   with the meta span, and the link measured 38px of reachable height at
+   390. Two targets cannot share a small gap and one of them is not even a
+   target (DESIGN.md §5, trap 2), so the ROW carries the height here instead
+   of the overlay. Only below the breakpoint: from 900px the head is one
+   baseline-aligned line and a 44px box in it would shift the heading. */
+@media (max-width:899.98px){
+  .s .acct3 .content .sec .hd .more{ display:inline-flex; align-items:center;
+    min-height:44px; }
+}
+
+/* ── text links inside the account column, on a POINTER ──────────────────
+   Below 460px `interaction.css` gives a lone `.lnk` a centred 44px box; from
+   461px it gives it nothing, and these are the screens where a text link is
+   the only control on its row — "Sửa", "Xoá", "Đổi", "Thêm địa chỉ". Measured
+   at 1280 before this block: "Đổi" on `/account/profile` reached 22px, the
+   height of its own type.
+
+   ±11 on a 22px line is 44. Every one of them stands alone on its line or
+   beside text, so nothing is stolen from a neighbour — the one place two of
+   them meet is the address row, where they sit side by side 14px apart and
+   the overlay takes no width. */
+/* 22px, not 14: each link carries a 44px-wide box below, and two of those
+   centred on 25px of type need 19px between them before they stop meeting
+   (DESIGN.md §5, trap 2 — measured, not assumed). */
+.s .acct3 .content .rows3 .right .acts{ display:flex; gap:22px; align-items:center; }
+.s .acct3 .content .rows3 .right .lnk,
+.s .acct3 .content .pghead .more{ position:relative; }
+/* 46px tall and at least 44 wide, centred on the type — the shape
+   `interaction.css` gives a lone text link below 460px, written out here so
+   it holds at every width. EVERY LONGHAND, for the reason the block above
+   the auth links records: a rule that only says `inset` inherits that
+   file's `height:44px` and its `transform`, and the box lands 22px up the
+   page. Measured at 390 with exactly that fault: "Sửa" reached 40px. */
+.s .acct3 .content .rows3 .right .lnk::after,
+.s .acct3 .content .pghead .more::after{ content:""; position:absolute;
+  left:50%; top:50%; transform:translate(-50%,-50%);
+  width:max(100%, 44px); height:46px; }
+/* "Đổi" sits in a `.kvs` row 8px from the rows above and below it, so an
+   overlay reaching 13px out would cover the phone number and the join date
+   — not stealing another target, but swallowing text that has to stay
+   selectable. The ROW carries the height instead (DESIGN.md §5, trap 6). */
+.s .acct3 .content .kvs dd .lnk{ display:inline-flex; align-items:center;
+  min-height:44px; }
+/* The address book's rows hold two of them, so the row has to be tall enough
+   for a 44px target to sit inside it without reaching into its neighbours. */
+.s .acct3 .content .rows3 .row{ min-height:60px; }

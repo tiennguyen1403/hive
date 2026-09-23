@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="vi" data-dir="nhan" data-spot="off" data-lex="so" data-type="d" data-badge="b">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tổng quan · quản trị · BRAND</title>
+<link rel="stylesheet" href="../v2/fonts.css"><link rel="stylesheet" href="fonts-trial.css"><link rel="stylesheet" href="../v2/reset.css"><link rel="stylesheet" href="v3.css"><link rel="stylesheet" href="v3-pages.css">
+<script src="../v2/icons.js"></script><script src="v3.js" defer></script>
+</head>
+<body data-title="Tổng quan · quản trị · BRAND">
+<div class="s v3 adm3">
+<aside class="side" data-adminnav data-active="dashboard"></aside>
+<main class="main">
+  <div class="top">
+    <div><h1>Tổng quan</h1><div class="sub"><span class="tm" data-k="t">Số</span> 05 · 11/09 → 25/09 <span class="tag3 on"><i></i>Đang bán</span> <span data-until="2026-09-25T20:00:00+07:00" data-verb="đóng">đóng sau 5 ngày 1 giờ</span></div></div>
+    <div class="acts"><span class="tag3"><i></i>Dữ liệu mô phỏng</span><span class="seg3"><a href="#">7 ngày</a><a class="on" href="#">14 ngày</a><a href="#">30 ngày</a></span><button type="button" class="btn3 sec sm" data-sim="Đã tải doanh-thu-14-ngay.csv"><svg data-i="export" class="ic sm"></svg>Tải CSV</button></div>
+  </div>
+
+  <div class="kpis3">
+    <div class="kpi3"><span class="k">Doanh thu 14 ngày</span><b>14,2tr₫</b>14.256.000₫ · chỉ tính đơn đã thanh toán</div>
+    <div class="kpi3"><span class="k">Đơn trong 14 ngày</span><b>15</b>trung bình 950.400₫ mỗi đơn · 8 khách</div>
+    <div class="kpi3"><span class="k">Cần xử lý</span><b>5</b>2 chờ chuyển khoản · 3 đã trả, chưa giao · <a href="#queue" style="color:var(--brand-text);text-decoration:underline">xử lý ngay</a></div>
+    <div class="kpi3"><span class="k">Còn trong <span class="tm" data-k="tl">số</span> 05</span><b>73 chiếc</b>108 / 181 đã bán · 60% · 10 mẫu<div class="meter"><i style="width:60%"></i></div></div>
+  </div>
+
+  <section class="panel3">
+    <h2>Doanh thu 14 ngày gần nhất<span class="meta">cột trống = ngày không có đơn đã thanh toán</span></h2>
+    <div class="bd">
+      <div style="display:flex;align-items:baseline;gap:12px"><b style="font-family:var(--font-display);font-weight:var(--fw-display);font-size:24px;letter-spacing:var(--ls-display)">14.256.000₫</b><span class="muted" style="font-size:var(--fs-sm)">08/09 → 21/09 · ngày cao nhất 11/09 · 2.793.000₫</span></div>
+      <div class="chart3" aria-label="Doanh thu theo ngày">
+        <i class="zero"></i><i class="zero"></i><i class="zero"></i><i class="hi" style="height:100%"></i><i style="height:52%"></i><i style="height:60%"></i><i style="height:64%"></i><i style="height:55%"></i><i style="height:30%"></i><i class="zero"></i><i style="height:57%"></i><i style="height:62%"></i><i class="zero"></i><i class="zero"></i>
+      </div>
+      <div class="axis"><span>08/09</span><span>11/09</span><span>14/09</span><span>17/09</span><span>21/09</span></div>
+      <p class="fine3"><a class="lnk" href="#">Xem dạng bảng</a></p>
+    </div>
+  </section>
+
+  <div class="split3">
+    <section class="panel3" id="queue">
+      <h2>Cần xử lý<span class="meta">5 đơn · việc của cửa hàng, không phải của khách hay bên vận chuyển</span></h2>
+      <div class="bd queue3">
+        <div class="q"><b><a href="admin-order.html">DH-2431</a> · Nguyễn Khả Vy · 400.000₫</b><span class="sub">Chờ chuyển khoản · hạn 08:05 ngày 22/09 · CÁT ×1</span><span class="act"><button type="button" class="btn3 sec sm" data-sim="DH-2431 → đã thanh toán"><svg data-i="check" class="ic sm"></svg>Đã nhận tiền</button></span></div>
+        <div class="q"><b><a href="admin-order.html">DH-2430</a> · Trần Minh Anh · 2.680.000₫</b><span class="sub">Chờ chuyển khoản · hạn 19:50 ngày 21/09 · SƯƠNG ×1, THAN ×1</span><span class="act"><button type="button" class="btn3 sec sm" data-sim="DH-2430 → đã thanh toán"><svg data-i="check" class="ic sm"></svg>Đã nhận tiền</button></span></div>
+        <div class="q"><b><a href="admin-order.html">DH-2429</a> · Hoàng Mỹ Linh · 1.272.000₫</b><span class="sub">Đã thanh toán 07:52 · 19/09 · chưa bàn giao · MUỐI ×2</span><span class="act"><a class="btn3 sm" href="admin-order.html"><svg data-i="box" class="ic sm"></svg>Đóng gói và bàn giao</a></span></div>
+        <div class="q"><b><a href="admin-order.html">DH-2428</a> · Võ Đức Duy · 430.000₫</b><span class="sub">Đã thanh toán 09:43 · 18/09 · chưa bàn giao <span class="late">2 ngày</span> · NẮNG ×1</span><span class="act"><a class="btn3 sm" href="admin-order.html"><svg data-i="box" class="ic sm"></svg>Đóng gói và bàn giao</a></span></div>
+        <div class="q"><b><a href="admin-order.html">DH-2427</a> · Phạm Thu Hà · 1.560.000₫</b><span class="sub">Đã thanh toán 20:41 · 17/09 · chưa bàn giao <span class="late">3 ngày</span> · NGUỘI ×1, KHÓI ×1</span><span class="act"><a class="btn3 sm" href="admin-order.html"><svg data-i="box" class="ic sm"></svg>Đóng gói và bàn giao</a></span></div>
+      </div>
+    </section>
+    <section class="panel3">
+      <h2>Bán chạy trong <span class="tm" data-k="tl">số</span> 05<span class="meta">đã bán / đã cắt</span></h2>
+      <div class="bd rank3">
+        <div class="r"><span class="no">1</span><img src="../v2/img/khoi.webp" alt=""><b>KHÓI</b><div class="meter"><i style="width:51%"></i></div><span class="n"><b>18</b> / 35 · 51%</span></div>
+        <div class="r"><span class="no">2</span><img src="../v2/img/bui.webp" alt=""><b>BỤI</b><div class="meter hot"><i style="width:89%"></i></div><span class="n"><b>16</b> / 18 · 89%</span></div>
+        <div class="r"><span class="no">3</span><img src="../v2/img/cat.webp" alt=""><b>CÁT</b><div class="meter"><i style="width:52%"></i></div><span class="n"><b>16</b> / 31 · 52%</span></div>
+        <div class="r"><span class="no">4</span><img src="../v2/img/muoi.webp" alt=""><b>MUỐI</b><div class="meter" style="background:var(--ink)"><i style="width:100%;background:var(--ink)"></i></div><span class="n"><b>14</b> / 14 · hết</span></div>
+        <div class="r"><span class="no">5</span><img src="../v2/img/nang.webp" alt=""><b>NẮNG</b><div class="meter"><i style="width:54%"></i></div><span class="n"><b>14</b> / 26 · 54%</span></div>
+        <p class="fine3"><a class="lnk" href="admin-so.html">Xem cả 10 mẫu của <span class="tm" data-k="tl">số</span></a></p>
+      </div>
+    </section>
+  </div>
+
+  <div class="split3">
+    <section class="panel3">
+      <h2>Đơn mới nhất<a class="more" href="admin-orders.html">Xem tất cả</a></h2>
+      <table><thead><tr><th>Mã đơn</th><th>Khách</th><th>Thời gian</th><th class="right">Giá trị</th><th>Trạng thái</th></tr></thead><tbody>
+        <tr><td><a href="admin-order.html">DH-2431</a></td><td>Nguyễn Khả Vy</td><td class="nw">20/09 · 08:05</td><td class="right">400.000</td><td><span class="tag3"><i></i>Chờ chuyển khoản</span></td></tr>
+        <tr><td><a href="admin-order.html">DH-2430</a></td><td>Trần Minh Anh</td><td class="nw">19/09 · 19:50</td><td class="right">2.680.000</td><td><span class="tag3"><i></i>Chờ chuyển khoản</span></td></tr>
+        <tr><td><a href="admin-order.html">DH-2429</a></td><td>Hoàng Mỹ Linh</td><td class="nw">18/09 · 22:15</td><td class="right">1.272.000</td><td><span class="tag3 on"><i></i>Đã thanh toán</span></td></tr>
+        <tr><td><a href="admin-order.html">DH-2428</a></td><td>Võ Đức Duy</td><td class="nw">18/09 · 09:40</td><td class="right">430.000</td><td><span class="tag3 on"><i></i>Đã thanh toán</span></td></tr>
+        <tr><td><a href="admin-order.html">DH-2427</a></td><td>Phạm Thu Hà</td><td class="nw">17/09 · 20:28</td><td class="right">1.560.000</td><td><span class="tag3 on"><i></i>Đã thanh toán</span></td></tr>
+      </tbody></table>
+    </section>
+    <div>
+      <section class="panel3">
+        <h2>Sắp hết<span class="meta">3 mẫu</span></h2>
+        <div class="bd rank3">
+          <div class="r" style="grid-template-columns:36px 1fr auto"><img src="../v2/img/muoi.webp" alt=""><span><b>MUỐI</b><span class="sub" style="display:block;font-size:var(--fs-sm);color:var(--ink2)">hết toàn bộ size</span></span><span class="tag3 hot"><i></i>Hết</span></div>
+          <div class="r" style="grid-template-columns:36px 1fr auto"><img src="../v2/img/bui.webp" alt=""><span><b>BỤI</b><span class="sub" style="display:block;font-size:var(--fs-sm);color:var(--ink2)">hết S · M</span></span><span class="tag3"><i></i>Còn 2</span></div>
+          <div class="r" style="grid-template-columns:36px 1fr auto"><img src="../v2/img/suong.webp" alt=""><span><b>SƯƠNG</b><span class="sub" style="display:block;font-size:var(--fs-sm);color:var(--ink2)">hết S</span></span><span class="tag3"><i></i>Còn 3</span></div>
+        </div>
+      </section>
+      <section class="panel3" style="margin-top:16px">
+        <h2>Khách trong 14 ngày<span class="meta">8 khách đặt 15 đơn</span></h2>
+        <div class="bd"><div class="meter" style="height:8px"><i style="width:50%"></i></div><div class="axis" style="margin-top:8px"><span><b style="color:var(--ink)">4</b> khách mới (tham gia trong <span class="tm" data-k="tl">số</span>)</span><span><b style="color:var(--ink)">4</b> khách quay lại</span></div></div>
+      </section>
+    </div>
+  </div>
+  <p class="fine3" style="margin-top:20px"><svg data-i="info" class="ic sm" style="vertical-align:-3px"></svg> Dữ liệu mô phỏng: 24 đơn, 10 mẫu · thao tác lưu trên trình duyệt này · <a class="lnk" href="#" data-sim="Mở chi tiết cách tính">Chi tiết</a></p>
+</main>
+</div>
+<div class="sheetwrap" id="resetsheet" hidden><div class="scrim"></div><div class="s panel" role="dialog" aria-modal="true" aria-label="Đặt lại dữ liệu mẫu"><div class="grab"></div><h3 class="title">Đặt lại dữ liệu mẫu?</h3><p class="sub">Mọi thay đổi đã ghi trên trình duyệt này sẽ bị xoá: đơn đã đánh dấu thanh toán, đã bàn giao hoặc huỷ, ghi chú, <span class="tm" data-k="tl">số</span> và mã tạo ở đây, điều chỉnh tồn kho.</p><div class="ft"><button type="button" class="btn3 sec" data-close>Giữ nguyên</button><button type="button" class="btn3" data-sim="Đã đặt lại về dữ liệu mẫu" data-simreset data-nocount>Đặt lại</button></div></div></div>
+</body>
+</html>

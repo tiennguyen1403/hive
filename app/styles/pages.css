@@ -1,0 +1,124 @@
+/* The pages that are mostly WORDS — about, FAQ, returns, contact, the 404 —
+   and the archive of an issue that has closed.
+
+   Ported from `prototype/v3/v3-pages.css` (`.prose .prep .faq3 .nf .solds`),
+   the approved mock: `pages.html`, which stacks the five content routes for
+   review, and `so.html`. Every number below is the mock's; change one and
+   you owe a screenshot comparison against those two files at the same width.
+
+   A FILE OF ITS OWN, added at v3 slice 4, and imported LAST of the component
+   files — after `account.css`, before `interaction.css` and `desktop.css`.
+   The measurement `globals.css` demands for a new file was re-run: every
+   class here is NEW (`prose`, `prep`, `faq3`, `nf`, `solds` return nothing
+   from a sweep of `app/styles/` and `prototype/v2/`), so no pair of rules
+   can tie on specificity with anything the two breakpoint files carry.
+
+   One near-miss, already narrower here than the rule it meets: `.num` is
+   `.s .num` in base.css (0,2,0), the display figure, and `.s .nf .num` is
+   0,3,0 and wins where it lands. The second one this note used to carry —
+   `.a`, against the v2 FAQ's `.s .qa .a` in admin.css — went at slice 6
+   with the accordion itself. */
+
+/* -- running text -------------------------------------------------------- */
+/* 68 characters, which is the measure `craft-floor` asks for and about what
+   a 960px column gives at 14px. The pages that carry it are the only ones in
+   the shop with paragraphs rather than rows. */
+.s .prose{ max-width:68ch; font-size:var(--fs-body); line-height:1.65; }
+.s .prose h2{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h2); letter-spacing:var(--ls-display); margin:var(--s5) 0 6px; }
+.s .prose p{ margin:8px 0; }
+.s .prose b{ font-weight:600; }
+
+/* -- a paragraph nobody has written yet ---------------------------------- */
+/* The dashed frame `NeedWrite` has worn since Phase 6, in the v3 grammar and
+   inside the reading column rather than beside it. It says WHAT belongs
+   there, which is the whole point: a blank space says nothing, and a warm
+   paragraph of filler would say something untrue (DESIGN.md §9 rule 2). */
+.s .prep{ margin-top:14px; padding:14px 16px; border:1px dashed var(--line);
+  border-radius:var(--r); background:var(--plate); font-size:var(--fs-ui);
+  color:var(--ink2); }
+.s .prep b{ display:block; color:var(--ink); font-weight:600; margin-bottom:2px; }
+
+/* -- the questions ------------------------------------------------------- */
+/* `<details>` and not the hand-built accordion of v2 (`.qa`): the v3 mock
+   draws exactly what the element does, the open state needs no class, and
+   the browser gives the semantics for free. 52px of summary clears the touch
+   floor on its own — the row is the control, so no overlay is involved. */
+.s .faq3 details{ border-bottom:1px solid var(--hair); }
+/* `color` is stated, and it has to be: `admin.css` carries
+   `.s details summary{ color:var(--link) }` for the back office's open
+   questions (0,1,2), and without a colour here every question on this page
+   inherited it and came out honey-brown. A question is a heading, not a
+   link — measured at 1280 before this line existed. */
+.s .faq3 summary{ list-style:none; display:flex; align-items:center;
+  justify-content:space-between; gap:12px; min-height:52px; padding:10px 0;
+  font-weight:600; font-size:var(--fs-body); color:var(--ink); cursor:pointer; }
+.s .faq3 summary::-webkit-details-marker{ display:none; }
+.s .faq3 summary:hover{ color:var(--brand-text); }
+.s .faq3 summary .ic{ flex:none; color:var(--ink2); transition:transform .2s; }
+.s .faq3 details[open] summary .ic{ transform:rotate(180deg); }
+@media (prefers-reduced-motion:reduce){
+  .s .faq3 summary .ic{ transition:none; }
+}
+.s .faq3 .a{ padding:0 0 14px; font-size:var(--fs-ui); color:var(--ink2);
+  max-width:64ch; }
+
+/* -- the page that is not there ------------------------------------------ */
+/* On a drop model this screen is reached routinely rather than
+   exceptionally: last issue's links keep circulating long after the styles
+   behind them are gone. So it is the number, one plain sentence, and the two
+   places worth going — not an apology. */
+.s .nf{ padding:var(--s6) 0 var(--s7); }
+.s .nf .num{ display:block; font-size:var(--fs-num); color:var(--ink);
+  line-height:.9; }
+.s .nf h1{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h1); letter-spacing:var(--ls-display); margin-top:8px; }
+.s .nf p{ font-size:var(--fs-body); color:var(--ink2); margin-top:8px;
+  max-width:48ch; }
+.s .nf .cta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+.s .nf .cta .btn{ display:inline-flex; width:auto; }
+
+/* -- when each style ran out --------------------------------------------- */
+/* ONE grid for the whole table, with each row a `subgrid`, so the three
+   columns line up across rows without the rows knowing about each other.
+   Written as a grid rather than a `<table>` because the first column carries
+   two type sizes and wraps; a table cell would keep them on one line and
+   push the two number columns off a 390px screen. */
+.s .solds{ margin-top:var(--s3); display:grid; grid-template-columns:minmax(0,1fr) auto auto; }
+.s .solds .r{ grid-column:1 / -1; display:grid; grid-template-columns:subgrid;
+  gap:12px; padding:10px 0; border-bottom:1px solid var(--hair);
+  font-size:var(--fs-ui); font-variant-numeric:tabular-nums; }
+.s .solds .r b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-ui); letter-spacing:var(--ls-display); }
+.s .solds .r span{ color:var(--ink2); font-size:var(--fs-sm); }
+.s .solds .r > span:nth-child(n+2){ text-align:right; color:var(--ink);
+  font-size:var(--fs-ui); }
+/* The head row is the one that carries the ink rule, the way every other
+   table in the shop opens. */
+.s .solds .hrow{ font-size:var(--fs-xs); letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink2); border-bottom:1px solid var(--ink); }
+.s .solds .hrow > span{ color:var(--ink2); font-size:var(--fs-xs); }
+/* A moment the orders cannot prove. It reads as a gap on purpose — the row
+   is saying the record is incomplete, not that the style never sold out. */
+.s .solds .r .none{ color:var(--ink2); }
+
+/* -- the reading column -------------------------------------------------- */
+/* 960px, the measure the mock gives the content routes — narrower than the
+   1320px the shop floor uses, because these pages are sentences rather than
+   grids. Beats `.s .wrap3` (0,2,0) on class count, so load order does not
+   matter (same device as `.wrap3.searchpage` in listing.css). */
+@media (min-width:900px){
+  .s .wrap3.readpage{ max-width:960px; }
+}
+
+/* -- the live password rules --------------------------------------------- */
+/* Each rule carries an icon AND its own words, so the list reads without
+   colour. `.checks3` and not `.rules`: `.s .rules` is the home page's four
+   rules (home.css) and `.s.adm .rules` the back office's, and a third
+   meaning for one word is how `.sub` and `.box` each cost an afternoon. */
+.s .checks3{ list-style:none; margin:10px 0 0; padding:0; display:grid; gap:4px;
+  font-size:var(--fs-sm); color:var(--ink2); }
+.s .checks3 li{ display:flex; align-items:center; gap:6px; }
+.s .checks3 li .ic{ color:var(--line); }
+.s .checks3 li.ok{ color:var(--ok); }
+.s .checks3 li.ok .ic{ color:var(--ok); }

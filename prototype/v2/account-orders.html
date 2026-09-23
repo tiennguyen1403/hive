@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Đơn hàng của tôi · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+</head>
+<body>
+<div class="s v2">
+<header class="nav2" data-nav data-cart="2" data-wish="2"></header>
+<main>
+  <div class="sub"><a href="account.html" aria-label="Quay lại"><svg data-i="back" class="ic"></svg></a><h1>Đơn hàng của tôi</h1><span class="rt plain">5 đơn</span></div>
+
+  <div class="acct">
+    <aside class="acctrail">
+      <div class="who"><span class="ava" aria-hidden="true">TA</span><span class="txt"><b>Trần Minh Anh</b><span>thành viên từ 08/03/2026</span></span></div>
+      <nav aria-label="Tài khoản">
+        <a href="account.html"><svg data-i="home" data-raw></svg>Tổng quan</a>
+        <a class="on" href="account-orders.html"><svg data-i="box" data-raw></svg>Đơn hàng<span style="margin-left:auto;font-size:11px;color:var(--ink2)">5</span></a>
+        <a href="#"><svg data-i="heart" data-raw></svg>Yêu thích<span style="margin-left:auto;font-size:11px;color:var(--ink2)">2</span></a>
+        <a href="#"><svg data-i="pin" data-raw></svg>Sổ địa chỉ<span style="margin-left:auto;font-size:11px;color:var(--ink2)">2</span></a>
+        <a href="#"><svg data-i="user" data-raw></svg>Thông tin cá nhân</a>
+        <div class="sep"></div>
+        <a href="#"><svg data-i="logout" data-raw></svg>Đăng xuất</a>
+      </nav>
+    </aside>
+
+    <div class="content">
+      <h1 class="pgt">Đơn hàng của tôi</h1>
+      <div class="tabs" role="tablist" aria-label="Lọc đơn theo trạng thái">
+        <button type="button" role="tab" aria-selected="true" class="on">Tất cả<span class="cnt">5</span></button>
+        <button type="button" role="tab" aria-selected="false">Đang xử lý<span class="cnt">2</span></button>
+        <button type="button" role="tab" aria-selected="false">Đã giao<span class="cnt">2</span></button>
+        <button type="button" role="tab" aria-selected="false">Đã huỷ<span class="cnt">1</span></button>
+      </div>
+
+      <div class="rows">
+        <a class="row" href="#">
+          <span class="thumbs"><span><img src="img/suong.webp" alt=""></span><span><img src="img/than.webp" alt=""></span></span>
+          <span class="grow"><span class="t">#DH-2430 · SƯƠNG, THAN</span><span class="d">19/09/2026 · 2 món · chuyển khoản</span>
+            <span style="display:block;margin-top:6px"><span class="badge warn">Chờ chuyển khoản</span> <span class="note" style="color:var(--hot);font-weight:500">hạn 19:50 ngày 21/09</span></span></span>
+          <span style="text-align:right"><span class="amt">2.680.000₫</span></span><svg data-i="chev" class="chev" data-raw></svg>
+        </a>
+        <a class="row" href="#">
+          <span class="thumbs"><span><img src="img/gio.webp" alt=""></span><span><img src="img/khoi.webp" alt=""></span></span>
+          <span class="grow"><span class="t">#DH-2422 · GIÓ, KHÓI</span><span class="d">14/09/2026 · 2 món · dự kiến nhận 21/09</span>
+            <span style="display:block;margin-top:6px"><span class="badge">Đang giao</span></span></span>
+          <span style="text-align:right"><span class="amt">1.056.000₫</span></span><svg data-i="chev" class="chev" data-raw></svg>
+        </a>
+        <a class="row" href="#">
+          <span class="thumbs"><span><img src="img/nguoi.webp" alt=""></span></span>
+          <span class="grow"><span class="t">#DH-2416 · NGUỘI</span><span class="d">11/09/2026 · 1 món · đã giao 16/09</span>
+            <span style="display:block;margin-top:6px"><span class="badge ok">Đã giao</span></span></span>
+          <span style="text-align:right"><span class="amt">1.191.000₫</span></span><svg data-i="chev" class="chev" data-raw></svg>
+        </a>
+        <a class="row" href="#">
+          <span class="thumbs"><span><img src="img/reu.webp" alt=""></span></span>
+          <span class="grow"><span class="t">#DH-2310 · RÊU</span><span class="d">06/06/2026 · 1 món · quá hạn chuyển khoản</span>
+            <span style="display:block;margin-top:6px"><span class="badge hot">Đã huỷ</span></span></span>
+          <span style="text-align:right"><span class="amt">1.430.000₫</span></span><svg data-i="chev" class="chev" data-raw></svg>
+        </a>
+        <a class="row" href="#">
+          <span class="thumbs"><span><img src="img/lua.webp" alt=""></span><span><img src="img/bui.webp" alt=""></span></span>
+          <span class="grow"><span class="t">#DH-2210 · LỬA, BÃO</span><span class="d">09/03/2026 · 2 món · đã giao 14/03</span>
+            <span style="display:block;margin-top:6px"><span class="badge ok">Đã giao</span></span></span>
+          <span style="text-align:right"><span class="amt">1.420.000₫</span></span><svg data-i="chev" class="chev" data-raw></svg>
+        </a>
+      </div>
+      <div class="note pad" style="padding-top:18px;padding-bottom:24px;text-align:center">Đã hiển thị tất cả 5 đơn.</div>
+    </div>
+  </div>
+</main>
+<footer class="foot2" data-footer></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tìm kiếm · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+</head>
+<body>
+<div class="s v2">
+<header class="nav2" data-nav data-cart="1" data-wish="2"></header>
+<main class="narrow">
+  <form class="sub" role="search">
+    <a href="products.html" aria-label="Quay lại danh mục"><svg data-i="back" class="ic"></svg></a>
+    <input class="inp" style="flex:1" type="search" value="khoi" aria-label="Tìm mẫu trong đợt" placeholder="hoodie, oversize, nỉ bông…">
+    <a class="rt" href="products.html">Huỷ</a>
+  </form>
+
+  <div class="lead">1 kết quả cho <b>“khoi”</b> trong đợt 05</div>
+
+  <!-- FIX L7: a lone result is one wide card — photo you can actually see,
+       text in a column, the button on its own row -->
+  <div class="hit">
+    <a class="ph" href="product.html"><img src="img/khoi-lg.webp" alt="KHÓI — màu Đen"></a>
+    <div class="g">
+      <a class="nm" href="product.html">KHÓI</a>
+      <div class="kindline">Áo thun oversize · Cotton 250gsm</div>
+      <div class="colors"><i style="background:#1C1C1C"></i><i style="background:#E6DFD1"></i><span>Đen · Kem</span></div>
+      <div class="p">390.000₫</div>
+      <div class="st">còn 17 / 35 chiếc · đợt 05</div>
+    </div>
+    <div class="act"><button type="button" class="btn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div>
+  </div>
+
+  <div class="h2">Có thể bạn tìm</div>
+  <div class="chips" style="flex-wrap:wrap;overflow:visible;padding-bottom:4px">
+    <a class="chip" href="products.html?family=TEE">Áo thun<span class="cnt">3</span></a>
+    <a class="chip" href="products.html?family=HOODIE">Áo hoodie<span class="cnt">2</span></a>
+    <a class="chip" href="products.html?family=JACKET">Áo khoác<span class="cnt">2</span></a>
+    <a class="chip" href="products.html?family=SHIRT">Áo sơ mi<span class="cnt">1</span></a>
+    <a class="chip" href="products.html?family=PANTS">Quần<span class="cnt">2</span></a>
+    <a class="chip" href="products.html?fit=OVERSIZE">oversize<span class="cnt">6</span></a>
+  </div>
+
+  <!-- device-only history: real behaviour of this browser, never a server -->
+  <div class="sechead" style="margin-top:22px"><h2 class="h2">Tìm gần đây</h2><span class="sub">trên thiết bị này</span><button type="button" class="lnk" data-sim="Đã xoá lịch sử tìm trên thiết bị này">Xoá</button></div>
+  <div class="chips" style="flex-wrap:wrap;overflow:visible;padding-top:10px">
+    <a class="chip" href="search.html">hoodie</a><a class="chip" href="search.html">nỉ bông</a><a class="chip" href="search.html">khoác dù</a>
+  </div>
+</main>
+<footer class="foot2" data-footer></footer>
+</div>
+
+<!-- size sheet, opened by the card button -->
+<div class="sheetwrap" id="sizesheet" hidden>
+  <div class="scrim"></div>
+  <div class="s sheetbody" role="dialog" aria-modal="true" aria-label="Chọn size KHÓI">
+    <div class="sheet sizesheet"><div class="grab"></div>
+      <div class="sheethead"><img src="img/khoi.webp" alt=""><div><h3 class="nm">KHÓI</h3><div class="kindline">Áo thun oversize · Oversize</div><div class="p">390.000₫</div></div></div>
+      <div class="sheetlabel">Màu <b>Đen</b> · còn 10</div>
+      <div class="swa2"><button type="button" class="swbtn" aria-pressed="true"><i style="background:#1C1C1C"></i><span>Đen</span></button><button type="button" class="swbtn" aria-pressed="false"><i style="background:#E6DFD1"></i><span>Kem</span></button></div>
+      <div class="sheetlabel">Size</div>
+      <div class="szrow" role="group">
+        <button type="button" class="sz" data-toggle aria-pressed="false"><b>S</b><i>còn 3</i></button>
+        <button type="button" class="sz" data-toggle aria-pressed="false"><b>M</b><i>còn 4</i></button>
+        <button type="button" class="sz low" data-toggle aria-pressed="false"><b>L</b><i>còn 2</i></button>
+        <button type="button" class="sz low" data-toggle aria-pressed="false"><b>XL</b><i>còn 1</i></button>
+      </div>
+      <div class="sheetaction"><button type="button" class="btn" data-sim="Đã thêm KHÓI vào giỏ" data-close><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ · 390.000₫</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

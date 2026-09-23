@@ -1,0 +1,319 @@
+/* The home page.
+
+   The v2 half of this file — the hero (`.hero2` / `.panel2`), the countdown
+   plates, the low-stock strip (`.lowcard`), the family tiles (`.famtile`),
+   the four rules (`.how`), the next-drop teaser (`.teaser2`), the promise
+   strip (`.policy`) and the section heading (`.sechead`) — went at v3 slice
+   6, once nothing rendered it. What is left of v2 is the two-button row and
+   the reminder band, which the v3 cover still uses.
+
+   Loaded after `sheet.css` and before `interaction.css` / `desktop.css`, so
+   the breakpoint files still come last. */
+
+/* ── the two buttons under the cover ─────────────────────────────────────
+   They share a row and wrap on a narrow phone; the third action ("Đặt nhắc"
+   as `.quiet`) keeps its content width so it reads as a way out rather than
+   as a second choice. */
+.s .cta{ display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.s .cta .btn{ flex:1 1 160px; white-space:nowrap; }
+.s .cta .btn.quiet{ flex:0 1 auto; }
+
+/* ── the reminder band ───────────────────────────────────────────────────
+   The drop band's box, carrying an icon instead of a drop number, so it is
+   not mistaken for a second status line. `.band` centres on the baseline for
+   a row of words; an icon in that row needs the box centred instead. */
+.s .band.remind{ align-items:center; gap:8px; }
+.s .band.remind svg{ color:var(--gold-800); }
+.s .band.remind .lnk{ margin-left:auto; white-space:nowrap; }
+
+/* ── 900px and up ─────────────────────────────────────────────────────── */
+@media (min-width:900px){
+  .s .cta{ margin-top:22px; }
+  .s .cta .btn{ flex:0 0 auto; min-width:200px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE HOME PAGE, v3 — the cover, the contents, the index, the rules, the
+   next issue.
+
+   Ported from `prototype/v3/v3.css` (blocks: cover, tocrow, sec, cards,
+   index, rules, past) plus the two skins that apply to the chosen
+   direction — `html[data-dir="nhan"]` and `[data-badge="b"]`. The app ships
+   ONE direction and ONE badge family, so the skin values are written
+   straight into these rules rather than behind an attribute selector: there
+   is no second direction to switch to.
+
+   THREE COLLISIONS were measured before writing this, because the system
+   has lost that fight before (DESIGN.md §8):
+   · `.s .rules` is the password checklist in `admin.css` (0,2,0) and its
+     `.s .rules div` (0,2,1) would flatten these rows into 11.5px flex rows.
+     Everything here is scoped `.s .sec .rules …`, which outranks both.
+   · `.s .row` in `lists.css` (0,2,0) is a flex list row with a top border;
+     the family index's rows are `.s .index .row` (0,3,0) and restate
+     display, padding, gap and border. Still true after the slice-6 sweep:
+     `.s .row` is what the account and admin list rows wear.
+   · `.s .btn:hover:not(:disabled)` in `interaction.css` is (0,4,0) and
+     loads LAST, so the cover's own button colours carry an extra class to
+     get past it. Same for `.s div > button.btn:only-child` (0,4,2), which
+     would stretch the lone reminder button across the desktop teaser.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── the cover: which issue, is it open, how long, one way in ───────────── */
+/* Black cloth is the material of the ISSUE and of nothing else (globals.css).
+   The photo runs to the edges; the label is stitched under it with a dashed
+   honey seam, which is the one place the brand colour draws a line. */
+.s .cover{ position:relative; background:var(--stage); color:var(--stage-ink); }
+.s .cover .photo{ position:relative; aspect-ratio:1/1; overflow:hidden;
+  background:var(--plate); }
+/* `next/image` with `fill` positions the tag itself; what belongs to the
+   design is the crop. The photo takes the height the black label decides —
+   it never sets it (see `CoverPhoto`). */
+.s .cover .photo img{ object-fit:cover; }
+.s .cover .face{ position:relative; background:var(--stage);
+  padding:var(--s4) var(--gut) var(--s6); border-top:1px dashed var(--brand); }
+
+/* The masthead. "SỐ" sits on the number's baseline — `flex-end` plus 10px,
+   which is what keeps an 11px label from floating beside a 96px figure. */
+.s .cover .issue{ position:relative; z-index:2; display:flex; align-items:flex-end;
+  gap:10px; }
+.s .cover .issue .k{ font-size:var(--fs-xs); font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--stage-ink); margin-bottom:10px; }
+.s .cover .issue .num{ font-size:var(--fs-num); color:var(--brand); }
+
+.s .cover .state{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px;
+  margin-top:var(--s4); font-size:var(--fs-sm); color:var(--stage-ink2); }
+/* On the cloth a badge cannot be the cloth: the live state inverts to the
+   rule colour with honey thread (family B, `badges.html`). */
+.s .cover .state .badge{ background:var(--stage-hair); color:var(--brand); }
+.s .cover.shut .state .badge{ color:var(--stage-ink2); }
+
+/* The clock, set straight on the cloth — no boxes. `min-width` holds the
+   two digits' place while the browser is still reading the time, because
+   the figures cannot be server-rendered (see `Countdown.tsx`). */
+.s .cover .clock{ display:flex; align-items:baseline; flex-wrap:wrap; gap:0 6px;
+  margin-top:var(--s3); font-family:var(--font-display); }
+.s .cover .clock b{ font-size:32px; font-weight:var(--fw-display); line-height:1;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+/* Before the browser has read the clock the figures are a hidden "00" rather
+   than an empty box with a reserved width: `2ch` is the advance of the
+   PROPORTIONAL zero and overshoots the tabular one by 11px a figure, which
+   pushed "phút" onto a second line at 390px. Two real glyphs cannot
+   mismeasure themselves. */
+.s .cover .clock b.wait{ visibility:hidden; }
+.s .cover .clock span{ font-family:var(--font-sans); font-size:var(--fs-xs);
+  letter-spacing:.06em; text-transform:uppercase; color:var(--stage-ink2);
+  margin-right:12px; }
+/* Once it reaches zero the row says so and stops. The page itself turns
+   over on the next load, not under the shopper. */
+.s .cover .clock .over{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h1); letter-spacing:var(--ls-display); text-transform:none;
+  color:var(--stage-ink2); margin-right:0; }
+
+.s .cover .t{ font-size:var(--fs-disp); line-height:1.05; letter-spacing:-.025em;
+  margin:var(--s5) 0 0; max-width:14ch; }
+.s .cover .lead{ margin-top:var(--s3); padding:0; font-size:var(--fs-body);
+  color:var(--stage-ink2); max-width:44ch; }
+
+/* ── the cover's buttons ────────────────────────────────────────────────
+   One honey action, full width on the phone; the second is a link wearing
+   a button's touch target. Both restate their colours on the cloth, where
+   the shop's white-ground values would vanish. */
+.s .cover .cta{ display:flex; flex-direction:column; align-items:stretch; gap:10px;
+  margin-top:var(--s5); }
+.s .cover .cta .btn{ width:100%; flex:0 0 auto; }
+.s .cover .cta .btn.ghost{ background:transparent; color:var(--stage-ink);
+  border-color:var(--stage-ink); }
+.s .cover .cta .btn.ghost:hover:not(:disabled){ background:var(--stage-hair);
+  border-color:var(--stage-ink); }
+.s .cover .cta .btn.quiet{ width:auto; align-self:flex-start; padding:0 4px;
+  background:transparent; border-color:transparent; color:var(--stage-ink);
+  text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
+.s .cover .cta .btn.quiet:hover:not(:disabled){ background:transparent;
+  border-color:transparent; color:var(--brand); }
+/* The cover's buttons carry no overlay of their own: `.s .btn::after` in
+   buttons.css is 3px a side for the whole system now, which measures 44
+   from the centre out on every screen. */
+
+/* ── "Còn ít": the styles that are nearly gone ──────────────────────────── */
+.s .cover .lows{ margin-top:var(--s6); }
+.s .cover .lows .lh{ display:flex; align-items:baseline; gap:10px; padding-bottom:6px;
+  border-bottom:1px solid var(--brand); font-size:var(--fs-xs); font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--stage-ink2); }
+.s .cover .lows .lh .n{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h3); letter-spacing:-.01em; text-transform:none;
+  color:var(--stage-ink); }
+
+/* ── a row of a table of contents: a name, a dotted leader, a price ────── */
+.s .tocrow{ display:flex; align-items:baseline; gap:10px; min-height:44px;
+  padding:12px 0; border-bottom:1px solid var(--stage-hair); font-size:var(--fs-ui);
+  color:inherit; }
+.s .tocrow .n{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-body); letter-spacing:-.01em; }
+.s .tocrow .d{ color:var(--stage-ink2); font-size:var(--fs-sm); }
+.s .tocrow .d s{ text-decoration:line-through; }
+/* The leader takes the slack between the name and the price. It is a dashed
+   honey thread on the cloth — the same stitch as the seam above it. */
+.s .tocrow .ld{ flex:1; min-width:18px; border-bottom:1px dashed var(--brand);
+  opacity:.7; transform:translateY(-4px); }
+.s .tocrow .p{ font-variant-numeric:tabular-nums; }
+.s a.tocrow:hover .n{ color:var(--brand); }
+/* `--hot` is drawn for white paper and comes out at 2.1:1 on the cloth. */
+.s .cover .tocrow .d .low{ color:var(--stage-hot); font-weight:500; }
+
+/* ── a section: a title, a count, a trailing link, a rule ───────────────── */
+.s .sec{ margin-top:var(--s7); }
+.s .sec .hd{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px;
+  padding-bottom:10px; margin-bottom:var(--s4); border-bottom:2px solid var(--ink); }
+.s .sec .hd h2{ margin:0; font-family:var(--font-display); font-size:var(--fs-h2);
+  font-weight:var(--fw-display); letter-spacing:-.015em; }
+.s .sec .hd .meta{ font-size:var(--fs-sm); color:var(--ink2);
+  font-variant-numeric:tabular-nums; }
+.s .sec .hd .more{ position:relative; margin-left:auto; font-size:var(--fs-sm);
+  white-space:nowrap; text-decoration:underline; text-underline-offset:3px; }
+/* 16px of text, 44px of finger. The head is not a scroll container, so the
+   overlay has room to reach (DESIGN.md §5, trap 1). */
+.s .sec .hd .more::after{ content:""; position:absolute; inset:-14px 0; }
+.s .sec .hd .more:hover{ color:var(--brand-text); }
+/* A section the page scrolls itself to has to clear the sticky bar above
+   it — 56px on the phone, 64 from 900px — or the jump lands with the
+   heading hidden under the bar. */
+.s .sec.anchor{ scroll-margin-top:64px; }
+/* On the phone the heading takes the first line, the link the end of it,
+   and the count drops to a line of its own rather than squeezing both. */
+@media (max-width:899.98px){
+  .s .sec .hd .more{ order:2; }
+  .s .sec .hd .meta{ order:3; flex-basis:100%; }
+}
+
+/* ── the contents grid ──────────────────────────────────────────────────
+   Two up on the phone, three from 900px. `minmax(0, 1fr)`: a long name and
+   price on one line must never widen its own column — it wraps instead. */
+.s .grid3{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:var(--s5) var(--s3); }
+
+/* ── the family index: rows, not tiles ──────────────────────────────────── */
+.s .index{ display:grid; }
+.s .index .row{ display:grid; grid-template-columns:48px 1fr auto; gap:14px;
+  align-items:center; min-height:72px; padding:6px 0; border-top:0;
+  border-bottom:1px solid var(--hair); }
+.s .index .row img{ display:block; width:48px; height:60px; object-fit:cover;
+  border-radius:var(--r-sm); background:var(--plate); }
+.s .index .row .n{ display:block; font-size:var(--fs-body); font-weight:600; }
+.s .index .row .d{ display:block; margin-top:0; font-size:var(--fs-sm);
+  color:var(--ink2); }
+.s .index .row .p{ font-size:var(--fs-ui); color:var(--ink2); text-align:right;
+  font-variant-numeric:tabular-nums; }
+.s .index .row:hover .n{ color:var(--brand-text); }
+
+/* ── the four rules: a definition list, no icons, no cards ──────────────── */
+.s .sec .rules{ display:grid; padding:0; }
+.s .sec .rules .r{ display:block; padding:14px 0; border-bottom:1px solid var(--hair);
+  font-size:var(--fs-ui); }
+.s .sec .rules .r b{ display:block; font-size:var(--fs-body); font-weight:600; }
+.s .sec .rules .r > span{ display:block; margin-top:2px; font-size:var(--fs-ui);
+  color:var(--ink2); max-width:48ch; text-wrap:pretty; }
+
+/* ── the next issue: the same cover, quieter, before it opens ───────────── */
+.s .cover.soon{ margin-top:var(--s8); }
+/* Unless nothing is selling — then it IS the cover, at the top of the page.
+   `.first` and not `.lead`: `.s .lead` is the paragraph under a headline
+   (base.css, 60ch and a gutter), and on a <section> it clamped the whole
+   cover to 507px at 1280. DESIGN.md §8 names this trap; this is the sixth
+   class to fall into it. */
+.s .cover.soon.first{ margin-top:0; }
+.s .cover.soon .issue .num{ font-size:72px; color:var(--stage-ink2); }
+.s .cover.soon .t{ font-size:var(--fs-h1); }
+.s .cover.soon .photo{ display:grid; grid-template-columns:1fr 1fr; gap:2px;
+  aspect-ratio:auto; background:transparent; }
+.s .cover.soon .photo figure{ position:relative; margin:0; aspect-ratio:4/5;
+  background:var(--stage-hair); overflow:hidden; }
+/* Held back, not hidden: a style that has not opened is a promise, and the
+   caption on top of it has to stay readable. These two are declared at
+   their own size (they are two tiles, not a bleed), so they take the
+   sizing the filled cover photo no longer needs. */
+.s .cover.soon .photo figure img{ width:100%; height:100%; object-fit:cover;
+  display:block; opacity:.45; }
+.s .cover.soon .photo figure > .badge{ position:absolute; left:10px; top:10px;
+  background:var(--stage); color:var(--brand); }
+.s .cover.soon .photo figcaption{ position:absolute; left:10px; right:10px; bottom:10px;
+  font-size:var(--fs-sm); color:var(--stage-ink); }
+.s .cover.soon .photo figcaption b{ display:block; font-family:var(--font-display);
+  font-weight:var(--fw-display); font-size:var(--fs-body); letter-spacing:var(--ls-display); }
+/* The teaser's label starts a little lower than the selling one's, at both
+   widths: the tiles it follows are quieter than a full-bleed photograph and
+   the block needs the air to read as its own object. */
+.s .cover.soon .face{ padding-top:var(--s5); }
+.s .cover.soon .remind{ margin-top:8px; font-size:var(--fs-sm); color:var(--stage-ink2);
+  max-width:40ch; }
+
+/* ── the issue before this one ──────────────────────────────────────────── */
+.s .past{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px;
+  margin-top:var(--s7); padding-top:var(--s4); border-top:1px solid var(--hair);
+  font-size:var(--fs-sm); color:var(--ink2); }
+.s .past .lnk{ display:inline-flex; align-items:center; min-height:44px; }
+
+/* ── an issue that is over ──────────────────────────────────────────────── */
+/* The photo says it quietly, so the page does not have to say it twice. */
+.s .cover.shut .photo img{ filter:grayscale(.6); opacity:.85; }
+.s .cover.shut .issue .num{ color:var(--stage-ink2); }
+
+/* ── the one authored moment ────────────────────────────────────────────
+   The cover photo settles out of a 3.5% overscan and the masthead is
+   stamped onto it a fifth of a second later. Once. Nothing else on the page
+   animates on arrival. */
+@keyframes v3-settle{ from{ transform:scale(1.035); } to{ transform:none; } }
+@keyframes v3-stamp{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+.s .cover .photo img{ animation:v3-settle 1.1s cubic-bezier(.2,.8,.2,1) both; }
+.s .cover .issue{ animation:v3-stamp .55s .2s cubic-bezier(.2,.8,.2,1) both; }
+/* The teaser is the quiet end of the page, and its tiles are two of them. */
+.s .cover.soon .photo figure img, .s .cover.soon .issue{ animation:none; }
+@media (prefers-reduced-motion:reduce){
+  .s .cover .photo img, .s .cover .issue{ animation:none; }
+}
+
+/* ── the reminder band ──────────────────────────────────────────────────
+   It announces an ISSUE, so it is the issue's own material: black cloth,
+   honey for the two things that are actionable — the bell and the link.
+   44px tall, because it is a row with a control in it. */
+.s .band.remind{ min-height:44px; background:var(--stage); color:var(--stage-ink); }
+.s .band.remind svg{ color:var(--brand); }
+.s .band.remind .lnk{ color:var(--brand); }
+
+/* ── 900px and up, v3 ───────────────────────────────────────────────────── */
+@media (min-width:900px){
+  /* Label left, photograph right, and the label's left edge is the page
+     gutter: `.s` already centres the page at its measure, so the mock's
+     `max()` — which reproduces that gutter on a cover with no cap above it
+     — reduces to the gutter itself here. */
+  .s .cover{ display:grid; grid-template-columns:5fr 7fr; min-height:640px; }
+  .s .cover .photo{ order:2; aspect-ratio:auto; min-height:640px; }
+  /* 16 on top, not 48: the first viewport has to hold the whole label,
+     "Còn ít" included, and the label's own content is 760px tall against
+     the 735 a 1280×800 window leaves under the bar. The mock lands on 16
+     the same way — its NHÃN skin (0,4,1) outranks its own desktop rule. */
+  .s .cover .face{ order:1; margin-left:var(--gutd);
+    padding:var(--s4) var(--s6) var(--s7) 0;
+    border-top:0; border-right:1px dashed var(--brand); }
+  .s .cover .state{ margin-top:var(--s5); }
+  .s .cover .clock b{ font-size:40px; }
+  .s .cover .t{ max-width:12ch; }
+  .s .cover .cta{ flex-direction:row; align-items:center; gap:18px; }
+  /* `:not(.quiet)` is not decoration: `.s div > button.btn:only-child` in
+     interaction.css is (0,4,2) and would otherwise stretch the teaser's
+     lone reminder button across the whole label. */
+  .s .cover .cta .btn:not(.quiet){ width:auto; min-width:200px; }
+  .s .cover .lows{ max-width:400px; }
+
+  .s .cover.soon{ min-height:0; }
+  .s .cover.soon .photo{ min-height:0; padding:var(--s7) var(--gutd) var(--s7) 0; }
+  .s .cover.soon .issue .num{ font-size:120px; }
+
+  .s .sec{ margin-top:var(--s8); }
+  .s .sec.anchor{ scroll-margin-top:72px; }
+  .s .grid3{ grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--s7) var(--s5); }
+  /* Two columns that read DOWN and then across: five families are a list of
+     five, not a grid of six with a hole in it. */
+  .s .index{ grid-template-columns:1fr 1fr; grid-template-rows:repeat(3, auto);
+    grid-auto-flow:column; column-gap:var(--s7); }
+  .s .sec .rules{ grid-template-columns:1fr 1fr; column-gap:var(--s7); }
+}

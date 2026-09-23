@@ -1,0 +1,119 @@
+/* List rows, cart lines, order totals, timeline, empty states.
+   Lifted verbatim from `prototype/app.css` — the approved mock is the
+   REFERENCE. Change anything here and you owe a screenshot comparison
+   against http://127.0.0.1:4321. */
+
+/* -------------------------------------------------------------- list rows */
+.s .rows{ margin:12px 18px 0; border:1px solid var(--hair); border-radius:var(--r);
+  overflow:hidden; }
+.s .row{ display:flex; gap:12px; align-items:center; padding:13px 14px;
+  border-top:1px solid var(--hair); }
+.s .rows .row:first-child{ border-top:0; }
+.s .row .grow{ flex:1; min-width:0; }
+.s .row .t{ font-size:12.5px; font-weight:500; display:block; }
+.s .row .d, .s .tl .t, .s .tl .d{ display:block; }
+.s .row .d{ font-size:11px; color:var(--ink2); margin-top:2px; }
+.s .row .amt{ font-size:12.5px; font-weight:500; white-space:nowrap; }
+.s .row .thumb{ width:52px; height:65px; border-radius:var(--r-sm); background:var(--plate);
+  overflow:hidden; flex:none; }
+.s .row .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.s .chev{ width:15px; height:15px; color:var(--ink2); fill:none; flex:none; }
+
+/* --------------------------------------------------------------- cart line
+   Three columns: photo · name and quantity · money. The right column
+   stretches the full height of the row, so the price sits against the top
+   edge and Remove against the bottom. The eye runs straight from name to
+   price and then down to the action, instead of zig-zagging through the
+   middle of the row. */
+.s .row.cartline{ align-items:stretch; }
+.s .cartline .thumb{ align-self:flex-start; }
+.s .cartline .grow{ display:flex; flex-direction:column; }
+.s .cartline .side{ display:flex; flex-direction:column; align-items:flex-end;
+  justify-content:space-between; gap:8px; flex:none; }
+.s .cartline .amt{ font-variant-numeric:tabular-nums; }
+.s .cartline .rm{ background:none; border:0; padding:0; font:inherit; font-size:11.5px;
+  color:var(--link); font-weight:500; text-decoration:underline; text-underline-offset:2px;
+  cursor:pointer; }
+/* Speaks up when the quantity typed exceeds what the drop cut. A drop is cut
+   once — typing 99 into the box does not sew more shirts — so say so plainly
+   rather than silently correcting the number under the shopper's hands. */
+.s .cartline .cap{ display:block; font-size:10.5px; color:var(--hot); margin-top:6px;
+  max-width:19ch; line-height:1.4; }
+.s .cartline .cap[hidden]{ display:none; }
+
+/* quantity field: typed into, not only stepped one at a time */
+.s .qty{ display:inline-flex; align-items:center; align-self:flex-start; margin-top:9px;
+  height:36px; background:#fff; border:1px solid var(--fill); border-radius:var(--r);
+  overflow:hidden; }
+.s .qb{ position:relative; width:32px; height:100%; flex:none; display:flex;
+  align-items:center; justify-content:center; padding:0; background:none; border:0;
+  color:var(--ink); cursor:pointer; }
+/* The button looks 32×34 but the touch target is a full 44×44 — measured,
+   not estimated. */
+.s .qb::after{ content:""; position:absolute; inset:-5px -6px; }
+.s .qb:hover:not(:disabled){ background:var(--gold-50); }
+.s .qb:disabled{ color:var(--line); cursor:not-allowed; }
+.s .qn{ width:40px; height:100%; padding:0; text-align:center; background:#fff;
+  border:0; border-left:1px solid var(--hair); border-right:1px solid var(--hair);
+  font-family:inherit; font-size:12.5px; font-weight:500; color:var(--ink);
+  font-variant-numeric:tabular-nums; -webkit-appearance:none; appearance:none; }
+.s .qn:focus{ background:var(--gold-50); }
+
+/* ------------------------------------------------------------ order totals */
+.s .sum{ margin:14px 18px 0; background:var(--gold-50); border-radius:var(--r); padding:13px 14px; }
+.s .sum div{ display:flex; justify-content:space-between; font-size:12px; padding:4px 0;
+  color:var(--ink2); }
+.s .sum div.tot{ border-top:1px solid var(--gold-200); margin-top:6px; padding-top:9px;
+  color:var(--ink); font-size:14px; font-weight:600; }
+
+/* --------------------------------------------------------------- timeline
+   Every step is the same height, whether or not it carries a timestamp.
+
+   MEASURED before the change: a step with a detail line came out 53px, one
+   without came out 35px, and the dots fell at a pitch of 53 · 36 · 35 · 53.
+   That reads as a chart of durations — as though more time passed between
+   two stops than between the next two — when the only thing varying is
+   whether we happen to know the minute. The steps are a sequence, not a
+   scale, so the cadence has to be even.
+
+   So the second line is RESERVED on every step rather than added to some.
+   The three parts are named because the total is arithmetic, not a magic
+   number: both type sizes are declared six lines below, and the 1.55 is the
+   line-height `.s` sets in base.css. Change a size there and the row
+   follows. Measured at 390px, every title and every detail in this product
+   sits on one line, which is what makes one reserved line enough. */
+.s .tl{
+  margin:14px 18px 0;
+  --tl-title-line: calc(12.5px * 1.55);
+  --tl-detail-line: calc(11px * 1.55 + 1px);   /* line + its 1px offset */
+  --tl-foot: 16px;
+}
+.s .tl .tlitem{ display:flex; gap:12px; }
+.s .tl .gut{ display:flex; flex-direction:column; align-items:center; flex:none; width:16px; }
+.s .tl .dot{ width:10px; height:10px; border-radius:99px; background:var(--hair); margin-top:4px; }
+.s .tl .tlitem.done .dot{ background:var(--mark); }
+.s .tl .tlitem.now .dot{ background:var(--mark); box-shadow:0 0 0 4px var(--gold-100); }
+/* The stem fills whatever is left between two dots, so an even row height
+   makes an even run of line as well — the cadence reads in the rule, not
+   only in the dots. */
+.s .tl .stem{ width:2px; flex:1; background:var(--hair); margin:3px 0; }
+.s .tl .tlitem.done .stem{ background:var(--mark); }
+.s .tl .bd{
+  padding-bottom:var(--tl-foot);
+  min-height:calc(var(--tl-title-line) + var(--tl-detail-line) + var(--tl-foot));
+}
+/* `min-height`, not `height`: a longer reason or a narrower phone may wrap
+   a line one day, and a step that grows is right where a clipped one is
+   not. Equality is the default, never a cage. */
+.s .tl .t{ font-size:12.5px; font-weight:500; }
+.s .tl .d{ font-size:11px; color:var(--ink2); margin-top:1px; }
+.s .tl .tlitem.todo .t{ color:var(--ink2); font-weight:400; }
+
+/* ----------------------------------------------------------- empty states */
+.s .empty{ padding:46px 30px; text-align:center; }
+.s .empty .ring{ width:56px; height:56px; border-radius:99px; background:var(--gold-50);
+  display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+.s .empty .ring svg{ width:24px; height:24px; color:var(--link); fill:none; }
+.s .empty h3{ font-size:14.5px; margin:0 0 5px; font-family:"Familjen Grotesk",sans-serif;
+  font-weight:700; }
+.s .empty p{ font-size:12px; color:var(--ink2); margin:0 0 16px; line-height:1.55; }

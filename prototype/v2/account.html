@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tài khoản · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+<style>@media (min-width:900px){ .mobonly{ display:none !important; } }</style>
+</head>
+<body>
+<div class="s v2">
+<header class="nav2" data-nav data-cart="2" data-wish="2"></header>
+<main>
+  <div class="sub"><a href="home.html" aria-label="Quay lại"><svg data-i="back" class="ic"></svg></a><h1>Tài khoản</h1></div>
+
+  <div class="acct">
+    <aside class="acctrail">
+      <div class="who"><span class="ava" aria-hidden="true">TA</span><span class="txt"><b>Trần Minh Anh</b><span>thành viên từ 08/03/2026</span></span></div>
+      <nav aria-label="Tài khoản">
+        <a class="on" href="account.html"><svg data-i="home" data-raw></svg>Tổng quan</a>
+        <a href="account-orders.html"><svg data-i="box" data-raw></svg>Đơn hàng<span class="cnt" style="margin-left:auto;font-size:11px;color:var(--ink2)">5</span></a>
+        <a href="#"><svg data-i="heart" data-raw></svg>Yêu thích<span style="margin-left:auto;font-size:11px;color:var(--ink2)">2</span></a>
+        <a href="#"><svg data-i="pin" data-raw></svg>Sổ địa chỉ<span style="margin-left:auto;font-size:11px;color:var(--ink2)">2</span></a>
+        <a href="#"><svg data-i="user" data-raw></svg>Thông tin cá nhân</a>
+        <div class="sep"></div>
+        <a href="#"><svg data-i="logout" data-raw></svg>Đăng xuất</a>
+      </nav>
+    </aside>
+
+    <div class="content">
+      <h1 class="pgt">Tài khoản</h1>
+      <div class="mobonly" style="display:flex;gap:13px;align-items:center;padding:18px 18px 0">
+        <span aria-hidden="true" style="width:52px;height:52px;border-radius:99px;background:var(--gold-100);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--gold-800);flex:none">TA</span>
+        <span><span class="nm" style="font-size:16px;display:block">Trần Minh Anh</span><span class="note">minhanh@email.com · 0912 345 678</span></span>
+      </div>
+
+      <div class="acctgrid">
+        <div class="full">
+          <div class="band"><b>Đợt 05</b><span class="sep" aria-hidden="true">/</span><span>đang mở</span><span class="cd" data-until="2026-09-25T20:00:00+07:00" data-verb="đóng">đóng sau 5 ngày 1 giờ</span></div>
+          <!-- the one order that is moving right now, and where it is -->
+          <div class="rows">
+            <a class="row" href="account-orders.html">
+              <svg data-i="truck" data-bulk class="ic"></svg>
+              <span class="grow"><span class="t">#DH-2422 đang trên đường giao</span><span class="d">GIÓ, KHÓI · dự kiến nhận 21/09 · mã vận đơn VD-8842-1907</span></span>
+              <span class="badge">Đang giao</span><svg data-i="chev" class="chev" data-raw></svg>
+            </a>
+            <a class="row" href="account-orders.html">
+              <svg data-i="clock" class="ic"></svg>
+              <span class="grow"><span class="t">#DH-2430 chờ chuyển khoản</span><span class="d">SƯƠNG, THAN · 2.680.000₫ · hạn 19:50 ngày 21/09 — quá hạn đơn tự huỷ</span></span>
+              <span class="badge warn">Chờ CK</span><svg data-i="chev" class="chev" data-raw></svg>
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <div class="rows">
+            <a class="row" href="account-orders.html"><svg data-i="box" class="ic"></svg><span class="grow"><span class="t">Đơn hàng của tôi</span><span class="d">5 đơn · 2 đang xử lý</span></span><svg data-i="chev" class="chev" data-raw></svg></a>
+            <a class="row" href="#"><svg data-i="heart" class="ic"></svg><span class="grow"><span class="t">Yêu thích</span><span class="d">2 mẫu đã lưu · BỤI sắp hết</span></span><svg data-i="chev" class="chev" data-raw></svg></a>
+            <a class="row" href="#"><svg data-i="pin" class="ic"></svg><span class="grow"><span class="t">Sổ địa chỉ</span><span class="d">2 địa chỉ · mặc định điền sẵn ở thanh toán</span></span><svg data-i="chev" class="chev" data-raw></svg></a>
+            <a class="row" href="#"><svg data-i="user" class="ic"></svg><span class="grow"><span class="t">Thông tin cá nhân</span><span class="d">Tên, email, mật khẩu · sửa lưu trên thiết bị này</span></span><svg data-i="chev" class="chev" data-raw></svg></a>
+          </div>
+        </div>
+
+        <div>
+          <!-- codes that are LIVE right now, straight from data/promotions.ts -->
+          <div class="sechead" style="margin:22px 18px 0"><h2 class="h2">Mã đang chạy</h2><span class="sub">đợt 05 · tới 25/09</span></div>
+          <div class="rows">
+            <div class="promo"><span class="code">DOT05</span><span class="g"><span class="t">Giảm 10%, tối đa 150.000₫</span><span class="d">Đơn từ 500.000₫ · còn 154 lượt</span></span><button type="button" class="lnk" style="font-size:11.5px" data-copy="DOT05">Sao chép</button></div>
+            <div class="promo"><span class="code">CHAOBAN</span><span class="g"><span class="t">Giảm 50.000₫</span><span class="d">Đơn từ 400.000₫ · không giới hạn lượt</span></span><button type="button" class="lnk" style="font-size:11.5px" data-copy="CHAOBAN">Sao chép</button></div>
+            <div class="promo"><span class="code">FREESHIP</span><span class="g"><span class="t">Miễn phí giao tiêu chuẩn</span><span class="d">Đơn từ 800.000₫ · còn 82 lượt</span></span><button type="button" class="lnk" style="font-size:11.5px" data-copy="FREESHIP">Sao chép</button></div>
+          </div>
+
+          <div class="sechead" style="margin:22px 18px 0"><h2 class="h2">Cài đặt</h2><span class="sub">lưu trên thiết bị này</span></div>
+          <div class="rows">
+            <div class="row"><span class="grow"><span class="t">Báo khi đợt mới mở</span><span class="d">Trước 2 giờ · Đợt 06 mở 20:00 ngày 02/10</span></span><button type="button" class="switch" role="switch" aria-checked="true" aria-label="Báo khi đợt mới mở"></button></div>
+            <div class="row"><span class="grow"><span class="t">Báo khi mẫu đã lưu sắp hết</span><span class="d">Chỉ mẫu trong yêu thích · còn ≤ 3 chiếc</span></span><button type="button" class="switch" role="switch" aria-checked="false" aria-label="Báo khi mẫu đã lưu sắp hết"></button></div>
+          </div>
+          <div class="note icon pad" style="padding-top:10px"><svg data-i="info" class="ic sm"></svg><span>Chưa có máy chủ gửi email, nên lựa chọn này chỉ nằm trong trình duyệt của bạn cho tới khi có.</span></div>
+        </div>
+      </div>
+
+      <div class="pad mobonly" style="padding-top:18px;padding-bottom:24px">
+        <button type="button" class="btn quiet"><svg data-i="logout" class="ic sm"></svg>Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+</main>
+<footer class="foot2" data-footer></footer>
+</div>
+</body>
+</html>

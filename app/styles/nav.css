@@ -1,0 +1,147 @@
+/* The wordmark, the icon scale, the nav bar and the issue band.
+
+   Lifted from `prototype/app.css` — the approved mock is the REFERENCE.
+   Change anything here and you owe a screenshot comparison against
+   http://127.0.0.1:4321.
+
+   ONE rule is an addition rather than a port: the invisible touch-target
+   overlay on the bar's links, marked ADDED below. It changes no pixel that
+   renders; it exists because the ported design missed the 44px floor. */
+
+/* --------------------------------------------------------------- nav bar */
+/* Two bars have stood here and both are gone: `.s .nav` (Phase 3) and
+   `.nav2` (v2). `SiteNav` has rendered `.nav3` (below) on every route since
+   slice 0 of v3, and nothing references the old classes. `.s .wm` stays:
+   the wordmark is the one part every bar has kept, and the admin sidebar,
+   the footer's colophon and the delivery slip all wear it too. */
+.s .wm{ font-family:var(--font-display); font-weight:var(--fw-display); font-size:14px;
+  letter-spacing:.14em; margin-right:auto; }
+/* Icons: Iconsax Linear. The paths already carry stroke=currentColor and
+   stroke-width=1.5, so all this sets is the size — it never overrides the
+   stroke.
+   Colour is INHERITED: an icon is always the same colour as the text beside
+   it. Want a different one? Set `color` on whatever contains them both,
+   never on the icon. */
+/* `display:inline-block` and the baseline shift ADDED at v3 slice 0.
+   Tailwind's preflight sets `svg{ display:block }`, which is invisible
+   inside a flex parent and a line of its own inside a paragraph — the
+   reason `.note.icon` had to give the icon a column of its own. Inline-block
+   with `vertical-align:-.18em` puts an icon ON the line beside 13px text;
+   flex and grid parents blockify it again anyway, so nothing that already
+   worked changes.
+
+   The box scale is 12 (a mark, `.mk`), 15 (beside 12–13px text, `.sm`) and
+   18 (nav and icon buttons, the default). The fourth step, 28 for an empty
+   state, is set where it lands — `.s .empty3 > .ic` in lists.css — rather
+   than by a variant here. */
+.s .ic{ display:inline-block; vertical-align:-.18em;
+  width:18px; height:18px; font-size:18px;
+  color:inherit; fill:none; flex:none; }
+/* Duotone (Iconsax Bulk) — used only for the ON state. It fills rather than
+   strokes, so fill has to be turned back on. Colour still inherits the same
+   way: solid-versus-hollow is the channel that carries the state, and it
+   does not need a colour channel of its own on top. */
+.s .ic.duo{ fill:currentColor; }
+
+/* ── Icon next to text: trim the transparent margins out of the layout box ──
+   Iconsax draws every glyph inside a 24×24 cell, but each one occupies a
+   different share of that cell (`chev` is 7.1 units wide, `truck` is 21.75).
+   Laying them out with `gap` lays out two BOXES, so the gap you actually see
+   swells by whatever emptiness the glyph left behind: measured between 6.9px
+   and 12px for one declared `gap:7px`, with the whole icon+label cluster
+   pushed as much as 5.6px to the right.
+
+   The negative margins here pull the box back to the edge of the ink. The
+   glyph is drawn exactly as before — only the box shrinks. NOT applied to an
+   icon standing on its own (nav bar, back button, checkbox): there the square
+   box IS the 44px touch target.
+
+   `--il` / `--ir` are written onto each SVG by the icon component; `1em`
+   equals the icon's width because `.ic` sets font-size to match. Missing
+   variables fall back to 0. */
+.s .btn > .ic,
+.s .card3 .addbtn3 > .ic,
+.s .badge > .ic,
+.s .side a > .ic{
+  margin-left:calc(var(--il, 0) * -1em);
+  margin-right:calc(var(--ir, 0) * -1em);
+}
+/* Menus are deliberately OUTSIDE that rule: there the icons form a COLUMN,
+   and trimming each glyph by a different amount leaves the labels beside them
+   ragged. An icon column has to be one constant width, however much the
+   glyphs inside it differ. */
+.s .ic.sm{ width:15px; height:15px; font-size:15px; }
+/* 12px: a mark inside a box — the tick in a checkbox, the +/- of a stepper. */
+.s .ic.mk{ width:12px; height:12px; font-size:12px; }
+
+/* ------------------------------------------------------------ nav bar, v3 */
+/* Sticky, 56px on the phone and 64px from 900px. What it has to say, in the
+   order it says it: whose shop this is, which issue is on sale and how long
+   is left, and the four things a shopper reaches for.
+
+   The ISSUE STAMP (`.itag`) is the one piece of black cloth in the bar —
+   the same material as the cover, so the nav and the cover read as one
+   object. On the phone it says only WHICH issue; the countdown joins it
+   from 900px, where there is room (`.cd`).
+
+   The bar sits on a soft shadow rather than a rule: `0 1px 0` for the
+   hairline and a wide, low-opacity drop underneath, so the page slides
+   under something rather than past a line. */
+.s .nav3{ position:sticky; top:0; z-index:40; background:var(--bg);
+  border-bottom:1px solid var(--hair);
+  box-shadow:0 1px 0 rgba(23,20,16,.04), 0 10px 24px -14px rgba(23,20,16,.28); }
+.s .nav3 .in{ display:flex; align-items:center; gap:10px; height:56px;
+  padding:0 8px 0 var(--gut); }
+.s .nav3 .wm{ font-size:16px; margin-right:0; display:inline-flex; align-items:center;
+  height:44px; }
+.s .nav3 .itag{ display:inline-flex; align-items:center; gap:8px; height:28px;
+  padding:0 10px; border-radius:var(--r-sm); font-size:var(--fs-xs); font-weight:600;
+  letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; position:relative;
+  background:var(--stage); color:var(--brand); border:1px solid var(--stage); }
+/* 28px of cloth, 44px of finger. */
+.s .nav3 .itag::after{ content:""; position:absolute; inset:-9px 0; }
+/* The dot is the second channel, and on cloth it has to stay visible: honey
+   while the issue is selling, blue before it opens, quiet grey once it has
+   shut. The word beside it says the same thing either way. */
+.s .nav3 .itag i{ width:6px; height:6px; border-radius:99px; background:currentColor;
+  flex:none; }
+.s .nav3 .itag.soon i{ background:var(--info); }
+.s .nav3 .itag.shut i{ background:var(--stage-ink2); }
+.s .nav3 .itag .cd{ display:none; font-weight:400; text-transform:none; letter-spacing:0;
+  color:var(--stage-ink2); font-variant-numeric:tabular-nums; }
+.s .nav3 .links{ display:none; }
+.s .nav3 .icons{ margin-left:auto; display:flex; align-items:center; flex:none; }
+/* 40 wide × 44 tall: the height is the floor; the width follows DESIGN.md §5's
+   nav exemption, because four 44px boxes would push the wordmark off a 360px
+   phone, and two touch targets that overlap are worse than one that is narrow. */
+.s .nav3 .ib{ position:relative; width:40px; height:44px; display:inline-flex;
+  align-items:center; justify-content:center; color:var(--ink); border-radius:var(--r);
+  flex:none; }
+.s .nav3 .ib:hover{ background:var(--plate); }
+/* The count bubble is the badge family B: black cloth, honey digits. It is
+   drawn only above zero — an empty bag says so by having no bubble. */
+.s .nav3 .ib b{ position:absolute; top:5px; right:3px; min-width:16px; height:16px;
+  padding:0 4px; border-radius:99px; background:var(--stage); color:var(--brand);
+  font-size:var(--fs-xs); line-height:16px; font-weight:700; text-align:center;
+  font-family:var(--font-sans); font-variant-numeric:tabular-nums; }
+
+/* The v2 sub-bar (back arrow + screen title, `SubBar.tsx`) stood here until
+   v3 slice 6. It went with the component at slice 4; the rules outlived it
+   and were reaching the `.sub` SECONDARY LINE the account and admin rows
+   wear — a different thing with the same short name. Nothing of it was
+   visible (every property was already overridden where the two met), but a
+   bar's padding and hairline were one specificity accident away. */
+
+/* ------------------------------------------------------------------- band
+   One band is left: the reminder line on the home page (`ReminderBand`,
+   dressed by `.band.remind` in home.css). The ISSUE band that shared this
+   box — a drop number, a separator and a countdown — went at v3 slice 6
+   with `DropBand.tsx`, which nothing had rendered since the cover took the
+   job at slice 1. */
+.s .band{ margin:14px 18px 0; background:var(--band); border-radius:var(--r);
+  padding:10px 13px; display:flex; align-items:baseline; gap:9px; font-size:11.5px;
+  color:var(--band-ink); }
+
+/* The v2 tab bar (`.tabs`, and `.tabs.scroll` in listing.css) stood here
+   until v3 slice 6. The family tabs are `.tabs3` (listing.css) since slice
+   2 of v3 and nothing rendered the old name afterwards. */

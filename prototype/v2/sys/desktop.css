@@ -1,0 +1,132 @@
+/* The desktop variant of the shopper-facing screens.
+
+   The prototype could not express this as breakpoints — a static mock has
+   none — so it drew two separate comps instead, `trang-chu-pc` and
+   `san-pham-pc`. This file is those two comps turned into one breakpoint.
+
+   Every number below is lifted from the prototype rather than chosen here:
+
+     1280px  `body.pc .device` in shell.css — the width both comps were drawn at
+      900px  the width shell.css itself already calls "wide" (`.tbar`)
+       40px  the page gutter both comps use in place of the phone's 18px
+     3 cols  `.grid.three`, gap 22/20 — already in cards.css
+      440px  the hero height in `sc_home_w`
+   1.05/.95  the product page's column split in `sc_pdp_w`, gap 34px
+
+   Below 900px nothing in here applies and the phone layout is untouched. */
+
+@media (min-width: 900px) {
+  /* The comps are 1280 wide. Past that the hero would stretch to the width
+     of the monitor and the two-column product page would pull its own
+     halves apart, so the page stops growing and centres instead. */
+  .s {
+    max-width: 1280px;
+    margin-inline: auto;
+  }
+
+  /* 18 → 40. `.pad` carries the gutter for everything this build wrote; the
+     rest are the ported blocks that hard-code their own. */
+  .s .pad,
+  .s .lead,
+  .s .h2,
+  .s .grid,
+  .s .chips,
+  .s .field,
+  .s .szrow,
+  .s .check,
+  .s .steps {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  .s .band,
+  .s .sum,
+  .s .rows,
+  .s .tl,
+  .s .alert {
+    margin-left: 40px;
+    margin-right: 40px;
+  }
+
+  /* Two cards across is a phone's answer. On 1280 it leaves each card 600px
+     wide, which makes a 390px photo into a poster. */
+  .s .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px 20px;
+  }
+
+  .s .hero {
+    height: var(--hero-desktop-h, 440px);
+  }
+
+  /* A button that ran the full width of a phone should not run the full
+     width of a monitor. The comps keep the decision column's buttons at
+     330px. */
+  .s .pad > .btn {
+    max-width: 330px;
+  }
+
+  .s .empty {
+    padding: 64px 30px;
+  }
+
+  /* 46ch suits a 390px column; `sc_home_w` gives the desktop lead 60ch. */
+  .s .lead {
+    max-width: 60ch;
+  }
+}
+
+/* The home page's teaser grid shows four on a phone and six on a monitor:
+   four fills two phone rows, six fills two desktop rows, and three columns
+   holding four cards leaves a hole in the second one. The extra two are
+   rendered either way and hidden below the breakpoint — one rule, rather
+   than two different slices of the same list. */
+@media (max-width: 899.98px) {
+  .s .grid.sixup > *:nth-child(n + 5) {
+    display: none;
+  }
+}
+
+/* ── the product page's two columns ──────────────────────────────────────
+   Photo on the left, the decision on the right, both visible at once. On a
+   phone the same two blocks stack — see `.pdpbuy` in cards.css. */
+@media (min-width: 900px) {
+  .s .pdp {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 34px;
+    padding: 24px 40px 0;
+    align-items: start;
+  }
+  /* The two halves become real grid items, so the photo can sit still while
+     the right-hand column scrolls past it. */
+  .s .pdp > .pdpbuy {
+    display: block;
+  }
+  .s .pdp .shot {
+    width: 60px;
+    height: 74px;
+  }
+  /* Inside the columns the gutter is the grid's, not the block's. */
+  .s .pdp .pad,
+  .s .pdp .lead,
+  .s .pdp .h2,
+  .s .pdp .szrow,
+  .s .pdp .swa,
+  .s .pdp .sheetlabel {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .s .pdp .rows {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .s .pdp .hero {
+    height: auto;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--r);
+  }
+  .s .pdp h1 {
+    font-size: 32px;
+    line-height: 1.1;
+  }
+}

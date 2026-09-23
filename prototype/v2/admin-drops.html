@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>Đợt bán · Quản trị · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+</head>
+<body>
+<div class="s adm v2">
+<nav class="side" aria-label="Khu quản trị" data-adminnav data-active="drops"></nav>
+<main class="main">
+  <header class="top">
+    <h1>Đợt bán</h1>
+    <div class="rt">
+      <span class="sim"><svg data-i="eye" class="ic sm"></svg>dữ liệu mô phỏng</span>
+      <button type="button" class="btn ghost sm" data-sim="Đã tải dot-ban.csv"><svg data-i="export" class="ic sm"></svg>Tải CSV</button>
+      <button type="button" class="btn sm" data-open="#newdrop"><svg data-i="plus" class="ic sm"></svg>Tạo đợt mới</button>
+    </div>
+  </header>
+  <p class="subhead">Một đợt được cắt một lần và không may thêm. "Đã bán" là phần đã đi của số đã cắt — không phải mục tiêu, vì không có mục tiêu nào được ghi ở đâu cả.</p>
+
+  <div class="dt">
+    <div class="bar tools">
+      <span class="find"><svg data-i="search" data-raw></svg><input type="search" placeholder="Tìm đợt…" aria-label="Tìm đợt"></span>
+      <span class="fwrap"><button type="button" class="facet" aria-haspopup="menu" aria-expanded="false"><span class="t">Trạng thái</span><svg data-i="down" data-raw></svg></button></span>
+      <span class="spacer"></span>
+      <span class="fwrap"><button type="button" class="facet colsbtn"><svg data-i="columns" data-raw></svg><span class="t">Cột</span></button></span>
+    </div>
+    <div class="scroll">
+      <table class="dtt">
+        <thead><tr>
+          <th class="srt"><button type="button" class="sortb"><span>Đợt</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th><span class="lb">Thời gian</span></th>
+          <th class="srt"><button type="button" class="sortb"><span>Trạng thái</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt num"><button type="button" class="sortb"><span>Mẫu</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt num"><button type="button" class="sortb"><span>Đã cắt</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt num"><button type="button" class="sortb"><span>Đã bán</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt num"><button type="button" class="sortb"><span>Còn</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt num"><button type="button" class="sortb"><span>Doanh thu ₫</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="actc"></th>
+        </tr></thead>
+        <tbody>
+          <tr><td><a class="lnk" href="#"><b>Đợt 06</b></a></td><td>02/10 – 16/10/2026</td><td><span class="badge"><i></i>Sắp mở</span></td><td class="num">0 <span class="note">· 2 hé lộ</span></td><td class="num">0</td><td class="num"><span class="sold-share"><span class="meter" aria-hidden="true"><i style="width:0"></i></span>0/0 · —</span></td><td class="num">0</td><td class="num">0</td><td class="actc"><button type="button" class="rowmenu" data-menu="#dropmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td><a class="lnk" href="admin-drop.html"><b>Đợt 05</b></a></td><td>11/09 – 25/09/2026</td><td><span class="badge ok"><i></i>Đang mở</span></td><td class="num">10</td><td class="num">181</td><td class="num"><span class="sold-share"><span class="meter" aria-hidden="true"><i style="width:60%"></i></span>108/181 · 60%</span></td><td class="num">73</td><td class="num">77.500.000</td><td class="actc"><button type="button" class="rowmenu" data-menu="#dropmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td><a class="lnk" href="#"><b>Đợt 04</b></a></td><td>05/06 – 19/06/2026</td><td><span class="badge flat"><i></i>Đã đóng</span></td><td class="num">6</td><td class="num">200</td><td class="num"><span class="sold-share"><span class="meter" aria-hidden="true"><i style="width:100%"></i></span>200/200 · 100%</span></td><td class="num">0</td><td class="num">171.600.000</td><td class="actc"><button type="button" class="rowmenu" data-menu="#dropmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td><a class="lnk" href="#"><b>Đợt 03</b></a></td><td>06/03 – 20/03/2026</td><td><span class="badge flat"><i></i>Đã đóng</span></td><td class="num">5</td><td class="num">208</td><td class="num"><span class="sold-share"><span class="meter" aria-hidden="true"><i style="width:100%"></i></span>208/208 · 100%</span></td><td class="num">0</td><td class="num">133.020.000</td><td class="actc"><button type="button" class="rowmenu" data-menu="#dropmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="foot"><span class="shown">Hiện <b class="tnum">1–4</b> trên <b class="tnum">4</b> đợt</span>
+      <span class="rt"><span class="perlb">Dòng mỗi trang<span class="fwrap perwrap"><button type="button" class="facet per" aria-haspopup="menu" aria-expanded="false"><span class="t">10</span><svg data-i="down" data-raw></svg></button></span></span><span class="pg">Trang <b class="tnum">1</b> / <b class="tnum">1</b></span><span class="pager"><button type="button" class="prev" disabled aria-label="Trang trước"><svg data-i="chev" data-raw></svg></button><button type="button" class="next" disabled aria-label="Trang sau"><svg data-i="chev" data-raw></svg></button></span></span></div>
+  </div>
+  <p class="note icon" style="margin-top:14px"><svg data-i="info" class="ic sm"></svg><span>Trạng thái đợt vẫn suy từ giờ mở / giờ đóng, không có cờ bật tắt. "Đóng đợt sớm" vì thế là <b>sửa giờ đóng</b> thành bây giờ — cùng một cơ chế, không phải một trạng thái thứ tư.</span></p>
+</main>
+</div>
+
+<div class="menu" id="dropmenu" role="menu" aria-label="Thao tác với đợt" hidden>
+  <h5>Đợt</h5>
+  <a href="admin-drop.html" role="menuitem" style="display:flex;align-items:center;gap:9px;padding:7px 9px;font-size:12px;border-radius:var(--r-sm)"><svg data-i="eye" data-raw style="width:14px;height:14px;color:var(--mark)"></svg>Xem chi tiết theo mẫu</a>
+  <button type="button" role="menuitem" data-sim="Sửa lịch đợt (mô phỏng)"><svg data-i="calendar" data-raw></svg>Sửa giờ mở / đóng</button>
+  <button type="button" role="menuitem" data-sim="Đã tải CSV của đợt"><svg data-i="export" data-raw></svg>Tải CSV đợt này</button>
+  <hr>
+  <button type="button" role="menuitem" class="bad" data-open="#closedrop"><svg data-i="clock" data-raw></svg>Đóng đợt sớm…</button>
+</div>
+
+<div class="modalwrap" id="newdrop" hidden>
+  <div class="scrim"></div>
+  <div class="modal s" role="dialog" aria-modal="true" aria-labelledby="nd-t">
+    <div class="hd"><h2 id="nd-t">Tạo đợt mới</h2><button type="button" class="x" data-close aria-label="Đóng"><svg data-i="x" data-raw></svg></button></div>
+    <div class="bd">
+      <p>Một đợt chỉ cần giờ mở và giờ đóng. Mẫu, giá và số cắt thêm sau ở Sản phẩm; trước giờ mở khách chỉ thấy tên và ảnh hé lộ.</p>
+      <div class="fgrid" style="margin-top:12px">
+        <div><label>Số đợt</label><input class="inp" value="07"></div>
+        <div><label>Thời lượng</label><input class="inp" value="14 ngày"></div>
+        <div><label>Mở lúc</label><input class="inp" value="20:00 · 06/11/2026"></div>
+        <div><label>Đóng lúc</label><input class="inp" value="20:00 · 20/11/2026"></div>
+        <div class="full"><label>Ghi chú nội bộ</label><input class="inp" placeholder="Không bắt buộc"></div>
+      </div>
+    </div>
+    <div class="ft"><button type="button" class="btn ghost sm" data-close>Huỷ</button><button type="button" class="btn sm" data-sim="Đã tạo Đợt 07 · 06/11 – 20/11 · chưa có mẫu"><svg data-i="confirm" class="ic sm"></svg>Tạo đợt 07</button></div>
+  </div>
+</div>
+
+<div class="modalwrap" id="closedrop" hidden>
+  <div class="scrim"></div>
+  <div class="modal s" role="dialog" aria-modal="true" aria-labelledby="cd-t">
+    <div class="hd"><h2 id="cd-t">Đóng đợt 05 ngay bây giờ?</h2><button type="button" class="x" data-close aria-label="Đóng"><svg data-i="x" data-raw></svg></button></div>
+    <div class="bd">
+      <p>Giờ đóng đổi từ <b>20:00 · 25/09</b> thành <b>18:50 · 20/09</b> (bây giờ). 73 chiếc còn lại sẽ không bán được nữa; giỏ hàng của khách đang chứa mẫu đợt 05 sẽ báo "đợt đã đóng".</p>
+      <p>Đơn đã đặt không bị ảnh hưởng. Việc này không hoàn tác được ở bản mô phỏng.</p>
+    </div>
+    <div class="ft"><button type="button" class="btn ghost sm" data-close>Giữ đợt mở</button><button type="button" class="btn sm" data-sim="Đợt 05 đã đóng lúc 18:50 · 73 chiếc còn lại ngừng bán">Đóng đợt 05</button></div>
+  </div>
+</div>
+</body>
+</html>

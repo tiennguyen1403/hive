@@ -1,0 +1,44 @@
+
+body{ margin:0; padding:26px 22px 80px; background:#12161A; color:#CBD2D9;
+  font-family:"Be Vietnam Pro",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
+a{ color:#F1C04A; }
+header{ max-width:78ch; margin:0 auto 26px; }
+header h1{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:30px;
+  color:#fff; margin:0 0 10px; letter-spacing:-.02em; line-height:1.18; }
+header p{ margin:0 0 8px; font-size:14px; line-height:1.62; color:#9AA5AF; }
+header b{ color:#fff; font-weight:600; }
+nav.crumbs{ max-width:78ch; margin:0 auto 26px; display:flex; flex-wrap:wrap; gap:8px; }
+nav.crumbs a{ font-size:12px; padding:6px 11px; border:1px solid #2A3138; border-radius:6px;
+  color:#9AA5AF; text-decoration:none; }
+nav.crumbs a.on{ background:#EBA400; border-color:#EBA400; color:#211D12; font-weight:600; }
+.grp{ max-width:1500px; margin:0 auto; padding-top:26px; border-top:1px solid #222830; }
+.grp > h2{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:20px;
+  color:#fff; margin:0 auto 4px; max-width:78ch; }
+.grp > p.lede{ font-size:13px; color:#8F9AA4; margin:0 auto 20px; max-width:78ch; line-height:1.6; }
+.row{ display:flex; flex-wrap:wrap; gap:22px; justify-content:center; align-items:flex-start; }
+figure{ margin:0 0 28px; }
+figcaption{ margin-bottom:8px; max-width:390px; }
+figcaption .n{ font-size:12.5px; color:#fff; font-weight:600; }
+figcaption .d{ font-size:11px; color:#7E8994; line-height:1.45; margin-top:2px; }
+figure.wide figcaption{ max-width:1280px; }
+.frame{ position:relative; border-radius:10px; overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.5); background:#fff; }
+.frame.m{ width:390px; }
+.frame.w{ width:1280px; }
+.fold{ position:absolute; left:0; right:0; top:760px; border-top:1px dashed rgba(16,50,62,.4);
+  pointer-events:none; }
+.fold span{ position:absolute; right:7px; top:3px; font-size:8.5px; color:#54707F;
+  background:#fff; padding:1px 5px; border-radius:3px; letter-spacing:.02em; }
+.navcards{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; max-width:1180px;
+  margin:0 auto; }
+.navcards a{ display:block; background:#fff; border-radius:10px; padding:20px 18px;
+  text-decoration:none; box-shadow:0 10px 30px rgba(0,0,0,.42); }
+.navcards .t{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:17px;
+  color:#211D12; letter-spacing:-.01em; }
+.navcards .c{ font-size:11px; color:#9E6817; margin-top:3px; font-weight:500; }
+.navcards .d{ font-size:12px; color:#71674E; margin-top:10px; line-height:1.55; }
+.navcards .go{ margin-top:15px; display:inline-block; font-size:12px; font-weight:500;
+  color:#9E6817; border:1px solid #C28800; border-radius:6px; padding:7px 14px; }
+.sw{ display:inline-flex; align-items:center; gap:7px; font-size:11px; color:#8D96A0;
+  font-family:ui-monospace,Consolas,monospace; }
+.sw i{ width:26px; height:26px; border-radius:5px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.14); }

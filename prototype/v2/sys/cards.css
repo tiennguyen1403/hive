@@ -1,0 +1,206 @@
+/* Image plates, the product grid, and the PRODUCT CARD (a photo band you
+   swipe through by colour).
+   Lifted verbatim from `prototype/app.css` — the approved mock is the
+   REFERENCE. Change anything here and you owe a screenshot comparison
+   against http://127.0.0.1:4321. */
+
+/* ---------------------------------------------------------------- imagery */
+/* `display:block` ADDED in Phase 3. The mock only ever put `.ph` on a
+   <div>, where block is the default, so the declaration was never needed.
+   This build makes the plate itself the link to the product — and an <a> is
+   inline, where BOTH `aspect-ratio` and a percentage `width` are silently
+   ignored. The plate then took its height from whatever the borrowed photo
+   happened to be: measured 483px on a 4:5 frame beside 570px and 689px on
+   two portrait ones, in the same row. A class that promises a 4:5 plate has
+   to deliver it on whatever element it lands on. */
+.s .ph{ display:block; width:100%; aspect-ratio:4/5; background:var(--plate);
+  border-radius:var(--r); overflow:hidden; }
+.s .ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+/* ── height ADDED in Phase 3, not lifted from the prototype ───────────────
+   The mock set each hero's height inline, which a media query cannot reach
+   without `!important`. The values did not change — the page still names the
+   number — only the channel did. */
+.s .hero{ width:100%; height:var(--hero-h, auto); background:var(--plate);
+  overflow:hidden; }
+.s .hero img{ width:100%; height:100%; object-fit:cover; display:block; object-position:50% 18%; }
+
+/* ------------------------------------------------------------------- grid */
+.s .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 12px; padding:16px 18px 0; }
+.s .grid.three{ grid-template-columns:repeat(3,1fr); gap:22px 20px; }
+.s .grid.four{ grid-template-columns:repeat(4,1fr); gap:22px 18px; }
+.s .card h3{ margin:8px 0 0; font-size:13.5px; }
+.s .card .kindline{ font-size:11px; color:var(--ink2); margin-top:1px; }
+.s .card .p{ font-size:12.5px; margin-top:3px; font-weight:500; }
+.s .card .st{ font-size:10.5px; color:var(--ink2); margin-top:4px; }
+.s .card .st .gone{ text-decoration:line-through; }
+.s .card .st .low{ color:var(--hot); font-weight:500; }
+.s .card .wrap{ position:relative; }
+.s .card .flag{ position:absolute; left:7px; top:7px; background:#fff; color:var(--ink);
+  font-size:9.5px; font-weight:600; padding:3px 6px; border-radius:var(--r-sm);
+  letter-spacing:.02em; }
+.s .card .sold{ position:absolute; inset:0; background:rgba(255,255,255,.72);
+  display:flex; align-items:center; justify-content:center; border-radius:var(--r);
+  font-size:11px; font-weight:600; letter-spacing:.06em; color:var(--ink); }
+
+/* ══ PRODUCT CARD — a photo band you swipe through by colour ═════════════
+   The image plate is no longer one picture: it is a horizontal band, one
+   frame per colourway. That band is a REAL SCROLL AREA (`overflow-x:auto`
+   plus `scroll-snap`), not a JS effect — so finger, trackpad, wheel and
+   arrow keys all drive it, and it never swallows the page's vertical swipe.
+   JS only paints the position pips and tells a tap apart from a swipe.
+
+   The card leaves out size and colour, and spends what it saves on the two
+   things PRODUCT.md line 86 counts as content: the "hết XL" line when a size
+   has run out, and the units left once it is down to three or fewer. Both
+   stay silent on most cards.
+
+   The card is a vertical column with the button pushed to the bottom. The
+   grid already stretches every card in a row to the same height, so without
+   that push a card carrying the "hết XL" line would sit its button lower
+   than one without — four buttons out of line across a single row. */
+.s .card.swipe{ display:flex; flex-direction:column; }
+.s .card.swipe .wrap{ border-radius:var(--r); overflow:hidden; }
+.s .card.swipe .slide{ display:flex; overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory; scrollbar-width:none; -ms-overflow-style:none; }
+.s .card.swipe .slide::-webkit-scrollbar{ width:0; height:0; display:none; }
+.s .card.swipe .pane{ flex:0 0 100%; scroll-snap-align:center; scroll-snap-stop:always;
+  background:var(--plate); cursor:pointer; }
+.s .card.swipe .pane img{ width:100%; aspect-ratio:4/5; object-fit:cover; display:block;
+  pointer-events:none; }
+/* The position pips are told apart by RING and SIZE, not by colour alone —
+   their colour is there to preview which colourways the card holds. */
+.s .card.swipe .pips{ position:absolute; left:0; right:0; bottom:8px;
+  display:flex; justify-content:center; gap:6px; pointer-events:none; }
+.s .card.swipe .pips i{ width:8px; height:8px; border-radius:99px; display:block;
+  box-shadow:inset 0 0 0 1px var(--line), 0 0 0 2px rgba(255,255,255,.92);
+  transition:box-shadow .16s ease, transform .16s ease; }
+.s .card.swipe .pips i.on{ transform:scale(1.3);
+  box-shadow:inset 0 0 0 1px var(--line), 0 0 0 2px #fff,
+             0 0 0 3.5px var(--ink); }
+@media (prefers-reduced-motion:reduce){
+  .s .card.swipe .pips i{ transition:none; }
+  .s .card.swipe .slide{ scroll-behavior:auto; }
+}
+/* price row; the units-left figure speaks only at three or fewer */
+.s .card .pricerow{ display:flex; align-items:baseline; gap:8px; margin-top:4px; }
+.s .card .pricerow .p{ margin:0; }
+.s .card .pricerow .left{ margin-left:auto; font-size:10.5px; color:var(--ink2); }
+.s .card .pricerow .left.tlitem{ color:var(--hot); font-weight:500; }
+/* sold-out sizes — shown only when a size really has run out */
+.s .card.swipe .missing{ font-size:10.5px; color:var(--hot); margin-top:3px; }
+.s .card.swipe .missing s{ text-decoration:line-through; }
+.s .card.swipe .act{ position:relative; margin-top:auto; padding-top:8px; }
+.s .card.swipe .addbtn{ display:flex; align-items:center; justify-content:center; gap:6px;
+  width:100%; height:36px; font:inherit; font-size:12px; font-weight:500;
+  letter-spacing:.01em; color:var(--fill-ink); background:var(--fill);
+  border:1px solid var(--fill); border-radius:var(--r); cursor:pointer;
+  position:relative; }
+/* 36px tall to keep the card light, and a finger still gets 44px — the same
+   invisible-overlay trick as `.btn`, and just as free for the layout. */
+.s .card.swipe .addbtn::after{ content:""; position:absolute; inset:-4px 0; }
+.s .card.swipe .addbtn:hover{ background:var(--gold-400); border-color:var(--gold-400); }
+.s .card.swipe .addbtn.xong{ background:var(--ok-bg); border-color:var(--ok-bg);
+  color:var(--ok); }
+
+/* ── the unsave button, ADDED in Phase 4 ─────────────────────────────────
+   Only on a card standing in the saved list. It sits on the plate so the
+   card keeps ONE action row, and so the list needs no wrapper to align a
+   control underneath — which is what it used to need, and what left the
+   old text link measurably closer to the card below it (20px above, 16px
+   below) than to the card it belonged to.
+
+   7px in from the corner, matching `.corner` on the other side. 32px looks
+   light on a 4:5 plate, and the overlay below takes a finger to 44.
+
+   It does cost the top-right 44px of the plate as swipe area on a
+   multi-colour card: the button is above the band and takes the pointer.
+   That is 5% of the plate, and the pips and arrow keys still move it. */
+.s .card .unsave{ position:absolute; right:7px; top:7px; width:32px; height:32px;
+  padding:0; border:0; border-radius:99px; display:flex; align-items:center;
+  justify-content:center; background:rgba(255,255,255,.94); color:var(--ink);
+  cursor:pointer; box-shadow:0 1px 3px rgba(33,29,18,.20);
+  transition:background-color .12s ease, color .12s ease; }
+.s .card .unsave::after{ content:""; position:absolute; inset:-6px; }
+.s .card .unsave:hover{ background:#fff; color:var(--link); }
+
+/* ── the size sheet ──────────────────────────────────────────────────────
+   The card's button never guesses a size. It opens this sheet — the only
+   place with room to say how many are left in EACH size, and the only place
+   that repeats back the colour the shopper just swiped to. */
+.s .sizesheet .sheethead{ display:flex; gap:12px; align-items:flex-start;
+  padding:2px 18px 0; }
+.s .sizesheet .sheethead img{ width:64px; height:80px; object-fit:cover;
+  border-radius:var(--r); background:var(--plate); flex:none; }
+.s .sizesheet .sheethead .nm{ margin:0; font-size:16px; }
+.s .sizesheet .sheethead .kindline{ font-size:11px; color:var(--ink2); margin-top:2px; }
+.s .sizesheet .sheethead .p{ font-size:14px; font-weight:500; margin-top:5px; }
+/* ── WIDENED in Phase 3: was `.s .sizesheet .swa`, now `.s .swa` ─────────
+   A colour swatch is a colour swatch wherever it stands, and the product
+   page needs the same one the sheet uses. Scoped to `.sizesheet` it simply
+   did not apply there — the buttons measured 0×0.
+   Safe to loosen because nothing else in the system defines `.swa` or
+   `.sheetlabel`, so dropping from 0,3,0 to 0,2,0 loses no tie. `.szrow`
+   below stays scoped: that one IS a real sheet-versus-desktop distinction. */
+.s .sheetlabel{ font-size:11px; color:var(--ink2); padding:16px 18px 7px; }
+.s .sheetlabel b{ color:var(--ink); font-weight:600; }
+.s .swa{ display:flex; gap:10px; padding:0 18px; }
+.s .swa button{ width:34px; height:34px; border-radius:99px; padding:0;
+  border:0; background:none; position:relative; cursor:pointer; flex:none; }
+/* 44px touch target, layout untouched */
+.s .swa button::after{ content:""; position:absolute; inset:-5px; }
+/* A Trắng or Kem swatch on a white background is nothing but its border, so
+   that border has to clear WCAG 1.4.11's 3:1. `--line` is the token for
+   exactly this (3.37:1); the 18%-alpha border it replaced managed 1.49:1. */
+.s .swa i{ display:block; width:100%; height:100%; border-radius:99px;
+  box-shadow:inset 0 0 0 1px var(--line); }
+.s .swa button[aria-pressed="true"] i{
+  box-shadow:inset 0 0 0 1px var(--line), 0 0 0 2px #fff,
+             0 0 0 3.5px var(--ink); }
+/* The size row in here is the ordinary one — chips at `flex:1`, spread the
+   full width — NOT the desktop `.szrow.w` variant. `.w` pins each chip at
+   68px and drops the gutter, which on a 390px sheet crowds them all against
+   the left edge.
+   This rule (0,3,0) beats `.s .szrow` (0,2,0). If it ever has to beat
+   `.s .szrow.w` (0,3,0) as well, it must be written `.s .sizesheet .szrow.w`
+   — coming later in the file is not enough against a tie. */
+.s .sizesheet .szrow{ padding:0 18px; }
+.s .sizesheet .missing{ font-size:11px; color:var(--hot); padding:9px 18px 0; }
+.s .sizesheet .missing s{ text-decoration:line-through; }
+.s .sizesheet .sheetaction{ padding:18px; }
+
+/* ── ADDED in Phase 3 ────────────────────────────────────────────────────
+   The product page's two halves and its thumbnail strip. The prototype drew
+   these with inline styles inside `sc_pdp` / `sc_pdp_w`, which a breakpoint
+   cannot reach; the values are unchanged.
+
+   `.pdpbuy` is `display:contents` here so that on a phone its children flow
+   straight into the page and keep their own 18px gutters. `desktop.css`
+   turns it back into a box, where it becomes the right-hand column. */
+.s .pdpbuy{ display:contents; }
+
+.s .shots{ display:flex; gap:7px; padding-top:9px; }
+.s .shot{ position:relative; width:46px; height:57px; flex:none; padding:0;
+  border:0; border-radius:4px; overflow:hidden; background:var(--plate);
+  cursor:pointer; }
+.s .shot img{ width:100%; height:100%; object-fit:cover; display:block; }
+/* The ring goes on an overlay, not on the button: an inset box-shadow paints
+   under the element's content, so the photo would cover it. */
+.s .shot::after{ content:""; position:absolute; inset:0; border-radius:inherit;
+  pointer-events:none; }
+.s .shot.on::after{ box-shadow:inset 0 0 0 2px var(--fill); }
+
+/* ── `.cardcell` REMOVED in Phase 4, and worth saying why ────────────────
+   It wrapped a card plus a control of its own underneath — the wishlist's
+   "Bỏ khỏi yêu thích" — and pushed that control to the bottom so it sat
+   level across a row. `.unsave` above moved the control onto the plate, so
+   there is nothing left to wrap.
+
+   Two things it taught, which still apply to anything stacked under a card:
+
+   · The gap has to be a MARGIN on the card, not padding on the thing below.
+     A box starting at the card's edge paints over the add button's touch
+     overlay, and the button measures 34px instead of 44.
+   · Two 44px targets cannot share a 6px gap. The lower one's overlay
+     reached 6px up and won the hit test. 18px was the smallest gap where
+     both kept their full target — which is also why the old link ended up
+     20px below its own card and only 16px above the next one. */

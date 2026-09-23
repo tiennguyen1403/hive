@@ -1,0 +1,20 @@
+import type { Metadata } from "next";
+import { NotificationsScreen } from "@/components/account/NotificationsScreen";
+import { dropCalendar } from "@/lib/drop";
+
+export const metadata: Metadata = {
+  title: "Thông báo",
+  // An account page is personal and renders client-side behind a session
+  // check. Nothing here belongs in a search index.
+  robots: { index: false, follow: false },
+};
+
+/**
+ * Which issue a reminder can be set for is a calendar question, so it is
+ * answered here rather than in the browser — the same reason the account
+ * overview reads its codes on the server.
+ */
+export default function NotificationsPage() {
+  const next = dropCalendar().upcoming;
+  return <NotificationsScreen {...(next ? { nextDropNo: next.no } : {})} />;
+}

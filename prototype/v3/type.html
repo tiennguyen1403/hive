@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="vi" data-dir="nhan" data-spot="off" data-lex="so" data-type="a" data-badge="b">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bộ chữ · năm cặp để so · v3</title>
+<link rel="stylesheet" href="../v2/fonts.css"><link rel="stylesheet" href="fonts-trial.css"><link rel="stylesheet" href="../v2/reset.css"><link rel="stylesheet" href="v3.css">
+<script src="../v2/icons.js"></script><script src="v3.js" defer></script>
+<style>
+  /* The type board: each option renders the same specimen with its own pairing,
+     set as custom properties on the block so the product rules stay untouched. */
+  .tb{ padding:0 var(--gut) 90px; }
+  @media (min-width:900px){ .tb{ padding:0 var(--gutd) 96px; max-width:var(--max); margin:0 auto; } }
+  .tb .intro{ padding:20px 0 12px; border-bottom:1px solid var(--hair); }
+  .tb .intro h1{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:28px; letter-spacing:-.02em; line-height:1.1; }
+  .tb .intro p{ font-family:"Be Vietnam Pro",sans-serif; font-size:13.5px; color:var(--ink2); max-width:76ch; margin-top:8px; }
+  .opt{ padding:28px 0 32px; border-bottom:1px solid var(--hair); }
+  .opt .hd{ display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 16px; font-family:"Be Vietnam Pro",sans-serif; }
+  .opt .hd .letter{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:22px; letter-spacing:-.02em; }
+  .opt .hd .name{ font-size:15px; font-weight:600; }
+  .opt .hd .who{ font-size:12.5px; color:var(--ink2); }
+  .opt .why{ font-family:"Be Vietnam Pro",sans-serif; font-size:13px; color:var(--ink2); max-width:80ch; margin-top:6px; }
+  .opt .why b{ color:var(--ink); font-weight:600; }
+  .spec{ margin-top:16px; display:grid; grid-template-columns:1fr; gap:18px; }
+  @media (min-width:900px){ .spec{ grid-template-columns:5fr 7fr; gap:40px; } }
+  .spec .label{ background:var(--stage); color:var(--stage-ink); padding:20px 20px 22px; border-radius:var(--r); border-top:1px dashed var(--brand); }
+  .spec .label .wm{ font-family:var(--font-display); font-weight:var(--fw-display); letter-spacing:.14em; font-size:16px; }
+  .spec .label .issue{ display:flex; align-items:flex-end; gap:10px; margin-top:8px; }
+  .spec .label .issue .k{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; margin-bottom:10px; }
+  .spec .label .issue .num{ font-size:96px; color:var(--brand); }
+  .spec .label .t{ font-size:30px; line-height:1.05; letter-spacing:var(--ls-display); margin-top:14px; max-width:14ch; }
+  .spec .label .clock{ display:flex; align-items:baseline; gap:6px; margin-top:12px; font-family:var(--font-display); font-weight:var(--fw-display); }
+  .spec .label .clock b{ font-size:30px; font-variant-numeric:tabular-nums; line-height:1; }
+  .spec .label .clock span{ font-family:var(--font-sans); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--stage-ink2); margin-right:10px; }
+  .spec .label .btn3{ margin-top:16px; }
+  .spec .floor .row{ display:flex; flex-wrap:wrap; gap:10px 22px; align-items:baseline; padding:8px 0; border-bottom:1px solid var(--hair); }
+  .spec .floor .row .n{ font-family:var(--font-display); font-weight:var(--fw-display); font-size:15px; letter-spacing:var(--ls-display); }
+  .spec .floor .row .p{ font-variant-numeric:tabular-nums; font-size:13px; }
+  .spec .floor .row .d{ font-size:12px; color:var(--ink2); }
+  .spec .floor .caps{ font-family:var(--font-display); font-weight:var(--fw-display); font-size:22px; letter-spacing:var(--ls-display); line-height:1.25; margin-top:12px; text-wrap:balance; }
+  .spec .floor .body{ font-size:14px; line-height:1.6; max-width:60ch; margin-top:12px; }
+  .spec .floor .ui{ font-size:13px; color:var(--ink2); margin-top:8px; }
+  .spec .floor .navline{ display:flex; flex-wrap:wrap; gap:14px; font-size:13px; margin-top:14px; padding-top:12px; border-top:1px solid var(--ink); }
+  .spec .floor .navline b{ font-weight:600; }
+  .opt .go{ margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-family:"Be Vietnam Pro",sans-serif; font-size:12.5px; color:var(--ink2); }
+  .opt .go button{ height:36px; padding:0 12px; border:1px solid var(--line); border-radius:var(--r); font:600 12.5px "Be Vietnam Pro",sans-serif; background:var(--bg); color:var(--ink); cursor:pointer; position:relative; }
+  .opt .go button::after{ content:""; position:absolute; inset:-5px 0; }
+  .opt .go button.on{ background:var(--sel); color:var(--sel-ink); border-color:var(--sel); }
+  .opt .go a{ color:var(--brand-text); text-decoration:underline; text-underline-offset:3px; position:relative; display:inline-flex; align-items:center; min-height:36px; }
+  .opt .go a::after{ content:""; position:absolute; inset:-4px 0; }
+  .tb .note3{ margin-top:24px; font-family:"Be Vietnam Pro",sans-serif; }
+</style>
+</head>
+<body data-title="Bộ chữ · {t} · v3">
+<div class="s v3">
+<header class="nav3" data-nav data-active="home" data-cart="1" data-wish="2" data-state="open"></header>
+<main class="tb">
+  <div class="intro">
+    <h1>Bộ chữ · năm cặp để so</h1>
+    <p>Cùng một mẫu thử cho mỗi cặp: nhãn đen của hướng NHÃN, dòng mục lục, tiêu đề, một đoạn thân, dòng nav. Mọi ứng viên đều có bộ tiếng Việt thật (kiểm bằng API của Google Fonts ngày 21/09, các font không có tiếng Việt như Gloock, Schibsted Grotesk, Bodoni Moda, Archivo Black, Sora đã loại). Bấm "Xem trên ba màn" để áp cặp đó lên trang chủ, danh mục và trang sản phẩm. Khi thực thi, font tự chứa qua next/font với subset tiếng Việt, không gọi Google lúc chạy.</p>
+  </div>
+
+  <section class="opt" style="--font-display:'Familjen Grotesk',sans-serif;--font-sans:'Be Vietnam Pro',system-ui,sans-serif;--fw-display:700;--ls-display:-.015em;--ls-num:-.04em">
+    <div class="hd"><span class="letter">A</span><span class="name">Familjen Grotesk + Be Vietnam Pro</span><span class="who">đang dùng · Familjen (Mattias Ström) · Be Vietnam Pro (Lâm Bảo, thiết kế cho tiếng Việt)</span></div>
+    <p class="why"><b>Lựa chọn an toàn đúng như bạn nói.</b> Grotesk gọn, số đẹp, dấu tiếng Việt chuẩn ở cả hai họ. Điểm yếu: không ai nhớ mặt chữ này; nó là chữ của một cửa hàng tốt, không phải của một cái tên.</p>
+    <div class="spec">
+      <div class="label"><div class="wm">BRAND</div><div class="issue"><span class="k">Số</span><span class="num">05</span></div><h2 class="disp t">Mười mẫu. Cắt một lần. Hết là hết.</h2><div class="clock"><b>05</b><span>ngày</span><b>01</b><span>giờ</span><b>09</b><span>phút</span></div><button type="button" class="btn3">Xem mười mẫu</button></div>
+      <div class="floor">
+        <div class="row"><span class="n">KHÓI</span><span class="d">còn 17 · S M L XL</span><span class="p" style="margin-left:auto">390.000₫</span></div>
+        <div class="row"><span class="n">SƯƠNG</span><span class="d">còn 3 · hết S</span><span class="p" style="margin-left:auto">1.450.000₫</span></div>
+        <div class="caps">ĐÁ · SỎI · NGUỘI · BỤI · NẮNG · GIÓ · MUỐI · THAN · ẤN ẨN ẪN ẬN ỐNG ỜI ỮA ỰC</div>
+        <p class="body">Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt. Số còn lại của từng mẫu hiện ngay bên dưới. Hết size là hết, không may thêm. Giỏ không giữ hàng; đơn đặt trước nhận trước, chuyển khoản giữ hàng 12 giờ.</p>
+        <p class="ui">Còn 17 / 35 chiếc đã cắt · đóng sau 5 ngày 1 giờ · Chuyển khoản · COD +15.000₫ · Thẻ</p>
+        <div class="navline"><b>Số 05</b><span>Áo thun</span><span>Hoodie</span><span>Khoác</span><span>Sơ mi</span><span>Quần</span></div>
+      </div>
+    </div>
+    <div class="go"><button type="button" data-set="type" data-val="a">Xem trên ba màn</button><a href="home.html" target="_blank">mở trang chủ</a></div>
+  </section>
+
+  <section class="opt" style="--font-display:'Big Shoulders Display',sans-serif;--font-sans:'Be Vietnam Pro',system-ui,sans-serif;--fw-display:800;--ls-display:0;--ls-num:-.01em">
+    <div class="hd"><span class="letter">B</span><span class="name">Big Shoulders Display + Be Vietnam Pro</span><span class="who">Patric King, lấy từ chữ vẽ tay trên biển hiệu Chicago · OFL</span></div>
+    <p class="why"><b>Biển hiệu.</b> Nén nhưng có nét vẽ tay, số rất khoẻ ở cỡ lớn; đúng chất phố mà không rơi vào Anton/Bebas mà mọi shop streetwear đều dùng. Thân chữ vẫn là Be Vietnam Pro nên phần đọc không đổi. Rủi ro: dấu tiếng Việt trên chữ hoa nén hơi chật; cần xem dòng "ẤN ẨN ẪN".</p>
+    <div class="spec">
+      <div class="label"><div class="wm">BRAND</div><div class="issue"><span class="k">Số</span><span class="num">05</span></div><h2 class="disp t">Mười mẫu. Cắt một lần. Hết là hết.</h2><div class="clock"><b>05</b><span>ngày</span><b>01</b><span>giờ</span><b>09</b><span>phút</span></div><button type="button" class="btn3">Xem mười mẫu</button></div>
+      <div class="floor">
+        <div class="row"><span class="n">KHÓI</span><span class="d">còn 17 · S M L XL</span><span class="p" style="margin-left:auto">390.000₫</span></div>
+        <div class="row"><span class="n">SƯƠNG</span><span class="d">còn 3 · hết S</span><span class="p" style="margin-left:auto">1.450.000₫</span></div>
+        <div class="caps">ĐÁ · SỎI · NGUỘI · BỤI · NẮNG · GIÓ · MUỐI · THAN · ẤN ẨN ẪN ẬN ỐNG ỜI ỮA ỰC</div>
+        <p class="body">Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt. Số còn lại của từng mẫu hiện ngay bên dưới. Hết size là hết, không may thêm. Giỏ không giữ hàng; đơn đặt trước nhận trước, chuyển khoản giữ hàng 12 giờ.</p>
+        <p class="ui">Còn 17 / 35 chiếc đã cắt · đóng sau 5 ngày 1 giờ · Chuyển khoản · COD +15.000₫ · Thẻ</p>
+        <div class="navline"><b>Số 05</b><span>Áo thun</span><span>Hoodie</span><span>Khoác</span><span>Sơ mi</span><span>Quần</span></div>
+      </div>
+    </div>
+    <div class="go"><button type="button" data-set="type" data-val="b">Xem trên ba màn</button><a href="home.html" target="_blank">mở trang chủ</a></div>
+  </section>
+
+  <section class="opt" style="--font-display:'Bricolage Grotesque',sans-serif;--font-sans:'Bricolage Grotesque',system-ui,sans-serif;--fw-display:800;--ls-display:-.02em;--ls-num:-.04em">
+    <div class="hd"><span class="letter">C</span><span class="name">Bricolage Grotesque, cả tiêu đề lẫn thân</span><span class="who">Mathieu Triay · có trục cỡ quang học 12–96 · OFL</span></div>
+    <p class="why"><b>Xưởng in.</b> Cặp duy nhất đổi cả thân chữ: một họ cho tất cả, tiêu đề dùng cỡ quang học 96 (nét gắt, đậm), thân dùng cỡ 12 (mở, dễ đọc). Có cá tính rõ (chữ a, g, số 5 lạ) nhưng vẫn nghiêm. Rủi ro: thân chữ ở 13px trên điện thoại kém Be Vietnam Pro một chút về dấu; là cặp "ấn tượng" nhất trong bốn.</p>
+    <div class="spec">
+      <div class="label"><div class="wm">BRAND</div><div class="issue"><span class="k">Số</span><span class="num">05</span></div><h2 class="disp t">Mười mẫu. Cắt một lần. Hết là hết.</h2><div class="clock"><b>05</b><span>ngày</span><b>01</b><span>giờ</span><b>09</b><span>phút</span></div><button type="button" class="btn3">Xem mười mẫu</button></div>
+      <div class="floor">
+        <div class="row"><span class="n">KHÓI</span><span class="d">còn 17 · S M L XL</span><span class="p" style="margin-left:auto">390.000₫</span></div>
+        <div class="row"><span class="n">SƯƠNG</span><span class="d">còn 3 · hết S</span><span class="p" style="margin-left:auto">1.450.000₫</span></div>
+        <div class="caps">ĐÁ · SỎI · NGUỘI · BỤI · NẮNG · GIÓ · MUỐI · THAN · ẤN ẨN ẪN ẬN ỐNG ỜI ỮA ỰC</div>
+        <p class="body">Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt. Số còn lại của từng mẫu hiện ngay bên dưới. Hết size là hết, không may thêm. Giỏ không giữ hàng; đơn đặt trước nhận trước, chuyển khoản giữ hàng 12 giờ.</p>
+        <p class="ui">Còn 17 / 35 chiếc đã cắt · đóng sau 5 ngày 1 giờ · Chuyển khoản · COD +15.000₫ · Thẻ</p>
+        <div class="navline"><b>Số 05</b><span>Áo thun</span><span>Hoodie</span><span>Khoác</span><span>Sơ mi</span><span>Quần</span></div>
+      </div>
+    </div>
+    <div class="go"><button type="button" data-set="type" data-val="c">Xem trên ba màn</button><a href="home.html" target="_blank">mở trang chủ</a></div>
+  </section>
+
+  <section class="opt" style="--font-display:'Unbounded',sans-serif;--font-sans:'Be Vietnam Pro',system-ui,sans-serif;--fw-display:800;--ls-display:-.03em;--ls-num:-.05em">
+    <div class="hd"><span class="letter">D</span><span class="name">Unbounded + Be Vietnam Pro</span><span class="who">NaN (Paris) · OFL</span></div>
+    <p class="why"><b>Rộng, kỹ thuật.</b> Chữ rộng bè, tròn, rất hiện đại; số "05" choán mặt như một con dấu, wordmark rộng nhìn như tem may. Gần với techwear hơn là biển hiệu. Rủi ro: tiêu đề dài chiếm nhiều dòng trên điện thoại (đã thấy ở câu đề 3 dòng), phải viết tiêu đề ngắn.</p>
+    <div class="spec">
+      <div class="label"><div class="wm">BRAND</div><div class="issue"><span class="k">Số</span><span class="num">05</span></div><h2 class="disp t">Mười mẫu. Cắt một lần. Hết là hết.</h2><div class="clock"><b>05</b><span>ngày</span><b>01</b><span>giờ</span><b>09</b><span>phút</span></div><button type="button" class="btn3">Xem mười mẫu</button></div>
+      <div class="floor">
+        <div class="row"><span class="n">KHÓI</span><span class="d">còn 17 · S M L XL</span><span class="p" style="margin-left:auto">390.000₫</span></div>
+        <div class="row"><span class="n">SƯƠNG</span><span class="d">còn 3 · hết S</span><span class="p" style="margin-left:auto">1.450.000₫</span></div>
+        <div class="caps">ĐÁ · SỎI · NGUỘI · BỤI · NẮNG · GIÓ · MUỐI · THAN · ẤN ẨN ẪN ẬN ỐNG ỜI ỮA ỰC</div>
+        <p class="body">Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt. Số còn lại của từng mẫu hiện ngay bên dưới. Hết size là hết, không may thêm. Giỏ không giữ hàng; đơn đặt trước nhận trước, chuyển khoản giữ hàng 12 giờ.</p>
+        <p class="ui">Còn 17 / 35 chiếc đã cắt · đóng sau 5 ngày 1 giờ · Chuyển khoản · COD +15.000₫ · Thẻ</p>
+        <div class="navline"><b>Số 05</b><span>Áo thun</span><span>Hoodie</span><span>Khoác</span><span>Sơ mi</span><span>Quần</span></div>
+      </div>
+    </div>
+    <div class="go"><button type="button" data-set="type" data-val="d">Xem trên ba màn</button><a href="home.html" target="_blank">mở trang chủ</a></div>
+  </section>
+
+  <section class="opt" style="--font-display:'Alfa Slab One',serif;--font-sans:'Be Vietnam Pro',system-ui,sans-serif;--fw-display:400;--ls-display:0;--ls-num:-.01em">
+    <div class="hd"><span class="letter">E</span><span class="name">Alfa Slab One + Be Vietnam Pro</span><span class="who">JM Solé · slab một trọng lượng · OFL</span></div>
+    <p class="why"><b>Nhãn dệt.</b> Slab đậm nhìn như chữ dệt trên nhãn áo và tem in kiện hàng; đi với vải đen và chỉ vàng thì rất "đồ", ít "web". Chỉ có một trọng lượng nên mọi tiêu đề đều cùng một sức nặng; thân chữ vẫn Be Vietnam Pro. Rủi ro: dễ nặng tay ở tiêu đề dài; cần dùng tiết chế, chủ yếu cho số, tên mẫu và wordmark.</p>
+    <div class="spec">
+      <div class="label"><div class="wm">BRAND</div><div class="issue"><span class="k">Số</span><span class="num">05</span></div><h2 class="disp t">Mười mẫu. Cắt một lần. Hết là hết.</h2><div class="clock"><b>05</b><span>ngày</span><b>01</b><span>giờ</span><b>09</b><span>phút</span></div><button type="button" class="btn3">Xem mười mẫu</button></div>
+      <div class="floor">
+        <div class="row"><span class="n">KHÓI</span><span class="d">còn 17 · S M L XL</span><span class="p" style="margin-left:auto">390.000₫</span></div>
+        <div class="row"><span class="n">SƯƠNG</span><span class="d">còn 3 · hết S</span><span class="p" style="margin-left:auto">1.450.000₫</span></div>
+        <div class="caps">ĐÁ · SỎI · NGUỘI · BỤI · NẮNG · GIÓ · MUỐI · THAN · ẤN ẨN ẪN ẬN ỐNG ỜI ỮA ỰC</div>
+        <p class="body">Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt. Số còn lại của từng mẫu hiện ngay bên dưới. Hết size là hết, không may thêm. Giỏ không giữ hàng; đơn đặt trước nhận trước, chuyển khoản giữ hàng 12 giờ.</p>
+        <p class="ui">Còn 17 / 35 chiếc đã cắt · đóng sau 5 ngày 1 giờ · Chuyển khoản · COD +15.000₫ · Thẻ</p>
+        <div class="navline"><b>Số 05</b><span>Áo thun</span><span>Hoodie</span><span>Khoác</span><span>Sơ mi</span><span>Quần</span></div>
+      </div>
+    </div>
+    <div class="go"><button type="button" data-set="type" data-val="e">Xem trên ba màn</button><a href="home.html" target="_blank">mở trang chủ</a></div>
+  </section>
+
+  <p class="note3"><svg data-i="info" class="ic sm"></svg><span><b>Đã thử và không đưa lên bảng:</b> Anton, Oswald, League Gothic, Saira Condensed (nén kiểu mọi shop streetwear); Spectral, Literata (serif đọc sách, quá "văn" cho vải đen); Bungee (chỉ có chữ hoa, dấu tiếng Việt chồng cao); Chakra Petch, Kanit (dấu tiếng Việt kém). Muốn xem cặp nào trong số này, nói tên là tôi thêm.</span></p>
+</main>
+<footer class="foot3" data-footer></footer>
+</div>
+<script>
+(function () {
+  function mark() { document.querySelectorAll("[data-set]").forEach(function (b) { b.classList.toggle("on", window.V3.setting("type", "d") === b.getAttribute("data-val")); }); }
+  document.addEventListener("click", function (e) { var b = e.target.closest("[data-set]"); if (!b) return; try { localStorage.setItem("v3." + b.getAttribute("data-set"), b.getAttribute("data-val")); } catch (x) {} window.V3.apply(); mark(); window.toast && window.toast("Đã áp cặp " + b.getAttribute("data-val").toUpperCase() + " lên ba màn · mở trang chủ để xem"); });
+  window.addEventListener("storage", function () { setTimeout(mark, 0); });
+  document.addEventListener("DOMContentLoaded", function () { setTimeout(mark, 0); });
+})();
+</script>
+</body>
+</html>

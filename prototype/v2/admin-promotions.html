@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>Khuyến mãi · Quản trị · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+</head>
+<body>
+<div class="s adm v2">
+<nav class="side" aria-label="Khu quản trị" data-adminnav data-active="promotions"></nav>
+<main class="main">
+  <header class="top">
+    <h1>Khuyến mãi</h1>
+    <div class="rt">
+      <span class="sim"><svg data-i="eye" class="ic sm"></svg>dữ liệu mô phỏng</span>
+      <button type="button" class="btn ghost sm" data-sim="Đã tải khuyen-mai.csv"><svg data-i="export" class="ic sm"></svg>Tải CSV</button>
+      <button type="button" class="btn sm" data-open="#newpromo"><svg data-i="plus" class="ic sm"></svg>Tạo mã</button>
+    </div>
+  </header>
+  <p class="subhead">"Hết lượt" là mã còn trong hạn nhưng đã dùng hết số lượt — checkout đang từ chối nó ngay lúc này. Số lượt đã dùng là dữ liệu mô phỏng, không phải đếm từ đơn hàng.</p>
+
+  <div class="dt">
+    <div class="stabs" role="tablist" aria-label="Trạng thái">
+      <button type="button" role="tab" aria-selected="true" class="on">Tất cả<span class="cnt">6</span></button>
+      <button type="button" role="tab">Đang chạy<span class="cnt">3</span></button>
+      <button type="button" role="tab">Hết lượt<span class="cnt">1</span></button>
+      <button type="button" role="tab">Đã kết thúc<span class="cnt">2</span></button>
+    </div>
+    <div class="bar tools">
+      <span class="find"><svg data-i="search" data-raw></svg><input type="search" placeholder="Tìm mã khuyến mãi…" aria-label="Tìm mã"></span>
+      <span class="fwrap"><button type="button" class="facet" aria-haspopup="menu" aria-expanded="false"><span class="t">Loại</span><svg data-i="down" data-raw></svg></button></span>
+      <span class="spacer"></span>
+      <span class="fwrap"><button type="button" class="facet colsbtn"><svg data-i="columns" data-raw></svg><span class="t">Cột</span></button></span>
+    </div>
+    <div class="scroll">
+      <table class="dtt">
+        <thead><tr>
+          <th class="srt"><button type="button" class="sortb"><span>Mã</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt"><button type="button" class="sortb"><span>Loại</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th><span class="lb">Giảm</span></th>
+          <th class="srt num"><button type="button" class="sortb"><span>Đơn tối thiểu</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt num"><button type="button" class="sortb"><span>Đã dùng</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th><span class="lb">Thời gian</span></th>
+          <th class="srt"><button type="button" class="sortb"><span>Trạng thái</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="actc"></th>
+        </tr></thead>
+        <tbody>
+          <tr><td><b class="nm">DOT05</b></td><td>Phần trăm</td><td>10% · tối đa 150.000₫</td><td class="num">500.000₫</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:23%"></i></span>46 / 200</span></td><td>11/09 – 25/09/2026</td><td><span class="badge ok"><i></i>Đang chạy</span></td><td class="actc"><button type="button" class="rowmenu" data-menu="#promomenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td><b class="nm">CHAOBAN</b></td><td>Số tiền</td><td>50.000₫</td><td class="num">400.000₫</td><td class="num">31 · không giới hạn</td><td>11/09 – 25/09/2026</td><td><span class="badge ok"><i></i>Đang chạy</span></td><td class="actc"><button type="button" class="rowmenu" data-menu="#promomenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td><b class="nm">FREESHIP</b></td><td>Miễn phí giao</td><td>Phí giao tiêu chuẩn · 30.000₫</td><td class="num">800.000₫</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:18%"></i></span>18 / 100</span></td><td>11/09 – 25/09/2026</td><td><span class="badge ok"><i></i>Đang chạy</span></td><td class="actc"><button type="button" class="rowmenu" data-menu="#promomenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td><b class="nm">VIP20</b></td><td>Phần trăm</td><td>20% · tối đa 300.000₫</td><td class="num">2.000.000₫</td><td class="num"><span class="cellmeter"><span class="meter hot" aria-hidden="true"><i style="width:100%"></i></span>50 / 50</span></td><td>11/09 – 25/09/2026</td><td><span class="badge warn"><i></i>Hết lượt</span> <button type="button" class="lnk" style="font-size:11px" data-sim="VIP20: giới hạn nâng lên 80 lượt">Nâng giới hạn</button></td><td class="actc"><button type="button" class="rowmenu" data-menu="#promomenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr class="paused"><td><b class="nm">DOT04</b></td><td>Số tiền</td><td>100.000₫</td><td class="num">1.000.000₫</td><td class="num">87 / 150</td><td>05/06 – 19/06/2026</td><td><span class="badge flat"><i></i>Đã kết thúc</span></td><td class="actc"><button type="button" class="rowmenu" data-menu="#promomenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr class="paused"><td><b class="nm">TET2026</b></td><td>Phần trăm</td><td>15% · tối đa 200.000₫</td><td class="num">—</td><td class="num">124 · không giới hạn</td><td>10/02 – 24/02/2026</td><td><span class="badge flat"><i></i>Đã kết thúc</span></td><td class="actc"><button type="button" class="rowmenu" data-menu="#promomenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="foot"><span class="shown">Hiện <b class="tnum">1–6</b> trên <b class="tnum">6</b> mã</span>
+      <span class="rt"><span class="perlb">Dòng mỗi trang<span class="fwrap perwrap"><button type="button" class="facet per" aria-haspopup="menu" aria-expanded="false"><span class="t">10</span><svg data-i="down" data-raw></svg></button></span></span><span class="pg">Trang <b class="tnum">1</b> / <b class="tnum">1</b></span><span class="pager"><button type="button" class="prev" disabled aria-label="Trang trước"><svg data-i="chev" data-raw></svg></button><button type="button" class="next" disabled aria-label="Trang sau"><svg data-i="chev" data-raw></svg></button></span></span></div>
+  </div>
+</main>
+</div>
+
+<div class="menu" id="promomenu" role="menu" aria-label="Thao tác với mã" hidden>
+  <h5>Mã khuyến mãi</h5>
+  <button type="button" role="menuitem" data-sim="Sửa mã (mô phỏng)"><svg data-i="edit" data-raw></svg>Sửa</button>
+  <button type="button" role="menuitem" data-sim="Đã tạo bản sao, đang chờ đặt tên"><svg data-i="swap" data-raw></svg>Nhân bản</button>
+  <button type="button" role="menuitem" data-sim="Đã chép mã"><svg data-i="doc" data-raw></svg>Sao chép mã</button>
+  <hr>
+  <button type="button" role="menuitem" data-sim="Mã đã tạm dừng · checkout từ chối từ giờ"><svg data-i="clock" data-raw></svg>Tạm dừng</button>
+  <button type="button" role="menuitem" class="bad" data-sim="Mã đã kết thúc sớm"><svg data-i="x" data-raw></svg>Kết thúc sớm</button>
+</div>
+
+<div class="modalwrap" id="newpromo" hidden>
+  <div class="scrim"></div>
+  <div class="modal s" role="dialog" aria-modal="true" aria-labelledby="np-t" style="width:520px">
+    <div class="hd"><h2 id="np-t">Tạo mã khuyến mãi</h2><button type="button" class="x" data-close aria-label="Đóng"><svg data-i="x" data-raw></svg></button></div>
+    <div class="bd">
+      <div class="fgrid">
+        <div><label>Mã</label><input class="inp" value="DOT06" style="text-transform:uppercase"></div>
+        <div><label>Loại</label><button type="button" class="inp sel selbtn" style="height:36px;font-size:12.5px"><span class="t">Phần trăm</span><svg data-i="down" data-raw></svg></button></div>
+        <div><label>Giá trị</label><input class="inp" value="10%"></div>
+        <div><label>Tối đa mỗi đơn</label><input class="inp" value="150.000"></div>
+        <div><label>Đơn tối thiểu</label><input class="inp" value="500.000"></div>
+        <div><label>Giới hạn lượt</label><input class="inp" value="200"></div>
+        <div><label>Bắt đầu</label><input class="inp" value="20:00 · 02/10/2026"></div>
+        <div><label>Kết thúc</label><input class="inp" value="20:00 · 16/10/2026"></div>
+      </div>
+      <p style="margin-top:12px">Xem trước: <b>DOT06</b> giảm 10%, tối đa 150.000₫, cho đơn từ 500.000₫, 200 lượt, chạy trọn đợt 06.</p>
+    </div>
+    <div class="ft"><button type="button" class="btn ghost sm" data-close>Huỷ</button><button type="button" class="btn sm" data-sim="Đã tạo mã DOT06 · sắp chạy từ 20:00 02/10"><svg data-i="confirm" class="ic sm"></svg>Tạo mã</button></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+/* Buttons and badges.
+   Lifted from `prototype/app.css` — the approved mock is the REFERENCE.
+   Change anything here and you owe a screenshot comparison against
+   http://127.0.0.1:4321. */
+
+/* ---------------------------------------------------------------- buttons */
+/* `padding: 0 16px` ADDED 2026-09-20, not in the prototype.
+   There, every `.btn` was a full-width block in a single column, so the
+   label was centred in space the parent supplied and no padding was ever
+   missed. Put the same button in a row where it shrinks to its content and
+   the omission shows immediately: the label touches both edges, and a short
+   one like "Huỷ" comes out 27px wide. On a full-width button the padding
+   changes nothing — the content is centred either way. */
+.s .btn{ display:flex; align-items:center; justify-content:center; gap:7px;
+  padding:0 16px;
+  background:var(--fill); color:var(--fill-ink); border:1px solid var(--fill);
+  border-radius:var(--r); height:40px; font-size:13px; font-weight:500;
+  letter-spacing:.01em; cursor:pointer; position:relative; }
+/* The button stands 40px tall so it reads light, but a finger still gets
+   more than 44: an invisible overlay widens the touch target by 3px on each
+   side. Costs the layout nothing.
+
+   3 and not 2 (WIDENED at v3 slice 1). Two took the box to exactly 44, and
+   exactly 44 is the one number a probe cannot confirm: `elementFromPoint`
+   stops answering a pixel inside each far edge, so every `.btn` in the
+   system measured 42–43 from its centre out and the floor could only be
+   argued from the CSS. At 46 the measurement says it. Nothing is squeezed:
+   the tightest button row in the app leaves a 10px gap, of which two
+   overlays now take 6. */
+.s .btn::after{ content:""; position:absolute; inset:-3px 0; }
+.s .btn.sm::after{ content:none; }
+.s .btn.ghost{ background:#fff; color:var(--link); border-color:var(--fill); }
+/* ── the THIRD action, v3 ────────────────────────────────────────────────
+   No ground, no border, just the word and its underline — `.btn3.quiet` in
+   the mock. It used to be the v2 pale plate, which read as a second-choice
+   BUTTON beside the honey one; at v3 it reads as a way out, which is what
+   every one of them is ("Về số 05", "Huỷ đơn này", "Bỏ qua").
+
+   Flipped globally at slice 4, when the account screens started rendering
+   it. The two places that had already restated the v3 reading locally —
+   `.acts3` (checkout.css) and `.cover .cta` (home.css, in the cloth's own
+   ink) — still win on specificity and are unchanged. */
+.s .btn.quiet{ background:transparent; border-color:transparent; color:var(--ink);
+  padding:0 4px; text-decoration:underline; text-underline-offset:4px;
+  text-decoration-thickness:1px; }
+.s .btn.quiet:hover:not(:disabled){ background:transparent; border-color:transparent;
+  color:var(--brand-text); }
+.s .btn.sm{ height:34px; font-size:12px; padding:0 14px; display:inline-flex; }
+/* ── `.wide` REDEFINED at v3 slice 3 ─────────────────────────────────────
+   It used to mean "carry the phone's 18px page gutter as a margin", which
+   was how a lone button sat inside a full-bleed column in v2. No component
+   ever rendered it — greped before the change — and inside `.wrap3` the
+   page already supplies that gutter. It now means what `.btn3.wide` means
+   in the v3 mock: fill the column. A `<button>` shrinks to its text, so
+   "Đặt hàng · 1.152.000₫" needs this said out loud; an `<a class="btn">` is
+   already a block-level flex container and only needs the margin reset. */
+.s .btn.wide{ width:100%; margin:0; }
+/* ── the ink button, ADDED at v3 slice 2 ─────────────────────────────────
+   The v3 world's SECOND action: transparent ground, ink type, ink border —
+   the product page's "Lưu" under the honey "Thêm vào giỏ". `.ghost` is the
+   v2 pair (honey border, honey type) and stays where it is still rendered.
+
+   NOT called `.sec`, which is the name the mock uses: `.s .sec` is the home
+   page's section block (home.css) and would land a 48px top margin on every
+   button carrying it. The mock hit the same wall and answered it with
+   `.sec:not(.btn3)`; a different word is cheaper.
+
+   NOT called `.outline` either, which is what it was until v3 slice 4.
+   Tailwind generates a utility for every word in the sources that looks
+   like one, `outline` among them, and `.outline{outline-width:1px}` landed
+   a second edge on top of this button's own border — visible on the cart's
+   "Áp dụng". `globals.css` no longer generates utilities at all, and this
+   name no longer collides with one either way. `lib/classnames.test.ts`
+   keeps it that way.
+
+   The hover has to out-rank `.s .btn:hover:not(:disabled)` (0,4,0) in
+   interaction.css, which loads later — hence the class in the selector. */
+.s .btn.ink{ background:transparent; color:var(--ink); border-color:var(--ink); }
+.s .btn.ink:hover:not(:disabled){ background:var(--plate); color:var(--ink);
+  border-color:var(--ink); }
+
+/* ── the RESTING look of a disabled button, ADDED at slice 2 of v2 ───────
+   `interaction.css` already gave `:disabled` the not-allowed cursor and a
+   hover that goes pale — but the resting state was never written, so a
+   button that cannot be pressed sat there in full honey, identical to one
+   that can, and only admitted it once a pointer touched it. On the product
+   page that is the DEFAULT state of the main call to action ("Chọn size
+   trước"), which made the page's biggest control a dead button by the look
+   of it (DESIGN.md §9 rule 3). Same pair as the v2 `.quiet`, which is
+   already measured: `--ink2` on `--gold-50`. No dashed border — that
+   belongs to `.off`, whose job is "not offered at all" rather than "not
+   yet".
+
+   LAST of the tones, and that is the point (moved here at v3 slice 4). It
+   ties with `.btn.ink` and `.btn.quiet` on specificity, so source order is
+   what decides — and it has to win both, or "Tiếp tục với Google · đang
+   chuẩn bị" draws itself as a perfectly pressable outline button. Measured
+   on `/sign-in` at 1280 before the move. */
+.s .btn:disabled, .s .btn[aria-disabled="true"]{ background:var(--gold-50);
+  color:var(--ink2); border-color:var(--line); text-decoration:none; }
+.s .lnk{ color:var(--link); font-weight:500; text-decoration:underline;
+  text-decoration-thickness:1px; text-underline-offset:3px;
+  text-decoration-color:color-mix(in srgb, var(--link) 45%, transparent); }
+
+/* ---------------------------------------------------------------- badges */
+/* ── Family B, "vải đen" — chosen 22/09/2026 from the three on
+   `prototype/v3/badges.html` ─────────────────────────────────────────────
+   A solid label, no border, 24px tall, 11px/700 upper case tracked .08em,
+   always with a dot. Family A drew the state in a 1px border, which is the
+   first thing to vanish on a photo or on black cloth — and this shop puts
+   badges in both places.
+
+   A LIVE state is the woven label itself: black cloth, honey thread. It is
+   the same material as the issue cover and the stamp in the nav, so the shop
+   has one badge rather than one per surface. Waiting and finished states are
+   unbleached cloth; alerts keep the red family; things on their way keep the
+   blue. See `components/ui/Badge.tsx` for which word gets which tone. */
+.s .badge{ display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px;
+  border-radius:var(--r-sm); white-space:nowrap;
+  font-size:var(--fs-xs); font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  background:var(--hair); color:var(--ink); }
+.s .badge.ok{ background:var(--stage); color:var(--brand); }
+.s .badge.warn{ background:var(--hair); color:var(--ink); }
+.s .badge.info{ background:var(--info-bg); color:var(--info); }
+.s .badge.hot{ background:var(--hot-bg); color:var(--hot); }
+.s .badge.shut{ background:var(--hair); color:var(--ink2); }
+/* Not a state: a name. Pale honey, sentence case, no dot — the mock's
+   `.ctag`, which is where an address label and "lưu trên thiết bị này" live. */
+.s .badge.flat{ background:var(--brand-soft); color:var(--ink); letter-spacing:.02em;
+  text-transform:none; }
+.s .badge i{ width:6px; height:6px; border-radius:99px; background:currentColor; flex:none;
+  font-style:normal; }
+
+/* The v2 filter chip (`.chips` / `.chip`) and the v2 step bar (`.steps`)
+   stood here until v3 slice 6. Both were replaced name and all — the chip
+   row is `.chips3` / `.chip3` in listing.css, the step bar is `.steps3` in
+   checkout.css — so nothing rendered either of them any more. */

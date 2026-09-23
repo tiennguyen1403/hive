@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thanh toán · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+</head>
+<body>
+<div class="s v2">
+<header class="nav2" data-nav data-cart="2" data-wish="2"></header>
+<main>
+  <div class="sub"><a href="cart.html" aria-label="Quay lại"><svg data-i="back" class="ic"></svg></a><h1>Thanh toán</h1></div>
+
+  <div class="checkout2">
+    <div class="steps">
+      <span class="st done"><span class="n" aria-hidden="true"><svg data-i="tick" data-raw></svg></span><span class="t">Giỏ hàng</span></span><span class="ln on"></span>
+      <span class="st done"><span class="n" aria-hidden="true"><svg data-i="tick" data-raw></svg></span><span class="t">Địa chỉ</span></span><span class="ln on"></span>
+      <span class="st now"><span class="n" aria-hidden="true">3</span><span class="t">Thanh toán</span></span><span class="ln"></span>
+      <span class="st todo"><span class="n" aria-hidden="true">4</span><span class="t">Xong</span></span>
+    </div>
+
+    <div>
+      <!-- the address book the shopper already has, one tap instead of a blank form -->
+      <div class="h2" style="margin-top:18px">Giao tới</div>
+      <div class="rows" role="radiogroup" aria-label="Chọn địa chỉ giao">
+        <button type="button" class="row pick" role="radio" aria-checked="true">
+          <span class="radio on"></span>
+          <span class="grow">
+            <span style="display:flex;gap:8px;align-items:center"><span class="t">Trần Minh Anh</span><span class="badge flat">Nhà</span><span class="badge flat">Mặc định</span></span>
+            <span class="d" style="margin-top:3px">24 Nguyễn Thị Minh Khai, Phường Sài Gòn, TP. Hồ Chí Minh</span>
+            <span class="d">0912 345 678</span>
+          </span>
+        </button>
+        <button type="button" class="row pick" role="radio" aria-checked="false">
+          <span class="radio"></span>
+          <span class="grow">
+            <span style="display:flex;gap:8px;align-items:center"><span class="t">Trần Minh Anh</span><span class="badge flat">Nhà</span></span>
+            <span class="d" style="margin-top:3px">155/3 Lê Văn Thọ, Phường Gò Vấp, TP. Hồ Chí Minh</span>
+            <span class="d">0912 345 678</span>
+          </span>
+        </button>
+      </div>
+      <div class="pad" style="padding-top:12px"><button type="button" class="btn ghost" id="addbtn" data-show="#newaddr" data-hide="#addbtn"><svg data-i="plus" class="ic sm"></svg>Giao tới địa chỉ khác</button></div>
+      <div class="note pad" id="addrows-note" style="padding-top:8px">Địa chỉ mới nhập ở đây sẽ được lưu vào sổ địa chỉ trên thiết bị này.</div>
+
+      <div id="newaddr" hidden>
+        <div class="field"><label>Họ và tên</label><input class="inp" value=""></div>
+        <div class="field"><div class="two"><div><label style="display:block;font-size:11px;color:var(--ink2);margin-bottom:5px">Số điện thoại</label><input class="inp" type="tel"></div><div><label style="display:block;font-size:11px;color:var(--ink2);margin-bottom:5px">Nhãn</label><input class="inp" placeholder="Nhà, Công ty…"></div></div></div>
+        <div class="field"><div class="two"><div><label style="display:block;font-size:11px;color:var(--ink2);margin-bottom:5px">Tỉnh / Thành phố</label><button type="button" class="inp sel selbtn"><span class="t">Chọn tỉnh / thành</span><svg data-i="down" data-raw></svg></button></div><div><label style="display:block;font-size:11px;color:var(--ink2);margin-bottom:5px">Phường / Xã</label><button type="button" class="inp sel selbtn" disabled><span class="t">Chọn tỉnh trước</span><svg data-i="down" data-raw></svg></button></div></div></div>
+        <div class="field"><label>Địa chỉ cụ thể</label><input class="inp" placeholder="Số nhà, tên đường"></div>
+      </div>
+
+      <div class="field"><label>Email nhận xác nhận đơn</label><input class="inp" type="email" value="minhanh@email.com"></div>
+      <div class="field"><label>Ghi chú cho người giao</label><textarea class="inp area" placeholder="Gọi trước khi tới"></textarea></div>
+
+      <div class="h2">Cách giao</div>
+      <div class="rows" role="radiogroup" aria-label="Cách giao">
+        <button type="button" class="row pick" role="radio" aria-checked="true">
+          <span class="radio on"></span>
+          <span class="grow"><span class="t">Giao tiêu chuẩn · 2–4 ngày</span><span class="d">Nhận <b style="color:var(--ink)">22/09 – 24/09</b> · giao bởi đối tác vận chuyển</span></span>
+          <span class="amt">30.000₫</span>
+        </button>
+        <button type="button" class="row pick" role="radio" aria-checked="false">
+          <span class="radio"></span>
+          <span class="grow"><span class="t">Giao nhanh · trong 24 giờ</span><span class="d">Nhận <b style="color:var(--ink)">21/09</b>, trong giờ hành chính · chỉ nội thành TP. Hồ Chí Minh</span></span>
+          <span class="amt">45.000₫</span>
+        </button>
+      </div>
+
+      <div class="h2">Cách thanh toán</div>
+      <div class="rows" role="radiogroup" aria-label="Cách thanh toán">
+        <button type="button" class="row pick" role="radio" aria-checked="true"><span class="radio on"></span><span class="grow"><span class="t">Chuyển khoản ngân hàng</span><span class="d">Mã QR và nội dung chuyển khoản hiện ở bước cuối · giữ hàng 12 giờ</span></span></button>
+        <button type="button" class="row pick" role="radio" aria-checked="false"><span class="radio"></span><span class="grow"><span class="t">Thanh toán khi nhận hàng (COD)</span><span class="d">Thu thêm 15.000₫ phí thu hộ</span></span></button>
+        <button type="button" class="row pick" role="radio" aria-checked="false"><span class="radio"></span><span class="grow"><span class="t">Thẻ nội địa / Visa</span><span class="d">Qua cổng thanh toán</span></span></button>
+      </div>
+    </div>
+
+    <div class="aside">
+      <!-- what is being paid for, visible on the page that takes the money -->
+      <details class="orderbox autoopen">
+        <summary><svg data-i="chev" data-raw></svg>Đơn của bạn · 2 món<span class="amt">810.000₫</span></summary>
+        <div class="il"><span class="th"><img src="img/khoi.webp" alt=""></span><span class="g"><b>KHÓI</b><span>Đen · M · ×1</span></span><span class="amt">390.000₫</span></div>
+        <div class="il"><span class="th"><img src="img/cat.webp" alt=""></span><span class="g"><b>CÁT</b><span>Kem · L · ×1</span></span><span class="amt">420.000₫</span></div>
+        <div class="il" style="justify-content:flex-end"><a class="lnk" href="cart.html">Sửa giỏ hàng</a></div>
+      </details>
+      <div class="pad" style="margin-top:14px;display:flex;gap:8px">
+        <input class="inp" style="flex:1" type="text" aria-label="Mã giảm giá" placeholder="Mã giảm giá">
+        <button type="button" class="btn ghost" style="flex:none" data-sim="Mã CHAOBAN đã áp dụng · −50.000₫"><svg data-i="tag" class="ic sm"></svg>Áp dụng</button>
+      </div>
+      <div class="sum">
+        <div><span>Tạm tính</span><span>810.000₫</span></div>
+        <div><span>Phí giao hàng</span><span>30.000₫</span></div>
+        <div><span>Giảm giá</span><span>—</span></div>
+        <div><span>Dự kiến nhận</span><span>22/09 – 24/09</span></div>
+        <div class="tot"><span>Tổng cộng</span><span>840.000₫</span></div>
+      </div>
+      <button type="button" class="check" role="checkbox" aria-checked="false" style="width:100%;text-align:left;background:none;border:0;font:inherit">
+        <span class="box"></span><span>Tôi đồng ý với điều khoản mua hàng và chính sách đổi trả 7 ngày.</span>
+      </button>
+      <div class="pad" style="padding-top:16px;padding-bottom:24px">
+        <a class="btn" href="order-confirmed.html"><svg data-i="confirm" class="ic sm"></svg>Đặt hàng · 840.000₫</a>
+      </div>
+      <div class="note pad" style="padding-top:0">Chuyển khoản giữ hàng 12 giờ; quá hạn đơn tự huỷ để trả hàng về kệ.</div>
+    </div>
+  </div>
+</main>
+<footer class="foot2" data-footer></footer>
+</div>
+</body>
+</html>

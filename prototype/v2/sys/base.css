@@ -1,0 +1,90 @@
+/* Foundation: box model, type, focus ring, browser-drawn surfaces, margins.
+
+   Lifted verbatim from `prototype/app.css`. ONE line departs from the
+   original: font-family resolves through next/font's variables
+   (--font-sans / --font-display) instead of naming the families directly,
+   because next/font self-hosts them. Every other value is unchanged; change
+   one and you owe a screenshot comparison against http://127.0.0.1:4321.
+
+   The tokens, and the switch that kills the focus ring while the pointer is
+   driving, live in ../globals.css. */
+
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+.s{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--font-sans);
+  font-size:13px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+.s .nm{ font-family:var(--font-display); font-weight:700; letter-spacing:-.015em; }
+.s a{ color:inherit; text-decoration:none; }
+.s :focus-visible{ outline:2px solid var(--mark); outline-offset:2px;
+  border-radius:var(--r-sm); }
+
+/* ── Surfaces the browser draws for you. Leave them alone and they arrive
+      wearing the operating system's defaults, which belong to no design
+      system at all. ── */
+.s ::selection{ background:var(--gold-300); color:var(--ink); }
+.s{ caret-color:var(--fill); }
+.s ::-webkit-scrollbar{ width:10px; height:10px; }
+.s ::-webkit-scrollbar-track{ background:var(--gold-50); }
+.s ::-webkit-scrollbar-thumb{ background:var(--gold-300); border-radius:99px;
+  border:3px solid var(--gold-50); }
+.s ::-webkit-scrollbar-thumb:hover{ background:var(--fill); }
+
+/* Digits have to line up in a column before two numbers can be compared at
+   a glance. */
+.s .p, .s .amt, .s .sum, .s .band .cd, .s .card .st, .s .sz i,
+.s .steps .n, .s.adm .kpi .vl, .s.adm td.num, .s.adm th.num,
+.s .chart .heroN, .s .xax span, .s .tl .d, .s .row .d{
+  font-variant-numeric:tabular-nums; }
+
+/* A heading should not drop a single orphaned word onto its last line. */
+.s h1, .s .h2, .s .empty h3, .s.adm h1{ text-wrap:balance; }
+.s p, .s .lead, .s .note, .s .empty p{ text-wrap:pretty; }
+
+
+/* ------------------------------------------------------------ type & margins */
+.s .pad{ padding-left:18px; padding-right:18px; }
+.s .lead{ padding:11px 18px 0; font-size:12.5px; line-height:1.55; color:var(--ink2); max-width:46ch; }
+.s .h2{ font-family:var(--font-display); font-weight:700; font-size:16px;
+  margin:22px 18px 0; letter-spacing:-.01em; }
+.s .note{ font-size:11px; color:var(--ink2); }
+/* ── A note that opens with an icon. ADDED 2026-09-20 ────────────────────
+   Needed at all because Tailwind's preflight sets `svg{ display:block }`.
+   Everywhere else in this app an icon sits inside a flex parent, where that
+   is invisible — dropped into a paragraph it takes a line of its own.
+   Measured: three notes were doing exactly that, each with its text pushed
+   16px down, under the icon instead of beside it.
+
+   The icon gets a COLUMN rather than a place in the sentence. All three of
+   these notes run to three lines at 390px; inline, line 1 would start
+   indented and lines 2-3 flush left, which reads as a mistake. In its own
+   column the icon marks the whole note and the text keeps one straight
+   edge. Named `.icon` after `.chip.icon`, which already means this.
+
+   `flex-start`, then 1px down: an 11px line box is 17.05px tall and the
+   glyph is 15px, so 1px centres it on the FIRST line instead of on the
+   block. */
+.s .note.icon{ display:flex; align-items:flex-start; gap:6px; }
+.s .note.icon > .ic{ margin-top:1px; }
+.s .hr{ height:1px; background:var(--hair); margin:18px 0 0; }
+
+/* ── The site footer, ADDED in Phase 6 ───────────────────────────────────
+   Four links to the content pages, and nothing else. The mock has no
+   shopper footer at all — its content screens were standalone frames with
+   nothing linking to them — so this is new, and it is deliberately the
+   smallest thing that makes those pages reachable. No newsletter box, no
+   social icons, no copyright line naming a company nobody has told us
+   about.
+
+   The links wrap and carry 44px targets, because they are the one control
+   on the page at the end of a long scroll. */
+.s .sitefoot{ border-top:1px solid var(--hair); margin-top:26px; padding:16px 18px 26px; }
+.s .sitefoot nav{ display:flex; flex-wrap:wrap; gap:12px 18px; }
+.s .sitefoot a{ position:relative; font-size:12px; color:var(--ink2); }
+.s .sitefoot a::after{ content:""; position:absolute; left:50%; top:50%;
+  transform:translate(-50%,-50%); width:max(100%, 44px); height:44px; }
+.s .sitefoot a:hover{ color:var(--link); text-decoration:underline;
+  text-underline-offset:3px; }

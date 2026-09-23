@@ -1,0 +1,158 @@
+/* The desktop variant of the shopper-facing screens.
+
+   The prototype could not express this as breakpoints — a static mock has
+   none — so it drew two separate comps instead, `trang-chu-pc` and
+   `san-pham-pc`. This file is those two comps turned into one breakpoint.
+
+   Every number below is lifted from the prototype rather than chosen here:
+
+     1280px  `body.pc .device` in shell.css — the width both comps were drawn at
+      900px  the width shell.css itself already calls "wide" (`.tbar`)
+       40px  the page gutter both comps use in place of the phone's 18px
+
+   The v2 breakpoints this file carried for the product grid, the hero and
+   the v2 gutter helpers (`.pad`, `.h2`, `.chips`, `.szrow`, `.steps`,
+   `.rows`, `.tl`, `.sum`, `.alert`) went at v3 slice 6 with the rules they
+   widened. What is left is the two v2 names the v3 screens still wear —
+   `.lead` and `.band` — and the v3 blocks below.
+
+   Below 900px nothing in here applies and the phone layout is untouched. */
+
+@media (min-width: 900px) {
+  /* The comps are 1280 wide. Past that the hero would stretch to the width
+     of the monitor and the two-column product page would pull its own
+     halves apart, so the page stops growing and centres instead. */
+  .s {
+    max-width: 1280px;
+    margin-inline: auto;
+  }
+
+  /* 18 → 40, for the two ported blocks that hard-code their own gutter.
+     Everything the v3 round wrote takes it from `.wrap3` instead. */
+  .s .lead {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  .s .band {
+    margin-left: 40px;
+    margin-right: 40px;
+  }
+
+  /* 46ch suits a 390px column; `sc_home_w` gives the desktop lead 60ch. */
+  .s .lead {
+    max-width: 60ch;
+  }
+}
+
+/* The v1 product page's two columns (`.pdp` / `.pdpbuy`) stood here until
+   slice 3 of v2, and the v2 product grid (`.cardgrid`, with its `sixup`
+   teaser variant) until slice 6 of v3. `.pdp3` and `.grid3` replaced them;
+   nothing rendered the old classes afterwards. */
+
+/* ── the nav bar, v3 ─────────────────────────────────────────────────────
+   From 900px the bar has room for the five family links, for the issue link
+   that heads them, and for the countdown inside the issue stamp. On the
+   phone the stamp says only WHICH issue: the cover carries the same number
+   with room to say what it counts. */
+@media (min-width: 900px) {
+  .s .nav3 .in {
+    height: 64px;
+    padding: 0 28px 0 var(--gutd);
+    gap: 28px;
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+  .s .nav3 .ib {
+    width: 44px;
+  }
+  .s .nav3 .links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .s .nav3 .links a {
+    font-size: var(--fs-ui);
+    color: var(--ink2);
+    padding: 6px 0;
+    position: relative;
+  }
+  /* The link box is 25px tall; the overlay takes the target to 44 without
+     costing the row a pixel. `::before`, so `.on`'s underline can keep
+     `::after` to itself. */
+  .s .nav3 .links a::before {
+    content: "";
+    position: absolute;
+    inset: -9px 0;
+  }
+  .s .nav3 .links a:hover,
+  .s .nav3 .links a.on {
+    color: var(--ink);
+  }
+  .s .nav3 .links a.on {
+    font-weight: 600;
+  }
+  .s .nav3 .links a.on::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 2px;
+    background: var(--brand);
+  }
+  /* The stamp is pushed to the right of the links and pulls the icons with
+     it, so the bar reads: who · what you can browse · which issue · you. */
+  .s .nav3 .itag {
+    order: 5;
+    margin-left: auto;
+    height: 32px;
+    padding: 0 12px;
+  }
+  .s .nav3 .itag .cd {
+    display: inline;
+  }
+  .s .nav3 .icons {
+    margin-left: 0;
+  }
+
+  /* ── the page block, v3 ───────────────────────────────────────────────── */
+  .s .wrap3 {
+    padding: 0 var(--gutd);
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+
+  /* ── the footer, v3 ──────────────────────────────────────────────────── */
+  .s .foot3 .in {
+    padding: var(--s6) var(--gutd) var(--s7);
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+  .s .foot3 .cols {
+    grid-template-columns: 1.1fr 0.9fr 1fr 1.3fr;
+    gap: var(--s5) var(--s6);
+  }
+  /* A pointer does not need the phone's 44px row. Back to the mock's rhythm. */
+  .s .foot3 li a,
+  .s .foot3 li > span {
+    min-height: 32px;
+  }
+
+  /* ── one centred column: the confirmation and the search screen ─────────
+     600px in the middle of the page, and the column IS the gutter — nothing
+     inside it keeps the 40px page margin on top of that. */
+  .s .narrow {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .s .narrow .lead {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .s .narrow .band,
+  .s .narrow .needwrite {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}

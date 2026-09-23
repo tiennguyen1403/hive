@@ -1,0 +1,51 @@
+/* The bottom sheet's own chrome — scrim, panel, the rise.
+
+   Lifted from `prototype/shell.css` rather than `app.css`. In the prototype
+   this lived with the viewer's furniture because the viewer was what opened
+   sheets, but it was never viewer furniture: the scrim and the panel are the
+   product. The design is the approved one; only the file it sits in changed.
+
+   Change anything here and you owe a screenshot comparison against
+   http://127.0.0.1:4321. */
+
+.sheetwrap {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sheetwrap[hidden] {
+  display: none;
+}
+.sheetwrap .scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 10, 6, 0.5);
+}
+.sheetwrap .sheetbody {
+  position: relative;
+  width: 390px;
+  max-width: 100%;
+  max-height: 86dvh;
+  overflow: auto;
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -14px 40px rgba(20, 16, 6, 0.35);
+  animation: rise 0.22s cubic-bezier(0.2, 0.75, 0.3, 1);
+}
+@keyframes rise {
+  from {
+    transform: translateY(20px);
+  }
+  to {
+    transform: none;
+  }
+}
+/* The rise is the sheet saying where it came from. Someone who has asked not
+   to see motion still needs the sheet — they just get it already there. */
+@media (prefers-reduced-motion: reduce) {
+  .sheetwrap .sheetbody {
+    animation: none;
+  }
+}

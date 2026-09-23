@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>Đơn hàng · Quản trị · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+</head>
+<body>
+<div class="s adm v2">
+<nav class="side" aria-label="Khu quản trị" data-adminnav data-active="orders"></nav>
+<main class="main">
+  <header class="top">
+    <h1>Đơn hàng</h1>
+    <div class="rt">
+      <span class="sim"><svg data-i="eye" class="ic sm"></svg>dữ liệu mô phỏng</span>
+      <button type="button" class="btn ghost sm" data-sim="Đã tải don-hang.csv"><svg data-i="export" class="ic sm"></svg>Tải CSV</button>
+    </div>
+  </header>
+  <p class="subhead">24 đơn gần đây — một mẫu, không phải toàn bộ sổ bán hàng. 5 đơn đang chờ cửa hàng xử lý.</p>
+
+  <div class="dt">
+    <!-- status tabs: the operator's queue, one click each -->
+    <div class="stabs" role="tablist" aria-label="Trạng thái">
+      <button type="button" role="tab" aria-selected="true" class="on">Tất cả<span class="cnt">24</span></button>
+      <button type="button" role="tab">Chờ chuyển khoản<span class="cnt">2</span></button>
+      <button type="button" role="tab">Đã thanh toán<span class="cnt">3</span></button>
+      <button type="button" role="tab">Đang giao<span class="cnt">4</span></button>
+      <button type="button" role="tab">Đã giao<span class="cnt">12</span></button>
+      <button type="button" role="tab">Đã huỷ<span class="cnt">3</span></button>
+    </div>
+
+    <div class="bar tools" hidden>
+      <span class="find"><svg data-i="search" data-raw></svg><input type="search" placeholder="Tìm mã đơn, khách hàng, mã vận đơn…" aria-label="Tìm"></span>
+      <span class="fwrap"><button type="button" class="facet" aria-haspopup="menu" aria-expanded="false"><span class="t">Thanh toán</span><svg data-i="down" data-raw></svg></button></span>
+      <span class="fwrap"><button type="button" class="facet" aria-haspopup="menu" aria-expanded="false"><span class="t">Đợt</span><svg data-i="down" data-raw></svg></button></span>
+      <span class="spacer"></span>
+      <span class="fwrap"><button type="button" class="facet colsbtn" aria-haspopup="menu" aria-expanded="false"><svg data-i="columns" data-raw></svg><span class="t">Cột</span></button></span>
+    </div>
+    <!-- two paid orders are selected: the toolbar has changed role in place -->
+    <div class="bar bulk" data-unit="đơn">
+      <span class="cnt">2 đơn đã chọn</span>
+      <button type="button" class="btn ghost sm" data-sim="2 đơn: mở form bàn giao vận chuyển (mã vận đơn từng đơn)"><svg data-i="truck" class="ic sm"></svg>Đóng gói & bàn giao</button>
+      <button type="button" class="btn ghost sm" data-sim="Đã in 2 phiếu giao"><svg data-i="printer" class="ic sm"></svg>In phiếu giao</button>
+      <button type="button" class="btn ghost sm" data-sim="Đã tải don-hang-da-chon.csv"><svg data-i="export" class="ic sm"></svg>Tải CSV</button>
+      <button type="button" class="clearf spacer">Bỏ chọn</button>
+    </div>
+
+    <div class="scroll">
+      <table class="dtt">
+        <thead><tr>
+          <th class="selc"><span class="lb"><button type="button" class="ck" role="checkbox" aria-checked="mixed" aria-label="Chọn tất cả"><svg data-i="tick" data-raw></svg></button></span></th>
+          <th class="srt"><button type="button" class="sortb"><span>Mã đơn</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt"><button type="button" class="sortb"><span>Khách hàng</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th><span class="lb">Món</span></th>
+          <th class="srt num"><button type="button" class="sortb"><span>SL</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt num"><button type="button" class="sortb"><span>Tổng ₫</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt"><button type="button" class="sortb"><span>Trạng thái</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt"><button type="button" class="sortb"><span>Thanh toán</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="srt desc"><button type="button" class="sortb"><span>Ngày đặt</span><svg data-i="down" class="ar" data-raw></svg></button></th>
+          <th class="actc"></th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="false" data-bulk aria-label="Chọn DH-2431"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2431</b></a></td><td>Nguyễn Khả Vy</td><td>CÁT</td><td class="num">1</td><td class="num">400.000</td><td><span class="badge warn"><i></i>Chờ chuyển khoản</span><span class="note" style="display:block;margin-top:2px">hạn 08:05 22/09</span></td><td>Chuyển khoản</td><td>20/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="false" data-bulk aria-label="Chọn DH-2430"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2430</b></a></td><td>Trần Minh Anh</td><td>SƯƠNG, THAN</td><td class="num">2</td><td class="num">2.680.000</td><td><span class="badge warn"><i></i>Chờ chuyển khoản</span><span class="note" style="display:block;margin-top:2px">hạn 19:50 21/09</span></td><td>Chuyển khoản</td><td>19/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr class="on"><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="true" data-bulk aria-label="Chọn DH-2429"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2429</b></a></td><td>Hoàng Mỹ Linh</td><td>MUỐI</td><td class="num">2</td><td class="num">1.272.000</td><td><span class="badge"><i></i>Đã thanh toán</span></td><td>Chuyển khoản</td><td>18/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr class="on"><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="true" data-bulk aria-label="Chọn DH-2428"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2428</b></a></td><td>Võ Đức Duy</td><td>NẮNG</td><td class="num">1</td><td class="num">430.000</td><td><span class="badge"><i></i>Đã thanh toán</span></td><td>Thẻ</td><td>18/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="false" data-bulk aria-label="Chọn DH-2427"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2427</b></a></td><td>Phạm Thu Hà</td><td>NGUỘI, KHÓI</td><td class="num">2</td><td class="num">1.560.000</td><td><span class="badge"><i></i>Đã thanh toán</span><span class="note" style="display:block;margin-top:2px;color:var(--hot)">chưa bàn giao · 3 ngày</span></td><td>Chuyển khoản</td><td>17/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="false" data-bulk aria-label="Chọn DH-2426"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2426</b></a></td><td>Bùi Thanh Tú</td><td>BỤI</td><td class="num">1</td><td class="num">890.000</td><td><span class="badge"><i></i>Đang giao</span><span class="note" style="display:block;margin-top:2px">VNP-8842377</span></td><td>Chuyển khoản</td><td>16/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="false" data-bulk aria-label="Chọn DH-2425"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2425</b></a></td><td>Lê Hoàng Nam</td><td>KHÓI, NẮNG</td><td class="num">2</td><td class="num">820.000</td><td><span class="badge"><i></i>Đang giao</span><span class="note" style="display:block;margin-top:2px">VNP-8842204</span></td><td>Thẻ</td><td>15/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="false" data-bulk aria-label="Chọn DH-2424"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2424</b></a></td><td>Đặng Quốc Bảo</td><td>CÁT, CÁT</td><td class="num">2</td><td class="num">840.000</td><td><span class="badge"><i></i>Đang giao</span><span class="note" style="display:block;margin-top:2px">VNP-8842190</span></td><td>Chuyển khoản</td><td>15/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="false" data-bulk aria-label="Chọn DH-2423"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2423</b></a></td><td>Nguyễn Khả Vy</td><td>ĐÁ</td><td class="num">1</td><td class="num">960.000</td><td><span class="badge ok"><i></i>Đã giao</span></td><td>COD</td><td>14/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+          <tr><td class="selc"><button type="button" class="ck" role="checkbox" aria-checked="false" data-bulk aria-label="Chọn DH-2422"><svg data-i="tick" data-raw></svg></button></td><td><a class="lnk" href="admin-order.html"><b>DH-2422</b></a></td><td>Trần Minh Anh</td><td>GIÓ, KHÓI</td><td class="num">2</td><td class="num">1.056.000</td><td><span class="badge"><i></i>Đang giao</span><span class="note" style="display:block;margin-top:2px">VD-8842-1907</span></td><td>Chuyển khoản</td><td>14/09/2026</td><td class="actc"><button type="button" class="rowmenu" data-menu="#rowmenu" aria-haspopup="menu" aria-expanded="false" aria-label="Thao tác"><svg data-i="more" data-raw></svg></button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="foot">
+      <span class="shown">Hiện <b class="tnum">1–10</b> trên <b class="tnum">24</b> đơn</span>
+      <span class="rt">
+        <span class="perlb">Dòng mỗi trang<span class="fwrap perwrap"><button type="button" class="facet per" aria-haspopup="menu" aria-expanded="false" aria-label="Dòng mỗi trang, đang chọn 10" data-menu="#permenu"><span class="t">10</span><svg data-i="down" data-raw></svg></button></span></span>
+        <span class="pg">Trang <b class="tnum">1</b> / <b class="tnum">3</b></span>
+        <span class="pager"><button type="button" class="prev" aria-label="Trang trước" disabled><svg data-i="chev" data-raw></svg></button><button type="button" class="next" aria-label="Trang sau"><svg data-i="chev" data-raw></svg></button></span>
+      </span>
+    </div>
+  </div>
+  <p class="note icon" style="margin-top:14px"><svg data-i="info" class="ic sm"></svg><span>Thao tác hàng loạt và menu từng dòng đều là mô phỏng: kết quả lưu trên trình duyệt này và ghi vào lịch sử đơn, không có máy chủ nào nhận.</span></p>
+</main>
+</div>
+
+<!-- row menu: what one order can do next -->
+<div class="menu" id="rowmenu" role="menu" aria-label="Thao tác với đơn" hidden>
+  <h5>Đơn hàng</h5>
+  <a href="admin-order.html" role="menuitem" style="display:flex;align-items:center;gap:9px;padding:7px 9px;font-size:12px;border-radius:var(--r-sm)"><svg data-i="eye" data-raw style="width:14px;height:14px;color:var(--mark)"></svg>Xem chi tiết</a>
+  <button type="button" role="menuitem" data-sim="Đã ghi nhận tiền về · chuyển sang Đã thanh toán"><svg data-i="confirm" data-raw></svg>Xác nhận đã nhận tiền</button>
+  <button type="button" role="menuitem" data-sim="Mở form bàn giao vận chuyển"><svg data-i="truck" data-raw></svg>Đóng gói & bàn giao</button>
+  <button type="button" role="menuitem" data-sim="Đã in phiếu giao"><svg data-i="printer" data-raw></svg>In phiếu giao</button>
+  <hr>
+  <button type="button" role="menuitem" class="bad" data-sim="Huỷ đơn: cần chọn lý do (mô phỏng)"><svg data-i="x" data-raw></svg>Huỷ đơn…</button>
+</div>
+<!-- FIX L9: the rows-per-page menu carries a label, not the current value -->
+<div class="menu ticked narrow" id="permenu" role="menu" aria-label="Dòng mỗi trang" hidden>
+  <h5>Dòng mỗi trang</h5>
+  <button type="button" role="menuitemradio" aria-checked="true"><svg data-i="tick" data-raw></svg><span>10</span></button>
+  <button type="button" role="menuitemradio" aria-checked="false"><svg data-i="tick" data-raw></svg><span>20</span></button>
+  <button type="button" role="menuitemradio" aria-checked="false"><svg data-i="tick" data-raw></svg><span>50</span></button>
+</div>
+</body>
+</html>

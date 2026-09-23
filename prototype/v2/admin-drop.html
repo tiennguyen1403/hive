@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>Đợt 05 · Quản trị · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+<style>.s.adm .grid2.detail{ grid-template-columns:1.6fr 1fr; }</style>
+</head>
+<body>
+<div class="s adm v2">
+<nav class="side" aria-label="Khu quản trị" data-adminnav data-active="drops"></nav>
+<main class="main">
+  <header class="top">
+    <h1>Đợt 05</h1>
+    <div class="rt">
+      <span class="sim"><svg data-i="eye" class="ic sm"></svg>dữ liệu mô phỏng</span>
+      <button type="button" class="btn ghost sm" data-sim="Sửa lịch đợt 05 (mô phỏng)"><svg data-i="calendar" class="ic sm"></svg>Sửa lịch</button>
+      <button type="button" class="btn ghost sm" data-open="#closedrop"><svg data-i="clock" class="ic sm"></svg>Đóng đợt sớm</button>
+      <button type="button" class="btn ghost sm" data-sim="Đã tải dot-05.csv"><svg data-i="export" class="ic sm"></svg>Tải CSV</button>
+    </div>
+  </header>
+  <p class="subhead"><a class="lnk" href="admin-drops.html">Đợt bán</a> · 20:00 11/09 → 20:00 25/09/2026 · <span class="badge ok"><i></i>Đang mở</span> · <span data-until="2026-09-25T20:00:00+07:00" data-verb="đóng">đóng sau 5 ngày 1 giờ</span> · ngày thứ 10 / 14</p>
+
+  <div class="kpis five">
+    <div class="kpi"><div class="lb">Mẫu</div><div class="vl">10</div><div class="kpinote">3 áo thun · 2 hoodie · 2 khoác · 1 sơ mi · 2 quần</div></div>
+    <div class="kpi"><div class="lb">Đã cắt</div><div class="vl">181 chiếc</div><div class="kpinote">21 bộ màu</div></div>
+    <div class="kpi"><div class="lb">Đã bán</div><div class="vl">108 · 60%</div><div class="kpinote">của số đã cắt</div><div class="meter" aria-hidden="true"><i style="width:60%"></i></div></div>
+    <div class="kpi"><div class="lb">Còn trên kệ</div><div class="vl">73 chiếc</div><div class="kpinote">1 mẫu hết · 2 mẫu ≤ 3 chiếc</div></div>
+    <div class="kpi"><div class="lb">Doanh thu đợt</div><div class="vl">77,5tr₫</div><div class="kpinote">77.500.000₫ · giá bán × đã bán</div></div>
+  </div>
+
+  <div class="grid2 detail">
+    <div>
+      <section class="panel">
+        <div class="hd"><h2>Theo mẫu</h2><div class="rt"><span class="note">đã bán / đã cắt · xếp theo % bán</span></div></div>
+        <table>
+          <thead><tr><th>Mẫu</th><th class="num">Giá ₫</th><th class="num">Đã cắt</th><th class="num">Đã bán</th><th class="num">Còn</th><th class="num">% bán</th><th class="num">Doanh thu ₫</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/muoi.webp" alt=""></span><span><b class="nm">MUỐI</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Quần jogger</span></span></span></td><td class="num">690.000</td><td class="num">14</td><td class="num">14</td><td class="num">0</td><td class="num"><span class="cellmeter"><span class="meter ok" aria-hidden="true"><i style="width:100%"></i></span>100%</span></td><td class="num">9.660.000</td></tr>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/bui.webp" alt=""></span><span><b class="nm">BỤI</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Áo hoodie</span></span></span></td><td class="num">890.000</td><td class="num">18</td><td class="num">16</td><td class="num">2</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:89%"></i></span>89%</span></td><td class="num">14.240.000</td></tr>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/suong.webp" alt=""></span><span><b class="nm">SƯƠNG</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Áo khoác dù</span></span></span></td><td class="num">1.450.000</td><td class="num">8</td><td class="num">5</td><td class="num">3</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:63%"></i></span>63%</span></td><td class="num">7.250.000</td></tr>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/nguoi.webp" alt=""></span><span><b class="nm">NGUỘI</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Áo hoodie in</span></span></span></td><td class="num">1.290.000</td><td class="num">12</td><td class="num">7</td><td class="num">5</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:58%"></i></span>58%</span></td><td class="num">9.030.000</td></tr>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/nang.webp" alt=""></span><span><b class="nm">NẮNG</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Áo thun</span></span></span></td><td class="num">450.000</td><td class="num">26</td><td class="num">14</td><td class="num">12</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:54%"></i></span>54%</span></td><td class="num">6.300.000</td></tr>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/gio.webp" alt=""></span><span><b class="nm">GIÓ</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Áo sơ mi dệt</span></span></span></td><td class="num">750.000</td><td class="num">15</td><td class="num">8</td><td class="num">7</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:53%"></i></span>53%</span></td><td class="num">6.000.000</td></tr>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/cat.webp" alt=""></span><span><b class="nm">CÁT</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Áo thun tay lỡ</span></span></span></td><td class="num">420.000</td><td class="num">31</td><td class="num">16</td><td class="num">15</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:52%"></i></span>52%</span></td><td class="num">6.720.000</td></tr>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/khoi.webp" alt=""></span><span><b class="nm">KHÓI</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Áo thun oversize</span></span></span></td><td class="num">390.000</td><td class="num">35</td><td class="num">18</td><td class="num">17</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:51%"></i></span>51%</span></td><td class="num">7.020.000</td></tr>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/da.webp" alt=""></span><span><b class="nm">ĐÁ</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Quần cargo</span></span></span></td><td class="num">980.000</td><td class="num">12</td><td class="num">6</td><td class="num">6</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:50%"></i></span>50%</span></td><td class="num">5.880.000</td></tr>
+            <tr><td><span class="cellrow"><span class="pill"><img src="img/than.webp" alt=""></span><span><b class="nm">THAN</b><span class="d" style="display:block;font-size:11px;color:var(--ink2)">Áo khoác bomber</span></span></span></td><td class="num">1.350.000</td><td class="num">10</td><td class="num">4</td><td class="num">6</td><td class="num"><span class="cellmeter"><span class="meter" aria-hidden="true"><i style="width:40%"></i></span>40%</span></td><td class="num">5.400.000</td></tr>
+          </tbody>
+        </table>
+        <div class="totalbar"><span class="note">10 mẫu · 181 cắt · 108 bán · 73 còn</span><b>77.500.000₫</b></div>
+      </section>
+    </div>
+    <div>
+      <section class="panel">
+        <div class="hd"><h2>Lịch</h2></div>
+        <div class="setrow"><span class="grow"><span class="lb">Mở</span><span class="vl">20:00 · thứ Sáu 11/09/2026</span></span></div>
+        <div class="setrow"><span class="grow"><span class="lb">Đóng</span><span class="vl">20:00 · thứ Sáu 25/09/2026</span></span></div>
+        <div class="setrow"><span class="grow"><span class="lb">Thời lượng</span><span class="vl">14 ngày · đang ở ngày thứ 10</span></span></div>
+        <div class="pad16"><div class="meter" aria-hidden="true"><i style="width:64%"></i></div><div class="note" style="margin-top:6px">64% thời gian đã qua · 60% hàng đã bán</div></div>
+      </section>
+      <section class="panel">
+        <div class="hd"><h2>Sắp hết hàng</h2><div class="rt"><span class="note">3 mẫu</span></div></div>
+        <div class="row" style="padding:10px 16px"><span class="pill"><img src="img/muoi.webp" alt=""></span><span class="grow"><span class="t nm">MUỐI</span><span class="d">hết toàn bộ size</span></span><span class="badge hot"><i></i>hết</span></div>
+        <div class="row" style="padding:10px 16px"><span class="pill"><img src="img/bui.webp" alt=""></span><span class="grow"><span class="t nm">BỤI</span><span class="d">hết S · M</span></span><span class="badge warn"><i></i>còn 2</span></div>
+        <div class="row" style="padding:10px 16px"><span class="pill"><img src="img/suong.webp" alt=""></span><span class="grow"><span class="t nm">SƯƠNG</span><span class="d">hết S</span></span><span class="badge warn"><i></i>còn 3</span></div>
+      </section>
+      <section class="panel">
+        <div class="hd"><h2>Đợt kế tiếp · 06</h2><div class="rt"><span class="note">mở 20:00 02/10</span></div></div>
+        <div class="teaserrow"><span class="pill"><img src="img/suong.webp" alt=""></span><span class="g"><b>SỎI</b><span>Áo khoác dù · hé lộ, chưa có giá</span></span></div>
+        <div class="teaserrow"><span class="pill"><img src="img/nguoi.webp" alt=""></span><span class="g"><b>NGÓI</b><span>Áo hoodie in · hé lộ, chưa có giá</span></span></div>
+        <div class="teaserrow" style="justify-content:flex-end"><button type="button" class="lnk" style="font-size:11.5px" data-sim="Thêm mẫu hé lộ cho đợt 06 (mô phỏng)">Thêm mẫu hé lộ</button></div>
+      </section>
+    </div>
+  </div>
+</main>
+</div>
+
+<div class="modalwrap" id="closedrop" hidden>
+  <div class="scrim"></div>
+  <div class="modal s" role="dialog" aria-modal="true" aria-labelledby="cd-t">
+    <div class="hd"><h2 id="cd-t">Đóng đợt 05 ngay bây giờ?</h2><button type="button" class="x" data-close aria-label="Đóng"><svg data-i="x" data-raw></svg></button></div>
+    <div class="bd">
+      <p>Giờ đóng đổi từ <b>20:00 · 25/09</b> thành <b>18:50 · 20/09</b> (bây giờ). 73 chiếc còn lại sẽ không bán được nữa; giỏ hàng của khách đang chứa mẫu đợt 05 sẽ báo "đợt đã đóng".</p>
+      <p>Đơn đã đặt không bị ảnh hưởng. Việc này không hoàn tác được ở bản mô phỏng.</p>
+    </div>
+    <div class="ft"><button type="button" class="btn ghost sm" data-close>Giữ đợt mở</button><button type="button" class="btn sm" data-sim="Đợt 05 đã đóng lúc 18:50 · 73 chiếc còn lại ngừng bán">Đóng đợt 05</button></div>
+  </div>
+</div>
+</body>
+</html>

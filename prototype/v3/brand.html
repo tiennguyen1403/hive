@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="vi" data-dir="so" data-spot="off" data-lex="so" data-badge="b">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bộ thành phần · ba hướng · v3</title>
+<link rel="stylesheet" href="../v2/fonts.css"><link rel="stylesheet" href="fonts-trial.css"><link rel="stylesheet" href="../v2/reset.css"><link rel="stylesheet" href="v3.css">
+<script src="../v2/icons.js"></script><script src="v3.js" defer></script>
+<style>
+  /* The sheet's own layer: labels and grids for reading the components, not part of the product. */
+  .sheet{ padding:0 var(--gut) 80px; }
+  @media (min-width:900px){ .sheet{ padding:0 var(--gutd) 80px; max-width:var(--max); margin:0 auto; } }
+  .sheet .switch{ display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center; padding:14px 0; border-bottom:1px solid var(--hair); font-size:12px; color:var(--ink2); }
+  .sheet .switch .g{ display:inline-flex; gap:4px; align-items:center; }
+  .sheet .switch button{ height:36px; padding:0 10px; border:1px solid var(--line); border-radius:var(--r); font-size:12px; color:var(--ink); background:var(--bg); cursor:pointer; position:relative; }
+  .sheet .switch button::after{ content:""; position:absolute; inset:-5px 0; }
+  .sheet .switch .g{ gap:4px 4px; row-gap:10px; flex-wrap:wrap; }
+  .sheet .switch button.on{ background:var(--sel); color:var(--sel-ink); border-color:var(--sel); }
+  .sheet h2{ font-family:var(--font-display); font-size:var(--fs-h2); font-weight:700; margin:40px 0 4px; padding-top:14px; border-top:2px solid var(--ink); }
+  .sheet h2 + p{ font-size:12.5px; color:var(--ink2); max-width:70ch; margin-bottom:14px; }
+  .sheet .lab{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); margin:14px 0 6px; }
+  .swg{ display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; }
+  .swg .sw3{ border:1px solid var(--hair); border-radius:var(--r); overflow:hidden; font-size:12px; }
+  .swg .sw3 i{ display:block; height:56px; }
+  .swg .sw3 div{ padding:6px 8px; }
+  .swg .sw3 b{ display:block; font-weight:600; }
+  .swg .sw3 code{ color:var(--ink2); font-family:ui-monospace,Consolas,monospace; font-size:11px; }
+  table.ct{ width:100%; border-collapse:collapse; font-size:12.5px; font-variant-numeric:tabular-nums; }
+  table.ct th{ text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); padding:6px 8px; border-bottom:1px solid var(--ink); }
+  table.ct td{ padding:7px 8px; border-bottom:1px solid var(--hair); }
+  table.ct .chip{ display:inline-block; padding:2px 8px; border-radius:var(--r-sm); font-size:11.5px; }
+  table.ct .ok{ color:var(--ok); font-weight:600; }
+  table.ct .bad{ color:var(--hot); font-weight:600; }
+  .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .two{ display:grid; grid-template-columns:1fr; gap:24px; }
+  @media (min-width:900px){ .two{ grid-template-columns:1fr 1fr; gap:48px; } }
+  .types .t{ display:grid; grid-template-columns:150px 1fr; gap:14px; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--hair); }
+  .types .t small{ font-size:11.5px; color:var(--ink2); font-variant-numeric:tabular-nums; }
+  .spc{ display:flex; align-items:flex-end; gap:8px; }
+  .spc i{ display:block; background:var(--brand); width:24px; }
+  .spc span{ font-size:11px; color:var(--ink2); text-align:center; display:block; margin-top:4px; }
+  .adm3{ background:var(--plate); padding:16px; border-radius:var(--r); }
+  .kpi3{ display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+  .kpi3 .k{ background:var(--bg); border:1px solid var(--hair); border-radius:var(--r); padding:12px 14px; font-size:12px; color:var(--ink2); }
+  .kpi3 .k b{ display:block; font-family:var(--font-display); font-size:24px; color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+  .dt3{ width:100%; margin-top:12px; background:var(--bg); border:1px solid var(--hair); font-size:12.5px; font-variant-numeric:tabular-nums; }
+  .dt3 th{ text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); padding:9px 10px; border-bottom:1px solid var(--ink); }
+  .dt3 td{ padding:10px; border-bottom:1px solid var(--hair); }
+  .dt3 tr:last-child td{ border-bottom:0; }
+  .dt3 a{ color:var(--brand-text); text-decoration:underline; text-underline-offset:3px; }
+  .demo-card{ max-width:280px; }
+  @media (max-width:899.98px){
+    .kpi3{ grid-template-columns:1fr; }
+    .types .t{ grid-template-columns:1fr; gap:4px; }
+    table.ct, .dt3{ display:block; overflow-x:auto; white-space:nowrap; }
+    .sheet .switch{ row-gap:12px; }
+  }
+  .demo-cover{ margin:0 calc(-1 * var(--gut)); }
+  @media (min-width:900px){ .demo-cover{ margin:0; } }
+</style>
+</head>
+<body data-title="Bộ thành phần · {t} · v3">
+<div class="s v3">
+<header class="nav3" data-nav data-active="home" data-cart="1" data-wish="2" data-state="open"></header>
+<main class="sheet">
+  <div class="switch" role="group" aria-label="Chọn hướng để xem">
+    <span>Hướng</span>
+    <span class="g"><button type="button" data-set="dir" data-val="so">SỐ · mực tím</button><button type="button" data-set="dir" data-val="phieu">PHIẾU · mực than xanh</button><button type="button" data-set="dir" data-val="nhan">NHÃN · mật ong đậm</button></span>
+    <span>Màu theo số</span>
+    <span class="g"><button type="button" data-set="spot" data-val="off">tắt</button><button type="button" data-set="spot" data-val="on">bật (chỉ hướng SỐ)</button></span>
+    <span>Từ</span>
+    <span class="g"><button type="button" data-set="lex" data-val="so">Số</button><button type="button" data-set="lex" data-val="phien">Phiên</button><button type="button" data-set="lex" data-val="tap">Tập</button><button type="button" data-set="lex" data-val="drop">Drop</button><button type="button" data-set="lex" data-val="dot">Đợt</button></span>
+  </div>
+
+  <h2>Bảng màu · vai trò, không phải sắc độ</h2>
+  <p>Mỗi ô là một token ngữ nghĩa dùng chung cho cả ba hướng; đổi hướng là đổi giá trị, không đổi tên. Bảng tương phản bên dưới tính ngay trên trình duyệt từ giá trị đang hiển thị.</p>
+  <div class="swg" id="swatches"></div>
+  <div class="lab">Tương phản đo được (WCAG AA: chữ 4,5 · chữ lớn và điều khiển 3)</div>
+  <table class="ct"><thead><tr><th>Cặp</th><th>Chữ</th><th>Nền</th><th>Tỉ lệ</th><th>Ngưỡng</th><th></th></tr></thead><tbody id="pairs"></tbody></table>
+
+  <h2>Chữ · chín vai</h2>
+  <p>Hai họ giữ nguyên (Be Vietnam Pro cho giao diện, Familjen Grotesk cho số và tiêu đề). Thay 17 cỡ rời rạc của v2 bằng chín vai có tên; sàn 11px cho chữ chức năng giữ nguyên (QĐ-22).</p>
+  <div class="types">
+    <div class="t"><small>Số · 96 / 168px · .9</small><span class="num" style="font-size:72px">05</span></div>
+    <div class="t"><small>Display · 30 / 44px · 1.05</small><span class="disp" style="font-size:var(--fs-disp);line-height:1.05">Mười mẫu. Cắt một lần.</span></div>
+    <div class="t"><small>H1 · 24 / 28px</small><span class="disp" style="font-size:var(--fs-h1)">KHÓI</span></div>
+    <div class="t"><small>H2 · 18 / 21px</small><span class="disp" style="font-size:var(--fs-h2)">Trong <span class="tm" data-k="tl">số</span> này</span></div>
+    <div class="t"><small>H3 · 15 / 16px</small><span class="disp" style="font-size:var(--fs-h3)">Còn ít</span></div>
+    <div class="t"><small>Body · 14px · 1.55</small><span style="font-size:var(--fs-body)">Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt. Hết size là hết, không may thêm.</span></div>
+    <div class="t"><small>UI · 13px</small><span style="font-size:var(--fs-ui)">Còn 17 / 35 chiếc đã cắt · đóng sau 5 ngày 1 giờ</span></div>
+    <div class="t"><small>Small · 12px</small><span style="font-size:var(--fs-sm);color:var(--ink2)">còn 2 · hết S M</span></div>
+    <div class="t"><small>Micro · 11px · nhãn hoa</small><span style="font-size:var(--fs-xs);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)">Lịch ra số</span></div>
+  </div>
+
+  <h2>Khoảng cách · chín bậc, nền 4px</h2>
+  <p>v2 dùng 17–28 giá trị lề khác nhau trên một trang; v3 dùng chín bậc: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96. Nhóm chặt dùng bậc 1–3, mục dùng bậc 6–8, lề trang 18px điện thoại và 40px từ 900px.</p>
+  <div class="spc">
+    <div><i style="height:4px"></i><span>4</span></div><div><i style="height:8px"></i><span>8</span></div><div><i style="height:12px"></i><span>12</span></div>
+    <div><i style="height:16px"></i><span>16</span></div><div><i style="height:24px"></i><span>24</span></div><div><i style="height:32px"></i><span>32</span></div>
+    <div><i style="height:48px"></i><span>48</span></div><div><i style="height:64px"></i><span>64</span></div><div><i style="height:96px"></i><span>96</span></div>
+  </div>
+
+  <h2>Nút, thẻ trạng thái, chip, công tắc</h2>
+  <p>Một hành động chính mỗi màn hình mang màu thương hiệu; phần còn lại là mực. Nút vô hiệu ghi việc cần làm, không đổi màu thành cảnh báo. Trạng thái luôn có chấm và chữ, không chỉ màu.</p>
+  <div class="lab">Nút</div>
+  <div class="row">
+    <button type="button" class="btn3"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ · 390.000₫</button>
+    <button type="button" class="btn3 sec"><svg data-i="heart" class="ic sm"></svg>Lưu</button>
+    <button type="button" class="btn3 quiet">Bốn quy tắc</button>
+    <button type="button" class="btn3" disabled>Chọn size</button>
+    <button type="button" class="btn3 sec sm">Áp dụng</button>
+    <span class="ib" style="border:1px solid var(--hair)"><svg data-i="search"></svg></span>
+  </div>
+  <div class="lab">Thẻ trạng thái</div>
+  <div class="row">
+    <span class="tag3 on"><i></i>Đang bán</span><span class="tag3 soon"><i></i>Sắp mở</span><span class="tag3 shut"><i></i>Đã đóng</span><span class="tag3 hot"><i></i>Còn 2</span><span class="tag3"><i></i>Chờ chuyển khoản</span>
+  </div>
+  <div class="lab">Chip lọc</div>
+  <div class="row">
+    <button type="button" class="chip3" data-toggle aria-pressed="false">Oversize<span class="cnt">6</span></button>
+    <button type="button" class="chip3 on" data-toggle aria-pressed="true">Còn size M<span class="cnt">8</span></button>
+    <button type="button" class="chip3" data-toggle aria-pressed="false"><i class="dot" style="background:#4A5240"></i>Rêu<span class="cnt">3</span></button>
+    <button type="button" class="chip3"><svg data-i="filter" class="ic sm"></svg>Lọc</button>
+  </div>
+  <div class="lab">Ô nhập, công tắc, ghi chú</div>
+  <div class="two">
+    <div>
+      <label class="lbl" for="d-email">Email nhận xác nhận đơn</label>
+      <input class="inp3" id="d-email" placeholder="ten@vidu.vn">
+      <div class="mysize" style="margin-top:14px"><div><b>Size ghi nhớ</b>Chọn sẵn size này ở các mẫu sau. Lưu trên thiết bị này.</div><button type="button" class="switch3" role="switch" aria-checked="true" aria-label="Ghi nhớ size"></button></div>
+    </div>
+    <div>
+      <p class="note3"><svg data-i="info" class="ic sm"></svg><span><b>Chuyển khoản giữ hàng 12 giờ.</b> Quá giờ, đơn tự huỷ và chiếc đó về kệ.</span></p>
+      <p class="note3 hot" style="margin-top:8px"><svg data-i="danger" class="ic sm"></svg><span>Mã DOT05 cần đơn từ 500.000₫. Đơn này 390.000₫.</span></p>
+      <div class="needwrite" style="margin-top:8px"><span class="lb"><svg data-i="edit" class="ic sm"></svg>Chờ người viết</span><p><b>Kênh liên hệ và mạng xã hội.</b> Chưa chốt nên chỗ này để trống.</p></div>
+    </div>
+  </div>
+
+  <h2>Thẻ mẫu, dòng mục lục, bảng size</h2>
+  <p>Thẻ giữ thanh nút dưới thẻ như bạn chốt, nhưng là viền mực (vàng chỉ dành cho hành động chính của màn); ảnh là liên kết, tên và giá nằm trên một dòng mục lục có dấu dẫn, số còn là dòng thứ hai. Bảng size là bảng thật: một dòng một size, số còn trên dấu dẫn, ô đánh dấu ở cuối; dòng đang chọn đảo màu.</p>
+  <div class="two">
+    <div class="demo-card">
+      <div class="card3">
+        <a class="img" href="product.html"><img src="../v2/img/bui.webp" alt="BỤI"></a>
+        <a class="meta" href="product.html"><span class="toc"><span class="n">BỤI</span><span class="ld"></span><span class="p">890.000₫</span></span><span class="ct"><span class="low">còn 2</span><span class="tally" data-n="2"></span><span>· hết <s>S</s> <s>M</s></span></span></a>
+        <div class="act"><button type="button" class="addbtn3"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div>
+      </div>
+      <div class="card3 sold" style="margin-top:24px">
+        <a class="img" href="product.html"><img src="../v2/img/muoi.webp" alt="MUỐI"><span class="stamp">SOLD OUT</span></a>
+            <a class="meta" href="product.html"><span class="toc"><span class="n">MUỐI</span><span class="ld"></span><span class="p">690.000₫</span></span><span class="ct"><span>14 / 14 đã bán</span></span></a>
+            <div class="act"><a class="addbtn3 view" href="product.html"><svg data-i="eye" class="ic sm"></svg>Xem chi tiết</a></div>
+      </div>
+    </div>
+    <div data-buy data-name="KHÓI" data-price="390.000₫">
+      <a class="tocrow" href="#"><span class="n">BỤI</span><span class="d"><span class="low">còn 2</span> · hết <s>S</s> <s>M</s></span><span class="ld"></span><span class="p">890.000₫</span></a>
+      <a class="tocrow" href="#"><span class="n">SƯƠNG</span><span class="d"><span class="low">còn 3</span> · hết <s>S</s></span><span class="ld"></span><span class="p">1.450.000₫</span></a>
+      <div class="fld"><div class="lbl"><b>Size</b><span data-sizeline>chưa chọn</span></div>
+        <table class="sizes"><tbody>
+          <tr><td><button type="button" data-size="S" aria-pressed="false"><span class="sz">S</span><span class="ld"></span><span class="left">còn 3</span><span class="mk"><svg data-i="tick" data-raw></svg></span></button></td></tr>
+          <tr><td><button type="button" data-size="M" aria-pressed="true"><span class="sz">M</span><span class="ld"></span><span class="left">còn 4</span><span class="mk"><svg data-i="tick" data-raw></svg></span></button></td></tr>
+          <tr><td><button type="button" class="gone" data-size="L" aria-pressed="false" aria-disabled="true"><span class="sz">L</span><span class="ld"></span><span class="left">hết</span><span class="mk"></span></button></td></tr>
+        </tbody></table>
+      </div>
+      <div class="stock" style="margin-top:16px"><b>Còn 17</b> / 35 chiếc đã cắt<div class="meter"><i style="width:48.6%"></i></div></div>
+      <div class="stock" style="border-top:0;margin-top:8px"><b>Còn 2</b> / 18 chiếc đã cắt<div class="meter hot"><i style="width:11%"></i></div></div>
+    </div>
+  </div>
+
+  <h2>Bìa <span class="tm" data-k="tl">số</span> · ba trạng thái trên một khung</h2>
+  <p>Cùng một khối bìa cho ba trạng thái; bìa đang bán ở trang chủ, bìa sắp mở ở cuối trang chủ. Dưới đây là bìa sắp mở thu gọn để so màu.</p>
+  <section class="cover soon demo-cover" style="margin-top:0">
+    <div class="photo">
+      <figure><img src="../v2/img/suong.webp" alt=""><span class="tag3 soon"><i></i>Chưa mở</span><figcaption><b>SỎI</b>Áo khoác dù · giá công bố khi mở</figcaption></figure>
+      <figure><img src="../v2/img/nguoi.webp" alt=""><span class="tag3 soon"><i></i>Chưa mở</span><figcaption><b>NGÓI</b>Áo hoodie in · giá công bố khi mở</figcaption></figure>
+    </div>
+    <div class="face">
+      <div class="issue"><span class="k"><span class="tm" data-k="tu">SỐ</span></span><span class="num">06</span></div>
+      <p class="state"><span class="tag3 soon"><i></i>Sắp mở</span><span class="tnum">Mở 20:00 thứ Sáu 02/10</span></p>
+      <div class="clock" data-until="2026-10-02T20:00:00+07:00" data-fmt="boxes"><b data-u="d">12</b><span>ngày</span><b data-u="h">01</b><span>giờ</span><b data-u="m">10</b><span>phút</span></div>
+      <h2 class="disp t" style="border:0;margin:24px 0 0;padding:0">Hai mẫu đã hé lộ. Giá và số lượng công bố đúng lúc mở.</h2>
+      <div class="cta"><button type="button" class="btn3 sec" data-sim="Đã đặt nhắc giờ mở · lưu trên thiết bị này"><svg data-i="bell" class="ic sm"></svg>Đặt nhắc giờ mở</button></div>
+    </div>
+  </section>
+
+  <h2>Khu quản trị · cùng token, giữ khung</h2>
+  <p>Quản trị không đổi bố cục (kỷ luật, theo lựa chọn của bạn): nhận màu thương hiệu cho hành động chính và liên kết, nhận thang chữ và khoảng cách, đổi từ "đợt" theo từ đã chốt. Ví dụ một dải KPI và ba dòng bảng.</p>
+  <div class="adm3">
+    <div class="kpi3">
+      <div class="k">Doanh thu 14 ngày<b>14,2tr₫</b>chỉ tính đơn đã thanh toán</div>
+      <div class="k">Cần xử lý<b>5</b>2 chờ chuyển khoản · 3 chưa giao</div>
+      <div class="k">Còn trong <span class="tm" data-k="tl">số</span> 05<b>73 chiếc</b>108 / 181 đã bán · 60%</div>
+    </div>
+    <table class="dt3"><thead><tr><th>Mã đơn</th><th>Khách</th><th>Thời gian</th><th>Giá trị</th><th>Trạng thái</th></tr></thead><tbody>
+      <tr><td><a href="#">DH-2431</a></td><td>Nguyễn Khả Vy</td><td>20/09 · 08:05</td><td>400.000₫</td><td><span class="tag3"><i></i>Chờ chuyển khoản</span></td></tr>
+      <tr><td><a href="#">DH-2429</a></td><td>Hoàng Mỹ Linh</td><td>18/09 · 22:15</td><td>1.272.000₫</td><td><span class="tag3 on"><i></i>Đã thanh toán</span></td></tr>
+      <tr><td><a href="#">DH-2427</a></td><td>Phạm Thu Hà</td><td>17/09 · 20:28</td><td>1.560.000₫</td><td><span class="tag3 soon"><i></i>Đang giao</span></td></tr>
+    </tbody></table>
+    <div class="row" style="margin-top:12px"><button type="button" class="btn3 sm"><svg data-i="check" class="ic sm"></svg>Đã nhận tiền</button><button type="button" class="btn3 sec sm"><svg data-i="export" class="ic sm"></svg>Tải CSV</button><button type="button" class="btn3 sec sm" data-sim="Thông báo ngắn 2,6 giây">Thử toast</button></div>
+  </div>
+</main>
+<footer class="foot3" data-footer></footer>
+</div>
+<script>
+(function () {
+  function set(k, v) { try { localStorage.setItem("v3." + k, v); } catch (e) {} window.V3.apply(); mark(); render(); }
+  function mark() { document.querySelectorAll("[data-set]").forEach(function (b) { b.classList.toggle("on", window.V3.setting(b.getAttribute("data-set"), b.getAttribute("data-set") === "spot" ? "off" : "so") === b.getAttribute("data-val")); }); }
+  document.addEventListener("click", function (e) { var b = e.target.closest("[data-set]"); if (b) set(b.getAttribute("data-set"), b.getAttribute("data-val")); });
+  // live palette + contrast, read from the computed tokens
+  var ROLES = [["bg", "Nền trang"], ["ink", "Mực chính"], ["ink2", "Mực phụ"], ["line", "Viền điều khiển"], ["hair", "Nét kẻ"], ["plate", "Nền sau ảnh"], ["brand", "Màu thương hiệu (mảng)"], ["brand-ink", "Chữ trên mảng"], ["brand-soft", "Tint thương hiệu"], ["brand-text", "Thương hiệu làm chữ"], ["stage", "Nền khối số"], ["stage-ink", "Chữ trên khối số"], ["spot", "Màu của số"], ["sel", "Ô đang chọn"], ["ply-a", "Liên đã đóng"], ["ply-b", "Liên sắp mở"], ["hot", "Sắp hết / huỷ"], ["ok", "Xong / đang bán"], ["info", "Sắp mở / đang giao"], ["warn", "Đang chờ"]];
+  function tok(n) { return getComputedStyle(document.documentElement).getPropertyValue("--" + n).trim(); }
+  function lin(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+  function L(h) { h = h.replace("#", ""); if (h.length === 3) h = h.replace(/./g, function (x) { return x + x; }); var r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b); }
+  function cr(a, b) { var x = L(a), y = L(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+  var PAIRS = [["Mực chính trên nền", "ink", "bg", 4.5], ["Mực phụ trên nền", "ink2", "bg", 4.5], ["Thương hiệu làm chữ trên nền", "brand-text", "bg", 4.5], ["Chữ trên mảng thương hiệu", "brand-ink", "brand", 4.5], ["Mực trên tint", "ink", "brand-soft", 4.5], ["Chữ trên khối số", "stage-ink", "stage", 4.5], ["Mực phụ trên khối số", "stage-ink2", "stage", 4.5], ["Màu của số trên khối số (chữ lớn)", "spot", "stage", 3], ["Chữ trên ô đang chọn", "sel-ink", "sel", 4.5], ["Mực trên liên đã đóng", "ink", "ply-a", 4.5], ["Mực trên liên sắp mở", "ink", "ply-b", 4.5], ["Viền điều khiển trên nền", "line", "bg", 3], ["Sắp hết trên nền", "hot", "bg", 4.5], ["Đang bán trên nền", "ok", "bg", 4.5], ["Sắp mở trên nền", "info", "bg", 4.5], ["Đang chờ trên nền", "warn", "bg", 4.5]];
+  function render() {
+    var sw = document.getElementById("swatches"); sw.innerHTML = ROLES.map(function (r) { var v = tok(r[0]); return '<div class="sw3"><i style="background:' + v + '"></i><div><b>' + r[1] + '</b><code>--' + r[0] + " " + v + "</code></div></div>"; }).join("");
+    var tb = document.getElementById("pairs"); tb.innerHTML = PAIRS.map(function (p) { var a = tok(p[1]), b = tok(p[2]); if (!a || !b) return ""; var c = cr(a, b); var ok = c >= p[3]; return "<tr><td>" + p[0] + '</td><td><span class="chip" style="background:' + b + ";color:" + a + '">Aa ' + a + "</span></td><td>" + b + "</td><td>" + c.toFixed(2) + ":1</td><td>" + p[3] + ':1</td><td class="' + (ok ? "ok" : "bad") + '">' + (ok ? "đạt" : "KHÔNG đạt") + "</td></tr>"; }).join("");
+  }
+  window.addEventListener("storage", function () { setTimeout(function () { mark(); render(); }, 0); });
+  document.addEventListener("DOMContentLoaded", function () { setTimeout(function () { mark(); render(); }, 0); });
+})();
+</script>
+</body>
+</html>

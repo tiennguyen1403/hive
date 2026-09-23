@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trang chủ · đợt sắp mở & đã đóng · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+<style>
+  /* two states of the same hero, stacked for review */
+  .divider{ margin:34px 18px 0; padding:8px 12px; background:var(--gold-100); border-radius:var(--r);
+    font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--gold-800); }
+  @media (min-width:900px){ .divider{ margin:44px 40px 0; } }
+</style>
+</head>
+<body>
+<div class="s v2">
+<header class="nav2" data-nav data-active="home" data-cart="1" data-wish="2" data-drop="soon"></header>
+<main>
+
+  <div class="divider">Trạng thái A · đợt 06 chưa mở (giữa hai đợt)</div>
+  <section class="hero2">
+    <div class="ph2"><img src="img/hero-wide.webp" alt=""></div>
+    <div class="panel2">
+      <span class="kick soon"><i></i>Đợt 06 · sắp mở</span>
+      <h1 class="display">Mở 20:00 ngày 02/10. Hai mẫu, mỗi mẫu cắt một lần.</h1>
+      <div class="count" data-until="2026-10-02T20:00:00+07:00" data-fmt="boxes" aria-label="Mở lúc 20:00 ngày 02/10">
+        <span class="u"><b data-u="d">12</b><span>ngày</span></span>
+        <span class="u"><b data-u="h">01</b><span>giờ</span></span>
+        <span class="u"><b data-u="m">09</b><span>phút</span></span>
+        <span class="lb">tới giờ mở</span>
+      </div>
+      <p class="lead">Giá và số lượng công bố đúng lúc mở. Người đã đặt nhắc được báo trước 2 giờ.</p>
+      <div class="cta">
+        <button type="button" class="btn" data-sim="Đã đặt nhắc cho đợt 06 (lưu trên thiết bị này)"><svg data-i="bell" class="ic sm"></svg>Nhắc tôi khi mở</button>
+        <a class="btn quiet" href="#how"><svg data-i="info" class="ic sm"></svg>Cách đợt hoạt động</a>
+      </div>
+    </div>
+  </section>
+  <div class="sechead"><h2 class="h2">Sẽ có gì trong đợt 06</h2><span class="sub">2 mẫu hé lộ</span></div>
+  <div class="grid">
+    <div class="card"><div class="wrap"><div class="ph"><img src="img/suong.webp" alt="SỎI"></div><span class="sold" style="background:rgba(255,255,255,.55)">CHƯA MỞ</span></div>
+      <h3 class="nm">SỎI</h3><div class="kindline">Áo khoác dù</div><div class="st">giá công bố khi mở</div></div>
+    <div class="card"><div class="wrap"><div class="ph"><img src="img/nguoi.webp" alt="NGÓI"></div><span class="sold" style="background:rgba(255,255,255,.55)">CHƯA MỞ</span></div>
+      <h3 class="nm">NGÓI</h3><div class="kindline">Áo hoodie in</div><div class="st">giá công bố khi mở</div></div>
+  </div>
+  <!-- FIX L4: the note reads the previous drop's REAL state -->
+  <div class="hr"></div>
+  <div class="note pad" style="padding-top:16px">Đợt 05 <b style="color:var(--ok)">đang mở</b> · đóng sau <span data-until="2026-09-25T20:00:00+07:00" data-verb="đóng" style="display:inline">5 ngày 1 giờ</span> · <a class="lnk" href="home.html">xem đợt 05</a></div>
+
+  <div class="divider" id="closed">Trạng thái B · đợt 04 đã đóng (xem lại)</div>
+  <section class="hero2">
+    <div class="ph2"><img src="img/hero-wide.webp" alt="" style="filter:saturate(.7)"></div>
+    <div class="panel2">
+      <span class="kick shut"><i></i>Đợt 04 · đã đóng</span>
+      <h1 class="display">Sáu mẫu, 200 chiếc đã cắt. Bán hết 200.</h1>
+      <p class="lead">Đóng lúc 20:00 ngày 19/06 — không may thêm. Không còn size nào. Đây là bản ghi của đợt, không phải kệ hàng.</p>
+      <div class="cta">
+        <a class="btn" href="home.html"><svg data-i="grid" class="ic sm"></svg>Về đợt 05 đang mở</a>
+      </div>
+    </div>
+  </section>
+  <div class="sechead"><h2 class="h2">Đợt 04 đã có gì</h2><span class="sub">6 mẫu · 200/200 đã bán</span></div>
+  <div class="grid sixup">
+    <div class="card"><div class="wrap"><div class="ph"><img src="img/reu.webp" alt="RÊU"></div><span class="sold">ĐÃ ĐÓNG</span></div><h3 class="nm">RÊU</h3><div class="pricerow"><div class="p">1.500.000₫</div><span class="left">30/30 đã bán</span></div></div>
+    <div class="card"><div class="wrap"><div class="ph"><img src="img/tro.webp" alt="TRO"></div><span class="sold">ĐÃ ĐÓNG</span></div><h3 class="nm">TRO</h3><div class="pricerow"><div class="p">950.000₫</div><span class="left">40/40 đã bán</span></div></div>
+    <div class="card"><div class="wrap"><div class="ph"><img src="img/song.webp" alt="SÓNG"></div><span class="sold">ĐÃ ĐÓNG</span></div><h3 class="nm">SÓNG</h3><div class="pricerow"><div class="p">430.000₫</div><span class="left">50/50 đã bán</span></div></div>
+    <div class="card"><div class="wrap"><div class="ph"><img src="img/vo.webp" alt="VỎ"></div><span class="sold">ĐÃ ĐÓNG</span></div><h3 class="nm">VỎ</h3><div class="pricerow"><div class="p">820.000₫</div><span class="left">25/25 đã bán</span></div></div>
+    <div class="card"><div class="wrap"><div class="ph"><img src="img/mua.webp" alt="MƯA"></div><span class="sold">ĐÃ ĐÓNG</span></div><h3 class="nm">MƯA</h3><div class="pricerow"><div class="p">1.420.000₫</div><span class="left">20/20 đã bán</span></div></div>
+    <div class="card"><div class="wrap"><div class="ph"><img src="img/kho.webp" alt="KHÔ"></div><span class="sold">ĐÃ ĐÓNG</span></div><h3 class="nm">KHÔ</h3><div class="pricerow"><div class="p">520.000₫</div><span class="left">35/35 đã bán</span></div></div>
+  </div>
+  <div class="pastdrops">Đợt khác đã đóng: <a class="lnk" href="#">Đợt 03</a> · 5 mẫu, 208/208</div>
+</main>
+<footer class="foot2" data-footer></footer>
+</div>
+</body>
+</html>

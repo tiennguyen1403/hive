@@ -1,0 +1,29 @@
+/* Token layer — plain-CSS twin of the `@theme` block in app/globals.css
+   (snapshot 2026-09-20). Same values, same names; the mock cannot run
+   Tailwind, so the aliases are declared here directly. */
+:root{
+  --font-sans:"Be Vietnam Pro",system-ui,sans-serif;
+  --font-display:"Familjen Grotesk",sans-serif;
+  --font-be-vietnam:"Be Vietnam Pro";
+  --font-familjen:"Familjen Grotesk";
+
+  --gold-50:#fdf9f2; --gold-100:#fbf1da; --gold-200:#fbe8bc; --gold-300:#f7d98e;
+  --gold-400:#f1c04a; --gold-500:#eba400; --gold-600:#c28800; --gold-700:#9e6817;
+  --gold-800:#6e4a12; --gold-900:#211d12;
+
+  --fill:#eba400; --fill-bd:#c28800; --fill-ink:#211d12;
+  --band:#fbe8bc; --band-ink:#211d12;
+  --mark:#c28800; --link:#9e6817;
+  --ink:#211d12; --ink2:#71674e; --hair:#f4ebd7; --line:#968b73;
+  --bg:#ffffff; --plate:#fbf1da;
+
+  --hot:#b61e32; --hot-bg:#fbeaec;
+  --ok:#1b6b3a; --ok-bg:#e6f4ea;
+  --warn:#44505e; --warn-bg:#eaedf1;
+  --info:#0c6289; --info-bg:#dceffa;
+
+  --r:6px; --r-sm:4px;
+}
+html,body{ background:var(--bg); }
+body{ margin:0; }
+html[data-pointer] :focus, html[data-pointer] :focus-visible{ outline:none !important; }

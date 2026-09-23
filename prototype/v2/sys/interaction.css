@@ -1,0 +1,350 @@
+/* What a control does when you point at it, press it, or reach it with a
+   finger.
+
+   PORTED LATE. These rules live in `prototype/shell.css`, below a banner
+   that reads "TỪ ĐÂY TRỞ XUỐNG LÀ BÊN TRONG `.s`" — everything under it is
+   app CSS that happened to be filed with the viewer chrome. Phase 0 ported
+   `app.css` and skipped `shell.css` wholesale, so the whole hover/press/
+   touch-target layer was missing from every shopper-facing screen: buttons
+   with no hover, size cells with no cursor, text links 15px tall.
+
+   Two translations were needed. The mock had no real controls, so it hung
+   behaviour on `[data-go]` / `[data-act]` attributes; here the elements are
+   real links and buttons, so the selectors name those instead. And two rules
+   are deliberately NOT ported:
+
+     `.cartdot .bag0/.bag1` — the mock kept both bag icons in the DOM and
+       hid one with CSS because it was static. This build renders whichever
+       one the count calls for.
+     `select.inp` — there is no native `<select>` anywhere in this app, by
+       decision. `components/ui/Select.tsx` explains why. */
+
+/* ─────────────────────────────────────────────────────────── button width
+   A <div> fills its container; a <button> shrinks to its text, because
+   `width:auto` on a form control means fit-content. Every button that was a
+   lone <div> in the mock has to stretch again. Small buttons, and buttons
+   standing beside something else in a row, keep their content width. */
+.s div > button.btn:only-child:not(.sm) {
+  width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────── the real controls
+   Border follows background, as the system already decided elsewhere. */
+.s .btn {
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.s .btn:hover:not(:disabled) {
+  background: var(--gold-400);
+  border-color: var(--gold-400);
+}
+.s .btn.ghost:hover:not(:disabled) {
+  background: var(--gold-50);
+  border-color: var(--fill);
+}
+.s .btn.quiet:hover:not(:disabled) {
+  background: var(--gold-100);
+  border-color: var(--gold-100);
+}
+.s .btn.off,
+.s .btn:disabled,
+.s .btn[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+.s .btn.off:hover,
+.s .btn:disabled:hover,
+.s .btn[aria-disabled="true"]:hover {
+  background: var(--gold-50);
+  border-color: var(--line);
+}
+.s .btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.s .sz {
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.s .sz:hover:not(:disabled) {
+  background: var(--gold-100);
+}
+.s .sz.on:hover {
+  background: var(--gold-400);
+  border-color: var(--gold-400);
+}
+.s .sz:disabled {
+  cursor: not-allowed;
+}
+
+/* ─────────────────────────────────────────────────────── the chip row
+   ADDED. The mock's row held four short chips and `overflow:hidden` was
+   enough for it. Here the sort chip reports the ordering IN FORCE, so its
+   label runs from "Mới nhất" to "Giá thấp đến cao" — measured at 390px the
+   row reaches 452px inside a 375px box, and with overflow hidden that last
+   chip is one nobody can reach.
+
+   Same treatment `.slide` already uses on the photo band: a real scroll
+   area with the bar hidden, so finger, trackpad and wheel all work. The
+   trailing margin is there because a scroll container does not honour its
+   own right padding at the end of the scroll in every browser, and the last
+   chip would sit flush against the edge. */
+.s .chips {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.s .chips::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+.s .chips > :last-child {
+  margin-right: 18px;
+}
+/* Inside the filter sheet the chips WRAP onto several lines by design, so
+   there is nothing to scroll and nothing to pad. BOTH axes go back, because
+   `overflow-x:visible` beside an `overflow-y:hidden` does not stay visible —
+   CSS computes it to `auto`, and the rule would quietly do nothing. */
+.s .fgroup .chips {
+  overflow: visible;
+}
+.s .fgroup .chips > :last-child {
+  margin-right: 0;
+}
+
+/* A browser gives <a> the hand and <button> the arrow. A chip and a
+   text-styled link are both things the shopper presses, whichever element
+   they happen to be. (Swept for: these two were the only controls on the
+   whole buying flow still showing the arrow.) */
+.s a.chip,
+.s button.chip,
+.s a.lnk,
+.s button.lnk,
+.s a.rt,
+.s button.rt {
+  cursor: pointer;
+}
+
+.s .chip:hover:not(.on) {
+  background: var(--gold-50);
+}
+.s .chip.on:hover {
+  background: var(--gold-400);
+  border-color: var(--gold-400);
+}
+
+/* A row that is a radio or a checkbox is pressable along its whole length,
+   so the pointer has to say so anywhere on it — not only over the dot. */
+.s [role="radio"]:not(:disabled),
+.s [role="checkbox"]:not(:disabled),
+.s .setrow[role],
+.s button.setrow {
+  cursor: pointer;
+}
+.s .rows button.row:hover:not(:disabled),
+.s button.setrow:hover {
+  background: var(--gold-50);
+}
+/* A row that cannot be chosen — express delivery outside the city it runs
+   in. The mock had no such state because nothing in it was interactive.
+   Modelled on `.btn.off`: dimmer ink, a dimmed dot, and the cursor saying
+   no. The reason is still written out in the row's own `.d` line, so the
+   state never rests on appearance alone. */
+.s .rows button.row:disabled {
+  cursor: not-allowed;
+  background: var(--gold-50);
+}
+.s .rows button.row:disabled .t,
+.s .rows button.row:disabled .amt {
+  color: var(--ink2);
+}
+.s .rows button.row:disabled .radio {
+  opacity: 0.5;
+}
+
+/* ──────────────────────────────────────────────── things that lead onward */
+.s a.lnk:hover,
+.s button.lnk:hover,
+.s a.rt:hover,
+.s button.rt:hover,
+.s .cartline .rm:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.s .nav a:hover {
+  color: var(--link);
+}
+/* Only the still plate. The swipe band is a scroll container with snap
+   points, and scaling a pane inside it moves the snap targets under the
+   finger mid-gesture. */
+.s .card .ph img {
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.s .card a.ph:hover img {
+  transform: scale(1.025);
+}
+
+/* ─────────────────────────────────────────────────────────── real inputs
+   The mock drew these as <div>s. They are `<input>` and `<textarea>` here,
+   which arrive wearing the browser's own appearance. */
+.s input.inp,
+.s textarea.inp {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: #fff;
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+}
+/* 4.94:1 — a placeholder is still text somebody has to read. */
+.s input.inp::placeholder,
+.s textarea.inp::placeholder {
+  color: #7a6f5a;
+  opacity: 1;
+}
+.s textarea.inp {
+  line-height: 1.55;
+  padding: 11px 12px;
+  resize: vertical;
+}
+.s .inp:focus {
+  border-color: var(--fill);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s .btn,
+  .s .sz,
+  .s .card .unsave,
+  .s .card .ph img {
+    transition: none;
+  }
+  .s .card a.ph:hover img {
+    transform: none;
+  }
+  .s .btn:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ───────────────────────────────────────── 44px targets for small text
+   A text link inside a sentence is exempt from the floor; one standing on
+   its own as a control is not, and these are the second kind — "Xoá",
+   "Huỷ", "Bảng size", "Đổi sang size L".
+
+   The box is 44px CENTRED on the text rather than an even inset on all four
+   sides: the labels are different lengths, so an even inset leaves the short
+   ones short. `max(100%, 44px)` keeps a long label's own width. */
+@media (max-width: 460px) {
+  .s a.lnk,
+  .s button.lnk,
+  .s a.rt,
+  .s button.rt,
+  .s .cartline .rm {
+    position: relative;
+    display: inline-block;
+  }
+  .s a.lnk::after,
+  .s button.lnk::after,
+  .s a.rt::after,
+  .s button.rt::after,
+  .s .cartline .rm::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: max(100%, 44px);
+    height: 44px;
+  }
+}
+
+/* ─────────────────────────────────── three more targets under the floor
+   Found by sweeping every control on every route at 390px, measuring the
+   HIT area rather than the box. All three are inherited from the port: the
+   mock had no real controls, so nothing needed a target.
+
+   Each overlay is sized to the gap it has. A target that overlaps its
+   neighbour steals the neighbour's taps, which is worse than being small. */
+
+/* The chip box measures 32px, so it needs 7 above and below to clear 44
+   (measured: at -6 the hit already lands on the parent). 3px each side
+   leaves 1px of the 7px gap between two chips in a row. */
+.s .chip{ position: relative; }
+.s .chip::after {
+  content: "";
+  position: absolute;
+  inset: -7px -3px;
+}
+
+/* The stepper buttons already carry a -5px/-6px overlay, but `.qty` clipped
+   it with `overflow:hidden` and they measured 35px. The clip was there to
+   keep the children's corners inside the rounded border; giving the end
+   buttons the same radius does that without cutting the target off. */
+.s .qty {
+  overflow: visible;
+}
+.s .qb:first-child {
+  border-radius: calc(var(--r) - 1px) 0 0 calc(var(--r) - 1px);
+}
+.s .qb:last-child {
+  border-radius: 0 calc(var(--r) - 1px) calc(var(--r) - 1px) 0;
+}
+
+/* The only route from a cart line to its product — the photo beside it is
+   not a link. 21px of text, so 11 each way. It stops short of the stepper
+   underneath, which has a target of its own to protect. */
+.s .cartline .t {
+  position: relative;
+}
+.s .cartline a.t::after {
+  content: "";
+  position: absolute;
+  inset: -11px 0;
+}
+
+/* A WRAPPING chip row needs a taller row gap than a scrolling one: two
+   chips stacked 7px apart have overlays that meet in the middle, and the
+   hit test hands the overlap to whichever paints last. 12px is exactly
+   6 + 6, so the two targets touch without either stealing from the other. */
+.s .fgroup .chips,
+.s .chips[style*="wrap"] {
+  row-gap: 12px;
+}
+
+/* A tickbox row is a control, and `.check` only ever had padding on top —
+   measured 28 to 34px tall. 15 top and bottom around a 14px line reaches
+   44; 13 left it two short. */
+.s button.check {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+
+/* A chip group sitting directly above another control had its bottom
+   overlay painted over by that control, costing the chips 3px. The group
+   keeps the room its own targets need. */
+.s .fgroup {
+  padding-bottom: 8px;
+}
+
+/* ── ADDED in Phase 6, after opening every floating layer ────────────────
+   The touch sweep in T28 measured 342 controls and missed these entirely:
+   a menu item only exists once the menu is open, and the sweep photographed
+   every page shut. Measured on the address form at 390px — 34 province rows
+   at 33px each (7px padding around an 18.6px line).
+
+   Phone only, the same split the text-link rule above uses: on a desktop
+   menu 33px is the right density, and the panel caps at 360px and scrolls
+   either way. */
+@media (max-width: 460px) {
+  .s .selm button {
+    min-height: 44px;
+  }
+}
+
+/* A disabled dropdown still wore the hand. "Chọn tỉnh trước" is a button you
+   genuinely cannot press yet, and the cursor was the only part of it that
+   disagreed. `.btn:disabled` already says this; `.selbtn` is not a `.btn`. */
+.s .selbtn:disabled {
+  cursor: not-allowed;
+}

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Danh mục · Đợt 05 · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+</head>
+<body>
+<div class="s v2">
+<header class="nav2" data-nav data-active="products" data-cart="1" data-wish="2"></header>
+<main>
+  <div class="sub"><a href="home.html" aria-label="Quay lại"><svg data-i="back" class="ic"></svg></a><h1>Danh mục</h1><span class="rt plain">Đợt 05 · 10 mẫu</span></div>
+
+  <!-- family tabs: a real field, with real counts -->
+  <div class="tabs scroll" role="tablist" aria-label="Loại">
+    <a href="products.html" class="on" role="tab" aria-selected="true" data-fam="ALL">Tất cả<span class="cnt">10</span></a>
+    <a href="products.html?family=TEE" role="tab" data-fam="TEE">Áo thun<span class="cnt">3</span></a>
+    <a href="products.html?family=HOODIE" role="tab" data-fam="HOODIE">Hoodie<span class="cnt">2</span></a>
+    <a href="products.html?family=JACKET" role="tab" data-fam="JACKET">Khoác<span class="cnt">2</span></a>
+    <a href="products.html?family=SHIRT" role="tab" data-fam="SHIRT">Sơ mi<span class="cnt">1</span></a>
+    <a href="products.html?family=PANTS" role="tab" data-fam="PANTS">Quần<span class="cnt">2</span></a>
+  </div>
+
+  <!-- phone: chip row with a fade so the cut-off chip reads as "more" (fix L6) -->
+  <div class="chipwrap">
+    <div class="chips">
+      <button type="button" class="chip icon" data-open="#filtersheet"><svg data-i="filter" class="ic sm"></svg>Lọc</button>
+      <button type="button" class="chip" data-toggle aria-pressed="false">Oversize<span class="cnt">6</span></button>
+      <button type="button" class="chip" data-toggle aria-pressed="false">Còn size S<span class="cnt">7</span></button>
+      <button type="button" class="chip" data-toggle aria-pressed="false">Còn size M<span class="cnt">8</span></button>
+      <button type="button" class="chip icon" data-open="#filtersheet"><svg data-i="sort" class="ic sm"></svg>Mới nhất</button>
+    </div>
+  </div>
+
+  <div class="listing">
+    <div class="band"><b>Đợt 05</b><span class="sep" aria-hidden="true">/</span><span>mười mẫu</span><span class="cd" data-until="2026-09-25T20:00:00+07:00" data-verb="đóng">đóng sau 5 ngày 1 giờ</span></div>
+
+    <!-- desktop: the filter rail -->
+    <aside class="rail" aria-label="Lọc">
+      <div class="fgroup"><h4>Loại <a class="lnk" href="#">Bỏ</a></h4>
+        <div class="chips"><button class="chip" data-toggle>Áo thun<span class="cnt">3</span></button><button class="chip" data-toggle>Hoodie<span class="cnt">2</span></button><button class="chip" data-toggle>Khoác<span class="cnt">2</span></button><button class="chip" data-toggle>Sơ mi<span class="cnt">1</span></button><button class="chip" data-toggle>Quần<span class="cnt">2</span></button></div></div>
+      <div class="fgroup"><h4>Form dáng</h4>
+        <div class="chips"><button class="chip" data-toggle>Oversize<span class="cnt">6</span></button><button class="chip" data-toggle>Regular<span class="cnt">4</span></button></div></div>
+      <div class="fgroup"><h4>Còn size</h4>
+        <div class="chips"><button class="chip" data-toggle>S<span class="cnt">7</span></button><button class="chip" data-toggle>M<span class="cnt">8</span></button><button class="chip" data-toggle>L<span class="cnt">9</span></button><button class="chip" data-toggle>XL<span class="cnt">8</span></button></div></div>
+      <div class="fgroup"><h4>Màu</h4>
+        <div class="swl">
+          <button class="swc" data-toggle><i style="background:#1C1C1C"></i>Đen<span class="cnt">7</span></button>
+          <button class="swc" data-toggle><i style="background:#F2F1ED"></i>Trắng<span class="cnt">3</span></button>
+          <button class="swc" data-toggle><i style="background:#E6DFD1"></i>Kem<span class="cnt">3</span></button>
+          <button class="swc" data-toggle><i style="background:#4A5240"></i>Rêu<span class="cnt">3</span></button>
+          <button class="swc" data-toggle><i style="background:#8C8C8C"></i>Xám<span class="cnt">2</span></button>
+          <button class="swc" data-toggle><i style="background:#2B3A52"></i>Xanh than<span class="cnt">2</span></button>
+          <button class="swc" data-toggle><i style="background:#5C4536"></i>Nâu<span class="cnt">1</span></button>
+        </div></div>
+      <div class="fgroup"><h4>Khoảng giá</h4>
+        <div class="chips" style="margin-bottom:10px"><button class="chip" data-toggle>Dưới 500k<span class="cnt">3</span></button><button class="chip" data-toggle>500k – 1tr<span class="cnt">4</span></button><button class="chip" data-toggle>Trên 1tr<span class="cnt">3</span></button></div>
+        <div class="two"><input class="inp" placeholder="390.000" aria-label="Giá thấp nhất"><input class="inp" placeholder="1.450.000" aria-label="Giá cao nhất"></div>
+        <div class="note" style="margin-top:6px">Đợt này từ 390.000₫ đến 1.450.000₫</div></div>
+    </aside>
+
+    <div>
+      <div class="listhead">
+        <span class="cnt"><b>10 mẫu</b> · Đợt 05</span>
+        <div class="band"><b>Đợt 05</b><span class="sep" aria-hidden="true">/</span><span>mười mẫu</span><span class="cd" data-until="2026-09-25T20:00:00+07:00" data-verb="đóng">đóng sau 5 ngày 1 giờ</span></div>
+        <button type="button" class="sortsel" data-menu="#sortmenu" aria-haspopup="menu" aria-expanded="false"><span class="lb">Sắp xếp</span><b>Mới nhất</b><svg data-i="down" data-raw></svg></button>
+      </div>
+
+      <div class="grid">
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/khoi.webp" alt="KHÓI"></a><div class="pips" aria-hidden="true"><i class="on" style="background:#1C1C1C"></i><i style="background:#E6DFD1"></i></div></div>
+          <h3 class="nm"><a href="product.html">KHÓI</a></h3><div class="pricerow"><div class="p">390.000₫</div></div>
+          <div class="act"><button type="button" class="addbtn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div></div>
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/bui.webp" alt="BỤI"></a><div class="pips" aria-hidden="true"><i class="on" style="background:#1C1C1C"></i><i style="background:#8C8C8C"></i></div></div>
+          <h3 class="nm"><a href="product.html">BỤI</a></h3><div class="pricerow"><div class="p">890.000₫</div><span class="left low">còn 2</span></div><div class="missing">hết <s>S</s> <s>M</s></div>
+          <div class="act"><button type="button" class="addbtn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div></div>
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/nguoi.webp" alt="NGUỘI"></a></div>
+          <h3 class="nm"><a href="product.html">NGUỘI</a></h3><div class="pricerow"><div class="p">1.290.000₫</div></div>
+          <div class="act"><button type="button" class="addbtn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div></div>
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/nang.webp" alt="NẮNG"></a><div class="pips" aria-hidden="true"><i class="on" style="background:#F2F1ED"></i><i style="background:#E6DFD1"></i><i style="background:#4A5240"></i></div></div>
+          <h3 class="nm"><a href="product.html">NẮNG</a></h3><div class="pricerow"><div class="p">450.000₫</div></div>
+          <div class="act"><button type="button" class="addbtn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div></div>
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/suong.webp" alt="SƯƠNG"></a><div class="pips" aria-hidden="true"><i class="on" style="background:#1C1C1C"></i><i style="background:#4A5240"></i></div></div>
+          <h3 class="nm"><a href="product.html">SƯƠNG</a></h3><div class="pricerow"><div class="p">1.450.000₫</div><span class="left low">còn 3</span></div><div class="missing">hết <s>S</s></div>
+          <div class="act"><button type="button" class="addbtn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div></div>
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/muoi.webp" alt="MUỐI"></a><span class="sold">HẾT HÀNG</span></div>
+          <h3 class="nm"><a href="product.html">MUỐI</a></h3><div class="pricerow"><div class="p">690.000₫</div><span class="left">14 / 14 đã bán</span></div>
+          <div class="act"><a class="addbtn view" href="product.html"><svg data-i="eye" class="ic sm"></svg>Xem chi tiết</a></div></div>
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/than.webp" alt="THAN"></a><div class="pips" aria-hidden="true"><i class="on" style="background:#1C1C1C"></i><i style="background:#2B3A52"></i></div></div>
+          <h3 class="nm"><a href="product.html">THAN</a></h3><div class="pricerow"><div class="p">1.350.000₫</div></div>
+          <div class="act"><button type="button" class="addbtn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div></div>
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/cat.webp" alt="CÁT"></a><div class="pips" aria-hidden="true"><i class="on" style="background:#E6DFD1"></i><i style="background:#F2F1ED"></i><i style="background:#5C4536"></i></div></div>
+          <h3 class="nm"><a href="product.html">CÁT</a></h3><div class="pricerow"><div class="p">420.000₫</div></div>
+          <div class="act"><button type="button" class="addbtn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div></div>
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/gio.webp" alt="GIÓ"></a><div class="pips" aria-hidden="true"><i class="on" style="background:#F2F1ED"></i><i style="background:#2B3A52"></i></div></div>
+          <h3 class="nm"><a href="product.html">GIÓ</a></h3><div class="pricerow"><div class="p">750.000₫</div></div><div class="missing">hết <s>XL</s></div>
+          <div class="act"><button type="button" class="addbtn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div></div>
+        <div class="card swipe"><div class="wrap"><a class="ph" href="product.html"><img src="img/da.webp" alt="ĐÁ"></a><div class="pips" aria-hidden="true"><i class="on" style="background:#4A5240"></i><i style="background:#1C1C1C"></i></div></div>
+          <h3 class="nm"><a href="product.html">ĐÁ</a></h3><div class="pricerow"><div class="p">980.000₫</div></div>
+          <div class="act"><button type="button" class="addbtn" data-open="#sizesheet"><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ</button></div></div>
+      </div>
+      <div class="note pad" style="padding-top:20px;text-align:center">Đã hiển thị cả 10 mẫu của đợt này · 73 / 181 chiếc còn trên kệ.</div>
+      <div class="pastdrops">Xem lại đợt đã đóng: <a class="lnk" href="home-states.html#closed">Đợt 04</a> · <a class="lnk" href="#">Đợt 03</a></div>
+    </div>
+  </div>
+</main>
+<footer class="foot2" data-footer></footer>
+</div>
+
+<!-- sort menu (desktop) -->
+<div class="menu ticked" id="sortmenu" role="menu" aria-label="Sắp xếp" hidden>
+  <h5>Sắp xếp</h5>
+  <button type="button" role="menuitemradio" aria-checked="true"><svg data-i="tick" data-raw></svg><span>Mới nhất</span></button>
+  <button type="button" role="menuitemradio" aria-checked="false"><svg data-i="tick" data-raw></svg><span>Giá thấp đến cao</span></button>
+  <button type="button" role="menuitemradio" aria-checked="false"><svg data-i="tick" data-raw></svg><span>Giá cao đến thấp</span></button>
+  <button type="button" role="menuitemradio" aria-checked="false"><svg data-i="tick" data-raw></svg><span>Sắp hết trước</span></button>
+</div>
+
+<!-- FILTER SHEET (phone) — Loại, Màu and counts are new; one clear control, not two -->
+<div class="sheetwrap" id="filtersheet" hidden>
+  <div class="scrim"></div>
+  <div class="s sheetbody" role="dialog" aria-modal="true" aria-label="Lọc">
+    <div class="sheet"><div class="grab"></div>
+      <div class="sub"><h1>Lọc</h1><button type="button" class="rt" data-close aria-label="Đóng">Đóng</button></div>
+      <div class="fgroup"><h4>Loại</h4><div class="chips"><button class="chip" data-toggle>Áo thun<span class="cnt">3</span></button><button class="chip" data-toggle>Hoodie<span class="cnt">2</span></button><button class="chip" data-toggle>Khoác<span class="cnt">2</span></button><button class="chip" data-toggle>Sơ mi<span class="cnt">1</span></button><button class="chip" data-toggle>Quần<span class="cnt">2</span></button></div></div>
+      <div class="fgroup"><h4>Form dáng</h4><div class="chips"><button class="chip on" data-toggle>Oversize<span class="cnt">6</span></button><button class="chip" data-toggle>Regular<span class="cnt">4</span></button></div></div>
+      <div class="fgroup"><h4>Còn size</h4><div class="chips"><button class="chip" data-toggle>S<span class="cnt">7</span></button><button class="chip" data-toggle>M<span class="cnt">8</span></button><button class="chip" data-toggle>L<span class="cnt">9</span></button><button class="chip" data-toggle>XL<span class="cnt">8</span></button></div></div>
+      <div class="fgroup"><h4>Màu</h4><div class="swl">
+        <button class="swc" data-toggle><i style="background:#1C1C1C"></i>Đen<span class="cnt">7</span></button>
+        <button class="swc" data-toggle><i style="background:#F2F1ED"></i>Trắng<span class="cnt">3</span></button>
+        <button class="swc" data-toggle><i style="background:#E6DFD1"></i>Kem<span class="cnt">3</span></button>
+        <button class="swc" data-toggle><i style="background:#4A5240"></i>Rêu<span class="cnt">3</span></button>
+        <button class="swc" data-toggle><i style="background:#8C8C8C"></i>Xám<span class="cnt">2</span></button>
+        <button class="swc" data-toggle><i style="background:#2B3A52"></i>Xanh than<span class="cnt">2</span></button>
+        <button class="swc" data-toggle><i style="background:#5C4536"></i>Nâu<span class="cnt">1</span></button></div></div>
+      <div class="fgroup"><h4>Khoảng giá</h4>
+        <div class="chips" style="margin-bottom:10px"><button class="chip" data-toggle>Dưới 500k<span class="cnt">3</span></button><button class="chip" data-toggle>500k – 1tr<span class="cnt">4</span></button><button class="chip" data-toggle>Trên 1tr<span class="cnt">3</span></button></div>
+        <div class="two"><input class="inp" placeholder="390.000" aria-label="Giá thấp nhất, đồng" inputmode="numeric"><input class="inp" placeholder="1.450.000" aria-label="Giá cao nhất, đồng" inputmode="numeric"></div>
+        <div class="note" style="margin-top:6px">Đợt này từ 390.000₫ đến 1.450.000₫</div></div>
+      <div class="fgroup"><h4>Sắp xếp</h4>
+        <div class="rows" style="margin:0" role="radiogroup">
+          <button type="button" class="row" role="radio" aria-checked="true" style="width:100%;text-align:left;background:none;border:0"><span class="radio on"></span><span class="grow"><span class="t">Mới nhất</span></span></button>
+          <button type="button" class="row" role="radio" aria-checked="false" style="width:100%;text-align:left;background:none;border:0"><span class="radio"></span><span class="grow"><span class="t">Giá thấp đến cao</span></span></button>
+          <button type="button" class="row" role="radio" aria-checked="false" style="width:100%;text-align:left;background:none;border:0"><span class="radio"></span><span class="grow"><span class="t">Giá cao đến thấp</span></span></button>
+          <button type="button" class="row" role="radio" aria-checked="false" style="width:100%;text-align:left;background:none;border:0"><span class="radio"></span><span class="grow"><span class="t">Sắp hết trước</span></span></button>
+        </div></div>
+      <div class="bar-bottom">
+        <button type="button" class="btn quiet"><svg data-i="x" class="ic sm"></svg>Bỏ lọc</button>
+        <button type="button" class="btn" data-close><svg data-i="grid" class="ic sm"></svg>Xem 6 mẫu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- size sheet, opened by any card button -->
+<div class="sheetwrap" id="sizesheet" hidden>
+  <div class="scrim"></div>
+  <div class="s sheetbody" role="dialog" aria-modal="true" aria-label="Chọn size KHÓI">
+    <div class="sheet sizesheet"><div class="grab"></div>
+      <div class="sheethead"><img src="img/khoi.webp" alt=""><div><h3 class="nm">KHÓI</h3><div class="kindline">Áo thun oversize · Oversize</div><div class="p">390.000₫</div></div></div>
+      <div class="sheetlabel">Màu <b>Đen</b> · còn 10</div>
+      <div class="swa2"><button type="button" class="swbtn" aria-pressed="true"><i style="background:#1C1C1C"></i><span>Đen</span></button><button type="button" class="swbtn" aria-pressed="false"><i style="background:#E6DFD1"></i><span>Kem</span></button></div>
+      <div class="sheetlabel">Size</div>
+      <div class="szrow" role="group">
+        <button type="button" class="sz" data-toggle aria-pressed="false"><b>S</b><i>còn 3</i></button>
+        <button type="button" class="sz" data-toggle aria-pressed="false"><b>M</b><i>còn 4</i></button>
+        <button type="button" class="sz low" data-toggle aria-pressed="false"><b>L</b><i>còn 2</i></button>
+        <button type="button" class="sz low" data-toggle aria-pressed="false"><b>XL</b><i>còn 1</i></button>
+      </div>
+      <div class="sheetaction"><button type="button" class="btn" data-sim="Đã thêm KHÓI vào giỏ" data-close><svg data-i="bag" class="ic sm"></svg>Thêm vào giỏ · 390.000₫</button></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

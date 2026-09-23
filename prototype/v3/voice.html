@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="vi" data-dir="so" data-spot="off" data-lex="so" data-badge="b">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giọng chữ và từ vựng · v3</title>
+<link rel="stylesheet" href="../v2/fonts.css"><link rel="stylesheet" href="../v2/reset.css"><link rel="stylesheet" href="v3.css">
+<script src="../v2/icons.js"></script><script src="v3.js" defer></script>
+<style>
+  /* A document, read like a style guide. Uses the active direction's tokens so it is judged in the same world. */
+  .doc{ max-width:880px; margin:0 auto; padding:24px var(--gut) 80px; font-size:14px; line-height:1.6; }
+  @media (min-width:900px){ .doc{ padding:32px var(--gutd) 96px; } }
+  .doc h1{ font-family:var(--font-display); font-size:var(--fs-disp); font-weight:700; letter-spacing:-.025em; line-height:1.05; }
+  .doc .lead{ margin-top:12px; color:var(--ink2); max-width:64ch; }
+  .doc h2{ font-family:var(--font-display); font-size:var(--fs-h2); font-weight:700; margin:44px 0 8px; padding-top:14px; border-top:2px solid var(--ink); letter-spacing:-.015em; }
+  .doc h3{ font-family:var(--font-display); font-size:var(--fs-h3); font-weight:700; margin:22px 0 6px; }
+  .doc p{ max-width:70ch; }
+  .doc ol, .doc ul{ padding-left:18px; margin:8px 0; }
+  .doc ol{ list-style:decimal; } .doc ul{ list-style:disc; }
+  .doc li{ margin:5px 0; max-width:70ch; }
+  .doc .kv{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin:14px 0; }
+  .doc .kv div{ border:1px solid var(--hair); border-radius:var(--r); padding:10px 12px; font-size:12px; color:var(--ink2); }
+  .doc .kv b{ display:block; font-family:var(--font-display); font-size:22px; color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+  table.g{ width:100%; border-collapse:collapse; font-size:13px; margin:12px 0; }
+  table.g th{ text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); padding:8px 8px 6px 0; border-bottom:1px solid var(--ink); vertical-align:bottom; }
+  table.g td{ padding:8px 8px 8px 0; border-bottom:1px solid var(--hair); vertical-align:top; }
+  table.g td.was{ color:var(--ink2); }
+  table.g td.was s{ text-decoration:none; }
+  table.g td.now{ font-weight:500; }
+  table.g td code, .doc code{ font-family:ui-monospace,Consolas,monospace; font-size:11.5px; color:var(--ink2); }
+  table.g tr.pick td{ background:var(--brand-soft); }
+  .doc .preview{ margin:14px 0; padding:14px 16px; border:1px solid var(--hair); border-radius:var(--r); background:var(--plate); }
+  .doc .preview .line{ display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; font-size:13px; }
+  .doc .preview .big{ font-family:var(--font-display); font-weight:700; font-size:28px; letter-spacing:-.02em; }
+  .doc .preview .big .num{ color:var(--spot); }
+  .doc .sw{ display:inline-flex; gap:4px; margin-left:8px; vertical-align:middle; }
+  .doc .sw button{ height:30px; padding:0 10px; border:1px solid var(--line); border-radius:var(--r); font-size:12px; background:var(--bg); cursor:pointer; }
+  .doc .sw button.on{ background:var(--sel); color:var(--sel-ink); border-color:var(--sel); }
+  .doc .rule{ display:grid; grid-template-columns:1fr; gap:4px; padding:12px 0; border-bottom:1px solid var(--hair); }
+  .doc .rule b{ font-size:14px; }
+  .doc .rule .ex{ font-size:12.5px; color:var(--ink2); }
+  .doc .rule .ex s{ text-decoration:line-through; }
+  .doc .rule .ex i{ font-style:normal; color:var(--ink); font-weight:500; }
+  .doc .note3{ margin-top:14px; }
+</style>
+</head>
+<body data-title="Giọng chữ · {t} · v3">
+<div class="s v3">
+<main class="doc">
+  <h1>Giọng chữ và từ vựng</h1>
+  <p class="lead">Đề xuất cho toàn bộ chữ trên giao diện: từ thay cho "đợt", giọng trung tính không xưng hô như bạn chọn, một bảng thuật ngữ để mỗi khái niệm chỉ có một tên, và các câu viết lại từ bản v2. Số liệu lấy từ kiểm kê 1.410 chuỗi trong <code>app/</code>, <code>components/</code>, <code>lib/</code> ngày 21/09/2026.</p>
+
+  <h2>1 · Bản v2 đang nói thế nào</h2>
+  <div class="kv">
+    <div><b>1.410</b>chuỗi riêng biệt trên 54 route</div>
+    <div><b>0</b>dấu chấm than, 0 emoji</div>
+    <div><b>18 · 11 · 8</b>lần "bạn" · "tôi" · "chúng tôi" — ba ngôi trộn trong một luồng</div>
+    <div><b>12</b>khái niệm có 2–4 tên gọi</div>
+    <div><b>9</b>câu "chưa chốt / chờ chốt" trên trang công khai</div>
+    <div><b>10 / 15</b>chuỗi dài nhất là lời miễn trừ, không phải copy bán</div>
+  </div>
+  <p>Kết luận: giọng v2 đã gần trung tính và không sến. Việc của v3 không phải "viết hay hơn" mà là <b>thống nhất</b> (một từ cho một khái niệm, một cách viết hoa), <b>rút gọn</b> (nút và nhãn), và cho brand <b>một từ riêng</b> cho cơ chế bán của nó.</p>
+
+  <h2>2 · Từ thay cho "đợt"</h2>
+  <p>"Đợt" đúng nghĩa nhưng là từ hành chính ("đợt tuyển sinh", "đợt giảm giá"), ai cũng dùng nên không ai nhớ. Từ thay phải: đúng cơ chế (có mở, có đóng, có số thứ tự), ghép được với mọi câu hiện có, và nghe như của một tờ báo hay một xưởng hơn là một sàn. Năm ứng viên, đổi trực tiếp để nghe:</p>
+  <div class="preview">
+    <div class="line"><span class="big"><span class="tm" data-k="t">Số</span> <span class="num">05</span></span><span class="tag3 on"><i></i>Đang bán</span><span>đóng sau 5 ngày 1 giờ</span>
+      <span class="sw" role="group" aria-label="Chọn từ"><button type="button" data-set="lex" data-val="so">Số</button><button type="button" data-set="lex" data-val="phien">Phiên</button><button type="button" data-set="lex" data-val="tap">Tập</button><button type="button" data-set="lex" data-val="drop">Drop</button><button type="button" data-set="lex" data-val="dot">Đợt</button></span></div>
+    <div class="line" style="margin-top:10px;color:var(--ink2)"><span><span class="tm" data-k="cal">Lịch ra số</span></span><span>·</span><span><span class="tm" data-k="in">Trong số này</span> · 10 mẫu</span><span>·</span><span><span class="tm" data-k="next">Số kế tiếp</span> mở 20:00 thứ Sáu 02/10</span><span>·</span><span>Quản trị: <span class="tm" data-k="adm">Các số</span></span><span>·</span><span>Mỗi <span class="tm" data-k="tl">số</span> cắt một lần.</span></div>
+  </div>
+  <table class="g">
+    <thead><tr><th>Từ</th><th>Nghĩa gốc</th><th>Vì sao hợp</th><th>Rủi ro</th><th>Đi với hướng</th></tr></thead>
+    <tbody>
+      <tr class="pick"><td><b>Số</b> — Số 05</td><td>số báo, ấn phẩm định kỳ</td><td>Mỗi lần bán là một ấn phẩm: có bìa, có mục lục, có ngày phát hành; "hết số này là hết" tự nhiên. Từ của thế giới tạp chí mà bộ gieo đã chỉ định.</td><td>Trùng chữ "số" trong "số lượng", "số đo"; luôn viết "Số 05" kèm con số và viết hoa để tách nghĩa.</td><td>SỐ (đề xuất)</td></tr>
+      <tr><td><b>Phiên</b> — Phiên 05</td><td>phiên chợ, phiên đấu giá, phiên giao dịch</td><td>Đúng cơ chế nhất: một phiên có giờ mở, giờ đóng, ai đến trước mua trước. Rất Việt (chợ phiên), không đụng từ nào khác trong app.</td><td>Hơi "sàn giao dịch" nếu đi với bảng biểu nhiều số.</td><td>PHIẾU · NHÃN</td></tr>
+      <tr><td><b>Tập</b> — Tập 05</td><td>tập phim, tập truyện</td><td>Trẻ, có nhịp kể chuyện; "tập mới phát hành" gần với cách khách 18–28 nói về phim.</td><td>Gợi giải trí hơn là hàng hoá; "Tập 05 đóng sau 5 ngày" hơi lạ tai.</td><td>SỐ</td></tr>
+      <tr><td><b>Drop</b> — Drop 05</td><td>tiếng Anh của giới streetwear</td><td>Khách nói đúng từ này. Không cần giải thích.</td><td>Là từ mặc định của cả ngành: không tạo màu riêng, và lệch với yêu cầu tiếng Việt tinh tế. Giữ như cửa thoát.</td><td>bất kỳ</td></tr>
+      <tr><td><b>Đợt</b> — Đợt 05</td><td>hiện tại</td><td>Đã quen, đã có trong mọi câu.</td><td>Chính là điều bạn nêu: đơn giản, không có màu riêng.</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p>Cũng đã cân và loại: <b>Lô</b> (đúng nghĩa "lô cắt", nhưng khách 18–28 đọc ra "lô đề"), <b>Mẻ</b> (đúng "cắt một lần" nhưng gợi bếp), <b>Mùa</b> (hai tuần không phải một mùa), <b>Kỳ</b> (đúng nhưng khô, giọng tài chính).</p>
+
+  <h2>3 · Sáu nguyên tắc giọng</h2>
+  <div class="rule"><b>1 · Không xưng hô.</b><span class="ex">Câu nói về hàng, giờ và số; không "bạn", không "tôi", không "chúng tôi". <s>Nhắc tôi khi mở</s> → <i>Đặt nhắc giờ mở</i>. <s>Đơn hàng của tôi</s> → <i>Đơn hàng</i>. <s>Chúng tôi không may thêm trong cùng một đợt</s> → <i>Không may thêm trong cùng một <span class="tm" data-k="tl">số</span></i>.</span></div>
+  <div class="rule"><b>2 · Số đứng trước tính từ.</b><span class="ex">Nói con số, để người mua tự kết luận. <s>Sắp hết · còn vài chiếc cuối</s> → <i>Còn ít · dưới 4 chiếc</i>. <s>Còn bao nhiêu chiếc hiện ngay ở lưới</s> → <i>Số còn lại của từng mẫu hiện ngay bên dưới</i>.</span></div>
+  <div class="rule"><b>3 · Nút là động từ và đối tượng; nút vô hiệu ghi việc cần làm.</b><span class="ex"><s>Tiến hành thanh toán · 420.000₫</s> → <i>Thanh toán · 420.000₫</i>. <s>Chọn size trước</s> (nút xám) → <i>Chọn size</i>; chọn xong nút đổi thành <i>Thêm vào giỏ · 390.000₫</i>. <s>Xác nhận đã nhận tiền</s> / <s>Đã nhận tiền</s> → một nhãn: <i>Đã nhận tiền</i>.</span></div>
+  <div class="rule"><b>4 · Mỗi khái niệm một từ.</b><span class="ex">Bảng thuật ngữ ở mục 4 là nguồn duy nhất; khu quản trị dùng đúng từ của mặt tiền. <s>checkout</s> → <i>trang thanh toán</i>. <s>Ship</s> → <i>Phí giao</i>. <s>Mã khuyến mãi</s> / <s>Mã giảm giá</s> → <i>Mã giảm giá</i>.</span></div>
+  <div class="rule"><b>5 · Trạng thái là thông tin, không phải cảnh báo.</b><span class="ex">Viết thường trong câu ("đang bán"), viết hoa đầu ở thẻ ("Đang bán"); chữ HOA toàn phần chỉ cho tên mẫu và con dấu (HẾT). Màu đỏ chỉ cho số dưới 4 và lỗi thật; "hết S M" là mực xám có gạch, không đỏ.</span></div>
+  <div class="rule"><b>6 · Ngắn, phẳng, không trang trí.</b><span class="ex">Không dấu chấm than, không emoji, không "nhé/nha". Dấu "·" nối tối đa ba dữ kiện. Một câu tối đa hai mệnh đề. Lời miễn trừ về bản mô phỏng tách khỏi copy bán: một dòng có nhãn, chi tiết gập lại. <s>Trình duyệt không cho chép tự động — chọn và chép tay nhé</s> → <i>Không chép tự động được. Chọn đoạn trên rồi chép tay.</i></span></div>
+
+  <h2>4 · Bảng thuật ngữ</h2>
+  <table class="g">
+    <thead><tr><th>Khái niệm</th><th>v2 đang có</th><th>v3 dùng một từ</th></tr></thead>
+    <tbody>
+      <tr><td>Đợt bán</td><td class="was">đợt · drop (mã) · dot-ban.csv · DOT06</td><td class="now"><span class="tm" data-k="t">Số</span> — cả mặt tiền, quản trị, tên tệp và mã mẫu (<code>SO06</code>)</td></tr>
+      <tr><td>Ba trạng thái</td><td class="was">đang mở / Đang mở · sắp mở / Sắp mở · đã đóng / Đã đóng</td><td class="now">đang bán · sắp mở · đã đóng (thường trong câu, hoa đầu ở thẻ)</td></tr>
+      <tr><td>Mã giảm</td><td class="was">Mã giảm giá · Mã khuyến mãi · ô giảm giá</td><td class="now">Mã giảm giá</td></tr>
+      <tr><td>COD</td><td class="was">Thanh toán khi nhận hàng (COD) · Trả khi nhận hàng · thu hộ khi nhận hàng · COD</td><td class="now">Thanh toán khi nhận (COD); rút gọn: COD</td></tr>
+      <tr><td>Chuyển khoản · Thẻ</td><td class="was">Chuyển khoản ngân hàng · CK · Thẻ · Thẻ nội địa / Visa</td><td class="now">Chuyển khoản · Thẻ (nội địa, Visa)</td></tr>
+      <tr><td>Giỏ</td><td class="was">Giỏ hàng · giỏ · Sửa giỏ hàng · Về giỏ hàng</td><td class="now">Giỏ (tiêu đề "Giỏ · 2 món")</td></tr>
+      <tr><td>Đơn</td><td class="was">Đơn hàng của tôi · N đơn · đơn hàng từ · đơn từ</td><td class="now">Đơn (mục "Đơn hàng" là tên trang; "đơn từ 500.000₫")</td></tr>
+      <tr><td>Mẫu / sản phẩm</td><td class="was">mẫu (mặt tiền) · Sản phẩm · Thêm mẫu · Tên sản phẩm</td><td class="now">Mẫu, ở cả quản trị</td></tr>
+      <tr><td>Phí giao</td><td class="was">Phí giao hàng · Ship · Giao 2–4 ngày</td><td class="now">Phí giao; hình thức: Giao tiêu chuẩn · Giao nhanh</td></tr>
+      <tr><td>Miễn phí giao</td><td class="was">Miễn phí · Miễn phí giao · Miễn phí giao tiêu chuẩn</td><td class="now">Miễn phí giao từ 1.000.000₫</td></tr>
+      <tr><td>Bên giao hàng</td><td class="was">đơn vị vận chuyển · đối tác vận chuyển</td><td class="now">Đơn vị vận chuyển</td></tr>
+      <tr><td>Danh sách đã lưu</td><td class="was">Yêu thích · wishlist · Lưu vào yêu thích</td><td class="now">Đã lưu; nút: Lưu</td></tr>
+      <tr><td>Tra cứu đơn</td><td class="was">Theo dõi đơn · theo dõi vận chuyển</td><td class="now">Tra cứu đơn (trang), Hành trình (dòng thời gian)</td></tr>
+      <tr><td>Tải CSV</td><td class="was">Tải CSV · Tải CSV dòng đã chọn · Tải CSV đơn này · Tải CSV đợt này · Tải CSV 14 ngày</td><td class="now">Tải CSV; phạm vi ghi trong <code>aria-label</code> và tên tệp</td></tr>
+      <tr><td>Khoảng giá</td><td class="was">Dưới 500k · 500k – 1tr · Trên 1tr</td><td class="now">Dưới 500.000₫ · 500.000 – 1.000.000₫ · Trên 1.000.000₫</td></tr>
+      <tr><td>Số lượng</td><td class="was">SL</td><td class="now">SL chỉ trong tiêu đề cột bảng, có <code>abbr</code>; câu chữ viết đủ</td></tr>
+      <tr><td>Xác nhận đơn</td><td class="was">Email nhận xác nhận đơn · Cần email để gửi/nhận xác nhận</td><td class="now">Email nhận xác nhận đơn · Cần email để gửi xác nhận đơn</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5 · Trước / sau, câu thật từ bản v2</h2>
+  <table class="g">
+    <thead><tr><th>Ở đâu</th><th>v2</th><th>v3</th></tr></thead>
+    <tbody>
+      <tr><td>Trang chủ · lead</td><td class="was">Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt sẵn. Còn bao nhiêu chiếc hiện ngay ở lưới — hết size là hết thật, không may thêm.</td><td class="now">Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt. Số còn lại của từng mẫu hiện ngay bên dưới. Hết size là hết, không may thêm.</td></tr>
+      <tr><td>Thẻ mẫu · dấu trên ảnh đã hết</td><td class="was">HẾT</td><td class="now">SOLD OUT · tiếng Anh, hai chữ, viết hoa; người dùng chốt 22/09. Từ duy nhất không phải tiếng Việt trên màn khách, vì là quy ước của streetwear; trong câu chữ vẫn nói "đã hết", "hết size".</td></tr>
+      <tr><td>Trang chủ · nút phụ</td><td class="was">Cách đợt hoạt động</td><td class="now">Bốn quy tắc</td></tr>
+      <tr><td>Trang chủ · mục</td><td class="was">Cách chúng tôi bán</td><td class="now">Bốn quy tắc · áp dụng cho mọi <span class="tm" data-k="tl">số</span></td></tr>
+      <tr><td>Trang chủ · mục</td><td class="was">Đợt 05 · mười mẫu</td><td class="now"><span class="tm" data-k="in">Trong số này</span> · 10 mẫu · 73 / 181 còn</td></tr>
+      <tr><td>Trang chủ · mục</td><td class="was">Sắp hết · còn vài chiếc cuối · Sắp hết trước</td><td class="now">Còn ít · dưới 4 chiếc</td></tr>
+      <tr><td>Trang chủ · mục</td><td class="was">Mua theo loại</td><td class="now">Theo loại</td></tr>
+      <tr><td>Trang chủ · nút nhắc</td><td class="was">Nhắc tôi khi mở</td><td class="now">Đặt nhắc giờ mở</td></tr>
+      <tr><td>Trang chủ · ghi chú nhắc</td><td class="was">Đã đặt nhắc · gửi trước giờ mở 2 giờ (lưu trên thiết bị này)</td><td class="now">Nhắc lưu trên thiết bị này. Trang chủ hiện lại khi còn 2 giờ tới giờ mở.</td></tr>
+      <tr><td>Thẻ mẫu · nút</td><td class="was">Thêm vào giỏ (thanh vàng trên mọi thẻ) · Xem chi tiết</td><td class="now">nút túi ở góc ảnh, tên nút đọc được: "Thêm KHÓI vào giỏ, chọn size trước"; thẻ hết hàng: dấu HẾT + "14 / 14 đã bán"</td></tr>
+      <tr><td>PDP · tồn kho</td><td class="was">Còn 17 / 35 chiếc đã cắt · đợt 05 đóng sau 4 ngày 16 giờ</td><td class="now">Còn 17 / 35 chiếc đã cắt · không may thêm (giờ đóng nằm ở dòng trên cùng)</td></tr>
+      <tr><td>PDP · nút</td><td class="was">Chọn size trước → Thêm vào giỏ</td><td class="now">Chọn size → Thêm vào giỏ · 390.000₫</td></tr>
+      <tr><td>PDP · nút phụ</td><td class="was">Lưu vào yêu thích</td><td class="now">Lưu</td></tr>
+      <tr><td>PDP · ghi chú</td><td class="was">Đợt 05 cắt 35 chiếc. Hết size là hết thật — giỏ hàng không giữ chỗ tồn kho.</td><td class="now">Giỏ không giữ hàng. Đơn đặt trước nhận trước. Chuyển khoản giữ hàng 12 giờ.</td></tr>
+      <tr><td>PDP · liên quan</td><td class="was">Có thể bạn thích · cùng đợt 05</td><td class="now">Cùng <span class="tm" data-k="tl">số</span> 05 · cùng loại, cùng tầm giá</td></tr>
+      <tr><td>PDP · form</td><td class="was">Oversize, rộng hơn 1 size so với thường / rộng hơn khoảng một size so với áo thường</td><td class="now">Oversize · rộng hơn một size so với form thường (một câu, hai chỗ)</td></tr>
+      <tr><td>Giỏ · nút</td><td class="was">Tiến hành thanh toán · 420.000₫</td><td class="now">Thanh toán · 420.000₫</td></tr>
+      <tr><td>Giỏ · liên kết</td><td class="was">Tiếp tục xem đợt 05</td><td class="now">Về <span class="tm" data-k="tl">số</span> 05</td></tr>
+      <tr><td>Giỏ · dải miễn phí</td><td class="was">Mua thêm 610.000₫ nữa để được miễn phí giao (đơn từ 1.000.000₫).</td><td class="now">Thêm 610.000₫ nữa để miễn phí giao.</td></tr>
+      <tr><td>Thanh toán · ô</td><td class="was">Thanh toán khi nhận hàng (COD) · Chuyển khoản ngân hàng · Thẻ nội địa / Visa</td><td class="now">Chuyển khoản · COD +15.000₫ · Thẻ (nội địa, Visa)</td></tr>
+      <tr><td>Xác nhận · sao chép</td><td class="was">Trình duyệt không cho chép tự động — chọn và chép tay nhé</td><td class="now">Không chép tự động được. Chọn đoạn trên rồi chép tay.</td></tr>
+      <tr><td>Tài khoản · mục</td><td class="was">Đơn hàng của tôi · Tài khoản của tôi</td><td class="now">Đơn hàng · Tài khoản</td></tr>
+      <tr><td>Đã lưu · trống</td><td class="was">Mẫu đã hết hàng vẫn được giữ trong danh sách để bạn theo dõi đợt sau.</td><td class="now">Mẫu đã hết vẫn nằm trong danh sách, để dõi <span class="tm" data-k="tl">số</span> sau.</td></tr>
+      <tr><td>Tìm kiếm · trống</td><td class="was">Thử bỏ bớt từ khoá…</td><td class="now">Không có mẫu nào khớp "zzzz". Bỏ bớt từ khoá, hoặc xem cả 10 mẫu.</td></tr>
+      <tr><td>404</td><td class="was">Có thể liên kết thuộc một đợt đã đóng.</td><td class="now">Trang này không có. Liên kết có thể thuộc một <span class="tm" data-k="tl">số</span> đã đóng.</td></tr>
+      <tr><td>Quản trị · khuyến mãi</td><td class="was">"Hết lượt" là mã còn trong hạn nhưng đã dùng hết số lượt — checkout đang từ chối nó ngay lúc này.</td><td class="now">Hết lượt: mã còn hạn nhưng đã dùng hết số lượt. Trang thanh toán đang từ chối mã này.</td></tr>
+      <tr><td>Quản trị · chi tiết đơn</td><td class="was">Tạm tính … · Ship 30.000₫</td><td class="now">Tạm tính … · Phí giao 30.000₫</td></tr>
+      <tr><td>Quản trị · nhãn thanh toán</td><td class="was">Xác nhận đã nhận tiền / Đã nhận tiền</td><td class="now">Đã nhận tiền</td></tr>
+      <tr><td>Chân trang · pháp lý</td><td class="was">Tên pháp nhân · MST — chờ chốt</td><td class="now">giữ (đây là ô chờ thông tin thật, không phải copy)</td></tr>
+      <tr><td>Trang công khai · NeedWrite</td><td class="was">…nên chỗ này để trống chờ bạn viết. (nói với chủ shop trên trang khách xem)</td><td class="now">Nội dung đang chuẩn bị. (khách) — ghi chú "chờ người viết" chỉ hiện ở khu quản trị</td></tr>
+      <tr><td>Quản trị · miễn trừ</td><td class="was">Mọi con số trên trang này được tính từ 24 đơn và 10 mẫu trong dữ liệu mô phỏng — … (246 ký tự)</td><td class="now">Dữ liệu mô phỏng · 24 đơn, 10 mẫu · thao tác lưu trên trình duyệt này — <u>Chi tiết</u> (gập)</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6 · Khi thực thi</h2>
+  <ul>
+    <li>Bảng thuật ngữ sống ở <code>lib/copy.ts</code>: một hằng cho mỗi nhãn dùng ở ≥ 2 nơi (trạng thái, hình thức thanh toán, giao, nút chung), test canh không còn chuỗi trùng nghĩa khác chữ.</li>
+    <li>Từ thay "đợt" là một hằng <code>ISSUE_WORD</code> với các dạng (hoa đầu, thường, hoa toàn phần) và các cụm (lịch, kế tiếp, trong … này); đổi một chỗ, đổi cả app, tên tệp CSV và mã mẫu đi theo.</li>
+    <li>Lời miễn trừ mô phỏng thành một component <code>SimNote</code>: một dòng + <code>&lt;details&gt;</code>; NeedWrite có hai bản: công khai ("đang chuẩn bị") và quản trị (nói rõ cần gì).</li>
+    <li>Mọi chuỗi trong bảng trước/sau và bảng thuật ngữ đưa vào brief của agent theo file:dòng của bản kiểm kê.</li>
+  </ul>
+  <p class="note3"><svg data-i="info" class="ic sm"></svg><span>Bản kiểm kê đầy đủ (1.616 dòng, có file:dòng cho từng chuỗi) nằm trong thư mục làm việc của phiên; khi bạn chốt, tôi chép vào <code>tasks/copy-inventory.md</code> để agent dùng.</span></p>
+</main>
+</div>
+<script>
+(function () {
+  function mark() { document.querySelectorAll("[data-set]").forEach(function (b) { b.classList.toggle("on", window.V3.setting("lex", "so") === b.getAttribute("data-val")); }); }
+  document.addEventListener("click", function (e) { var b = e.target.closest("[data-set]"); if (!b) return; try { localStorage.setItem("v3." + b.getAttribute("data-set"), b.getAttribute("data-val")); } catch (x) {} window.V3.apply(); mark(); });
+  window.addEventListener("storage", function () { setTimeout(mark, 0); });
+  document.addEventListener("DOMContentLoaded", function () { setTimeout(mark, 0); });
+})();
+</script>
+</body>
+</html>

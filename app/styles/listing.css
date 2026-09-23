@@ -1,0 +1,244 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   THE LISTING AND THE SEARCH SCREEN, v3 — the issue head, the family tabs,
+   the quick chips, the filter rail, the list bar, the end line; and the
+   search bar with its suggestions.
+
+   Ported from `prototype/v3/v3.css` (blocks: listing, chips, tabs) and
+   `prototype/v3/v3-pages.css` (search, empty state), plus the two skins the
+   shop ships — `html[data-dir="nhan"]` and `[data-badge="b"]` — written
+   straight into the rules, because there is one direction to switch to.
+
+   The v2 listing — the family tabs (`.tabs`), the scrolling chip row
+   (`.chips` / `.chip`) with its fade (`.chipwrap`), the desktop filter rail
+   (`.rail`) with its colour list (`.swl` / `.swc`), the list head's sort
+   control (`.sortsel`) and the wide single result (`.hit`) — stood at the
+   top of this file until v3 slice 6, when the sweep removed it. Every one
+   of them has a `*3` name below.
+
+   COLLISIONS measured before writing, because this system has lost that
+   fight before (DESIGN.md §8):
+   · `.wrap3` in the mock's search bar is the INPUT's wrapper. Here `.wrap3`
+     is the page block (base.css, a gutter and a measure), so the input's
+     wrapper is `.inpwrap` instead. Reusing the mock's name would have put a
+     40px page gutter inside a 44px search box.
+   · `.cnt` also lives on `.s .acctrail3 nav .cnt` (account.css, 0,4,0) and
+     `.s.adm3 .side nav a .cnt` (admin.css); both are scoped deeper than the
+     `.s .chip3 .cnt` and `.s .tabs3 a .cnt` below.
+   · `.dot` exists on `.s .cartline3 .dot` (checkout.css); ours is
+     `.s .chip3 .dot`.
+   · `.sort` is new. `.listbar`, `.listend`, `.listing3`, `.rail3`, `.lhead`,
+     `.tabs3`, `.chips3`, `.chip3`, `.suggest`, `.searchbar`, `.searchmeta`
+     and `.inpwrap` are all new to `app/styles/`.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── the issue head: which issue, how much of it is left, how long ─────── */
+.s .lhead{ padding-top:var(--s4); }
+.s .lhead .row1{ display:flex; align-items:baseline; flex-wrap:wrap; gap:6px 14px; }
+.s .lhead .big{ margin:0; font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h1); letter-spacing:-.02em; }
+/* The number is the one honey word on a white ground, so it takes the token
+   drawn for honey TEXT (#9e6817, 4.72:1) rather than the fill (1.9:1, which
+   no size of text clears). globals.css states that rule for the whole
+   system. */
+.s .lhead .big .num{ color:var(--brand-text); }
+.s .lhead .meta{ font-size:var(--fs-sm); color:var(--ink2); font-variant-numeric:tabular-nums; }
+
+/* ── the family tabs ─────────────────────────────────────────────────────
+   Links with `aria-current`, not tabs (see `FamilyTabs`). The row scrolls
+   sideways with its bar hidden; each tab is 44px tall on its own, so no
+   invisible overlay is needed and the scroll container has nothing to clip
+   (DESIGN.md §5, trap 1). */
+.s .tabs3{ display:flex; overflow-x:auto; scrollbar-width:none; padding:0 6px;
+  margin-top:var(--s3); border-bottom:1px solid var(--ink); }
+.s .tabs3::-webkit-scrollbar{ width:0; height:0; display:none; }
+.s .tabs3 a{ position:relative; flex:none; display:inline-flex; align-items:center; gap:4px;
+  min-height:44px; padding:12px 12px 10px; font-size:var(--fs-ui); color:var(--ink2);
+  white-space:nowrap; }
+.s .tabs3 a .cnt{ font-size:var(--fs-xs); font-variant-numeric:tabular-nums; }
+.s .tabs3 a:hover{ color:var(--ink); }
+.s .tabs3 a.on{ color:var(--ink); font-weight:600; }
+/* The mark sits ON the row's rule, which is why it is -1px and not 0. */
+.s .tabs3 a.on::after{ content:""; position:absolute; left:12px; right:12px; bottom:-1px;
+  height:2px; background:var(--brand); }
+
+/* ── the phone's quick chips ─────────────────────────────────────────────
+   A scroll container again, and this one DOES clip: the chips are 36px with
+   a 5px overlay each side. The row's own 12px/8px padding is what gives the
+   overlay room inside the clip. The mask fades the tail so a half-visible
+   chip reads as "there is more" rather than as a rendering fault (L6). */
+.s .chips3{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;
+  padding:var(--s3) 0 var(--s2);
+  mask-image:linear-gradient(90deg, #000 calc(100% - 34px), transparent); }
+.s .chips3::-webkit-scrollbar{ width:0; height:0; display:none; }
+/* Wrapped rather than scrolled — the search screen's two chip rows, where
+   the whole list has to be visible at once. Nothing to scroll, so nothing to
+   clip and no tail to fade. */
+.s .chips3.wrapped{ flex-wrap:wrap; overflow:visible; mask-image:none; }
+
+.s .chip3{ position:relative; display:inline-flex; align-items:center; gap:6px; height:36px;
+  padding:0 12px; border:1px solid var(--line); border-radius:var(--r);
+  background:var(--bg); color:var(--ink); font-size:var(--fs-sm); font-weight:400;
+  white-space:nowrap; cursor:pointer; }
+/* 36px of chip, 46px of finger. Vertical only: the chips sit 8px apart in a
+   row, and a horizontal overlay would eat the neighbour's taps. */
+.s .chip3::after{ content:""; position:absolute; inset:-5px 0; }
+.s .chip3 .cnt{ color:var(--ink2); font-variant-numeric:tabular-nums; }
+.s .chip3:hover{ border-color:var(--ink); }
+/* Applied = the issue's own material, inverted: black cloth, honey thread. */
+.s .chip3.on{ background:var(--sel); color:var(--sel-ink); border-color:var(--sel); }
+.s .chip3.on .cnt{ color:inherit; opacity:.8; }
+.s .chip3 .dot{ width:12px; height:12px; flex:none; border-radius:99px;
+  border:1px solid var(--hair); }
+
+/* ── the bar over the grid: what is on screen, and in what order ───────── */
+.s .listbar{ display:flex; align-items:center; gap:12px; padding:10px 0;
+  font-size:var(--fs-sm); color:var(--ink2); font-variant-numeric:tabular-nums; }
+.s .listbar .sort{ position:relative; margin-left:auto; display:inline-flex; align-items:center;
+  gap:6px; height:36px; padding:0 10px; border:1px solid var(--line); border-radius:var(--r);
+  background:var(--bg); color:var(--ink); font-size:var(--fs-sm); cursor:pointer; }
+.s .listbar .sort::after{ content:""; position:absolute; inset:-5px 0; }
+.s .listbar .sort b{ font-weight:600; }
+.s .listbar .sort:hover{ border-color:var(--ink); }
+.s .listbar .sort svg{ color:var(--ink2); }
+
+/* ── the end of the list ─────────────────────────────────────────────────
+   How much is on screen, how much of the cut is left, and the way back to
+   the issues that have closed. `.lnk` carries its own 44px target below
+   460px (interaction.css), which is the width this row is read at. */
+.s .listend{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px;
+  margin-top:var(--s6); padding-top:var(--s4); border-top:1px solid var(--hair);
+  font-size:var(--fs-sm); color:var(--ink2); font-variant-numeric:tabular-nums; }
+
+/* ── a filter group ──────────────────────────────────────────────────────
+   Shared by the desktop rail and the phone's sheet, because they hold the
+   same five groups and only the way a click travels differs (a link there, a
+   draft here — see `FilterRail` and `FilterSheet`). The rail adds its own
+   sticky column below; everything the group LOOKS like is here. */
+.s .grp{ padding:14px 0; border-bottom:1px solid var(--hair); }
+.s .grp h4{ margin:0 0 8px; font-size:var(--fs-xs); font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink2); }
+/* 10px between rows: each chip's overlay reaches 5px, so two rows meet
+   exactly and neither steals the other's taps (DESIGN.md §5, trap 2). */
+.s .grp .opts{ display:flex; flex-wrap:wrap; gap:10px 6px; }
+.s .grp .range{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+/* A target like everything else, even standing beside 36px chips. */
+.s .grp .range .inp{ height:44px; font-size:var(--fs-ui); }
+/* `.btn.sm` is 34px and drops the system's overlay (`buttons.css`); in a
+   filter group it is a real control in a column of 36px chips, so it takes
+   their height and their overlay back. */
+.s .grp .btn.sm{ height:36px; }
+.s .grp .btn.sm::after{ content:""; position:absolute; inset:-5px 0; }
+/* The real ends of the issue, under the two boxes. `.dt .foot` is the admin
+   table's pager and cannot reach a `.grp`. */
+.s .grp .foot{ margin:10px 0 0; font-size:var(--fs-sm); color:var(--ink2); }
+
+/* ── one result ──────────────────────────────────────────────────────────
+   A search that finds exactly one style still gets a card, not a row — but
+   not a half-width card with white space where the other nine should have
+   been, which is the shape that read as a broken page rather than as a
+   precise one (L7, v2). One column, capped at 340px: the card keeps the
+   grid's own proportions at a size a phone and a monitor can both show
+   whole. */
+.s .grid3.single{ grid-template-columns:minmax(0, 1fr); max-width:340px; }
+
+/* ── the phone has no rail; the sheet is the whole filter ──────────────── */
+.s .listing3{ display:block; }
+.s .rail3{ display:none; }
+
+/* ── the filter sheet's own chrome ───────────────────────────────────────
+   The head is the sheet's masthead without a photo, and the foot is the two
+   controls that end the decision: what the draft would show, and the way
+   out of it. `.sact` (sheet.css) supplies the space above them. */
+.s .fhead{ display:flex; align-items:center; gap:12px; padding-bottom:12px;
+  border-bottom:1px solid var(--ink); }
+.s .fhead h2{ margin:0; font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-h3); letter-spacing:var(--ls-display); }
+.s .fhead .muted{ font-size:var(--fs-sm); color:var(--ink2);
+  font-variant-numeric:tabular-nums; }
+.s .fhead .x{ margin-left:auto; width:44px; height:44px; flex:none; display:inline-flex;
+  align-items:center; justify-content:center; border:0; border-radius:var(--r);
+  background:none; color:var(--ink); cursor:pointer; }
+.s .fhead .x:hover{ background:var(--plate); }
+.s .sact .btn{ width:100%; }
+/* The quiet half of the pair, under the honey one. 44px of row, and a 12px
+   gap above it so the two overlays cannot meet. */
+.s .sact .clearall{ display:flex; align-items:center; justify-content:center; min-height:44px;
+  margin-top:4px; border:0; background:none; font:inherit; font-size:var(--fs-sm);
+  color:var(--ink2); cursor:pointer; }
+.s .sact .clearall:hover{ color:var(--ink); }
+
+/* ── the search screen ────────────────────────────────────────────────── */
+.s .searchbar{ position:relative; display:flex; align-items:center; gap:8px;
+  padding:var(--s3) 0 0; }
+.s .searchbar .inpwrap{ position:relative; flex:1; min-width:0; }
+.s .searchbar .ico{ position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  color:var(--ink2); pointer-events:none; }
+/* The one control the whole screen exists for, so it is the full 44 rather
+   than the system's 40 — and it needs no `.inptap` wrapper to get there. */
+.s .searchbar .inp{ height:44px; padding:0 40px; font-size:var(--fs-body); }
+/* Chrome draws its OWN clear button inside `type="search"`, and it is the
+   one browser surface this bar cannot leave alone: beside the button the
+   design already provides, it reads as two X's and the shopper has to guess
+   which one is the shop's (craft floor, "browser surfaces"). */
+.s .searchbar .inp::-webkit-search-cancel-button,
+.s .searchbar .inp::-webkit-search-decoration{ appearance:none; display:none; }
+.s .searchbar .clear{ position:absolute; right:0; top:0; width:44px; height:44px;
+  display:flex; align-items:center; justify-content:center; border:0; background:none;
+  color:var(--ink2); cursor:pointer; }
+.s .searchbar .clear:hover{ color:var(--ink); }
+.s .searchbar .cancel{ display:inline-flex; align-items:center; min-height:44px; padding:0 4px;
+  border:0; background:none; font:inherit; font-size:var(--fs-ui); color:var(--ink2);
+  cursor:pointer; }
+.s .searchbar .cancel:hover{ color:var(--ink); }
+
+/* ── what the box offers while it is being typed in ─────────────────────
+   Absolutely positioned inside `.inpwrap` and not portalled: nothing above
+   it on this screen is a scroll container or carries a transform, so there
+   is no clipping box to escape (unlike the sort menu, which opens out of
+   one). */
+.s .suggest{ position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:30;
+  padding:6px 0; background:var(--bg); border:1px solid var(--ink); border-radius:var(--r); }
+/* `.lb` and not the mock's `.grp`: `.grp` is a FILTER group above, with a
+   hairline under it, and one name for two things is how `.sub` and `.box`
+   each cost an afternoon (DESIGN.md §8). */
+.s .suggest .lb{ padding:8px 12px 4px; font-size:var(--fs-xs); letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink2); }
+.s .suggest a{ display:grid; grid-template-columns:36px minmax(0,1fr) auto; gap:10px;
+  align-items:center; min-height:44px; padding:4px 12px; font-size:var(--fs-ui); }
+.s .suggest a.plain{ grid-template-columns:minmax(0,1fr) auto; }
+.s .suggest a:hover, .s .suggest a[data-active]{ background:var(--plate); }
+.s .suggest a img{ width:36px; height:45px; object-fit:cover; border-radius:2px;
+  background:var(--plate); }
+.s .suggest a b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-ui); letter-spacing:var(--ls-display); }
+.s .suggest a .d{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+.s .suggest a .p{ font-variant-numeric:tabular-nums; }
+.s .suggest a svg{ color:var(--ink2); }
+/* `<mark>` arrives wearing the browser's own yellow highlight, which is a
+   second brand colour nobody chose. The match is marked in weight and in the
+   honey text token instead. */
+.s .suggest mark{ background:transparent; color:var(--brand-text); font-weight:600; }
+
+.s .searchmeta{ display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 12px;
+  padding:14px 0 var(--s3); font-size:var(--fs-ui); color:var(--ink2); }
+.s .searchmeta b{ color:var(--ink); font-weight:600; }
+.s .searchmeta .num{ font-size:var(--fs-h2); color:var(--ink); }
+
+/* ── 900px and up, v3 ───────────────────────────────────────────────────── */
+@media (min-width:900px){
+  /* The rail says everything the chip row says, with room for the groups the
+     row has to leave out. Two of the same control on one screen is one too
+     many, so the chips go. */
+  .s .chips3:not(.wrapped){ display:none; }
+
+  .s .listing3{ display:grid; grid-template-columns:232px minmax(0,1fr); gap:var(--s7);
+    align-items:start; margin-top:var(--s4); }
+  /* 84px clears the 64px bar and the 20px of air the mock leaves under it. */
+  .s .rail3{ display:block; position:sticky; top:84px; }
+  .s .rail3 .grp:first-child{ padding-top:0; }
+
+  /* The search screen is one column of results, not a full-width listing:
+     1000px is the measure the mock gives it. Beats `.s .wrap3` (0,2,0) on
+     class count, so load order does not matter. */
+  .s .wrap3.searchpage{ max-width:1000px; }
+}

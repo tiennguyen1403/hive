@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="vi" data-dir="nhan" data-spot="off" data-lex="so" data-type="d" data-badge="a">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Badge · ba họ để so · v3</title>
+<link rel="stylesheet" href="../v2/fonts.css"><link rel="stylesheet" href="fonts-trial.css"><link rel="stylesheet" href="../v2/reset.css"><link rel="stylesheet" href="v3.css"><link rel="stylesheet" href="v3-pages.css">
+<script src="../v2/icons.js"></script><script src="v3.js" defer></script>
+<style>
+  /* The badge board: every family renders the same specimen inside its own
+     data-badge scope, so the three can be read side by side. The page itself
+     keeps data-badge="a" (no rules) and ignores the shared setting. */
+  .bb{ padding:0 var(--gut) 90px; font-family:"Be Vietnam Pro",sans-serif; }
+  @media (min-width:900px){ .bb{ padding:0 var(--gutd) 96px; max-width:var(--max); margin:0 auto; } }
+  .bb .intro{ padding:20px 0 14px; border-bottom:1px solid var(--hair); }
+  .bb .intro h1{ font-family:var(--font-display); font-weight:var(--fw-display); font-size:28px; letter-spacing:var(--ls-display); line-height:1.1; }
+  .bb .intro p{ font-size:13.5px; color:var(--ink2); max-width:80ch; margin-top:8px; }
+  .bb .intro ul{ margin-top:8px; display:flex; flex-wrap:wrap; gap:4px 14px; font-size:12.5px; color:var(--ink2); }
+  .bb .intro li b{ color:var(--ink); font-weight:600; }
+  .opt{ padding:28px 0 32px; border-bottom:1px solid var(--hair); }
+  .opt .hd{ display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 16px; }
+  .opt .hd .letter{ font-family:var(--font-display); font-weight:var(--fw-display); font-size:22px; letter-spacing:var(--ls-display); }
+  .opt .hd .name{ font-size:15px; font-weight:600; }
+  .opt .hd .who{ font-size:12.5px; color:var(--ink2); }
+  .opt .why{ font-size:13px; color:var(--ink2); max-width:84ch; margin-top:6px; }
+  .opt .why b{ color:var(--ink); font-weight:600; }
+  .spec{ margin-top:16px; display:grid; grid-template-columns:minmax(0, 1fr); gap:16px; }
+  @media (min-width:900px){ .spec{ grid-template-columns:minmax(0, 7fr) minmax(0, 5fr); gap:24px; } }
+  .spec .lab{ font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); margin:14px 0 8px; }
+  .spec .lab:first-child{ margin-top:0; }
+  .spec .row{ display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; }
+  .spec .floor{ padding:16px 18px 18px; border:1px solid var(--hair); border-radius:var(--r); }
+  .spec .cloth{ padding:16px 18px 18px; background:var(--stage); color:var(--stage-ink); border-radius:var(--r); border-top:1px dashed var(--brand); }
+  .spec .cloth .lab{ color:var(--stage-ink2); }
+  .spec .cloth .state{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; font-size:12px; color:var(--stage-ink2); }
+  .spec .cloth .state + .state{ margin-top:10px; }
+  .spec .tiles{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:340px; }
+  .spec .tiles .img, .spec .tiles .tile{ position:relative; aspect-ratio:4/5; overflow:hidden; border-radius:var(--r); background:var(--plate); display:block; }
+  .spec .tiles img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .spec .tiles .sold img{ opacity:.5; filter:grayscale(.5); }
+  /* the teaser tile of the next issue, as on the home cover: dark cloth, faded photo, the CHƯA MỞ tag */
+  .spec .tiles .tile{ background:var(--stage-hair); }
+  .spec .tiles .tile img{ opacity:.45; }
+  .spec .tiles .tile > .tag3{ position:absolute; left:10px; top:10px; background:var(--bg); color:var(--info); }
+  .spec .tiles .tile .cap{ position:absolute; left:10px; right:10px; bottom:10px; font-size:12px; color:var(--stage-ink); }
+  .spec .tiles .tile .cap b{ display:block; font-family:var(--font-display); font-weight:var(--fw-display); font-size:14px; }
+  /* a nav strip: the real .nav3 rules, unstuck */
+  .spec .nav3.strip{ position:static; box-shadow:none; border:1px solid var(--hair); border-radius:var(--r); }
+  .spec .nav3.strip .in{ height:56px; padding:0 8px 0 14px; gap:12px; max-width:none; min-width:0; }
+  .spec .nav3.strip .links{ display:none; }
+  .spec .nav3.strip .itag{ order:0; margin-left:0; }
+  .spec .nav3.strip .itag .cd{ display:inline; }
+  .spec .nav3.strip .icons{ margin-left:auto; }
+  /* admin excerpt: the table rules of .s.adm3 without its frame */
+  .spec table{ width:100%; font-size:13px; font-variant-numeric:tabular-nums; border:1px solid var(--hair); border-radius:var(--r); }
+  .spec th{ text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); padding:8px 12px; border-bottom:1px solid var(--ink); }
+  .spec td{ padding:8px 12px; border-bottom:1px solid var(--hair); }
+  .spec tr:last-child td{ border-bottom:0; }
+  .spec td a{ color:var(--brand-text); text-decoration:underline; text-underline-offset:3px; }
+  .spec .ctags{ display:flex; gap:8px; flex-wrap:wrap; }
+  .spec .cloth .tag3.sim{ color:var(--brand); border-color:var(--brand); }
+  .spec .steps3{ margin:0; max-width:360px; }
+  .opt .go{ margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:12.5px; color:var(--ink2); }
+  .opt .go button{ height:36px; padding:0 12px; border:1px solid var(--line); border-radius:var(--r); font:600 12.5px "Be Vietnam Pro",sans-serif; background:var(--bg); color:var(--ink); cursor:pointer; position:relative; }
+  .opt .go button::after{ content:""; position:absolute; inset:-5px 0; }
+  .opt .go button.on{ background:var(--sel); color:var(--sel-ink); border-color:var(--sel); }
+  .opt .go a{ color:var(--brand-text); text-decoration:underline; text-underline-offset:3px; position:relative; display:inline-flex; align-items:center; min-height:36px; }
+  .opt .go a::after{ content:""; position:absolute; inset:-4px 0; }
+  .bb .ask{ margin-top:24px; padding:14px 16px; border:1px dashed var(--line); border-radius:var(--r); font-size:13px; color:var(--ink2); max-width:84ch; }
+  .bb .ask b{ color:var(--ink); font-weight:600; }
+  /* last so it wins over the strip rule above at equal specificity */
+  @media (max-width:599.98px){ .spec .nav3.strip .itag .cd{ display:none; } }
+  /* phones: the excerpt table drops the customer column so the status tag never forces a horizontal scroll */
+  @media (max-width:479.98px){ .spec th:nth-child(2), .spec td:nth-child(2){ display:none; } }
+</style>
+</head>
+<body data-title="Badge · ba họ để so · v3" data-badgeboard>
+<div class="s v3">
+<header class="nav3" data-nav data-active="home" data-cart="2" data-wish="2" data-state="open"></header>
+<main class="bb">
+  <div class="intro">
+    <h1>Badge · ba họ để so</h1>
+    <p>Badge là mọi nhãn nhỏ mang một trạng thái, một con số hay một danh tính. Cửa hàng có tám chỗ như vậy, và một họ badge phải áp được lên cả tám cùng lúc. Ba họ dưới đây dùng cùng một mẫu thử; bấm "Xem trên các màn" để áp họ đó lên toàn bộ mock rồi mở trang chủ, danh mục, giỏ hay quản trị mà so.</p>
+    <ul>
+      <li><b>Thẻ trạng thái</b> đang bán · sắp mở · đã đóng · còn 2 · chờ chuyển khoản…</li>
+      <li><b>Dấu SOLD OUT</b> trên ảnh mẫu đã bán</li>
+      <li><b>Nhãn CHƯA MỞ</b> trên ô hé lộ</li>
+      <li><b>Tem Số</b> trên nav</li>
+      <li><b>Bong bóng đếm</b> trên túi và tim</li>
+      <li><b>Nhãn khách</b> trong quản trị</li>
+      <li><b>Tem mô phỏng</b> ở thanh bên quản trị</li>
+      <li><b>Vòng bước</b> giỏ → xong</li>
+    </ul>
+  </div>
+
+  <!-- ── A ──────────────────────────────────────────────────────────────── -->
+  <section class="opt" id="opt-a">
+    <div class="hd"><span class="letter">A</span><span class="name">Chỉ viền</span><span class="who">đang dùng, đã chỉnh lại: cao 24px, một viền màu trạng thái, chấm 6px, chữ 11px cách .06em</span></div>
+    <p class="why"><b>Nhẹ nhất, hợp với bảng và danh sách.</b> Màu chỉ nằm trên viền và chữ nên một cột toàn thẻ vẫn thoáng. Dấu SOLD OUT và tem Số giữ vải đen chỉ vàng; bong bóng đếm giữ mật ong. Điểm yếu: trên ảnh và trên nền đen, viền mảnh dễ chìm.</p>
+    <div class="spec">
+      <div class="floor s">
+        <div class="lab">Thẻ trạng thái · cửa hàng và quản trị</div>
+        <div class="row"><span class="tag3 on"><i></i>Đang bán</span><span class="tag3 soon"><i></i>Sắp mở</span><span class="tag3 shut"><i></i>Đã đóng</span><span class="tag3 hot"><i></i>Còn 2</span><span class="tag3"><i></i>Chờ chuyển khoản</span><span class="tag3 on"><i></i>Đã thanh toán</span><span class="tag3 soon"><i></i>Đang giao</span><span class="tag3 shut"><i></i>Đã huỷ</span><span class="tag3 hot"><i></i>Hết lượt</span><span class="tag3"><i></i>Dữ liệu mô phỏng</span></div>
+        <div class="lab">Trên ảnh · mẫu đã bán, mẫu hé lộ</div>
+        <div class="tiles"><div class="card3 sold"><a class="img" href="#"><img src="../v2/img/muoi.webp" alt=""><span class="stamp">SOLD OUT</span></a></div><div class="tile"><img src="../v2/img/suong.webp" alt=""><span class="tag3 soon"><i></i>Chưa mở</span><span class="cap"><b>SỎI</b>Áo khoác dù</span></div></div>
+        <div class="lab">Nav · tem Số và bong bóng đếm</div>
+        <div class="nav3 strip"><div class="in"><a class="wm" href="#">BRAND</a><a class="itag" href="#"><i></i>Số 05<span class="cd"> · đóng sau 5 ngày 1 giờ</span></a><div class="icons"><span class="ib"><svg data-i="heart"></svg><b>2</b></span><span class="ib"><svg data-i="bag"></svg><b>2</b></span></div></div></div>
+        <div class="lab">Quản trị · bảng, nhãn khách, vòng bước</div>
+        <table><thead><tr><th>Mã đơn</th><th>Khách</th><th>Trạng thái</th></tr></thead><tbody>
+          <tr><td><a href="#">DH-2431</a></td><td>Nguyễn Khả Vy</td><td><span class="tag3"><i></i>Chờ chuyển khoản</span></td></tr>
+          <tr><td><a href="#">DH-2429</a></td><td>Hoàng Mỹ Linh</td><td><span class="tag3 on"><i></i>Đã thanh toán</span></td></tr>
+          <tr><td><a href="#">DH-2426</a></td><td>Ngô Bảo Châu</td><td><span class="tag3 soon"><i></i>Đang giao</span></td></tr>
+        </tbody></table>
+        <div class="row" style="margin-top:12px"><span class="ctags"><span class="ctag new">mới</span><span class="ctag back">quay lại</span><span class="ctag">3 số liên tiếp</span></span></div>
+        <div class="steps3" style="margin-top:14px"><div class="st done"><b><svg data-i="tick" style="width:12px;height:9px"></svg></b>Giỏ</div><div class="st on"><b>2</b>Địa chỉ</div><div class="st"><b>3</b>Thanh toán</div><div class="st"><b>4</b>Xong</div></div>
+      </div>
+      <div class="cloth s">
+        <div class="lab">Trên vải đen · bìa Số và thanh bên quản trị</div>
+        <div class="cover open" style="display:block;min-height:0;background:transparent"><p class="state" style="margin:0"><span class="tag3 on"><i></i>Đang bán</span><span>Đóng 20:00 thứ Sáu 25/09</span></p></div>
+        <div class="cover soon" style="display:block;min-height:0;background:transparent;margin-top:10px"><p class="state" style="margin:0"><span class="tag3 soon"><i></i>Sắp mở</span><span>Mở 20:00 thứ Sáu 02/10</span></p></div>
+        <div class="cover shut" style="display:block;min-height:0;background:transparent;margin-top:10px"><p class="state" style="margin:0"><span class="tag3 shut"><i></i>Đã đóng</span><span>Mở 20:00 · 05/06 · đóng 20:00 · 19/06</span></p></div>
+        <div class="adm3x" style="margin-top:18px;padding-top:12px;border-top:1px dashed var(--brand)"><span class="tag3 sim"><i></i>Chế độ mô phỏng</span><p style="font-size:11px;color:var(--stage-ink2);margin-top:6px">Thao tác lưu trên trình duyệt này, không có máy chủ.</p></div>
+      </div>
+    </div>
+    <div class="go"><button type="button" data-set="badge" data-val="a">Xem trên các màn</button><a href="home.html" target="_blank">mở trang chủ</a><a href="admin-orders.html" target="_blank">mở đơn hàng quản trị</a></div>
+  </section>
+
+  <!-- ── B ──────────────────────────────────────────────────────────────── -->
+  <section class="opt" id="opt-b" data-badge="b">
+    <div class="hd"><span class="letter">B</span><span class="name">Vải đen</span><span class="who">nhãn dệt đặc: trạng thái sống là vải đen chỉ vàng, trạng thái chờ và đã đóng là vải mộc, cảnh báo giữ họ đỏ; không viền</span></div>
+    <p class="why"><b>Cùng chất liệu với bìa Số và tem trên nav</b>, nên cả cửa hàng chỉ có một thứ badge. Dấu SOLD OUT có đường may đứt nét vàng bên trong như mép bìa; bong bóng đếm đảo thành đen chữ vàng. Đọc rõ trên ảnh và trên nền đen. Điểm yếu: một cột nhiều thẻ đặc trong bảng quản trị sẽ nặng hơn A.</p>
+    <div class="spec">
+      <div class="floor s">
+        <div class="lab">Thẻ trạng thái · cửa hàng và quản trị</div>
+        <div class="row"><span class="tag3 on"><i></i>Đang bán</span><span class="tag3 soon"><i></i>Sắp mở</span><span class="tag3 shut"><i></i>Đã đóng</span><span class="tag3 hot"><i></i>Còn 2</span><span class="tag3"><i></i>Chờ chuyển khoản</span><span class="tag3 on"><i></i>Đã thanh toán</span><span class="tag3 soon"><i></i>Đang giao</span><span class="tag3 shut"><i></i>Đã huỷ</span><span class="tag3 hot"><i></i>Hết lượt</span><span class="tag3"><i></i>Dữ liệu mô phỏng</span></div>
+        <div class="lab">Trên ảnh · mẫu đã bán, mẫu hé lộ</div>
+        <div class="tiles"><div class="card3 sold"><a class="img" href="#"><img src="../v2/img/muoi.webp" alt=""><span class="stamp">SOLD OUT</span></a></div><div class="tile"><img src="../v2/img/suong.webp" alt=""><span class="tag3 soon"><i></i>Chưa mở</span><span class="cap"><b>SỎI</b>Áo khoác dù</span></div></div>
+        <div class="lab">Nav · tem Số và bong bóng đếm</div>
+        <div class="nav3 strip"><div class="in"><a class="wm" href="#">BRAND</a><a class="itag" href="#"><i></i>Số 05<span class="cd"> · đóng sau 5 ngày 1 giờ</span></a><div class="icons"><span class="ib"><svg data-i="heart"></svg><b>2</b></span><span class="ib"><svg data-i="bag"></svg><b>2</b></span></div></div></div>
+        <div class="lab">Quản trị · bảng, nhãn khách, vòng bước</div>
+        <table><thead><tr><th>Mã đơn</th><th>Khách</th><th>Trạng thái</th></tr></thead><tbody>
+          <tr><td><a href="#">DH-2431</a></td><td>Nguyễn Khả Vy</td><td><span class="tag3"><i></i>Chờ chuyển khoản</span></td></tr>
+          <tr><td><a href="#">DH-2429</a></td><td>Hoàng Mỹ Linh</td><td><span class="tag3 on"><i></i>Đã thanh toán</span></td></tr>
+          <tr><td><a href="#">DH-2426</a></td><td>Ngô Bảo Châu</td><td><span class="tag3 soon"><i></i>Đang giao</span></td></tr>
+        </tbody></table>
+        <div class="row" style="margin-top:12px"><span class="ctags"><span class="ctag new">mới</span><span class="ctag back">quay lại</span><span class="ctag">3 số liên tiếp</span></span></div>
+        <div class="steps3" style="margin-top:14px"><div class="st done"><b><svg data-i="tick" style="width:12px;height:9px"></svg></b>Giỏ</div><div class="st on"><b>2</b>Địa chỉ</div><div class="st"><b>3</b>Thanh toán</div><div class="st"><b>4</b>Xong</div></div>
+      </div>
+      <div class="cloth s">
+        <div class="lab">Trên vải đen · bìa Số và thanh bên quản trị</div>
+        <div class="cover open" style="display:block;min-height:0;background:transparent"><p class="state" style="margin:0"><span class="tag3 on"><i></i>Đang bán</span><span>Đóng 20:00 thứ Sáu 25/09</span></p></div>
+        <div class="cover soon" style="display:block;min-height:0;background:transparent;margin-top:10px"><p class="state" style="margin:0"><span class="tag3 soon"><i></i>Sắp mở</span><span>Mở 20:00 thứ Sáu 02/10</span></p></div>
+        <div class="cover shut" style="display:block;min-height:0;background:transparent;margin-top:10px"><p class="state" style="margin:0"><span class="tag3 shut"><i></i>Đã đóng</span><span>Mở 20:00 · 05/06 · đóng 20:00 · 19/06</span></p></div>
+        <div class="adm3x" style="margin-top:18px;padding-top:12px;border-top:1px dashed var(--brand)"><span class="tag3 sim"><i></i>Chế độ mô phỏng</span><p style="font-size:11px;color:var(--stage-ink2);margin-top:6px">Thao tác lưu trên trình duyệt này, không có máy chủ.</p></div>
+      </div>
+    </div>
+    <div class="go"><button type="button" data-set="badge" data-val="b">Xem trên các màn</button><a href="home.html" target="_blank">mở trang chủ</a><a href="admin-orders.html" target="_blank">mở đơn hàng quản trị</a></div>
+  </section>
+
+  <!-- ── C ──────────────────────────────────────────────────────────────── -->
+  <section class="opt" id="opt-c" data-badge="c">
+    <div class="hd"><span class="letter">C</span><span class="name">Con dấu</span><span class="who">chữ Unbounded 11px cách rộng, viền 1,5px, góc vuông; trên ảnh dấu nghiêng như đóng tay</span></div>
+    <p class="why"><b>Nhiều cá tính phố nhất</b> và dùng đúng bộ chữ vừa chốt: mỗi thẻ là một con dấu nhỏ. Dấu SOLD OUT đóng nghiêng bằng mực trên ảnh mờ; tem Số trên nav thành khung viền; nhãn khách thành dấu viền. Vẫn giữ chấm nên trạng thái không chỉ nhờ màu. Điểm yếu: dấu rộng gần gấp rưỡi A, một bảng nhiều thẻ sẽ ồn và trên điện thoại hàng đơn phải xếp dấu xuống dòng riêng; cần kỷ luật chỉ dùng cho trạng thái thật.</p>
+    <div class="spec">
+      <div class="floor s">
+        <div class="lab">Thẻ trạng thái · cửa hàng và quản trị</div>
+        <div class="row"><span class="tag3 on"><i></i>Đang bán</span><span class="tag3 soon"><i></i>Sắp mở</span><span class="tag3 shut"><i></i>Đã đóng</span><span class="tag3 hot"><i></i>Còn 2</span><span class="tag3"><i></i>Chờ chuyển khoản</span><span class="tag3 on"><i></i>Đã thanh toán</span><span class="tag3 soon"><i></i>Đang giao</span><span class="tag3 shut"><i></i>Đã huỷ</span><span class="tag3 hot"><i></i>Hết lượt</span><span class="tag3"><i></i>Dữ liệu mô phỏng</span></div>
+        <div class="lab">Trên ảnh · mẫu đã bán, mẫu hé lộ</div>
+        <div class="tiles"><div class="card3 sold"><a class="img" href="#"><img src="../v2/img/muoi.webp" alt=""><span class="stamp">SOLD OUT</span></a></div><div class="tile"><img src="../v2/img/suong.webp" alt=""><span class="tag3 soon"><i></i>Chưa mở</span><span class="cap"><b>SỎI</b>Áo khoác dù</span></div></div>
+        <div class="lab">Nav · tem Số và bong bóng đếm</div>
+        <div class="nav3 strip"><div class="in"><a class="wm" href="#">BRAND</a><a class="itag" href="#"><i></i>Số 05<span class="cd"> · đóng sau 5 ngày 1 giờ</span></a><div class="icons"><span class="ib"><svg data-i="heart"></svg><b>2</b></span><span class="ib"><svg data-i="bag"></svg><b>2</b></span></div></div></div>
+        <div class="lab">Quản trị · bảng, nhãn khách, vòng bước</div>
+        <table><thead><tr><th>Mã đơn</th><th>Khách</th><th>Trạng thái</th></tr></thead><tbody>
+          <tr><td><a href="#">DH-2431</a></td><td>Nguyễn Khả Vy</td><td><span class="tag3"><i></i>Chờ chuyển khoản</span></td></tr>
+          <tr><td><a href="#">DH-2429</a></td><td>Hoàng Mỹ Linh</td><td><span class="tag3 on"><i></i>Đã thanh toán</span></td></tr>
+          <tr><td><a href="#">DH-2426</a></td><td>Ngô Bảo Châu</td><td><span class="tag3 soon"><i></i>Đang giao</span></td></tr>
+        </tbody></table>
+        <div class="row" style="margin-top:12px"><span class="ctags"><span class="ctag new">mới</span><span class="ctag back">quay lại</span><span class="ctag">3 số liên tiếp</span></span></div>
+        <div class="steps3" style="margin-top:14px"><div class="st done"><b><svg data-i="tick" style="width:12px;height:9px"></svg></b>Giỏ</div><div class="st on"><b>2</b>Địa chỉ</div><div class="st"><b>3</b>Thanh toán</div><div class="st"><b>4</b>Xong</div></div>
+      </div>
+      <div class="cloth s">
+        <div class="lab">Trên vải đen · bìa Số và thanh bên quản trị</div>
+        <div class="cover open" style="display:block;min-height:0;background:transparent"><p class="state" style="margin:0"><span class="tag3 on"><i></i>Đang bán</span><span>Đóng 20:00 thứ Sáu 25/09</span></p></div>
+        <div class="cover soon" style="display:block;min-height:0;background:transparent;margin-top:10px"><p class="state" style="margin:0"><span class="tag3 soon"><i></i>Sắp mở</span><span>Mở 20:00 thứ Sáu 02/10</span></p></div>
+        <div class="cover shut" style="display:block;min-height:0;background:transparent;margin-top:10px"><p class="state" style="margin:0"><span class="tag3 shut"><i></i>Đã đóng</span><span>Mở 20:00 · 05/06 · đóng 20:00 · 19/06</span></p></div>
+        <div class="adm3x" style="margin-top:18px;padding-top:12px;border-top:1px dashed var(--brand)"><span class="tag3 sim"><i></i>Chế độ mô phỏng</span><p style="font-size:11px;color:var(--stage-ink2);margin-top:6px">Thao tác lưu trên trình duyệt này, không có máy chủ.</p></div>
+      </div>
+    </div>
+    <div class="go"><button type="button" data-set="badge" data-val="c">Xem trên các màn</button><a href="home.html" target="_blank">mở trang chủ</a><a href="admin-orders.html" target="_blank">mở đơn hàng quản trị</a></div>
+  </section>
+
+  <div class="ask"><b>Có thể ghép.</b> Ba họ tách theo chất liệu để dễ so; chốt xong vẫn ghép được, ví dụ B cho thẻ trạng thái và dấu SOLD OUT nhưng giữ bong bóng đếm mật ong của A. Một câu nữa cần chốt: <b>có đặt nhãn "còn 2" lên ảnh thẻ không</b>, hay giữ ở dòng đếm dưới tên như hiện nay (mock đang giữ ở dòng đếm, theo luận đề "số là số thật, không hô").</div>
+</main>
+<footer class="foot3" data-footer></footer>
+</div>
+<script>
+(function () {
+  function mark() { document.querySelectorAll("[data-set]").forEach(function (b) { b.classList.toggle("on", window.V3.setting("badge", "a") === b.getAttribute("data-val")); }); }
+  document.addEventListener("click", function (e) { var b = e.target.closest("[data-set]"); if (!b) return; try { localStorage.setItem("v3." + b.getAttribute("data-set"), b.getAttribute("data-val")); } catch (x) {} window.V3.apply(); mark(); window.toast && window.toast("Đã áp họ " + b.getAttribute("data-val").toUpperCase() + " lên mọi màn · mở trang khác để xem"); });
+  document.addEventListener("DOMContentLoaded", function () { setTimeout(mark, 0); });
+})();
+</script>
+</body>
+</html>

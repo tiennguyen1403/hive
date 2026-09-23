@@ -1,0 +1,337 @@
+/* ── Tailwind, WITHOUT its utility classes ────────────────────────────────
+   `@import "tailwindcss"` pulls in three things: the default theme, the
+   preflight reset, and `@tailwind utilities`. This project uses the first
+   two and has never used the third — 368 `className` tokens were swept and
+   the only utility among them was `sr-only`, which is defined in
+   `styles/base.css` below rather than borrowed.
+
+   The third one was not merely unused, it was HARMFUL. Tailwind v4 scans
+   every source file for anything that looks like a utility name and
+   generates a class for it, and the scan reaches `prototype/` and the
+   stylesheets themselves. So the build shipped `.outline{outline-style:…;
+   outline-width:1px}`, `.ring{box-shadow:…}`, `.grid{display:grid}`,
+   `.grow{flex-grow:1}`, `.table{display:table}`, `.resize{resize:both}` and
+   `.container{max-width:…}` — every one of them a class name this design
+   system also uses, at the same specificity, decided by source order.
+
+   Measured on `/cart`: the "Áp dụng" button carries `.btn.outline`, picked
+   up Tailwind's `outline-width:1px`, and drew a 1px outline ON TOP of its
+   own 1px border — a two-pixel edge nobody designed, and an `outline` the
+   user has now asked three times to be rid of. DESIGN.md §6 says the focus
+   ring is the only `outline` in the system; this is what made that false.
+
+   Importing the two halves by name keeps the tokens and the reset and
+   generates no utilities at all. `@theme` below is still compiled — the
+   PostCSS plugin processes the file either way — and still emits its
+   variables into `:root`. `lib/classnames.test.ts` now fails the build if a
+   utility name is used as a class name again. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+
+/* The design system, in sixteen files.
+
+   GROUPING INTO FILES DECIDES SOURCE ORDER, and source order decides every
+   tie. Two rules of equal specificity that set the same property are settled
+   by whichever comes last, so which file a rule lives in is part of what it
+   does (`.s .chonsize .szrow` against `.s .szrow.w`, both 0,3,0 — that tie
+   once pinned the size row to the left edge).
+
+   MEASURED AGAIN at v3 slice 6, after the sweep that deleted the whole v2
+   layer, by the method this note has always named — list every cross-file
+   pair that ties on specificity AND shares a declaration, then ask the
+   browser whether one element matches both halves:
+
+     1181 rule branches across the sixteen files
+    23505 cross-file pairs tie and share a declaration
+        7 of them land on a single element, on 69 route visits at 390 and
+          1280 (685 distinct co-occurrence signatures)
+
+   Those seven, each resolved by the file that loads later — which is how
+   they already resolved before the sweep, because deleting rules can only
+   remove ties, never create one:
+
+     .s .nm (base)           × .s .wm (nav)            font face and tracking
+     .s .note3 (base)        × .s .note3 (product)     the whole note block
+     .s .note3 > .ic (base)  × .s .note3 > .ic (product)
+     .s .inp.area (forms)    × .s .field3 .inp (checkout)   height
+     .s .picks3 .pick (checkout) × .s [role="radio"] (interaction)  cursor
+     .s.adm3 .cb (admin)     × .s [role="checkbox"] (interaction)   cursor
+     .s.adm3 .meter i (admin) × .s .meter.hot i (product)   background
+
+   Adding a rule to any of these files, or moving one between them, means
+   running that measurement again. Do NOT sort these @imports alphabetically.
+
+   `table.css` (the v2 data table) was the seventeenth and went at slice 6
+   with `/system`, the only route that still rendered `.dt`. */
+@import "./styles/base.css";
+@import "./styles/nav.css";
+@import "./styles/buttons.css";
+@import "./styles/cards.css";
+@import "./styles/forms.css";
+@import "./styles/lists.css";
+@import "./styles/admin.css";
+@import "./styles/sheet.css";
+/* The home page's own surfaces: the cover, its clock, the low-stock strip,
+   the family index, the four rules and the next-issue teaser. Added at slice
+   1 of the v2 round and rebuilt at v3 slice 1; the v2 rules went at slice 6.
+   Placed here rather than earlier because it defines NEW class names only. */
+@import "./styles/home.css";
+/* The listing, the search result and the product page. Added at v2 slice 2,
+   rebuilt at v3 slice 2, swept at slice 6. NEW class names only, measured
+   against the two breakpoint files that follow. */
+@import "./styles/listing.css";
+@import "./styles/product.css";
+/* The cart, the checkout, the confirmation and the order lookup. Added at v2
+   slice 3, rebuilt at v3 slices 2–3, swept at slice 6. One name is shared on
+   purpose and restated rather than inherited: `.stockline` (product.css),
+   reached here as `.cartline3 .stockline` (0,3,0). */
+@import "./styles/checkout.css";
+/* The account rail, its panels, the notifications and the auth card. Added
+   at v2 slice 4, rebuilt at v3 slice 4, swept at slice 6. It loads after
+   `checkout.css` so it can reuse `.panel3`, `.pghead`, `.two3`, `.tl3`,
+   `.kvs`, `.sum3`, `.fine3` and `.field3` and add to them on source order
+   rather than with a deeper selector. */
+@import "./styles/account.css";
+/* The pages that are mostly words — about, FAQ, returns, contact, the 404 —
+   and the archive of a closed issue. Added at v3 slice 4: NEW class names
+   only (`prose`, `prep`, `faq3`, `nf`, `solds`), measured against the two
+   breakpoint files that follow. Its one near-miss, `.num` (base.css, 0,2,0),
+   is outranked here by `.s .nf .num` (0,3,0). */
+@import "./styles/pages.css";
+/* Hover, press and touch targets. Ported late from `prototype/shell.css`,
+   where they were filed under the viewer chrome but scoped to `.s`. */
+@import "./styles/interaction.css";
+/* Last, so its breakpoint outranks the phone rules it widens rather than
+   racing them on specificity. */
+@import "./styles/desktop.css";
+
+/* =========================================================================
+   TOKEN LAYER — v3, hướng NHÃN (nhãn dệt: vải đen, chỉ mật ong, sàn trắng).
+
+   Decided 21/09/2026 22:38 and carried into code at v3 slice 0. Values are
+   copied from `prototype/v3/v3.css`, block `html[data-dir="nhan"]` — the
+   approved mock. Every text/background pair was computed before it was
+   written (`scratchpad/v3/contrast.js`) and clears WCAG AA. Do NOT adjust a
+   value by eye; recompute first, then change it.
+
+   Two rules the v3 world adds to the v2 one:
+   · BLACK CLOTH IS NOT A THEME. `--stage` (#171410) is the material of the
+     ISSUE — the cover, the next-issue teaser, the issue stamp in the nav,
+     the admin sidebar. Everywhere else is light ground with ink on it. Do
+     not paint a surface dark because it "needs weight".
+   · HONEY CANNOT CARRY WHITE TEXT. `--brand-ink` is ink, not #fff, and text
+     that wants to BE honey uses `--brand-text` (#9e6817, 4.72:1 on white).
+
+   Declaring each colour twice is deliberate:
+   · `@theme` lets Tailwind generate utilities (`bg-fill`, `text-ink`,
+     `rounded-md`).
+   · the `:root` block below aliases them to the short names (`--fill`,
+     `--ink`) so the design-system CSS could be lifted verbatim instead of
+     find-and-replaced variable by variable. The v2 alias names all still
+     exist and now point at the v3 values, so a screen that has not been
+     rebuilt yet still compiles and still looks like one system.
+   ========================================================================= */
+@theme {
+  /* primary ramp — HONEY */
+  --color-gold-50: #fdf9f2;
+  --color-gold-100: #fbf1da;
+  --color-gold-200: #fbe8bc;
+  --color-gold-300: #f7d98e;
+  --color-gold-400: #f1c04a;
+  --color-gold-500: #eba400;
+  --color-gold-600: #c28800;
+  --color-gold-700: #9e6817;
+  --color-gold-800: #6e4a12;
+  --color-gold-900: #171410;
+
+  /* the primary colour, split by the job it does */
+  --color-fill: #eba400; /* FILLS: buttons, selected chips, cart dot */
+  --color-fill-bd: #c28800; /* spare — no longer used as a button border */
+  --color-fill-ink: #171410; /* text on a fill, 8.9:1 — yellow cannot carry white text */
+  --color-band: #fbf1da; /* the issue-status band */
+  --color-band-ink: #171410; /* 15.4:1 on the band */
+  --color-mark: #c28800; /* chart bars, milestone dots, focus ring — only needs 3:1 */
+  --color-link: #9e6817; /* text & links: honey brown, 4.72:1 — the lightest step still readable */
+
+  --color-ink: #171410; /* body text      18.5:1 on white */
+  --color-ink2: #6b6250; /* secondary text  6.2:1 */
+  --color-hair: #ece7dd; /* hairline rule */
+  --color-line: #9c937f; /* control border  3.05:1 — clears the control-border bar */
+  --color-bg: #ffffff;
+  --color-plate: #f4efe6; /* backdrop behind imagery */
+
+  /* the issue's own material: black cloth, honey thread */
+  --color-stage: #171410;
+  --color-stage-ink: #ffffff; /* 18.5:1 on the cloth */
+  --color-stage-ink2: #b9b0a0; /* 8.4:1 on the cloth */
+  --color-stage-hair: #3a352e; /* rule drawn ON the cloth */
+  --color-stage-rule: #eba400; /* the stitched honey edge */
+  /* "còn 2" ON the cloth. `--hot` is a dark red drawn for white paper and
+     comes out at 2.1:1 here — unreadable exactly where scarcity has to be
+     read. This is the same red lifted until it clears AA on #171410 (5.2:1)
+     while staying clearly outside the honey family. */
+  --color-stage-hot: #ff8f86;
+
+  /* the brand thread, named by the job rather than by the hue */
+  --color-brand: #eba400;
+  --color-brand-ink: #171410;
+  --color-brand-soft: #fbf1da;
+  --color-brand-text: #9e6817;
+  /* a selected row / chip inverts into the cloth */
+  --color-sel: #171410;
+  --color-sel-ink: #eba400;
+  /* the SOLD OUT stamp on a sold photo */
+  --color-stamp: #171410;
+
+  /* status — each hue sits clear of the yellow family so it never reads as brand */
+  --color-hot: #b3261e; /* low stock / cancelled */
+  --color-hot-bg: #fbeaea;
+  --color-ok: #1b6b3a; /* done */
+  --color-ok-bg: #e6f4ea;
+  --color-warn: #44505e; /* waiting — grey, because yellow is now the brand colour */
+  --color-warn-bg: #eaedf1;
+  --color-info: #0c6289; /* in flight */
+  --color-info-bg: #dceffa;
+
+  /* The v3 radius is 4px (3px small). Override Tailwind's `md` so
+     `rounded-md` returns the system's number instead of spawning a second
+     radius scale alongside it. */
+  --radius-md: 4px;
+  --radius-sm: 3px;
+
+  /* Both families are self-hosted by next/font; `app/layout.tsx` puts the
+     variables on <html>. Unbounded 800 carries the numbers, the headings,
+     the style names and the wordmark; Be Vietnam Pro carries everything
+     else. Pair D, chosen 22/09/2026. */
+  --font-sans: var(--font-be-vietnam), system-ui, sans-serif;
+  --font-display: var(--font-unbounded), sans-serif;
+}
+
+/* ── Short aliases: the variable names the design-system CSS already uses ── */
+:root {
+  --gold-50: var(--color-gold-50);
+  --gold-100: var(--color-gold-100);
+  --gold-200: var(--color-gold-200);
+  --gold-300: var(--color-gold-300);
+  --gold-400: var(--color-gold-400);
+  --gold-500: var(--color-gold-500);
+  --gold-600: var(--color-gold-600);
+  --gold-700: var(--color-gold-700);
+  --gold-800: var(--color-gold-800);
+  --gold-900: var(--color-gold-900);
+
+  --fill: var(--color-fill);
+  --fill-bd: var(--color-fill-bd);
+  --fill-ink: var(--color-fill-ink);
+  --band: var(--color-band);
+  --band-ink: var(--color-band-ink);
+  --mark: var(--color-mark);
+  --link: var(--color-link);
+
+  --ink: var(--color-ink);
+  --ink2: var(--color-ink2);
+  --hair: var(--color-hair);
+  --line: var(--color-line);
+  --bg: var(--color-bg);
+  --plate: var(--color-plate);
+
+  --stage: var(--color-stage);
+  --stage-ink: var(--color-stage-ink);
+  --stage-ink2: var(--color-stage-ink2);
+  --stage-hair: var(--color-stage-hair);
+  --stage-rule: var(--color-stage-rule);
+  --stage-hot: var(--color-stage-hot);
+
+  --brand: var(--color-brand);
+  --brand-ink: var(--color-brand-ink);
+  --brand-soft: var(--color-brand-soft);
+  --brand-text: var(--color-brand-text);
+  --sel: var(--color-sel);
+  --sel-ink: var(--color-sel-ink);
+  --stamp: var(--color-stamp);
+
+  --hot: var(--color-hot);
+  --hot-bg: var(--color-hot-bg);
+  --ok: var(--color-ok);
+  --ok-bg: var(--color-ok-bg);
+  --warn: var(--color-warn);
+  --warn-bg: var(--color-warn-bg);
+  --info: var(--color-info);
+  --info-bg: var(--color-info-bg);
+
+  --r: var(--radius-md);
+  --r-sm: var(--radius-sm);
+
+  /* ── Nine spacing steps, 4-based. Tight groups use s1–s3, sections s6–s8.
+        Not colours, so they stay out of `@theme`: Tailwind would turn them
+        into a second spacing scale beside its own. ── */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+  --s9: 96px;
+  --gut: 18px;
+  --gutd: 40px;
+  --max: 1320px;
+
+  /* ── Nine type roles: number · display · h1 · h2 · h3 · body · ui · small
+        · micro. 11px is the floor for text a shopper has to read to act
+        (QĐ-22). The desktop values arrive at the single 900px breakpoint. ── */
+  --fs-num: 96px;
+  --fs-disp: 30px;
+  --fs-h1: 24px;
+  --fs-h2: 18px;
+  --fs-h3: 15px;
+  --fs-body: 14px;
+  --fs-ui: 13px;
+  --fs-sm: 12px;
+  --fs-xs: 11px;
+
+  /* Unbounded 800 is drawn wide; the display roles pull it back in. */
+  --fw-display: 800;
+  --ls-display: -0.03em;
+  --ls-num: -0.05em;
+}
+
+@media (min-width: 900px) {
+  :root {
+    --fs-num: 168px;
+    --fs-disp: 44px;
+    --fs-h1: 28px;
+    --fs-h2: 21px;
+    --fs-h3: 16px;
+  }
+}
+
+/* ── Page backdrop. `.s` — placed by each route group's layout — is what
+      carries the system's font and text colour; body only has to make the
+      background reach the edges of the viewport. ── */
+html,
+body {
+  background: var(--bg);
+}
+body {
+  margin: 0;
+}
+
+/* The focus ring is the ONLY `outline` left in the system. It appears for
+   keyboard users and never for mouse users — drop it and the site stops
+   being usable with Tab.
+
+   Do NOT trust `:focus-visible` alone to keep that promise. Measured in the
+   prototype: on an element given a `tabindex`, and on a real `<button>`
+   focused from script, Chrome still turns `:focus-visible` on after a click.
+   So the page marks for itself whether the pointer or the keyboard is
+   driving (the script in `app/layout.tsx`), and the rule below kills every
+   focus ring while the pointer is. 
+
+   `!important` is deliberate: this is the off switch, so it has to beat
+   everything else. */
+html[data-pointer] :focus,
+html[data-pointer] :focus-visible {
+  outline: none !important;
+}

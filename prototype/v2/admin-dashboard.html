@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280">
+<title>Tổng quan · Quản trị · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+</head>
+<body>
+<div class="s adm v2">
+<nav class="side" aria-label="Khu quản trị" data-adminnav data-active="dashboard"></nav>
+<main class="main">
+  <header class="top">
+    <h1>Tổng quan</h1>
+    <div class="rt">
+      <span class="sim"><svg data-i="eye" class="ic sm"></svg>dữ liệu mô phỏng</span>
+      <span class="seg" role="group" aria-label="Kỳ xem"><button type="button">7 ngày</button><button type="button" class="on">14 ngày</button><button type="button">30 ngày</button></span>
+      <button type="button" class="btn ghost sm" data-sim="Đã tải doanh-thu-14-ngay.csv"><svg data-i="export" class="ic sm"></svg>Tải CSV 14 ngày</button>
+    </div>
+  </header>
+  <p class="subhead">Đợt 05 · 11/09 → 25/09 · <span class="badge ok"><i></i>đang mở</span> · <span data-until="2026-09-25T20:00:00+07:00" data-verb="đóng">đóng sau 5 ngày 1 giờ</span></p>
+
+  <div class="kpis">
+    <div class="kpi"><div class="lb">Doanh thu 14 ngày</div><div class="vl">14,2tr₫</div><div class="kpinote">14.256.000₫ · chỉ tính đơn đã thanh toán</div></div>
+    <div class="kpi"><div class="lb">Đơn trong 14 ngày</div><div class="vl">15</div><div class="kpinote">trung bình 950,4k₫/đơn · 8 khách</div></div>
+    <div class="kpi"><div class="lb">Cần xử lý</div><div class="vl">5</div><div class="kpinote">2 chờ chuyển khoản · 3 đã trả, chưa giao · <a class="lnk" href="#queue">xử lý ngay</a></div></div>
+    <div class="kpi"><div class="lb">Còn trong đợt 05</div><div class="vl">73 chiếc</div><div class="kpinote">108 / 181 đã bán · 60% · 10 mẫu</div><div class="meter" aria-hidden="true"><i style="width:60%"></i></div></div>
+  </div>
+
+  <section class="panel">
+    <div class="hd"><h2>Doanh thu 14 ngày gần nhất</h2><div class="rt"><span class="note">cột trống = ngày không có đơn đã thanh toán</span></div></div>
+    <div class="chart">
+      <div class="heroN">14.256.000₫</div>
+      <div class="heroL">tổng 14 ngày · 07/09 → 20/09 · ngày cao nhất 11/09 đạt 2.793.000₫ (giờ mở đợt)</div>
+      <div class="plot" role="img" aria-label="Biểu đồ cột doanh thu 14 ngày, cao nhất 11/09: 2.793.000₫">
+        <span class="b" style="height:0" title="07/09 · 0₫"></span><span class="b" style="height:0" title="08/09 · 0₫"></span><span class="b" style="height:0" title="09/09 · 0₫"></span><span class="b" style="height:0" title="10/09 · 0₫"></span>
+        <span class="b peak" style="height:100%" title="11/09 · 2.793.000₫ · 3 đơn"><span class="lbl">2,7tr₫</span></span>
+        <span class="b" style="height:60%" title="12/09 · 1.670.000₫ · 2 đơn"></span><span class="b" style="height:70%" title="13/09 · 1.965.000₫ · 2 đơn"></span><span class="b" style="height:72%" title="14/09 · 2.016.000₫ · 2 đơn"></span>
+        <span class="b" style="height:59%" title="15/09 · 1.660.000₫ · 2 đơn"></span><span class="b" style="height:32%" title="16/09 · 890.000₫ · 1 đơn"></span><span class="b" style="height:56%" title="17/09 · 1.560.000₫ · 1 đơn"></span><span class="b" style="height:61%" title="18/09 · 1.702.000₫ · 2 đơn"></span>
+        <span class="b" style="height:0" title="19/09 · 0₫ · 1 đơn chờ chuyển khoản"></span><span class="b" style="height:0" title="20/09 · 0₫ · 1 đơn chờ chuyển khoản"></span>
+      </div>
+      <div class="xax" aria-hidden="true"><span>07/09</span><span> </span><span> </span><span>10/09</span><span> </span><span> </span><span>13/09</span><span> </span><span> </span><span>16/09</span><span> </span><span> </span><span>19/09</span><span> </span></div>
+      <details><summary>Xem dạng bảng</summary></details>
+    </div>
+  </section>
+
+  <div class="grid2 wide">
+    <section class="panel queue" id="queue">
+      <div class="hd"><h2>Cần xử lý</h2><div class="rt"><span class="note">5 đơn · việc của cửa hàng, không phải của khách hay bên vận chuyển</span></div></div>
+      <div class="row" id="q2431"><span class="grow"><span class="t"><a class="lnk" href="admin-order.html">DH-2431</a> · Nguyễn Khả Vy · 400.000₫</span><span class="d">Chờ chuyển khoản · <span class="due">hạn 08:05 ngày 22/09</span> · CÁT ×1</span></span>
+        <span class="acts"><button type="button" class="btn ghost sm" data-sim="DH-2431: đã ghi nhận tiền về · chuyển sang Đã thanh toán" data-done="#q2431">Đã nhận tiền</button></span></div>
+      <div class="row" id="q2430"><span class="grow"><span class="t"><a class="lnk" href="admin-order.html">DH-2430</a> · Trần Minh Anh · 2.680.000₫</span><span class="d">Chờ chuyển khoản · <span class="due">hạn 19:50 ngày 21/09</span> · SƯƠNG ×1, THAN ×1</span></span>
+        <span class="acts"><button type="button" class="btn ghost sm" data-sim="DH-2430: đã ghi nhận tiền về · chuyển sang Đã thanh toán" data-done="#q2430">Đã nhận tiền</button></span></div>
+      <div class="row" id="q2429"><span class="grow"><span class="t"><a class="lnk" href="admin-order.html">DH-2429</a> · Hoàng Mỹ Linh · 1.272.000₫</span><span class="d">Đã thanh toán 07:52 19/09 · chưa bàn giao · MUỐI ×2</span></span>
+        <span class="acts"><button type="button" class="btn sm" data-sim="DH-2429: mở form bàn giao vận chuyển" data-done="#q2429">Đóng gói & bàn giao</button></span></div>
+      <div class="row" id="q2428"><span class="grow"><span class="t"><a class="lnk" href="admin-order.html">DH-2428</a> · Võ Đức Duy · 430.000₫</span><span class="d">Đã thanh toán 09:43 18/09 · chưa bàn giao · NẮNG ×1</span></span>
+        <span class="acts"><button type="button" class="btn sm" data-sim="DH-2428: mở form bàn giao vận chuyển" data-done="#q2428">Đóng gói & bàn giao</button></span></div>
+      <div class="row" id="q2427"><span class="grow"><span class="t"><a class="lnk" href="admin-order.html">DH-2427</a> · Phạm Thu Hà · 1.560.000₫</span><span class="d">Đã thanh toán 20:41 17/09 · chưa bàn giao <span class="due late">· 3 ngày</span> · NGUỘI ×1, KHÓI ×1</span></span>
+        <span class="acts"><button type="button" class="btn sm" data-sim="DH-2427: mở form bàn giao vận chuyển" data-done="#q2427">Đóng gói & bàn giao</button></span></div>
+    </section>
+
+    <section class="panel rank">
+      <div class="hd"><h2>Bán chạy trong đợt 05</h2><div class="rt"><span class="note">đã bán / đã cắt</span></div></div>
+      <div class="row"><span class="n">1</span><span class="pill"><img src="img/khoi.webp" alt=""></span><span class="g"><span class="t">KHÓI</span></span><span class="meter" aria-hidden="true"><i style="width:51%"></i></span><span class="v"><b>18</b> / 35 · 51%</span></div>
+      <div class="row"><span class="n">2</span><span class="pill"><img src="img/bui.webp" alt=""></span><span class="g"><span class="t">BỤI</span></span><span class="meter" aria-hidden="true"><i style="width:89%"></i></span><span class="v"><b>16</b> / 18 · 89%</span></div>
+      <div class="row"><span class="n">3</span><span class="pill"><img src="img/cat.webp" alt=""></span><span class="g"><span class="t">CÁT</span></span><span class="meter" aria-hidden="true"><i style="width:52%"></i></span><span class="v"><b>16</b> / 31 · 52%</span></div>
+      <div class="row"><span class="n">4</span><span class="pill"><img src="img/nang.webp" alt=""></span><span class="g"><span class="t">NẮNG</span></span><span class="meter" aria-hidden="true"><i style="width:54%"></i></span><span class="v"><b>14</b> / 26 · 54%</span></div>
+      <div class="row"><span class="n">5</span><span class="pill"><img src="img/muoi.webp" alt=""></span><span class="g"><span class="t">MUỐI</span></span><span class="meter ok" aria-hidden="true"><i style="width:100%"></i></span><span class="v"><b>14</b> / 14 · hết</span></div>
+      <div class="row" style="justify-content:flex-end"><a class="lnk" style="font-size:11.5px" href="admin-drop.html">Xem cả 10 mẫu của đợt</a></div>
+    </section>
+  </div>
+
+  <div class="grid2 wide">
+    <section class="panel">
+      <div class="hd"><h2>Đơn mới nhất</h2><div class="rt"><a class="lnk" style="font-size:11.5px" href="admin-orders.html">Xem tất cả</a></div></div>
+      <table>
+        <thead><tr><th>Mã đơn</th><th>Khách</th><th>Thời gian</th><th class="num">Giá trị</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          <tr><td><a class="lnk" href="admin-order.html"><b>DH-2431</b></a></td><td>Nguyễn Khả Vy</td><td>20/09 · 08:05</td><td class="num">400.000</td><td><span class="badge warn"><i></i>Chờ chuyển khoản</span></td></tr>
+          <tr><td><a class="lnk" href="admin-order.html"><b>DH-2430</b></a></td><td>Trần Minh Anh</td><td>19/09 · 19:50</td><td class="num">2.680.000</td><td><span class="badge warn"><i></i>Chờ chuyển khoản</span></td></tr>
+          <tr><td><a class="lnk" href="admin-order.html"><b>DH-2429</b></a></td><td>Hoàng Mỹ Linh</td><td>18/09 · 22:15</td><td class="num">1.272.000</td><td><span class="badge"><i></i>Đã thanh toán</span></td></tr>
+          <tr><td><a class="lnk" href="admin-order.html"><b>DH-2428</b></a></td><td>Võ Đức Duy</td><td>18/09 · 09:40</td><td class="num">430.000</td><td><span class="badge"><i></i>Đã thanh toán</span></td></tr>
+          <tr><td><a class="lnk" href="admin-order.html"><b>DH-2427</b></a></td><td>Phạm Thu Hà</td><td>17/09 · 20:28</td><td class="num">1.560.000</td><td><span class="badge"><i></i>Đã thanh toán</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div>
+      <section class="panel">
+        <div class="hd"><h2>Sắp hết hàng</h2><div class="rt"><span class="note">3 mẫu</span></div></div>
+        <div class="row" style="padding:10px 16px"><span class="pill"><img src="img/muoi.webp" alt=""></span><span class="grow"><span class="t nm">MUỐI</span><span class="d">hết toàn bộ size</span></span><span class="badge hot"><i></i>hết</span></div>
+        <div class="row" style="padding:10px 16px"><span class="pill"><img src="img/bui.webp" alt=""></span><span class="grow"><span class="t nm">BỤI</span><span class="d">hết S · M</span></span><span class="badge warn"><i></i>còn 2</span></div>
+        <div class="row" style="padding:10px 16px"><span class="pill"><img src="img/suong.webp" alt=""></span><span class="grow"><span class="t nm">SƯƠNG</span><span class="d">hết S</span></span><span class="badge warn"><i></i>còn 3</span></div>
+      </section>
+      <section class="panel">
+        <div class="hd"><h2>Khách trong 14 ngày</h2><div class="rt"><span class="note">8 khách đặt 15 đơn</span></div></div>
+        <div class="split" aria-hidden="true"><i class="a" style="width:50%"></i><i class="b" style="width:50%"></i></div>
+        <div class="legend"><span><i style="background:var(--mark)"></i><b>4</b> khách mới (tham gia trong đợt)</span><span><i style="background:var(--gold-300)"></i><b>4</b> khách quay lại</span></div>
+      </section>
+    </div>
+  </div>
+
+  <p class="note icon" style="margin-top:14px"><svg data-i="info" class="ic sm"></svg><span>Mọi con số trên trang này được tính từ 24 đơn và 10 mẫu trong dữ liệu mô phỏng — một mẫu gần đây, không phải toàn bộ sổ bán hàng. Không có số nào được gõ tay. Thao tác ở đây lưu trên trình duyệt này, không có máy chủ.</span></p>
+</main>
+</div>
+</body>
+</html>

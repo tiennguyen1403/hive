@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đề xuất nâng cấp UI · v2 · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+<style>
+  /* The review board. Its own small layer — it is a tool for reading the
+     mock, not a screen of the product. */
+  body{ font-family:var(--font-sans); color:var(--ink); font-size:14px; line-height:1.6; background:#fff; }
+  .board{ max-width:1480px; margin:0 auto; padding:28px 32px 80px; }
+  h1{ font-family:var(--font-display); font-weight:700; font-size:30px; letter-spacing:-.02em; line-height:1.1; }
+  h2{ font-family:var(--font-display); font-weight:700; font-size:21px; letter-spacing:-.01em; margin:48px 0 6px; padding-top:22px; border-top:1px solid var(--hair); }
+  h3{ font-family:var(--font-display); font-weight:700; font-size:17px; }
+  p{ max-width:78ch; }
+  .muted{ color:var(--ink2); }
+  .kv{ display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:10px; font-size:13px; color:var(--ink2); }
+  .kv b{ color:var(--ink); font-weight:600; }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding:3px 9px; border-radius:99px; background:var(--gold-100); color:var(--gold-800); font-size:11.5px; font-weight:600; }
+  .pill.ok{ background:var(--ok-bg); color:var(--ok); }
+  .pill.hot{ background:var(--hot-bg); color:var(--hot); }
+  .pill.warn{ background:var(--warn-bg); color:var(--warn); }
+  table.bugs{ width:100%; border-collapse:collapse; font-size:13px; margin-top:14px; }
+  table.bugs th{ text-align:left; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); padding:8px 10px; border-bottom:1px solid var(--hair); }
+  table.bugs td{ padding:9px 10px; border-bottom:1px solid var(--hair); vertical-align:top; }
+  table.bugs td:first-child{ white-space:nowrap; font-weight:600; }
+  .screen{ display:grid; grid-template-columns:300px 1fr; gap:26px; padding:26px 0 34px; border-top:1px solid var(--hair); }
+  .screen:first-of-type{ border-top:0; }
+  .screen .meta h3{ margin-bottom:6px; }
+  .screen .meta ul{ margin:10px 0 0; padding-left:16px; list-style:disc; font-size:13px; color:var(--ink2); }
+  .screen .meta li{ margin:4px 0; }
+  .screen .meta li b{ color:var(--ink); font-weight:600; }
+  .links{ display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:12px; font-size:12.5px; }
+  .links a{ color:var(--link); text-decoration:underline; text-underline-offset:3px; }
+  .frames{ display:grid; grid-template-columns:406px 1fr; gap:22px; align-items:start; }
+  .frames.deskonly{ grid-template-columns:1fr; }
+  .phone{ width:406px; border:8px solid #211d12; border-radius:26px; overflow:hidden; background:#fff; box-shadow:0 10px 30px rgba(33,29,18,.12); }
+  .phone iframe{ width:390px; height:760px; border:0; display:block; }
+  .desk{ position:relative; width:100%; overflow:hidden; border:1px solid var(--line); border-radius:8px; background:#fff; aspect-ratio:1280/800; }
+  .desk.tall{ aspect-ratio:1440/900; }
+  .desk iframe{ position:absolute; left:0; top:0; width:1280px; height:800px; border:0; transform-origin:0 0; }
+  .desk.tall iframe{ width:1440px; height:900px; }
+  .caption{ font-size:11.5px; color:var(--ink2); margin-top:6px; }
+  .review{ margin-top:14px; padding:12px; border:1px dashed var(--line); border-radius:6px; background:var(--gold-50); }
+  .review .opts{ display:flex; gap:6px; flex-wrap:wrap; }
+  .review label{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; padding:6px 10px; border:1px solid var(--fill); border-radius:6px; background:#fff; cursor:pointer; }
+  .review label:has(input:checked){ background:var(--fill); color:var(--fill-ink); font-weight:600; }
+  .review input[type=radio]{ appearance:none; width:0; height:0; margin:0; }
+  .review textarea{ width:100%; margin-top:8px; min-height:56px; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font:inherit; font-size:12.5px; resize:vertical; background:#fff; }
+  .bar{ position:sticky; top:0; z-index:5; display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:22px -32px 0; padding:10px 32px; background:rgba(255,255,255,.94); backdrop-filter:blur(6px); border-bottom:1px solid var(--hair); font-size:12.5px; }
+  .bar nav{ display:flex; flex-wrap:wrap; gap:4px 14px; }
+  .bar nav a{ color:var(--ink2); }
+  .bar nav a:hover{ color:var(--link); }
+  .bar .btnx{ margin-left:auto; display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 14px; border-radius:6px; background:var(--fill); color:var(--fill-ink); font-weight:600; border:1px solid var(--fill); cursor:pointer; }
+  .bar .btnx svg{ width:15px; height:15px; }
+  .bar .prog{ color:var(--ink2); }
+  pre#out{ display:none; white-space:pre-wrap; font:12px/1.5 ui-monospace,Consolas,monospace; background:var(--gold-50); border:1px solid var(--hair); border-radius:6px; padding:12px; margin-top:12px; }
+  .q{ border:1px solid var(--hair); border-radius:6px; padding:12px 14px; margin-top:10px; font-size:13.5px; }
+  .q b{ display:block; font-weight:600; }
+  .q span{ color:var(--ink2); }
+  @media (max-width:1100px){ .screen{ grid-template-columns:1fr; } .frames{ grid-template-columns:1fr; } .phone{ width:406px; max-width:100%; } }
+</style>
+</head>
+<body>
+<div class="board">
+  <span class="pill">Mock · chờ duyệt · không phải bản chạy thật</span>
+  <h1 style="margin-top:12px">Đề xuất nâng cấp UI — v2</h1>
+  <p class="muted" style="margin:6px 0 0;padding:10px 12px;border:1px solid var(--hair);border-radius:6px;background:var(--gold-50)"><b>Đã thực thi xong 21/09/2026.</b> Bảng này là hồ sơ của đợt duyệt: 17 màn đã được dựng vào <code>app/</code> qua sáu lát, mỗi lát được đo lại độc lập. Chỗ nào app khác mock là lệch có lý do, ghi ở <code>tasks/plan.md</code> (từng lát). Bản đang chạy: <code>npm run preview</code> → <code>http://127.0.0.1:3200</code>.</p>
+  <p class="muted" style="margin-top:8px">Sau 6 phase, đây là <b>bản mock</b> của đợt nâng cấp: sửa 11 lỗi đã bắt được, dựng khung desktop cho mọi màn, thêm thông tin và chức năng <b>chỉ từ dữ liệu đang có</b>, và cho khu quản trị thao tác mô phỏng có nhãn. Chưa một dòng nào được viết vào <code>app/</code> — bạn duyệt xong mới implement.</p>
+  <div class="kv">
+    <span><b>Đồng hồ đóng băng</b> 18:50 · 20/09/2026 — đúng ngày fixture mô tả (đợt 05 đang mở, còn 5 ngày 1 giờ)</span>
+    <span><b>Số liệu</b> suy từ <code>data/</code> + <code>lib/</code> qua vitest, không gõ tay</span>
+    <span><b>CSS hệ</b> chép nguyên từ <code>app/styles/</code> (snapshot 20/09); phần mới nằm ở <code>v2.css</code></span>
+    <span><b>Ảnh</b> vẫn là ảnh mượn tạm</span>
+  </div>
+
+  <div class="bar">
+    <nav>
+      <a href="#bugs">Lỗi</a><a href="#g1">Trang chủ</a><a href="#g2">Danh mục · PDP</a><a href="#g3">Giỏ · Thanh toán</a><a href="#g4">Tài khoản</a><a href="#g5">Quản trị</a><a href="#ask">Cần bạn chốt</a>
+    </nav>
+    <span class="prog" id="prog">0 / 17 màn đã duyệt</span>
+    <button type="button" class="btnx" id="copy"><svg data-i="doc" data-raw></svg>Sao chép kết quả duyệt</button>
+  </div>
+  <pre id="out"></pre>
+
+  <h2 id="bugs">Lỗi đã bắt được trong bản đang chạy</h2>
+  <p class="muted">Đã xác minh bằng ảnh chụp 65 màn và đọc code. Mỗi dòng ghi cách mock sửa.</p>
+  <table class="bugs">
+    <thead><tr><th>#</th><th>Lỗi</th><th>Bằng chứng</th><th>Mock sửa thế nào</th></tr></thead>
+    <tbody>
+      <tr><td>L1</td><td>Chân trang chỉ có trên 6/27 route — PDP, danh mục, giỏ, thanh toán, tài khoản không có</td><td><code>grep SiteFooter</code></td><td>Khung trang mới: chân trang ở mọi màn, mang lịch đợt, hỗ trợ, giao & thanh toán</td></tr>
+      <tr><td>L2</td><td>Trang ngắn để trống nửa màn (404, giỏ, tìm kiếm)</td><td>ảnh 390 & 1280</td><td><code>.s.v2</code> cao tối thiểu 100dvh, chân trang xuống đáy</td></tr>
+      <tr><td>L3</td><td>Nền khu quản trị dừng ở đáy nội dung, phần còn lại trắng</td><td>6/10 màn admin</td><td><code>min-height:100dvh</code>; thanh bên dính</td></tr>
+      <tr><td>L4</td><td>"Đợt 05 đã đóng · xem lại" in ra khi đợt 05 đang mở (<code>app/page.tsx:64</code>)</td><td>ảnh <code>/?drop=6</code></td><td>Dòng ghi chú đọc trạng thái thật của đợt trước — xem "Trang chủ · trạng thái"</td></tr>
+      <tr><td>L5</td><td>Hai nút cùng dẫn tới /products cách nhau 4 thẻ</td><td>ảnh home</td><td>Một CTA ở hero, một "Xem cả 10 mẫu" sau lưới</td></tr>
+      <tr><td>L6</td><td>Hàng chip lọc bị cắt ở mép phải, không dấu hiệu cuộn</td><td>ảnh /products 390</td><td>Lớp mờ ở mép phải (<code>.chipwrap</code>)</td></tr>
+      <tr><td>L7</td><td>Tìm kiếm 1 kết quả → thẻ nửa màn</td><td>ảnh search</td><td>Kết quả đơn lẻ là một dòng đủ rộng</td></tr>
+      <tr><td>L8</td><td>Ô "Giá bán ₫" hiện <code>390000</code> thô</td><td>ảnh admin</td><td>Định dạng <code>390.000</code> khi rời ô — sửa lúc implement, không cần màn riêng</td></tr>
+      <tr><td>L9</td><td>Menu "Dòng mỗi trang" có tiêu đề là "10"</td><td><code>DataTable.tsx:294</code></td><td>Tiêu đề là nhãn — xem menu ở "Quản trị · Đơn hàng"</td></tr>
+      <tr><td>L10</td><td>Chữ cái đại diện: admin 1 chữ, tài khoản 2 chữ</td><td>ảnh customers</td><td>Thống nhất 2 chữ — sửa lúc implement</td></tr>
+      <tr><td>L11</td><td>Thẻ hết hàng không có nút → lỗ hổng trong hàng lưới</td><td>ảnh home/listing</td><td>Nút nhẹ "Xem chi tiết" giữ nhịp hàng</td></tr>
+      <tr><td>L12</td><td><b>Mâu thuẫn nội dung:</b> PDP và checkout khẳng định "đổi trả 7 ngày", trang /returns lại nói thời hạn chưa chốt</td><td>ảnh PDP · returns</td><td>Mock giữ "7 ngày nếu chưa qua sử dụng" và ghi "điều kiện chi tiết chờ chốt" — <a href="#ask">cần bạn chốt</a></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ═══════════════════════════════════ 1 -->
+  <h2 id="g1">1 · Trang chủ & khung chung</h2>
+  <p class="muted">Nav dính, pill trạng thái đợt, liên kết theo <em>loại</em> thật thay cho tìm chữ; chân trang 4 cột; dải chính sách chỉ ghi những gì code đang thực thi.</p>
+
+  <section class="screen" id="s-home">
+    <div class="meta">
+      <h3>Trang chủ · đợt 05 đang mở</h3>
+      <ul>
+        <li><b>Hero nói được việc:</b> số đợt, trạng thái, đếm ngược bằng số, một CTA. Desktop chia 5/7 — ảnh không còn crop mặt người.</li>
+        <li><b>Sắp hết</b> — BỤI còn 2, SƯƠNG còn 3: số thật từ tồn kho.</li>
+        <li><b>Mua theo loại</b> với số mẫu thật (Áo thun 3 · Hoodie 2 · Khoác 2 · Sơ mi 1 · Quần 2).</li>
+        <li><b>Cách chúng tôi bán</b> — 4 nguyên tắc lấy từ trang giới thiệu.</li>
+        <li><b>Đợt 06 sắp mở</b> — 2 mẫu hé lộ đã có trong data, nay hiện ngay khi đợt 05 còn mở.</li>
+        <li>Dải chính sách + chân trang mới. Một CTA duy nhất tới danh mục (sửa L5).</li>
+      </ul>
+      <div class="links"><a href="home.html" target="_blank">Mở toàn màn</a><a href="before/shop-home-390.png" target="_blank">Cũ · 390</a><a href="before/shop-home-1280.png" target="_blank">Cũ · 1280</a></div>
+      <div class="review" data-screen="home"><div class="opts"><label><input type="radio" name="r-home" value="Duyệt">Duyệt</label><label><input type="radio" name="r-home" value="Sửa">Sửa</label><label><input type="radio" name="r-home" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="home.html" title="Trang chủ · điện thoại"></iframe></div><div class="caption">390 px · cuộn được trong khung</div></div>
+      <div><div class="desk"><iframe loading="lazy" src="home.html" title="Trang chủ · desktop"></iframe></div><div class="caption">1280 px thu nhỏ · cuộn được trong khung</div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-home-states">
+    <div class="meta">
+      <h3>Trang chủ · sắp mở & đã đóng</h3>
+      <ul>
+        <li>Cùng một hero cho hai trạng thái còn lại: <b>chưa mở</b> (việc duy nhất là đặt nhắc) và <b>đã đóng</b> (bản ghi của đợt, không phải kệ hàng).</li>
+        <li>Sửa L4: dòng ghi chú đọc trạng thái thật — "Đợt 05 <em>đang mở</em>" chứ không phải "đã đóng".</li>
+        <li>Thẻ đợt đã đóng ghi "30/30 đã bán" thay vì để trống.</li>
+      </ul>
+      <div class="links"><a href="home-states.html" target="_blank">Mở toàn màn</a><a href="before/shop-drop-6-390.png" target="_blank">Cũ · sắp mở</a><a href="before/shop-drop-4-390.png" target="_blank">Cũ · đã đóng</a></div>
+      <div class="review" data-screen="home-states"><div class="opts"><label><input type="radio" name="r-home-states" value="Duyệt">Duyệt</label><label><input type="radio" name="r-home-states" value="Sửa">Sửa</label><label><input type="radio" name="r-home-states" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="home-states.html" title="Trạng thái đợt · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="home-states.html" title="Trạng thái đợt · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════ 2 -->
+  <h2 id="g2">2 · Danh mục · Bộ lọc · Trang sản phẩm · Tìm kiếm</h2>
+
+  <section class="screen" id="s-products">
+    <div class="meta">
+      <h3>Danh mục</h3>
+      <ul>
+        <li><b>Tab theo loại</b> có số đếm — thay cho "Áo / Khoác / Quần" vốn là tìm chữ.</li>
+        <li>Chip lọc có số đếm, mép phải mờ dần (L6). Thẻ hết hàng có nút nhẹ (L11).</li>
+        <li><b>Desktop:</b> rail lọc bên trái luôn mở (Loại · Form · Còn size · Màu · Khoảng giá), sắp xếp là Select của hệ, lưới 3 cột.</li>
+        <li>Chân trang có link xem lại đợt 04 · 03.</li>
+      </ul>
+      <div class="links"><a href="products.html" target="_blank">Mở toàn màn</a><a href="products.html#filter" target="_blank">Mở sẵn bộ lọc (điện thoại)</a><a href="before/shop-products-390.png" target="_blank">Cũ · 390</a><a href="before/shop-products-1280.png" target="_blank">Cũ · 1280</a></div>
+      <div class="review" data-screen="products"><div class="opts"><label><input type="radio" name="r-products" value="Duyệt">Duyệt</label><label><input type="radio" name="r-products" value="Sửa">Sửa</label><label><input type="radio" name="r-products" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="products.html" title="Danh mục · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="products.html" title="Danh mục · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-filter">
+    <div class="meta">
+      <h3>Bộ lọc (tấm trượt)</h3>
+      <ul>
+        <li>Thêm <b>Loại</b> và <b>Màu</b> — hai trường thật chưa từng lọc được.</li>
+        <li>Mỗi lựa chọn mang <b>số mẫu</b> còn lại; khoảng giá có 3 mức nhanh và ghi biên thật 390.000 – 1.450.000₫.</li>
+        <li>Một nút "Bỏ lọc" duy nhất; nút chính báo trước "Xem 6 mẫu".</li>
+      </ul>
+      <div class="links"><a href="products.html#filter" target="_blank">Mở toàn màn</a><a href="before/ov-filter-sheet.png" target="_blank">Cũ</a></div>
+      <div class="review" data-screen="filter"><div class="opts"><label><input type="radio" name="r-filter" value="Duyệt">Duyệt</label><label><input type="radio" name="r-filter" value="Sửa">Sửa</label><label><input type="radio" name="r-filter" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly" style="grid-template-columns:406px">
+      <div><div class="phone"><iframe loading="lazy" src="products.html#filter" title="Bộ lọc · điện thoại"></iframe></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-product">
+    <div class="meta">
+      <h3>Trang sản phẩm · KHÓI</h3>
+      <ul>
+        <li><b>Còn 17 / 35 chiếc đã cắt</b> + thanh đo — con số của mô hình drop, đặt ngay dưới giá.</li>
+        <li>Swatch màu có <b>tên và số còn</b> (Đen còn 10 · Kem còn 7). Breadcrumb Đợt 05 › Áo thun › KHÓI.</li>
+        <li>Thêm dòng Thanh toán và giao nhanh nội thành vào bảng thông tin.</li>
+        <li><b>Thanh mua dính</b> (điện thoại) chỉ hiện khi nút chính đã cuộn khỏi màn — cuộn xuống trong khung để thấy.</li>
+        <li><b>Desktop:</b> ảnh dính bên trái với dải thumbnail dọc, liên quan <b>4 mẫu</b> một hàng (thay 2 thẻ to 390px).</li>
+      </ul>
+      <div class="links"><a href="product.html" target="_blank">Mở toàn màn</a><a href="product.html#size" target="_blank">Bảng size</a><a href="before/shop-products-khoi-390.png" target="_blank">Cũ · 390</a><a href="before/shop-products-khoi-1280.png" target="_blank">Cũ · 1280</a></div>
+      <div class="review" data-screen="product"><div class="opts"><label><input type="radio" name="r-product" value="Duyệt">Duyệt</label><label><input type="radio" name="r-product" value="Sửa">Sửa</label><label><input type="radio" name="r-product" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="product.html" title="Sản phẩm · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="product.html" title="Sản phẩm · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-search">
+    <div class="meta">
+      <h3>Tìm kiếm</h3>
+      <ul>
+        <li>Sửa L7: một kết quả là một dòng đủ rộng, có nút thêm vào giỏ.</li>
+        <li>Gợi ý theo loại mang số đếm. <b>"Tìm gần đây"</b> lưu trên thiết bị — dữ liệu thật của trình duyệt, không phải máy chủ.</li>
+        <li>Desktop: cột hẹp căn giữa.</li>
+      </ul>
+      <div class="links"><a href="search.html" target="_blank">Mở toàn màn</a><a href="before/shop-search-q-khoi-390.png" target="_blank">Cũ · 390</a></div>
+      <div class="review" data-screen="search"><div class="opts"><label><input type="radio" name="r-search" value="Duyệt">Duyệt</label><label><input type="radio" name="r-search" value="Sửa">Sửa</label><label><input type="radio" name="r-search" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="search.html" title="Tìm kiếm · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="search.html" title="Tìm kiếm · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════ 3 -->
+  <h2 id="g3">3 · Giỏ hàng · Thanh toán · Xác nhận</h2>
+
+  <section class="screen" id="s-cart">
+    <div class="meta">
+      <h3>Giỏ hàng</h3>
+      <ul>
+        <li><b>Tiến độ miễn phí giao</b>: "mua thêm 190.000₫" — ngưỡng 1.000.000₫ đã có trong <code>lib/shipping.ts</code>.</li>
+        <li>Mỗi dòng ghi số còn của đúng size/màu đang đặt. Chấm màu cạnh tên màu.</li>
+        <li>Tổng tiền có <b>Dự kiến nhận</b>; link "Tiếp tục xem đợt 05"; ba cam kết nhỏ dưới nút.</li>
+        <li><b>Desktop:</b> hai cột — món bên trái, tổng tiền dính bên phải (thay vì kéo giãn 1.200px).</li>
+      </ul>
+      <div class="links"><a href="cart.html" target="_blank">Mở toàn màn</a><a href="before/shop-cart-390.png" target="_blank">Cũ · 390</a><a href="before/shop-cart-1280.png" target="_blank">Cũ · 1280</a></div>
+      <div class="review" data-screen="cart"><div class="opts"><label><input type="radio" name="r-cart" value="Duyệt">Duyệt</label><label><input type="radio" name="r-cart" value="Sửa">Sửa</label><label><input type="radio" name="r-cart" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="cart.html" title="Giỏ hàng · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="cart.html" title="Giỏ hàng · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-checkout">
+    <div class="meta">
+      <h3>Thanh toán</h3>
+      <ul>
+        <li><b>Chọn từ sổ địa chỉ</b> (khách có 2) thay vì form trống; "địa chỉ khác" mở form và lưu vào sổ.</li>
+        <li><b>Đơn của bạn</b> — xem được món đang trả tiền ngay trên trang này (gập trên điện thoại, mở sẵn trên desktop).</li>
+        <li>Cách giao ghi <b>ngày nhận</b> thật (22/09 – 24/09 · 21/09). Mã giảm giá nhập được ở đây.</li>
+        <li><b>Desktop:</b> form bên trái, đơn + tổng tiền + Đặt hàng dính bên phải.</li>
+      </ul>
+      <div class="links"><a href="checkout.html" target="_blank">Mở toàn màn</a><a href="before/shop-checkout-390.png" target="_blank">Cũ · 390</a><a href="before/shop-checkout-1280.png" target="_blank">Cũ · 1280</a></div>
+      <div class="review" data-screen="checkout"><div class="opts"><label><input type="radio" name="r-checkout" value="Duyệt">Duyệt</label><label><input type="radio" name="r-checkout" value="Sửa">Sửa</label><label><input type="radio" name="r-checkout" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="checkout.html" title="Thanh toán · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="checkout.html" title="Thanh toán · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-confirmed">
+    <div class="meta">
+      <h3>Xác nhận đơn</h3>
+      <ul>
+        <li><b>Hạn chuyển khoản 12 giờ</b> ghi thành giờ cụ thể — luật đã có ở trang đổi trả, nay hiện đúng chỗ.</li>
+        <li>Ô <b>QR & số tài khoản</b> để trống có nhãn: chưa có tài khoản ngân hàng nào được chốt.</li>
+        <li>Nút "Xem đơn trong tài khoản". Desktop: cột 600px căn giữa.</li>
+      </ul>
+      <div class="links"><a href="order-confirmed.html" target="_blank">Mở toàn màn</a><a href="before/shop-order-confirmed-1280.png" target="_blank">Cũ · 1280 (trạng thái rỗng)</a></div>
+      <div class="review" data-screen="confirmed"><div class="opts"><label><input type="radio" name="r-confirmed" value="Duyệt">Duyệt</label><label><input type="radio" name="r-confirmed" value="Sửa">Sửa</label><label><input type="radio" name="r-confirmed" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="order-confirmed.html" title="Xác nhận · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="order-confirmed.html" title="Xác nhận · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════ 4 -->
+  <h2 id="g4">4 · Tài khoản</h2>
+
+  <section class="screen" id="s-account">
+    <div class="meta">
+      <h3>Tài khoản · tổng quan</h3>
+      <ul>
+        <li><b>Đơn đang chuyển động</b> lên đầu: #DH-2422 đang giao (dự kiến 21/09), #DH-2430 chờ chuyển khoản với hạn giờ.</li>
+        <li><b>Mã đang chạy</b> — DOT05 · CHAOBAN · FREESHIP từ <code>data/promotions.ts</code>, có Sao chép. <a href="#ask">Cần bạn chốt có công khai không.</a></li>
+        <li>Cài đặt thành <b>công tắc thật</b>, lưu trên thiết bị — cùng cơ chế sổ địa chỉ; ghi rõ chưa có máy chủ gửi email.</li>
+        <li><b>Desktop:</b> rail trái cho mọi màn tài khoản, nội dung 2 cột.</li>
+      </ul>
+      <div class="links"><a href="account.html" target="_blank">Mở toàn màn</a><a href="before/shop-account-390.png" target="_blank">Cũ · 390</a><a href="before/shop-account-1280.png" target="_blank">Cũ · 1280</a></div>
+      <div class="review" data-screen="account"><div class="opts"><label><input type="radio" name="r-account" value="Duyệt">Duyệt</label><label><input type="radio" name="r-account" value="Sửa">Sửa</label><label><input type="radio" name="r-account" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="account.html" title="Tài khoản · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="account.html" title="Tài khoản · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-orders">
+    <div class="meta">
+      <h3>Đơn hàng của tôi</h3>
+      <ul>
+        <li>Tab có <b>số đếm</b>; mỗi dòng có <b>ảnh món</b>, tên mẫu, và một dòng trạng thái có ý nghĩa (hạn chuyển khoản, ngày dự kiến, ngày đã giao).</li>
+        <li>Desktop dùng rail chung.</li>
+      </ul>
+      <div class="links"><a href="account-orders.html" target="_blank">Mở toàn màn</a><a href="before/shop-account-orders-390.png" target="_blank">Cũ · 390</a></div>
+      <div class="review" data-screen="orders"><div class="opts"><label><input type="radio" name="r-orders" value="Duyệt">Duyệt</label><label><input type="radio" name="r-orders" value="Sửa">Sửa</label><label><input type="radio" name="r-orders" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="account-orders.html" title="Đơn hàng · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="account-orders.html" title="Đơn hàng · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <section class="screen" id="s-auth">
+    <div class="meta">
+      <h3>Đăng nhập</h3>
+      <ul>
+        <li>Điện thoại giữ nguyên bố cục đã duyệt. <b>Desktop:</b> thẻ 460px căn giữa thay vì ô nhập 1.200px.</li>
+      </ul>
+      <div class="links"><a href="auth.html" target="_blank">Mở toàn màn</a><a href="before/shop-sign-in-1280.png" target="_blank">Cũ · 1280</a></div>
+      <div class="review" data-screen="auth"><div class="opts"><label><input type="radio" name="r-auth" value="Duyệt">Duyệt</label><label><input type="radio" name="r-auth" value="Sửa">Sửa</label><label><input type="radio" name="r-auth" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames">
+      <div><div class="phone"><iframe loading="lazy" src="auth.html" title="Đăng nhập · điện thoại"></iframe></div></div>
+      <div><div class="desk"><iframe loading="lazy" src="auth.html" title="Đăng nhập · desktop"></iframe></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════ 5 -->
+  <h2 id="g5">5 · Quản trị — thao tác mô phỏng có nhãn</h2>
+  <p class="muted">Mọi nút ở đây đều <b>làm được việc nó nói</b> trên trình duyệt này: bấm thử sẽ thấy thông báo và trạng thái đổi. Thanh bên có nhãn "chế độ mô phỏng", đếm số thay đổi và nút đặt lại. Không có máy chủ.</p>
+
+  <section class="screen" id="s-dash">
+    <div class="meta">
+      <h3>Tổng quan</h3>
+      <ul>
+        <li><b>Kỳ xem</b> 7 · 14 · 30 ngày. KPI "Còn trong đợt" có thanh đo.</li>
+        <li><b>Cần xử lý</b> là danh sách hành động: 2 đơn chờ tiền có hạn giờ, 3 đơn đã trả chưa bàn giao (một đơn trễ 3 ngày) — nút ngay trên dòng.</li>
+        <li><b>Bán chạy</b> theo đã bán / đã cắt; <b>khách mới vs quay lại</b> (4 / 4) — đều suy từ fixture.</li>
+      </ul>
+      <div class="links"><a href="admin-dashboard.html" target="_blank">Mở toàn màn</a><a href="before/admin-admin-1440.png" target="_blank">Cũ</a></div>
+      <div class="review" data-screen="admin-dashboard"><div class="opts"><label><input type="radio" name="r-dash" value="Duyệt">Duyệt</label><label><input type="radio" name="r-dash" value="Sửa">Sửa</label><label><input type="radio" name="r-dash" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-dashboard.html" title="Tổng quan"></iframe></div><div class="caption">1440 px thu nhỏ · cuộn được trong khung</div></div></div>
+  </section>
+
+  <section class="screen" id="s-aorders">
+    <div class="meta">
+      <h3>Đơn hàng</h3>
+      <ul>
+        <li><b>Tab trạng thái</b> có số đếm — hàng đợi của người vận hành.</li>
+        <li><b>Cột chọn + thanh hàng loạt</b>: đang chọn 2 đơn đã thanh toán → "Đóng gói & bàn giao", "In phiếu giao", "Tải CSV".</li>
+        <li>Ô trạng thái mang dòng phụ có ý nghĩa (hạn tiền, mã vận đơn, "chưa bàn giao · 3 ngày"). Menu ⋯ từng dòng.</li>
+        <li>Sửa L9: menu số dòng mỗi trang có tiêu đề đúng.</li>
+      </ul>
+      <div class="links"><a href="admin-orders.html" target="_blank">Mở toàn màn</a><a href="before/admin-admin-orders-1440.png" target="_blank">Cũ</a></div>
+      <div class="review" data-screen="admin-orders"><div class="opts"><label><input type="radio" name="r-aorders" value="Duyệt">Duyệt</label><label><input type="radio" name="r-aorders" value="Sửa">Sửa</label><label><input type="radio" name="r-aorders" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-orders.html" title="Đơn hàng"></iframe></div></div></div>
+  </section>
+
+  <section class="screen" id="s-aorder">
+    <div class="meta">
+      <h3>Chi tiết đơn · DH-2429</h3>
+      <ul>
+        <li>Dải <b>"Bước tiếp theo"</b> nói việc phải làm; nút chính mở form bàn giao ngay tại chỗ (đơn vị vận chuyển, mã vận đơn) → trạng thái, dòng thời gian và ghi chú cùng đổi.</li>
+        <li><b>Ghi chú nội bộ</b> có mốc giờ; "Huỷ đơn" nằm trong menu ⋯ và bắt chọn lý do.</li>
+        <li>Cột phải: giao đến (sửa được), thanh toán khớp, khách hàng.</li>
+      </ul>
+      <div class="links"><a href="admin-order.html" target="_blank">Mở toàn màn</a><a href="before/admin-admin-orders-DH-2310-1440.png" target="_blank">Cũ (đơn đã huỷ)</a></div>
+      <div class="review" data-screen="admin-order"><div class="opts"><label><input type="radio" name="r-aorder" value="Duyệt">Duyệt</label><label><input type="radio" name="r-aorder" value="Sửa">Sửa</label><label><input type="radio" name="r-aorder" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-order.html" title="Chi tiết đơn"></iframe></div></div></div>
+  </section>
+
+  <section class="screen" id="s-adrops">
+    <div class="meta">
+      <h3>Đợt bán + chi tiết đợt 05</h3>
+      <ul>
+        <li>Bảng đợt có <b>Tạo đợt mới</b> (chỉ cần giờ mở/đóng) và menu từng đợt.</li>
+        <li><b>Chi tiết đợt</b>: 5 KPI, bảng theo mẫu (giá · cắt · bán · còn · % · doanh thu = giá × đã bán), lịch với "64% thời gian đã qua · 60% hàng đã bán", đợt kế tiếp.</li>
+        <li><b>Đóng đợt sớm</b> = sửa giờ đóng thành bây giờ, có hộp xác nhận nói rõ hệ quả — không thêm trạng thái thứ tư.</li>
+      </ul>
+      <div class="links"><a href="admin-drops.html" target="_blank">Bảng đợt</a><a href="admin-drop.html" target="_blank">Chi tiết đợt 05</a><a href="before/admin-admin-drops-1440.png" target="_blank">Cũ</a></div>
+      <div class="review" data-screen="admin-drops"><div class="opts"><label><input type="radio" name="r-adrops" value="Duyệt">Duyệt</label><label><input type="radio" name="r-adrops" value="Sửa">Sửa</label><label><input type="radio" name="r-adrops" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-drop.html" title="Chi tiết đợt"></iframe></div><div class="caption">Đang hiện chi tiết đợt 05 · <a href="admin-drops.html" target="_blank">bảng đợt mở riêng</a></div></div></div>
+  </section>
+
+  <section class="screen" id="s-apromo">
+    <div class="meta">
+      <h3>Khuyến mãi</h3>
+      <ul>
+        <li>Tab trạng thái; <b>Tạo mã</b> mở form có dòng xem trước bằng lời.</li>
+        <li>Cột "Đã dùng" có thanh đo; mã hết lượt có nút "Nâng giới hạn" ngay trên dòng.</li>
+        <li>Menu ⋯: Sửa · Nhân bản · Sao chép mã · Tạm dừng · Kết thúc sớm.</li>
+      </ul>
+      <div class="links"><a href="admin-promotions.html" target="_blank">Mở toàn màn</a><a href="before/admin-admin-promotions-1440.png" target="_blank">Cũ</a></div>
+      <div class="review" data-screen="admin-promotions"><div class="opts"><label><input type="radio" name="r-apromo" value="Duyệt">Duyệt</label><label><input type="radio" name="r-apromo" value="Sửa">Sửa</label><label><input type="radio" name="r-apromo" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
+    </div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-promotions.html" title="Khuyến mãi"></iframe></div></div></div>
+  </section>
+
+  <h2 id="ask">Cần bạn chốt</h2>
+  <div class="q"><b>1 · Công khai mã giảm giá của đợt trong trang tài khoản?</b><span>Mock hiện DOT05 · CHAOBAN · FREESHIP cho khách đã đăng nhập. Nếu đây là mã chỉ gửi riêng thì bỏ mục này, giỏ hàng vẫn nhập tay.</span></div>
+  <div class="q"><b>2 · Đổi trả "7 ngày nếu chưa qua sử dụng" — đã chốt chưa?</b><span>PDP và ô đồng ý ở thanh toán đang khẳng định 7 ngày; trang /returns lại để trống chờ viết. Mock giữ 7 ngày + "điều kiện chi tiết chờ chốt". Chốt một trong hai.</span></div>
+  <div class="q"><b>3 · Thao tác mô phỏng của quản trị sống bao lâu?</b><span>Mock đề xuất lưu trên trình duyệt (qua reload vẫn còn, có nút đặt lại) — cùng cơ chế giỏ/yêu thích. Hay chỉ trong phiên?</span></div>
+  <div class="q"><b>4 · "Tìm gần đây" và "Sắp hết" ngưỡng ≤ 3 chiếc</b><span>Lịch sử tìm lưu trên thiết bị (không máy chủ); ngưỡng sắp hết dùng đúng LOW_STOCK_AT = 3 đang có. Giữ?</span></div>
+  <div class="q"><b>5 · Hai màn không dựng lại trong mock</b><span>Sản phẩm (admin) và Khách hàng (admin) chỉ nhận sửa L8, L10 — bố cục giữ nguyên. Trang giới thiệu / FAQ / đổi trả / liên hệ / 404 nhận khung mới (chân trang, cột hẹp) nhưng nội dung giữ nguyên.</span></div>
+  <div class="q"><b>6 · Sàn chữ chức năng 11px — ĐÃ CHỐT: A (20/09)</b><span>Mọi chữ người dùng phải đọc để thao tác ≥ 11px; thông báo lỗi và cảnh báo giỏ 11,5px. Mock đã áp dụng cho cả 17 màn (51 quy tắc CSS, cuối <code>v2.css</code>). Khi thực thi: áp vào <code>app/styles/</code> theo đúng file:dòng đã ghi, chỉnh padding ô KPI quản trị để ghi chú gọn, cập nhật thang chữ ở DESIGN.md §3.</span></div>
+
+  <p class="muted" style="margin-top:40px;font-size:12.5px">Mở bằng <code>cd prototype && python serve.py 4320</code> → <code>http://127.0.0.1:4320/v2/</code>, hoặc mở thẳng tệp <code>index.html</code>. Kết quả duyệt lưu trong trình duyệt này; bấm "Sao chép kết quả duyệt" rồi dán lại cho tôi.</p>
+</div>
+
+<script>
+(function () {
+  // scale desktop frames to fit their box
+  function fit() {
+    document.querySelectorAll(".desk").forEach(function (d) {
+      var f = d.querySelector("iframe"); if (!f) return;
+      var w = d.classList.contains("tall") ? 1440 : 1280;
+      f.style.transform = "scale(" + (d.clientWidth / w) + ")";
+    });
+  }
+  window.addEventListener("resize", fit); fit();
+  // review state, per screen, in this browser
+  var KEY = "v2.review"; var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+  var boxes = document.querySelectorAll(".review");
+  function prog() {
+    var n = 0; boxes.forEach(function (b) { if (state[b.getAttribute("data-screen")] && state[b.getAttribute("data-screen")].v) n++; });
+    document.getElementById("prog").textContent = n + " / " + boxes.length + " màn đã duyệt";
+  }
+  boxes.forEach(function (b) {
+    var id = b.getAttribute("data-screen"); var s = state[id] || {};
+    if (s.v) { var r = b.querySelector('input[value="' + s.v + '"]'); if (r) r.checked = true; }
+    if (s.n) b.querySelector("textarea").value = s.n;
+    b.addEventListener("change", function () {
+      var v = b.querySelector("input:checked"); state[id] = { v: v ? v.value : "", n: b.querySelector("textarea").value };
+      localStorage.setItem(KEY, JSON.stringify(state)); prog();
+    });
+    b.querySelector("textarea").addEventListener("input", function () {
+      var v = b.querySelector("input:checked"); state[id] = { v: v ? v.value : "", n: b.querySelector("textarea").value };
+      localStorage.setItem(KEY, JSON.stringify(state));
+    });
+  });
+  prog();
+  document.getElementById("copy").addEventListener("click", function () {
+    var lines = [];
+    boxes.forEach(function (b) {
+      var id = b.getAttribute("data-screen"); var s = state[id] || {};
+      lines.push(id + ": " + (s.v || "(chưa duyệt)") + (s.n ? " — " + s.n : ""));
+    });
+    var text = "Kết quả duyệt mock v2 (" + new Date().toLocaleString("vi-VN") + ")\n" + lines.join("\n");
+    var out = document.getElementById("out"); out.textContent = text; out.style.display = "block";
+    try { navigator.clipboard.writeText(text); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+/* Foundation: box model, type, focus ring, browser-drawn surfaces, the page
+   frame and the footer.
+
+   Lifted from `prototype/app.css`. ONE line departs from the
+   original: font-family resolves through next/font's variables
+   (--font-sans / --font-display) instead of naming the families directly,
+   because next/font self-hosts them. Every other value is unchanged; change
+   one and you owe a screenshot comparison against http://127.0.0.1:4321.
+
+   The tokens, and the switch that kills the focus ring while the pointer is
+   driving, live in ../globals.css. */
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+.s{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--font-sans);
+  font-size:var(--fs-ui); line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+/* ── The display roles, v3 ───────────────────────────────────────────────
+   Nine roles live as tokens in ../globals.css; these three classes are the
+   only ones that change the FACE. Unbounded 800 is drawn wide and loose, so
+   every display role pulls it back with `--ls-display`, and the big numbers
+   pull harder still (`--ls-num`).
+
+   `.nm` is the style name — on a card, in a cart line, at the head of a
+   product page. `.disp` is a display-sized line of prose (the cover's
+   headline). `.num` is a figure read as a figure: the issue number, a KPI.
+   `.num` sets `line-height:.9` because at 96px the default leading opens a
+   hole under the number the layout then has to close. */
+.s .nm, .s .disp{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:var(--ls-display); }
+.s .num{ font-family:var(--font-display); font-weight:var(--fw-display);
+  font-variant-numeric:tabular-nums; letter-spacing:var(--ls-num); line-height:.9; }
+.s .tnum{ font-variant-numeric:tabular-nums; }
+.s .muted{ color:var(--ink2); }
+/* A phone number and a date range are read as one token; the non-breaking
+   spaces inside them (lib/phone.ts, lib/datetime.ts) do the real work, and
+   this is for the places that need the whole run held together. */
+.s .nw{ white-space:nowrap; }
+.s a{ color:inherit; text-decoration:none; }
+/* ── The one utility this project uses, defined here rather than borrowed ──
+   Six components render `.sr-only` to give a screen reader the sentence a
+   graphic says visually (`Steps`, and the five admin tables). It arrived
+   from
+   Tailwind's utilities, which `globals.css` no longer generates — they
+   collided with this system's own class names. This is the standard recipe,
+   and it belongs to the design system now like everything else here. */
+.sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); clip-path:inset(50%); white-space:nowrap;
+  border-width:0; }
+.s :focus-visible{ outline:2px solid var(--mark); outline-offset:2px;
+  border-radius:var(--r-sm); }
+
+/* ── Surfaces the browser draws for you. Leave them alone and they arrive
+      wearing the operating system's defaults, which belong to no design
+      system at all. ── */
+.s ::selection{ background:var(--brand); color:var(--brand-ink); }
+.s{ caret-color:var(--brand); }
+.s ::-webkit-scrollbar{ width:10px; height:10px; }
+.s ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:99px;
+  border:3px solid var(--bg); }
+.s ::-webkit-scrollbar-thumb:hover{ background:var(--ink2); }
+
+/* Digits have to line up in a column before two numbers can be compared at
+   a glance. */
+.s .p,
+.s .amt,
+.s .row .d{
+  font-variant-numeric:tabular-nums; }
+
+/* A heading should not drop a single orphaned word onto its last line. */
+.s h1{ text-wrap:balance; }
+.s p,
+.s .lead{ text-wrap:pretty; }
+
+.s .lead{ padding:11px 18px 0; font-size:12.5px; line-height:1.55; color:var(--ink2); max-width:46ch; }
+
+/* ── the note, v3 ────────────────────────────────────────────────────────
+   Ported from `prototype/v3/v3.css`, `.note3`. It was never a variant of the
+   v2 `.note` that stood here until slice 6 — that one was 11px of grey
+   standing on the page, this one is a BLOCK on pale honey: the place a
+   screen says something the shopper should not miss and that is not an
+   error. `.hot` is the same block in the alert family, for a discount code
+   the rules refused.
+
+   Both pairs are the token layer's and were computed there: ink on
+   `--brand-soft` is 15.4:1, `--hot` on `--hot-bg` is 5.6:1. */
+.s .note3{ display:flex; gap:10px; align-items:flex-start; padding:10px 12px;
+  border-radius:var(--r); background:var(--brand-soft); color:var(--ink);
+  font-size:var(--fs-sm); line-height:1.5; }
+.s .note3 > .ic{ color:var(--brand-text); margin-top:1px; }
+.s .note3.hot{ background:var(--hot-bg); color:var(--hot); }
+.s .note3.hot > .ic{ color:currentColor; }
+
+/* `.s .sitefoot` (Phase 6), `.foot2` (v2) and the page frames that went with
+   them (`.s.v2`, and the `.s .hr` rule both of them set a margin on) all
+   stood here and all are gone: each was replaced wholesale on every route
+   the day its successor landed. `.foot3` and `.s.v3` are the current pair.
+   The v2 heading (`.h2`) and padding (`.pad`) helpers went the same way at
+   slice 6; `.wrap3` below is the one gutter left. */
+
+/* ── The page frame, v3 ──────────────────────────────────────────────────
+   One column, at least a viewport tall, with `main` taking the slack: the
+   footer lands ON the bottom edge of a short page and below the fold of a
+   long one, and it does it without knowing anything about the screen above
+   it. Before this the footer was on 6 of 27 shop routes and a short screen
+   — the confirmation, an empty search, sign-in — left half the viewport
+   blank under the last line (fixes L1 and L2).
+
+   `100dvh`, not `100vh`: on a phone the browser's own chrome slides away as
+   you scroll, and `vh` would leave a band of background showing under the
+   footer for exactly as long as that animation lasts.
+
+   The back office does not wear this: `.s.adm3` is a sidebar beside a page,
+   not a stack, and states its own direction in admin.css. */
+.s.v3{ display:flex; flex-direction:column; min-height:100dvh; }
+.s.v3 > main{ flex:1 0 auto; }
+/* The page's own gutter and width, as the v3 mock draws it: 18px on the
+   phone, 40px and a 1320px measure from 900px (desktop.css). */
+.s .wrap3{ padding:0 var(--gut); }
+
+/* ── The footer, v3 ──────────────────────────────────────────────────────
+   Same four columns of things that are TRUE — the issue calendar read from
+   the fixtures, the help pages that exist, the delivery and payment terms
+   `lib/shipping.ts` actually enforces, and a slot that admits the legal name
+   and the contact channels have not been written yet — rebuilt in the v3
+   grammar: a 2px ink rule across the top, an inner block that keeps the
+   page's gutter and max width, and a colophon under a hairline.
+
+   Two columns on the phone, and the two LONG groups (delivery terms, about
+   + the empty slot) take the full width rather than being squeezed into
+   half of a 390px screen. Four columns from 900px (desktop.css).
+
+   Every row is at least 44px tall on the phone. The invisible `::after`
+   overlay the rest of the system uses cannot help here: five links stacked
+   at a 34px pitch would each need a 44px overlay and the overlays would eat
+   their neighbours'. DESIGN.md §5 records that decision once already —
+   targets that tread on each other are worse than tight ones — so the ROW
+   grows on the phone instead of the overlay. Back to 32 from 900px. */
+.s .foot3{ margin-top:var(--s8); border-top:2px solid var(--ink); }
+.s .foot3 .in{ padding:var(--s5) var(--gut) var(--s6); }
+.s .foot3 .cols{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s5) var(--s4); }
+@media (max-width:899.98px){ .s .foot3 .cols > div:nth-child(n+3){ grid-column:1 / -1; } }
+.s .foot3 h4{ font-size:var(--fs-xs); font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink2); margin-bottom:8px; }
+.s .foot3 ul{ display:flex; flex-direction:column; list-style:none; margin:0; padding:0; }
+.s .foot3 li a, .s .foot3 li > span{ display:inline-flex; align-items:center;
+  min-height:44px; font-size:var(--fs-ui); color:var(--ink); }
+.s .foot3 li a:hover{ text-decoration:underline; text-underline-offset:3px;
+  color:var(--brand-text); }
+/* The calendar rows are two lines each, so they are a block with their own
+   padding rather than a 44px inline-flex row that would double in height. */
+.s .foot3 .cal li a{ display:block; padding:8px 0; min-height:0; }
+.s .foot3 .cal b{ display:block; font-family:var(--font-display);
+  font-weight:var(--fw-display); font-size:var(--fs-ui); letter-spacing:var(--ls-display); }
+.s .foot3 .cal .st{ display:block; font-size:var(--fs-xs); color:var(--ink2);
+  margin-top:1px; font-variant-numeric:tabular-nums; }
+.s .foot3 .cal .st.on{ color:var(--ok); font-weight:500; }
+/* `.needwrite` carries the page gutter as a margin and a cream ground
+   (admin.css), both of which belong to the back office. In a footer column
+   the column already supplies the gutter, and the ground is already white —
+   so here it is what the mock draws: a dashed outline and nothing else. */
+.s .foot3 .needwrite{ margin:8px 0 0; background:transparent; }
+.s .foot3 .needwrite .lb, .s .foot3 .needwrite .lb svg{ color:var(--ink2); }
+.s .foot3 .colophon{ margin-top:var(--s5); padding-top:14px;
+  border-top:1px solid var(--hair); display:flex; flex-wrap:wrap; gap:8px 18px;
+  font-size:var(--fs-xs); color:var(--ink2); align-items:center; }
+.s .foot3 .colophon .wm{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:.14em; color:var(--ink); font-size:var(--fs-sm); margin-right:0; }
+.s .foot3 .colophon .legal{ margin-left:auto; }

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Giỏ hàng · BRAND</title>
+<link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="sys/base.css"><link rel="stylesheet" href="sys/nav.css"><link rel="stylesheet" href="sys/buttons.css">
+<link rel="stylesheet" href="sys/cards.css"><link rel="stylesheet" href="sys/forms.css"><link rel="stylesheet" href="sys/lists.css">
+<link rel="stylesheet" href="sys/admin.css"><link rel="stylesheet" href="sys/table.css"><link rel="stylesheet" href="sys/sheet.css">
+<link rel="stylesheet" href="sys/interaction.css"><link rel="stylesheet" href="sys/desktop.css"><link rel="stylesheet" href="v2.css">
+<script src="icons.js"></script><script src="v2.js" defer></script>
+</head>
+<body>
+<div class="s v2">
+<header class="nav2" data-nav data-cart="2" data-wish="2"></header>
+<main>
+  <div class="sub"><a href="products.html" aria-label="Quay lại"><svg data-i="back" class="ic"></svg></a><h1>Giỏ hàng</h1><span class="rt plain">2 món</span></div>
+
+  <div class="cart2">
+    <div class="steps">
+      <span class="st now"><span class="n" aria-hidden="true">1</span><span class="t">Giỏ hàng</span></span><span class="ln"></span>
+      <span class="st todo"><span class="n" aria-hidden="true">2</span><span class="t">Địa chỉ</span></span><span class="ln"></span>
+      <span class="st todo"><span class="n" aria-hidden="true">3</span><span class="t">Thanh toán</span></span><span class="ln"></span>
+      <span class="st todo"><span class="n" aria-hidden="true">4</span><span class="t">Xong</span></span>
+    </div>
+
+    <div>
+      <!-- the free-shipping threshold already lives in lib/shipping.ts; say it out loud -->
+      <div class="shipbar">Mua thêm <b>190.000₫</b> nữa để được <b>miễn phí giao</b> (đơn từ 1.000.000₫).
+        <div class="meter" aria-hidden="true"><i style="width:81%"></i></div></div>
+
+      <div class="rows">
+        <div class="row cartline">
+          <span class="thumb"><img src="img/khoi.webp" alt=""></span>
+          <span class="grow">
+            <a class="t nm" href="product.html">KHÓI</a>
+            <span class="d">Áo thun oversize · <i class="dot" style="background:#1C1C1C"></i>Đen · M</span>
+            <span class="qty"><button type="button" class="qb" aria-label="Bớt một chiếc KHÓI" disabled><svg data-i="minus" class="ic sm"></svg></button><input class="qn" type="text" inputmode="numeric" value="1" aria-label="Số lượng KHÓI size M"><button type="button" class="qb" aria-label="Thêm một chiếc KHÓI"><svg data-i="plus" class="ic sm"></svg></button></span>
+            <span class="cap info">còn 4 chiếc size M màu Đen</span>
+          </span>
+          <span class="side"><span class="amt">390.000₫</span><button type="button" class="rm">Xoá</button></span>
+        </div>
+        <div class="row cartline">
+          <span class="thumb"><img src="img/cat.webp" alt=""></span>
+          <span class="grow">
+            <a class="t nm" href="#">CÁT</a>
+            <span class="d">Áo thun tay lỡ · <i class="dot" style="background:#E6DFD1"></i>Kem · L</span>
+            <span class="qty"><button type="button" class="qb" aria-label="Bớt một chiếc CÁT" disabled><svg data-i="minus" class="ic sm"></svg></button><input class="qn" type="text" inputmode="numeric" value="1" aria-label="Số lượng CÁT size L"><button type="button" class="qb" aria-label="Thêm một chiếc CÁT"><svg data-i="plus" class="ic sm"></svg></button></span>
+            <span class="cap info">còn 2 chiếc size L màu Kem</span>
+          </span>
+          <span class="side"><span class="amt">420.000₫</span><button type="button" class="rm">Xoá</button></span>
+        </div>
+      </div>
+
+      <a class="backlink" href="products.html"><svg data-i="back" data-raw></svg>Tiếp tục xem đợt 05</a>
+    </div>
+
+    <div class="aside">
+      <div class="pad" style="margin-top:14px;display:flex;gap:8px">
+        <input class="inp" style="flex:1" type="text" aria-label="Mã giảm giá" placeholder="Mã giảm giá">
+        <button type="button" class="btn ghost" style="flex:none" data-sim="Mã CHAOBAN đã áp dụng · −50.000₫"><svg data-i="tag" class="ic sm"></svg>Áp dụng</button>
+      </div>
+      <div class="sum">
+        <div><span>Tạm tính · 2 món</span><span>810.000₫</span></div>
+        <div><span>Phí giao hàng</span><span>30.000₫</span></div>
+        <div><span>Giảm giá</span><span>—</span></div>
+        <div><span>Dự kiến nhận</span><span>22/09 – 24/09</span></div>
+        <div class="tot"><span>Tổng cộng</span><span>840.000₫</span></div>
+      </div>
+      <div class="note pad" style="padding-top:10px">Đợt 05 <span data-until="2026-09-25T20:00:00+07:00" data-verb="đóng" style="display:inline">đóng sau 5 ngày 1 giờ</span>. Giỏ hàng không giữ chỗ tồn kho — ai chốt trước lấy trước.</div>
+      <div class="pad" style="padding-top:14px">
+        <a class="btn" href="checkout.html"><svg data-i="card" class="ic sm"></svg>Tiến hành thanh toán · 840.000₫</a>
+      </div>
+      <div class="note pad" style="padding-top:10px;display:flex;gap:14px">
+        <span><svg data-i="truck" class="ic sm" style="display:inline-block;vertical-align:-3px"></svg> 2–4 ngày</span>
+        <span><svg data-i="refund" class="ic sm" style="display:inline-block;vertical-align:-3px"></svg> Đổi trả 7 ngày</span>
+        <span><svg data-i="card" class="ic sm" style="display:inline-block;vertical-align:-3px"></svg> CK · COD · Thẻ</span>
+      </div>
+    </div>
+  </div>
+</main>
+<footer class="foot2" data-footer></footer>
+</div>
+</body>
+</html>

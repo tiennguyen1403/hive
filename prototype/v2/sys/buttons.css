@@ -1,0 +1,72 @@
+/* Buttons, badges, filter chips, the step bar.
+   Lifted verbatim from `prototype/app.css` — the approved mock is the
+   REFERENCE. Change anything here and you owe a screenshot comparison
+   against http://127.0.0.1:4321. */
+
+/* ---------------------------------------------------------------- buttons */
+/* `padding: 0 16px` ADDED 2026-09-20, not in the prototype.
+   There, every `.btn` was a full-width block in a single column, so the
+   label was centred in space the parent supplied and no padding was ever
+   missed. Put the same button in a row where it shrinks to its content and
+   the omission shows immediately: the label touches both edges, and a short
+   one like "Huỷ" comes out 27px wide. On a full-width button the padding
+   changes nothing — the content is centred either way. */
+.s .btn{ display:flex; align-items:center; justify-content:center; gap:7px;
+  padding:0 16px;
+  background:var(--fill); color:var(--fill-ink); border:1px solid var(--fill);
+  border-radius:var(--r); height:40px; font-size:13px; font-weight:500;
+  letter-spacing:.01em; cursor:pointer; position:relative; }
+/* The button stands 40px tall so it reads light, but a finger still gets
+   44px: an invisible overlay widens the touch target by 2px on each side.
+   Costs the layout nothing. */
+.s .btn::after{ content:""; position:absolute; inset:-2px 0; }
+.s .btn.sm::after{ content:none; }
+.s .btn.ghost{ background:#fff; color:var(--link); border-color:var(--fill); }
+.s .btn.quiet{ background:var(--gold-50); color:var(--ink2);
+  border-color:var(--gold-50); }
+.s .btn.sm{ height:34px; font-size:12px; padding:0 14px; display:inline-flex; }
+.s .btn.off{ background:var(--gold-50); color:var(--ink2); border-color:var(--line);
+  border-style:dashed; }
+.s .btn.wide{ margin:0 18px; }
+.s .lnk{ color:var(--link); font-weight:500; text-decoration:underline;
+  text-decoration-thickness:1px; text-underline-offset:3px;
+  text-decoration-color:color-mix(in srgb, var(--link) 45%, transparent); }
+
+/* ---------------------------------------------------------------- badges */
+.s .badge{ display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:500;
+  white-space:nowrap;
+  padding:3px 8px; border-radius:var(--r-sm); background:var(--info-bg); color:var(--info); }
+.s .badge.ok{ background:var(--ok-bg); color:var(--ok); }
+.s .badge.warn{ background:var(--warn-bg); color:var(--warn); }
+.s .badge.hot{ background:var(--hot-bg); color:var(--hot); }
+.s .badge.flat{ background:var(--gold-50); color:var(--ink2); }
+.s .badge i{ width:5px; height:5px; border-radius:99px; background:currentColor; flex:none;
+  font-style:normal; }
+
+/* ----------------------------------------------------------- filter chips */
+/* `padding-bottom:7px` ADDED in Phase 6. `.chips` is a scroll container
+   (interaction.css turns on overflow-x), and a scroll container CLIPS what
+   overflows it — including the invisible 7px the chips' touch overlay
+   reaches below its box. Measured at 390px: 38px of hit area instead of 46.
+   Exactly the fault `.qty{overflow:hidden}` had in Phase 4, in a second
+   place. The padding gives the overlay room inside the clip. */
+.s .chips{ display:flex; gap:7px; padding:12px 18px 7px; overflow:hidden; }
+.s .chip{ border:1px solid var(--fill); background:#fff; border-radius:var(--r);
+  padding:6px 11px; font-size:11.5px; color:var(--ink2); white-space:nowrap; }
+.s .chip.on{ background:var(--fill); border-color:var(--fill); color:var(--fill-ink);
+  font-weight:500; }
+.s .chip.icon{ display:inline-flex; align-items:center; gap:5px; }
+
+/* -------------------------------------------------------------- step bar */
+.s .steps{ display:flex; align-items:flex-start; padding:15px 18px 0; }
+.s .steps .st{ display:flex; flex-direction:column; align-items:center; gap:7px; flex:none; }
+.s .steps .n{ width:28px; height:28px; border-radius:var(--r); display:flex;
+  align-items:center; justify-content:center; font-size:12px; font-weight:600;
+  background:var(--gold-100); color:var(--ink2); }
+.s .steps .st.done .n, .s .steps .st.now .n{ background:var(--fill); color:var(--fill-ink); }
+.s .steps .n svg{ width:13px; height:8.7px; color:var(--fill-ink); fill:none; }
+.s .steps .t{ font-size:10px; color:var(--ink2); white-space:nowrap; }
+.s .steps .st.now .t{ color:var(--ink); font-weight:600; }
+.s .steps .ln{ flex:1; height:2px; background:var(--hair); margin:13px 3px 0;
+  border-radius:99px; min-width:14px; }
+.s .steps .ln.on{ background:var(--mark); }

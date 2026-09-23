@@ -1,0 +1,530 @@
+/* The admin area: shell, sidebar, stat tiles, charts.
+   Lifted verbatim from `prototype/app.css` — the approved mock is the
+   REFERENCE. Change anything here and you owe a screenshot comparison
+   against http://127.0.0.1:4321. */
+
+/* ============================================== the admin area (desktop) */
+/* `min-width` ADDED in Phase 6. The back office is a DESKTOP surface: the
+   mock drew every admin screen at 1280px and none at phone width, and a
+   data table with eight columns has no honest phone layout. Without a floor
+   the sidebar and the tables squeezed into something broken at 390px;
+   with one the layout keeps its real proportions and the page simply scrolls
+   sideways, which is what a desktop site does on a phone. Deliberate, and
+   recorded in tasks/todo.md under Checkpoint 6. */
+.s.adm{ display:flex; min-height:100%; background:var(--gold-50);
+  min-width:1180px; }
+.s.adm .side{ width:208px; flex:none; background:#fff; border-right:1px solid var(--hair);
+  padding:18px 0; }
+.s.adm .side .wm{ padding:0 18px 16px; display:block; }
+.s.adm .side a{ display:flex; align-items:center; gap:9px; padding:9px 18px; font-size:12.5px;
+  color:var(--ink2); }
+.s.adm .side a.on{ color:var(--gold-800); font-weight:600; background:var(--gold-50);
+  box-shadow:inset 2px 0 0 var(--mark); }
+.s.adm .main{ flex:1; min-width:0; padding:20px 24px 26px; }
+.s.adm .top{ display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+.s.adm h1{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:21px; margin:0;
+  letter-spacing:-.01em; }
+.s.adm .top .rt{ margin-left:auto; display:flex; gap:9px; align-items:center; }
+.s.adm .sim{ display:inline-flex; align-items:center; gap:6px; font-size:10.5px; color:var(--warn);
+  background:var(--warn-bg); padding:4px 9px; border-radius:var(--r); font-weight:500; }
+.s.adm .panel{ background:#fff; border:1px solid var(--hair); border-radius:var(--r);
+  margin-top:16px; }
+.s.adm .panel > .hd{ display:flex; align-items:center; gap:10px; padding:13px 16px;
+  border-bottom:1px solid var(--hair); }
+.s.adm .panel > .hd h2{ font-size:13.5px; margin:0; font-weight:600; }
+.s.adm .panel > .hd .rt{ margin-left:auto; display:flex; gap:8px; align-items:center; }
+.s.adm .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:16px; }
+.s.adm .kpi{ background:#fff; border:1px solid var(--hair); border-radius:var(--r); padding:14px 15px; }
+.s.adm .kpi .lb{ font-size:11px; color:var(--ink2); }
+.s.adm .kpi .vl{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:23px;
+  margin-top:5px; letter-spacing:-.02em; }
+.s.adm .kpi .kpinote{ font-size:10.5px; color:var(--ink2); margin-top:4px; }
+/* The admin area's plain tables (figures under a chart, stock by size, the
+   items on an order…). The `:not(.dtt)` is not optional: the `.dt` component's
+   own table also lives inside `.s.adm`, and `.s.adm th` (0,2,1) beats
+   `.dt th` (0,1,1) — so without excluding it the header labels pick up two
+   layers of padding and land 14px out of line with the cells below. Measured,
+   and hit for real. */
+.s.adm table:not(.dtt){ width:100%; border-collapse:collapse; }
+.s.adm table:not(.dtt) th{ text-align:left; font-size:10.5px; font-weight:500;
+  color:var(--ink2); padding:9px 16px; border-bottom:1px solid var(--hair);
+  white-space:nowrap; }
+.s.adm table:not(.dtt) td{ font-size:12px; padding:11px 16px;
+  border-bottom:1px solid var(--hair); vertical-align:middle; }
+.s.adm table:not(.dtt) td b{ white-space:nowrap; }
+.s.adm table:not(.dtt) tr:last-child td{ border-bottom:0; }
+.s.adm table:not(.dtt) td.num, .s.adm table:not(.dtt) th.num{ text-align:right;
+  font-variant-numeric:tabular-nums; }
+.s.adm .pill, .dt .pill{ width:34px; height:42px; border-radius:var(--r-sm); background:var(--plate);
+  overflow:hidden; }
+.s.adm .pill img, .dt .pill img{ width:100%; height:100%; object-fit:cover; display:block; }
+.s.adm .cellrow, .dt .cellrow{ display:flex; align-items:center; gap:10px; }
+/* ── ADDED in Phase 5 ────────────────────────────────────────────────────
+   A name over a secondary line, inside a table cell. `.d` is only given
+   `display:block` under `.row` and `.tl`, so in a `.dt` cell it stayed
+   inline and the two ran together — "BỤIÁo hoodie", on every row of the
+   products and customers tables. */
+.dt .cellrow b, .dt .cellrow .d{ display:block; }
+.dt .cellrow .d{ font-size:11px; color:var(--ink2); margin-top:1px; font-weight:400; }
+.s.adm .inp{ height:34px; font-size:12px; }
+/* ── FIXED 2026-09-20 ────────────────────────────────────────────────────
+   A fixed `height` belongs to a single-line control. A <textarea> sizes
+   itself from `rows`, and a height OVERRIDES that outright — so the
+   material field rendered 34px, one line tall, with its `rows` silently
+   ignored.
+
+   `.s .inp.area` (the shop's taller-input variant) could not rescue it
+   either: that selector and `.s.adm .inp` both weigh (0,3,0), and admin.css
+   is imported after forms.css, so 34px won on source order. Naming the
+   ELEMENT is what actually settles it — `textarea.inp` is (0,2,1) plus a
+   type, and beats the class-only rule on the same element.
+
+   `min-height` on top of `rows` so a drag of the resize handle cannot take
+   it back below four usable lines. The figure follows the admin type scale
+   rather than being a pixel someone picked: four rows of 12px at 1.55, plus
+   11px of padding top and bottom and a 1px border on each side. */
+.s.adm textarea.inp{
+  height:auto;
+  min-height:calc(12px * 1.55 * 4 + 24px);
+}
+.s.adm .field{ padding:0; }
+.s.adm .fgrid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:16px; }
+.s.adm .fgrid .full{ grid-column:1 / -1; }
+.s.adm .fgrid label{ display:block; font-size:11px; color:var(--ink2); margin-bottom:5px; }
+
+/* ------------------------------------------------------------------ charts */
+.s .chart{ padding:16px; }
+.s .chart .heroN{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:28px;
+  letter-spacing:-.02em; }
+.s .chart .heroL{ font-size:11px; color:var(--ink2); margin-top:2px; }
+.s .plot{ display:flex; align-items:flex-end; gap:6px; height:132px; margin-top:16px;
+  border-bottom:1px solid var(--hair); }
+.s .plot .b{ flex:1; background:var(--mark); border-radius:4px 4px 0 0; position:relative; }
+.s .plot .b.peak{ background:var(--link); }
+.s .plot .b .lbl{ position:absolute; top:-17px; left:50%; transform:translateX(-50%);
+  font-size:10px; color:var(--ink); font-weight:600; white-space:nowrap; }
+.s .xax{ display:flex; gap:6px; margin-top:6px; }
+.s .xax span{ flex:1; font-size:9.5px; color:var(--ink2); text-align:center; }
+.s details{ margin-top:14px; font-size:11.5px; }
+.s details summary{ color:var(--link); cursor:pointer; font-weight:500; }
+
+/* alert strip — for an item that ran out while it sat in the cart */
+.s .alert{ margin:14px 18px 0; background:var(--hot-bg); border-radius:var(--r);
+  padding:11px 13px; display:flex; gap:10px; align-items:flex-start; }
+.s .alert svg{ width:17px; height:17px; color:var(--hot); flex:none; margin-top:1px; }
+.s .alert .t{ font-size:12.5px; font-weight:600; color:var(--hot); display:block; }
+.s .alert .d{ font-size:11.5px; color:var(--ink2); display:block; margin-top:2px;
+  line-height:1.5; }
+
+/* a cart line with something wrong with it */
+.s .row.snag{ background:var(--hot-bg); }
+.s .row.snag .amt{ text-decoration:line-through; color:var(--ink2); }
+.s .fixes{ display:flex; gap:14px; margin-top:8px; }
+
+/* size table */
+.s .gtable{ margin:14px 18px 0; border:1px solid var(--hair); border-radius:var(--r);
+  overflow:hidden; }
+.s .gtable table{ width:100%; border-collapse:collapse; }
+.s .gtable th{ text-align:left; font-size:10.5px; font-weight:500; color:var(--ink2);
+  padding:9px 13px; border-bottom:1px solid var(--hair); background:var(--gold-50); }
+.s .gtable td{ font-size:12.5px; padding:10px 13px; border-bottom:1px solid var(--hair);
+  font-variant-numeric:tabular-nums; }
+.s .gtable tr:last-child td{ border-bottom:0; }
+.s .gtable tr.gone td{ color:var(--ink2); }
+.s .gtable td:first-child{ font-weight:600; }
+
+/* sheet sliding up from the bottom */
+.s .sheet{ border-top:1px solid var(--hair); }
+.s .sheet .grab{ width:34px; height:4px; border-radius:99px; background:var(--hair);
+  margin:9px auto 0; }
+.s .fgroup{ padding:16px 18px 0; }
+.s .fgroup h4{ margin:0 0 9px; font-size:12px; font-weight:600; }
+.s .fgroup .chips{ padding:0; flex-wrap:wrap; gap:7px; }
+.s .bar-bottom{ position:sticky; bottom:0; background:#fff; border-top:1px solid var(--hair);
+  padding:12px 18px; margin-top:18px; display:flex; gap:10px; }
+.s .bar-bottom .btn{ flex:1; }
+
+/* settings list with values on the right */
+.s .setrow{ display:flex; align-items:center; gap:12px; padding:13px 14px;
+  border-top:1px solid var(--hair); }
+.s .rows .setrow:first-child{ border-top:0; }
+.s .setrow .grow{ flex:1; min-width:0; }
+.s .setrow .lb{ font-size:11px; color:var(--ink2); display:block; }
+.s .setrow .vl{ font-size:12.5px; display:block; margin-top:2px; }
+
+/* a slot whose copy is not written yet (named `.needwrite` because `.todo`
+   collides with the step bar's `.st.todo`) — it states what belongs here
+   rather than inventing something to fill the space */
+.s .needwrite{ margin:14px 18px 0; border:1px dashed var(--line); border-radius:var(--r);
+  background:var(--gold-50); padding:12px 14px; }
+.s .needwrite .lb{ display:flex; align-items:center; gap:6px; font-size:10px; font-weight:700;
+  color:var(--warn); letter-spacing:.06em; }
+.s .needwrite .lb svg{ width:13px; height:13px; color:var(--warn); }
+.s .needwrite p{ margin:7px 0 0; font-size:12px; color:var(--ink2); line-height:1.55; }
+
+/* Q & A */
+.s .qa{ margin:14px 18px 0; border:1px solid var(--hair); border-radius:var(--r);
+  overflow:hidden; }
+/* The padding moved from the row onto the BUTTON in Phase 6. As a bare
+   <button> the question measured 20px of hit area inside a 46px row — the
+   row looked pressable everywhere and only its middle was. Now the button
+   IS the row. */
+.s .qa .q{ border-top:1px solid var(--hair); }
+.s .qa .hd{ width:100%; padding:13px 14px; background:none; border:0;
+  font:inherit; color:inherit; text-align:left; cursor:pointer; }
+.s .qa .a{ padding:0 14px 13px; }
+.s .qa .q:first-child{ border-top:0; }
+.s .qa .q.open{ background:var(--gold-50); }
+.s .qa .hd{ display:flex; gap:12px; align-items:flex-start; }
+.s .qa .t{ flex:1; font-size:12.5px; font-weight:600; }
+.s .qa .hd svg{ width:15px; height:15px; color:var(--ink2); flex:none; margin-top:1px; }
+.s .qa .q.open .hd svg{ transform:rotate(90deg); color:var(--link); }
+.s .qa .a{ font-size:12px; color:var(--ink2); line-height:1.62; }
+.s .qa .q:not(.open) .a{ display:none; }
+.s .qa .hd svg{ transition:transform .16s ease; }
+@media (prefers-reduced-motion:reduce){ .s .qa .hd svg{ transition:none; } }
+.s .qa .a b{ color:var(--ink); font-weight:600; }
+
+/* numbered list */
+.s .steps-num{ margin:12px 18px 0; }
+.s .steps-num .tlitem{ display:flex; gap:11px; padding:9px 0; }
+.s .steps-num .n{ width:20px; height:20px; border-radius:99px; background:var(--gold-100);
+  color:var(--ink2); font-size:11px; font-weight:600; display:flex; align-items:center;
+  justify-content:center; flex:none; margin-top:1px; }
+.s .steps-num .bd{ flex:1; font-size:12.5px; line-height:1.55; }
+.s .steps-num .bd b{ display:block; font-weight:600; }
+.s .steps-num .bd span{ color:var(--ink2); font-size:12px; }
+
+/* password requirements */
+.s .rules{ padding:10px 18px 0; }
+.s .rules div{ display:flex; gap:8px; align-items:center; font-size:11.5px;
+  color:var(--ink2); padding:3px 0; }
+.s .rules svg{ width:14px; height:14px; flex:none; }
+.s .rules .ok{ color:var(--ok); }
+.s .rules .no{ color:var(--hot); }
+
+/* the 404 block */
+.s .void{ margin:26px 18px 0; border:1px dashed var(--line); border-radius:var(--r);
+  background:var(--gold-50); aspect-ratio:4/3; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:10px; text-align:center; padding:20px; }
+.s .void svg{ width:34px; height:34px; color:var(--link); }
+.s .void .t{ font-family:"Familjen Grotesk",sans-serif; font-weight:700; font-size:16px; }
+.s .void .d{ font-size:12px; color:var(--ink2); line-height:1.55; max-width:30ch; }
+
+/* large drop zone for a product with no photos yet */
+.s .drop{ border:1px dashed var(--line); border-radius:var(--r); background:var(--gold-50);
+  padding:30px 20px; display:flex; flex-direction:column; align-items:center; gap:8px;
+  text-align:center; }
+.s .drop svg{ width:26px; height:26px; color:var(--link); }
+.s .drop .t{ font-size:12.5px; font-weight:600; }
+.s .drop .d{ font-size:11px; color:var(--ink2); line-height:1.5; }
+
+/* ── The spec page, `/system` ────────────────────────────────────────────
+   ADDED 2026-09-20. It is a DESKTOP reference: its job is to show each
+   component at the size it ships, beside its measurements, so a phone
+   layout for it would be a layout of the wrong thing. Out of the sitemap,
+   linked from nowhere. So it takes a floor and scrolls sideways — the same
+   decision as `.s.adm`, for the same reason — instead of squashing.
+
+   Before the floor it overflowed 814px at 390 while ALSO being squashed:
+   the worst of both. */
+.s.specpage{ min-width:1180px; }
+
+/* A `.s.adm` nested inside the spec page is a SPECIMEN, not the back
+   office. It must not impose the back office's own 1180px floor a second
+   time, and it is `block` because it has no sidebar to sit beside — as a
+   flex row it laid its caption and its table out side by side. */
+.s.specpage .s.adm{ min-width:0; display:block; }
+
+/* Table spec page — used only on the "data table system" screen, never on a
+   real product screen. */
+.s.adm .spec > p{ font-size:12.5px; color:var(--ink2); line-height:1.65; max-width:70ch;
+  margin:6px 0 0; }
+.s.adm .spec > p b{ color:var(--ink); font-weight:600; }
+.s.adm .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+/* ── ADDED in Phase 5 ────────────────────────────────────────────────────
+   A wide pane beside a narrow one — a table next to a short list. The mock
+   set this inline on the overview screen (`1.55fr 1fr`, measuring 612.7 /
+   395.3 at 1280px); the number is unchanged, only the channel. At a plain
+   1fr 1fr the orders table lost 108px and every customer name wrapped:
+   measured rows of 60 and 79px against the mock's even 45. */
+.s.adm .grid2.wide{ grid-template-columns:1.55fr 1fr; }
+
+/* ── DELIBERATE DEVIATION from the mock, Phase 5 ─────────────────────────
+   A list row directly under a panel header drew its own top hairline on top
+   of the header's bottom one — 2px where every other rule in the admin area
+   is 1px. The prototype has it too (measured: both borders 1px, 0 gap), so
+   this is an inherited defect rather than a port error, and it is fixed
+   here rather than reproduced. */
+.s.adm .panel > .hd + .row, .s.adm .panel > .hd + .setrow{ border-top:0; }
+.s.adm .cap2{ font-size:11px; color:var(--ink2); margin:7px 2px 0; line-height:1.5; }
+.s.adm .cap2 code, .s.adm .ref code{ font-family:ui-monospace,Consolas,monospace;
+  font-size:10.5px; color:var(--gold-800); background:var(--gold-50);
+  padding:1.5px 5px; border-radius:var(--r-sm); }
+.s.adm .ref table{ width:100%; border-collapse:separate; border-spacing:0; }
+.s.adm .ref th{ text-align:left; font-size:10.5px; font-weight:500; color:var(--ink2);
+  padding:9px 16px; border-bottom:1px solid var(--hair); }
+.s.adm .ref td{ font-size:12px; padding:9px 16px; border-bottom:1px solid var(--hair);
+  vertical-align:top; }
+.s.adm .ref tr:last-child td{ border-bottom:0; }
+.s.adm .ref td:first-child{ white-space:nowrap; }
+.s.adm .ref td .n{ color:var(--ink2); font-size:11px; line-height:1.55; }
+.s.adm .swatchrow{ display:flex; flex-wrap:wrap; gap:10px; padding:16px; }
+.s.adm .swatchrow > span{ display:inline-flex; }
+/* ── `margin-top` MOVED onto the grid, 2026-09-20 ────────────────────────
+   Zeroing `.panel:first-child` is what makes the two columns start level —
+   without it a column whose first panel carries the default 16px sits lower
+   than one whose first child is something else. But that zero also removed
+   the ONLY space between the grid and whatever sits above it, and measured
+   0px on all four screens that use these variants: the customer's badge row
+   sat flush on the panel edge, and the three `.note` lines did the same
+   more quietly.
+
+   So the space belongs to the GRID, not to its first panel. 16px, the same
+   step `.panel` sets everywhere else, so the rhythm does not change — it
+   just comes from a box that cannot be zeroed out from the inside. */
+
+/* ── ADDED in Phase 5 · the product form ─────────────────────────────────
+   A wide editing column beside a narrow one for photos and colours. The
+   mock set `1.5fr 1fr` inline on both product screens; unchanged, only the
+   channel. */
+.s.adm .grid2.form{ grid-template-columns:1.5fr 1fr; margin-top:16px; }
+.s.adm .grid2.form > div > .panel:first-child{ margin-top:0; }
+
+/* The stock grid: one row per size, one column per colourway. The mock had
+   size alone, but the catalogue stores units per size AND per colour, so a
+   size-only grid could not edit what the shop actually holds. */
+/* `margin-left:auto`, not `text-align:right` on the cell: `input.inp` is
+   `display:block` (interaction.css), and a block box does not answer to the
+   cell's text alignment — the fields sat left of their own column heads. */
+.s.adm .stockgrid .inp.cell{ width:72px; margin-left:auto; text-align:right;
+  font-variant-numeric:tabular-nums; }
+.s.adm .stockgrid th:first-child, .s.adm .stockgrid td:first-child{ width:1%;
+  white-space:nowrap; }
+
+/* The action bar under a form. Sticky, because the grid above it is long
+   enough to scroll the buttons off on a laptop, and a save you have to go
+   looking for is a save people stop trusting. */
+.s.adm .formbar{ position:sticky; bottom:0; display:flex; align-items:center; gap:10px;
+  margin-top:16px; padding:12px 16px; background:#fff; border:1px solid var(--hair);
+  border-radius:var(--r); }
+.s.adm .formbar > .note{ margin-right:auto; }
+.s.adm .formbar b{ color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
+
+/* A colour swatch beside its name. Same 3:1 border as `.swa i`, and for the
+   same reason: Trắng and Kem on white are nothing but their edge. */
+.s.adm .dotcolor{ width:14px; height:14px; border-radius:99px; display:block;
+  box-shadow:inset 0 0 0 1px var(--line); }
+
+/* ── ADDED in Phase 5 ────────────────────────────────────────────────────
+   How much of a drop has gone, in a table cell. The bar is read going down
+   the column in the time it takes to scan; the figure beside it is what
+   anybody would actually quote. Neither is alone — a length is not a value,
+   and on a drop model the share of the cut IS the result.
+   One hue, `--mark`, the token that already means "chart". */
+.s.adm .dt .sold-share{ display:flex; flex-direction:column; align-items:flex-end;
+  gap:4px; font-variant-numeric:tabular-nums; }
+.s.adm .dt .sold-share .meter{ width:74px; height:3px; border-radius:99px;
+  background:var(--gold-200); overflow:hidden; }
+.s.adm .dt .sold-share .meter i{ display:block; height:100%; background:var(--mark); }
+
+.dt .ava{ width:30px; height:30px; flex:none; border-radius:99px;
+  background:var(--gold-100); color:var(--gold-800); display:flex;
+  align-items:center; justify-content:center; font-size:11px; font-weight:600; }
+/* A specimen on the spec page: it looks real, and clicking it only says that
+   it is a specimen. */
+.dt.demo{ }
+
+/* ── Filter-chip style comparison page. Every rule sits under `.vlab` so
+      none of it leaks into a real table; this is a board to choose from,
+      not something in service. ── */
+.s.adm .vlab .dt.bare{ background:none; border:0; margin:0; border-radius:0; }
+.s.adm .vlab .grid5{ display:grid; grid-template-columns:230px repeat(4, 1fr);
+  align-items:center; gap:0; }
+.s.adm .vlab .grid5 > div{ padding:13px 14px; border-top:1px solid var(--hair); }
+.s.adm .vlab .grid5 > div:nth-child(-n+5){ border-top:0; }
+.s.adm .vlab .hd5{ font-size:10px; font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--ink2); padding-bottom:4px !important; }
+.s.adm .vlab .nm5{ font-size:12.5px; font-weight:600; color:var(--ink); }
+.s.adm .vlab .nm5 span{ display:block; font-size:11px; font-weight:400;
+  color:var(--ink2); margin-top:3px; line-height:1.5; }
+.s.adm .vlab .ctx{ padding:16px; }
+.s.adm .vlab .ctx + .ctx{ border-top:1px solid var(--hair); }
+.s.adm .vlab .ctx h4{ margin:0 0 9px; font-size:12px; font-weight:600; }
+.s.adm .vlab .ctx h4 em{ font-style:normal; font-weight:400; color:var(--ink2);
+  font-size:11px; margin-left:7px; }
+.s.adm .vlab .figtable{ width:100%; border-collapse:separate; border-spacing:0; }
+.s.adm .vlab .figtable th{ text-align:left; font-size:10.5px; font-weight:500;
+  color:var(--ink2); padding:9px 16px; border-bottom:1px solid var(--hair); }
+.s.adm .vlab .figtable td{ font-size:12px; padding:9px 16px;
+  border-bottom:1px solid var(--hair); font-variant-numeric:tabular-nums; }
+.s.adm .vlab .figtable tr:last-child td{ border-bottom:0; }
+.s.adm .vlab .figtable .hit{ color:var(--ok); font-weight:500; }
+.s.adm .vlab .figtable .kh{ color:var(--ink2); }
+.s.adm .vlab p.note2{ font-size:12px; color:var(--ink2); line-height:1.65;
+  max-width:72ch; margin:6px 0 0; }
+.s.adm .vlab p.note2 b{ color:var(--ink); font-weight:600; }
+
+/* The current build has nothing for the "menu is open" state — move the
+   pointer away and the chip looks idle while its menu is still hanging
+   open. All four candidates below fix it: while open, hold the hover
+   shade. */
+.s.adm .vlab .facet.hv, .s.adm .vlab .facet.op{ background:var(--gold-50); }
+
+/* The count badge: honey reads fine on a white button, but put it on the
+   yellow fill itself and it dissolves into the background. In all four
+   candidates below it switches to ink. */
+.s.adm .vlab .vA .facet .n, .s.adm .vlab .vB .facet .n,
+.s.adm .vlab .vC .facet .n, .s.adm .vlab .vD .facet .n{
+  background:var(--ink); color:var(--gold-100); }
+
+/* The old build, kept for comparison. What ships now IS style C, so the
+   reference row has to rebuild the old look explicitly — it can no longer
+   just inherit it. */
+.s.adm .vlab .vOld .facet{ background:#fff; border-color:currentColor;
+  color:var(--ink2); }
+.s.adm .vlab .vOld .facet.hv, .s.adm .vlab .vOld .facet.op{ background:var(--gold-50); }
+.s.adm .vlab .vOld .facet.on{ background:var(--gold-50); color:var(--ink);
+  font-weight:500; }
+.s.adm .vlab .vOld .facet .n{ background:var(--fill); color:var(--fill-ink); }
+
+/* The chosen style — marked so that reopening this page later still
+   explains why */
+.s.adm .vlab .nm5 .locked{ display:inline-flex; align-items:center; gap:5px;
+  margin-top:7px; font-size:10.5px; font-weight:600; color:var(--ok);
+  background:var(--ok-bg); padding:3px 8px; border-radius:var(--r-sm); }
+
+/* A · pale yellow fill, border the same colour — the brief taken literally */
+.s.adm .vlab .vA .facet{ background:var(--gold-100); border-color:var(--gold-100);
+  color:var(--ink2); }
+.s.adm .vlab .vA .facet.hv, .s.adm .vlab .vA .facet.op{ background:var(--gold-200); border-color:var(--gold-200); }
+.s.adm .vlab .vA .facet.on{ background:var(--gold-300); border-color:var(--gold-300);
+  color:var(--ink); font-weight:600; }
+
+/* B · pale yellow fill, border two steps darker in the same family */
+.s.adm .vlab .vB .facet{ background:var(--gold-100); border-color:var(--gold-400);
+  color:var(--ink2); }
+.s.adm .vlab .vB .facet.hv, .s.adm .vlab .vB .facet.op{ background:var(--gold-200); border-color:var(--gold-500); }
+.s.adm .vlab .vB .facet.on{ background:var(--gold-200); border-color:var(--gold-600);
+  color:var(--ink); font-weight:600; }
+
+/* C · pale yellow fill, border clearing 3:1 — the only one whose edge meets
+   the bar */
+.s.adm .vlab .vC .facet{ background:var(--gold-100); border-color:var(--gold-600);
+  color:var(--ink2); }
+.s.adm .vlab .vC .facet.hv, .s.adm .vlab .vC .facet.op{ background:var(--gold-200); border-color:var(--gold-600); }
+.s.adm .vlab .vC .facet.on{ background:var(--gold-200); border-color:var(--gold-700);
+  color:var(--ink); font-weight:600; }
+
+/* D · one step darker fill, still no visible border */
+.s.adm .vlab .vD .facet{ background:var(--gold-200); border-color:var(--gold-200);
+  color:var(--ink2); }
+.s.adm .vlab .vD .facet.hv, .s.adm .vlab .vD .facet.op{ background:var(--gold-300); border-color:var(--gold-300); }
+.s.adm .vlab .vD .facet.on{ background:var(--gold-400); border-color:var(--gold-400);
+  color:var(--ink); font-weight:600; }
+
+/* ── Product-card comparison page. Every rule sits under `.tlab` and none of
+      it reaches a real screen — a board to choose from. ── */
+.s.adm .tlab > p{ font-size:12.5px; color:var(--ink2); line-height:1.65;
+  max-width:72ch; margin:6px 0 0; }
+.s.adm .tlab > p b{ color:var(--ink); font-weight:600; }
+.s.adm .tlab .pairgrid{ display:grid; grid-template-columns:390px 1fr; gap:26px;
+  padding:18px 16px; align-items:start; }
+.s.adm .tlab .pairgrid + .pairgrid{ border-top:1px solid var(--hair); }
+.s.adm .tlab .frame{ width:390px; background:#fff; border:1px solid var(--hair);
+  border-radius:var(--r); overflow:hidden; }
+.s.adm .tlab .annot h4{ margin:0 0 6px; font-size:13.5px; font-weight:600; }
+.s.adm .tlab .annot p{ margin:0 0 10px; font-size:12px; color:var(--ink2);
+  line-height:1.62; max-width:52ch; }
+.s.adm .tlab .annot p b{ color:var(--ink); font-weight:600; }
+.s.adm .tlab .pov{ display:inline-block; font-size:11px; color:var(--gold-800);
+  background:var(--gold-50); border:1px solid var(--gold-200); border-radius:var(--r);
+  padding:6px 10px; line-height:1.5; max-width:52ch; }
+.s.adm .tlab .caution{ display:block; font-size:11px; color:#8C1726;
+  background:var(--hot-bg); border:1px solid #EFC6CC; border-radius:var(--r);
+  padding:7px 10px; line-height:1.55; max-width:52ch; margin-top:8px; }
+.s.adm .tlab .caution b{ font-weight:600; }
+.s.adm .tlab .needs{ margin-top:11px; font-size:11px; color:var(--ink2); }
+.s.adm .tlab .needs b{ color:var(--ink); font-weight:600; }
+.s.adm .tlab .needs code{ font-family:ui-monospace,Consolas,monospace; font-size:10.5px;
+  background:var(--gold-50); padding:1.5px 5px; border-radius:var(--r-sm);
+  color:var(--gold-800); }
+
+/* ── parts belonging only to the candidate cards ─────────────────────── */
+/* small size row sitting on the card itself */
+.s .card .szmini{ display:flex; gap:4px; margin-top:7px; }
+.s .card .szmini span{ flex:1; text-align:center; font-size:10.5px; font-weight:500;
+  line-height:20px; height:20px; border:1px solid var(--fill); border-radius:var(--r-sm);
+  color:var(--ink); }
+.s .card .szmini span.soldout{ border-style:dashed; border-color:var(--line);
+  color:var(--ink2); text-decoration:line-through; }
+/* fabric spec line */
+.s .card .specs{ font-size:10.5px; color:var(--ink2); margin-top:3px; line-height:1.5; }
+/* colour dots */
+.s .card .colorrow{ display:flex; gap:5px; margin-top:7px; align-items:center; }
+.s .card .colorrow i{ width:13px; height:13px; border-radius:99px; display:block;
+  box-shadow:inset 0 0 0 1px rgba(33,29,18,.18); }
+.s .card .colorrow b{ font-size:10px; color:var(--ink2); font-weight:400; margin-left:2px; }
+/* how much of the drop has sold */
+.s .card .meter{ height:3px; border-radius:99px; background:var(--gold-200);
+  margin-top:8px; overflow:hidden; }
+.s .card .meter i{ display:block; height:100%; background:var(--mark); }
+.s .card .stockline{ font-size:10.5px; color:var(--ink2); margin-top:5px; }
+.s .card .stockline b{ color:var(--ink); font-weight:600; font-variant-numeric:tabular-nums; }
+/* quick add button */
+.s .card .quickrow{ margin-top:8px; }
+.s .card .quickrow .btn{ height:32px; font-size:12px; }
+/* corner flag on the photo */
+.s .card .corner{ position:absolute; left:7px; top:7px; background:var(--hot);
+  color:#fff; font-size:9.5px; font-weight:600; padding:3px 7px;
+  border-radius:var(--r-sm); letter-spacing:.02em; }
+.s .card .form{ position:absolute; right:7px; top:7px; background:rgba(255,255,255,.93);
+  color:var(--ink); font-size:9.5px; font-weight:600; padding:3px 7px;
+  border-radius:var(--r-sm); }
+
+/* ── style F · size popover on the card itself (NOT chosen — kept to compare
+      against) ─────────────────────────────────────────────────────────── */
+.s .card.swipe .sizepop{ position:absolute; left:-4px; right:-4px; bottom:calc(100% + 6px);
+  z-index:3; background:#fff; border:1px solid var(--hair); border-radius:var(--r);
+  box-shadow:0 10px 26px -8px rgba(33,29,18,.26), 0 2px 6px -2px rgba(33,29,18,.12);
+  padding:8px; }
+.s .card.swipe .sizepop[hidden]{ display:none; }
+.s .card.swipe .sizepop .hint{ font-size:10.5px; color:var(--ink2); margin:0 0 6px 2px; }
+.s .card.swipe .szgrid{ display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+/* The size chip's border uses --fill-bd (3.08:1 on white), not --fill
+   (2.13:1): that border is the only thing saying the chip can be pressed. */
+.s .card.swipe .z{ height:44px; font:inherit; font-size:12.5px; font-weight:600;
+  color:var(--ink); background:#fff; border:1px solid var(--fill-bd);
+  border-radius:var(--r); cursor:pointer; }
+.s .card.swipe .z:hover{ background:var(--gold-100); }
+.s .card.swipe .z .r{ display:block; font-size:9.5px; font-weight:400; color:var(--ink2); }
+.s .card.swipe .z.soldout{ border-style:dashed; border-color:var(--line); color:var(--ink2);
+  text-decoration:line-through; cursor:not-allowed; background:var(--gold-50); }
+.s .card.swipe .z.soldout .r{ text-decoration:none; }
+
+/* ── static frame for style G: rebuilds the prototype's `.sheetbody` shell so
+      the real sheet can be seen sitting over the grid ──────────────────── */
+.s .viewport{ position:relative; height:660px; overflow:hidden; }
+.s .tscrim{ position:absolute; inset:0; background:rgba(12,10,6,.5); }
+.s .shelf{ position:absolute; left:0; right:0; bottom:0; background:#fff;
+  border-radius:14px 14px 0 0; box-shadow:0 -12px 32px -10px rgba(12,10,6,.34); }
+
+:root{ --chev:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%3E%3Cg%20transform%3D%22rotate%2890%2012%2012%29%22%3E%3Cpath%20stroke%3D%22%236E4A12%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%2210%22%20stroke-width%3D%221.5%22%20d%3D%22M8.91%2019.92l6.52-6.52c.77-.77.77-2.03%200-2.8L8.91%204.08%22%3E%3C%2Fpath%3E%3C%2Fg%3E%3C%2Fsvg%3E"); }
+
+/* ── ADDED in Phase 5 · the two detail screens ───────────────────────────
+   The mock set `1.6fr 1fr` inline on both; unchanged, only the channel. */
+.s.adm .grid2.detail{ grid-template-columns:1.6fr 1fr; margin-top:16px; }
+.s.adm .grid2.detail > .panel:first-child,
+.s.adm .grid2.detail > div > .panel:first-child{ margin-top:0; }
+
+/* The line under an order's items: what it added up to. */
+.s.adm .totalbar{ display:flex; justify-content:flex-end; align-items:baseline; gap:34px;
+  padding:13px 16px; border-top:1px solid var(--hair); font-size:12.5px; }
+.s.adm .totalbar b{ font-size:14px; font-variant-numeric:tabular-nums; }
+
+/* An address or a contact block: stacked lines, not a table. */
+.s.adm .addrblock{ display:flex; flex-direction:column; gap:3px; padding:14px 16px;
+  font-size:12.5px; line-height:1.6; }
+.s.adm .addrblock b{ font-weight:600; }
+
+.s.adm .badgerow{ display:flex; gap:9px; align-items:center; margin-top:4px; }

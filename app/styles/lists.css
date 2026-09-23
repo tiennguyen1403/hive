@@ -1,0 +1,50 @@
+/* List rows and the empty state.
+
+   The v2 half of this file went at v3 slice 6, once nothing rendered it any
+   more: the cart line (`.cartline`), the quantity stepper (`.qty` / `.qb` /
+   `.qn`), the order totals box (`.sum`) and the order timeline (`.tl`) were
+   all replaced by `.cartline3`, `.qty3`, `.sum3` and `.tl3` in checkout.css
+   at v3 slices 2 and 3, and the v2 empty state (`.empty`) by `.empty3`
+   below. What is left is the plain list row the account and admin screens
+   still wear, and the two rules the stepper's touch target needs.
+
+   Lifted from `prototype/app.css` — the approved mock is the REFERENCE.
+   Change anything here and you owe a screenshot comparison against
+   http://127.0.0.1:4321. */
+
+/* -------------------------------------------------------------- list rows */
+.s .row{ display:flex; gap:12px; align-items:center; padding:13px 14px;
+  border-top:1px solid var(--hair); }
+.s .row .fill{ flex:1; min-width:0; }
+.s .row .t{ font-size:12.5px; font-weight:500; display:block; }
+.s .row .d{ display:block; font-size:11px; color:var(--ink2); margin-top:2px; }
+.s .row .amt{ font-size:12.5px; font-weight:500; white-space:nowrap; }
+.s .row .thumb{ width:52px; height:65px; border-radius:var(--r-sm); background:var(--plate);
+  overflow:hidden; flex:none; }
+.s .row .thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+
+/* ── the quantity box's touch target ─────────────────────────
+   The label IS the target around the 34px box — an `<input>` is a replaced
+   element and has no pseudo-elements to carry one. 34 + 5 + 5 = 44, and
+   nothing visible moves. The box itself is `.qty3`, in checkout.css. */
+.s .qntap{ position:relative; display:flex; height:100%; flex:none; }
+.s .qntap::after{ content:""; position:absolute; inset:-5px 0; }
+
+/* ── the empty state, v3 ────────────────────────────────────
+   Ported from `prototype/v3/v3-pages.css`, `.empty3`.
+
+   Set LEFT, not centred in a ring. An empty state is the page saying a
+   sentence, and it reads on the same left edge as everything above it; 44ch
+   is the measure the rest of the system gives a paragraph.
+
+   The action is a `<p>` here (see `Empty.tsx`) so `interaction.css` cannot
+   stretch a lone button across the measure — but `.s .btn` is still
+   `display:flex`, which would do the same thing on its own, so the button
+   goes back to inline inside this block. */
+.s .empty3{ padding:var(--s6) 0; max-width:44ch; }
+.s .empty3 > .ic{ width:28px; height:28px; font-size:28px; color:var(--ink2); }
+.s .empty3 h2{ margin:10px 0 0; font-family:var(--font-display);
+  font-weight:var(--fw-display); font-size:var(--fs-h2); letter-spacing:var(--ls-display); }
+.s .empty3 p{ margin:6px 0 0; font-size:var(--fs-ui); color:var(--ink2); }
+.s .empty3 .act3{ margin:14px 0 0; }
+.s .empty3 .act3 .btn{ display:inline-flex; width:auto; }
