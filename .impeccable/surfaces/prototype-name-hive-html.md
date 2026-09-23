@@ -2,7 +2,7 @@
 version: 1
 slug: "prototype-name-hive-html"
 primary_target: "prototype/name/hive.html"
-related_targets: ["prototype/name/index.html","prototype/name/hive-2.html"]
+related_targets: ["prototype/name/index.html","prototype/name/hive-2.html","prototype/name/hive-g.html"]
 ---
 
 # prototype/name/hive.html — bảng hướng logo HIVE (mock so sánh, chưa duyệt)
@@ -36,3 +36,14 @@ chữ I · con dấu tròn · vạch cắt rập · vé số. Dựng ba: **E · 
 Gòn), **G · Một nhát cắt** (typographic, không biểu tượng). Bốn còn lại demoted trên bảng kèm lý do. Đề xuất G.
 Không chạy `concept-seed` vì vật thể là một mark trong thế giới đã chốt, không phải một surface; ghi rõ ở đây.
 THESIS và FIRST VIEWPORT giữ như trên; FORM đổi: ba cột E/F/G, cùng hàng ứng dụng.
+
+## Vòng G (23/09/2026, `prototype/name/hive-g.html`)
+
+Người dùng nghiêng về G nhưng hỏi đúng: nhát cắt trên chữ H làm mark có nghĩa gì, hay cắt mù? Trả lời thật: wordmark có quy
+tắc (một đường thẳng, thấp qua H, giữa I, cao qua V, E), còn mark H được đặt bằng mắt. Bảng họ G sửa điều đó bằng bốn quy tắc
+nói ra được, mỗi quy tắc kèm hình dựng: **G1 Cùng một nhát** (mark = mảnh H của chính đường cắt wordmark), **G2 Cắt rồi may**
+(thanh ngang H bị cắt, thay bằng một đường may mật ong — nối vào quy tắc "Một Sợi Chỉ"), **G3 Khía rập** (khía tam giác giữa
+thân trái, sâu 1/6 cap), **G4 Theo thanh ngang** (cắt ngang đúng tim thanh ngang của H qua cả từ). Toạ độ đặt theo số đo glyph
+Unbounded 800 đo bằng canvas trong Chromium (HIVE 104px: ink 70,7–372,8, cap 78; H 100px: ink 8,65–91,65, cap 75), không ước
+lượng. Đề xuất G2. Lỗi kỹ thuật đã sửa ở cả hive-2 và hive-g: `<use>` của symbol có viewBox lệch gốc bị khung ngoài che 56 đơn vị
+đầu → khung ngoài dùng viewBox bắt đầu từ 0.
