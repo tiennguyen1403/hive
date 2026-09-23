@@ -1,16 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { CATALOG, bySlug } from "@/data/catalog";
 import { SIZES, type Product } from "@/data/types";
-import { EMPTY_SIM, pushSim, simProducts, type SimAction } from "./admin-sim";
 import { onHand, onHandOf } from "./inventory";
 import {
   ADJUST_REASONS,
+  STOCK_REASONS,
   canRaise,
+  cellDelta,
   changedCells,
   colorTotal,
   deltaLabel,
   draftOf,
   draftTotal,
+  isStockReason,
   overCutBy,
   saveBlocker,
   withCell,
@@ -128,6 +130,15 @@ describe("saveBlocker names the job that is left", () => {
   it("offers four reasons, all of them things that happen to cut cloth", () => {
     expect(ADJUST_REASONS).toEqual(["Hàng trả về", "Kiểm kê lệch", "Hư hỏng", "Khác"]);
   });
+
+  it("accepts one more on the server: the product form's own save (slice B3b)", () => {
+    // `admin_adjust_stock()` restates this list; the sheet's menu keeps four.
+    expect(STOCK_REASONS).toEqual([...ADJUST_REASONS, "Sửa mẫu"]);
+    expect(isStockReason("Sửa mẫu")).toBe(true);
+    expect(isStockReason("Hàng trả về")).toBe(true);
+    expect(isStockReason("May thêm")).toBe(false);
+    expect(isStockReason("")).toBe(false);
+  });
 });
 
 describe("deltaLabel", () => {
@@ -146,45 +157,26 @@ describe("deltaLabel", () => {
   });
 });
 
-describe("an adjustment reaches the shelf through the store", () => {
-  it("moves on-hand and therefore un-sells the piece", () => {
-    const color = bui.colors[0]!;
-    const before = onHandOf(bui, color, "L");
-    const action: SimAction = {
-      kind: "INVENTORY_ADJUSTED",
-      at: "2026-09-20T18:40:00+07:00",
-      productId: String(bui.id),
-      cells: [{ color, size: "L", before, after: before + 1 }],
-      reason: "Hàng trả về",
-      ref: "DH-2419",
-      note: "",
-    };
-    const after = simProducts(CATALOG, pushSim(EMPTY_SIM, action)).find(
-      (p) => p.id === bui.id,
-    )!;
-
-    expect(onHandOf(after, color, "L")).toBe(before + 1);
-    expect(onHand(after)).toBe(onHand(bui) + 1);
-    // The cut never moves: only what is left on the shelf does.
-    expect(after.cutUnits).toBe(bui.cutUnits);
+// Where the cells go — `admin_adjust_stock()`, the shelf in Postgres, the
+// cut left alone, every other style untouched — is proved against the
+// database in `lib/db/catalog-admin.dbtest.ts` since slice B3b.
+describe("what an adjustment carries", () => {
+  it("adds up the units it moved, up and down", () => {
+    expect(
+      cellDelta([
+        { color: "black", size: "L", before: 1, after: 3 },
+        { color: "grey", size: "S", before: 2, after: 1 },
+      ]),
+    ).toBe(1);
+    expect(cellDelta([{ color: "black", size: "XL", before: 1, after: 0 }])).toBe(-1);
+    expect(cellDelta([])).toBe(0);
   });
 
-  it("leaves every other style exactly as it was", () => {
+  it("is exactly what changedCells hands over", () => {
     const color = bui.colors[0]!;
-    const action: SimAction = {
-      kind: "INVENTORY_ADJUSTED",
-      at: "2026-09-20T18:40:00+07:00",
-      productId: String(bui.id),
-      cells: [{ color, size: "L", before: onHandOf(bui, color, "L"), after: 0 }],
-      reason: "Hư hỏng",
-      ref: "",
-      note: "",
-    };
-    const after = simProducts(CATALOG, pushSim(EMPTY_SIM, action));
-    for (const p of after) {
-      if (p.id === bui.id) continue;
-      expect(onHand(p)).toBe(onHand(CATALOG.find((x) => x.id === p.id)!));
-    }
+    const before = onHandOf(bui, color, "L");
+    const draft = withCell(draftOf(bui), color, "L", before + 2);
+    expect(cellDelta(changedCells(bui, draft))).toBe(2);
   });
 
   it("keeps the colour totals the grid was showing", () => {

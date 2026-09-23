@@ -6,7 +6,6 @@ import { useMemo } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { SearchBox } from "@/components/admin/AdminOrdersScreen";
-import { useSim } from "@/components/admin/SimContext";
 import { ChipMenu, ToggleChip } from "@/components/admin/Table3";
 import { Empty } from "@/components/shop/Empty";
 import { useCatalog } from "@/components/shop/CatalogContext";
@@ -20,7 +19,6 @@ import {
   logStamp,
   mergeLogRows,
   scheduleRows,
-  simLogRows,
   withinDays,
 } from "@/lib/activity-log";
 import type { AdminOrder } from "@/lib/admin-orders";
@@ -44,15 +42,15 @@ const LOG_WINDOW_DAYS = 7;
 /**
  * "Nhật ký thao tác" — every operation the shop can account for.
  *
- * Since slice B3a the record is the `events` table: every move on an order —
- * the shop's, the shopper's, the twelve-hour clock's — and every reset is a
- * row written in the same transaction as the change, and the sample's own
- * history is written in by `reset_demo()`. Beside it, two things read rather
- * than stored, each saying so: what the clock has decided that nobody wrote
- * down yet (an issue opening on schedule, a hold that ran out before the
- * sweep), and what this browser still simulates — stock, issues, codes —
- * until slice B3b moves them into the table too. `lib/activity-log.ts` holds
- * the rules and is tested without a DOM.
+ * The record is the `events` table: every move on an order — the shop's, the
+ * shopper's, the twelve-hour clock's (slice B3a) — every move on the
+ * catalogue — the shelf, a style, an issue, a teaser, a code (slice B3b) —
+ * and every reset is a row written in the same transaction as the change, and
+ * the sample's own history is written in by `reset_demo()`. Beside it, one
+ * thing read rather than stored, and saying so: what the clock has decided
+ * that nobody wrote down yet (an issue opening on schedule, a hold that ran
+ * out before the sweep). `lib/activity-log.ts` holds the rules and is tested
+ * without a DOM.
  *
  * "Ai" is the hand that acted: "Cửa hàng" for the manager, "Khách" for the
  * shopper, "Hệ thống" for the clock and for a reset a script ran. The line
@@ -73,13 +71,11 @@ export function ActivityLogScreen({
   query: Query;
 }) {
   const catalog = useCatalog();
-  const { sim } = useSim();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
 
   const all = mergeLogRows(
     logRows(catalog, events, orders, now),
-    simLogRows(catalog, sim, catalog.products),
     scheduleRows(catalog, catalog.drops, catalog.products, now),
   );
   const filter = logFilter(query.kind);
@@ -111,7 +107,7 @@ export function ActivityLogScreen({
     <>
       <AdminTop
         title="Nhật ký thao tác"
-        sub={`Đơn hàng: nhật ký trên máy chủ · tồn kho, ${LEX.tl}, mã: mô phỏng trên trình duyệt này`}
+        sub="Nhật ký trên máy chủ · mỗi thao tác một dòng, có trước và sau"
       >
         <ExportCsvButton label="Tải CSV" filename="nhat-ky.csv" rows={csvRows} />
       </AdminTop>
@@ -154,7 +150,7 @@ export function ActivityLogScreen({
             <Empty
               icon="doc"
               title="Chưa có thao tác nào"
-              text="Mọi thao tác trên đơn hàng hiện ở đây, kèm việc khách tự làm, việc suy từ đồng hồ và dữ liệu, và các thay đổi mô phỏng trên trình duyệt này."
+              text={`Mọi thao tác trên đơn hàng, tồn kho, ${LEX.tl} và mã giảm giá hiện ở đây, kèm việc khách tự làm và việc suy từ đồng hồ và dữ liệu.`}
             />
           </div>
         ) : (

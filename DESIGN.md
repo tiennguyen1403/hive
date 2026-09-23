@@ -619,7 +619,7 @@ thủ): `brand.session` (bỏ ở B1: phiên là cookie Supabase Auth) · `brand
 · `brand.promo` mã đang áp · `brand.wishlist` · `brand.orders` (bỏ ở B2: đơn nằm trong Postgres; người vãng lai giữ khoá biên nhận trong cookie httpOnly `guest_orders`) · `brand.addresses`
 sổ địa chỉ · `brand.reminder` nhắc Số · `brand.searches` tìm gần đây ·
 `brand.prefs` công tắc · `brand.notif.read` thông báo đã đọc · `brand.adminSim`
-nhật ký mô phỏng của khu quản trị — **từ B3a chỉ còn tồn kho, Số, teaser và mã giảm giá** (B3b đưa nốt lên Postgres); mọi thao tác trên đơn hàng đã ghi vào bảng `events` trên máy chủ
+(bỏ ở B3b 24/09: tồn kho, Số, teaser, mã giảm giá và sửa mẫu đều ghi Postgres qua hàm `admin_*`, nhật ký là bảng `events` trên máy chủ; khoá cũ còn trong trình duyệt là vô hại, không mã nào đọc)
 · `brand.adminCols` cột bảng. Không khoá nào ở `sessionStorage`.
 
 **Đồng hồ mẫu (QĐ-24).** App sống trong 24 giờ sau mốc
@@ -674,7 +674,7 @@ tiết từng lát v2 nằm trong lịch sử của tệp này (bản 2026-09-21
   Tailwind — QĐ-23; `.outline` → `.btn.ink`, `.grid`/`.grow` → `.grid3`/`.fill`;
   `lib/classnames.test.ts`).
 - **Lát 5** (khu quản trị `.s.adm3`, `Table3`, `AdminSheet`, `brand.adminSim`
-  hai chiều; `admin-1280.png`).
+  hai chiều — bỏ ở B3b; `admin-1280.png`).
 - **Lát 6** (dọn lớp v2: xoá `table.css`, `/system`, modal, nav2, foot2, hero2,
   card v2, chips, steps, tl, sum…; đo lại 7 cặp hoà chỉ định trong
   `globals.css`): **16 tệp / 3.740 dòng CSS**.

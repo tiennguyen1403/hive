@@ -8,10 +8,21 @@ import { Field3 } from "@/components/ui/Field3";
 import { Select } from "@/components/ui/Select";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Catalog } from "@/lib/catalog";
-import { FAMILIES, FAMILY_LABELS, type Family } from "@/data/types";
-import type { SimActionInput } from "@/components/admin/SimContext";
+import { FAMILY_LABELS, type Family } from "@/data/types";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { photoUrl } from "@/lib/photos";
+
+/**
+ * What the sheet sends: the issue, a name, a kind and a photo. The family and
+ * the slug are the server's to derive (`lib/catalog-admin.ts#readTeaser`) —
+ * the browser is never asked for either.
+ */
+export interface TeaserDraft {
+  dropNo: number;
+  name: string;
+  garment: string;
+  photoKey: string;
+}
 
 /** The kinds the catalogue actually uses, so the menu cannot invent one. */
 function kindOptions(catalog: Catalog) {
@@ -43,20 +54,23 @@ function photoKeys(catalog: Catalog): string[] {
  * form that asked for them would collect numbers the shop has not decided
  * (`Teaser` in `data/types.ts` refuses to carry them for the same reason).
  *
- * What it adds lives in the back office only. The shop front reads the
- * fixtures (DESIGN.md §8), so the sheet says where the new row will and will
- * not appear rather than letting somebody find out later.
+ * What it adds is a row of `public.teasers` since slice B3b
+ * (`admin_add_teaser()`), and the shop's home page reads the same table — so
+ * the sheet says the new teaser shows there, because it does.
  */
 export function TeaserFormSheet({
   open,
+  pending = false,
   no,
   onClose,
   onConfirm,
 }: {
   open: boolean;
+  /** The save is on its way to the server. */
+  pending?: boolean;
   no: number;
   onClose: () => void;
-  onConfirm: (action: Extract<SimActionInput, { kind: "TEASER_ADDED" }>) => void;
+  onConfirm: (draft: TeaserDraft) => void;
 }) {
   const catalog = useCatalog();
   const [name, setName] = useState("");
@@ -86,33 +100,27 @@ export function TeaserFormSheet({
       sub={
         <>
           Chỉ tên, loại và ảnh. Không giá, không số cắt: hai thứ đó công bố đúng lúc mở. Mẫu thêm ở
-          đây hiện trong quản trị; trang chủ của khách đọc dữ liệu mẫu.
+          đây hiện ngay trên bìa {LEX.tl} {issueNo(no)} ở trang chủ.
         </>
       }
       footer={
         <>
-          <Button tone="ink sm" icon="back" onClick={onClose}>
+          <Button tone="ink sm" icon="back" disabled={pending} onClick={onClose}>
             Huỷ
           </Button>
           <Button
             tone="sm"
-            {...(ready ? { icon: "plus" as const } : {})}
-            disabled={!ready}
+            {...(ready && !pending ? { icon: "plus" as const } : {})}
+            disabled={!ready || pending}
             onClick={() => {
+              if (pending) return;
               if (!clean) return setError("Nhập tên mẫu.");
               if (!kind) return setError("Chọn loại.");
               if (!photo) return setError("Chọn một ảnh.");
-              onConfirm({
-                kind: "TEASER_ADDED",
-                no,
-                name: clean,
-                garment: kind,
-                family: familyOf(catalog, kind),
-                photoKey: photo,
-              });
+              onConfirm({ dropNo: no, name: clean, garment: kind, photoKey: photo });
             }}
           >
-            {blocker ?? "Thêm"}
+            {pending ? "Đang lưu…" : (blocker ?? "Thêm")}
           </Button>
         </>
       }
@@ -174,9 +182,4 @@ export function TeaserFormSheet({
       </Field3>
     </AdminSheet>
   );
-}
-
-/** The family a kind belongs to, read off the catalogue rather than typed. */
-function familyOf(catalog: Catalog, kind: string): Family {
-  return catalog.products.find((p) => p.kind === kind)?.family ?? FAMILIES[0];
 }

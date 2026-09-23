@@ -77,11 +77,11 @@ export interface DropSummary {
 /**
  * The styles cut for one issue.
  *
- * `products` defaults to the catalogue this render was handed, and is passed
- * in explicitly by the back office, which renders `fixtures + overlay` — a
- * stock adjustment made in this browser has to reach the issue's own figures,
- * or "còn 73 chiếc" on the dashboard would disagree with the products table
- * one click away. Every other caller passes only the catalogue (v3 slice 5).
+ * `products` defaults to the catalogue this render was handed. The back
+ * office passes its list in explicitly (v3 slice 5), which since slice B3b is
+ * the same catalogue the database holds — a stock adjustment saved there
+ * reaches the issue's own figures in the same response, so "còn 73 chiếc" on
+ * the dashboard cannot disagree with the products table one click away.
  */
 export function productsInDrop(
   catalog: Catalog,

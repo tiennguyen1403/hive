@@ -58,6 +58,8 @@ function span(from: string, to: string): { from: string; to: string } | null {
 
 interface DropFormModalProps {
   open: boolean;
+  /** The save is on its way to the server (slice B3b). */
+  pending?: boolean;
   onClose: () => void;
   /** "Tạo số 07" or "Sửa giờ số 06" — it also decides the button. */
   mode: "create" | "edit";
@@ -81,6 +83,7 @@ interface DropFormModalProps {
  */
 export function DropFormModal({
   open,
+  pending = false,
   onClose,
   mode,
   no,
@@ -122,14 +125,17 @@ export function DropFormModal({
       }
       footer={
         <>
-          <Button tone="ink sm" icon="back" onClick={onClose}>
+          <Button tone="ink sm" icon="back" disabled={pending} onClick={onClose}>
             Huỷ
           </Button>
           <Button
             tone="sm"
-            {...(ready ? { icon: mode === "create" ? ("plus" as const) : ("calendar" as const) } : {})}
-            disabled={!ready}
+            {...(ready && !pending
+              ? { icon: mode === "create" ? ("plus" as const) : ("calendar" as const) }
+              : {})}
+            disabled={!ready || pending}
             onClick={() => {
+              if (pending) return;
               if (!days) return setError("Nhập ngày mở và ngày đóng theo dạng dd/mm/yyyy.");
               if (Date.parse(days.to) <= Date.parse(days.from)) {
                 return setError("Ngày đóng phải sau ngày mở.");
@@ -137,11 +143,13 @@ export function DropFormModal({
               onConfirm(atDropHour(catalog, days.from), atDropHour(catalog, days.to));
             }}
           >
-            {!ready
-              ? "Nhập hai ngày"
-              : mode === "create"
-                ? `Tạo ${LEX.tl}`
-                : "Lưu giờ"}
+            {pending
+              ? "Đang lưu…"
+              : !ready
+                ? "Nhập hai ngày"
+                : mode === "create"
+                  ? `Tạo ${LEX.tl}`
+                  : "Lưu giờ"}
           </Button>
         </>
       }

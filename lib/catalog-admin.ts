@@ -1,0 +1,520 @@
+import {
+  COLOR_KEYS,
+  SIZES,
+  type ColorKey,
+  type Drop,
+  type Family,
+  type Fit,
+  type Product,
+  type Promotion,
+  type Size,
+} from "@/data/types";
+import type { Catalog } from "./catalog";
+import { onHandOf } from "./inventory";
+import { isStockReason, type InventoryCell } from "./inventory-adjust";
+import { issueLabel } from "./lexicon";
+import { normalisePromoCode } from "./promotions";
+import { asciiSlug, teaserSlug } from "./teasers";
+
+/**
+ * The back office's side of the CATALOGUE, since slice B3b moved every move
+ * on it into Postgres (`supabase/migrations/…_catalog_admin.sql`).
+ *
+ * Pure, like `lib/admin-orders.ts` is for the orders: the Server Actions
+ * (`lib/actions/catalog-admin.ts`) read what the forms sent as `unknown` and
+ * check it here, then the `admin_*` functions check the same things again —
+ * a Server Action is a public endpoint, and so is a function the publishable
+ * key can reach. What lives here is what both sides and the screens have to
+ * agree on: what a form may send, what the next issue number is, what a
+ * refusal says.
+ *
+ * Every limit restates one in the migration; the database tests and the
+ * tests beside this file pin the pairs.
+ */
+
+// ─────────────────────────────────────────────────────────── the answers
+/** What a check hands back: the value to send, or the sentence for the form. */
+export type Checked<T> = { ok: true; value: T } | { ok: false; error: string };
+
+const ok = <T>(value: T): Checked<T> => ({ ok: true, value });
+const no = <T>(error: string): Checked<T> => ({ ok: false, error });
+
+/** The codes the catalogue's `admin_*` functions raise, and nothing else. */
+export const CATALOG_ERROR_CODES = [
+  "NOT_ADMIN",
+  "NOT_FOUND",
+  "NOT_ALLOWED",
+  "BAD_INPUT",
+  "STALE",
+] as const;
+
+export type CatalogErrorCode = (typeof CATALOG_ERROR_CODES)[number];
+
+/** A refusal the database named, or `UNAVAILABLE` for anything it did not. */
+export type CatalogFailure = CatalogErrorCode | "UNAVAILABLE";
+
+/** `raise exception using message = 'STALE'` arrives as SQLSTATE P0001. */
+export function catalogFailureOf(error: { code?: string; message?: string } | null): CatalogFailure {
+  if (!error) return "UNAVAILABLE";
+  const message = error.message ?? "";
+  return error.code === "P0001" && (CATALOG_ERROR_CODES as readonly string[]).includes(message)
+    ? (message as CatalogErrorCode)
+    : "UNAVAILABLE";
+}
+
+/** Every move the back office makes on the catalogue. */
+export type CatalogMove =
+  | "ADJUST_STOCK"
+  | "ADD_DROP"
+  | "SCHEDULE_DROP"
+  | "CLOSE_DROP"
+  | "ADD_TEASER"
+  | "ADD_PROMO"
+  | "EDIT_PROMO"
+  | "PAUSE_PROMO"
+  | "RAISE_LIMIT"
+  | "END_PROMO"
+  | "UPDATE_PRODUCT";
+
+/** The sentence the brief fixed for a shelf that moved under the form. */
+export const STALE_STOCK_MESSAGE = "Tồn kho đã đổi ở nơi khác — tải lại rồi sửa tiếp";
+
+/**
+ * The sentence for a move that did not go through, naming what to do next.
+ * `subject` is what the move was about, as the screen names it: a style's
+ * name, "Số 07", a code.
+ *
+ * `NOT_ALLOWED` almost always means somebody else got there first — another
+ * tab took the issue number, raised the limit, paused the code — so the
+ * sentence says to look again rather than to try again.
+ */
+export function catalogFailureMessage(
+  move: CatalogMove,
+  failure: CatalogFailure,
+  subject = "",
+): string {
+  switch (failure) {
+    case "NOT_ADMIN":
+      return "Phiên quản trị đã hết — đăng nhập lại bằng tài khoản quản trị.";
+    case "UNAVAILABLE":
+      return "Chưa lưu được. Thử lại sau ít phút.";
+    case "STALE":
+      return STALE_STOCK_MESSAGE;
+    case "NOT_FOUND":
+      switch (move) {
+        case "ADJUST_STOCK":
+        case "UPDATE_PRODUCT":
+          return subject ? `Không tìm thấy mẫu ${subject}.` : "Không tìm thấy mẫu này.";
+        case "SCHEDULE_DROP":
+        case "CLOSE_DROP":
+          return subject ? `Không tìm thấy ${subject}.` : "Không tìm thấy số này.";
+        case "ADD_TEASER":
+          return subject ? `Chưa có ${subject} để hé lộ mẫu.` : "Chưa có số này để hé lộ mẫu.";
+        default:
+          return subject ? `Không tìm thấy mã ${subject}.` : "Không tìm thấy mã này.";
+      }
+    case "NOT_ALLOWED":
+      switch (move) {
+        case "ADD_DROP":
+          return `${subject || "Số này"} đã có — tải lại trang để lấy số kế tiếp.`;
+        case "CLOSE_DROP":
+          return `${subject || "Số này"} không còn mở — tải lại trang để xem.`;
+        case "ADD_TEASER":
+          return `Mẫu hé lộ ${subject} đã có trong số này.`;
+        case "ADD_PROMO":
+          return `Mã ${subject} đã có rồi.`;
+        case "PAUSE_PROMO":
+          return `${subject} đã đổi trạng thái ở nơi khác — tải lại trang để xem.`;
+        case "RAISE_LIMIT":
+          return `Giới hạn của ${subject} đã đổi ở nơi khác — tải lại trang để xem.`;
+        case "END_PROMO":
+          return `${subject} không còn đang chạy — tải lại trang để xem.`;
+        case "UPDATE_PRODUCT":
+          return `Mã trên địa chỉ "${subject}" đã dùng cho mẫu khác.`;
+        default:
+          return "Thao tác này không còn làm được — tải lại trang để xem.";
+      }
+    case "BAD_INPUT":
+      switch (move) {
+        case "ADJUST_STOCK":
+          return "Tồn kho gửi lên chưa hợp lệ — mỗi ô từ 0 trở lên, tổng không vượt số đã cắt, và cần một lý do.";
+        case "ADD_DROP":
+        case "SCHEDULE_DROP":
+          return "Ngày đóng phải sau ngày mở.";
+        case "CLOSE_DROP":
+          return "Chưa đóng được: giờ mở của số này chưa tới.";
+        case "ADD_TEASER":
+          return "Cần tên, loại và một ảnh trong bộ ảnh mượn.";
+        case "ADD_PROMO":
+        case "EDIT_PROMO":
+          return "Điều kiện mã chưa hợp lệ — kiểm lại các ô.";
+        case "RAISE_LIMIT":
+          return "Giới hạn mới phải lớn hơn giới hạn hiện có.";
+        case "UPDATE_PRODUCT":
+          return "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.";
+        default:
+          return "Thông tin gửi lên chưa hợp lệ.";
+      }
+  }
+}
+
+// ──────────────────────────────────────────────────────────── small reads
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+const text = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+
+/** A whole number of pieces or đồng, as `public.json_count` accepts one. */
+const INT_MAX = 2_147_483_647;
+const isCount = (v: unknown): v is number =>
+  typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= INT_MAX;
+
+/** The one shape every instant in this codebase is written in. */
+const VN_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+07:00$/;
+
+export function isVnInstant(v: unknown): v is string {
+  return typeof v === "string" && VN_ISO.test(v) && !Number.isNaN(Date.parse(v));
+}
+
+// ─────────────────────────────────────────────────────────────── the shelf
+/** Longest reference and note an adjustment keeps — `admin_adjust_stock()`'s. */
+export const MAX_REF = 200;
+export const MAX_NOTE = 500;
+/** Seven colours by four sizes. */
+const MAX_CELLS = COLOR_KEYS.length * SIZES.length;
+/** Nobody counts a shelf past this; the database refuses it too. */
+const MAX_PIECES = 100_000;
+
+/**
+ * The cells a form sent, or null when they are not cells at all: each a
+ * known colour and size, once, with whole numbers that are not negative and
+ * an `after` that differs from its `before`.
+ */
+export function readCells(value: unknown): InventoryCell[] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_CELLS) return null;
+  const cells: InventoryCell[] = [];
+  for (const v of value) {
+    if (!isRecord(v)) return null;
+    const { color, size, before, after } = v;
+    if (typeof color !== "string" || !(COLOR_KEYS as readonly string[]).includes(color)) return null;
+    if (typeof size !== "string" || !(SIZES as readonly string[]).includes(size)) return null;
+    if (!isCount(before) || !isCount(after) || before > MAX_PIECES || after > MAX_PIECES) return null;
+    if (before === after) return null;
+    if (cells.some((c) => c.color === color && c.size === size)) return null;
+    cells.push({ color: color as ColorKey, size: size as Size, before, after });
+  }
+  return cells;
+}
+
+/** The style's whole shelf with these cells applied. */
+function shelfAfter(product: Product, cells: readonly InventoryCell[]): number {
+  let total = 0;
+  for (const color of product.colors) {
+    for (const size of SIZES) {
+      const moved = cells.find((c) => c.color === color && c.size === size);
+      total += moved ? moved.after : onHandOf(product, color, size);
+    }
+  }
+  return total;
+}
+
+/**
+ * Whether this adjustment of this style may be sent, or the sentence saying
+ * why not: a colour the style comes in, a reason from the list, a reference
+ * and a note that fit, and a shelf that stays within the cut.
+ */
+export function checkAdjustment(
+  product: Product,
+  cells: readonly InventoryCell[],
+  reason: string,
+  ref: string,
+  note: string,
+): string | null {
+  if (!isStockReason(reason)) return "Chọn lý do.";
+  if (ref.length > MAX_REF) return `Tham chiếu tối đa ${MAX_REF} ký tự.`;
+  if (note.length > MAX_NOTE) return `Ghi chú tối đa ${MAX_NOTE} ký tự.`;
+  if (cells.some((c) => !product.colors.includes(c.color))) {
+    return `${product.name} không có màu này.`;
+  }
+  if (shelfAfter(product, cells) > product.cutUnits) {
+    return `Không vượt ${product.cutUnits} đã cắt`;
+  }
+  return null;
+}
+
+/**
+ * The cells a whole grid moved, for the product form: what it started from
+ * (the shelf as the page was rendered) against what it holds now. Same shape
+ * as the adjustment sheet's `changedCells`, so both saves send the same list.
+ */
+export function gridCells(
+  colors: readonly ColorKey[],
+  initial: Readonly<Record<string, Readonly<Record<string, number>>>>,
+  current: Readonly<Record<string, Readonly<Record<string, number>>>>,
+): InventoryCell[] {
+  const cells: InventoryCell[] = [];
+  for (const color of colors) {
+    for (const size of SIZES) {
+      const before = initial[color]?.[size] ?? 0;
+      const after = current[color]?.[size] ?? 0;
+      if (after !== before) cells.push({ color, size, before, after });
+    }
+  }
+  return cells;
+}
+
+// ─────────────────────────────────────────────────────────────── the issues
+/** The next issue number nobody has used — what "Tạo số" offers. */
+export function nextDropNo(drops: readonly Pick<Drop, "no">[]): number {
+  return drops.reduce((n, d) => Math.max(n, d.no), 0) + 1;
+}
+
+/** Two instants in the app's shape, the closing one after the opening one. */
+export function readWindow(opensAt: unknown, closesAt: unknown): Checked<Omit<Drop, "no">> {
+  if (!isVnInstant(opensAt) || !isVnInstant(closesAt)) {
+    return no("Nhập ngày mở và ngày đóng theo dạng dd/mm/yyyy.");
+  }
+  if (Date.parse(closesAt) <= Date.parse(opensAt)) return no("Ngày đóng phải sau ngày mở.");
+  return ok({ opensAt, closesAt });
+}
+
+/** An issue number as an address or a form sends it: a whole number above 0. */
+export function readDropNo(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) && value > 0 && value <= INT_MAX
+    ? value
+    : null;
+}
+
+// ─────────────────────────────────────────────────────────────── the teasers
+/** A teaser, as `admin_add_teaser()` takes it. */
+export interface TeaserRow {
+  slug: string;
+  name: string;
+  /** "Áo khoác dù" — `Teaser.kind`, named `garment` on the wire. */
+  garment: string;
+  family: Family;
+  dropNo: number;
+  photoKey: string;
+}
+
+/** Longest teaser name, and longest kind — the database's own limits. */
+export const MAX_TEASER_NAME = 40;
+const MAX_KIND = 80;
+
+/**
+ * The photos a teaser may borrow: every one the catalogue already uses, on a
+ * style or on another teaser. There is no product photography (PRODUCT.md),
+ * so a new key would be a broken image.
+ */
+export function borrowedPhotoKeys(catalog: Catalog): string[] {
+  return [
+    ...new Set([
+      ...catalog.products.flatMap((p) => p.photoKeys),
+      ...catalog.teasers.map((t) => t.photoKey),
+    ]),
+  ];
+}
+
+/** The family the catalogue files a kind under, or undefined for a new kind. */
+export function familyOfKind(catalog: Catalog, kind: string): Family | undefined {
+  return catalog.products.find((p) => p.kind === kind)?.family;
+}
+
+/**
+ * "Thêm mẫu hé lộ", as the sheet sends it — the issue, a name, a kind the
+ * catalogue uses and a borrowed photo — turned into the row to write. The
+ * name is written in capitals like every style's; the family and the slug
+ * are derived here, never taken from the browser.
+ */
+export function readTeaser(value: unknown, catalog: Catalog): Checked<TeaserRow> {
+  if (!isRecord(value)) return no("Cần tên, loại và một ảnh.");
+  const dropNo = readDropNo(value.dropNo);
+  if (dropNo === null) return no("Chọn số cho mẫu hé lộ.");
+  const name = text(value.name).toLocaleUpperCase("vi");
+  if (name === "" || name.length > MAX_TEASER_NAME) return no("Nhập tên mẫu.");
+  const garment = text(value.garment);
+  const family = familyOfKind(catalog, garment);
+  if (garment === "" || garment.length > MAX_KIND || !family) return no("Chọn loại.");
+  const photoKey = text(value.photoKey);
+  if (!borrowedPhotoKeys(catalog).includes(photoKey)) return no("Chọn một ảnh.");
+  return ok({ slug: teaserSlug(name, dropNo), name, garment, family, dropNo, photoKey });
+}
+
+// ───────────────────────────────────────────────────────────────── the codes
+/** The three shapes a code can take. */
+export type PromoKind = Promotion["kind"];
+
+const PROMO_KINDS: readonly PromoKind[] = ["PERCENT", "AMOUNT", "FREE_SHIPPING"];
+
+/**
+ * A code's terms, the way `public.read_promo_terms()` normalises them: every
+ * field present, "none" as null. The table write and the log's before/after
+ * both use this shape, so "nothing changed" is one comparison.
+ */
+export interface PromoTerms {
+  kind: PromoKind;
+  percent: number | null;
+  maxDiscountVnd: number | null;
+  amountVnd: number | null;
+  minOrderVnd: number | null;
+  usageLimit: number | null;
+  startsAt: string;
+  endsAt: string;
+}
+
+/** Longest code the database takes. */
+export const MAX_PROMO_CODE = 40;
+
+/** The terms a code in the catalogue carries now. */
+export function termsOf(p: Promotion): PromoTerms {
+  return {
+    kind: p.kind,
+    percent: p.kind === "PERCENT" ? p.percent : null,
+    maxDiscountVnd: p.kind === "PERCENT" ? (p.maxDiscountVnd ?? null) : null,
+    amountVnd: p.kind === "AMOUNT" ? p.amountVnd : null,
+    minOrderVnd: p.minOrderVnd ?? null,
+    usageLimit: p.usageLimit,
+    startsAt: p.startsAt,
+    endsAt: p.endsAt,
+  };
+}
+
+export function sameTerms(a: PromoTerms, b: PromoTerms): boolean {
+  return (Object.keys(a) as Array<keyof PromoTerms>).every((k) => a[k] === b[k]);
+}
+
+/**
+ * The code sheet's draft — `PromoDraft` in `components/admin/PromoFormSheet`,
+ * where a cap or a minimum of 0 means "none" and a blank limit is null —
+ * read into a code and its terms. Only the fields the kind carries survive:
+ * the sheet keeps an amount in its state while the percentage tab is open,
+ * and the table's check constraint would refuse a PERCENT row carrying one.
+ */
+export function readPromoDraft(value: unknown): Checked<{ code: string; terms: PromoTerms }> {
+  if (!isRecord(value)) return no("Điều kiện mã chưa hợp lệ — kiểm lại các ô.");
+  const code = normalisePromoCode(typeof value.code === "string" ? value.code : "");
+  if (code === "" || code.length > MAX_PROMO_CODE) {
+    return no("Nhập mã — đây là thứ khách gõ ở ô giảm giá.");
+  }
+
+  const kind = value.promoKind;
+  if (typeof kind !== "string" || !(PROMO_KINDS as readonly string[]).includes(kind)) {
+    return no("Chọn loại mã.");
+  }
+
+  const { percent, amountVnd, maxDiscountVnd, minOrderVnd, usageLimit, startsAt, endsAt } = value;
+  if (![percent, amountVnd, maxDiscountVnd, minOrderVnd].every(isCount)) {
+    return no("Số tiền và phần trăm phải là số nguyên, không âm.");
+  }
+  if (usageLimit !== null && !(isCount(usageLimit) && usageLimit >= 1)) {
+    return no("Giới hạn lượt để trống, hoặc từ 1 trở lên.");
+  }
+  if (!isVnInstant(startsAt) || !isVnInstant(endsAt)) {
+    return no("Nhập thời gian theo dạng 20:00 11/09/2026.");
+  }
+  if (Date.parse(endsAt) <= Date.parse(startsAt)) return no("Giờ kết thúc phải sau giờ bắt đầu.");
+
+  const pct = percent as number;
+  const amount = amountVnd as number;
+  const cap = maxDiscountVnd as number;
+  const min = minOrderVnd as number;
+
+  if (kind === "PERCENT" && (pct < 1 || pct > 100)) return no("Phần trăm phải nằm giữa 1 và 100.");
+  if (kind === "AMOUNT" && amount < 1) return no("Số tiền giảm phải lớn hơn 0.");
+
+  return ok({
+    code,
+    terms: {
+      kind: kind as PromoKind,
+      percent: kind === "PERCENT" ? pct : null,
+      maxDiscountVnd: kind === "PERCENT" && cap > 0 ? cap : null,
+      amountVnd: kind === "AMOUNT" ? amount : null,
+      minOrderVnd: min > 0 ? min : null,
+      usageLimit: usageLimit as number | null,
+      startsAt,
+      endsAt,
+    },
+  });
+}
+
+// ────────────────────────────────────────────────────────────── the styles
+/** What "Sửa mẫu" may change — `admin_update_product()`'s patch. Never the cut. */
+export interface ProductPatch {
+  name?: string;
+  kind?: string;
+  slug?: string;
+  priceVnd?: number;
+  material?: string;
+  fit?: Fit;
+  dropNo?: number;
+}
+
+/** The database's limits on a style's own fields. */
+export const MAX_PRODUCT_NAME = 40;
+export const MAX_SLUG = 80;
+export const MAX_MATERIAL = 200;
+
+const SLUG = /^[a-z0-9-]+$/;
+
+export function isSlug(value: string): boolean {
+  return value.length <= MAX_SLUG && SLUG.test(value);
+}
+
+/**
+ * The product form, read against the style as the catalogue has it now:
+ * every field checked, then only the ones that CHANGED kept — the patch the
+ * database writes and the event keeps. The name is written in capitals like
+ * every style's; an empty address segment is made from the name, as the
+ * field's own help line promises ("Tự sinh từ tên nếu để trống").
+ */
+export function productPatch(
+  product: Product,
+  value: unknown,
+  catalog: Catalog,
+): Checked<ProductPatch> {
+  if (!isRecord(value)) return no("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
+
+  const name = text(value.name).toLocaleUpperCase("vi");
+  if (name === "" || name.length > MAX_PRODUCT_NAME) return no("Nhập tên mẫu.");
+
+  const kind = text(value.kind);
+  if (kind === "" || kind.length > MAX_KIND) return no("Chọn loại.");
+
+  const slug = text(value.slug) || asciiSlug(name);
+  if (!isSlug(slug)) {
+    return no("Mã trên địa chỉ chỉ gồm chữ thường không dấu, số và gạch ngang.");
+  }
+  if (catalog.products.some((p) => p.slug === slug && p.id !== product.id)) {
+    return no(`Mã trên địa chỉ "${slug}" đã dùng cho mẫu khác.`);
+  }
+
+  const priceVnd = value.priceVnd;
+  if (!isCount(priceVnd) || priceVnd < 1) return no("Nhập giá bán lớn hơn 0.");
+
+  const material = text(value.material);
+  if (material === "" || material.length > MAX_MATERIAL) return no("Nhập chất liệu.");
+
+  const fit = value.fit === undefined ? product.fit : value.fit;
+  if (fit !== "OVERSIZE" && fit !== "REGULAR") return no("Chọn form.");
+
+  const dropNo = readDropNo(value.dropNo);
+  if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no("Chọn một số.");
+
+  const patch: ProductPatch = {};
+  if (name !== product.name) patch.name = name;
+  if (kind !== product.kind) patch.kind = kind;
+  if (slug !== product.slug) patch.slug = slug;
+  if (priceVnd !== product.priceVnd) patch.priceVnd = priceVnd;
+  if (material !== product.material) patch.material = material;
+  if (fit !== product.fit) patch.fit = fit;
+  if (dropNo !== product.dropNo) patch.dropNo = dropNo;
+  return ok(patch);
+}
+
+/** Whether a patch changes anything at all. */
+export function isEmptyPatch(patch: ProductPatch): boolean {
+  return Object.keys(patch).length === 0;
+}
+
+/** "Số 07" — how the messages above name an issue. */
+export const dropSubject = (no: number): string => issueLabel(no);

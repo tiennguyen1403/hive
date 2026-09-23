@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
+  GUEST_SUFFIX,
+  dropRows,
+  orderCustomer,
   orderItemsLabel,
   orderNote,
   promoState,
   promoValueLabel,
   queueRows,
-  simDropRows,
 } from "./admin-rows";
-import { EMPTY_SIM, pushSim, simDrops } from "./admin-sim";
 import { DROPS } from "@/data/catalog";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { CUSTOMERS } from "@/data/customers";
@@ -65,6 +66,16 @@ describe("promoState", () => {
     expect(promoState(promo({ usedCount: 100 }), new Date("2026-10-01T10:00:00+07:00"))).toBe(
       "ENDED",
     );
+  });
+
+  it("is paused when the shop paused a code that would otherwise be running (slice B3b)", () => {
+    expect(promoState(promo({ paused: true }), NOW)).toBe("PAUSED");
+  });
+
+  it("lets the clock and the cap speak before the pause, as the simulation did", () => {
+    expect(promoState(promo({ paused: true }), new Date("2026-09-01T10:00:00+07:00"))).toBe("UPCOMING");
+    expect(promoState(promo({ paused: true }), new Date("2026-10-01T10:00:00+07:00"))).toBe("ENDED");
+    expect(promoState(promo({ paused: true, usedCount: 100 }), NOW)).toBe("USED_UP");
   });
 });
 
@@ -197,9 +208,11 @@ describe("queueRows", () => {
     expect(c1!.customer).toBe(base.owner!.name);
   });
 
-  it("names nobody for an order placed signed out", () => {
+  it("names the recipient of an order placed signed out, and says it is a guest's (slice B3b)", () => {
     const guest: AdminOrder = { ...BOOK.find((o) => o.code === "DH-2429")!, owner: null };
-    expect(queueRows(FIXTURE_CATALOG, [guest], NOW)[0]!.customer).toBe("—");
+    expect(queueRows(FIXTURE_CATALOG, [guest], NOW)[0]!.customer).toBe(
+      `${guest.shipTo.recipient} · vãng lai`,
+    );
   });
 
   it("marks only a paid order that has waited too long", () => {
@@ -208,25 +221,47 @@ describe("queueRows", () => {
   });
 });
 
-describe("simDropRows", () => {
+describe("orderCustomer — the 'Khách' column", () => {
+  it("is the account's name for an order with an account", () => {
+    const own = BOOK.find((o) => o.code === "DH-2430")!;
+    expect(orderCustomer(own)).toBe(own.owner!.name);
+  });
+
+  it("is the recipient and '· vãng lai' for an order placed signed out", () => {
+    const guest: AdminOrder = { ...BOOK.find((o) => o.code === "DH-2430")!, owner: null };
+    expect(orderCustomer(guest)).toBe(`${guest.shipTo.recipient} · ${GUEST_SUFFIX}`);
+    expect(GUEST_SUFFIX).toBe("vãng lai");
+  });
+});
+
+describe("dropRows", () => {
+  it("lists every issue, newest number first", () => {
+    expect(dropRows(FIXTURE_CATALOG, DROPS, NOW).map((r) => r.no)).toEqual(
+      [...DROPS].map((d) => d.no).sort((a, b) => b - a),
+    );
+  });
+
   it("counts teased styles apart from styles on sale", () => {
-    const rows = simDropRows(FIXTURE_CATALOG, simDrops(DROPS, EMPTY_SIM), NOW);
+    const rows = dropRows(FIXTURE_CATALOG, DROPS, NOW);
     const six = rows.find((r) => r.no === 6)!;
     expect(six.styles).toBe(0);
     expect(six.teasers).toBe(2);
   });
 
-  it("reports a drop closed once its hour has been moved to the past", () => {
-    const overlay = pushSim(EMPTY_SIM, {
-      kind: "DROP_SCHEDULED",
-      at: "2026-09-20T09:00:00+07:00",
-      no: FIXTURE_CATALOG.currentDropNo,
-      opensAt: "2026-09-11T20:00:00+07:00",
-      closesAt: "2026-09-20T09:00:00+07:00",
-    });
-    const row = simDropRows(FIXTURE_CATALOG, simDrops(DROPS, overlay), NOW).find((r) => r.no === FIXTURE_CATALOG.currentDropNo)!;
+  it("reports a drop closed once its closing hour has been moved to the past", () => {
+    // "Đóng sớm" is `admin_schedule_drop()` with the closing hour set to now:
+    // the state follows the instant, with no flag to flip.
+    const moved = DROPS.map((d) =>
+      d.no === FIXTURE_CATALOG.currentDropNo ? { ...d, closesAt: "2026-09-20T09:00:00+07:00" } : d,
+    );
+    const row = dropRows(FIXTURE_CATALOG, moved, NOW).find((r) => r.no === FIXTURE_CATALOG.currentDropNo)!;
     expect(row.state).toBe("CLOSED");
-    expect(row.rescheduled).toBe(true);
+  });
+
+  it("gives an issue with nothing in it yet a row of its own", () => {
+    const seven = { no: 7, opensAt: "2026-11-06T20:00:00+07:00", closesAt: "2026-11-20T20:00:00+07:00" };
+    const row = dropRows(FIXTURE_CATALOG, [...DROPS, seven], NOW)[0]!;
+    expect(row).toMatchObject({ no: 7, state: "UPCOMING", styles: 0, teasers: 0, cutUnits: 0 });
   });
 });
 

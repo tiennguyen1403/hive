@@ -97,7 +97,7 @@ function SoldOutTable({ rows }: { rows: SoldOutRow[] }) {
     <section className="sec" aria-labelledby="h-solds">
       <div className="hd">
         <h2 id="h-solds">Hết lúc nào</h2>
-        <span className="meta">theo sổ cửa hàng · dữ liệu mô phỏng</span>
+        <span className="meta">theo sổ cửa hàng · dữ liệu mẫu</span>
       </div>
 
       <div className="solds">

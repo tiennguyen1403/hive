@@ -13,11 +13,19 @@ import { demoNow } from "@/lib/clock";
 export const metadata = { title: "Sửa mẫu" };
 
 /**
- * One style, editable.
+ * One style, editable — and since slice B3b, saved (`updateProduct`).
  *
  * The grid shows what is LEFT per colour and size, and the line above it
  * reports what was cut — the difference being what sold. Both come from the
- * catalogue rather than from a second copy of the numbers.
+ * catalogue in the database (`loadCatalog()`) rather than from a second copy
+ * of the numbers, and the numbers the grid starts from are what a save sends
+ * as "before", so a shelf changed elsewhere in the meantime is refused.
+ *
+ * The address is the style's id, which no edit changes: a new address
+ * segment moves the shop's page (`/products/<slug>`), not this one. The form
+ * is keyed on the values it was rendered with, so the response that answers
+ * a save — which re-renders this page — starts it again from what the
+ * database now holds.
  */
 export default async function AdminEditProductPage(props: PageProps<"/admin/products/[id]">) {
   const { id } = await props.params;
@@ -34,6 +42,18 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
     for (const s of SIZES) stock[c]![s] = onHandOf(product, c, s);
   }
 
+  const values = {
+    name: product.name,
+    kind: product.kind,
+    slug: product.slug,
+    priceVnd: product.priceVnd,
+    dropNo: product.dropNo,
+    material: product.material,
+    colors: [...product.colors],
+    stock,
+    photoKeys: [...product.photoKeys],
+  };
+
   return (
     <>
       <AdminTop
@@ -42,21 +62,13 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
         sub={`${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc. Lưới dưới là số còn lại theo từng màu và size.`}
       />
       <ProductForm
+        key={JSON.stringify(values)}
         mode="edit"
+        productId={product.id}
         kindOptions={kindOptions(catalog)}
         dropOptions={dropOptions(catalog, now)}
         cutUnits={product.cutUnits}
-        values={{
-          name: product.name,
-          kind: product.kind,
-          slug: product.slug,
-          priceVnd: product.priceVnd,
-          dropNo: product.dropNo,
-          material: product.material,
-          colors: [...product.colors],
-          stock,
-          photoKeys: [...product.photoKeys],
-        }}
+        values={values}
       />
     </>
   );

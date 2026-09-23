@@ -250,13 +250,13 @@ insert into public.seed_teasers (slug, name, kind, family, drop_no, photo_key, p
   ('soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0),
   ('ngoi', 'NGÓI', 'Áo hoodie in', 'HOODIE', 6, 'nguoi', 1);
 
-insert into public.seed_promotions (code, kind, percent, max_discount_vnd, amount_vnd, starts_at, ends_at, usage_limit, used_count, min_order_vnd, position) values
-  ('DOT05', 'PERCENT', 10, 150000, null, '2026-09-11T20:00:00+07:00'::timestamptz, '2026-09-25T20:00:00+07:00'::timestamptz, 200, 46, 500000, 0),
-  ('CHAOBAN', 'AMOUNT', null, null, 50000, '2026-09-11T20:00:00+07:00'::timestamptz, '2026-09-25T20:00:00+07:00'::timestamptz, null, 31, 400000, 1),
-  ('FREESHIP', 'FREE_SHIPPING', null, null, null, '2026-09-11T20:00:00+07:00'::timestamptz, '2026-09-25T20:00:00+07:00'::timestamptz, 100, 18, 800000, 2),
-  ('VIP20', 'PERCENT', 20, 300000, null, '2026-09-11T20:00:00+07:00'::timestamptz, '2026-09-25T20:00:00+07:00'::timestamptz, 50, 50, 2000000, 3),
-  ('DOT04', 'AMOUNT', null, null, 100000, '2026-06-05T20:00:00+07:00'::timestamptz, '2026-06-19T20:00:00+07:00'::timestamptz, 150, 87, 1000000, 4),
-  ('TET2026', 'PERCENT', 15, 200000, null, '2026-02-10T00:00:00+07:00'::timestamptz, '2026-02-24T00:00:00+07:00'::timestamptz, null, 124, null, 5);
+insert into public.seed_promotions (code, kind, percent, max_discount_vnd, amount_vnd, starts_at, ends_at, usage_limit, used_count, min_order_vnd, position, paused) values
+  ('DOT05', 'PERCENT', 10, 150000, null, '2026-09-11T20:00:00+07:00'::timestamptz, '2026-09-25T20:00:00+07:00'::timestamptz, 200, 46, 500000, 0, false),
+  ('CHAOBAN', 'AMOUNT', null, null, 50000, '2026-09-11T20:00:00+07:00'::timestamptz, '2026-09-25T20:00:00+07:00'::timestamptz, null, 31, 400000, 1, false),
+  ('FREESHIP', 'FREE_SHIPPING', null, null, null, '2026-09-11T20:00:00+07:00'::timestamptz, '2026-09-25T20:00:00+07:00'::timestamptz, 100, 18, 800000, 2, false),
+  ('VIP20', 'PERCENT', 20, 300000, null, '2026-09-11T20:00:00+07:00'::timestamptz, '2026-09-25T20:00:00+07:00'::timestamptz, 50, 50, 2000000, 3, false),
+  ('DOT04', 'AMOUNT', null, null, 100000, '2026-06-05T20:00:00+07:00'::timestamptz, '2026-06-19T20:00:00+07:00'::timestamptz, 150, 87, 1000000, 4, false),
+  ('TET2026', 'PERCENT', 15, 200000, null, '2026-02-10T00:00:00+07:00'::timestamptz, '2026-02-24T00:00:00+07:00'::timestamptz, null, 124, null, 5, false);
 
 insert into public.seed_customers (handle, name, email, phone, joined_at) values
   ('c-minhanh', 'Trần Minh Anh', 'minhanh@email.com', '0912345678', '2026-03-08T21:14:00+07:00'::timestamptz),

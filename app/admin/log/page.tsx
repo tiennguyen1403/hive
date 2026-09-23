@@ -9,8 +9,8 @@ import { requireAdmin } from "@/lib/db/session";
 export const metadata = { title: "Nhật ký thao tác" };
 
 /**
- * The log: every event the database recorded (slice B3a), plus what the
- * clock decided and what this browser still simulates.
+ * The log: every event the database recorded — the orders since slice B3a,
+ * the catalogue since slice B3b — plus what the clock decided.
  *
  * `requireAdmin` first, then the newest five hundred events — a day of the
  * demo is a few dozen, and the log starts again at every reset — and the

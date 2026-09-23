@@ -1,5 +1,4 @@
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
-import type { InventoryCell } from "./admin-sim";
 import { onHandOf } from "./inventory";
 
 /**
@@ -16,7 +15,29 @@ import { onHandOf } from "./inventory";
  * What the grid DOES move is units on hand: a return goes back on the shelf,
  * a stocktake corrects a miscount, breakage takes a piece off. All three are
  * real things that happen to cloth after it is cut.
+ *
+ * Since slice B3b the save is `admin_adjust_stock()` in Postgres, which
+ * applies the same ceiling and refuses a cell whose `before` is no longer the
+ * shelf's own number (`STALE`) — the rules below are what the sheet can say
+ * before the button is pressed, the database is what decides.
  */
+
+/**
+ * One cell of the grid that moved: what the form was showing, and what it
+ * was set to. `before` travels to the database so that a shelf somebody else
+ * changed in the meantime is refused rather than overwritten.
+ */
+export interface InventoryCell {
+  color: ColorKey;
+  size: Size;
+  before: number;
+  after: number;
+}
+
+/** How many units an adjustment added (or removed) across every cell. */
+export function cellDelta(cells: readonly InventoryCell[]): number {
+  return cells.reduce((n, c) => n + (c.after - c.before), 0);
+}
 
 /** `draft[color][size]` — what the grid currently holds. */
 export type StockDraft = Record<string, Record<string, number>>;
@@ -57,8 +78,8 @@ export function draftTotal(product: Product, draft: StockDraft): number {
 /**
  * Every cell that moved, with what it was and what it became.
  *
- * This is exactly the shape the store keeps (`InventoryCell`), so the action
- * written to `brand.adminSim` is this list and nothing is restated.
+ * This is exactly the list `admin_adjust_stock()` takes and the
+ * `INVENTORY_ADJUSTED` event keeps, so nothing is restated on the way.
  */
 export function changedCells(product: Product, draft: StockDraft): InventoryCell[] {
   const cells: InventoryCell[] = [];
@@ -96,6 +117,21 @@ export const ADJUST_REASONS = [
 ] as const;
 
 export type AdjustReason = (typeof ADJUST_REASONS)[number];
+
+/**
+ * Every reason the database accepts for a change to the shelf: the sheet's
+ * four, and "Sửa mẫu" — what the product form's own grid saves under
+ * (slice B3b), so the log can tell an edit of the style from a correction
+ * of the shelf. Not offered in the sheet's menu: nobody adjusting stock from
+ * the table is editing the style. `admin_adjust_stock()` restates the list.
+ */
+export const PRODUCT_EDIT_REASON = "Sửa mẫu";
+
+export const STOCK_REASONS: readonly string[] = [...ADJUST_REASONS, PRODUCT_EDIT_REASON];
+
+export function isStockReason(value: string): boolean {
+  return STOCK_REASONS.includes(value);
+}
 
 /**
  * Why the save button is not offered yet, or null when it is.

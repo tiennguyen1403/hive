@@ -1,12 +1,12 @@
 import { COLORS } from "@/data/colors";
-import type { Drop, OrderState, PaymentMethod, Product } from "@/data/types";
+import { FAMILY_LABELS, type Drop, type OrderState, type PaymentMethod, type Product } from "@/data/types";
 import type { AdminOrder } from "./admin-orders";
-import { cellDelta, type SimAction, type SimOverlay } from "./admin-sim";
 import { orderItemsLabel } from "./admin-rows";
 import type { Catalog } from "./catalog";
+import type { PromoTerms } from "./catalog-admin";
 import { effectiveStatus } from "./customer-orders";
 import { clockLabel, dateTimeLabel, dayMonth } from "./datetime";
-import type { AdminEvent } from "./db/event-dto";
+import type { AdminEvent, ProductFields } from "./db/event-dto";
 import { dropSummary } from "./inventory";
 import { LEX, issueLabel } from "./lexicon";
 import { vnd } from "./money";
@@ -17,27 +17,24 @@ import { STATE_LABEL } from "./order-labels";
  * "Nhật ký thao tác" — the back office's record, read out of the places the
  * truth lives.
  *
- * SINCE SLICE B3A THE RECORD IS A TABLE. Every order move — placed, paid,
- * handed over, delivered, cancelled by the shop, by the shopper or by the
- * twelve-hour clock, a note, a new address — and every reset writes a row of
- * `public.events` in the same transaction as the change itself, and
- * `reset_demo()` writes the sample's own history in by the rules this module
- * used to derive it with. So `logRows` reads events and states nothing it
- * could not point at a row for.
+ * THE RECORD IS A TABLE. Every order move — placed, paid, handed over,
+ * delivered, cancelled by the shop, by the shopper or by the twelve-hour
+ * clock, a note, a new address (slice B3a) — every move on the catalogue — a
+ * shelf adjusted, a style edited, an issue created or rescheduled, a teaser,
+ * a code created, edited, paused, raised or ended (slice B3b) — and every
+ * reset writes a row of `public.events` in the same transaction as the change
+ * itself, and `reset_demo()` writes the sample's own history in by the rules
+ * this module used to derive it with. So `logRows` reads events and states
+ * nothing it could not point at a row for.
  *
- * Two things are still derived here, and say so:
- *
- *   · WHAT THE CLOCK DECIDED before anybody wrote it down. A transfer whose
- *     hold ran out is cancelled on every screen the moment it runs out
- *     (`effectiveStatus`), but the sweep that writes `ORDER_EXPIRED` runs at
- *     the next order or the daily health check. Until then this module reads
- *     it off the order, so the log never disagrees with the table beside it;
- *     once swept, the event takes the row's place. An issue opening and
- *     closing on its schedule is the same kind of fact (`scheduleRows`).
- *   · WHAT IS STILL SIMULATED. Stock adjustments, issues, teasers and codes
- *     move to Postgres in slice B3b; until then they live in this browser
- *     (`lib/admin-sim.ts`) and `simLogRows` reads them from there, so the
- *     "ghi nhật ký" their buttons promise stays true.
+ * One thing is still derived here, and says so: WHAT THE CLOCK DECIDED before
+ * anybody wrote it down. A transfer whose hold ran out is cancelled on every
+ * screen the moment it runs out (`effectiveStatus`), but the sweep that
+ * writes `ORDER_EXPIRED` runs at the next order or the daily health check.
+ * Until then this module reads it off the order, so the log never disagrees
+ * with the table beside it; once swept, the event takes the row's place. An
+ * issue opening and closing on its schedule is the same kind of fact
+ * (`scheduleRows`).
  *
  * WHO is "Cửa hàng" for the manager's hand, "Khách" for the shopper's, and
  * "Hệ thống" for the clock and for a reset a script ran. The screen prints
@@ -180,6 +177,39 @@ function expiredRow(catalog: Catalog, book: Book, id: string, code: string, at: 
   };
 }
 
+/** What a style edit changed, field by field, as the log names each field. */
+const PRODUCT_FIELD_LABEL: Record<keyof ProductFields, string> = {
+  name: "tên",
+  kind: "loại",
+  family: "nhóm",
+  slug: "mã địa chỉ",
+  priceVnd: "giá",
+  material: "chất liệu",
+  fit: "form",
+  dropNo: "số",
+};
+
+/** One field's value as a sentence prints it. */
+function fieldValue(key: keyof ProductFields, fields: ProductFields): string {
+  switch (key) {
+    case "priceVnd":
+      return fields.priceVnd === undefined ? "" : vnd(fields.priceVnd);
+    case "family":
+      return fields.family ? FAMILY_LABELS[fields.family] : "";
+    case "fit":
+      return fields.fit === "OVERSIZE" ? "oversize" : fields.fit === "REGULAR" ? "regular" : "";
+    case "dropNo":
+      return fields.dropNo === undefined ? "" : issueLabel(fields.dropNo);
+    default:
+      return fields[key] ?? "";
+  }
+}
+
+/** "20:00 11/09 → 20:00 25/09" — a code's run. */
+function termsWindow(t: PromoTerms): string {
+  return `${dateTimeLabel(t.startsAt)} → ${dateTimeLabel(t.endsAt)}`;
+}
+
 function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
   const id = eventId(e.id);
   const author = AUTHOR[e.actorRole];
@@ -303,155 +333,160 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
         detail: `neo ${logStamp(e.anchor)}`,
         subject: "Dữ liệu mẫu",
       };
-  }
-}
 
-// ─────────────────────────────────────────────────── what is still simulated
-/**
- * The actions this browser recorded on what is still simulated — stock,
- * issues, teasers, codes — newest first. Slice B3b turns each kind into an
- * event and this function goes; until then these rows are what makes the
- * "ghi nhật ký" on those buttons true.
- */
-export function simLogRows(
-  catalog: Catalog,
-  overlay: SimOverlay,
-  products: readonly Product[],
-): LogRow[] {
-  return overlay.actions
-    .map((a, i) => simRow(a, `sim-${String(i).padStart(6, "0")}`, products))
-    .sort(byNewest);
-}
-
-function simRow(a: SimAction, id: string, products: readonly Product[]): LogRow {
-  switch (a.kind) {
+    // ── the catalogue (slice B3b) — the same sentences the simulation said
     case "INVENTORY_ADJUSTED": {
-      const product = products.find((p) => String(p.id) === a.productId);
-      const one = a.cells.length === 1 ? a.cells[0] : undefined;
-      const name = product?.name ?? a.productId;
-      const delta = cellDelta(a.cells);
+      const product = catalog.byId.get(e.productId as Product["id"]);
+      const one = e.cells.length === 1 ? e.cells[0] : undefined;
+      const name = product?.name ?? e.productId;
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "stock",
-        author: "Cửa hàng",
+        author,
         action: "Điều chỉnh tồn kho",
-        detail: `lý do: ${a.reason.toLocaleLowerCase("vi")}`,
+        detail: `lý do: ${e.reason.toLocaleLowerCase("vi")}`,
         subject: one
           ? `${name} · ${COLORS[one.color].label} · ${one.size}`
-          : `${name} · ${a.cells.length} ô`,
-        ...(product ? { href: `/admin/products/${product.id}` } : {}),
+          : `${name} · ${e.cells.length} ô`,
+        href: `/admin/products/${e.productId}`,
         ...(one ? { before: String(one.before), after: String(one.after) } : {}),
         tail: [
-          one ? "" : `${delta > 0 ? "+" : ""}${delta} chiếc`,
-          a.ref.trim() ? `tham chiếu ${a.ref.trim()}` : "",
-          a.note.trim() ? `"${a.note.trim()}"` : "",
+          one ? "" : `${e.delta > 0 ? "+" : ""}${e.delta} chiếc`,
+          e.ref.trim() ? `tham chiếu ${e.ref.trim()}` : "",
+          e.note.trim() ? `"${e.note.trim()}"` : "",
         ]
           .filter(Boolean)
           .join(" · "),
       };
     }
+    case "PRODUCT_EDITED": {
+      // One field: its before and after. Several: each one, in the tail.
+      const keys = (Object.keys(e.after) as Array<keyof ProductFields>).filter(
+        (k) => k in PRODUCT_FIELD_LABEL,
+      );
+      const name = catalog.byId.get(e.productId as Product["id"])?.name ?? e.after.name ?? e.productId;
+      const only = keys.length === 1 ? keys[0] : undefined;
+      return {
+        id,
+        at: e.at,
+        kind: "stock",
+        author,
+        action: "Sửa mẫu",
+        detail: keys.map((k) => PRODUCT_FIELD_LABEL[k]).join(", "),
+        subject: name,
+        href: `/admin/products/${e.productId}`,
+        ...(only
+          ? { before: fieldValue(only, e.before), after: fieldValue(only, e.after) }
+          : {
+              tail: keys
+                .map((k) => `${PRODUCT_FIELD_LABEL[k]} ${fieldValue(k, e.before)} → ${fieldValue(k, e.after)}`)
+                .join(" · "),
+            }),
+      };
+    }
     case "PROMO_ADDED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "promo",
-        author: "Cửa hàng",
+        author,
         action: "Tạo mã",
-        subject: a.code,
+        subject: e.promoCode,
         href: "/admin/promotions",
-        tail: `${dateTimeLabel(a.startsAt)} → ${dateTimeLabel(a.endsAt)}`,
+        tail: termsWindow(e.terms),
       };
     case "PROMO_EDITED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "promo",
-        author: "Cửa hàng",
-        action: a.nextCode === a.code ? "Sửa mã" : "Nhân bản mã",
-        subject: a.code,
+        author,
+        action: "Sửa mã",
+        subject: e.promoCode,
         href: "/admin/promotions",
-        ...(a.nextCode === a.code ? {} : { before: a.code, after: a.nextCode }),
-        tail: `${dateTimeLabel(a.startsAt)} → ${dateTimeLabel(a.endsAt)}`,
+        tail: termsWindow(e.after),
       };
     case "PROMO_LIMIT_RAISED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "promo",
-        author: "Cửa hàng",
+        author,
         action: "Nâng giới hạn",
-        subject: a.code,
+        subject: e.promoCode,
         href: "/admin/promotions",
-        before: `${a.before} lượt`,
-        after: `${a.after} lượt`,
+        before: e.before === null ? "không giới hạn" : `${e.before} lượt`,
+        after: `${e.after} lượt`,
       };
     case "PROMO_PAUSED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "promo",
-        author: "Cửa hàng",
-        action: a.paused ? "Tạm dừng mã" : "Tiếp tục mã",
-        subject: a.code,
+        author,
+        action: e.paused ? "Tạm dừng mã" : "Tiếp tục mã",
+        subject: e.promoCode,
         href: "/admin/promotions",
-        before: a.paused ? "đang chạy" : "tạm dừng",
-        after: a.paused ? "tạm dừng" : "đang chạy",
-        tail: a.paused
+        before: e.paused ? "đang chạy" : "tạm dừng",
+        after: e.paused ? "tạm dừng" : "đang chạy",
+        tail: e.paused
           ? "trang thanh toán từ chối từ giờ"
           : "trang thanh toán nhận lại từ giờ",
       };
     case "PROMO_ENDED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "promo",
-        author: "Cửa hàng",
+        author,
         action: "Kết thúc sớm",
-        subject: a.code,
+        subject: e.promoCode,
         href: "/admin/promotions",
-        after: dateTimeLabel(a.endsAt),
+        before: dateTimeLabel(e.before),
+        after: dateTimeLabel(e.after),
         tail: "giờ kết thúc = bây giờ",
       };
     case "DROP_ADDED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "drop",
-        author: "Cửa hàng",
+        author,
         action: "Tạo số",
-        subject: issueLabel(a.no),
-        href: `/admin/drops/${String(a.no).padStart(2, "0")}`,
-        tail: `mở ${dateTimeLabel(a.opensAt)} → đóng ${dateTimeLabel(a.closesAt)}`,
+        subject: issueLabel(e.no),
+        href: `/admin/drops/${String(e.no).padStart(2, "0")}`,
+        tail: `mở ${dateTimeLabel(e.opensAt)} → đóng ${dateTimeLabel(e.closesAt)}`,
       };
     case "DROP_SCHEDULED": {
       // Closing early IS the closing hour moved to now, so the two are one
       // action and the log tells them apart by how far apart the two
       // instants are rather than by a flag nobody could derive.
-      const early = Math.abs(Date.parse(a.closesAt) - Date.parse(a.at)) < 60_000;
+      const early = Math.abs(Date.parse(e.after.closesAt) - Date.parse(e.at)) < 60_000;
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "drop",
-        author: "Cửa hàng",
+        author,
         action: early ? "Đóng sớm" : "Sửa giờ",
         ...(early ? { detail: "giờ đóng đổi thành bây giờ" } : {}),
-        subject: issueLabel(a.no),
-        href: `/admin/drops/${String(a.no).padStart(2, "0")}`,
-        after: dateTimeLabel(a.closesAt),
-        ...(early ? {} : { tail: `mở ${dateTimeLabel(a.opensAt)}` }),
+        subject: issueLabel(e.no),
+        href: `/admin/drops/${String(e.no).padStart(2, "0")}`,
+        before: dateTimeLabel(e.before.closesAt),
+        after: dateTimeLabel(e.after.closesAt),
+        ...(early ? {} : { tail: `mở ${dateTimeLabel(e.after.opensAt)}` }),
       };
     }
     case "TEASER_ADDED":
       return {
         id,
-        at: a.at,
+        at: e.at,
         kind: "drop",
-        author: "Cửa hàng",
+        author,
         action: "Thêm mẫu hé lộ",
-        subject: issueLabel(a.no),
-        href: `/admin/drops/${String(a.no).padStart(2, "0")}`,
-        tail: `${a.name} · ${a.garment}`,
+        subject: issueLabel(e.no),
+        href: `/admin/drops/${String(e.no).padStart(2, "0")}`,
+        tail: `${e.name} · ${e.garment}`,
       };
   }
 }

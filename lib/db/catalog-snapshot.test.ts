@@ -67,6 +67,7 @@ const snapshot = () => ({
       usageLimit: 200,
       usedCount: 46,
       minOrderVnd: 500000,
+      paused: false,
     },
     {
       code: "CHAOBAN",
@@ -79,6 +80,7 @@ const snapshot = () => ({
       usageLimit: null,
       usedCount: 31,
       minOrderVnd: 400000,
+      paused: true,
     },
     {
       code: "FREESHIP",
@@ -173,6 +175,7 @@ describe("a well-formed snapshot", () => {
       usageLimit: null,
       usedCount: 31,
       minOrderVnd: 400_000,
+      paused: true,
     });
     expect(input.promotions[2]).toEqual({
       code: "FREESHIP",
@@ -187,6 +190,15 @@ describe("a well-formed snapshot", () => {
 
   it("keeps null usageLimit as null, which is what 'unlimited' means", () => {
     expect(input.promotions[1]!.usageLimit).toBeNull();
+  });
+
+  it("keeps paused only when the shop paused the code (slice B3b)", () => {
+    // `false` would be a field the fixture does not carry, and the database
+    // test compares the two with toEqual.
+    expect("paused" in input.promotions[0]!).toBe(false);
+    expect(input.promotions[1]!.paused).toBe(true);
+    // FREESHIP's document has no `paused` at all — an older snapshot.
+    expect("paused" in input.promotions[2]!).toBe(false);
   });
 });
 
@@ -287,6 +299,16 @@ describe("a snapshot that is wrong", () => {
         }),
       ),
     ).toThrow("products[0].priceVnd must be an integer");
+  });
+
+  it("refuses a paused flag that is not a boolean", () => {
+    expect(() =>
+      parseCatalogSnapshot(
+        broken((doc) => {
+          (doc.promotions[1] as { paused?: unknown }).paused = "yes";
+        }),
+      ),
+    ).toThrow("promotions[1].paused must be a boolean");
   });
 
   it("refuses a PERCENT promotion with no percent", () => {

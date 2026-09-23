@@ -33,7 +33,11 @@ export type PromoCheck =
  *
  * Four different refusals, because the shopper's next move differs each
  * time: retype it, use another code, come back with a bigger basket, or
- * give up on this one.
+ * give up on this one. Since slice B3b a fifth: the shop PAUSED the code
+ * (`Promotion.paused`) — its dates are fine and it may come back, so it is
+ * neither "hết hạn" nor "hết lượt", and `place_order()` refuses it the same
+ * way. The dates and the cap are read first, as in the back office's
+ * `promoState`: a code that is over is over, paused or not.
  */
 export function checkPromoCode(
   catalog: Catalog,
@@ -57,6 +61,9 @@ export function checkPromoCode(
   if (promo.usageLimit !== null && promo.usedCount >= promo.usageLimit) {
     return { ok: false, message: `Mã ${code} đã hết lượt dùng.` };
   }
+  if (promo.paused) {
+    return { ok: false, message: `Mã ${code} đang tạm dừng.` };
+  }
   if (promo.minOrderVnd !== undefined && subtotalVnd < promo.minOrderVnd) {
     return { ok: false, message: `Mã ${code} cần đơn từ ${vnd(promo.minOrderVnd)}.` };
   }
@@ -79,14 +86,16 @@ export function normalisePromoCode(raw: string): string {
  * `checkPromoCode` applies the same two rules plus that minimum, so nothing
  * listed here can be refused for a reason this list could have seen.
  *
- * An expired code and an exhausted one are both simply absent. The admin
- * table is where those two states have to be told apart (`promoState` in
- * `admin-rows.ts`); to a shopper they are the same non-event.
+ * An expired code, an exhausted one and one the shop has paused are all
+ * simply absent. The admin table is where those states have to be told
+ * apart (`promoState` in `admin-rows.ts`); to a shopper they are the same
+ * non-event.
  */
 export function livePromotions(catalog: Catalog, now: Date = demoNow()): Promotion[] {
   const t = now.getTime();
   return catalog.promotions.filter(
     (p) =>
+      !p.paused &&
       t >= Date.parse(p.startsAt) &&
       t < Date.parse(p.endsAt) &&
       (p.usageLimit === null || p.usedCount < p.usageLimit),

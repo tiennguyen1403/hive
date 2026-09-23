@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
+import { useAdminToast } from "@/components/admin/AdminToast";
 import { RevenueChart } from "@/components/admin/RevenueChart";
-import { useSim } from "@/components/admin/SimContext";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/icon/Icon";
@@ -22,8 +22,7 @@ import {
   stockAlerts,
   type WindowDays,
 } from "@/lib/admin-metrics";
-import { queueRows } from "@/lib/admin-rows";
-import { simDrops, simProducts } from "@/lib/admin-sim";
+import { orderCustomer, queueRows } from "@/lib/admin-rows";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { closesInLabel, dropState, opensInLabel } from "@/lib/drop";
@@ -38,8 +37,8 @@ import { photoUrl } from "@/lib/photos";
  * The back office's front page.
  *
  * EVERY NUMBER HERE IS DERIVED — from the order book in the database (slice
- * B3a) and the catalogue, plus what this browser still simulates on top of
- * the catalogue (stock, issues). The approved mock drew this screen
+ * B3a) and the catalogue, which the database holds too (the shelf and the
+ * issues since slice B3b). The approved mock drew this screen
  * with invented figures — page views, a conversion rate, "+12% so với kỳ
  * trước" — and PRODUCT.md forbids presenting invented sales as real, so:
  *
@@ -68,7 +67,7 @@ export function DashboardScreen({
 }) {
   const catalog = useCatalog();
   const currentDropNo = catalog.currentDropNo;
-  const { sim, say } = useSim();
+  const say = useAdminToast();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   /** Rows just confirmed, kept disabled until the answer re-renders the queue. */
   const [done, setDone] = useState<string[]>([]);
@@ -79,7 +78,7 @@ export function DashboardScreen({
   // The book as the database has it, read through what the twelve-hour clock
   // has already decided about it.
   const orders = book.map((o) => effectiveOrder(o, now));
-  const products = simProducts(catalog.products, sim);
+  const products = catalog.products;
 
   /**
    * "Đã nhận tiền" on a queue row: `markPaid` → `admin_mark_paid()`. The
@@ -103,7 +102,7 @@ export function DashboardScreen({
   const queue = queueRows(catalog, orders, now);
   const awaiting = queue.filter((q) => q.action === "MARK_PAID").length;
   const toHandOver = queue.length - awaiting;
-  const drop = simDrops(catalog.drops, sim).find((d) => d.no === currentDropNo);
+  const drop = catalog.dropByNo.get(currentDropNo);
   const state = drop ? dropState(drop, now) : "CLOSED";
   const summary = dropSummary(catalog, currentDropNo, products);
   const soldPercent =
@@ -341,7 +340,7 @@ export function DashboardScreen({
                     <td>
                       <Link href={`/admin/orders/${o.code}`}>{o.code}</Link>
                     </td>
-                    <td className="nw">{o.owner?.name ?? "—"}</td>
+                    <td className="nw">{orderCustomer(o)}</td>
                     <td className="nw">
                       {dayMonth(o.placedAt)} · {clockLabel(o.placedAt)}
                     </td>
@@ -421,8 +420,7 @@ export function DashboardScreen({
 
       <p className="fine3">
         <Icon name="info" className="ic sm" /> Dữ liệu mẫu: {book.length} đơn, {summary.styles}{" "}
-        mẫu · đơn hàng lưu trên máy chủ; tồn kho, {LEX.tl} và mã còn mô phỏng trên trình duyệt
-        này ·{" "}
+        mẫu · mọi thao tác lưu trên máy chủ ·{" "}
         <Link className="lnk" href="/admin/log">
           Chi tiết
         </Link>

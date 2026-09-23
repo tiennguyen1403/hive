@@ -1,30 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
+import { useAdminToast } from "@/components/admin/AdminToast";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
-import { PromoFormSheet, type PromoDraft } from "@/components/admin/PromoFormSheet";
-import { useSim, useSimNow } from "@/components/admin/SimContext";
+import { PromoFormSheet } from "@/components/admin/PromoFormSheet";
 import { ActionMenu, Stabs } from "@/components/admin/Table3";
 import { Badge, type BadgeTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Promotion } from "@/data/types";
-import { PROMO_KIND_LABEL, SIM_SUFFIX, promoState, promoValueLabel } from "@/lib/admin-rows";
-import { simPromotions, type SimPromotion } from "@/lib/admin-sim";
+import {
+  addPromo,
+  editPromo,
+  endPromo,
+  pausePromo,
+  raisePromoLimit,
+} from "@/lib/actions/catalog-admin";
+import type { ActionState } from "@/lib/actions/state";
+import { PROMO_KIND_LABEL, promoState, promoValueLabel, type PromoState } from "@/lib/admin-rows";
 import type { Query } from "@/lib/admin-url";
-import { clockLabel, dayMonth, dayMonthYear, toVnIso } from "@/lib/datetime";
+import { clockLabel, dayMonth, dayMonthYear } from "@/lib/datetime";
 import { dropState } from "@/lib/drop";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
-import { demoNow } from "@/lib/clock";
 
 const PATH = "/admin/promotions";
 
 /** How many uses "Nâng giới hạn" adds. One decision, one number. */
 const RAISE_BY = 50;
 
-type Standing = "LIVE" | "UPCOMING" | "PAUSED" | "ENDED" | "USED_UP";
+type Standing = PromoState;
 
 const STANDING: Record<Standing, { label: string; tone: BadgeTone }> = {
   LIVE: { label: "Đang chạy", tone: "ok" },
@@ -44,51 +50,52 @@ const TABS: Array<{ value: Standing | null; label: string }> = [
 ];
 
 /**
- * Which of the five things a code is doing right now.
- *
- * Pausing is the only one that is not derived from the clock, and it wins:
- * a paused code is being refused at checkout whatever its dates say, and
- * hiding that behind "Đang chạy" would be the table contradicting the button
- * somebody just pressed. Everything else falls out of the window and the cap
- * (`promoState`), so ending a run early needs no flag — the closing hour
- * moves and the row follows.
- */
-function standingOf(row: SimPromotion, now: Date): Standing {
-  const state = promoState(row.promo, now);
-  if (row.paused && state === "LIVE") return "PAUSED";
-  return state === "LIVE"
-    ? "LIVE"
-    : state === "UPCOMING"
-      ? "UPCOMING"
-      : state === "USED_UP"
-        ? "USED_UP"
-        : "ENDED";
-}
-
-/**
  * The discount codes, and the six things an operator does to one.
  *
- * `usedCount` is the one figure on this screen that is a stored fixture
- * value rather than something derived — nothing in this build records a
- * redemption, so it could not be counted from anywhere. The line under the
- * title says so, and `data/promotions.ts` says it again.
+ * Which of the five things a code is doing is `promoState` (`lib/admin-rows.ts`):
+ * pausing is the only one not read off the clock, and it shows over what
+ * would otherwise be "Đang chạy" — a paused code is being refused at
+ * checkout whatever its dates say. Everything else falls out of the window
+ * and the cap, so ending a run early needs no flag — the closing hour moves
+ * and the row follows.
  *
- * Every action here is real state on this browser: the badge changes, the
- * tab counts change, it survives a reload, the sidebar counts it and the
- * activity log gains a line. What it does not do is reach a server, because
- * there is none.
+ * `usedCount` is the one figure on this screen that is not derived here: the
+ * sample codes carry the counts the fixture gave them, and every order placed
+ * since spends one more use in the same transaction (`place_order()`). The
+ * line under the title says so.
+ *
+ * Since slice B3b every action here is a row of `public.promotions` and an
+ * event in the log: "Tạo mã" and "Nhân bản" are `admin_add_promo()`, "Sửa" is
+ * `admin_edit_promo()` — the code itself never changes, so its box is
+ * read-only when editing — "Tạm dừng"/"Tiếp tục", "Nâng giới hạn" and "Kết
+ * thúc sớm" each have their own function. Checkout reads the same table.
  */
 export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query: Query }) {
   const catalog = useCatalog();
-  const { sim, run } = useSim();
-  const now = useSimNow(nowIso);
-  const [editing, setEditing] = useState<SimPromotion | null>(null);
+  const say = useAdminToast();
+  const now = useMemo(() => new Date(nowIso), [nowIso]);
+  const [editing, setEditing] = useState<Promotion | null>(null);
   const [creating, setCreating] = useState(false);
+  const [pending, startAction] = useTransition();
 
-  const rows = simPromotions(catalog.promotions, sim).map((r) => ({
-    row: r,
-    standing: standingOf(r, now),
-  }));
+  /**
+   * Run one Server Action and say what the server answered. The action
+   * revalidates everything, so the response that answers it already carries
+   * the new table. After an `await` the transition has to be restated
+   * (react.dev/reference/react/useTransition).
+   */
+  function act(call: () => Promise<ActionState>, after?: () => void) {
+    if (pending) return;
+    startAction(async () => {
+      const result = await call();
+      startAction(() => {
+        if (result.ok) after?.();
+        say(result.message ?? result.errors.form ?? "");
+      });
+    });
+  }
+
+  const rows = catalog.promotions.map((promo) => ({ promo, standing: promoState(promo, now) }));
   const tab = (query.state as Standing | undefined) ?? null;
   const shown = tab ? rows.filter((r) => r.standing === tab) : rows;
 
@@ -120,25 +127,24 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
 
   const csvRows = [
     ["Mã", "Loại", "Giảm", "Điều kiện", "Bắt đầu", "Kết thúc", "Đã dùng", "Giới hạn", "Trạng thái"],
-    ...rows.map(({ row, standing }) => [
-      String(row.promo.code),
-      PROMO_KIND_LABEL[row.promo.kind],
-      promoValueLabel(row.promo),
-      row.promo.minOrderVnd ? `Đơn từ ${row.promo.minOrderVnd}` : "—",
-      dayMonthYear(row.promo.startsAt),
-      dayMonthYear(row.promo.endsAt),
-      row.promo.usedCount,
-      row.promo.usageLimit ?? "không giới hạn",
+    ...rows.map(({ promo, standing }) => [
+      String(promo.code),
+      PROMO_KIND_LABEL[promo.kind],
+      promoValueLabel(promo),
+      promo.minOrderVnd ? `Đơn từ ${promo.minOrderVnd}` : "—",
+      dayMonthYear(promo.startsAt),
+      dayMonthYear(promo.endsAt),
+      promo.usedCount,
+      promo.usageLimit ?? "không giới hạn",
       STANDING[standing].label,
     ]),
   ];
 
+  const taken = rows.map((r) => String(r.promo.code));
+
   return (
     <>
-      <AdminTop
-        title="Mã giảm giá"
-        sub={`${summary} · số lượt đã dùng là dữ liệu mô phỏng`}
-      >
+      <AdminTop title="Mã giảm giá" sub={`${summary} · số lượt đã dùng gồm cả dữ liệu mẫu`}>
         <ExportCsvButton label="Tải CSV" filename="ma-giam-gia.csv" rows={csvRows} />
         <Button tone="sm" icon="plus" onClick={() => setCreating(true)}>
           Tạo mã
@@ -173,8 +179,7 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
             </tr>
           </thead>
           <tbody>
-            {shown.map(({ row, standing }) => {
-              const p = row.promo;
+            {shown.map(({ promo: p, standing }) => {
               const code = String(p.code);
               const percent =
                 p.usageLimit === null || p.usageLimit === 0
@@ -187,7 +192,6 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
                     <b className="nm" style={{ letterSpacing: ".04em" }}>
                       {code}
                     </b>
-                    {(row.simulated || row.edited) && <span className="sub">{SIM_SUFFIX}</span>}
                   </td>
                   <td>{promoValueLabel(p)}</td>
                   <td>{p.minOrderVnd ? `Đơn từ ${vnd(p.minOrderVnd)}` : "Không điều kiện"}</td>
@@ -219,41 +223,26 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
                         {
                           label: "Sửa",
                           icon: "edit",
-                          onRun: () => setEditing(row),
+                          onRun: () => setEditing(p),
                         },
                         ...(p.usageLimit !== null
                           ? [
                               {
                                 label: `Nâng giới hạn thêm ${RAISE_BY}`,
                                 icon: "plus" as const,
-                                onRun: () =>
-                                  run(
-                                    {
-                                      kind: "PROMO_LIMIT_RAISED",
-                                      code,
-                                      before: p.usageLimit!,
-                                      after: p.usageLimit! + RAISE_BY,
-                                    },
-                                    `${code}: giới hạn ${p.usageLimit} → ${p.usageLimit! + RAISE_BY} lượt · ghi nhật ký`,
-                                  ),
+                                onRun: () => act(() => raisePromoLimit(code, p.usageLimit! + RAISE_BY)),
                               },
                             ]
                           : []),
                         {
                           label: "Nhân bản",
                           icon: "doc",
-                          onRun: () => setEditing(row),
+                          onRun: () => setEditing(p),
                         },
                         {
-                          label: row.paused ? "Tiếp tục" : "Tạm dừng",
-                          icon: row.paused ? "check" : "clock",
-                          onRun: () =>
-                            run(
-                              { kind: "PROMO_PAUSED", code, paused: !row.paused },
-                              row.paused
-                                ? `${code} chạy lại · trang thanh toán nhận mã từ giờ`
-                                : `${code} đã tạm dừng · trang thanh toán từ chối từ giờ`,
-                            ),
+                          label: p.paused ? "Tiếp tục" : "Tạm dừng",
+                          icon: p.paused ? "check" : "clock",
+                          onRun: () => act(() => pausePromo(code, !p.paused)),
                         },
                         ...(live
                           ? [
@@ -262,11 +251,7 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
                                 icon: "x" as const,
                                 danger: true,
                                 rule: true,
-                                onRun: () =>
-                                  run(
-                                    { kind: "PROMO_ENDED", code, endsAt: toVnIso(demoNow()) },
-                                    `Đã kết thúc sớm ${code} · giờ kết thúc = bây giờ · ghi nhật ký`,
-                                  ),
+                                onRun: () => act(() => endPromo(code)),
                               },
                             ]
                           : []),
@@ -291,57 +276,55 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
 
       <PromoFormSheet
         open={editing !== null}
-        promo={editing?.promo ?? null}
+        pending={pending}
+        promo={editing}
         standing={
           editing
-            ? `${STANDING[standingOf(editing, now)].label} · ${editing.promo.usedCount}${
-                editing.promo.usageLimit === null ? "" : ` / ${editing.promo.usageLimit}`
+            ? `${STANDING[promoState(editing, now)].label} · ${editing.usedCount}${
+                editing.usageLimit === null ? "" : ` / ${editing.usageLimit}`
               } lượt`
             : undefined
         }
-        taken={rows.map((r) => String(r.row.promo.code))}
-        duplicate={editing ? duplicateOf(editing.promo) : undefined}
-        onClose={() => setEditing(null)}
+        taken={taken}
+        duplicate={editing ? duplicateOf(editing) : undefined}
+        onClose={() => {
+          if (!pending) setEditing(null);
+        }}
         onSave={(d) => {
           if (!editing) return;
-          run(
-            { kind: "PROMO_EDITED", code: String(editing.promo.code), nextCode: d.code, ...terms(d) },
-            `Đã lưu ${d.code} · ghi nhật ký`,
+          const code = String(editing.code);
+          act(
+            () => editPromo(code, d),
+            () => setEditing(null),
           );
-          setEditing(null);
         }}
         onDuplicate={(d) => {
-          run({ kind: "PROMO_ADDED", ...d }, `Đã nhân bản thành ${d.code} · ghi nhật ký`);
-          setEditing(null);
+          if (!editing) return;
+          const from = String(editing.code);
+          act(
+            () => addPromo(d, from),
+            () => setEditing(null),
+          );
         }}
       />
 
       <PromoFormSheet
         open={creating}
+        pending={pending}
         promo={null}
-        taken={rows.map((r) => String(r.row.promo.code))}
-        onClose={() => setCreating(false)}
-        onSave={(d) => {
-          run({ kind: "PROMO_ADDED", ...d }, `Đã tạo mã ${d.code} · ghi nhật ký`);
-          setCreating(false);
+        taken={taken}
+        onClose={() => {
+          if (!pending) setCreating(false);
         }}
+        onSave={(d) =>
+          act(
+            () => addPromo(d),
+            () => setCreating(false),
+          )
+        }
       />
     </>
   );
-}
-
-/** Everything a `PROMO_EDITED` carries beyond the code it is keyed on. */
-function terms(d: PromoDraft) {
-  return {
-    promoKind: d.promoKind,
-    percent: d.percent,
-    amountVnd: d.amountVnd,
-    maxDiscountVnd: d.maxDiscountVnd,
-    minOrderVnd: d.minOrderVnd,
-    usageLimit: d.usageLimit,
-    startsAt: d.startsAt,
-    endsAt: d.endsAt,
-  };
 }
 
 /**

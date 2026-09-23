@@ -128,6 +128,39 @@ included). `place_order` writes `ORDER_PLACED`, `cancel_order`
 `ORDER_CANCELLED_BY_CUSTOMER`, and every released hold `ORDER_EXPIRED`,
 stamped at its deadline.
 
+## The catalogue in the back office (slice B3b)
+
+The shelf, the issues, the teasers, the codes and the styles themselves are
+written by ten more functions (`20260924020000_catalog_admin.sql`), in the
+same order of checks — role (`NOT_ADMIN`), clock and input (`BAD_INPUT`), the
+row (`NOT_FOUND`), the guard (`NOT_ALLOWED`), a shelf that moved under the form
+(`STALE`) — and each writes exactly one event, naming what it is about in
+`product_id`, `promo_code` or `drop_no` (check constraints require it).
+
+| Function | What it does | Event |
+|---|---|---|
+| `admin_adjust_stock(product_id, cells, reason, ref, note, p_now)` | cells `[{color, size, before, after}]`; every cell of the style locked; `before` must still be the shelf's number (`STALE`); total ≤ `cut_units`; reason one of the sheet's four or "Sửa mẫu" | `INVENTORY_ADJUSTED {cells, reason, ref, note, delta}` |
+| `admin_add_drop(no, opens_at, closes_at, p_now)` | `no` must be `max + 1` (`NOT_ALLOWED` otherwise); closes after opens | `DROP_ADDED {opensAt, closesAt}` |
+| `admin_schedule_drop(no, opens_at, closes_at, p_now)` | any issue's two instants; "Đóng sớm" is this with `closes_at = p_now` | `DROP_SCHEDULED {before, after}` |
+| `admin_add_teaser(slug, name, garment, family, drop_no, photo_key, p_now)` | slug `^[a-z0-9-]+$` and new; photo one the catalogue already borrows; goes last | `TEASER_ADDED {slug, name, garment, family, photoKey}` |
+| `admin_add_promo(terms, p_now)` | code upper case, no whitespace, new; terms as the table's check reads them; `used_count` 0, not paused | `PROMO_ADDED {terms}` |
+| `admin_edit_promo(code, terms, p_now)` | new terms, never a new code; `used_count` and `paused` kept; an edit that changes nothing is `BAD_INPUT` | `PROMO_EDITED {before, after}` |
+| `admin_pause_promo(code, paused, p_now)` | `promotions.paused`; pausing a paused code is `NOT_ALLOWED` | `PROMO_PAUSED {paused}` |
+| `admin_raise_promo_limit(code, after, p_now)` | `after` above the current limit, or any limit when there was none | `PROMO_LIMIT_RAISED {before, after}` |
+| `admin_end_promo(code, p_now)` | `ends_at = p_now`, only for a code inside its window | `PROMO_ENDED {before, after}` |
+| `admin_update_product(id, patch, p_now)` | patch ⊆ name, kind, slug, priceVnd, material, fit, dropNo — never the cut; slug new; a kind other styles file under one family moves the family too | `PRODUCT_EDITED {before, after}`, changed fields only |
+
+`place_order` refuses a paused code with `PROMO_INVALID`, and stamps
+`products.sold_out_at` when the last piece of a style goes; `cancel_order`,
+`admin_cancel_order`, a released hold and an adjustment that puts pieces back
+clear it (`sync_sold_out`, which locks the product rows first so two orders
+racing for the last two pieces agree). Lock order, everywhere: orders, stock
+cells, a promotion, products.
+
+`lib/db/catalog-admin.dbtest.ts` walks every function's allowed move and its
+refusals, the events, `sold_out_at` both ways, and a reset back to the
+fixture after all of it.
+
 ## Resetting
 
 `select public.reset_demo(public.demo_anchor());` rebuilds the catalogue from

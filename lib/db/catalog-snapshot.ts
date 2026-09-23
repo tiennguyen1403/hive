@@ -225,6 +225,15 @@ function readPromotion(value: unknown, path: string): Promotion {
     fail(`${path}.usageLimit`, "must be an integer or null (null means unlimited)");
   }
 
+  // Slice B3b: whether the shop has paused the code. Kept only when it is
+  // true, the way `minOrderVnd` is kept only when there is one — the fixture
+  // pauses nothing, and a `paused: false` on every code would be a field the
+  // fixture does not have. Absent (an older snapshot) reads as running.
+  const pausedRaw = source.paused;
+  if (pausedRaw !== undefined && pausedRaw !== null && typeof pausedRaw !== "boolean") {
+    fail(`${path}.paused`, "must be a boolean");
+  }
+
   const minOrderVnd = optionalInteger(source, "minOrderVnd", path);
   const window = {
     startsAt: instant(source, "startsAt", path),
@@ -232,6 +241,7 @@ function readPromotion(value: unknown, path: string): Promotion {
     usageLimit: usageLimitRaw === null ? null : integer(source, "usageLimit", path),
     usedCount: integer(source, "usedCount", path),
     ...(minOrderVnd !== undefined ? { minOrderVnd } : {}),
+    ...(pausedRaw === true ? { paused: true } : {}),
   };
 
   const code = promoCode(text(source, "code", path));

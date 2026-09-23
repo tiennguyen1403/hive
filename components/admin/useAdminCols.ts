@@ -15,7 +15,7 @@ export const ADMIN_COLS_KEY = "brand.adminCols";
  *
  * Read after mount, never during render: the page is server-rendered, and
  * reading `localStorage` while rendering would hydrate into a different tree
- * (the same rule `SimContext` follows).
+ * (the same rule the cart and the wishlist follow).
  */
 export function useAdminCols(defaults: string[]) {
   const [cols, setCols] = useState<string[]>(defaults);

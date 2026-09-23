@@ -2,20 +2,22 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminSheet } from "@/components/admin/AdminSheet";
 import { AdminTop } from "@/components/admin/AdminTop";
+import { useAdminToast } from "@/components/admin/AdminToast";
 import { DropFormModal, atDropHour, dropLengthDays } from "@/components/admin/DropFormModal";
 import { TeaserFormSheet } from "@/components/admin/TeaserFormSheet";
-import { useSim, useSimNow } from "@/components/admin/SimContext";
 import { ActionMenu } from "@/components/admin/Table3";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SIZES, type Product, type Teaser } from "@/data/types";
-import type { Catalog } from "@/lib/catalog";
+import { teasersIn, type Catalog } from "@/lib/catalog";
+import { addDrop, addTeaser, closeDropNow, scheduleDrop } from "@/lib/actions/catalog-admin";
+import type { ActionState } from "@/lib/actions/state";
 import { stockAlerts } from "@/lib/admin-metrics";
-import { DROP_STATE_LABEL, SIM_SUFFIX, simDropRows } from "@/lib/admin-rows";
-import { isSimTeaser, nextDropNo, simDrops, simProducts, simTeasers } from "@/lib/admin-sim";
+import { DROP_STATE_LABEL, dropRows } from "@/lib/admin-rows";
+import { nextDropNo } from "@/lib/catalog-admin";
 import { downloadCsv } from "@/lib/csv";
 import { clockLabel, dateTimeLabel, dayMonth, dayMonthYear, toVnIso } from "@/lib/datetime";
 import { closesInLabel, dropState, opensInLabel } from "@/lib/drop";
@@ -38,7 +40,6 @@ import { useCatalog } from "@/components/shop/CatalogContext";
 import type { AdminOrder } from "@/lib/admin-orders";
 import { orderTotalVnd } from "@/lib/orders";
 import { LOW_STOCK_AT } from "@/lib/inventory";
-import { demoNow } from "@/lib/clock";
 
 /**
  * Every issue the shop has run, and one of them open underneath.
@@ -49,11 +50,17 @@ import { demoNow } from "@/lib/clock";
  * with a different row selected, which is why both routes render this.
  *
  * The figures are derived end to end — styles, units cut, units sold and
- * revenue all come out of `CATALOG` plus whatever this browser adjusted — so
- * this table cannot drift from what the shop itself shows. THE STATE IS
- * NEVER STORED: it is read off the two instants and the clock
- * (`lib/drop.ts`), which is why "đóng sớm" is a changed closing hour rather
- * than a fourth state, exactly as the mock's own footnote says.
+ * revenue all come out of the catalogue the database holds — so this table
+ * cannot drift from what the shop itself shows. THE STATE IS NEVER STORED:
+ * it is read off the two instants and the clock (`lib/drop.ts`), which is
+ * why "đóng sớm" is a changed closing hour rather than a fourth state,
+ * exactly as the mock's own footnote says.
+ *
+ * Since slice B3b every button here writes Postgres: "Tạo số" is
+ * `admin_add_drop()`, "Sửa giờ" and "Đóng sớm" are `admin_schedule_drop()`,
+ * "Thêm mẫu hé lộ" is `admin_add_teaser()`. "Sửa giờ" is offered on every
+ * issue, whatever its state — the function moves any issue's two instants,
+ * and it is also how an issue closed early opens again.
  */
 export function AdminDropsScreen({
   no,
@@ -64,29 +71,40 @@ export function AdminDropsScreen({
   nowIso: string;
   /**
    * The order book, from the database since slice B3a: what an issue's
-   * order count and its sold-out hours are read from. The issues themselves
-   * are still simulated here until slice B3b.
+   * order count and its sold-out hours are read from.
    */
   orders: AdminOrder[];
 }) {
   const catalog = useCatalog();
-  const { sim, run } = useSim();
-  const now = useSimNow(nowIso);
+  const say = useAdminToast();
+  const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const [closing, setClosing] = useState<number | null>(null);
   const [teasing, setTeasing] = useState<number | null>(null);
+  const [pending, startAction] = useTransition();
 
-  const products = simProducts(catalog.products, sim);
-  const drops = simDrops(catalog.drops, sim);
-  const rows = simDropRows(catalog, drops, now).map((r) => ({
-    ...r,
-    styles: productsInDrop(catalog, r.no, products).length,
-    cutUnits: dropSummary(catalog, r.no, products).cutUnits,
-    soldUnits: dropSummary(catalog, r.no, products).soldUnits,
-    onHand: dropSummary(catalog, r.no, products).onHand,
-    revenueVnd: dropRevenueVnd(catalog, r.no, products),
-  }));
+  /**
+   * Run one Server Action and say what the server answered. The action
+   * revalidates everything, so the response that answers it already carries
+   * the new table. After an `await` the transition has to be restated
+   * (react.dev/reference/react/useTransition).
+   */
+  function act(call: () => Promise<ActionState>, after: () => void) {
+    if (pending) return;
+    startAction(async () => {
+      const result = await call();
+      startAction(() => {
+        if (result.ok) after();
+        say(result.message ?? result.errors.form ?? "");
+      });
+    });
+  }
+
+  const products = catalog.products;
+  // Newest number first, the order the table reads in.
+  const drops = [...catalog.drops].sort((a, b) => b.no - a.no);
+  const rows = dropRows(catalog, drops, now);
   const newNo = nextDropNo(drops);
 
   /** Which issue is open below: the one asked for, else the one selling. */
@@ -129,9 +147,7 @@ export function AdminDropsScreen({
             {rows.map((r) => {
               const percent =
                 r.cutUnits === 0 ? 0 : Math.round((r.soldUnits / r.cutUnits) * 100);
-              const teasers = simTeasers(catalog.teasers, sim).filter(
-                (t) => t.dropNo === r.no,
-              ).length;
+              const teasers = r.teasers;
               return (
                 <tr key={r.no} className={r.no === openNo ? "on" : undefined}>
                   <td>
@@ -147,7 +163,6 @@ export function AdminDropsScreen({
                     >
                       {r.state === "OPEN" ? "Đang bán" : DROP_STATE_LABEL[r.state]}
                     </Badge>
-                    {(r.simulated || r.rescheduled) && <span className="sub">{SIM_SUFFIX}</span>}
                   </td>
                   <td className="nw">
                     {clockLabel(drops.find((d) => d.no === r.no)!.opensAt)} ·{" "}
@@ -188,15 +203,11 @@ export function AdminDropsScreen({
                               },
                             ]
                           : []),
-                        ...(r.state === "UPCOMING"
-                          ? [
-                              {
-                                label: "Sửa giờ",
-                                icon: "calendar" as const,
-                                onRun: () => setEditing(r.no),
-                              },
-                            ]
-                          : []),
+                        {
+                          label: "Sửa giờ",
+                          icon: "calendar" as const,
+                          onRun: () => setEditing(r.no),
+                        },
                       ]}
                     />
                   </td>
@@ -215,49 +226,56 @@ export function AdminDropsScreen({
           products={products}
           opensAt={drop.opensAt}
           closesAt={drop.closesAt}
-          teasers={simTeasers(catalog.teasers, sim).filter((t) => t.dropNo === drop.no + 1)}
+          teasers={teasersIn(catalog, drop.no + 1)}
+          canTease={catalog.dropByNo.has(drop.no + 1)}
           onClose={() => setClosing(drop.no)}
           onTease={() => setTeasing(drop.no + 1)}
-          simTeaser={(slug) => isSimTeaser(slug, sim)}
         />
       )}
 
       <DropFormModal
         open={creating}
-        onClose={() => setCreating(false)}
+        pending={pending}
+        onClose={() => {
+          if (!pending) setCreating(false);
+        }}
         mode="create"
         no={newNo}
         opensAt={defaultOpening(catalog, nowIso)}
         closesAt={defaultClosing(catalog, nowIso)}
-        onConfirm={(opensAt, closesAt) => {
-          run(
-            { kind: "DROP_ADDED", no: newNo, opensAt, closesAt },
-            `Đã tạo ${LEX.tl} ${issueNo(newNo)} (sắp mở) · ghi nhật ký`,
-          );
-          setCreating(false);
-        }}
+        onConfirm={(opensAt, closesAt) =>
+          act(
+            () => addDrop(newNo, opensAt, closesAt),
+            () => setCreating(false),
+          )
+        }
       />
 
       <DropFormModal
         open={editing !== null}
-        onClose={() => setEditing(null)}
+        pending={pending}
+        onClose={() => {
+          if (!pending) setEditing(null);
+        }}
         mode="edit"
         no={editing ?? 0}
         opensAt={drops.find((d) => d.no === editing)?.opensAt ?? nowIso}
         closesAt={drops.find((d) => d.no === editing)?.closesAt ?? nowIso}
         onConfirm={(opensAt, closesAt) => {
           if (editing === null) return;
-          run(
-            { kind: "DROP_SCHEDULED", no: editing, opensAt, closesAt },
-            `${issueLabel(editing)}: lịch đổi thành ${dayMonthYear(opensAt)} → ${dayMonthYear(closesAt)}`,
+          const n = editing;
+          act(
+            () => scheduleDrop(n, opensAt, closesAt),
+            () => setEditing(null),
           );
-          setEditing(null);
         }}
       />
 
       <AdminSheet
         open={closing !== null}
-        onClose={() => setClosing(null)}
+        onClose={() => {
+          if (!pending) setClosing(null);
+        }}
         title={`Đóng ${LEX.tl} ${issueNo(closing ?? 0)} sớm?`}
         sub={
           closing !== null && (
@@ -270,29 +288,23 @@ export function AdminDropsScreen({
         }
         footer={
           <>
-            <Button tone="ink sm" icon="back" onClick={() => setClosing(null)}>
+            <Button tone="ink sm" icon="back" disabled={pending} onClick={() => setClosing(null)}>
               Giữ lịch
             </Button>
             <Button
               tone="sm"
-              icon="clock"
+              {...(pending ? {} : { icon: "clock" as const })}
+              disabled={pending}
               onClick={() => {
                 if (closing === null) return;
-                const d = drops.find((x) => x.no === closing);
-                if (!d) return;
-                run(
-                  {
-                    kind: "DROP_SCHEDULED",
-                    no: closing,
-                    opensAt: d.opensAt,
-                    closesAt: toVnIso(demoNow()),
-                  },
-                  `Đã đóng ${LEX.tl} ${issueNo(closing)} lúc ${dateTimeLabel(toVnIso(demoNow()))} · ghi nhật ký`,
+                const n = closing;
+                act(
+                  () => closeDropNow(n),
+                  () => setClosing(null),
                 );
-                setClosing(null);
               }}
             >
-              Đóng bây giờ
+              {pending ? "Đang lưu…" : "Đóng bây giờ"}
             </Button>
           </>
         }
@@ -300,12 +312,17 @@ export function AdminDropsScreen({
 
       <TeaserFormSheet
         open={teasing !== null}
+        pending={pending}
         no={teasing ?? 0}
-        onClose={() => setTeasing(null)}
-        onConfirm={(action) => {
-          run(action, `Đã thêm mẫu hé lộ ${action.name} · ghi nhật ký`);
-          setTeasing(null);
+        onClose={() => {
+          if (!pending) setTeasing(null);
         }}
+        onConfirm={(draft) =>
+          act(
+            () => addTeaser(draft),
+            () => setTeasing(null),
+          )
+        }
       />
     </>
   );
@@ -320,9 +337,9 @@ function IssueDetail({
   opensAt,
   closesAt,
   teasers,
+  canTease,
   onClose,
   onTease,
-  simTeaser,
 }: {
   no: number;
   nowIso: string;
@@ -331,10 +348,14 @@ function IssueDetail({
   opensAt: string;
   closesAt: string;
   teasers: Teaser[];
+  /**
+   * The next issue exists, so a teaser can be announced for it. When it does
+   * not, "Thêm mẫu hé lộ" would be a button the database refuses — it is not
+   * drawn (DESIGN.md §9 rule 3).
+   */
+  canTease: boolean;
   onClose: () => void;
   onTease: () => void;
-  /** Whether this teaser was announced in this browser rather than shipped. */
-  simTeaser: (slug: string) => boolean;
 }) {
   const catalog = useCatalog();
   const now = new Date(nowIso);
@@ -531,17 +552,16 @@ function IssueDetail({
                     <Image src={photoUrl(t.photoKey, 120)} alt="" width={44} height={55} />
                     <div>
                       <b>{t.name}</b>
-                      <div className="sub">
-                        {t.kind} · giá công bố khi mở
-                        {simTeaser(t.slug) ? ` · ${SIM_SUFFIX}` : ""}
-                      </div>
+                      <div className="sub">{t.kind} · giá công bố khi mở</div>
                     </div>
                   </div>
                 ))
               )}
-              <Button tone="ink sm" icon="plus" onClick={onTease}>
-                Thêm mẫu hé lộ
-              </Button>
+              {canTease && (
+                <Button tone="ink sm" icon="plus" onClick={onTease}>
+                  Thêm mẫu hé lộ
+                </Button>
+              )}
             </div>
           </section>
         </>

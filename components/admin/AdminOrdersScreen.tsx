@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { CancelOrderModal } from "@/components/admin/CancelOrderModal";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
-import { useSim } from "@/components/admin/SimContext";
+import { useAdminToast } from "@/components/admin/AdminToast";
 import { ActionMenu, Cb, ChipMenu, Stabs, TableFoot } from "@/components/admin/Table3";
 import { useAdminCols } from "@/components/admin/useAdminCols";
 import { Badge } from "@/components/ui/Badge";
@@ -19,7 +19,7 @@ import { cancelOrderAdmin, markPaid } from "@/lib/actions/admin";
 import type { ActionState } from "@/lib/actions/state";
 import { needsAction, recentOrders } from "@/lib/admin-metrics";
 import { canCancel, nextMove, type AdminOrder } from "@/lib/admin-orders";
-import { orderItemsLabel, orderNote } from "@/lib/admin-rows";
+import { orderCustomer, orderItemsLabel, orderNote } from "@/lib/admin-rows";
 import { hrefWith, pageOf, paginate, perPageOf, type Query } from "@/lib/admin-url";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { clockLabel, dayMonth } from "@/lib/datetime";
@@ -90,7 +90,7 @@ export function AdminOrdersScreen({
   query: Query;
 }) {
   const catalog = useCatalog();
-  const { say } = useSim();
+  const say = useAdminToast();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [picked, setPicked] = useState<string[]>([]);
@@ -172,7 +172,7 @@ export function AdminOrdersScreen({
     ["Mã đơn", "Khách", "Điện thoại", "Thời gian", "Món", "Giá trị (VND)", "Thanh toán", "Trạng thái"],
     ...list.map((o) => [
       String(o.code),
-      o.owner?.name ?? "—",
+      orderCustomer(o),
       o.shipTo.phone,
       `${dayMonth(o.placedAt)} ${clockLabel(o.placedAt)}`,
       orderItemsLabel(catalog, o),
@@ -350,9 +350,9 @@ export function AdminOrdersScreen({
                   </td>
                   <td className="nw">
                     <span className="avatar" aria-hidden="true">
-                      {initialsOf(o.owner?.name ?? "?")}
+                      {initialsOf(o.owner?.name ?? o.shipTo.recipient)}
                     </span>
-                    {o.owner?.name ?? "—"}
+                    {orderCustomer(o)}
                     <span className="sub" style={{ paddingLeft: 36 }}>
                       {formatPhone(o.shipTo.phone)}
                     </span>

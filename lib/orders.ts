@@ -58,8 +58,12 @@ export function promoDiscountVnd(
   }
 }
 
-/** Whether a code can be used right now — window and usage cap, both. */
+/**
+ * Whether a code can be used right now — window and usage cap, both, and not
+ * paused by the shop (slice B3b: `place_order()` refuses a paused code).
+ */
 export function isPromoLive(promo: Promotion, now: Date = demoNow()): boolean {
+  if (promo.paused) return false;
   const t = now.getTime();
   if (t < Date.parse(promo.startsAt) || t >= Date.parse(promo.endsAt)) return false;
   return promo.usageLimit === null || promo.usedCount < promo.usageLimit;

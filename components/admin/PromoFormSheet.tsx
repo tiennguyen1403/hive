@@ -7,8 +7,8 @@ import { Field3 } from "@/components/ui/Field3";
 import { Icon } from "@/components/icon/Icon";
 import { Select } from "@/components/ui/Select";
 import type { Promotion } from "@/data/types";
-import type { PromoKind } from "@/lib/admin-sim";
 import { PROMO_KIND_LABEL } from "@/lib/admin-rows";
+import type { PromoKind } from "@/lib/catalog-admin";
 import { clockLabel, dayMonthYear, isoDayFromInput } from "@/lib/datetime";
 import { moneyInput, parseVnd, vnd } from "@/lib/money";
 
@@ -57,6 +57,8 @@ export interface PromoDraft {
 
 interface PromoFormSheetProps {
   open: boolean;
+  /** The save is on its way to the server (slice B3b). */
+  pending?: boolean;
   /** The code being edited, or null when this is a fresh one. */
   promo: Promotion | null;
   /** What it is doing right now, and how much of its cap is spent. */
@@ -77,13 +79,20 @@ interface PromoFormSheetProps {
  * eight fields; a separate "create" dialog was how the v2 screen ended up
  * with a form that could make a code it could not then change.
  *
- * `usedCount` is never editable and never shown as a field. It is the one
- * figure on this screen that is a stored fixture value rather than something
- * derived — nothing in this build records a redemption — and a box somebody
- * could type into would turn it into a claim about sales.
+ * `usedCount` is never editable and never shown as a field: it is what the
+ * code has already done — the sample's counts, plus one for every order
+ * placed with it since — and a box somebody could type into would turn it
+ * into a claim about sales.
+ *
+ * THE CODE ITSELF IS READ-ONLY WHEN EDITING (slice B3b), a deliberate change
+ * from the simulation, which let it be renamed: orders carry the code they
+ * were placed with (`orders.promo_code` references it), so a renamed code
+ * would be a different code wearing an old one's history. "Nhân bản" is how a
+ * new code is made from an old one.
  */
 export function PromoFormSheet({
   open,
+  pending = false,
   promo,
   standing,
   taken,
@@ -178,13 +187,14 @@ export function PromoFormSheet({
       }
       footer={
         <>
-          <Button tone="ink sm" icon="back" onClick={onClose}>
+          <Button tone="ink sm" icon="back" disabled={pending} onClick={onClose}>
             Huỷ
           </Button>
           {duplicate && onDuplicate && (
             <Button
               tone="ink sm"
-              icon="doc"
+              {...(pending ? {} : { icon: "doc" as const })}
+              disabled={pending}
               onClick={() =>
                 submit((d) =>
                   onDuplicate({
@@ -199,21 +209,31 @@ export function PromoFormSheet({
               Nhân bản thành {duplicate.code}
             </Button>
           )}
-          <Button tone="sm" icon="check" onClick={() => submit(onSave)}>
-            Lưu
+          <Button
+            tone="sm"
+            {...(pending ? {} : { icon: "check" as const })}
+            disabled={pending}
+            onClick={() => submit(onSave)}
+          >
+            {pending ? "Đang lưu…" : "Lưu"}
           </Button>
         </>
       }
     >
       <div className="fgrid">
-        <Field3 label="Mã">
-          {({ id }) => (
+        <Field3
+          label="Mã"
+          {...(promo ? { help: "Mã không đổi được sau khi tạo — dùng Nhân bản để có mã mới." } : {})}
+        >
+          {({ id, describedBy }) => (
             <input
               id={id}
               className="inp"
+              aria-describedby={describedBy}
               placeholder="DOT06"
               style={{ textTransform: "uppercase", letterSpacing: ".04em" }}
               value={code}
+              readOnly={promo !== null}
               onChange={(e) => {
                 setCode(e.target.value);
                 setError(null);
@@ -329,8 +349,8 @@ export function PromoFormSheet({
       <p className="note3">
         <Icon name="info" className="ic sm" />
         <span>
-          Khách đang thấy mã đang chạy trong mục “Mã đang chạy” của tài khoản. Đổi mã hoặc kết thúc
-          sớm thì mục đó cập nhật ngay trên trình duyệt này.
+          Khách đang thấy mã đang chạy trong mục “Mã đang chạy” của tài khoản. Sửa, tạm dừng hoặc
+          kết thúc sớm thì mục đó cập nhật ngay.
         </span>
       </p>
       <p className="fine3">

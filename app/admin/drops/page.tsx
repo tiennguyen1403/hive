@@ -12,7 +12,8 @@ export const metadata = { title: "Các số" };
  *
  * `requireAdmin` first, as on every admin page. The issue's order figures
  * are read off the order book in the database (slice B3a); the issues
- * themselves are still simulated in this browser until slice B3b.
+ * themselves, their styles and teasers are the catalogue the database holds
+ * (slice B3b), and every button on the screen writes there.
  *
  * Dynamic: an issue's state is the clock's answer, not a stored flag, so a
  * page built once would keep calling an open issue open long after it shut.

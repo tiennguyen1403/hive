@@ -1,8 +1,7 @@
 import { teasersIn, type Catalog } from "./catalog";
-import type { DropState, Order, Promotion } from "@/data/types";
+import type { Drop, DropState, Order, Product, Promotion } from "@/data/types";
 import { needsAction } from "./admin-metrics";
 import type { AdminOrder } from "./admin-orders";
-import type { SimDrop } from "./admin-sim";
 import { clockLabel, dayMonth, dateTimeLabel, rangeLabel } from "./datetime";
 import { dropState } from "./drop";
 import { dropRevenueVnd, dropSummary } from "./inventory";
@@ -28,6 +27,19 @@ import { demoNow } from "./clock";
  */
 
 // ───────────────────────────────────────────────────────────────── orders
+/** What the "Khách" column adds to an order placed signed out. */
+export const GUEST_SUFFIX = "vãng lai";
+
+/**
+ * Who an order is for, as the "Khách" column says it: the account's name, or
+ * — for an order placed signed out, which has no account — the name it is
+ * addressed to with "· vãng lai" after it (slice B3b). Only an order with an
+ * account links to a profile; a guest has none to link to.
+ */
+export function orderCustomer(o: AdminOrder): string {
+  return o.owner ? o.owner.name : `${o.shipTo.recipient} · ${GUEST_SUFFIX}`;
+}
+
 /** "MUỐI ×2, KHÓI ×1" — what is in the box, in the fewest characters. */
 export function orderItemsLabel(catalog: Catalog, o: Order): string {
   return o.lines
@@ -123,7 +135,7 @@ export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date): Qu
     .sort((a, b) => b.placedAt.localeCompare(a.placedAt))
     .map((o) => {
       const note = orderNote(o, now);
-      const customer = o.owner?.name ?? "—";
+      const customer = orderCustomer(o);
       if (o.status.state === "AWAITING_TRANSFER") {
         return {
           code: o.code,
@@ -165,16 +177,23 @@ export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date): Qu
     });
 }
 
-export type PromoState = "UPCOMING" | "LIVE" | "USED_UP" | "ENDED";
+export type PromoState = "UPCOMING" | "LIVE" | "PAUSED" | "USED_UP" | "ENDED";
 
 /**
- * Which of the four things a code is doing right now.
+ * Which of the five things a code is doing right now.
  *
  * "Used up" is its own state and not a footnote on "live": a code inside its
  * dates with no uses left is being REFUSED at checkout, and that is exactly
  * the thing somebody opens this table to find out. The date wins when both
  * apply — a run that is over is over, and no amount of unused quota brings
  * it back.
+ *
+ * "Paused" (slice B3b, `Promotion.paused`) is the one state not read off the
+ * clock, and it only shows over what would otherwise be "live": a paused
+ * code is being refused at checkout whatever its dates say, and hiding that
+ * behind "Đang chạy" would be the table contradicting the button somebody
+ * just pressed — but a code that has not started, has run out or is over is
+ * still that first, exactly as the simulation drew it.
  */
 export function promoState(p: Promotion, now: Date = demoNow()): PromoState {
   const t = now.getTime();
@@ -186,6 +205,7 @@ export function promoState(p: Promotion, now: Date = demoNow()): PromoState {
   // (`isPromoLive`, `>=`) while this table still said "Đang chạy".
   if (t >= Date.parse(p.endsAt)) return "ENDED";
   if (p.usageLimit !== null && p.usedCount >= p.usageLimit) return "USED_UP";
+  if (p.paused) return "PAUSED";
   return "LIVE";
 }
 
@@ -213,9 +233,6 @@ export function promoValueLabel(p: Promotion): string {
   return `Phí giao tiêu chuẩn · ${vnd(STANDARD_FEE_VND)}`;
 }
 
-/** "(mô phỏng)" — the suffix every row born in this browser carries. */
-export const SIM_SUFFIX = "(mô phỏng)";
-
 export interface DropRow {
   no: number;
   label: string;
@@ -228,10 +245,6 @@ export interface DropRow {
   soldUnits: number;
   onHand: number;
   revenueVnd: number;
-  /** Created in this browser. */
-  simulated: boolean;
-  /** Its schedule was moved in this browser. */
-  rescheduled: boolean;
 }
 
 export const DROP_STATE_LABEL: Record<DropState, string> = {
@@ -241,18 +254,24 @@ export const DROP_STATE_LABEL: Record<DropState, string> = {
 };
 
 /**
- * The issue rows, over whatever set of drops this browser has.
+ * The issue rows, newest number first.
  *
  * `teasers` is counted separately from `styles`: a drop that has not opened
  * holds no product yet, and writing "0 mẫu" while two styles are being teased
- * on the shop front would read as a mistake. The state stays derived — see
- * `simDrops`, where closing early is a moved closing hour and not a flag.
+ * on the shop front would read as a mistake. The state stays derived from
+ * the two instants: closing early is a moved closing hour
+ * (`admin_schedule_drop()`), never a flag.
  */
-export function simDropRows(catalog: Catalog, drops: SimDrop[], now: Date): DropRow[] {
+export function dropRows(
+  catalog: Catalog,
+  drops: readonly Drop[],
+  now: Date,
+  products: readonly Product[] = catalog.products,
+): DropRow[] {
   return [...drops]
     .sort((a, b) => b.no - a.no)
     .map((d) => {
-      const s = dropSummary(catalog, d.no);
+      const s = dropSummary(catalog, d.no, products);
       return {
         no: d.no,
         label: `Số ${String(d.no).padStart(2, "0")}`,
@@ -263,9 +282,7 @@ export function simDropRows(catalog: Catalog, drops: SimDrop[], now: Date): Drop
         cutUnits: s.cutUnits,
         soldUnits: s.soldUnits,
         onHand: s.onHand,
-        revenueVnd: dropRevenueVnd(catalog, d.no),
-        simulated: d.simulated,
-        rescheduled: d.rescheduled,
+        revenueVnd: dropRevenueVnd(catalog, d.no, products),
       };
     });
 }

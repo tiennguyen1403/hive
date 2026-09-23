@@ -4,7 +4,6 @@ import { CUSTOMERS } from "@/data/customers";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { ORDERS } from "@/data/orders";
 import type { AdminOrder } from "./admin-orders";
-import { EMPTY_SIM, type SimAction, type SimOverlay } from "./admin-sim";
 import type { AdminEvent } from "./db/event-dto";
 import {
   LOG_FILTERS,
@@ -16,7 +15,6 @@ import {
   logStamp,
   mergeLogRows,
   scheduleRows,
-  simLogRows,
   withinDays,
   type LogRow,
 } from "./activity-log";
@@ -271,32 +269,45 @@ describe("who did it", () => {
   });
 });
 
-// ─────────────────────────────────────────── still simulated (slice B3b)
-function overlay(...actions: SimAction[]): SimOverlay {
-  return { actions };
-}
-const simRows = (...actions: SimAction[]) => simLogRows(FIXTURE_CATALOG, overlay(...actions), CATALOG);
+/// ───────────────────────────────────────── the catalogue (slice B3b)
+// What the simulation used to say about stock, issues, teasers and codes, now
+// read off `public.events` — the same sentences, from rows the database wrote.
 
-describe("what is still simulated in this browser", () => {
-  it("has nothing to say with an empty store", () => {
-    expect(simLogRows(FIXTURE_CATALOG, EMPTY_SIM, CATALOG)).toEqual([]);
-  });
+/** One catalogue event the manager's hand wrote. */
+const done = (e: Record<string, unknown>): AdminEvent =>
+  ({ id: ++next, at: AT, actorRole: "admin", actor: "quanly@email.com", ...e }) as AdminEvent;
 
+const TERMS = {
+  kind: "PERCENT",
+  percent: 10,
+  maxDiscountVnd: 150_000,
+  amountVnd: null,
+  minOrderVnd: 500_000,
+  usageLimit: 200,
+  startsAt: "2026-09-11T20:00:00+07:00",
+  endsAt: "2026-09-25T20:00:00+07:00",
+} as const;
+
+describe("what the shop did to the catalogue", () => {
   it("names the style, the colour and the size of a one-cell adjustment", () => {
     const bui = FIXTURE_CATALOG.bySlug.get("bui")!;
-    const row = simRows({
-      kind: "INVENTORY_ADJUSTED",
-      at: AT,
-      productId: String(bui.id),
-      cells: [{ color: "black", size: "L", before: 1, after: 2 }],
-      reason: "Hàng trả về",
-      ref: "DH-2419",
-      note: "còn nguyên tag",
-    })[0]!;
+    const row = rowsOf(
+      done({
+        kind: "INVENTORY_ADJUSTED",
+        productId: String(bui.id),
+        cells: [{ color: "black", size: "L", before: 1, after: 2 }],
+        reason: "Hàng trả về",
+        ref: "DH-2419",
+        note: "còn nguyên tag",
+        delta: 1,
+      }),
+    )[0]!;
     expect(row.kind).toBe("stock");
+    expect(row.author).toBe("Cửa hàng");
     expect(row.action).toBe("Điều chỉnh tồn kho");
     expect(row.detail).toBe("lý do: hàng trả về");
     expect(row.subject).toBe("BỤI · Đen · L");
+    expect(row.href).toBe(`/admin/products/${bui.id}`);
     expect(row.before).toBe("1");
     expect(row.after).toBe("2");
     expect(row.tail).toBe('tham chiếu DH-2419 · "còn nguyên tag"');
@@ -304,54 +315,81 @@ describe("what is still simulated in this browser", () => {
 
   it("counts the cells when an adjustment moved more than one", () => {
     const bui = FIXTURE_CATALOG.bySlug.get("bui")!;
-    const row = simRows({
-      kind: "INVENTORY_ADJUSTED",
-      at: AT,
-      productId: String(bui.id),
-      cells: [
-        { color: "black", size: "L", before: 1, after: 2 },
-        { color: "grey", size: "S", before: 0, after: 1 },
-      ],
-      reason: "Kiểm kê lệch",
-      ref: "",
-      note: "",
-    })[0]!;
+    const row = rowsOf(
+      done({
+        kind: "INVENTORY_ADJUSTED",
+        productId: String(bui.id),
+        cells: [
+          { color: "black", size: "L", before: 1, after: 2 },
+          { color: "grey", size: "S", before: 0, after: 1 },
+        ],
+        reason: "Kiểm kê lệch",
+        ref: "",
+        note: "",
+        delta: 2,
+      }),
+    )[0]!;
     expect(row.subject).toBe("BỤI · 2 ô");
     expect(row.tail).toBe("+2 chiếc");
   });
 
-  it("tells a code edited apart from a code duplicated", () => {
-    const terms = {
-      at: AT,
-      promoKind: "PERCENT" as const,
-      percent: 10,
-      amountVnd: 0,
-      maxDiscountVnd: 150_000,
-      minOrderVnd: 500_000,
-      usageLimit: 200,
-      startsAt: "2026-09-11T20:00:00+07:00",
-      endsAt: "2026-09-25T20:00:00+07:00",
-    };
-    const edited = simRows({ kind: "PROMO_EDITED", code: "DOT05", nextCode: "DOT05", ...terms })[0]!;
-    const copied = simRows({ kind: "PROMO_EDITED", code: "DOT05", nextCode: "SO06", ...terms })[0]!;
-    expect(edited.action).toBe("Sửa mã");
-    expect(edited.after).toBeUndefined();
-    expect(copied.action).toBe("Nhân bản mã");
-    expect(copied.before).toBe("DOT05");
-    expect(copied.after).toBe("SO06");
-    expect(edited.kind).toBe("promo");
+  it("records a style edit as the field it changed, before and after", () => {
+    const row = rowsOf(
+      done({
+        kind: "PRODUCT_EDITED",
+        productId: "p-khoi",
+        before: { priceVnd: 390_000 },
+        after: { priceVnd: 420_000 },
+      }),
+    )[0]!;
+    expect(row.kind).toBe("stock");
+    expect(row.action).toBe("Sửa mẫu");
+    expect(row.detail).toBe("giá");
+    expect(row.subject).toBe("KHÓI");
+    expect(row.before).toBe("390.000₫");
+    expect(row.after).toBe("420.000₫");
   });
 
-  it("records a raised cap as a before and an after", () => {
-    const row = simRows({ kind: "PROMO_LIMIT_RAISED", at: AT, code: "DOT05", before: 200, after: 250 })[0]!;
+  it("lists every field of an edit that changed several", () => {
+    const row = rowsOf(
+      done({
+        kind: "PRODUCT_EDITED",
+        productId: "p-khoi",
+        before: { name: "KHÓI", slug: "khoi" },
+        after: { name: "KHÓI ĐEN", slug: "khoi-den" },
+      }),
+    )[0]!;
+    expect(row.detail).toBe("tên, mã địa chỉ");
+    expect(row.before).toBeUndefined();
+    expect(row.tail).toBe("tên KHÓI → KHÓI ĐEN · mã địa chỉ khoi → khoi-den");
+  });
+
+  it("records a new code with its run, and an edited one with its new run", () => {
+    const made = rowsOf(done({ kind: "PROMO_ADDED", promoCode: "TEST10", terms: TERMS }))[0]!;
+    expect(made.action).toBe("Tạo mã");
+    expect(made.subject).toBe("TEST10");
+    expect(made.kind).toBe("promo");
+    expect(made.tail).toBe("20:00 ngày 11/09 → 20:00 ngày 25/09");
+
+    const edited = rowsOf(
+      done({ kind: "PROMO_EDITED", promoCode: "DOT05", before: TERMS, after: { ...TERMS, percent: 12 } }),
+    )[0]!;
+    expect(edited.action).toBe("Sửa mã");
+    expect(edited.before).toBeUndefined();
+  });
+
+  it("records a raised cap as a before and an after, from unlimited too", () => {
+    const row = rowsOf(done({ kind: "PROMO_LIMIT_RAISED", promoCode: "DOT05", before: 200, after: 250 }))[0]!;
     expect(row.action).toBe("Nâng giới hạn");
     expect(row.before).toBe("200 lượt");
     expect(row.after).toBe("250 lượt");
+    const open = rowsOf(done({ kind: "PROMO_LIMIT_RAISED", promoCode: "CHAOBAN", before: null, after: 100 }))[0]!;
+    expect(open.before).toBe("không giới hạn");
   });
 
   it("says which way a pause went", () => {
-    const off = simRows({ kind: "PROMO_PAUSED", at: AT, code: "BANTHAN", paused: true })[0]!;
-    const on = simRows({ kind: "PROMO_PAUSED", at: AT, code: "BANTHAN", paused: false })[0]!;
+    const off = rowsOf(done({ kind: "PROMO_PAUSED", promoCode: "DOT05", paused: true }))[0]!;
+    const on = rowsOf(done({ kind: "PROMO_PAUSED", promoCode: "DOT05", paused: false }))[0]!;
     expect(off.action).toBe("Tạm dừng mã");
     expect(off.after).toBe("tạm dừng");
     expect(on.action).toBe("Tiếp tục mã");
@@ -359,56 +397,69 @@ describe("what is still simulated in this browser", () => {
   });
 
   it("ends a run by moving its closing hour, and says so", () => {
-    const row = simRows({ kind: "PROMO_ENDED", at: AT, code: "DOT05", endsAt: AT })[0]!;
+    const row = rowsOf(
+      done({ kind: "PROMO_ENDED", promoCode: "DOT05", before: "2026-09-25T20:00:00+07:00", after: AT }),
+    )[0]!;
     expect(row.action).toBe("Kết thúc sớm");
+    expect(row.before).toBe("20:00 ngày 25/09");
+    expect(row.after).toBe("18:52 ngày 20/09");
     expect(row.tail).toBe("giờ kết thúc = bây giờ");
   });
 
-  it("tells an issue created apart from an issue closed early", () => {
-    const created = simRows({
-      kind: "DROP_ADDED",
-      at: AT,
-      no: 7,
-      opensAt: "2026-11-06T20:00:00+07:00",
-      closesAt: "2026-11-20T20:00:00+07:00",
-    })[0]!;
+  it("tells an issue created apart from an issue closed early and one rescheduled", () => {
+    const created = rowsOf(
+      done({ kind: "DROP_ADDED", no: 7, opensAt: "2026-11-06T20:00:00+07:00", closesAt: "2026-11-20T20:00:00+07:00" }),
+    )[0]!;
     expect(created.action).toBe("Tạo số");
     expect(created.subject).toBe("Số 07");
     expect(created.kind).toBe("drop");
+    expect(created.href).toBe("/admin/drops/07");
 
-    const early = simRows({
-      kind: "DROP_SCHEDULED",
-      at: AT,
-      no: 5,
-      opensAt: "2026-09-11T20:00:00+07:00",
-      closesAt: AT,
-    })[0]!;
+    const window = { opensAt: "2026-09-11T20:00:00+07:00", closesAt: "2026-09-25T20:00:00+07:00" };
+    const early = rowsOf(
+      done({ kind: "DROP_SCHEDULED", no: 5, before: window, after: { ...window, closesAt: AT } }),
+    )[0]!;
     expect(early.action).toBe("Đóng sớm");
     expect(early.detail).toBe("giờ đóng đổi thành bây giờ");
+    expect(early.before).toBe("20:00 ngày 25/09");
+    expect(early.after).toBe("18:52 ngày 20/09");
 
-    const moved = simRows({
-      kind: "DROP_SCHEDULED",
-      at: AT,
-      no: 6,
-      opensAt: "2026-10-02T20:00:00+07:00",
-      closesAt: "2026-10-16T20:00:00+07:00",
-    })[0]!;
+    const moved = rowsOf(
+      done({
+        kind: "DROP_SCHEDULED",
+        no: 6,
+        before: { opensAt: "2026-10-02T20:00:00+07:00", closesAt: "2026-10-16T20:00:00+07:00" },
+        after: { opensAt: "2026-10-03T20:00:00+07:00", closesAt: "2026-10-17T20:00:00+07:00" },
+      }),
+    )[0]!;
     expect(moved.action).toBe("Sửa giờ");
+    expect(moved.tail).toBe("mở 20:00 ngày 03/10");
   });
 
   it("records a teaser against the issue it was announced for", () => {
-    const row = simRows({
-      kind: "TEASER_ADDED",
-      at: AT,
-      no: 6,
-      name: "SỎI",
-      garment: "Áo khoác dù",
-      family: "JACKET",
-      photoKey: "suong",
-    })[0]!;
+    const row = rowsOf(
+      done({
+        kind: "TEASER_ADDED",
+        no: 6,
+        slug: "thu-6",
+        name: "THỬ",
+        garment: "Áo khoác dù",
+        family: "JACKET",
+        photoKey: "suong",
+      }),
+    )[0]!;
     expect(row.action).toBe("Thêm mẫu hé lộ");
     expect(row.subject).toBe("Số 06");
-    expect(row.tail).toBe("SỎI · Áo khoác dù");
+    expect(row.tail).toBe("THỬ · Áo khoác dù");
+  });
+
+  it("files a style edit under Tồn kho and every code move under Mã giảm giá", () => {
+    const rows = rowsOf(
+      done({ kind: "PRODUCT_EDITED", productId: "p-khoi", before: { priceVnd: 1 }, after: { priceVnd: 2 } }),
+      done({ kind: "PROMO_PAUSED", promoCode: "DOT05", paused: true }),
+    );
+    expect(rows.filter((r) => inFilter("stock", r)).map((r) => r.action)).toEqual(["Sửa mẫu"]);
+    expect(rows.filter((r) => inFilter("promo", r)).map((r) => r.action)).toEqual(["Tạm dừng mã"]);
   });
 });
 
@@ -425,11 +476,27 @@ describe("what the schedule did", () => {
   });
 });
 
-describe("the three sources as one log", () => {
+describe("the two sources as one log", () => {
   it("merges them newest first", () => {
     const merged = mergeLogRows(
-      logRows(FIXTURE_CATALOG, sampleEvents(), BOOK, NOW),
-      simRows({ kind: "PROMO_ENDED", at: "2026-09-20T18:55:00+07:00", code: "DOT05", endsAt: AT }),
+      logRows(
+        FIXTURE_CATALOG,
+        [
+          ...sampleEvents(),
+          {
+            id: 9_999,
+            at: "2026-09-20T18:55:00+07:00",
+            actorRole: "admin",
+            actor: "quanly@email.com",
+            kind: "PROMO_ENDED",
+            promoCode: "DOT05",
+            before: "2026-09-25T20:00:00+07:00",
+            after: "2026-09-20T18:55:00+07:00",
+          },
+        ],
+        BOOK,
+        NOW,
+      ),
       scheduleRows(FIXTURE_CATALOG, DROPS, CATALOG, NOW),
     );
     expect(merged[0]!.action).toBe("Kết thúc sớm");
@@ -506,7 +573,9 @@ describe("how a row reads", () => {
   });
 
   it("writes a row with no before as just the after", () => {
-    const row = simRows({ kind: "PROMO_ENDED", at: AT, code: "DOT05", endsAt: AT })[0]!;
-    expect(diffText(row)).toBe("18:52 ngày 20/09 · giờ kết thúc = bây giờ");
+    // An order placed has a state to land in and nothing it left.
+    const row = rowsOf(pressed({ kind: "ORDER_PLACED" }))[0]!;
+    expect(row.before).toBeUndefined();
+    expect(diffText(row)).toMatch(/^(chờ chuyển khoản|đã nhận đơn) · [\d.]+₫$/);
   });
 });

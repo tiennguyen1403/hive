@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseEnv } from "@/lib/db/server";
+import { PATH_HEADER } from "@/lib/request-path";
 
 /**
  * Keeping the session alive, and nothing else.
@@ -35,9 +36,28 @@ import { supabaseEnv } from "@/lib/db/server";
  * the refreshed cookies onto BOTH the request (so the render that follows sees
  * them) and the response (so the browser stores them), and return that exact
  * response object.
+ *
+ * ONE thing more since slice B3b, and it is not a decision either: the path
+ * the visitor asked for travels upstream as the request header `x-pathname`
+ * (`lib/request-path.ts`), because a layout is not handed its
+ * page's address and the admin layout's sign-in detour has to come back to
+ * the page that was asked for. The documented way to pass a value from the
+ * proxy to the render is a request header set through
+ * `NextResponse.next({ request: { headers } })` — NOT `NextResponse.next({
+ * headers })`, which would send it to the browser instead
+ * (`03-api-reference/03-file-conventions/proxy.md`, "Setting Headers"). The
+ * headers are copied again after a cookie refresh, so the refreshed cookies
+ * travel with it. `set` overwrites whatever a client sent under that name.
  */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
-  let response = NextResponse.next({ request });
+  const asked = request.nextUrl.pathname + request.nextUrl.search;
+  const forward = () => {
+    const headers = new Headers(request.headers);
+    headers.set(PATH_HEADER, asked);
+    return NextResponse.next({ request: { headers } });
+  };
+
+  let response = forward();
 
   const { url, publishableKey } = supabaseEnv();
 
@@ -50,7 +70,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         for (const { name, value } of cookiesToSet) {
           request.cookies.set(name, value);
         }
-        response = NextResponse.next({ request });
+        response = forward();
         for (const { name, value, options } of cookiesToSet) {
           response.cookies.set(name, value, options);
         }

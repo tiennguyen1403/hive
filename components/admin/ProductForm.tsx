@@ -1,13 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useAdminToast } from "@/components/admin/AdminToast";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Icon } from "@/components/icon/Icon";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { COLORS } from "@/data/colors";
 import { SIZES, type ColorKey, type Size } from "@/data/types";
+import { updateProduct } from "@/lib/actions/catalog-admin";
+import { gridCells } from "@/lib/catalog-admin";
 import { LEX } from "@/lib/lexicon";
 import { moneyInitial, moneyInput, parseVnd, plainVnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
@@ -27,6 +30,8 @@ export interface ProductFormValues {
 
 interface ProductFormProps {
   mode: "new" | "edit";
+  /** The style being edited — what the save is keyed on. Absent for a new one. */
+  productId?: string;
   values: ProductFormValues;
   kindOptions: SelectOption[];
   dropOptions: SelectOption[];
@@ -46,18 +51,29 @@ interface ProductFormProps {
  * spells out units per size AND per colour — and a grid that cannot express
  * "hết XL màu đen" would be unable to edit what the shop actually stores.
  *
- * NOTHING IS SAVED. There is no server behind this build, and a Save button
- * that quietly did nothing would be the same lie as an invented figure — so
- * the button says what it is and pressing it says what happened. Everything
- * else on the screen is real: typing in the grid recomputes the totals live,
- * because that arithmetic is the reason the screen exists.
+ * EDITING SAVES (slice B3b). "Lưu thay đổi" is `updateProduct`: the fields
+ * that changed go to `admin_update_product()` — never the cut, which an issue
+ * sets once — and if the grid moved, the cells go to `admin_adjust_stock()`
+ * with the reason "Sửa mẫu" and the numbers this page was rendered with, so
+ * a shelf somebody changed in the meantime is refused rather than
+ * overwritten. Typing in the grid recomputes the totals live, because that
+ * arithmetic is the reason the screen exists.
  *
- * Editing the shelf of a style that already exists belongs on the products
- * table instead ("Điều chỉnh tồn kho"), where it is recorded with a reason
- * and reaches the rest of the back office. This grid is the DRAFT of a style
- * nobody has cut yet.
+ * A NEW STYLE CANNOT BE SAVED YET, and the button says so. Creating one
+ * needs its colours and a photo for each colour, and the approved form has
+ * no control for either — adding one is a design decision, not wiring. The
+ * page stays (the products table links to it) with the button disabled and
+ * the reason under it (DESIGN.md §9 rule 3).
  */
-export function ProductForm({ mode, values, kindOptions, dropOptions, cutUnits }: ProductFormProps) {
+export function ProductForm({
+  mode,
+  productId,
+  values,
+  kindOptions,
+  dropOptions,
+  cutUnits,
+}: ProductFormProps) {
+  const say = useAdminToast();
   const [name, setName] = useState(values.name);
   const [kind, setKind] = useState(values.kind);
   const [slug, setSlug] = useState(values.slug);
@@ -65,9 +81,32 @@ export function ProductForm({ mode, values, kindOptions, dropOptions, cutUnits }
   const [dropNo, setDropNo] = useState(String(values.dropNo));
   const [material, setMaterial] = useState(values.material);
   const [stock, setStock] = useState(values.stock);
-  const [saidNoServer, setSaidNoServer] = useState(false);
+  const [saving, startSaving] = useTransition();
 
   const colors = values.colors;
+
+  /**
+   * Both saves in one Server Action. The page re-renders with what the
+   * database now holds in the same response; the answer — or which half did
+   * not go through, and why — is said in the toast. After an `await` the
+   * transition has to be restated (react.dev/reference/react/useTransition).
+   */
+  function save() {
+    if (mode !== "edit" || !productId || saving) return;
+    const cells = gridCells(colors, values.stock, stock);
+    startSaving(async () => {
+      const result = await updateProduct(productId, {
+        name,
+        kind,
+        slug,
+        priceVnd: price === "" ? 0 : Number(price),
+        material,
+        dropNo: Number(dropNo),
+        cells,
+      });
+      startSaving(() => say(result.message ?? result.errors.form ?? ""));
+    });
+  }
 
   /** What the grid currently adds up to — recomputed as it is typed in. */
   const onHandTotal = useMemo(() => {
@@ -229,8 +268,8 @@ export function ProductForm({ mode, values, kindOptions, dropOptions, cutUnits }
               )}
               {mode === "edit" && (
                 <p className="fine3">
-                  Sửa ở đây là sửa bản nháp. Đổi số trên kệ thật thì dùng “Điều chỉnh tồn kho” ở
-                  bảng Mẫu — thao tác đó có lý do và vào nhật ký.
+                  Lưu ở đây ghi thẳng số trên kệ, lý do “Sửa mẫu”, vào nhật ký. Tổng không vượt
+                  số đã cắt.
                 </p>
               )}
             </div>
@@ -295,18 +334,28 @@ export function ProductForm({ mode, values, kindOptions, dropOptions, cutUnits }
         <ButtonLink tone="ink sm" icon="back" href="/admin/products">
           Huỷ
         </ButtonLink>
-        <Button tone="sm" icon="check" onClick={() => setSaidNoServer(true)}>
-          {mode === "new" ? "Lưu nháp" : "Lưu thay đổi"}
-        </Button>
+        {mode === "new" ? (
+          /* Disabled, so no icon — the way "Gửi lại xác nhận · đang chuẩn
+             bị" is drawn on the order screen. */
+          <Button tone="sm" disabled>
+            Tạo mẫu mới · đang chuẩn bị
+          </Button>
+        ) : (
+          <Button
+            tone="sm"
+            {...(saving ? {} : { icon: "check" as const })}
+            disabled={saving}
+            onClick={save}
+          >
+            {saving ? "Đang lưu…" : "Lưu thay đổi"}
+          </Button>
+        )}
       </div>
 
-      {saidNoServer && (
-        <p className="note3" role="status">
+      {mode === "new" && (
+        <p className="note3">
           <Icon name="info" className="ic sm" />
-          <span>
-            Chưa nối máy chủ, nên chưa lưu được. Những gì vừa sửa đang nằm trong trình duyệt này và
-            sẽ mất khi tải lại trang — màn hình này dựng để xem và thử, không phải để ghi.
-          </span>
+          <span>Tạo mẫu cần chọn màu và ảnh cho từng màu; ô đó chưa có trong thiết kế.</span>
         </p>
       )}
     </>

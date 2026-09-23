@@ -321,4 +321,12 @@ export interface PromoWindow {
   usageLimit: number | null;
   usedCount: number;
   minOrderVnd?: number;
+  /**
+   * Stopped by the shop without touching its dates (slice B3b): checkout
+   * refuses the code until it is resumed, and the back office reads it as
+   * "Tạm dừng". Pausing is not ending — one can be taken back — which is why
+   * it is a flag and not a moved `endsAt`. Absent rather than `false` when the
+   * code is running, like `minOrderVnd`: the fixture pauses nothing.
+   */
+  paused?: boolean;
 }

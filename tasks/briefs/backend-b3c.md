@@ -40,6 +40,21 @@ duyệt quyết, máy chủ kiểm byte đầu và dung lượng.
   vào báo cáo. `npx supabase stop && npx supabase start` rồi `db reset`.
 - Preview 3200 có thể đang chạy bản B3b — tắt rồi dựng lại. Cổng 3100 không đụng.
 
+## 1c. Từ báo cáo B3b (24/09, ĐẠT) — những gì lát này phải khớp và hai việc nhỏ gộp vào
+
+- Tên đã có: migration `20260924020000_catalog_admin.sql` (`catalog_snapshot` v2, `admin_update_product(p_id, p_patch, p_now)` với patch
+  `name kind slug priceVnd material fit dropNo`, family suy từ loại; `admin_adjust_stock`; `admin_add_teaser` kiểm ảnh mượn; check
+  `events_kind_check` + `events_product_check`/`events_promo_check`/`events_drop_check` — sự kiện mẫu phải ghi `product_id`).
+  `lib/catalog-admin.ts`: `CATALOG_ERROR_CODES`, `catalogFailureMessage`, `CatalogMove`; `lib/actions/catalog-admin.ts`: 11 action,
+  `updateProduct(id, form)` gộp patch + `cells` (lý do "Sửa mẫu"); `lib/actions/state.ts` `ActionState`; `lib/teasers.ts` `asciiSlug`;
+  `lib/db/event-dto.ts` + `lib/activity-log.ts` cho 10 kind. Mã lỗi B3b: slug/mã trùng = `NOT_ALLOWED`, không đổi gì = `BAD_INPUT`.
+  **Giữ cách đặt này**: `SLUG_TAKEN` ở §2.7/§3.3 đổi thành `NOT_ALLOWED` với message "Mã địa chỉ đã có mẫu khác dùng" (phân biệt bằng
+  `CatalogMove`), `NO_CHANGE` = `BAD_INPUT` với message "Chưa có thay đổi nào để lưu."; các mã còn lại của §3.3 vẫn thêm mới.
+- Đặt lại dữ liệu mẫu: action đang gọi `reset_demo(demo_anchor())` — nối `purgeUploadedPhotos()` vào đó (§3.3).
+- **Việc nhỏ gộp vào (mở từ B3b):** (1) lịch đề xuất cho Số mới đang là "bây giờ + 7 ngày" nên Số 07 có thể mở trước Số 06; đề xuất =
+  mở 20:00 ngày sau `closes_at` của Số cuối, đóng sau 14 ngày; `admin_add_drop` từ chối khung giờ chồng lên Số khác (`NOT_ALLOWED`,
+  message "Lịch chồng lên Số NN"). (2) `photopick` của sheet teaser đã được phiên chính ép 44×55 (`admin.css`) — giữ.
+
 ## 2. Quyết định đã chốt (không hỏi lại)
 
 1. **Ảnh qua máy chủ, phục vụ từ chính app.** Không host Supabase trong HTML; không `NEXT_PUBLIC_SUPABASE_URL`. Route `GET /photos/[...key]`

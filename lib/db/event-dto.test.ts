@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toEvent, toEvents, vnIso, type EventRow } from "./event-dto";
+import { EVENT_KINDS, isOrderEvent, toEvent, toEvents, vnIso, type EventRow } from "./event-dto";
 
 /** A row exactly as PostgREST hands it over: UTC, microseconds, jsonb payload. */
 const row = (over: Partial<EventRow> = {}): EventRow => ({
@@ -9,9 +9,26 @@ const row = (over: Partial<EventRow> = {}): EventRow => ({
   actor: "quanly@email.com",
   kind: "ORDER_PAID",
   order_code: "DH-2430",
+  product_id: null,
+  promo_code: null,
+  drop_no: null,
   payload: { from: "AWAITING_TRANSFER" },
   ...over,
 });
+
+/** A catalogue event: no order, the manager's hand. */
+const cat = (over: Partial<EventRow>): EventRow => row({ order_code: null, ...over });
+
+const TERMS = {
+  kind: "PERCENT",
+  percent: 10,
+  maxDiscountVnd: 150000,
+  amountVnd: null,
+  minOrderVnd: 500000,
+  usageLimit: 100,
+  startsAt: "2026-09-23T20:00:00+07:00",
+  endsAt: "2026-10-23T20:00:00+07:00",
+};
 
 const SHIP_TO = {
   recipient: "Trần Minh Anh",
@@ -173,6 +190,139 @@ describe("toEvent — each kind, with the fields its SimAction carried", () => {
   });
 });
 
+describe("toEvent — the catalogue's kinds (slice B3b), named by their own column", () => {
+  it("knows exactly the twenty kinds the table's check constraint allows", () => {
+    expect(EVENT_KINDS).toHaveLength(20);
+  });
+
+  it("INVENTORY_ADJUSTED, with every cell, the reason, the reference, the note and the delta", () => {
+    const e = toEvent(
+      cat({
+        kind: "INVENTORY_ADJUSTED",
+        product_id: "p-khoi",
+        payload: {
+          cells: [{ color: "black", size: "XL", before: 1, after: 0 }],
+          reason: "Kiểm kê lệch",
+          ref: "",
+          note: "",
+          delta: -1,
+        },
+      }),
+    );
+    expect(e).toMatchObject({
+      kind: "INVENTORY_ADJUSTED",
+      productId: "p-khoi",
+      cells: [{ color: "black", size: "XL", before: 1, after: 0 }],
+      reason: "Kiểm kê lệch",
+      delta: -1,
+    });
+    expect(isOrderEvent(e)).toBe(false);
+  });
+
+  it("refuses a shelf event with no style, and a cell with a size that is not one", () => {
+    const payload = { cells: [], reason: "Khác", ref: "", note: "", delta: 0 };
+    expect(() => toEvent(cat({ kind: "INVENTORY_ADJUSTED", payload }))).toThrow("event 7.product_id");
+    expect(() =>
+      toEvent(
+        cat({
+          kind: "INVENTORY_ADJUSTED",
+          product_id: "p-khoi",
+          payload: { ...payload, cells: [{ color: "black", size: "XXL", before: 1, after: 0 }] },
+        }),
+      ),
+    ).toThrow("event 7.payload.cells[0].size");
+  });
+
+  it("PRODUCT_EDITED, only the fields that changed, each of its own type", () => {
+    const e = toEvent(
+      cat({
+        kind: "PRODUCT_EDITED",
+        product_id: "p-khoi",
+        payload: { before: { priceVnd: 390000, family: "TEE" }, after: { priceVnd: 420000, family: "HOODIE" } },
+      }),
+    );
+    expect(e).toMatchObject({
+      productId: "p-khoi",
+      before: { priceVnd: 390000, family: "TEE" },
+      after: { priceVnd: 420000, family: "HOODIE" },
+    });
+    expect(() =>
+      toEvent(
+        cat({ kind: "PRODUCT_EDITED", product_id: "p-khoi", payload: { before: {}, after: { priceVnd: "420000" } } }),
+      ),
+    ).toThrow("event 7.payload.after.priceVnd");
+  });
+
+  it("DROP_ADDED and DROP_SCHEDULED, with the issue from drop_no and +07:00 instants", () => {
+    const window = { opensAt: "2026-10-01T20:00:00+07:00", closesAt: "2026-10-15T20:00:00+07:00" };
+    expect(toEvent(cat({ kind: "DROP_ADDED", drop_no: 7, payload: window }))).toMatchObject({
+      kind: "DROP_ADDED",
+      no: 7,
+      ...window,
+    });
+    expect(
+      toEvent(cat({ kind: "DROP_SCHEDULED", drop_no: 5, payload: { before: window, after: window } })),
+    ).toMatchObject({ no: 5, before: window, after: window });
+    expect(() => toEvent(cat({ kind: "DROP_ADDED", payload: window }))).toThrow("event 7.drop_no");
+    expect(() =>
+      toEvent(cat({ kind: "DROP_ADDED", drop_no: 7, payload: { ...window, opensAt: "2026-10-01T13:00:00Z" } })),
+    ).toThrow("event 7.payload.opensAt");
+  });
+
+  it("TEASER_ADDED, with its slug, name, kind, family and photo", () => {
+    const e = toEvent(
+      cat({
+        kind: "TEASER_ADDED",
+        drop_no: 6,
+        payload: { slug: "thu-6", name: "THỬ", garment: "Áo khoác dù", family: "JACKET", photoKey: "suong" },
+      }),
+    );
+    expect(e).toMatchObject({ no: 6, slug: "thu-6", name: "THỬ", garment: "Áo khoác dù", family: "JACKET" });
+  });
+
+  it("the five code events, each naming the code from promo_code", () => {
+    expect(toEvent(cat({ kind: "PROMO_ADDED", promo_code: "TEST10", payload: TERMS }))).toMatchObject({
+      promoCode: "TEST10",
+      terms: TERMS,
+    });
+    expect(
+      toEvent(cat({ kind: "PROMO_EDITED", promo_code: "TEST10", payload: { before: TERMS, after: { ...TERMS, percent: 12 } } })),
+    ).toMatchObject({ before: { percent: 10 }, after: { percent: 12 } });
+    expect(toEvent(cat({ kind: "PROMO_PAUSED", promo_code: "TEST10", payload: { paused: true } }))).toMatchObject({
+      paused: true,
+    });
+    expect(
+      toEvent(cat({ kind: "PROMO_LIMIT_RAISED", promo_code: "CHAOBAN", payload: { before: null, after: 100 } })),
+    ).toMatchObject({ before: null, after: 100 });
+    expect(
+      toEvent(
+        cat({
+          kind: "PROMO_ENDED",
+          promo_code: "TEST10",
+          payload: { before: "2026-10-23T20:00:00+07:00", after: "2026-09-24T01:30:00+07:00" },
+        }),
+      ),
+    ).toMatchObject({ before: "2026-10-23T20:00:00+07:00", after: "2026-09-24T01:30:00+07:00" });
+  });
+
+  it("refuses a code event with no code and a pause that is not a yes or a no", () => {
+    expect(() => toEvent(cat({ kind: "PROMO_PAUSED", payload: { paused: true } }))).toThrow("event 7.promo_code");
+    expect(() =>
+      toEvent(cat({ kind: "PROMO_PAUSED", promo_code: "TEST10", payload: { paused: "yes" } })),
+    ).toThrow("event 7.payload.paused");
+    expect(() =>
+      toEvent(cat({ kind: "PROMO_ADDED", promo_code: "TEST10", payload: { ...TERMS, kind: "GIFT" } })),
+    ).toThrow("event 7.payload.kind");
+  });
+
+  it("tells an order's event from everything else", () => {
+    expect(isOrderEvent(toEvent(row()))).toBe(true);
+    expect(isOrderEvent(toEvent(cat({ kind: "DEMO_RESET", payload: { anchor: "2026-09-23T18:50:00+07:00" } })))).toBe(
+      false,
+    );
+  });
+});
+
 describe("toEvents", () => {
   it("reads a page in the order it came", () => {
     const got = toEvents([row({ id: 2 }), row({ id: 1, kind: "ORDER_PLACED", payload: {} })]);
@@ -180,7 +330,7 @@ describe("toEvents", () => {
   });
 
   it("leaves out a kind this build does not know, rather than guessing at it", () => {
-    const got = toEvents([row({ id: 2, kind: "INVENTORY_ADJUSTED", order_code: null }), row({ id: 1 })]);
+    const got = toEvents([row({ id: 2, kind: "STOCK_TELEPORTED", order_code: null }), row({ id: 1 })]);
     expect(got.map((e) => e.id)).toEqual([1]);
   });
 });

@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { SearchBox } from "@/components/admin/AdminOrdersScreen";
-import { useSim } from "@/components/admin/SimContext";
+import { useAdminToast } from "@/components/admin/AdminToast";
 import { ActionMenu, Stabs, TableFoot } from "@/components/admin/Table3";
 import { Badge } from "@/components/ui/Badge";
 import { useCatalog } from "@/components/shop/CatalogContext";
@@ -65,7 +65,7 @@ export function CustomersTable({
   query: Query;
 }) {
   const catalog = useCatalog();
-  const { say } = useSim();
+  const say = useAdminToast();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
 

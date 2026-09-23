@@ -8,7 +8,6 @@ import { Icon } from "@/components/icon/Icon";
 import { Select } from "@/components/ui/Select";
 import { COLORS } from "@/data/colors";
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
-import type { InventoryCell } from "@/lib/admin-sim";
 import {
   ADJUST_REASONS,
   canRaise,
@@ -20,6 +19,7 @@ import {
   draftTotal,
   saveBlocker,
   withCell,
+  type InventoryCell,
   type StockDraft,
 } from "@/lib/inventory-adjust";
 import { onHandOf } from "@/lib/inventory";
@@ -42,16 +42,20 @@ const REASON_OPTIONS = ADJUST_REASONS.map((r) => ({ value: r, label: r }));
  *
  * The save button is DISABLED and says the job that is left — "Chưa có thay
  * đổi", "Chọn lý do" — rather than being hidden or silently doing nothing
- * (DESIGN.md §9 rule 3).
+ * (DESIGN.md §9 rule 3). While the save is on its way to the server
+ * (`adjustStock`, slice B3b) it is disabled too and says so.
  */
 export function InventoryAdjustSheet({
   product,
+  pending = false,
   onClose,
   onSave,
   onBlocked,
 }: {
   /** The style being adjusted, or null when the sheet is shut. */
   product: Product | null;
+  /** The save is on its way to the server. */
+  pending?: boolean;
   onClose: () => void;
   onSave: (cells: InventoryCell[], reason: string, ref: string, note: string) => void;
   /** Called when a raise is refused, so the screen can say why in a toast. */
@@ -113,19 +117,19 @@ export function InventoryAdjustSheet({
       }
       footer={
         <>
-          <Button tone="ink sm" icon="back" onClick={onClose}>
+          <Button tone="ink sm" icon="back" disabled={pending} onClick={onClose}>
             Huỷ
           </Button>
           <Button
             tone="sm"
-            {...(blocker ? {} : { icon: "check" as const })}
-            disabled={blocker !== null}
+            {...(blocker || pending ? {} : { icon: "check" as const })}
+            disabled={blocker !== null || pending}
             onClick={() => {
-              if (blocker || !reason) return;
+              if (blocker || !reason || pending) return;
               onSave(changed, reason, ref.trim(), note.trim());
             }}
           >
-            {blocker ?? "Lưu điều chỉnh"}
+            {pending ? "Đang lưu…" : (blocker ?? "Lưu điều chỉnh")}
           </Button>
         </>
       }

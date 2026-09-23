@@ -1,5 +1,5 @@
 import type { Order } from "@/data/types";
-import type { AdminEvent } from "./db/event-dto";
+import { isOrderEvent, type AdminEvent } from "./db/event-dto";
 import { vnd } from "./money";
 import { orderTotalVnd, transferReference } from "./orders";
 
@@ -45,7 +45,8 @@ export function internalNotes(events: AdminEvent[], order: Order): InternalNote[
   const notes: InternalNote[] = [];
 
   for (const e of events) {
-    if (e.kind === "DEMO_RESET" || e.code !== String(order.code)) continue;
+    // Only an order's own events: a reset, a shelf or a code is not a note.
+    if (!isOrderEvent(e) || e.code !== String(order.code)) continue;
     switch (e.kind) {
       case "ORDER_PAID":
         notes.push(

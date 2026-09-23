@@ -239,6 +239,14 @@ async (page) => {
         let p = el.parentElement;
         while (p && p !== document.documentElement) {
           const o = getComputedStyle(p);
+          // Inside a scroll container (a long menu in an open sheet, a scrolling
+          // panel) everything is reachable by scrolling; the locked body above
+          // it must not be read as the frame that cuts it. Slice B3b found six
+          // such false alarms in the teaser sheet's kind menu.
+          if (
+            (/auto|scroll/.test(o.overflowY) && p.scrollHeight > p.clientHeight + 1) ||
+            (/auto|scroll/.test(o.overflowX) && p.scrollWidth > p.clientWidth + 1)
+          ) break;
           // A swipe strip also overflows its box, but you can reach the rest
           // by scrolling — that is the pattern, not the bug. Only an axis that
           // is cut AND cannot be scrolled hides content for good.
@@ -458,6 +466,55 @@ async (page) => {
     }],
     ["/admin#reset", "admin-reset-sheet-1280", async () => {
       await page.locator(".simbar").getByRole("button", { name: "Đặt lại dữ liệu mẫu" }).click();
+    }],
+    // slice B3b: the sheets and menus that now write to the database
+
+    ["/admin/products#rowmenu", "admin-products-row-menu-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác KHÓI", exact: true }).click();
+    }],
+    ["/admin/products#adjust", "admin-products-adjust-sheet-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác KHÓI", exact: true }).click();
+      await page.waitForTimeout(250);
+      await page.getByRole("menuitem", { name: "Điều chỉnh tồn kho" }).click();
+      await page.waitForTimeout(350);
+      await page.getByRole("dialog").locator(".field3", { hasText: "Lý do" }).first().locator("button.selbtn").click();
+    }],
+    ["/admin/drops#rowmenu", "admin-drops-row-menu-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác Số 05", exact: true }).click();
+    }],
+    ["/admin/drops#create", "admin-drops-create-sheet-1280", async () => {
+      await page.locator(".top").getByRole("button", { name: "Tạo số" }).click();
+    }],
+    ["/admin/drops#edit", "admin-drops-edit-sheet-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác Số 06", exact: true }).click();
+      await page.waitForTimeout(250);
+      await page.getByRole("menuitem", { name: "Sửa giờ" }).click();
+    }],
+    ["/admin/drops#close", "admin-drops-close-sheet-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác Số 05", exact: true }).click();
+      await page.waitForTimeout(250);
+      await page.getByRole("menuitem", { name: "Đóng sớm" }).click();
+    }],
+    ["/admin/drops/05#teaser", "admin-drops-teaser-sheet-1280", async () => {
+      await page.getByRole("button", { name: "Thêm mẫu hé lộ" }).click();
+      await page.waitForTimeout(350);
+      await page.getByRole("dialog").locator(".field3", { hasText: "Loại" }).first().locator("button.selbtn").click();
+    }],
+    ["/admin/promotions#rowmenu", "admin-promotions-row-menu-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác DOT05", exact: true }).click();
+    }],
+    ["/admin/promotions#create", "admin-promotions-create-sheet-1280", async () => {
+      await page.locator(".top").getByRole("button", { name: "Tạo mã" }).click();
+      await page.waitForTimeout(350);
+      await page.getByRole("dialog").locator(".field3", { hasText: "Loại" }).first().locator("button.selbtn").click();
+    }],
+    ["/admin/promotions#edit", "admin-promotions-edit-sheet-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác DOT05", exact: true }).click();
+      await page.waitForTimeout(250);
+      await page.getByRole("menuitem", { name: "Sửa", exact: true }).click();
+    }],
+    ["/admin/products/p-khoi#kind", "admin-product-form-kind-menu-1280", async () => {
+      await page.locator(".field3", { hasText: "Loại" }).first().locator("button.selbtn").click();
     }],
   ];
   for (const [route, name, open] of ADMIN_OVERLAYS) await visit(route, 1280, name, open);

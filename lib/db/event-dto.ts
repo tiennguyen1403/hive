@@ -1,5 +1,16 @@
-import type { OrderState } from "@/data/types";
+import {
+  COLOR_KEYS,
+  FAMILIES,
+  SIZES,
+  type ColorKey,
+  type Family,
+  type Fit,
+  type OrderState,
+  type Size,
+} from "@/data/types";
 import type { ShipTo } from "@/lib/admin-orders";
+import type { PromoKind, PromoTerms } from "@/lib/catalog-admin";
+import type { InventoryCell } from "@/lib/inventory-adjust";
 
 /**
  * The border between `public.events` and the back office's screens.
@@ -9,9 +20,15 @@ import type { ShipTo } from "@/lib/admin-orders";
  * arrives as columns plus a `payload` that is `jsonb`: whatever the writing
  * function put there, typed `unknown` on the way in. This module checks every
  * field it uses and flattens each row into one member of `AdminEvent`, whose
- * fields are the ones the `SimAction` of the same name carried before slice
- * B3a — so the activity log and the order's notes changed where they read
- * from, not what they say.
+ * fields are the ones the `SimAction` of the same name carried before slices
+ * B3a and B3b — so the activity log and the order's notes changed where they
+ * read from, not what they say.
+ *
+ * Since slice B3b the catalogue writes here too: the shelf, the styles, the
+ * issues, the teasers and the codes. Those rows name what they are about in a
+ * column of their own (`product_id`, `promo_code`, `drop_no`), which the
+ * table's check constraints require, and that column — not the payload — is
+ * where this module reads it from.
  *
  * Pure and free of `server-only`, for the reason `order-dto.ts` gives: the
  * marker does not resolve under vitest, and a mapper nobody can test is a
@@ -29,6 +46,16 @@ export const EVENT_KINDS = [
   "ORDER_NOTE",
   "ORDER_ADDRESS_EDITED",
   "DEMO_RESET",
+  "INVENTORY_ADJUSTED",
+  "PRODUCT_EDITED",
+  "DROP_ADDED",
+  "DROP_SCHEDULED",
+  "TEASER_ADDED",
+  "PROMO_ADDED",
+  "PROMO_EDITED",
+  "PROMO_PAUSED",
+  "PROMO_LIMIT_RAISED",
+  "PROMO_ENDED",
 ] as const;
 
 export type EventKind = (typeof EVENT_KINDS)[number];
@@ -50,7 +77,26 @@ interface OrderEventBase extends EventBase {
   code: string;
 }
 
-export type AdminEvent =
+/** A style's own fields as `PRODUCT_EDITED` keeps them — only the changed ones. */
+export interface ProductFields {
+  name?: string;
+  kind?: string;
+  family?: Family;
+  slug?: string;
+  priceVnd?: number;
+  material?: string;
+  fit?: Fit;
+  dropNo?: number;
+}
+
+/** An issue's two instants, as `DROP_SCHEDULED` keeps them. */
+export interface DropWindow {
+  opensAt: string;
+  closesAt: string;
+}
+
+/** The events about an order — the kinds whose `code` is an order code. */
+export type OrderEvent =
   | (OrderEventBase & { kind: "ORDER_PLACED" })
   /** `from`: the state it left — a transfer being waited on, or a card / COD order taken. */
   | (OrderEventBase & { kind: "ORDER_PAID"; from?: OrderState })
@@ -66,12 +112,66 @@ export type AdminEvent =
   | (OrderEventBase & { kind: "ORDER_CANCELLED_BY_CUSTOMER"; from?: OrderState })
   | (OrderEventBase & { kind: "ORDER_EXPIRED" })
   | (OrderEventBase & { kind: "ORDER_NOTE"; text: string })
-  | (OrderEventBase & { kind: "ORDER_ADDRESS_EDITED"; before: ShipTo; after: ShipTo; reason: string })
+  | (OrderEventBase & { kind: "ORDER_ADDRESS_EDITED"; before: ShipTo; after: ShipTo; reason: string });
+
+/** The events about the catalogue (slice B3b), each naming what it is about. */
+export type CatalogEvent =
+  | (EventBase & {
+      kind: "INVENTORY_ADJUSTED";
+      productId: string;
+      /** One entry per cell that moved. An adjustment is one decision. */
+      cells: InventoryCell[];
+      reason: string;
+      /** An order code, a stocktake sheet — free text, may be empty. */
+      ref: string;
+      note: string;
+      /** Units added (negative: removed) across every cell. */
+      delta: number;
+    })
+  | (EventBase & { kind: "PRODUCT_EDITED"; productId: string; before: ProductFields; after: ProductFields })
+  | (EventBase & { kind: "DROP_ADDED"; no: number; opensAt: string; closesAt: string })
+  | (EventBase & { kind: "DROP_SCHEDULED"; no: number; before: DropWindow; after: DropWindow })
+  | (EventBase & {
+      kind: "TEASER_ADDED";
+      no: number;
+      slug: string;
+      name: string;
+      /** Shown as-is, e.g. "Áo khoác dù" — `Teaser.kind`. */
+      garment: string;
+      family: Family;
+      photoKey: string;
+    })
+  | (EventBase & { kind: "PROMO_ADDED"; promoCode: string; terms: PromoTerms })
+  | (EventBase & { kind: "PROMO_EDITED"; promoCode: string; before: PromoTerms; after: PromoTerms })
+  | (EventBase & { kind: "PROMO_PAUSED"; promoCode: string; paused: boolean })
+  | (EventBase & {
+      kind: "PROMO_LIMIT_RAISED";
+      promoCode: string;
+      /** Null when the code had no limit before. */
+      before: number | null;
+      after: number;
+    })
+  | (EventBase & {
+      kind: "PROMO_ENDED";
+      promoCode: string;
+      /** The closing instant it had, and the one it got — now. */
+      before: string;
+      after: string;
+    });
+
+export type AdminEvent =
+  | OrderEvent
+  | CatalogEvent
   | (EventBase & {
       kind: "DEMO_RESET";
       /** The 18:50 the sample was shifted onto. */
       anchor: string;
     });
+
+/** Whether an event is about an order — the only kinds that carry an order code. */
+export function isOrderEvent(e: AdminEvent): e is OrderEvent {
+  return e.kind.startsWith("ORDER_");
+}
 
 /** Exactly the columns `lib/db/admin.ts` selects. */
 export interface EventRow {
@@ -81,6 +181,9 @@ export interface EventRow {
   actor: string;
   kind: string;
   order_code: string | null;
+  product_id: string | null;
+  promo_code: string | null;
+  drop_no: number | null;
   payload: unknown;
 }
 
@@ -158,6 +261,100 @@ function shipTo(value: unknown, path: string): ShipTo {
   };
 }
 
+// ───────────────────────────────────────────── the catalogue's payloads
+function whole(source: Record<string, unknown>, key: string, path: string): number {
+  const value = source[key];
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    return fail(`${path}.${key}`, "must be a whole number");
+  }
+  return value;
+}
+
+function wholeOrNull(source: Record<string, unknown>, key: string, path: string): number | null {
+  const value = source[key];
+  if (value === undefined || value === null) return null;
+  return whole(source, key, path);
+}
+
+function instantOf(source: Record<string, unknown>, key: string, path: string): string {
+  const value = source[key];
+  if (typeof value !== "string" || !VN_ISO.test(value)) {
+    return fail(`${path}.${key}`, "must be an ISO instant ending in +07:00");
+  }
+  return value;
+}
+
+function member<T extends string>(
+  allowed: readonly T[],
+  source: Record<string, unknown>,
+  key: string,
+  path: string,
+): T {
+  const value = source[key];
+  if (typeof value !== "string" || !(allowed as readonly string[]).includes(value)) {
+    return fail(`${path}.${key}`, `must be one of ${allowed.join(", ")}`);
+  }
+  return value as T;
+}
+
+const PROMO_KINDS: readonly PromoKind[] = ["PERCENT", "AMOUNT", "FREE_SHIPPING"];
+const FITS: readonly Fit[] = ["OVERSIZE", "REGULAR"];
+
+/** A code's terms as `public.read_promo_terms()` wrote them. */
+function promoTerms(value: unknown, path: string): PromoTerms {
+  const source = record(value, path);
+  return {
+    kind: member(PROMO_KINDS, source, "kind", path),
+    percent: wholeOrNull(source, "percent", path),
+    maxDiscountVnd: wholeOrNull(source, "maxDiscountVnd", path),
+    amountVnd: wholeOrNull(source, "amountVnd", path),
+    minOrderVnd: wholeOrNull(source, "minOrderVnd", path),
+    usageLimit: wholeOrNull(source, "usageLimit", path),
+    startsAt: instantOf(source, "startsAt", path),
+    endsAt: instantOf(source, "endsAt", path),
+  };
+}
+
+function inventoryCells(value: unknown, path: string): InventoryCell[] {
+  if (!Array.isArray(value)) return fail(path, "must be an array");
+  return value.map((item, i) => {
+    const at = `${path}[${i}]`;
+    const source = record(item, at);
+    return {
+      color: member<ColorKey>(COLOR_KEYS, source, "color", at),
+      size: member<Size>(SIZES, source, "size", at),
+      before: whole(source, "before", at),
+      after: whole(source, "after", at),
+    };
+  });
+}
+
+/** Only the fields a style edit changed — each one checked for its own type. */
+function productFields(value: unknown, path: string): ProductFields {
+  const source = record(value, path);
+  const out: ProductFields = {};
+  if ("name" in source) out.name = text(source, "name", path);
+  if ("kind" in source) out.kind = text(source, "kind", path);
+  if ("family" in source) out.family = member<Family>(FAMILIES, source, "family", path);
+  if ("slug" in source) out.slug = text(source, "slug", path);
+  if ("priceVnd" in source) out.priceVnd = whole(source, "priceVnd", path);
+  if ("material" in source) out.material = text(source, "material", path);
+  if ("fit" in source) out.fit = member(FITS, source, "fit", path);
+  if ("dropNo" in source) out.dropNo = whole(source, "dropNo", path);
+  return out;
+}
+
+function dropWindow(value: unknown, path: string): DropWindow {
+  const source = record(value, path);
+  return { opensAt: instantOf(source, "opensAt", path), closesAt: instantOf(source, "closesAt", path) };
+}
+
+/** The column naming what a catalogue event is about, which the table requires. */
+function column<T>(value: T | null, path: string, expected: string): T {
+  if (value === null || value === undefined || value === "") return fail(path, expected);
+  return value;
+}
+
 export function isEventKind(kind: string): kind is EventKind {
   return (EVENT_KINDS as readonly string[]).includes(kind);
 }
@@ -185,6 +382,98 @@ export function toEvent(row: EventRow): AdminEvent {
     const anchor = text(payload, "anchor", at);
     if (!VN_ISO.test(anchor)) fail(`${at}.anchor`, "must be an ISO instant ending in +07:00");
     return { ...base, kind: "DEMO_RESET", anchor };
+  }
+
+  switch (row.kind) {
+    case "INVENTORY_ADJUSTED":
+      return {
+        ...base,
+        kind: row.kind,
+        productId: column(row.product_id, `${path}.product_id`, "must name the style"),
+        cells: inventoryCells(payload.cells, `${at}.cells`),
+        reason: text(payload, "reason", at),
+        ref: textOrEmpty(payload, "ref", at),
+        note: textOrEmpty(payload, "note", at),
+        delta: whole(payload, "delta", at),
+      };
+    case "PRODUCT_EDITED":
+      return {
+        ...base,
+        kind: row.kind,
+        productId: column(row.product_id, `${path}.product_id`, "must name the style"),
+        before: productFields(payload.before, `${at}.before`),
+        after: productFields(payload.after, `${at}.after`),
+      };
+    case "DROP_ADDED":
+      return {
+        ...base,
+        kind: row.kind,
+        no: column(row.drop_no, `${path}.drop_no`, "must name the issue"),
+        opensAt: instantOf(payload, "opensAt", at),
+        closesAt: instantOf(payload, "closesAt", at),
+      };
+    case "DROP_SCHEDULED":
+      return {
+        ...base,
+        kind: row.kind,
+        no: column(row.drop_no, `${path}.drop_no`, "must name the issue"),
+        before: dropWindow(payload.before, `${at}.before`),
+        after: dropWindow(payload.after, `${at}.after`),
+      };
+    case "TEASER_ADDED":
+      return {
+        ...base,
+        kind: row.kind,
+        no: column(row.drop_no, `${path}.drop_no`, "must name the issue"),
+        slug: text(payload, "slug", at),
+        name: text(payload, "name", at),
+        garment: text(payload, "garment", at),
+        family: member<Family>(FAMILIES, payload, "family", at),
+        photoKey: text(payload, "photoKey", at),
+      };
+    case "PROMO_ADDED":
+      return {
+        ...base,
+        kind: row.kind,
+        promoCode: column(row.promo_code, `${path}.promo_code`, "must name the code"),
+        terms: promoTerms(payload, at),
+      };
+    case "PROMO_EDITED":
+      return {
+        ...base,
+        kind: row.kind,
+        promoCode: column(row.promo_code, `${path}.promo_code`, "must name the code"),
+        before: promoTerms(payload.before, `${at}.before`),
+        after: promoTerms(payload.after, `${at}.after`),
+      };
+    case "PROMO_PAUSED": {
+      const paused = payload.paused;
+      if (typeof paused !== "boolean") return fail(`${at}.paused`, "must be a boolean");
+      return {
+        ...base,
+        kind: row.kind,
+        promoCode: column(row.promo_code, `${path}.promo_code`, "must name the code"),
+        paused,
+      };
+    }
+    case "PROMO_LIMIT_RAISED":
+      return {
+        ...base,
+        kind: row.kind,
+        promoCode: column(row.promo_code, `${path}.promo_code`, "must name the code"),
+        before: wholeOrNull(payload, "before", at),
+        after: whole(payload, "after", at),
+      };
+    case "PROMO_ENDED":
+      return {
+        ...base,
+        kind: row.kind,
+        promoCode: column(row.promo_code, `${path}.promo_code`, "must name the code"),
+        before: instantOf(payload, "before", at),
+        after: instantOf(payload, "after", at),
+      };
+    default:
+      break;
   }
 
   if (typeof row.order_code !== "string" || !/^DH-\d{4,}$/.test(row.order_code)) {

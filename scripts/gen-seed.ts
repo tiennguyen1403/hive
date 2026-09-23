@@ -264,10 +264,15 @@ export function renderSeedSql(
         "used_count",
         "min_order_vnd",
         "position",
+        "paused",
       ],
       // The three shapes are a discriminated union in `data/types.ts` and a
       // check constraint in SQL: a PERCENT row carries no amount, an AMOUNT
       // row carries no cap. Narrowing here keeps both honest.
+      //
+      // `paused` (slice B3b) is written out rather than left to the column
+      // default: the fixture pauses nothing, and saying so in the seed is
+      // what a reset puts back.
       input.promotions.map((promo, index) => [
         str(promo.code),
         str(promo.kind),
@@ -280,6 +285,7 @@ export function renderSeedSql(
         num(promo.usedCount),
         num(promo.minOrderVnd),
         num(index),
+        bool(promo.paused ?? false),
       ]),
     ),
   );

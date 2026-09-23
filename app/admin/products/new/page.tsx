@@ -15,6 +15,11 @@ export const metadata = { title: "Thêm mẫu" };
  * The kind and issue menus are DERIVED from the catalogue and the issue
  * list, not typed out here — a hard-coded list of kinds would drift the
  * first time somebody adds a style the menu has never heard of.
+ *
+ * It cannot be saved yet (slice B3b): a new style needs its colours and a
+ * photo for each, and the approved form has no control for either. The page
+ * stays — the products table links here — and the form's button says
+ * "Tạo mẫu mới · đang chuẩn bị" with the reason beneath it.
  */
 export default async function AdminNewProductPage() {
   await requireAdmin("/admin/products/new");

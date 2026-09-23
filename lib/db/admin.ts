@@ -50,7 +50,9 @@ const DAY_MS = 86_400_000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PROFILE_COLUMNS = "id, handle, name, email, phone, joined_at";
 const ADDRESS_COLUMNS = "id, recipient, phone, line, province_code, ward_code, label, is_default";
-const EVENT_COLUMNS = "id, at, actor_role, actor, kind, order_code, payload";
+// `product_id`, `promo_code` and `drop_no` joined at slice B3b, with the
+// catalogue's events: each names what it is about in one of them.
+const EVENT_COLUMNS = "id, at, actor_role, actor, kind, order_code, product_id, promo_code, drop_no, payload";
 
 // ──────────────────────────────────────────────────────────────── orders
 /** Every order in the book, newest first, each with its account. */

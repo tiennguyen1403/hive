@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
+import { useAdminToast } from "@/components/admin/AdminToast";
 import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { InventoryAdjustSheet } from "@/components/admin/InventoryAdjustSheet";
 import { SearchBox } from "@/components/admin/AdminOrdersScreen";
-import { useSim } from "@/components/admin/SimContext";
 import { ActionMenu, ChipMenu, Stabs, ToggleChip } from "@/components/admin/Table3";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { COLORS } from "@/data/colors";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { SIZES, type Product, type Teaser } from "@/data/types";
-import { simDrops, simProducts, simTeasers } from "@/lib/admin-sim";
+import { adjustStock } from "@/lib/actions/catalog-admin";
 import { hrefWith, type Query } from "@/lib/admin-url";
 import { dropState } from "@/lib/drop";
 import {
@@ -40,19 +40,22 @@ const PATH = "/admin/products";
  * second case entirely.
  *
  * The figures come from `lib/inventory` — the same functions the shop reads —
- * over `fixtures + overlay`, so a stock adjustment made in the sheet below
- * shows here, on the issue's KPIs and on the overview the moment it is saved.
+ * over the catalogue the database holds, so a stock adjustment saved in the
+ * sheet below (`adjustStock` → `admin_adjust_stock()`, slice B3b) shows here,
+ * on the issue's KPIs, on the overview and on the shop's own product page in
+ * the response that answers the save.
  */
 export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query }) {
   const catalog = useCatalog();
-  const { sim, run, say } = useSim();
+  const say = useAdminToast();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
+  const [saving, startSaving] = useTransition();
 
-  const products = simProducts(catalog.products, sim);
-  const drops = simDrops(catalog.drops, sim);
-  const teasers = simTeasers(catalog.teasers, sim);
+  const products = catalog.products;
+  const drops = catalog.drops;
+  const teasers = catalog.teasers;
 
   const openIssue = drops.find((d) => dropState(d, now) === "OPEN")?.no ?? drops[0]?.no ?? 0;
 
@@ -301,23 +304,24 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
 
       <InventoryAdjustSheet
         product={adjusting}
-        onClose={() => setAdjusting(null)}
+        pending={saving}
+        onClose={() => {
+          if (!saving) setAdjusting(null);
+        }}
         onBlocked={say}
         onSave={(cells, reason, ref, note) => {
-          if (!adjusting) return;
-          const moved = cells.reduce((n, c) => n + (c.after - c.before), 0);
-          run(
-            {
-              kind: "INVENTORY_ADJUSTED",
-              productId: String(adjusting.id),
-              cells,
-              reason,
-              ref,
-              note,
-            },
-            `Đã điều chỉnh tồn kho ${adjusting.name} · ${moved > 0 ? "+" : ""}${moved} chiếc · ghi nhật ký`,
-          );
-          setAdjusting(null);
+          if (!adjusting || saving) return;
+          const id = String(adjusting.id);
+          // The sheet stays open on a refusal — a shelf that moved elsewhere
+          // (`STALE`) says so and nothing is written. After an `await` the
+          // transition has to be restated (react.dev/reference/react/useTransition).
+          startSaving(async () => {
+            const result = await adjustStock(id, cells, reason, ref, note);
+            startSaving(() => {
+              if (result.ok) setAdjusting(null);
+              say(result.message ?? result.errors.form ?? "");
+            });
+          });
         }}
       />
     </>

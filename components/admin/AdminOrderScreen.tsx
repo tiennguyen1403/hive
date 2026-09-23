@@ -7,7 +7,7 @@ import { AddressEditForm } from "@/components/admin/AddressEditForm";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { CancelOrderModal } from "@/components/admin/CancelOrderModal";
 import { HandoverForm } from "@/components/admin/HandoverForm";
-import { useSim } from "@/components/admin/SimContext";
+import { useAdminToast } from "@/components/admin/AdminToast";
 import { ActionMenu } from "@/components/admin/Table3";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -85,7 +85,7 @@ export function AdminOrderScreen({
   openHandover: boolean;
 }) {
   const catalog = useCatalog();
-  const { say } = useSim();
+  const say = useAdminToast();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const order = effectiveOrder(base, now);
   const code = String(order.code);

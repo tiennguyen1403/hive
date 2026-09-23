@@ -13,7 +13,19 @@ import {
 } from "./promotions";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { promoCode } from "@/data/types";
+import { buildCatalog } from "./catalog";
+import { isPromoLive } from "./orders";
 import { checkoutTotals } from "./shipping";
+
+/** The fixture with one code paused by the shop (slice B3b). */
+function withPaused(code: string) {
+  return buildCatalog({
+    products: [...FIXTURE_CATALOG.products],
+    drops: [...FIXTURE_CATALOG.drops],
+    teasers: [...FIXTURE_CATALOG.teasers],
+    promotions: FIXTURE_CATALOG.promotions.map((p) => (p.code === code ? { ...p, paused: true } : p)),
+  });
+}
 
 /** Inside every live code's window, and the clock the mock was drawn on. */
 const NOW = new Date("2026-09-20T18:50:00+07:00");
@@ -67,6 +79,24 @@ describe("checkPromoCode · a code that does not", () => {
       ok: false,
       message: "Nhập mã giảm giá trước khi áp dụng.",
     });
+  });
+
+  it("says a paused code is paused — not expired, not used up (slice B3b)", () => {
+    expect(checkPromoCode(withPaused("CHAOBAN"), "CHAOBAN", BASKET, NOW)).toEqual({
+      ok: false,
+      message: "Mã CHAOBAN đang tạm dừng.",
+    });
+  });
+
+  it("lets the dates speak first: a paused code that is over is over", () => {
+    expect(checkPromoCode(withPaused("DOT04"), "DOT04", 2_000_000, NOW)).toEqual({
+      ok: false,
+      message: "Mã DOT04 đã hết hạn.",
+    });
+  });
+
+  it("stops applying a stored code the moment the shop pauses it", () => {
+    expect(appliedPromo(withPaused("CHAOBAN"), "CHAOBAN", BASKET, NOW)).toBeUndefined();
   });
 });
 
@@ -166,6 +196,20 @@ describe("the codes a shopper can use today", () => {
     for (const promo of livePromotions(FIXTURE_CATALOG, NOW)) {
       expect(checkPromoCode(FIXTURE_CATALOG, promo.code, 10_000_000, NOW).ok).toBe(true);
     }
+  });
+
+  it("leaves out a code the shop has paused, and agrees with the checker about it", () => {
+    const paused = withPaused("DOT05");
+    expect(livePromotions(paused, NOW).map((p) => p.code)).toEqual(["CHAOBAN", "FREESHIP"]);
+    for (const promo of livePromotions(paused, NOW)) {
+      expect(checkPromoCode(paused, promo.code, 10_000_000, NOW).ok).toBe(true);
+    }
+  });
+
+  it("treats a paused code as not live wherever the question is asked (isPromoLive)", () => {
+    const dot05 = FIXTURE_CATALOG.promoByCode.get(promoCode("DOT05"))!;
+    expect(isPromoLive(dot05, NOW)).toBe(true);
+    expect(isPromoLive({ ...dot05, paused: true }, NOW)).toBe(false);
   });
 });
 

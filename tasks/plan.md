@@ -1462,3 +1462,23 @@ Supabase Storage, bucket công khai gói Free (1 GB), đi qua máy chủ Next, p
 chờ duyệt; (3) màu chốt lúc cắt, sửa mẫu chỉ đổi thứ tự dải màu và ảnh; (4) ảnh mượn tạm vẫn chọn được, luôn có nhãn. Thêm ô Form
 (oversize/regular); Loại chỉ chọn trong loại đã có. Sau duyệt: brief UI cho `ui-implementer`, brief storage + SQL tạo mẫu cho
 `backend-implementer` (sau B3b; cần bật lại `[storage]` cục bộ, `serverActions.bodySizeLimit`, `remotePatterns` host Supabase).
+
+**Lát B3b ĐẠT (24/09/2026, `backend-implementer` trên Opus 5.5, bị ngắt một lần vì giới hạn phiên và nối lại bằng tin nhắn; phiên chính
+duyệt độc lập).** Quản trị thật, phần 2: không còn gì mô phỏng trên trình duyệt. Migration `20260924020000_catalog_admin.sql`:
+`promotions.paused` (+ `seed_promotions`), 10 hàm `admin_adjust_stock / add_drop / schedule_drop / add_teaser / add_promo / edit_promo /
+pause_promo / raise_promo_limit / end_promo / update_product` (guard `NOT_ADMIN` → `assert_now` → `BAD_INPUT / NOT_FOUND / NOT_ALLOWED /
+STALE`), `events` thêm 10 kind + 3 check cột đối tượng, `catalog_snapshot` v2, `place_order`/`cancel_order`/`admin_cancel_order`/
+`expire_and_lock` giữ `sold_out_at` sống, `reset_demo` v5; `admin_adjust_stock` khoá mọi ô của mẫu, tổng ≤ `cut_units`, STALE theo
+`before`. TS: `lib/catalog-admin.ts`, `lib/actions/catalog-admin.ts` (11 action), `lib/teasers.ts`, `lib/request-path.ts` + `proxy.ts`
+đặt `x-pathname` (đăng nhập từ link sâu quay về đúng trang), `requireAdmin()` không tham số ở layout; xoá `lib/admin-sim.ts`,
+`SimContext`, `simLogRows`; `AdminToast` thay toast của SimProvider; cột Khách hiện "· vãng lai"; chữ "mô phỏng" thành "dữ liệu mẫu" /
+"đã lưu". **Kiểm:** typecheck sạch; `npm test` **55 tệp / 1.158 test**; `npm run test:db` **5 tệp / 148 test**; build 44 route; phiên
+chính tự đi hai trình duyệt (quản lý 1280, khách 390): link sâu giữ, KHÓI Đen XL 1→0 → PDP "XL hết", tạo TEST10 → giỏ trừ 39.000₫, tạm
+dừng → giỏ "Mã TEST10 đang tạm dừng.", sửa giá → PDP 420.000, đơn vãng lai (qua SQL) hiện "Khách Thử · vãng lai" và trang đơn không
+có khung hồ sơ, "Tạo mẫu mới · đang chuẩn bị" disabled, đặt lại về seed; chạy lại kịch bản 25 bước của agent; 0 request ngoài 3200,
+0 console. **Phiên chính sửa thêm:** `photopick` ảnh 44×55 `object-fit:cover` (lệch tỉ lệ 2,69× agent đo được); `tools/layout-sweep.js`
+ghép 11 lớp nổi admin của B3b (17 lớp) và máy dò `clipped` bỏ qua phần tử trong khung cuộn (6 báo nhầm ở menu Loại của sheet teaser)
+→ sweep **78 lượt** 0/0/0/0, tồn dư 48 + 2; DESIGN.md §8 bỏ `brand.adminSim`; `tasks/backend.md` §9 B3. **Mở:** lịch đề xuất Số mới
+có thể mở trước Số đang chờ (gộp vào B3c cùng luật chồng lịch); bìa Số vẽ cho 2 teaser, teaser thứ ba rớt xuống một mình (quyết định
+thiết kế, chưa giao); ô Mã chỉ đọc chưa có kiểu riêng (lát 7); nhật ký đóng sớm có hai dòng cùng phút (cửa hàng + hệ thống, đều đúng);
+`SizeGuideSheet` giữ "Số đo mô phỏng" theo ý người dùng.

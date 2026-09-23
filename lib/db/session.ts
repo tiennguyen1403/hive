@@ -1,8 +1,21 @@
 import "server-only";
 
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
+import { safeNext } from "@/lib/actions/state";
+import { PATH_HEADER } from "@/lib/request-path";
 import { getSupabase } from "./server";
+
+/**
+ * Where the visitor was going, for the sign-in detour: the proxy's header,
+ * kept to a path of this app's own (`safeNext` — never a full URL, never
+ * `//somewhere`), or `fallback` when the header is missing.
+ */
+async function requestedPath(fallback: string): Promise<string> {
+  const raw = (await headers()).get(PATH_HEADER);
+  return safeNext(raw, fallback);
+}
 
 /**
  * Who is asking, decided on the server, once per request.
@@ -61,10 +74,18 @@ export const getSession = cache(async (): Promise<SessionInfo | null> => {
  * framework-handled control-flow exception, so nothing after it runs — which
  * is why the return type can promise a session
  * (`03-api-reference/04-functions/redirect.md`).
+ *
+ * `nextPath` may be left out (slice B3b): the path then comes from the
+ * request itself (`x-pathname`, set by `proxy.ts` and read with `headers()`,
+ * `03-api-reference/04-functions/headers.md`), which is the only way a LAYOUT
+ * knows which page below it was asked for.
  */
-export async function requireSession(nextPath: string): Promise<SessionInfo> {
+export async function requireSession(nextPath?: string): Promise<SessionInfo> {
   const session = await getSession();
-  if (!session) redirect(`/sign-in?next=${encodeURIComponent(nextPath)}`);
+  if (!session) {
+    const back = nextPath ?? (await requestedPath("/account"));
+    redirect(`/sign-in?next=${encodeURIComponent(back)}`);
+  }
   return session;
 }
 
@@ -81,9 +102,17 @@ export async function requireSession(nextPath: string): Promise<SessionInfo> {
  * not the manager: 404 — the back office is not a place a shopper is told
  * exists (QĐ-16, applied to the admin area). Both `redirect` and `notFound`
  * throw, so the return type can promise an admin session.
+ *
+ * Without `nextPath` "here" is the page the request asked for — so a guest
+ * who opens `/admin/orders/DH-2430` comes back to that order after signing
+ * in, not to the overview (slice B3b; the admin layout calls it bare).
  */
-export async function requireAdmin(nextPath: string): Promise<SessionInfo> {
-  const session = await requireSession(nextPath);
+export async function requireAdmin(nextPath?: string): Promise<SessionInfo> {
+  const session = await getSession();
+  if (!session) {
+    const back = nextPath ?? (await requestedPath("/admin"));
+    redirect(`/sign-in?next=${encodeURIComponent(back)}`);
+  }
   if (session.role !== "admin") notFound();
   return session;
 }

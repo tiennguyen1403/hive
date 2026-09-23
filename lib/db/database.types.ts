@@ -405,6 +405,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["promo_kind"]
           max_discount_vnd: number | null
           min_order_vnd: number | null
+          paused: boolean
           percent: number | null
           position: number
           starts_at: string
@@ -418,6 +419,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["promo_kind"]
           max_discount_vnd?: number | null
           min_order_vnd?: number | null
+          paused?: boolean
           percent?: number | null
           position: number
           starts_at: string
@@ -431,6 +433,7 @@ export type Database = {
           kind?: Database["public"]["Enums"]["promo_kind"]
           max_discount_vnd?: number | null
           min_order_vnd?: number | null
+          paused?: boolean
           percent?: number | null
           position?: number
           starts_at?: string
@@ -716,6 +719,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["promo_kind"]
           max_discount_vnd: number | null
           min_order_vnd: number | null
+          paused: boolean
           percent: number | null
           position: number
           starts_at: string
@@ -729,6 +733,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["promo_kind"]
           max_discount_vnd?: number | null
           min_order_vnd?: number | null
+          paused?: boolean
           percent?: number | null
           position: number
           starts_at: string
@@ -742,6 +747,7 @@ export type Database = {
           kind?: Database["public"]["Enums"]["promo_kind"]
           max_discount_vnd?: number | null
           min_order_vnd?: number | null
+          paused?: boolean
           percent?: number | null
           position?: number
           starts_at?: string
@@ -885,6 +891,42 @@ export type Database = {
         }
         Returns: string
       }
+      admin_add_drop: {
+        Args: {
+          p_closes_at: string
+          p_no: number
+          p_now: string
+          p_opens_at: string
+        }
+        Returns: undefined
+      }
+      admin_add_promo: {
+        Args: { p_now: string; p_terms: Json }
+        Returns: undefined
+      }
+      admin_add_teaser: {
+        Args: {
+          p_drop_no: number
+          p_family: string
+          p_garment: string
+          p_name: string
+          p_now: string
+          p_photo_key: string
+          p_slug: string
+        }
+        Returns: undefined
+      }
+      admin_adjust_stock: {
+        Args: {
+          p_cells: Json
+          p_note: string
+          p_now: string
+          p_product_id: string
+          p_reason: string
+          p_ref: string
+        }
+        Returns: undefined
+      }
       admin_cancel_order: {
         Args: {
           p_code: string
@@ -901,6 +943,14 @@ export type Database = {
           p_reason: string
           p_ship_to: Json
         }
+        Returns: undefined
+      }
+      admin_edit_promo: {
+        Args: { p_code: string; p_now: string; p_terms: Json }
+        Returns: undefined
+      }
+      admin_end_promo: {
+        Args: { p_code: string; p_now: string }
         Returns: undefined
       }
       admin_hand_over: {
@@ -926,6 +976,27 @@ export type Database = {
         Returns: undefined
       }
       admin_orders: { Args: never; Returns: Json }
+      admin_pause_promo: {
+        Args: { p_code: string; p_now: string; p_paused: boolean }
+        Returns: undefined
+      }
+      admin_raise_promo_limit: {
+        Args: { p_after: number; p_code: string; p_now: string }
+        Returns: undefined
+      }
+      admin_schedule_drop: {
+        Args: {
+          p_closes_at: string
+          p_no: number
+          p_now: string
+          p_opens_at: string
+        }
+        Returns: undefined
+      }
+      admin_update_product: {
+        Args: { p_id: string; p_now: string; p_patch: Json }
+        Returns: undefined
+      }
       assert_now: { Args: { p_now: string }; Returns: undefined }
       cancel_order: {
         Args: { p_code: string; p_now: string }
@@ -944,13 +1015,20 @@ export type Database = {
       }
       expire_transfers: { Args: { p_now: string }; Returns: number }
       is_admin: { Args: never; Returns: boolean }
+      json_count: { Args: { p_value: Json }; Returns: number }
       my_orders: { Args: never; Returns: Json }
       order_json: { Args: { p_code: string }; Returns: Json }
+      parse_vn_iso: { Args: { p_text: string }; Returns: string }
       place_order: { Args: { p_input: Json; p_now: string }; Returns: Json }
+      read_promo_terms: { Args: { p_terms: Json }; Returns: Json }
       receipt_order: { Args: { p_code: string; p_key: string }; Returns: Json }
       remove_address: { Args: { p_id: string }; Returns: boolean }
       reset_demo: { Args: { p_anchor?: string }; Returns: undefined }
       set_default_address: { Args: { p_id: string }; Returns: boolean }
+      sync_sold_out: {
+        Args: { p_now: string; p_product_ids: string[] }
+        Returns: undefined
+      }
       track_order: { Args: { p_code: string; p_phone: string }; Returns: Json }
       update_address: {
         Args: {
@@ -965,6 +1043,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      vn_iso: { Args: { p_at: string }; Returns: string }
     }
     Enums: {
       color_key:
