@@ -1342,3 +1342,17 @@ thi theo brief, phiên chính viết brief và duyệt output — `ui-implemente
 brief `tasks/briefs/backend-b*.md`. Lát: B0 nền (schema catalog, seed, DAL, trang catalog đọc DB) → B1 tài khoản → B2 đặt
 hàng → B3 quản trị (kèm đồng hồ thật) → B4 triển khai → B5 tuỳ chọn. Không làm: cổng thanh toán, webhook ngân hàng, API
 vận chuyển, email/SMS, Realtime, Storage, Cache Components, tự host. `PRODUCT.md` sửa hai dòng phạm vi cùng ngày.
+
+**Lát B0a ĐẠT (23/09/2026, `backend-implementer`, phiên chính duyệt độc lập; commit "B0a: catalog becomes a value").**
+Catalog thành giá trị: `lib/catalog.ts` (`Catalog`, `CatalogInput`, `buildCatalog`, `teasersIn`; `currentDropNo` suy = dropNo
+lớn nhất có mẫu), `data/colors.ts` (`COLORS` dời sang), `data/fixture-catalog.ts` (`FIXTURE_CATALOG`), `lib/db/catalog.ts`
+(`loadCatalog`, `catalogInput`, `server-only`; B0a trả fixture), `components/shop/CatalogContext.tsx` (`CatalogProvider` ở
+root layout dựng lại chỉ mục bằng `useMemo`, `useCatalog()`); 15 module `lib/` nhận `catalog` làm tham số đầu (kể cả
+`admin-metrics.ts` theo dây chuyền), 17 tệp `app/`, 38 component, 17 tệp test chuyển sang `FIXTURE_CATALOG`. Kiểm: grep gate
+đúng một dòng `lib/db/catalog.ts`; tsc sạch; **1.038 test / 45 tệp** (+13); build 56 trang; sweep 59 lượt 0 console / 0 tràn /
+0 chữ < 11px / 0 request ngoài 3200, 48 phát hiện `a.ib` có sẵn từ 20/09; 16 cặp ảnh trước sau
+(`.playwright-cli/shots/backend/b0a/`) chỉ lệch ở đồng hồ mẫu và `Countdown`, đo từng dải pixel, `admin-products-1280`
+trùng md5 khi đặt lại con trỏ. Payload HTML `/` 54.925 → 63.248 B (+15%) vì catalog qua ranh giới RSC ở root — **giữ**,
+xem lại khi có dữ liệu thật. Lệch ghi nhận: `data/catalog.ts` không import `COLORS` (import chết); `getDrop` dùng
+`dropByNo`; `generateStaticParams` thành async (B0b bỏ). Mở: `photoSetsNeeded` là hàm chết (lát tỉa); `React.cache` cho
+`loadCatalog` vào B0b; hook cảnh báo `DESIGN.md` mới hơn `.impeccable/design.json` (drift từ v3, chưa sửa).

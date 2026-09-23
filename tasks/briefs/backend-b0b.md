@@ -25,6 +25,20 @@ Dependency được phép (đúng bốn gói, không thêm): `supabase` (dev, CL
 sinh seed), `@supabase/supabase-js`, `@supabase/ssr`. Phiên bản mới nhất lúc cài (23/09: 2.117.0,
 4.23.15, 2.117.0, 0.12.7); ghi vào báo cáo.
 
+## 1b. Từ báo cáo B0a (23/09, đã đạt và commit)
+
+- `lib/admin-metrics.ts` cũng nhận `catalog` (`dropRanking`, `stockAlerts`); `lib/admin-sim.ts`, `lib/reminder.ts` chỉ
+  nới kiểu `readonly`. Không đụng lại các chữ ký này.
+- `CatalogProvider` **giữ ở root layout** (quyết định phiên chính); payload +15% đã chấp nhận. Không dời provider.
+- `app/products/[slug]/page.tsx#generateStaticParams` hiện là `async` và gọi `loadCatalog()`; lát này **bỏ** nó (§3.4).
+- `loadCatalog()` đang được gọi nhiều lần trong một request (`generateMetadata` + page ở `/so/[no]`, `/products`):
+  `React.cache` ở §3.4 là bắt buộc, không phải tuỳ chọn.
+- Sweep có sẵn 48 phát hiện `a.ib` (smallTarget 46, loneButton 2) từ 20/09: không thuộc mức của brief, không sửa, không
+  tính là hồi quy. Mức đạt của lát này là 0 console / 0 tràn / 0 chữ < 11px / 0 request ngoài 3200.
+- Chú giải ở `app/cart/page.tsx` và `app/account/page.tsx` đã cập nhật ở B0a; giữ nguyên.
+- Ảnh đối chứng là `.playwright-cli/shots/backend/b0a/after/*` (16 tệp, kịch bản seed `brand.session` = `c-minhanh`,
+  `brand.cart` = `p-khoi/M/black`, điều hướng `/about` trước khi vào URL có hash để lớp nổi mở thật).
+
 ## 2. Quyết định áp dụng (đã chốt, không hỏi lại)
 
 - **QĐ-25**: trình duyệt không gọi Supabase; không biến `NEXT_PUBLIC_SUPABASE_*`; không
