@@ -515,3 +515,66 @@
   line-height:1; font-variant-numeric:tabular-nums; }
 .s.adm3 .side nav a.on .cnt{ background:var(--stage); color:var(--brand); }
 :is(html[data-badge="c"],[data-badge="c"]) .s.adm3 .side nav a .cnt{ border-radius:3px; }
+
+/* ── round 7 (24/09): colour and photo pickers on the style form ────────── */
+/* breadcrumb over the page title, as the app's AdminTop already draws it */
+.s.adm3 .top .crumb{ font-size:var(--fs-sm); color:var(--ink2); margin-bottom:4px; }
+.s.adm3 .top .crumb a{ color:var(--brand-text); text-decoration:underline; text-underline-offset:3px; position:relative; }
+.s.adm3 .top .crumb a::after{ content:""; position:absolute; inset:-14px 0; }
+.s.adm3 .top .crumb i{ font-style:normal; margin:0 6px; }
+/* The seven fabric colours as toggle chips. The order picked is the band order
+   on the card, so a chosen chip carries its position. */
+.s .colorpick{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.s .colorpick .chip3{ padding:0 12px 0 10px; cursor:pointer; }
+.s .colorpick .chip3 .dot{ width:14px; height:14px; }
+.s .colorpick .chip3.on .dot{ border-color:rgba(255,255,255,.45); }
+.s .colorpick .chip3 .pos{ font-size:var(--fs-xs); font-variant-numeric:tabular-nums; opacity:.85; }
+/* One row per chosen colour: its 4:5 photo, the caption, the actions. */
+.s .cslots{ margin-top:6px; }
+.s .cslot{ display:grid; grid-template-columns:96px minmax(0,1fr); gap:14px; padding:14px 0; border-top:1px solid var(--hair); }
+.s .cslot:first-child{ border-top:0; }
+.s .cslot .shot{ position:relative; display:block; width:96px; aspect-ratio:4/5; border-radius:var(--r); overflow:hidden; background:var(--plate); }
+.s .cslot .shot img{ display:block; width:100%; height:100%; object-fit:cover; }
+.s .cslot .shot.blank{ border:1px dashed var(--line); display:grid; place-items:center; color:var(--ink2); }
+.s .cslot .shot.blank .ic{ width:22px; height:22px; }
+.s .cslot .shot.over{ border:1px dashed var(--brand-text); background:var(--brand-soft); }
+.s .cslot .shot .prog{ position:absolute; left:0; right:0; bottom:0; height:3px; background:rgba(23,20,16,.25); }
+.s .cslot .shot .prog i{ display:block; height:100%; width:0; background:var(--brand); transition:width .35s; }
+.s .cslot .hd{ display:flex; align-items:center; gap:8px; min-height:36px; }
+.s .cslot .hd b{ font-family:var(--font-display); font-weight:var(--fw-display); letter-spacing:var(--ls-display); }
+.s .cslot .hd .sub{ font-size:var(--fs-sm); color:var(--ink2); }
+.s .cslot .hd .swatch{ display:inline-block; width:10px; height:10px; border-radius:99px; border:1px solid var(--hair); flex:none; }
+.s .cslot .ord{ margin-left:auto; display:inline-flex; gap:8px; }
+.s .cslot .ord button{ width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:var(--r); color:var(--ink2); cursor:pointer; position:relative; }
+.s .cslot .ord button::after{ content:""; position:absolute; inset:-4px; }
+.s .cslot .ord button:hover{ background:var(--plate); color:var(--ink); }
+.s .cslot .ord button:disabled{ color:var(--hair); cursor:not-allowed; background:none; }
+.s .cslot .ord .flip{ transform:rotate(180deg); }
+.s .cslot .file{ font-size:var(--fs-sm); color:var(--ink2); margin-top:2px; line-height:1.5; font-variant-numeric:tabular-nums; }
+.s .cslot .file b{ color:var(--ink); font-weight:600; }
+.s .cslot .file .tag3{ margin-right:4px; }
+.s .cslot .acts{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+.s .cslot .acts .lnk{ min-width:44px; min-height:36px; display:inline-flex; align-items:center; justify-content:center; position:relative; }
+.s .cslot .acts .lnk::after{ content:""; position:absolute; inset:-5px 0; }
+.s .cslot .acts label.btn3{ cursor:pointer; }
+.s .cslot .acts label.btn3:focus-within{ outline:2px solid var(--focus); outline-offset:2px; }
+/* the borrowed-photo grid, opened under a row by "Mượn tạm" */
+.s .photopick{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.s .photopick button{ padding:2px; border:1px solid var(--hair); border-radius:var(--r); background:none; cursor:pointer; line-height:0; position:relative; }
+.s .photopick button::after{ content:""; position:absolute; inset:-2px; }
+.s .photopick button img{ display:block; width:44px; height:55px; object-fit:cover; border-radius:2px; }
+.s .photopick button:hover{ border-color:var(--line); }
+.s .photopick button.on{ border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+/* the cut grid on the form: 44px boxes, like every other input on the page */
+.s .cutgrid .cell{ height:46px; }
+.s .cutgrid .cell input{ width:44px; height:44px; border-left:0; border-right:0; }
+.s .cutgrid .swatch{ display:inline-block; width:10px; height:10px; border-radius:99px; margin-right:6px; vertical-align:middle; border:1px solid var(--hair); }
+/* the bar under a form: what it holds, the way out, the confirm */
+.s.adm3 .formbar3{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px; padding:12px 16px; background:var(--bg); border:1px solid var(--hair); border-radius:var(--r); font-size:var(--fs-sm); color:var(--ink2); }
+.s.adm3 .formbar3 > span{ margin-right:auto; }
+.s.adm3 .formbar3 b{ color:var(--ink); font-variant-numeric:tabular-nums; }
+/* round 7, after the first screenshots: the "ảnh đại diện" note never wraps, a disabled arrow stays visible */
+.s .cslot .hd .sub{ white-space:nowrap; }
+.s .cslot .ord button:disabled{ color:var(--ink2); opacity:.35; }
+/* the arrows never push past the panel: a long colour name wraps them to their own line instead */
+.s .cslot .hd{ flex-wrap:wrap; row-gap:4px; }

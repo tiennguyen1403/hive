@@ -63,3 +63,12 @@ badge (vàng/đen thường, đen/vàng khi đang mở). Còn mở: câu đề b
 án chọn trên bảng (`v3.hero`, bảng `HERO` trong `v3.js`, đổi trực tiếp
 `#cover-t` và `#cover-lead` ở `home.html`). Agent `ui-implementer` đang dựng
 lát 0 theo `tasks/briefs/v3-lat-0.md`.
+
+## Bước 3 · 24/09 · Tạo mẫu: ô chọn màu và ảnh (chờ duyệt)
+
+Hai màn `admin-product-new.html` (SỎI, mẫu ví dụ) và `admin-product-edit.html`
+(KHÓI) thêm đúng hai ô mà form v2 chưa có: bảy chip màu vải (thứ tự chọn là thứ
+tự dải màu, màu đầu là ảnh đại diện) và một ô ảnh 4:5 cho mỗi màu (chọn tệp hoặc
+kéo thả, hoặc mượn tạm một trong 18 ảnh đang dùng, luôn có nhãn "mượn tạm").
+Runtime của form ở `product-form.js`; CSS ở cuối `v3-pages.css` (round 7). Bảng
+duyệt `index.html` có mục "Bước 3" với hai khung và bốn câu chốt.
