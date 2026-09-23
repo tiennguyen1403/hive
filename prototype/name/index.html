@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bảng so tên: HIVE / HEX</title>
+<style>
+  /* Self-hosted Unbounded 800, the v3 display face (prototype/v3/fonts). */
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-b89d52.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-vietnamese-0260aa.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-ext-d711e9.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+  :root {
+    --ink: #171410; --ink-2: #6b6250; --hair: #ece7dd; --plate: #f4efe6;
+    --honey: #eba400; --honey-soft: #fbf1da; --link: #9e6817;
+    --cloth: #171410; --cloth-2: #b9b0a0; --cloth-hair: #3a352e;
+  }
+  * { box-sizing: border-box; }
+  html { background: #fff; color: var(--ink); }
+  body { margin: 0; font: 15px/1.5 system-ui, "Segoe UI", sans-serif; }
+  .display { font-family: "Unbounded", system-ui, sans-serif; font-weight: 800; letter-spacing: -0.02em; }
+  header { padding: 28px 24px 12px; border-bottom: 1px solid var(--hair); }
+  header h1 { margin: 0 0 4px; font-size: 18px; }
+  header p { margin: 0; color: var(--ink-2); max-width: 70ch; }
+  main { padding: 8px 24px 64px; }
+  section { display: grid; grid-template-columns: 200px 1fr 1fr; gap: 0 24px; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--hair); }
+  section > h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--ink-2); align-self: start; padding-top: 6px; }
+  section > h2 small { display: block; font-weight: 400; margin-top: 4px; }
+  .cell { min-height: 120px; display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 18px; }
+  .cell.white { background: #fff; outline: 1px solid var(--hair); }
+  .cell.cloth { background: var(--cloth); color: var(--honey); }
+  .cell.honey { background: var(--honey); color: var(--ink); }
+  .cell.plate { background: var(--plate); }
+  .word { font-size: 96px; line-height: 1; }
+  .word.sm { font-size: 18px; letter-spacing: 0; }
+  .nav { display: flex; align-items: center; gap: 14px; width: 390px; max-width: 100%; padding: 12px 18px; background: #fff; outline: 1px solid var(--hair); box-shadow: 0 2px 8px rgba(23,20,16,.08); border-radius: 4px; }
+  .nav .tag { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 3px; background: var(--cloth); color: var(--honey); letter-spacing: .04em; }
+  .marks { display: flex; gap: 28px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .mark { width: 120px; height: 120px; }
+  .mark.tiny { width: 16px; height: 16px; }
+  .mark.small { width: 32px; height: 32px; }
+  .mark.mid { width: 64px; height: 64px; }
+  .fav { display: flex; gap: 20px; align-items: flex-end; }
+  .fav figure { margin: 0; text-align: center; color: var(--ink-2); font-size: 11px; }
+  .note { color: var(--ink-2); font-size: 13px; margin: 6px 0 0; }
+  .row-head { padding: 24px 0 0; display: grid; grid-template-columns: 200px 1fr 1fr; gap: 0 24px; }
+  .row-head div { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+  @media (max-width: 900px) { section, .row-head { grid-template-columns: 1fr; } .word { font-size: 64px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Bảng so tên · HIVE và HEX</h1>
+  <p>Cùng một hệ v3: Unbounded 800, mực <code>#171410</code>, mật ong <code>#eba400</code>, vải đen cho khối Số. Cả hai tên đều dùng được hình lục giác; khác nhau nằm ở chữ và cách nó ghép với "Số 05". Chưa có gì được duyệt ở đây.</p>
+</header>
+<main>
+  <div class="row-head"><div></div><div>HIVE</div><div>HEX</div></div>
+
+  <section>
+    <h2>1 · Wordmark trên nền trắng<small>96px, chữ mực</small></h2>
+    <div class="cell white"><span class="display word">HIVE</span></div>
+    <div class="cell white"><span class="display word">HEX</span></div>
+  </section>
+
+  <section>
+    <h2>2 · Trên vải đen<small>mật ong trên #171410, cách bìa Số dùng</small></h2>
+    <div class="cell cloth"><span class="display word">HIVE</span></div>
+    <div class="cell cloth"><span class="display word">HEX</span></div>
+  </section>
+
+  <section>
+    <h2>3 · Trên mật ong<small>chữ mực trên #eba400, cho tem và nút</small></h2>
+    <div class="cell honey"><span class="display word">HIVE</span></div>
+    <div class="cell honey"><span class="display word">HEX</span></div>
+  </section>
+
+  <section>
+    <h2>4 · Thanh nav 390px<small>wordmark 18px cạnh tem Số như app</small></h2>
+    <div class="cell plate"><div class="nav"><span class="display word sm">HIVE</span><span class="tag">SỐ 05</span></div></div>
+    <div class="cell plate"><div class="nav"><span class="display word sm">HEX</span><span class="tag">SỐ 05</span></div></div>
+  </section>
+
+  <section>
+    <h2>5 · Ghép số đợt<small>tên + mã đợt trong một dòng</small></h2>
+    <div class="cell white"><span class="display word" style="font-size:56px">HIVE<span style="color:var(--honey)">.05</span></span></div>
+    <div class="cell white"><span class="display word" style="font-size:56px">HEX<span style="color:var(--honey)">.05</span></span></div>
+  </section>
+
+  <section>
+    <h2>6 · Ba hướng mark<small>lục giác viền · lục giác đặc · cụm tổ ong / chữ X khoét</small></h2>
+    <div class="cell white marks">
+      <!-- outline hexagon with H -->
+      <svg class="mark" viewBox="0 0 100 100"><polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill="none" stroke="#171410" stroke-width="7" stroke-linejoin="round"/><text x="50" y="66" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="44" fill="#171410">H</text></svg>
+      <!-- filled honey hexagon with H -->
+      <svg class="mark" viewBox="0 0 100 100"><polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#eba400"/><text x="50" y="66" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="44" fill="#171410">H</text></svg>
+      <!-- honeycomb cluster: 7 cells -->
+      <svg class="mark" viewBox="0 0 100 100" fill="#171410">
+        <g id="hc"><polygon points="50,33 65,42 65,58 50,67 35,58 35,42"/></g>
+        <polygon points="50,3 65,12 65,28 50,37 35,28 35,12"/>
+        <polygon points="50,63 65,72 65,88 50,97 35,88 35,72"/>
+        <polygon points="24,18 39,27 39,43 24,52 9,43 9,27"/>
+        <polygon points="76,18 91,27 91,43 76,52 61,43 61,27"/>
+        <polygon points="24,48 39,57 39,73 24,82 9,73 9,57"/>
+        <polygon points="76,48 91,57 91,73 76,82 61,73 61,57"/>
+        <polygon points="50,33 65,42 65,58 50,67 35,58 35,42" fill="#eba400"/>
+      </svg>
+    </div>
+    <div class="cell white marks">
+      <svg class="mark" viewBox="0 0 100 100"><polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill="none" stroke="#171410" stroke-width="7" stroke-linejoin="round"/><text x="50" y="66" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="44" fill="#171410">X</text></svg>
+      <svg class="mark" viewBox="0 0 100 100"><polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#eba400"/><text x="50" y="66" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="44" fill="#171410">X</text></svg>
+      <!-- solid ink hexagon with X knocked out -->
+      <svg class="mark" viewBox="0 0 100 100">
+        <defs><mask id="knock"><rect width="100" height="100" fill="#fff"/><text x="50" y="66" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="46" fill="#000">X</text></mask></defs>
+        <polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#171410" mask="url(#knock)"/>
+      </svg>
+    </div>
+  </section>
+
+  <section>
+    <h2>7 · Favicon<small>mark lục giác đặc ở 16 · 32 · 64px</small></h2>
+    <div class="cell white fav">
+      <figure><svg class="mark tiny" viewBox="0 0 100 100"><polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#eba400"/><text x="50" y="68" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="52" fill="#171410">H</text></svg><figcaption>16</figcaption></figure>
+      <figure><svg class="mark small" viewBox="0 0 100 100"><polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#eba400"/><text x="50" y="68" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="52" fill="#171410">H</text></svg><figcaption>32</figcaption></figure>
+      <figure><svg class="mark mid" viewBox="0 0 100 100"><polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#eba400"/><text x="50" y="68" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="52" fill="#171410">H</text></svg><figcaption>64</figcaption></figure>
+      <figure><svg class="mark mid" viewBox="0 0 100 100" fill="#171410"><polygon points="50,3 65,12 65,28 50,37 35,28 35,12"/><polygon points="50,63 65,72 65,88 50,97 35,88 35,72"/><polygon points="24,18 39,27 39,43 24,52 9,43 9,27"/><polygon points="76,18 91,27 91,43 76,52 61,43 61,27"/><polygon points="24,48 39,57 39,73 24,82 9,73 9,57"/><polygon points="76,48 91,57 91,73 76,82 61,73 61,57"/><polygon points="50,33 65,42 65,58 50,67 35,58 35,42" fill="#eba400"/></svg><figcaption>cụm 64</figcaption></figure>
+    </div>
+    <div class="cell white fav">
+      <figure><svg class="mark tiny" viewBox="0 0 100 100"><polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#eba400"/><text x="50" y="68" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="52" fill="#171410">X</text></svg><figcaption>16</figcaption></figure>
+      <figure><svg class="mark small" viewBox="0 0 100 100"><polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#eba400"/><text x="50" y="68" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="52" fill="#171410">X</text></svg><figcaption>32</figcaption></figure>
+      <figure><svg class="mark mid" viewBox="0 0 100 100"><polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#eba400"/><text x="50" y="68" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="52" fill="#171410">X</text></svg><figcaption>64</figcaption></figure>
+      <figure><svg class="mark mid" viewBox="0 0 100 100"><defs><mask id="knock2"><rect width="100" height="100" fill="#fff"/><text x="50" y="66" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="46" fill="#000">X</text></mask></defs><polygon points="50,2 92,26 92,74 50,98 8,74 8,26" fill="#171410" mask="url(#knock2)"/></svg><figcaption>khoét 64</figcaption></figure>
+    </div>
+  </section>
+
+  <p class="note">Mở bằng <code>cd prototype &amp;&amp; python serve.py 3100</code> rồi vào <code>http://127.0.0.1:3100/name/</code>. Bảng này là vật so sánh, không phải thiết kế logo; khi chốt tên, logo sẽ đi qua vòng mock và duyệt như mọi màn khác.</p>
+</main>
+</body>
+</html>

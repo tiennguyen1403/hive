@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bảng hướng logo · HIVE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* Unbounded 800: the v3 display face, self-hosted in prototype/v3/fonts. */
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-b89d52.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-vietnamese-0260aa.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-ext-d711e9.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+  :root {
+    --ink: #171410; --ink-2: #6b6250; --hair: #ece7dd; --line: #9c937f; --plate: #f4efe6;
+    --honey: #eba400; --honey-soft: #fbf1da; --honey-text: #9e6817;
+    --cloth: #171410; --cloth-ink: #fff; --cloth-2: #b9b0a0; --cloth-hair: #3a352e;
+    --display: "Unbounded", system-ui, sans-serif;
+    --sans: "Be Vietnam Pro", system-ui, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: #fff; color: var(--ink); scrollbar-color: var(--line) var(--plate); }
+  body { margin: 0; font: 14px/1.55 var(--sans); }
+  ::selection { background: var(--honey); color: var(--ink); }
+  a { color: var(--honey-text); }
+  code { font: 12px/1 ui-monospace, Consolas, monospace; background: var(--plate); padding: 1px 4px; border-radius: 3px; }
+
+  .display { font-family: var(--display); font-weight: 800; }
+  header { padding: 32px 24px 20px; border-bottom: 1px solid var(--hair); display: grid; grid-template-columns: minmax(0, 68ch) 1fr; gap: 24px; align-items: end; }
+  header h1 { margin: 0 0 8px; font: 800 22px/1.15 var(--display); letter-spacing: -0.02em; }
+  header p { margin: 0; color: var(--ink-2); }
+  header .status { justify-self: end; font-size: 12px; color: var(--ink-2); border: 1px dashed var(--honey); border-radius: 4px; padding: 6px 10px; }
+
+  main { padding: 0 24px 72px; }
+  .cols { display: grid; grid-template-columns: 180px repeat(3, minmax(0, 1fr)); gap: 0 20px; }
+  .cols.head { padding: 26px 0 10px; border-bottom: 1px solid var(--ink); }
+  .cols.head .dir { display: grid; gap: 4px; }
+  .cols.head .dir b { font: 800 15px/1.2 var(--display); letter-spacing: -0.01em; }
+  .cols.head .dir span { color: var(--ink-2); font-size: 12px; }
+  .row { display: grid; grid-template-columns: 180px repeat(3, minmax(0, 1fr)); gap: 0 20px; padding: 22px 0; border-bottom: 1px solid var(--hair); align-items: start; }
+  .row > h2 { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.35; }
+  .row > h2 small { display: block; font-weight: 400; color: var(--ink-2); margin-top: 4px; }
+  .cell { min-height: 120px; display: flex; align-items: center; justify-content: center; gap: 24px; padding: 18px; border-radius: 4px; position: relative; }
+  .cell.white { outline: 1px solid var(--hair); }
+  .cell.cloth { background: var(--cloth); color: var(--honey); }
+  .cell.honey { background: var(--honey); color: var(--ink); }
+  .cell.plate { background: var(--plate); }
+  .cell.stack { flex-direction: column; align-items: stretch; gap: 14px; }
+  .cell .colkey { display: none; }
+
+  /* marks */
+  .mark { display: block; width: 120px; height: 120px; }
+  .mark.m18 { width: 18px; height: 18px; }
+  .mark.m16 { width: 16px; height: 16px; }
+  .mark.m32 { width: 32px; height: 32px; }
+  .mark.m48 { width: 48px; height: 48px; }
+  .mark.m64 { width: 64px; height: 64px; }
+  /* colour roles read by the symbols */
+  .on-white { --c1: #171410; --c2: #eba400; --c3: #171410; color: #171410; }
+  .on-cloth { --c1: #eba400; --c2: #eba400; --c3: #171410; color: #eba400; }
+  .on-honey { --c1: #171410; --c2: #171410; --c3: #eba400; color: #171410; }
+
+  /* wordmark and lockups */
+  .wm { font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
+  .wm.w64 { font-size: 64px; }
+  .wm.w40 { font-size: 40px; }
+  .wm.w22 { font-size: 22px; letter-spacing: 0; }
+  .wm.w16 { font-size: 16px; letter-spacing: .14em; }
+  .wm.w12 { font-size: 12px; letter-spacing: .14em; }
+  .lock { display: inline-flex; align-items: center; gap: .32em; }
+  /* Honey as text on white fails AA (1.9:1); the system's honey text step is #9e6817 (4.7:1).
+     On black cloth the number keeps true honey, as the cover does. */
+  .lock .n, .n { color: var(--honey-text); }
+  .cell.cloth .lock .n, .cell.cloth .n { color: var(--honey); }
+  .cell.honey .lock .n { color: var(--ink); }
+  .sub { font: 600 11px/1 var(--sans); letter-spacing: .18em; color: var(--ink-2); margin-top: 6px; }
+  .lockrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; }
+  .lockrow + .lockrow { border-top: 1px solid var(--hair); }
+  .lockrow figcaption { font-size: 11px; color: var(--ink-2); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  figure { margin: 0; }
+
+  /* number slot */
+  .slot { display: inline-block; height: 1em; overflow: hidden; vertical-align: bottom; }
+  .slot ul { list-style: none; margin: 0; padding: 0; animation: slot 6s cubic-bezier(.2,.8,.2,1) infinite; }
+  .slot li { height: 1em; line-height: 1; }
+  @keyframes slot { 0%, 26% { transform: translateY(0); } 33%, 59% { transform: translateY(-1em); } 66%, 92% { transform: translateY(-2em); } 100% { transform: translateY(-3em); } }
+  @media (prefers-reduced-motion: reduce) { .slot ul { animation: none; } }
+  .slotnote { color: var(--ink-2); font-size: 13px; max-width: 60ch; }
+
+  /* nav 390 */
+  .nav { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 354px; padding: 12px 16px; background: #fff; outline: 1px solid var(--hair); box-shadow: 0 2px 8px rgba(23,20,16,.08); border-radius: 4px; }
+  .nav .itag { margin-left: auto; font: 700 11px/1 var(--sans); letter-spacing: .06em; padding: 5px 8px; border-radius: 3px; background: var(--cloth); color: var(--honey); }
+
+  /* favicon chips */
+  .favs { display: flex; gap: 14px; align-items: flex-end; }
+  .favs figure { text-align: center; font-size: 11px; color: var(--ink-2); }
+  .favs .chip { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 4px; outline: 1px solid var(--hair); margin: 0 auto 6px; }
+  .favs .chip.dark { background: var(--cloth); outline: 0; }
+
+  /* cover */
+  .cover { width: 100%; max-width: 354px; background: var(--cloth); color: var(--cloth-ink); padding: 16px 18px 0; border-radius: 4px; display: grid; grid-template-rows: auto 1fr auto; min-height: 300px; position: relative; overflow: hidden; }
+  .cover .top { display: flex; align-items: center; gap: 8px; color: var(--honey); }
+  .cover .num { display: flex; align-items: baseline; gap: 8px; margin-top: 18px; }
+  .cover .num b { font: 800 96px/.9 var(--display); color: var(--honey); letter-spacing: -0.03em; }
+  .cover .num i { font: 600 11px/1 var(--sans); letter-spacing: .14em; font-style: normal; color: var(--honey); }
+  .cover .headline { font: 800 19px/1.25 var(--display); letter-spacing: -0.01em; margin: 14px 0 20px; max-width: 16ch; }
+  .cover .meta { font-size: 12px; color: var(--cloth-2); display: flex; justify-content: space-between; padding: 10px 0 14px; border-top: 1px solid var(--cloth-hair); }
+  .cover.a::after { content: ""; position: absolute; right: -28px; top: -28px; width: 56px; height: 56px; background: var(--honey); transform: rotate(45deg); }
+  .cover.a .meta { border-top-color: var(--honey); }
+  .cover.b .meta { border-top: 0; padding-top: 14px; background: repeating-linear-gradient(90deg, var(--honey) 0 14px, var(--cloth) 14px 20px) top / 100% 3px no-repeat; }
+  .cover.c .meta { border-top: 1px dashed var(--honey); }
+
+  /* hang tag and woven label */
+  .garment { display: flex; gap: 22px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+  .hangtag { width: 150px; min-height: 250px; background: #fff; outline: 1px solid var(--line); border-radius: 4px; padding: 30px 14px 14px; position: relative; display: grid; grid-template-rows: auto auto 1fr auto; gap: 8px; }
+  .hangtag::before { content: ""; position: absolute; top: 10px; left: 50%; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; border: 1.5px solid var(--line); }
+  .hangtag.a { clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%); }
+  .hangtag.a::after { content: ""; position: absolute; top: 0; right: 0; width: 24px; height: 24px; background: linear-gradient(225deg, var(--honey) 50%, transparent 50%); }
+  .hangtag.b { border-bottom: 0; padding-bottom: 18px; background: linear-gradient(#fff, #fff) padding-box, repeating-linear-gradient(90deg, var(--ink) 0 12px, var(--honey) 12px 24px) bottom / 100% 6px no-repeat border-box; }
+  .hangtag.c { outline: 0; box-shadow: inset 0 0 0 1px var(--line); }
+  .hangtag.c::after { content: ""; position: absolute; inset: 5px; border: 1px dashed var(--honey); border-radius: 3px; pointer-events: none; }
+  .hangtag .brand { display: flex; align-items: center; gap: 6px; }
+  .hangtag .brand .wm { font-size: 14px; letter-spacing: .08em; }
+  .hangtag .issue { font: 700 11px/1 var(--sans); letter-spacing: .12em; color: var(--ink); background: var(--honey); display: inline-block; padding: 4px 6px; border-radius: 3px; justify-self: start; }
+  .hangtag .prod { align-self: end; }
+  .hangtag .prod b { display: block; font: 800 20px/1 var(--display); letter-spacing: -0.01em; }
+  .hangtag .prod span { display: block; font-size: 11px; color: var(--ink-2); margin-top: 4px; line-height: 1.35; }
+  .hangtag .price { display: grid; gap: 4px; border-top: 1px solid var(--hair); padding-top: 8px; }
+  .hangtag .price b { font: 800 16px/1 var(--display); }
+  .hangtag .price span { font: 600 11px/1 var(--sans); letter-spacing: .1em; color: var(--ink-2); }
+  .label { width: 144px; height: 44px; background: var(--cloth); color: var(--honey); display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; border-radius: 2px; }
+  .label::after { content: ""; position: absolute; inset: 4px; border: 1px dashed var(--honey); opacity: .8; border-radius: 2px; }
+  .label .wm { font-size: 13px; letter-spacing: .14em; }
+  .label.a { clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%); }
+  .label.b::before { content: ""; position: absolute; left: 4px; right: 4px; bottom: 4px; height: 3px; background: repeating-linear-gradient(90deg, var(--honey) 0 10px, transparent 10px 15px); }
+  .label.b::after { border-bottom: 0; }
+  .garment figcaption { font-size: 11px; color: var(--ink-2); text-align: center; margin-top: 6px; }
+
+  /* avatars */
+  .avatars { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+  .avatars figure { text-align: center; font-size: 11px; color: var(--ink-2); }
+  .av { display: grid; place-items: center; margin: 0 auto 6px; }
+  .av.c40 { width: 40px; height: 40px; border-radius: 50%; }
+  .av.s120 { width: 120px; height: 120px; border-radius: 4px; }
+  .av.honey { background: var(--honey); }
+  .av.cloth { background: var(--cloth); }
+
+  /* comparison */
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th, td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--hair); vertical-align: top; font-size: 13px; }
+  th { font-weight: 600; width: 180px; color: var(--ink); }
+  thead th { font: 800 13px/1.2 var(--display); border-bottom: 1px solid var(--ink); padding-bottom: 8px; }
+  td.good { color: var(--ink); } td.mid { color: var(--ink-2); } td.bad { color: #b3261e; }
+  .verdict { margin: 28px 0 0; max-width: 72ch; }
+  .verdict h2 { font: 800 16px/1.2 var(--display); margin: 0 0 8px; }
+  .verdict p { margin: 0 0 10px; }
+
+  @media (max-width: 900px) {
+    header { grid-template-columns: 1fr; }
+    header .status { justify-self: start; }
+    .cols.head { display: none; }
+    .row { grid-template-columns: 1fr; gap: 12px; padding: 18px 0; }
+    .cell .colkey { display: block; position: absolute; left: 8px; top: 6px; font: 800 11px/1 var(--display); color: var(--ink-2); }
+    .cell.cloth .colkey, .cell.honey .colkey { color: inherit; opacity: .8; }
+    .wm.w64 { font-size: 48px; }
+  }
+  @media (max-width: 420px) {
+    header, main { padding-left: 18px; padding-right: 18px; }
+    .cell { padding: 16px 12px; gap: 16px; }
+    .garment { gap: 14px; }
+    .hangtag { width: 140px; }
+  }
+  @media (max-width: 900px) {
+    /* the comparison table stacks: one block per criterion, three labelled lines */
+    table thead { display: none; }
+    table, tbody, tr, th, td { display: block; width: auto; }
+    tr { padding: 10px 0; border-bottom: 1px solid var(--hair); }
+    th, td { border: 0; padding: 2px 0; }
+    td::before { font-weight: 600; color: var(--ink); }
+    td:nth-child(2)::before { content: "A · "; }
+    td:nth-child(3)::before { content: "B · "; }
+    td:nth-child(4)::before { content: "C · "; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- unit pointy-top hexagon, radius 1, centred at origin -->
+    <polygon id="hexu" points="0,-1 0.866,-0.5 0.866,0.5 0,1 -0.866,0.5 -0.866,-0.5"/>
+    <!-- full-size hexagon in a 100 box, radius 48 -->
+    <polygon id="hex100" points="50,2 91.57,26 91.57,74 50,98 8.43,74 8.43,26"/>
+    <clipPath id="hexclip"><use href="#hex100"/></clipPath>
+    <!-- A · one cut: a straight slice from the top edge (66,11) to the right edge (92,46);
+         the corner piece stays, separated by a thread-width gap. Small sizes drop the piece. -->
+    <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+      <rect width="100" height="100" fill="#fff"/>
+      <line x1="56" y1="-2.4" x2="100" y2="57.4" stroke="#000" stroke-width="4"/>
+    </mask>
+    <polygon id="hex100-cut" points="50,2 66,11.24 91.57,46 91.57,74 50,98 8.43,74 8.43,26"/>
+    <!-- C · abdomen clip -->
+    <clipPath id="abclip"><use href="#hexu" transform="translate(71 58) scale(25)"/></clipPath>
+
+    <symbol id="mark-a" viewBox="0 0 100 100"><use href="#hex100" fill="currentColor" mask="url(#cut)"/></symbol>
+    <symbol id="mark-a-sm" viewBox="0 0 100 100"><use href="#hex100-cut" fill="currentColor"/></symbol>
+
+    <symbol id="mark-b" viewBox="0 0 100 100">
+      <g clip-path="url(#hexclip)">
+        <rect x="0" y="0" width="100" height="34" fill="var(--c1)"/>
+        <rect x="0" y="34" width="100" height="32" fill="var(--c2)"/>
+        <rect x="0" y="66" width="100" height="34" fill="var(--c1)"/>
+      </g>
+    </symbol>
+    <symbol id="mark-b-sm" viewBox="0 0 100 100">
+      <g clip-path="url(#hexclip)">
+        <rect x="0" y="0" width="100" height="52" fill="var(--c1)"/>
+        <rect x="0" y="52" width="100" height="48" fill="var(--c2)"/>
+      </g>
+    </symbol>
+
+    <symbol id="mark-c" viewBox="0 0 100 100">
+      <!-- wings: two outlined cells over the thorax -->
+      <use href="#hexu" transform="translate(31 30) scale(11)" fill="none" stroke="var(--c1)" stroke-width="0.34"/>
+      <use href="#hexu" transform="translate(50 25) scale(10)" fill="none" stroke="var(--c1)" stroke-width="0.36"/>
+      <!-- head, thorax, abdomen -->
+      <use href="#hexu" transform="translate(13 58) scale(9)" fill="var(--c1)"/>
+      <use href="#hexu" transform="translate(36 58) scale(14)" fill="var(--c1)"/>
+      <use href="#hexu" transform="translate(71 58) scale(25)" fill="var(--c2)"/>
+      <g clip-path="url(#abclip)">
+        <rect x="62" y="30" width="6" height="56" fill="var(--c3)"/>
+        <rect x="76" y="30" width="6" height="56" fill="var(--c3)"/>
+      </g>
+      <polygon points="99,58 92,54 92,62" fill="var(--c1)"/>
+    </symbol>
+    <symbol id="mark-c-sm" viewBox="0 0 100 100">
+      <use href="#hexu" transform="translate(14 54) scale(12)" fill="var(--c1)"/>
+      <use href="#hexu" transform="translate(40 54) scale(18)" fill="var(--c1)"/>
+      <use href="#hexu" transform="translate(76 54) scale(26)" fill="var(--c2)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header>
+  <div>
+    <h1>Bảng hướng logo · HIVE</h1>
+    <p>Ba hướng, mỗi hướng một mức "ong": <b>A · Ô cắt</b> chỉ hình học, <b>B · Sọc</b> lục giác mang sọc vàng đen, <b>C · Ong ba ô</b> con ong dựng từ ba ô tổ. Cùng một wordmark Unbounded 800 vì hệ v3 đã chốt; thứ được so là mark, cách nó sống ở 16px, khi thêu một màu, và cạnh số đợt. Số đợt là ô dữ liệu, không nằm trong tệp logo.</p>
+  </div>
+  <div class="status">Chưa có hướng nào được duyệt · bảng so tên cũ ở <a href="./">index.html</a></div>
+</header>
+
+<main>
+  <div class="cols head">
+    <div></div>
+    <div class="dir"><b>A · Ô cắt</b><span>Một ô tổ, cắt đúng một lần. Kể câu đề bìa bằng hình.</span></div>
+    <div class="dir"><b>B · Sọc</b><span>Ô tổ mang sọc vàng đen. Ong không hiện hình, chỉ để lại màu.</span></div>
+    <div class="dir"><b>C · Ong ba ô</b><span>Đầu, ngực, bụng là ba ô tổ. Con ong dựng từ chính tổ của nó.</span></div>
+  </div>
+
+  <section class="row">
+    <h2>Mark<small>120px trên trắng, vải đen, mật ong</small></h2>
+    <div class="cell stack" style="padding:0;gap:0">
+      <div class="cell white on-white"><span class="colkey">A</span><svg class="mark"><use href="#mark-a"/></svg></div>
+      <div class="cell cloth on-cloth"><svg class="mark"><use href="#mark-a"/></svg></div>
+      <div class="cell honey on-honey"><svg class="mark"><use href="#mark-a"/></svg></div>
+    </div>
+    <div class="cell stack" style="padding:0;gap:0">
+      <div class="cell white on-white"><span class="colkey">B</span><svg class="mark"><use href="#mark-b"/></svg></div>
+      <div class="cell cloth on-cloth"><svg class="mark"><use href="#mark-b"/></svg></div>
+      <div class="cell honey on-honey"><svg class="mark"><use href="#mark-b"/></svg></div>
+    </div>
+    <div class="cell stack" style="padding:0;gap:0">
+      <div class="cell white on-white"><span class="colkey">C</span><svg class="mark"><use href="#mark-c"/></svg></div>
+      <div class="cell cloth on-cloth"><svg class="mark"><use href="#mark-c"/></svg></div>
+      <div class="cell honey on-honey"><svg class="mark"><use href="#mark-c"/></svg></div>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Ba lockup<small>HIVE trần · HIVE SAIGON · HIVE với ô số</small></h2>
+    <div class="cell white stack on-white">
+      <span class="colkey">A</span>
+      <figure class="lockrow"><span class="lock"><svg class="mark m48"><use href="#mark-a"/></svg><span class="wm w64">HIVE</span></span><figcaption>trần</figcaption></figure>
+      <figure class="lockrow"><span class="lock" style="align-items:flex-end"><svg class="mark m48"><use href="#mark-a"/></svg><span><span class="wm w40" style="display:block">HIVE</span><span class="sub">SAIGON</span></span></span><figcaption>địa danh</figcaption></figure>
+      <figure class="lockrow"><span class="lock"><svg class="mark m48"><use href="#mark-a"/></svg><span class="wm w40">HIVE<span class="n">.05</span></span></span><figcaption>ô số</figcaption></figure>
+    </div>
+    <div class="cell white stack on-white">
+      <span class="colkey">B</span>
+      <figure class="lockrow"><span class="lock"><svg class="mark m48"><use href="#mark-b"/></svg><span class="wm w64">HIVE</span></span><figcaption>trần</figcaption></figure>
+      <figure class="lockrow"><span class="lock" style="align-items:flex-end"><svg class="mark m48"><use href="#mark-b"/></svg><span><span class="wm w40" style="display:block">HIVE</span><span class="sub">SAIGON</span></span></span><figcaption>địa danh</figcaption></figure>
+      <figure class="lockrow"><span class="lock"><svg class="mark m48"><use href="#mark-b"/></svg><span class="wm w40">HIVE<span class="n">.05</span></span></span><figcaption>ô số</figcaption></figure>
+    </div>
+    <div class="cell white stack on-white">
+      <span class="colkey">C</span>
+      <figure class="lockrow"><span class="lock"><svg class="mark m48"><use href="#mark-c"/></svg><span class="wm w64">HIVE</span></span><figcaption>trần</figcaption></figure>
+      <figure class="lockrow"><span class="lock" style="align-items:flex-end"><svg class="mark m48"><use href="#mark-c"/></svg><span><span class="wm w40" style="display:block">HIVE</span><span class="sub">SAIGON</span></span></span><figcaption>địa danh</figcaption></figure>
+      <figure class="lockrow"><span class="lock"><svg class="mark m48"><use href="#mark-c"/></svg><span class="wm w40">HIVE<span class="n">.05</span></span></span><figcaption>ô số</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="row" style="grid-template-columns: 180px 1fr">
+    <h2>Ô số là dữ liệu<small>cùng một tệp logo, số đổi theo Số đang mở</small></h2>
+    <div class="cell white on-white" style="justify-content:flex-start;gap:36px;flex-wrap:wrap">
+      <span class="wm w64">HIVE<span class="n">.<span class="slot"><ul><li>05</li><li>06</li><li>12</li><li>05</li></ul></span></span></span>
+      <p class="slotnote">Tệp logo chỉ chứa mark và chữ HIVE. Số đợt là một ô chữ đặt cạnh, lấy từ dữ liệu như tem "SỐ 05" trên nav hôm nay. Đổi Số thì không ai mở lại tệp logo; muốn bỏ số thì bỏ ô, wordmark không đổi.</p>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Nav 390 và favicon<small>wordmark 16px cách chữ .14em, mark 18px; favicon 16 và 32</small></h2>
+    <div class="cell plate stack on-white">
+      <span class="colkey">A</span>
+      <div class="nav"><svg class="mark m18"><use href="#mark-a-sm"/></svg><span class="wm w16">HIVE</span><span class="itag">SỐ 05</span></div>
+      <div class="favs">
+        <figure><div class="chip"><svg class="mark m16"><use href="#mark-a-sm"/></svg></div>16</figure>
+        <figure><div class="chip"><svg class="mark m32"><use href="#mark-a-sm"/></svg></div>32</figure>
+        <figure><div class="chip dark on-cloth"><svg class="mark m16"><use href="#mark-a-sm"/></svg></div>16 tối</figure>
+        <figure><div class="chip dark on-cloth"><svg class="mark m32"><use href="#mark-a-sm"/></svg></div>32 tối</figure>
+      </div>
+    </div>
+    <div class="cell plate stack on-white">
+      <span class="colkey">B</span>
+      <div class="nav"><svg class="mark m18"><use href="#mark-b-sm"/></svg><span class="wm w16">HIVE</span><span class="itag">SỐ 05</span></div>
+      <div class="favs">
+        <figure><div class="chip"><svg class="mark m16"><use href="#mark-b-sm"/></svg></div>16</figure>
+        <figure><div class="chip"><svg class="mark m32"><use href="#mark-b"/></svg></div>32</figure>
+        <figure><div class="chip dark on-cloth" style="--c2:#171410"><svg class="mark m16"><use href="#mark-b-sm"/></svg></div>16 tối</figure>
+        <figure><div class="chip dark on-cloth" style="--c2:#171410"><svg class="mark m32"><use href="#mark-b"/></svg></div>32 tối</figure>
+      </div>
+    </div>
+    <div class="cell plate stack on-white">
+      <span class="colkey">C</span>
+      <div class="nav"><svg class="mark m18"><use href="#mark-c-sm"/></svg><span class="wm w16">HIVE</span><span class="itag">SỐ 05</span></div>
+      <div class="favs">
+        <figure><div class="chip"><svg class="mark m16"><use href="#mark-c-sm"/></svg></div>16</figure>
+        <figure><div class="chip"><svg class="mark m32"><use href="#mark-c-sm"/></svg></div>32</figure>
+        <figure><div class="chip dark on-cloth"><svg class="mark m16"><use href="#mark-c-sm"/></svg></div>16 tối</figure>
+        <figure><div class="chip dark on-cloth"><svg class="mark m32"><use href="#mark-c-sm"/></svg></div>32 tối</figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Bìa Số trên trang chủ<small>khối vải đen 390, câu đề A, mép may theo từng hướng</small></h2>
+    <div class="cell plate on-cloth"><span class="colkey">A</span>
+      <div class="cover a">
+        <div class="top"><svg class="mark m16"><use href="#mark-a-sm"/></svg><span class="wm w12">HIVE</span></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu 25/09</span><span>73 / 181 còn</span></div>
+      </div>
+    </div>
+    <div class="cell plate on-cloth" style="--c2:#171410"><span class="colkey">B</span>
+      <div class="cover b">
+        <div class="top"><svg class="mark m16"><use href="#mark-b-sm"/></svg><span class="wm w12">HIVE</span></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu 25/09</span><span>73 / 181 còn</span></div>
+      </div>
+    </div>
+    <div class="cell plate on-cloth"><span class="colkey">C</span>
+      <div class="cover c">
+        <div class="top"><svg class="mark m16"><use href="#mark-c-sm"/></svg><span class="wm w12">HIVE</span></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu 25/09</span><span>73 / 181 còn</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Tem treo và nhãn dệt<small>tem giấy 150×250 với dữ liệu mẫu KHÓI; nhãn cổ áo thêu một màu chỉ mật ong</small></h2>
+    <div class="cell plate garment"><span class="colkey">A</span>
+      <figure><div class="hangtag a on-white">
+        <div class="brand"><svg class="mark m16"><use href="#mark-a-sm"/></svg><span class="wm">HIVE</span></div>
+        <span class="issue">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo</figcaption></figure>
+      <figure><div class="label a on-cloth"><svg class="mark m16"><use href="#mark-a-sm"/></svg><span class="wm">HIVE</span></div><figcaption>nhãn dệt</figcaption></figure>
+    </div>
+    <div class="cell plate garment"><span class="colkey">B</span>
+      <figure><div class="hangtag b on-white">
+        <div class="brand"><svg class="mark m16"><use href="#mark-b-sm"/></svg><span class="wm">HIVE</span></div>
+        <span class="issue">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo</figcaption></figure>
+      <figure><div class="label b on-cloth" style="--c2:#171410"><svg class="mark m16"><use href="#mark-b-sm"/></svg><span class="wm">HIVE</span></div><figcaption>nhãn dệt</figcaption></figure>
+    </div>
+    <div class="cell plate garment"><span class="colkey">C</span>
+      <figure><div class="hangtag c on-white">
+        <div class="brand"><svg class="mark m16"><use href="#mark-c-sm"/></svg><span class="wm">HIVE</span></div>
+        <span class="issue">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo</figcaption></figure>
+      <figure><div class="label c on-cloth"><svg class="mark m18"><use href="#mark-c-sm"/></svg><span class="wm">HIVE</span></div><figcaption>nhãn dệt</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Avatar mạng xã hội<small>tròn 40 và vuông 120, trên mật ong và trên vải đen</small></h2>
+    <div class="cell plate avatars"><span class="colkey">A</span>
+      <figure><div class="av c40 honey on-honey"><svg class="mark m32" style="width:26px;height:26px"><use href="#mark-a-sm"/></svg></div>40</figure>
+      <figure><div class="av c40 cloth on-cloth"><svg class="mark" style="width:26px;height:26px"><use href="#mark-a-sm"/></svg></div>40 tối</figure>
+      <figure><div class="av s120 honey on-honey"><svg class="mark m64"><use href="#mark-a"/></svg></div>120</figure>
+      <figure><div class="av s120 cloth on-cloth"><svg class="mark m64"><use href="#mark-a"/></svg></div>120 tối</figure>
+    </div>
+    <div class="cell plate avatars"><span class="colkey">B</span>
+      <figure><div class="av c40 honey on-honey"><svg class="mark" style="width:26px;height:26px"><use href="#mark-b-sm"/></svg></div>40</figure>
+      <figure><div class="av c40 cloth on-cloth" style="--c2:#171410"><svg class="mark" style="width:26px;height:26px"><use href="#mark-b-sm"/></svg></div>40 tối</figure>
+      <figure><div class="av s120 honey on-honey"><svg class="mark m64"><use href="#mark-b"/></svg></div>120</figure>
+      <figure><div class="av s120 cloth on-cloth" style="--c2:#171410"><svg class="mark m64"><use href="#mark-b"/></svg></div>120 tối</figure>
+    </div>
+    <div class="cell plate avatars"><span class="colkey">C</span>
+      <figure><div class="av c40 honey on-honey"><svg class="mark" style="width:28px;height:28px"><use href="#mark-c-sm"/></svg></div>40</figure>
+      <figure><div class="av c40 cloth on-cloth"><svg class="mark" style="width:28px;height:28px"><use href="#mark-c-sm"/></svg></div>40 tối</figure>
+      <figure><div class="av s120 honey on-honey"><svg class="mark m64"><use href="#mark-c"/></svg></div>120</figure>
+      <figure><div class="av s120 cloth on-cloth"><svg class="mark m64"><use href="#mark-c"/></svg></div>120 tối</figure>
+    </div>
+  </section>
+
+  <section class="row" style="grid-template-columns: 180px 1fr; align-items:start">
+    <h2>So nhanh<small>đọc từ bảng trên, không phải điểm số</small></h2>
+    <div>
+      <table>
+        <thead><tr><th></th><th>A · Ô cắt</th><th>B · Sọc</th><th>C · Ong ba ô</th></tr></thead>
+        <tbody>
+          <tr><th>Ở 16px</th><td class="good">giữ hình; nhát cắt phải mở rộng ở cỡ nhỏ</td><td class="good">giữ hình với hai dải</td><td class="mid">còn nhận ra ba ô, mất cánh</td></tr>
+          <tr><th>Thêu một màu</th><td class="good">một mảng, một khe hở</td><td class="mid">cần hai màu chỉ hoặc dệt âm bản</td><td class="mid">một màu được nếu bỏ sọc bụng</td></tr>
+          <tr><th>Kể "cắt một lần"</th><td class="good">chính là câu chuyện</td><td class="bad">không</td><td class="bad">không</td></tr>
+          <tr><th>Kể "ong"</th><td class="mid">gián tiếp, qua ô tổ</td><td class="good">qua màu sọc</td><td class="good">trực tiếp</td></tr>
+          <tr><th>Rủi ro trùng</th><td class="good">thấp; lục giác cắt hiếm gặp</td><td class="mid">trung bình; lục giác sọc có ở vài brand tech</td><td class="bad">cao; con ong là cliché của Bumble, Hive Social</td></tr>
+          <tr><th>Hợp nhãn dệt vải đen</th><td class="good">rõ, chỉ mật ong trên đen</td><td class="mid">sọc âm bản hơi mờ</td><td class="good">bụng ong mật ong nổi trên đen</td></tr>
+          <tr><th>Cùng hệ với app</th><td class="good">tem Số, mép may, bo 4px đều là góc và nét</td><td class="good">mép may mật ong thành sọc, hợp</td><td class="mid">đường may đứt nét hợp; con ong là nhân vật mới</td></tr>
+        </tbody>
+      </table>
+      <div class="verdict">
+        <h2>Ý của phiên thiết kế</h2>
+        <p><b>A · Ô cắt</b> là hướng tôi đề xuất: nó là mark duy nhất kể được lời hứa của cửa hàng bằng hình, sống ở 16px, thêu một màu, và không trùng ai. Ong hiện diện qua ô tổ và màu mật ong, đủ để tên HIVE có nghĩa mà không cần vẽ con ong.</p>
+        <p><b>B · Sọc</b> là lựa chọn an toàn nếu bạn muốn "ong" rõ hơn A mà vẫn không có nhân vật; điểm yếu là nhãn dệt phải làm âm bản. <b>C · Ong ba ô</b> thân thiện nhất và dễ nhớ nhất với người mua trẻ, nhưng là hướng dễ bị so với các app dùng con ong; nếu chọn C thì bụng ong cần giữ đúng ba ô tổ để khác họ.</p>
+        <p>Bất kể hướng nào, lockup chính là <b>HIVE trần</b>; SAIGON và ô số là lớp ghép, tách được, không nằm trong tệp logo.</p>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>
