@@ -578,3 +578,27 @@
 .s .cslot .ord button:disabled{ color:var(--ink2); opacity:.35; }
 /* the arrows never push past the panel: a long colour name wraps them to their own line instead */
 .s .cslot .hd{ flex-wrap:wrap; row-gap:4px; }
+
+/* ── round 7b (24/09, the user asked for a drag-to-crop frame): the crop sheet ─ */
+.sheetwrap .panel.wide.crop{ width:720px; }
+.s .cropwrap{ display:grid; grid-template-columns:minmax(0,1fr) 150px; gap:16px; margin-top:14px; align-items:start; }
+.s .cropper{ position:relative; overflow:hidden; background:var(--plate); border-radius:var(--r); user-select:none; touch-action:none; display:flex; justify-content:center; }
+.s .cropper img{ display:block; max-width:100%; max-height:440px; }
+/* the frame: honey thread on the edge, everything outside it dimmed by one big shadow that the stage clips */
+.s .cropper .frame{ position:absolute; box-sizing:border-box; border:1px solid var(--brand); box-shadow:0 0 0 9999px rgba(23,20,16,.55); cursor:move; outline:none; }
+.s .cropper .frame:focus-visible{ border:2px solid var(--focus); }
+.s .cropper .frame i{ position:absolute; width:14px; height:14px; background:var(--bg); border:1px solid var(--ink); border-radius:99px; }
+.s .cropper .frame i[data-h="nw"]{ left:-7px; top:-7px; cursor:nwse-resize; }
+.s .cropper .frame i[data-h="se"]{ right:-7px; bottom:-7px; cursor:nwse-resize; }
+.s .cropper .frame i[data-h="ne"]{ right:-7px; top:-7px; cursor:nesw-resize; }
+.s .cropper .frame i[data-h="sw"]{ left:-7px; bottom:-7px; cursor:nesw-resize; }
+.s .cropside .shot{ position:relative; display:block; width:96px; aspect-ratio:4/5; border-radius:var(--r); background:var(--plate); background-repeat:no-repeat; }
+.s .cropside .file{ font-size:var(--fs-sm); color:var(--ink2); margin-top:10px; line-height:1.5; font-variant-numeric:tabular-nums; }
+.s .cropside .file b{ color:var(--ink); font-weight:600; }
+.s .cropside .err{ color:var(--hot); display:flex; gap:6px; align-items:flex-start; margin-top:6px; }
+.s .cropside .err .ic{ flex:none; margin-top:2px; }
+.s .cropside .lnk{ display:inline-flex; align-items:center; min-height:36px; position:relative; margin-top:6px; }
+.s .cropside .lnk::after{ content:""; position:absolute; inset:-5px 0; }
+/* a link-styled file picker on the colour row */
+.s .cslot .acts label.lnk{ cursor:pointer; }
+.s .cslot .acts label.lnk:focus-within{ outline:2px solid var(--focus); outline-offset:2px; }

@@ -1453,3 +1453,12 @@ thêm:** nhãn "Ghi chú cho khách" (hứa quá, khách không thấy) → "Ghi
 `tasks/backend.md` §6.5 cập nhật. **Mở (B3b/B4):** xoá `simLogRows`/`scheduleRows` khi kho/Số/mã lên DB; chuyển hướng sau đăng nhập chưa giữ
 link sâu `/admin/...`; vai trong JWT đổi chậm tới 1 giờ; đơn khách vãng lai hiện "—" ở cột Khách; chưa phân trang (`listEvents` 500);
 chưa có cron nên DH-2430/2431 hết hạn ~25/37 giờ sau neo.
+
+**QĐ-27 (24/09/2026) — Form mẫu có ô chọn màu và ảnh; ảnh lưu ở Supabase Storage.** Người dùng chốt "thêm ô chọn màu và ảnh" cho
+Thêm/Sửa mẫu (B3b để nút "đang chuẩn bị"); mock vòng 7 ở `prototype/v3/admin-product-new.html`, `admin-product-edit.html`
+(`product-form.js`, `product-crop.js`, CSS cuối `v3-pages.css`), bảng duyệt mục "Bước 3". Bốn câu đã chốt cùng ngày: (1) ảnh tải lên lưu ở
+Supabase Storage, bucket công khai gói Free (1 GB), đi qua máy chủ Next, phục vụ qua `next/image` — trình duyệt vẫn không gọi Supabase;
+(2) **cần khung kéo chọn vùng cắt** → sheet "Chọn vùng cắt" tỉ lệ khoá 4:5 (kéo dời, kéo góc đổi cỡ, phím mũi tên), dựng thêm 24/09,
+chờ duyệt; (3) màu chốt lúc cắt, sửa mẫu chỉ đổi thứ tự dải màu và ảnh; (4) ảnh mượn tạm vẫn chọn được, luôn có nhãn. Thêm ô Form
+(oversize/regular); Loại chỉ chọn trong loại đã có. Sau duyệt: brief UI cho `ui-implementer`, brief storage + SQL tạo mẫu cho
+`backend-implementer` (sau B3b; cần bật lại `[storage]` cục bộ, `serverActions.bodySizeLimit`, `remotePatterns` host Supabase).

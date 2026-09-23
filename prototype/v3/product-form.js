@@ -38,13 +38,21 @@
     return '<label class="btn3 sec sm">' + esc(label) + '<input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-file="' + c + '" aria-label="' + esc(label) + " cho " + COLORS[c][0] + '"></label>';
   }
   function lnk(c, act, label) { return '<button type="button" class="lnk" data-act="' + act + '" data-c="' + c + '">' + esc(label) + "</button>"; }
+  function fileLnk(c, label) { return '<label class="lnk">' + esc(label) + '<input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" data-file="' + c + '" aria-label="' + esc(label) + " cho " + COLORS[c][0] + '"></label>'; }
+  function fmt(n) { return Math.round(n).toLocaleString("vi-VN"); }
+  function dims(w, h) { return fmt(w) + "×" + fmt(h); }
+  function saveW(w) { return Math.min(1200, Math.round(w)); }
+  function defaultCrop(nw, nh) { var w = Math.min(nw, nh / 1.25), h = w * 1.25; return { x: (nw - w) / 2, y: (nh - h) / 2, w: w, h: h }; }
+  /* the chosen region, drawn into a 4:5 box of height H by positioning the whole image behind it */
+  function cropStyle(p, H) { var k = H / p.crop.h; return "background-image:url(" + p.src + ");background-size:" + (p.nw * k).toFixed(1) + "px auto;background-position:" + (-p.crop.x * k).toFixed(1) + "px " + (-p.crop.y * k).toFixed(1) + "px;background-repeat:no-repeat"; }
+  function measure(src, cb) { var im = new Image(); im.onload = function () { cb(im.naturalWidth, im.naturalHeight); }; im.src = src; }
 
   function slotHtml(c, i) {
     var p = photo(c), name = COLORS[c][0], n = S.order.length, shot, file, acts;
     if (p.kind === "file") {
-      shot = '<span class="shot"><img src="' + esc(p.src) + '" alt=""><span class="prog" hidden><i></i></span></span>';
-      file = "<b>" + esc(p.name) + "</b> · " + size(p.bytes) + " · thu về 1.200×1.500, cắt giữa 4:5 khi tải lên";
-      acts = fileBtn(c, "Đổi ảnh") + lnk(c, "loan", "Mượn tạm");
+      shot = '<span class="shot"' + (p.crop ? ' style="' + cropStyle(p, 120) + '"' : "") + ">" + (p.crop ? "" : '<img src="' + esc(p.src) + '" alt="">') + '<span class="prog" hidden><i></i></span></span>';
+      file = "<b>" + esc(p.name) + "</b> · " + size(p.bytes) + (p.crop ? " · vùng cắt " + dims(p.crop.w, p.crop.h) + " · lưu " + dims(saveW(p.crop.w), saveW(p.crop.w) * 1.25) : " · đang đọc ảnh…");
+      acts = '<button type="button" class="btn3 sec sm" data-act="crop" data-c="' + c + '">Khung cắt</button>' + fileLnk(c, "Đổi ảnh") + lnk(c, "loan", "Mượn tạm");
     } else if (p.kind === "loan") {
       shot = '<span class="shot"><img src="../v2/img/' + p.key + '.webp" alt=""><span class="prog" hidden><i></i></span></span>';
       file = '<span class="tag3 shut"><i></i>mượn tạm</span> ảnh của mẫu ' + loanName(p.key) + " · thay bằng ảnh thật khi có";
@@ -120,8 +128,11 @@
   function setFile(c, f) {
     if (!f || !/^image\//.test(f.type)) { toast("Chỉ nhận JPG, PNG hoặc WebP"); return; }
     if (f.size > 10 * 1048576) { toast("Tệp quá 10 MB · chọn ảnh nhỏ hơn"); return; }
-    S.photos[c] = { kind: "file", name: f.name, bytes: f.size, src: URL.createObjectURL(f) };
-    picking = null; renderSlots(); renderBar();
+    var src = URL.createObjectURL(f);
+    measure(src, function (nw, nh) {
+      picking = null;
+      window.CROP.open({ c: c, name: f.name, bytes: f.size, src: src, nw: nw, nh: nh, crop: defaultCrop(nw, nh), fresh: true });
+    });
   }
   function fakeUpload(done) {
     var up = files(), n = up.length, k = 0, bar = root.querySelector("[data-bar]");
@@ -160,6 +171,7 @@
       if (again && !again.disabled) again.focus();
     } else if (t.hasAttribute("data-act")) {
       var a = t.getAttribute("data-act"), ac = t.getAttribute("data-c");
+      if (a === "crop") { var cp = photo(ac); if (cp.crop) window.CROP.open({ c: ac, name: cp.name, bytes: cp.bytes, src: cp.src, nw: cp.nw, nh: cp.nh, crop: { x: cp.crop.x, y: cp.crop.y, w: cp.crop.w, h: cp.crop.h }, fresh: false }); return; }
       if (a === "loan") picking = picking === ac ? null : ac;
       if (a === "drop") { S.photos[ac] = { kind: "none" }; if (picking === ac) picking = null; }
       renderSlots(); renderBar();
@@ -206,4 +218,7 @@
   });
 
   renderAll();
+  /* a sample file arrives without its size: read it, then give it the largest centred 4:5 frame */
+  S.order.forEach(function (c) { var p = photo(c); if (p.kind === "file" && !p.crop) measure(p.src, function (nw, nh) { p.nw = nw; p.nh = nh; p.crop = defaultCrop(nw, nh); renderSlots(); }); });
+  window.PFORM = { state: S, colors: COLORS, icon: icon, dims: dims, saveW: saveW, defaultCrop: defaultCrop, cropStyle: cropStyle, render: function () { renderSlots(); renderBar(); } };
 })();

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Thêm mẫu · quản trị · BRAND</title>
 <link rel="stylesheet" href="../v2/fonts.css"><link rel="stylesheet" href="fonts-trial.css"><link rel="stylesheet" href="../v2/reset.css"><link rel="stylesheet" href="v3.css"><link rel="stylesheet" href="v3-pages.css">
-<script src="../v2/icons.js"></script><script src="v3.js" defer></script><script src="product-form.js" defer></script>
+<script src="../v2/icons.js"></script><script src="v3.js" defer></script><script src="product-form.js" defer></script><script src="product-crop.js" defer></script>
 </head>
 <body data-title="Thêm mẫu · quản trị · BRAND">
 <div class="s v3 adm3">
@@ -70,13 +70,27 @@
 <div class="menu3" id="m-kind" hidden role="menu"><button type="button" class="ticked">Áo thun</button><button type="button">Áo thun tay lỡ</button><button type="button">Áo hoodie</button><button type="button">Áo khoác dù</button><button type="button">Áo sơ mi dệt</button><button type="button">Quần jogger</button><button type="button">Quần cargo</button></div>
 <div class="menu3" id="m-fit" hidden role="menu"><button type="button" class="ticked">Oversize</button><button type="button">Regular</button></div>
 <div class="menu3" id="m-so" hidden role="menu"><button type="button" class="ticked"><span class="tm" data-k="t">Số</span> 06 · sắp mở</button><button type="button"><span class="tm" data-k="t">Số</span> 05 · đang mở</button><button type="button"><span class="tm" data-k="t">Số</span> 04 · đã đóng</button></div>
+<!-- FEATURE · round 7b: the crop frame — 4:5 locked, drag to move, corners to resize, arrows to nudge -->
+<div class="sheetwrap" id="cropsheet" hidden><div class="scrim"></div>
+  <div class="s panel wide crop" role="dialog" aria-modal="true" aria-labelledby="crop-title">
+    <div class="grab"></div>
+    <h3 class="title" id="crop-title">Chọn vùng cắt · <span data-crop-name>Đen</span></h3>
+    <p class="sub">Ảnh trên trang luôn là 4:5. Kéo khung để dời, kéo góc để đổi cỡ; phần ngoài khung không được lưu.</p>
+    <div class="cropwrap">
+      <div class="cropper" data-cropper><img alt="" draggable="false"><div class="frame" tabindex="0" aria-roledescription="khung cắt" aria-label="Khung cắt 4:5 · phím mũi tên để dời, cộng và trừ để đổi cỡ"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div>
+      <div class="cropside"><span class="shot" data-crop-preview aria-hidden="true"></span><div class="file" data-crop-info></div><button type="button" class="lnk" data-crop-reset>Toàn ảnh</button></div>
+    </div>
+    <div class="ft"><button type="button" class="btn3 sec" data-close>Huỷ</button><button type="button" class="btn3" data-crop-apply><svg data-i="check" class="ic sm"></svg>Dùng vùng này</button></div>
+    <button type="button" data-close data-crop-closer hidden></button>
+  </div>
+</div>
 <div class="sheetwrap" id="resetsheet" hidden><div class="scrim"></div><div class="s panel" role="dialog" aria-modal="true" aria-label="Đặt lại dữ liệu mẫu"><div class="grab"></div><h3 class="title">Đặt lại dữ liệu mẫu?</h3><p class="sub">Mọi thay đổi đã ghi trên trình duyệt này sẽ bị xoá.</p><div class="ft"><button type="button" class="btn3 sec" data-close>Giữ</button><button type="button" class="btn3" data-simreset data-sim="Đã đặt lại dữ liệu mẫu" data-nocount>Đặt lại</button></div></div></div>
 
 <!-- Sample state: three colours picked in this order; Đen has a file chosen, Kem borrows CÁT's stand-in, Rêu has nothing yet. -->
 <script type="application/json" id="pform-state">{
   "order": ["black", "cream", "moss"],
   "photos": {
-    "black": { "kind": "file", "name": "soi-den.jpg", "bytes": 2516582, "src": "../v2/img/hero.webp" },
+    "black": { "kind": "file", "name": "soi-den.jpg", "bytes": 2516582, "src": "../v2/img/hero-wide.webp" },
     "cream": { "kind": "loan", "key": "cat" }
   },
   "cells": {

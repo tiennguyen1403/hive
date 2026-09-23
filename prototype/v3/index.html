@@ -126,7 +126,7 @@
     <div><b>Bước 1b · bộ chữ</b>Đã chốt D · Unbounded + Be Vietnam Pro.</div>
     <div><b>Bước 2 · 17 màn còn lại</b>Đã duyệt 01:02 · 22/09: 21 / 21 khung, sáu câu đã chốt, rà khoảng cách, canh hàng, cỡ icon xong.</div>
     <div><b>Bước 2b · badge</b>Đã chốt <b>B · Vải đen</b> (mục <a href="#badge">Badge</a>); dấu trên ảnh mẫu đã hết là <b>SOLD OUT</b>.</div>
-    <div><b>Bước 3 · ô chọn màu và ảnh</b>Chờ duyệt 24/09: hai màn (<a href="#s-product-new">Thêm mẫu</a>, <a href="#s-product-edit">Sửa mẫu</a>) và bốn câu ở <a href="#ask3">Cần bạn chốt · bước 3</a>.</div>
+    <div><b>Bước 3 · ô chọn màu và ảnh</b>Bốn câu đã chốt 24/09 (<a href="#ask3">mục chốt</a>); theo câu 2, khung kéo chọn vùng cắt dựng thêm cùng ngày, chờ duyệt cùng hai màn (<a href="#s-product-new">Thêm mẫu</a>, <a href="#s-product-edit">Sửa mẫu</a>).</div>
     <div class="now"><b>Bước 3 · thực thi</b>Lát 0–3 đã đạt, lát 4 đang chạy. Câu đề bìa: người dùng chưa muốn chốt (22/09), giữ câu A hiện tại; bốn phương án vẫn ở mục <a href="#hero">câu đề bìa</a> để xem sau.</div>
   </div>
 
@@ -603,7 +603,8 @@
       <h3>Thêm mẫu · SỎI</h3>
       <ul>
         <li><b>Màu sẽ cắt:</b> bảy màu vải là bảy chip bật/tắt. Thứ tự chọn là thứ tự dải màu trên thẻ (chip mang số thứ tự), màu đầu là ảnh đại diện; chọn một màu thì lưới size có hàng để điền và ô ảnh của màu đó mở ra. Bỏ màu thì số đã điền của màu đó xoá theo, có báo. Trên hàng màu có ↑ ↓ đổi thứ tự và ✕ bỏ màu.</li>
-        <li><b>Mỗi màu một ảnh 4:5:</b> chọn tệp hoặc kéo thả vào ô (JPG, PNG, WebP, tối đa 10 MB); trình duyệt thu về 1.200×1.500 và cắt giữa trước khi gửi, không có công cụ cắt tay. Vẫn “Mượn tạm” được một trong 18 ảnh đang dùng, và ảnh mượn luôn mang nhãn <i>mượn tạm</i> (PRODUCT.md: không trình bày ảnh mượn như ảnh thật). Ba trạng thái có sẵn trên màn: Đen đã chọn tệp, Kem mượn tạm, Rêu chưa có.</li>
+        <li><b>Mỗi màu một ảnh 4:5:</b> chọn tệp hoặc kéo thả vào ô (JPG, PNG, WebP, tối đa 10 MB); trình duyệt cắt theo khung đã chọn và thu về 1.200×1.500 trước khi gửi. Vẫn “Mượn tạm” được một trong 18 ảnh đang dùng, và ảnh mượn luôn mang nhãn <i>mượn tạm</i> (PRODUCT.md: không trình bày ảnh mượn như ảnh thật). Ba trạng thái có sẵn trên màn: Đen đã chọn tệp, Kem mượn tạm, Rêu chưa có.</li>
+        <li><b>Khung cắt</b> (thêm 24/09 theo câu 2): sau khi chọn tệp, sheet “Chọn vùng cắt” mở với khung 4:5 lớn nhất đặt giữa ảnh; kéo khung để dời, kéo góc để đổi cỡ (tỉ lệ khoá), phím mũi tên dời được. Bên phải là xem trước 96×120, kích thước vùng chọn và cỡ sẽ lưu; “Toàn ảnh” đặt lại; vùng hẹp hơn 800px thì báo mờ. Mở lại bằng “Khung cắt” trên hàng màu; Huỷ giữ nguyên ảnh cũ.</li>
         <li><b>Nút tạo nói việc còn thiếu</b> (“Chọn ảnh cho Rêu”, “Điền số cắt cho…”) và chỉ bật khi đủ; bấm thì thấy tiến trình tải ảnh rồi thông báo.</li>
         <li><b>Thêm ô Form</b> (oversize · regular): bảng Mẫu hiện “Loại · form” mà form chưa có ô này. Loại chỉ chọn trong các loại đã có; họ suy từ loại.</li>
         <li><b>Sau màn hình:</b> ảnh tải lên lưu ở Supabase Storage (bucket công khai, gói Free 1 GB), đi qua máy chủ Next; trình duyệt vẫn không gọi Supabase vì ảnh phục vụ qua <code>next/image</code> như ảnh mượn hiện nay. Mỗi màu một dòng <code>product_colors</code>, <code>photo_key</code> là khoá mượn hoặc đường dẫn tệp.</li>
@@ -611,7 +612,7 @@
       <div class="links"><a href="admin-product-new.html" target="_blank">Mở toàn màn</a></div>
       <div class="review" data-screen="product-new"><div class="opts"><label><input type="radio" name="r-product-new" value="Duyệt">Duyệt</label><label><input type="radio" name="r-product-new" value="Sửa">Sửa</label><label><input type="radio" name="r-product-new" value="Bỏ">Bỏ</label></div><textarea placeholder="Ghi chú cho màn này…"></textarea></div>
     </div>
-    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-product-new.html" title="Thêm mẫu · desktop"></iframe></div><div class="caption">1280 px thu nhỏ · thử bật chip Nâu, bấm “Mượn tạm” ở Rêu hoặc chọn một tệp thật từ máy, rồi “Tạo mẫu”</div></div></div>
+    <div class="frames deskonly"><div><div class="desk tall"><iframe loading="lazy" src="admin-product-new.html" title="Thêm mẫu · desktop"></iframe></div><div class="caption">1280 px thu nhỏ · thử bấm “Khung cắt” ở Đen hoặc chọn một tệp thật từ máy để thấy sheet chọn vùng cắt; bật chip Nâu, bấm “Mượn tạm” ở Rêu, rồi “Tạo mẫu”</div></div></div>
   </section>
 
   <section class="screen" id="s-product-edit">
@@ -629,10 +630,10 @@
   </section>
 
   <h2 id="ask3">Cần bạn chốt · bước 3</h2>
-  <div class="q"><b>1 · Ảnh lưu ở Supabase Storage</b><span>Bucket công khai trong gói Free (1 GB, 5 GB egress/tháng), tải lên qua máy chủ Next, phục vụ qua next/image. Không thêm nhà cung cấp nào khác. Ổn chứ?</span></div>
-  <div class="q"><b>2 · Không có công cụ cắt tay</b><span>Ảnh thu về 1.200×1.500 và cắt giữa về 4:5 ngay trong trình duyệt (khoảng 200–300 KB). Đủ cho demo, hay cần khung kéo để chọn vùng cắt?</span></div>
-  <div class="q"><b>3 · Màu chốt lúc cắt</b><span>Sửa mẫu chỉ đổi thứ tự dải màu và ảnh; muốn thêm màu là tạo mẫu mới. Đúng ý “cắt một lần” chứ?</span></div>
-  <div class="q"><b>4 · Ảnh mượn tạm vẫn chọn được</b><span>Mẫu mới không có ảnh vẫn tạo được bằng ảnh mượn, luôn mang nhãn; ảnh thật thay dần từng màu ở màn sửa. Giữ, hay bắt buộc ảnh thật?</span></div>
+  <div class="q"><b>1 · Ảnh lưu ở Supabase Storage</b><span>Bucket công khai trong gói Free (1 GB, 5 GB egress/tháng), tải lên qua máy chủ Next, phục vụ qua next/image. Không thêm nhà cung cấp nào khác. Ổn chứ? <b>Chốt 24/09: ổn.</b></span></div>
+  <div class="q"><b>2 · Không có công cụ cắt tay</b><span>Ảnh thu về 1.200×1.500 và cắt giữa về 4:5 ngay trong trình duyệt (khoảng 200–300 KB). Đủ cho demo, hay cần khung kéo để chọn vùng cắt? <b>Chốt 24/09: cần khung kéo — đã dựng sheet “Chọn vùng cắt”, xem khung Thêm mẫu.</b></span></div>
+  <div class="q"><b>3 · Màu chốt lúc cắt</b><span>Sửa mẫu chỉ đổi thứ tự dải màu và ảnh; muốn thêm màu là tạo mẫu mới. Đúng ý “cắt một lần” chứ? <b>Chốt 24/09: đồng ý.</b></span></div>
+  <div class="q"><b>4 · Ảnh mượn tạm vẫn chọn được</b><span>Mẫu mới không có ảnh vẫn tạo được bằng ảnh mượn, luôn mang nhãn; ảnh thật thay dần từng màu ở màn sửa. Giữ, hay bắt buộc ảnh thật? <b>Chốt 24/09: giữ ảnh mượn.</b></span></div>
   <div class="review" data-screen="tra-loi-3"><b style="font-size:13px">Trả lời các câu trên</b><textarea placeholder="1: … 2: … (viết tự do)" style="min-height:96px"></textarea></div>
 
   <h2 id="feat">Chức năng mới cho v3</h2>
