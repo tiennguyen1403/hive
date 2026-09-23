@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bảng hướng logo · HIVE · tay bài 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-b89d52.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-vietnamese-0260aa.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-ext-d711e9.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+  :root {
+    --ink: #171410; --ink-2: #6b6250; --hair: #ece7dd; --line: #9c937f; --plate: #f4efe6;
+    --honey: #eba400; --honey-soft: #fbf1da; --honey-text: #9e6817;
+    --cloth: #171410; --cloth-ink: #fff; --cloth-2: #b9b0a0; --cloth-hair: #3a352e;
+    --display: "Unbounded", system-ui, sans-serif;
+    --sans: "Be Vietnam Pro", system-ui, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: #fff; color: var(--ink); scrollbar-color: var(--line) var(--plate); }
+  body { margin: 0; font: 14px/1.55 var(--sans); }
+  ::selection { background: var(--honey); color: var(--ink); }
+  a { color: var(--honey-text); }
+  code { font: 12px/1 ui-monospace, Consolas, monospace; background: var(--plate); padding: 1px 4px; border-radius: 3px; }
+
+  header { padding: 32px 24px 20px; border-bottom: 1px solid var(--hair); display: grid; grid-template-columns: minmax(0, 70ch) 1fr; gap: 24px; align-items: end; }
+  header h1 { margin: 0 0 8px; font: 800 22px/1.15 var(--display); letter-spacing: -0.02em; }
+  header p { margin: 0; color: var(--ink-2); }
+  header .status { justify-self: end; font-size: 12px; color: var(--ink-2); border: 1px dashed var(--honey); border-radius: 4px; padding: 6px 10px; }
+
+  main { padding: 0 24px 72px; }
+  .cols.head { display: grid; grid-template-columns: 180px repeat(3, minmax(0, 1fr)); gap: 0 20px; padding: 26px 0 10px; border-bottom: 1px solid var(--ink); }
+  .cols.head .dir { display: grid; gap: 4px; }
+  .cols.head .dir b { font: 800 15px/1.2 var(--display); letter-spacing: -0.01em; }
+  .cols.head .dir span { color: var(--ink-2); font-size: 12px; }
+  .row { display: grid; grid-template-columns: 180px repeat(3, minmax(0, 1fr)); gap: 0 20px; padding: 22px 0; border-bottom: 1px solid var(--hair); align-items: start; }
+  .row > h2 { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.35; }
+  .row > h2 small { display: block; font-weight: 400; color: var(--ink-2); margin-top: 4px; }
+  .cell { min-height: 120px; display: flex; align-items: center; justify-content: center; gap: 24px; padding: 18px; border-radius: 4px; position: relative; }
+  .cell.white { outline: 1px solid var(--hair); }
+  .cell.cloth { background: var(--cloth); color: var(--honey); }
+  .cell.honey { background: var(--honey); color: var(--ink); }
+  .cell.plate { background: var(--plate); }
+  .cell.stack { flex-direction: column; align-items: stretch; gap: 14px; }
+  .cell .colkey { display: none; }
+
+  /* colour roles read by the symbols: c1 = line/type, c2 = fill */
+  .on-white { --c1: #171410; --c2: #eba400; --c3: #ffffff; color: #171410; }
+  .on-cloth { --c1: #eba400; --c2: #171410; --c3: #171410; color: #eba400; }
+  .on-honey { --c1: #171410; --c2: #eba400; --c3: #eba400; color: #171410; }
+  .on-cloth.plated { --c1: #171410; --c2: #eba400; }   /* the plate stays honey on black cloth */
+
+  .mark { display: block; width: 150px; height: 100px; }
+  .mark.sq { width: 120px; height: 120px; }
+  .mark.m16 { width: 16px; height: 16px; } .mark.m18 { width: 18px; height: 18px; } .mark.m24 { width: 24px; height: 24px; }
+  .mark.m32 { width: 32px; height: 32px; } .mark.m48 { width: 48px; height: 48px; } .mark.m64 { width: 64px; height: 64px; }
+  .mark.w27 { width: 27px; height: 18px; } .mark.w48 { width: 48px; height: 32px; } .mark.w72 { width: 72px; height: 48px; } .mark.w96 { width: 96px; height: 64px; }
+  .wordsvg { display: block; height: 64px; width: auto; }
+  .wordsvg.h40 { height: 40px; } .wordsvg.h22 { height: 22px; } .wordsvg.h16 { height: 16px; } .wordsvg.h12 { height: 12px; } .wordsvg.h30 { height: 30px; }
+
+  .wm { font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
+  .wm.w64 { font-size: 64px; } .wm.w40 { font-size: 40px; } .wm.w22 { font-size: 22px; letter-spacing: 0; }
+  .wm.w16 { font-size: 16px; letter-spacing: .14em; } .wm.w12 { font-size: 12px; letter-spacing: .14em; }
+  .lock { display: inline-flex; align-items: center; gap: .32em; }
+  .n { color: var(--honey-text); }
+  .cell.cloth .n { color: var(--honey); }
+  .cell.honey .n { color: var(--ink); }
+  .sub { font: 600 11px/1 var(--sans); letter-spacing: .18em; color: var(--ink-2); margin-top: 6px; }
+  .lockrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; }
+  .lockrow + .lockrow { border-top: 1px solid var(--hair); }
+  .lockrow figcaption { font-size: 11px; color: var(--ink-2); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  figure { margin: 0; }
+
+  .slot { display: inline-block; height: 1em; overflow: hidden; vertical-align: bottom; }
+  .slot ul { list-style: none; margin: 0; padding: 0; animation: slot 6s cubic-bezier(.2,.8,.2,1) infinite; }
+  .slot li { height: 1em; line-height: 1; }
+  @keyframes slot { 0%, 26% { transform: translateY(0); } 33%, 59% { transform: translateY(-1em); } 66%, 92% { transform: translateY(-2em); } 100% { transform: translateY(-3em); } }
+  @media (prefers-reduced-motion: reduce) { .slot ul { animation: none; } }
+  .slotnote { color: var(--ink-2); font-size: 13px; max-width: 60ch; }
+
+  .nav { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 354px; padding: 12px 16px; background: #fff; outline: 1px solid var(--hair); box-shadow: 0 2px 8px rgba(23,20,16,.08); border-radius: 4px; }
+  .nav .itag { margin-left: auto; font: 700 11px/1 var(--sans); letter-spacing: .06em; padding: 5px 8px; border-radius: 3px; background: var(--cloth); color: var(--honey); }
+  .favs { display: flex; gap: 14px; align-items: flex-end; }
+  .favs figure { text-align: center; font-size: 11px; color: var(--ink-2); }
+  .favs .chip { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 4px; outline: 1px solid var(--hair); margin: 0 auto 6px; }
+  .favs .chip.dark { background: var(--cloth); outline: 0; }
+
+  .cover { width: 100%; max-width: 354px; background: var(--cloth); color: var(--cloth-ink); padding: 16px 18px 0; border-radius: 4px; display: grid; grid-template-rows: auto 1fr auto; min-height: 300px; position: relative; overflow: hidden; }
+  .cover .top { display: flex; align-items: center; gap: 8px; color: var(--honey); min-height: 24px; }
+  .cover .num { display: flex; align-items: baseline; gap: 8px; margin-top: 18px; }
+  .cover .num b { font: 800 96px/.9 var(--display); color: var(--honey); letter-spacing: -0.03em; }
+  .cover .num i { font: 600 11px/1 var(--sans); letter-spacing: .14em; font-style: normal; color: var(--honey); }
+  .cover .headline { font: 800 19px/1.25 var(--display); letter-spacing: -0.01em; margin: 14px 0 20px; max-width: 16ch; }
+  .cover .meta { font-size: 12px; color: var(--cloth-2); display: flex; justify-content: space-between; padding: 10px 0 14px; border-top: 1px solid var(--cloth-hair); }
+  .cover.e .meta { border-top: 1px dashed var(--honey); }
+  .cover.g .meta { border-top-color: var(--honey); }
+
+  .garment { display: flex; gap: 22px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+  .hangtag { width: 150px; min-height: 250px; background: #fff; outline: 1px solid var(--line); border-radius: 4px; padding: 30px 14px 14px; position: relative; display: grid; grid-template-rows: auto auto 1fr auto; gap: 8px; }
+  .hangtag::before { content: ""; position: absolute; top: 10px; left: 50%; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; border: 1.5px solid var(--line); }
+  .hangtag .brand { display: flex; align-items: center; gap: 6px; min-height: 24px; }
+  .hangtag .brand .wm { font-size: 14px; letter-spacing: .08em; }
+  .hangtag .issue { font: 700 11px/1 var(--sans); letter-spacing: .12em; color: var(--ink); background: var(--honey); display: inline-block; padding: 4px 6px; border-radius: 3px; justify-self: start; }
+  .hangtag.e .issue { background: none; outline: 1px solid var(--ink); padding: 3px 6px; }
+  .hangtag .prod { align-self: end; }
+  .hangtag .prod b { display: block; font: 800 20px/1 var(--display); letter-spacing: -0.01em; }
+  .hangtag .prod span { display: block; font-size: 11px; color: var(--ink-2); margin-top: 4px; line-height: 1.35; }
+  .hangtag .price { display: grid; gap: 4px; border-top: 1px solid var(--hair); padding-top: 8px; }
+  .hangtag .price b { font: 800 16px/1 var(--display); }
+  .hangtag .price span { font: 600 11px/1 var(--sans); letter-spacing: .1em; color: var(--ink-2); }
+  .hangtag.g { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+  .label { width: 144px; height: 44px; background: var(--cloth); color: var(--honey); display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; border-radius: 2px; }
+  .label::after { content: ""; position: absolute; inset: 4px; border: 1px dashed var(--honey); opacity: .8; border-radius: 2px; }
+  .label .wm { font-size: 13px; letter-spacing: .14em; }
+  .label.e::after { border-style: solid; opacity: 1; }
+  .label.f::after { display: none; }
+  .garment figcaption { font-size: 11px; color: var(--ink-2); text-align: center; margin-top: 6px; }
+
+  .avatars { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+  .avatars figure { text-align: center; font-size: 11px; color: var(--ink-2); }
+  .av { display: grid; place-items: center; margin: 0 auto 6px; }
+  .av.c40 { width: 40px; height: 40px; border-radius: 50%; }
+  .av.s120 { width: 120px; height: 120px; border-radius: 4px; }
+  .av.honey { background: var(--honey); } .av.cloth { background: var(--cloth); }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th, td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--hair); vertical-align: top; font-size: 13px; }
+  th { font-weight: 600; width: 180px; }
+  thead th { font: 800 13px/1.2 var(--display); border-bottom: 1px solid var(--ink); padding-bottom: 8px; }
+  td.mid { color: var(--ink-2); } td.bad { color: #b3261e; }
+  .verdict { margin: 28px 0 0; max-width: 72ch; }
+  .verdict h2 { font: 800 16px/1.2 var(--display); margin: 0 0 8px; }
+  .verdict p { margin: 0 0 10px; }
+  .demoted { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--hair); }
+  .demoted h3 { font: 600 13px/1.3 var(--sans); margin: 0 0 8px; color: var(--ink-2); }
+  .demoted ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 20px; font-size: 12.5px; color: var(--ink-2); }
+  .demoted li b { color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 900px) {
+    header { grid-template-columns: 1fr; } header .status { justify-self: start; }
+    .cols.head { display: none; }
+    .row { grid-template-columns: 1fr; gap: 12px; padding: 18px 0; }
+    .cell .colkey { display: block; position: absolute; left: 8px; top: 6px; font: 800 11px/1 var(--display); color: var(--ink-2); }
+    .cell.cloth .colkey, .cell.honey .colkey { color: inherit; opacity: .8; }
+    .wm.w64 { font-size: 48px; } .wordsvg { height: 48px; }
+    table thead { display: none; }
+    table, tbody, tr, th, td { display: block; width: auto; }
+    tr { padding: 10px 0; border-bottom: 1px solid var(--hair); }
+    th, td { border: 0; padding: 2px 0; }
+    td::before { font-weight: 600; color: var(--ink); }
+    td:nth-child(2)::before { content: "E · "; } td:nth-child(3)::before { content: "F · "; } td:nth-child(4)::before { content: "G · "; }
+  }
+  @media (max-width: 420px) {
+    header, main { padding-left: 18px; padding-right: 18px; }
+    .cell { padding: 16px 12px; gap: 16px; } .garment { gap: 14px; } .hangtag { width: 140px; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- E · woven label: a bordered rectangle with a woven inner edge -->
+    <symbol id="mark-e" viewBox="0 0 150 100">
+      <rect x="4" y="4" width="142" height="92" rx="3" fill="var(--c3)" stroke="var(--c1)" stroke-width="4"/>
+      <rect x="12" y="12" width="126" height="76" rx="1" fill="none" stroke="var(--c1)" stroke-width="1.6" stroke-dasharray="4 3"/>
+      <text x="75" y="63" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="34" letter-spacing="1" fill="var(--c1)">HIVE</text>
+    </symbol>
+    <symbol id="mark-e-sm" viewBox="0 0 100 100">
+      <rect x="6" y="16" width="88" height="68" rx="3" fill="var(--c3)" stroke="var(--c1)" stroke-width="7"/>
+      <text x="50" y="68" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="46" fill="var(--c1)">H</text>
+    </symbol>
+    <!-- E · issue label: the second small label that sits beside the brand label -->
+    <symbol id="issue-e" viewBox="0 0 110 100">
+      <rect x="4" y="4" width="102" height="92" rx="3" fill="var(--c3)" stroke="var(--c1)" stroke-width="4"/>
+      <rect x="12" y="12" width="86" height="76" rx="1" fill="none" stroke="var(--c1)" stroke-width="1.6" stroke-dasharray="4 3"/>
+      <text x="55" y="42" text-anchor="middle" font-family="Be Vietnam Pro, system-ui" font-weight="600" font-size="15" letter-spacing="3" fill="var(--c1)">SỐ</text>
+      <text x="55" y="80" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="34" fill="var(--c1)">05</text>
+    </symbol>
+
+    <!-- F · plate: a honey plate with two mounting holes, name above, number below -->
+    <symbol id="mark-f" viewBox="0 0 150 100">
+      <rect x="3" y="3" width="144" height="94" rx="8" fill="var(--c2)"/>
+      <rect x="9" y="9" width="132" height="82" rx="5" fill="none" stroke="var(--c1)" stroke-width="3"/>
+      <circle cx="22" cy="20" r="3" fill="var(--c1)"/><circle cx="128" cy="20" r="3" fill="var(--c1)"/>
+      <text x="75" y="52" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="30" letter-spacing="1" fill="var(--c1)">HIVE</text>
+      <text x="75" y="80" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="20" letter-spacing="3" fill="var(--c1)">SỐ 05</text>
+    </symbol>
+    <symbol id="mark-f-word" viewBox="0 0 150 64">
+      <rect x="3" y="3" width="144" height="58" rx="7" fill="var(--c2)"/>
+      <rect x="9" y="9" width="132" height="46" rx="4" fill="none" stroke="var(--c1)" stroke-width="3"/>
+      <text x="75" y="45" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="30" letter-spacing="1" fill="var(--c1)">HIVE</text>
+    </symbol>
+    <symbol id="mark-f-sm" viewBox="0 0 100 100">
+      <rect x="4" y="18" width="92" height="64" rx="9" fill="var(--c2)"/>
+      <rect x="11" y="25" width="78" height="50" rx="5" fill="none" stroke="var(--c1)" stroke-width="5"/>
+      <text x="50" y="66" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="38" fill="var(--c1)">H</text>
+    </symbol>
+
+    <!-- G · one cut: the wordmark sliced once, pieces kept in place -->
+    <!-- one straight cut at about 12 degrees: low through the H, mid through the I, high through V and E -->
+    <mask id="cut-word" maskUnits="userSpaceOnUse" x="0" y="0" width="440" height="110">
+      <rect width="440" height="110" fill="#fff"/>
+      <line x1="40" y1="89" x2="400" y2="10" stroke="#000" stroke-width="5"/>
+    </mask>
+    <symbol id="word-g" viewBox="60 0 320 110">
+      <text x="220" y="94" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="104" letter-spacing="-2" fill="currentColor" mask="url(#cut-word)">HIVE</text>
+    </symbol>
+    <mask id="cut-h" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+      <rect width="100" height="100" fill="#fff"/>
+      <line x1="14" y1="112" x2="86" y2="-12" stroke="#000" stroke-width="9"/>
+    </mask>
+    <symbol id="mark-g" viewBox="0 0 100 100">
+      <text x="50" y="86" text-anchor="middle" font-family="Unbounded" font-weight="800" font-size="100" fill="currentColor" mask="url(#cut-h)">H</text>
+    </symbol>
+  </defs>
+</svg>
+
+<header>
+  <div>
+    <h1>Bảng hướng logo · HIVE · tay bài 2</h1>
+    <p>Tay bài thứ hai, không dùng lại hình nào của tay bài 1. Chất liệu lấy từ thế giới của người mua streetwear Sài Gòn thay vì nghĩa đen của chữ hive: <b>E · Nhãn dệt</b> lấy nhãn cổ áo làm huy hiệu, <b>F · Biển số</b> lấy tấm biển vàng chữ đen ngoài đường làm khung tên và số, <b>G · Một nhát cắt</b> để chính con chữ mang lời hứa "cắt một lần". Xếp từ an toàn tới táo bạo. Số đợt vẫn là ô dữ liệu.</p>
+  </div>
+  <div class="status">Chưa có hướng nào được duyệt · tay bài 1 ở <a href="hive.html">hive.html</a> · bảng so tên ở <a href="./">index.html</a></div>
+</header>
+
+<main>
+  <div class="cols head">
+    <div></div>
+    <div class="dir"><b>E · Nhãn dệt</b><span>Huy hiệu là cái nhãn may ở cổ áo: khung, đường dệt, chữ. Quen mắt trong ngành, ít rủi ro.</span></div>
+    <div class="dir"><b>F · Biển số</b><span>Tấm biển vàng chữ đen quen thuộc ngoài đường Sài Gòn. Tên ở trên, Số ở dưới, ô số có sẵn trong hình.</span></div>
+    <div class="dir"><b>G · Một nhát cắt</b><span>Không biểu tượng. Wordmark bị cắt đúng một lần, mảnh giữ nguyên chỗ. Chữ H cắt làm favicon.</span></div>
+  </div>
+
+  <section class="row">
+    <h2>Mark<small>trên trắng, vải đen, mật ong</small></h2>
+    <div class="cell stack" style="padding:0;gap:0">
+      <div class="cell white on-white"><span class="colkey">E</span><svg class="mark"><use href="#mark-e"/></svg></div>
+      <div class="cell cloth on-cloth"><svg class="mark"><use href="#mark-e"/></svg></div>
+      <div class="cell honey on-honey"><svg class="mark"><use href="#mark-e"/></svg></div>
+    </div>
+    <div class="cell stack" style="padding:0;gap:0">
+      <div class="cell white on-white"><span class="colkey">F</span><svg class="mark"><use href="#mark-f"/></svg></div>
+      <div class="cell cloth on-cloth plated"><svg class="mark"><use href="#mark-f"/></svg></div>
+      <div class="cell honey on-honey" style="--c2:#171410;--c1:#eba400"><svg class="mark"><use href="#mark-f"/></svg></div>
+    </div>
+    <div class="cell stack" style="padding:0;gap:0">
+      <div class="cell white on-white"><span class="colkey">G</span><svg class="mark sq"><use href="#mark-g"/></svg></div>
+      <div class="cell cloth on-cloth"><svg class="mark sq"><use href="#mark-g"/></svg></div>
+      <div class="cell honey on-honey"><svg class="mark sq"><use href="#mark-g"/></svg></div>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Ba lockup<small>HIVE trần · HIVE SAIGON · HIVE với ô số</small></h2>
+    <div class="cell white stack on-white">
+      <span class="colkey">E</span>
+      <figure class="lockrow"><svg class="mark w96"><use href="#mark-e"/></svg><figcaption>trần</figcaption></figure>
+      <figure class="lockrow"><span class="lock" style="align-items:flex-end"><svg class="mark w72"><use href="#mark-e"/></svg><span class="sub" style="margin:0 0 6px">SAIGON</span></span><figcaption>địa danh</figcaption></figure>
+      <figure class="lockrow"><span class="lock" style="gap:6px"><svg class="mark w72"><use href="#mark-e"/></svg><svg class="mark" style="width:53px;height:48px"><use href="#issue-e"/></svg></span><figcaption>ô số</figcaption></figure>
+    </div>
+    <div class="cell white stack on-white">
+      <span class="colkey">F</span>
+      <figure class="lockrow"><svg class="mark w96" style="height:41px"><use href="#mark-f-word"/></svg><figcaption>trần</figcaption></figure>
+      <figure class="lockrow"><span class="lock" style="align-items:flex-end"><svg class="mark w72" style="height:31px"><use href="#mark-f-word"/></svg><span class="sub" style="margin:0 0 4px">SAIGON</span></span><figcaption>địa danh</figcaption></figure>
+      <figure class="lockrow"><svg class="mark w72"><use href="#mark-f"/></svg><figcaption>ô số</figcaption></figure>
+    </div>
+    <div class="cell white stack on-white">
+      <span class="colkey">G</span>
+      <figure class="lockrow"><svg class="wordsvg" viewBox="60 0 320 110"><use href="#word-g"/></svg><figcaption>trần</figcaption></figure>
+      <figure class="lockrow"><span class="lock" style="align-items:flex-end"><svg class="wordsvg h40" viewBox="60 0 320 110"><use href="#word-g"/></svg><span class="sub" style="margin:0 0 4px">SAIGON</span></span><figcaption>địa danh</figcaption></figure>
+      <figure class="lockrow"><span class="lock" style="gap:.15em"><svg class="wordsvg h40" viewBox="60 0 320 110"><use href="#word-g"/></svg><span class="wm w40 n">.05</span></span><figcaption>ô số</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="row" style="grid-template-columns: 180px 1fr">
+    <h2>Ô số là dữ liệu<small>tệp logo không chứa số</small></h2>
+    <div class="cell white on-white" style="justify-content:flex-start;gap:36px;flex-wrap:wrap">
+      <span class="lock" style="gap:.15em"><svg class="wordsvg" viewBox="60 0 320 110"><use href="#word-g"/></svg><span class="wm w64 n">.<span class="slot"><ul><li>05</li><li>06</li><li>12</li><li>05</li></ul></span></span></span>
+      <p class="slotnote">Ở E, số là cái nhãn thứ hai may cạnh nhãn tên. Ở F, số là dòng dưới của tấm biển. Ở G, số đứng sau wordmark. Cả ba đều lấy số từ dữ liệu như tem "SỐ 05" trên nav hôm nay; đổi Số không mở lại tệp logo.</p>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Nav 390 và favicon<small>wordmark 16px cách chữ .14em; mark 18px; favicon 16 và 32</small></h2>
+    <div class="cell plate stack on-white">
+      <span class="colkey">E</span>
+      <div class="nav"><svg class="mark m18"><use href="#mark-e-sm"/></svg><span class="wm w16">HIVE</span><span class="itag">SỐ 05</span></div>
+      <div class="favs">
+        <figure><div class="chip"><svg class="mark m16"><use href="#mark-e-sm"/></svg></div>16</figure>
+        <figure><div class="chip"><svg class="mark m32"><use href="#mark-e-sm"/></svg></div>32</figure>
+        <figure><div class="chip dark on-cloth"><svg class="mark m16"><use href="#mark-e-sm"/></svg></div>16 tối</figure>
+        <figure><div class="chip dark on-cloth"><svg class="mark m32"><use href="#mark-e-sm"/></svg></div>32 tối</figure>
+      </div>
+    </div>
+    <div class="cell plate stack on-white">
+      <span class="colkey">F</span>
+      <div class="nav"><svg class="mark w27"><use href="#mark-f-sm"/></svg><span class="wm w16">HIVE</span><span class="itag">SỐ 05</span></div>
+      <div class="favs">
+        <figure><div class="chip"><svg class="mark m16"><use href="#mark-f-sm"/></svg></div>16</figure>
+        <figure><div class="chip"><svg class="mark m32"><use href="#mark-f-sm"/></svg></div>32</figure>
+        <figure><div class="chip dark on-cloth plated"><svg class="mark m16"><use href="#mark-f-sm"/></svg></div>16 tối</figure>
+        <figure><div class="chip dark on-cloth plated"><svg class="mark m32"><use href="#mark-f-sm"/></svg></div>32 tối</figure>
+      </div>
+    </div>
+    <div class="cell plate stack on-white">
+      <span class="colkey">G</span>
+      <div class="nav"><svg class="mark m18"><use href="#mark-g"/></svg><span class="wm w16">HIVE</span><span class="itag">SỐ 05</span></div>
+      <div class="favs">
+        <figure><div class="chip"><svg class="mark m16"><use href="#mark-g"/></svg></div>16</figure>
+        <figure><div class="chip"><svg class="mark m32"><use href="#mark-g"/></svg></div>32</figure>
+        <figure><div class="chip dark on-cloth"><svg class="mark m16"><use href="#mark-g"/></svg></div>16 tối</figure>
+        <figure><div class="chip dark on-cloth"><svg class="mark m32"><use href="#mark-g"/></svg></div>32 tối</figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Bìa Số trên trang chủ<small>khối vải đen 390, câu đề A</small></h2>
+    <div class="cell plate on-cloth"><span class="colkey">E</span>
+      <div class="cover e">
+        <div class="top"><svg class="mark" style="width:36px;height:24px"><use href="#mark-e"/></svg></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu 25/09</span><span>73 / 181 còn</span></div>
+      </div>
+    </div>
+    <div class="cell plate on-cloth plated"><span class="colkey">F</span>
+      <div class="cover f">
+        <div class="top"><svg class="mark" style="width:60px;height:26px"><use href="#mark-f-word"/></svg></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu 25/09</span><span>73 / 181 còn</span></div>
+      </div>
+    </div>
+    <div class="cell plate on-cloth"><span class="colkey">G</span>
+      <div class="cover g">
+        <div class="top"><svg class="wordsvg h22" viewBox="60 0 320 110"><use href="#word-g"/></svg></div>
+        <div><div class="num"><i>SỐ</i><b>05</b></div><p class="headline">Mười mẫu. Cắt một lần. Hết là hết.</p></div>
+        <div class="meta"><span>Đang mở · đóng 20:00 thứ Sáu 25/09</span><span>73 / 181 còn</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Tem treo và nhãn dệt<small>tem giấy 150×250 với dữ liệu mẫu KHÓI; nhãn cổ áo thêu một màu</small></h2>
+    <div class="cell plate garment"><span class="colkey">E</span>
+      <figure><div class="hangtag e on-white">
+        <div class="brand"><svg class="mark" style="width:54px;height:36px"><use href="#mark-e"/></svg></div>
+        <span class="issue">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo</figcaption></figure>
+      <figure><div class="label e on-cloth"><svg class="mark" style="width:96px;height:32px"><use href="#mark-e"/></svg></div><figcaption>nhãn dệt · huy hiệu là nhãn</figcaption></figure>
+    </div>
+    <div class="cell plate garment"><span class="colkey">F</span>
+      <figure><div class="hangtag f on-white">
+        <div class="brand"><svg class="mark" style="width:66px;height:44px"><use href="#mark-f"/></svg></div>
+        <span class="issue" style="visibility:hidden">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo · số nằm trong biển</figcaption></figure>
+      <figure><div class="label f on-cloth plated"><svg class="mark" style="width:84px;height:36px"><use href="#mark-f-word"/></svg></div><figcaption>nhãn dệt</figcaption></figure>
+    </div>
+    <div class="cell plate garment"><span class="colkey">G</span>
+      <figure><div class="hangtag g on-white">
+        <div class="brand"><svg class="wordsvg h22" viewBox="60 0 320 110"><use href="#word-g"/></svg></div>
+        <span class="issue">SỐ 05</span>
+        <div class="prod"><b>KHÓI</b><span>Áo thun oversize<br>Cotton 250gsm · Đen</span></div>
+        <div class="price"><span>SIZE M</span><b>390.000₫</b></div>
+      </div><figcaption>tem treo</figcaption></figure>
+      <figure><div class="label g on-cloth"><svg class="mark m24"><use href="#mark-g"/></svg><svg class="wordsvg h16" viewBox="60 0 320 110"><use href="#word-g"/></svg></div><figcaption>nhãn dệt</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="row">
+    <h2>Avatar mạng xã hội<small>tròn 40 và vuông 120</small></h2>
+    <div class="cell plate avatars"><span class="colkey">E</span>
+      <figure><div class="av c40 honey on-honey"><svg class="mark" style="width:26px;height:26px"><use href="#mark-e-sm"/></svg></div>40</figure>
+      <figure><div class="av c40 cloth on-cloth"><svg class="mark" style="width:26px;height:26px"><use href="#mark-e-sm"/></svg></div>40 tối</figure>
+      <figure><div class="av s120 honey on-honey"><svg class="mark" style="width:96px;height:64px"><use href="#mark-e"/></svg></div>120</figure>
+      <figure><div class="av s120 cloth on-cloth"><svg class="mark" style="width:96px;height:64px"><use href="#mark-e"/></svg></div>120 tối</figure>
+    </div>
+    <div class="cell plate avatars"><span class="colkey">F</span>
+      <figure><div class="av c40 honey on-honey" style="--c2:#171410;--c1:#eba400"><svg class="mark" style="width:28px;height:28px"><use href="#mark-f-sm"/></svg></div>40</figure>
+      <figure><div class="av c40 cloth on-cloth plated"><svg class="mark" style="width:28px;height:28px"><use href="#mark-f-sm"/></svg></div>40 tối</figure>
+      <figure><div class="av s120 honey on-honey" style="--c2:#171410;--c1:#eba400"><svg class="mark" style="width:96px;height:64px"><use href="#mark-f"/></svg></div>120</figure>
+      <figure><div class="av s120 cloth on-cloth plated"><svg class="mark" style="width:96px;height:64px"><use href="#mark-f"/></svg></div>120 tối</figure>
+    </div>
+    <div class="cell plate avatars"><span class="colkey">G</span>
+      <figure><div class="av c40 honey on-honey"><svg class="mark" style="width:28px;height:28px"><use href="#mark-g"/></svg></div>40</figure>
+      <figure><div class="av c40 cloth on-cloth"><svg class="mark" style="width:28px;height:28px"><use href="#mark-g"/></svg></div>40 tối</figure>
+      <figure><div class="av s120 honey on-honey"><svg class="mark m64"><use href="#mark-g"/></svg></div>120</figure>
+      <figure><div class="av s120 cloth on-cloth"><svg class="mark m64"><use href="#mark-g"/></svg></div>120 tối</figure>
+    </div>
+  </section>
+
+  <section class="row" style="grid-template-columns: 180px 1fr; align-items:start">
+    <h2>So nhanh<small>đọc từ bảng trên, không phải điểm số</small></h2>
+    <div>
+      <table>
+        <thead><tr><th></th><th>E · Nhãn dệt</th><th>F · Biển số</th><th>G · Một nhát cắt</th></tr></thead>
+        <tbody>
+          <tr><th>Ở 16px</th><td>khung + H, rõ</td><td>biển + H, rõ; biển ngang cần 27×18</td><td>H cắt rõ; wordmark bỏ nhát cắt dưới 24px</td></tr>
+          <tr><th>Thêu một màu</th><td>đúng bản chất: nó là cái nhãn</td><td>khung + chữ một màu được, mất màu vàng</td><td>chữ một màu, khe cắt là đường không thêu</td></tr>
+          <tr><th>Kể "cắt một lần"</th><td class="bad">không</td><td class="bad">không</td><td>chính là câu chuyện</td></tr>
+          <tr><th>Kể "Số"</th><td>nhãn số may cạnh nhãn tên</td><td>số là dòng dưới của biển, tự nhiên nhất</td><td class="mid">số đứng cạnh, như tay bài 1</td></tr>
+          <tr><th>Đọc ra tech / crypto?</th><td>không; đọc ra quần áo</td><td>không; đọc ra đường phố</td><td>không; đọc ra chữ in</td></tr>
+          <tr><th>Rủi ro</th><td class="mid">giống nhiều brand workwear (khung nhãn vuông)</td><td class="mid">liên tưởng xe cộ; không được bắt chước biển thật</td><td class="mid">wordmark thuần thì dễ bị chép; nhát cắt là thứ giữ nó</td></tr>
+          <tr><th>Cùng hệ với app</th><td>hợp: tem, khung, đường may đứt nét đã có</td><td>hợp nhất về màu: mật ong mang chữ mực đúng luật</td><td>hợp: chỉ cần Unbounded và một đường cắt</td></tr>
+        </tbody>
+      </table>
+      <div class="verdict">
+        <h2>Ý của phiên thiết kế</h2>
+        <p><b>G · Một nhát cắt</b> là hướng tôi đề xuất: không cần biểu tượng nào, con chữ tự kể lời hứa của cửa hàng, và nhát cắt là thứ khiến một wordmark Unbounded thành của riêng bạn. Nó tránh hẳn cảm giác tech vì không có hình học nào ngoài chữ.</p>
+        <p><b>F · Biển số</b> là hướng táo bạo và Sài Gòn nhất, màu vàng chữ đen trùng khít hệ v3, ô số có sẵn trong hình; cần vẽ biển như một khung riêng, không bắt chước biển xe thật. <b>E · Nhãn dệt</b> là lựa chọn an toàn: ai trong ngành cũng đọc ra ngay, đổi lại ít riêng.</p>
+        <p>Bất kể hướng nào: lockup chính là HIVE trần; SAIGON và ô số là lớp ghép.</p>
+      </div>
+      <div class="demoted">
+        <h3>Bốn hướng đã xét và để lại, gọi ra được nếu bạn muốn xem</h3>
+        <ul>
+          <li><b>Một sợi chỉ</b> · chữ I thay bằng một đường may mật ong. Đẹp trên áo, nhưng ở 16px đường may biến mất.</li>
+          <li><b>Con dấu</b> · dấu tròn "HIVE · SỐ 05" như dấu đóng lên tem. Là mặc định của ngành cho "phiên bản"; giữ ý dấu số cho tem treo.</li>
+          <li><b>Vạch cắt rập</b> · khía tam giác như dấu trên rập may. Quá tinh, chỉ thợ may nhận ra; ý "cắt" đã dồn vào G.</li>
+          <li><b>Vé số</b> · cuống vé răng cưa có số. Rất Việt, nhưng liên tưởng xổ số làm rẻ thương hiệu quần áo.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

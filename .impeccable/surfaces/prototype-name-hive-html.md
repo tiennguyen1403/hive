@@ -2,7 +2,7 @@
 version: 1
 slug: "prototype-name-hive-html"
 primary_target: "prototype/name/hive.html"
-related_targets: ["prototype/name/index.html"]
+related_targets: ["prototype/name/index.html","prototype/name/hive-2.html"]
 ---
 
 # prototype/name/hive.html — bảng hướng logo HIVE (mock so sánh, chưa duyệt)
@@ -26,3 +26,13 @@ FIRST VIEWPORT: 1280: tiêu đề một dòng + ba cột A/B/C, mỗi cột mark
 FORM: bảng lưới hairline, hàng = ứng dụng, cột = hướng; không concept-seed vì là yêu cầu hẹp trong thế giới đã chốt (new-work §3, "shape directly").
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance — áp dụng khi hướng được chọn đi vào app; bảng mock kết thúc ở vòng duyệt của người dùng.
+
+## Re-roll 1 (23/09/2026, tay bài 2 · `prototype/name/hive-2.html`)
+
+Người dùng loại cả ba hướng A/B/C: "lục giác nhìn như tech / crypto" và "tôi hoàn toàn không có idea gì về logo".
+Tay bài mới không dùng lại lục giác, sọc, con ong. Bảy ứng viên lấy từ thế giới của người mua streetwear Sài Gòn
+(ba họ chất liệu: vải, kim loại/biển, chữ in): nhãn dệt · biển số vàng · một nhát cắt trên chữ · một sợi chỉ thay
+chữ I · con dấu tròn · vạch cắt rập · vé số. Dựng ba: **E · Nhãn dệt** (an toàn), **F · Biển số** (táo bạo, Sài
+Gòn), **G · Một nhát cắt** (typographic, không biểu tượng). Bốn còn lại demoted trên bảng kèm lý do. Đề xuất G.
+Không chạy `concept-seed` vì vật thể là một mark trong thế giới đã chốt, không phải một surface; ghi rõ ở đây.
+THESIS và FIRST VIEWPORT giữ như trên; FORM đổi: ba cột E/F/G, cùng hàng ứng dụng.
