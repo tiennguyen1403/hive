@@ -19,9 +19,10 @@ import {
 } from "./catalog-query";
 import { productsInDrop } from "./inventory";
 import { CATALOG } from "@/data/catalog";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { FAMILY_LABELS } from "@/data/types";
 
-const DROP5 = productsInDrop(5);
+const DROP5 = productsInDrop(FIXTURE_CATALOG, 5);
 
 describe("fold", () => {
   it("drops the tone marks a shopper will not type", () => {
@@ -295,7 +296,7 @@ describe("the tallies behind every tab and chip", () => {
     // VEST is in FAMILIES and in drop 04. A "Áo gile 0" tab would lead to an
     // empty grid.
     expect(familyCounts(DROP5).some((t) => t.value === "VEST")).toBe(false);
-    expect(familyCounts(productsInDrop(4)).some((t) => t.value === "VEST")).toBe(true);
+    expect(familyCounts(productsInDrop(FIXTURE_CATALOG, 4)).some((t) => t.value === "VEST")).toBe(true);
   });
 
   it("splits the drop by fit", () => {

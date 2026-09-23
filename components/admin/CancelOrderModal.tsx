@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import type { Order } from "@/data/types";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { orderItemsLabel } from "@/lib/admin-rows";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd } from "@/lib/orders";
@@ -52,6 +53,7 @@ export function CancelOrderModal({
   onClose: () => void;
   onConfirm: (reason: string, note: string) => void;
 }) {
+  const catalog = useCatalog();
   const [reason, setReason] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState(false);
@@ -79,7 +81,7 @@ export function CancelOrderModal({
               ? `Đơn đã thanh toán ${vnd(total)}. Huỷ thì phải hoàn tiền tay — chưa nối cổng thanh toán nào.`
               : `Đơn ${vnd(total)} chưa nhận được tiền. Huỷ là đóng lại, không có gì phải hoàn.`}{" "}
             Khách thấy lý do ở màn đơn của họ. Tồn kho không tự đổi: muốn đưa{" "}
-            {orderItemsLabel(order)} lại lên kệ thì dùng Điều chỉnh tồn kho ở Mẫu.
+            {orderItemsLabel(catalog, order)} lại lên kệ thì dùng Điều chỉnh tồn kho ở Mẫu.
           </>
         )
       }

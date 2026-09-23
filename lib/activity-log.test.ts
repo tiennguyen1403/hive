@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { CATALOG, DROPS, bySlug } from "@/data/catalog";
+import { CATALOG, DROPS } from "@/data/catalog";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { ORDERS } from "@/data/orders";
 import { EMPTY_SIM, type SimAction, type SimOverlay } from "./admin-sim";
 import {
@@ -23,26 +24,26 @@ function overlay(...actions: SimAction[]): SimOverlay {
 }
 
 function rowsOf(...actions: SimAction[]): LogRow[] {
-  return logRows(overlay(...actions), FIXTURES, NOW);
+  return logRows(FIXTURE_CATALOG, overlay(...actions), FIXTURES, NOW);
 }
 
 const AT = "2026-09-20T18:52:00+07:00";
 
 describe("the log is read out of the store, never stored", () => {
   it("still has rows with an empty store: the clock and the data did things", () => {
-    const rows = logRows(EMPTY_SIM, FIXTURES, NOW);
+    const rows = logRows(FIXTURE_CATALOG, EMPTY_SIM, FIXTURES, NOW);
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((r) => r.author === "Hệ thống" || r.author === "Cửa hàng")).toBe(true);
   });
 
   it("is empty only when the fixtures are empty too", () => {
     expect(
-      logRows(EMPTY_SIM, { orders: [], drops: [], products: [] }, NOW),
+      logRows(FIXTURE_CATALOG, EMPTY_SIM, { orders: [], drops: [], products: [] }, NOW),
     ).toEqual([]);
   });
 
   it("puts the newest first", () => {
-    const rows = logRows(EMPTY_SIM, FIXTURES, NOW);
+    const rows = logRows(FIXTURE_CATALOG, EMPTY_SIM, FIXTURES, NOW);
     for (let i = 1; i < rows.length; i++) {
       expect(Date.parse(rows[i - 1]!.at)).toBeGreaterThanOrEqual(Date.parse(rows[i]!.at));
     }
@@ -118,7 +119,7 @@ describe("what the shop pressed", () => {
   });
 
   it("names the style, the colour and the size of a one-cell adjustment", () => {
-    const bui = bySlug.get("bui")!;
+    const bui = FIXTURE_CATALOG.bySlug.get("bui")!;
     const row = rowsOf({
       kind: "INVENTORY_ADJUSTED",
       at: AT,
@@ -138,7 +139,7 @@ describe("what the shop pressed", () => {
   });
 
   it("counts the cells when an adjustment moved more than one", () => {
-    const bui = bySlug.get("bui")!;
+    const bui = FIXTURE_CATALOG.bySlug.get("bui")!;
     const row = rowsOf({
       kind: "INVENTORY_ADJUSTED",
       at: AT,
@@ -275,7 +276,7 @@ describe("who did it", () => {
   });
 
   it("says Hệ thống for a transfer that matched itself", () => {
-    const rows = logRows(EMPTY_SIM, FIXTURES, NOW);
+    const rows = logRows(FIXTURE_CATALOG, EMPTY_SIM, FIXTURES, NOW);
     const matched = rows.filter((r) => r.action === "Khớp chuyển khoản");
     expect(matched.length).toBeGreaterThan(0);
     for (const r of matched) {
@@ -290,7 +291,7 @@ describe("who did it", () => {
     const waiting = ORDERS.find((o) => o.status.state === "AWAITING_TRANSFER")!;
     const dueAt = waiting.status.state === "AWAITING_TRANSFER" ? waiting.status.dueAt : "";
     const after = new Date(Date.parse(dueAt) + 3_600_000);
-    const row = logRows(EMPTY_SIM, FIXTURES, after).find(
+    const row = logRows(FIXTURE_CATALOG, EMPTY_SIM, FIXTURES, after).find(
       (r) => r.id === `due-${waiting.code}`,
     )!;
     expect(row.author).toBe("Hệ thống");
@@ -304,7 +305,7 @@ describe("who did it", () => {
     const waiting = ORDERS.find((o) => o.status.state === "AWAITING_TRANSFER")!;
     const dueAt = waiting.status.state === "AWAITING_TRANSFER" ? waiting.status.dueAt : "";
     const after = new Date(Date.parse(dueAt) + 3_600_000);
-    const rows = logRows(
+    const rows = logRows(FIXTURE_CATALOG, 
       overlay({ kind: "ORDER_PAID", at: AT, code: String(waiting.code) }),
       FIXTURES,
       after,
@@ -313,7 +314,7 @@ describe("who did it", () => {
   });
 
   it("says Hệ thống for an issue that opened and closed on its own schedule", () => {
-    const rows = logRows(EMPTY_SIM, FIXTURES, NOW);
+    const rows = logRows(FIXTURE_CATALOG, EMPTY_SIM, FIXTURES, NOW);
     const opened = rows.filter((r) => r.action === "Mở số");
     const closed = rows.filter((r) => r.action === "Đóng số");
     expect(opened.length).toBeGreaterThan(0);
@@ -324,13 +325,13 @@ describe("who did it", () => {
   });
 
   it("never invents an hour for a code that ran out of uses", () => {
-    const rows = logRows(EMPTY_SIM, FIXTURES, NOW);
+    const rows = logRows(FIXTURE_CATALOG, EMPTY_SIM, FIXTURES, NOW);
     expect(rows.some((r) => r.action === "Hết lượt")).toBe(false);
   });
 });
 
 describe("filtering", () => {
-  const rows = logRows(EMPTY_SIM, FIXTURES, NOW);
+  const rows = logRows(FIXTURE_CATALOG, EMPTY_SIM, FIXTURES, NOW);
 
   it("offers the six choices the mock's menu draws", () => {
     expect(LOG_FILTERS.map((f) => f.label)).toEqual([

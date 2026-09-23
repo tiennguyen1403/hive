@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { Icon } from "@/components/icon/Icon";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import type { ResolvedLine } from "@/lib/cart";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";

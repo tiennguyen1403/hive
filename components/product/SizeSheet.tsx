@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/icon/Icon";
 import { Sheet } from "@/components/ui/Sheet";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import type { ColorKey, Product, Size } from "@/data/types";
 import { onHandByColor, onHandOf } from "@/lib/inventory";
 import { vnd } from "@/lib/money";

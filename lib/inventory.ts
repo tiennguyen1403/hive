@@ -1,4 +1,4 @@
-import { CATALOG } from "@/data/catalog";
+import type { Catalog } from "./catalog";
 import {
   FAMILIES,
   FAMILY_LABELS,
@@ -77,18 +77,26 @@ export interface DropSummary {
 /**
  * The styles cut for one issue.
  *
- * `products` defaults to the catalogue and is passed in by the back office,
- * which renders `fixtures + overlay` — a stock adjustment made in this
- * browser has to reach the issue's own figures, or "còn 73 chiếc" on the
- * dashboard would disagree with the products table one click away. Every
- * other caller reads the fixtures and passes nothing (v3 slice 5).
+ * `products` defaults to the catalogue this render was handed, and is passed
+ * in explicitly by the back office, which renders `fixtures + overlay` — a
+ * stock adjustment made in this browser has to reach the issue's own figures,
+ * or "còn 73 chiếc" on the dashboard would disagree with the products table
+ * one click away. Every other caller passes only the catalogue (v3 slice 5).
  */
-export function productsInDrop(no: number, products: Product[] = CATALOG): Product[] {
+export function productsInDrop(
+  catalog: Catalog,
+  no: number,
+  products: readonly Product[] = catalog.products,
+): Product[] {
   return products.filter((p) => p.dropNo === no);
 }
 
-export function dropSummary(no: number, products: Product[] = CATALOG): DropSummary {
-  const ps = productsInDrop(no, products);
+export function dropSummary(
+  catalog: Catalog,
+  no: number,
+  products: readonly Product[] = catalog.products,
+): DropSummary {
+  const ps = productsInDrop(catalog, no, products);
   return {
     styles: ps.length,
     cutUnits: ps.reduce((n, p) => n + p.cutUnits, 0),
@@ -107,8 +115,12 @@ export function dropSummary(no: number, products: Product[] = CATALOG): DropSumm
  * Ties break on the name so the row does not reshuffle between two renders
  * of the same numbers.
  */
-export function lowStockIn(no: number, products: Product[] = CATALOG): Product[] {
-  return productsInDrop(no, products)
+export function lowStockIn(
+  catalog: Catalog,
+  no: number,
+  products: readonly Product[] = catalog.products,
+): Product[] {
+  return productsInDrop(catalog, no, products)
     .filter((p) => isLowStock(p))
     .sort((a, b) => onHand(a) - onHand(b) || a.name.localeCompare(b.name, "vi"));
 }
@@ -136,8 +148,8 @@ export interface FamilyGroup {
   fromVnd: number;
 }
 
-export function familyGroupsIn(no: number): FamilyGroup[] {
-  const ps = productsInDrop(no);
+export function familyGroupsIn(catalog: Catalog, no: number): FamilyGroup[] {
+  const ps = productsInDrop(catalog, no);
   return FAMILIES.flatMap((family) => {
     const inFamily = ps.filter((p) => p.family === family);
     const lead = inFamily[0];
@@ -220,11 +232,18 @@ function joinWords(words: string[]): string {
  * Price times units sold. Simulated, like everything else here — an admin
  * screen showing this must say so.
  */
-export function dropRevenueVnd(no: number, products: Product[] = CATALOG): number {
-  return productsInDrop(no, products).reduce((n, p) => n + p.priceVnd * soldUnits(p), 0);
+export function dropRevenueVnd(
+  catalog: Catalog,
+  no: number,
+  products: readonly Product[] = catalog.products,
+): number {
+  return productsInDrop(catalog, no, products).reduce(
+    (n, p) => n + p.priceVnd * soldUnits(p),
+    0,
+  );
 }
 
 /** How many photo sets the open drop still needs: one per colourway. */
-export function photoSetsNeeded(no: number): number {
-  return productsInDrop(no).reduce((n, p) => n + p.colors.length, 0);
+export function photoSetsNeeded(catalog: Catalog, no: number): number {
+  return productsInDrop(catalog, no).reduce((n, p) => n + p.colors.length, 0);
 }

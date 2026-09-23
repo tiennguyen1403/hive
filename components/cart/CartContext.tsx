@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import {
   CART_STORAGE_KEY,
   addToCart,
@@ -70,6 +71,7 @@ const CartCtx = createContext<CartApi | null>(null);
  * and is the only version that is correct on both.
  */
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const catalog = useCatalog();
   const [cart, setCart] = useState<Cart>([]);
   const [promoCode, setCode] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -121,10 +123,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const add = useCallback((line: CartLine) => setCart((c) => addToCart(c, line)), []);
+  const add = useCallback(
+    (line: CartLine) => setCart((c) => addToCart(catalog, c, line)),
+    [catalog],
+  );
   const setQty = useCallback(
-    (key: string, qty: number) => setCart((c) => setLineQty(c, key, qty)),
-    [],
+    (key: string, qty: number) => setCart((c) => setLineQty(catalog, c, key, qty)),
+    [catalog],
   );
   const remove = useCallback((key: string) => setCart((c) => removeLine(c, key)), []);
   // An order that has been placed takes its discount with it. Leaving the

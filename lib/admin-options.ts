@@ -1,4 +1,4 @@
-import { CATALOG, DROPS } from "@/data/catalog";
+import type { Catalog } from "./catalog";
 import type { SelectOption } from "@/components/ui/Select";
 import { dropState } from "./drop";
 import { demoNow } from "./clock";
@@ -12,9 +12,9 @@ import { demoNow } from "./clock";
  */
 
 /** Every kind the catalogue actually uses, with how many styles wear it. */
-export function kindOptions(): SelectOption[] {
+export function kindOptions(catalog: Catalog): SelectOption[] {
   const count = new Map<string, number>();
-  for (const p of CATALOG) count.set(p.kind, (count.get(p.kind) ?? 0) + 1);
+  for (const p of catalog.products) count.set(p.kind, (count.get(p.kind) ?? 0) + 1);
   return [...count]
     .sort((a, b) => a[0].localeCompare(b[0], "vi"))
     .map(([kind, n]) => ({ value: kind, label: kind, note: `${n} mẫu` }));
@@ -23,8 +23,8 @@ export function kindOptions(): SelectOption[] {
 const STATE_NOTE = { OPEN: "đang mở", UPCOMING: "sắp mở", CLOSED: "đã đóng" } as const;
 
 /** Newest drop first, each saying what it is doing right now. */
-export function dropOptions(now: Date = demoNow()): SelectOption[] {
-  return [...DROPS]
+export function dropOptions(catalog: Catalog, now: Date = demoNow()): SelectOption[] {
+  return [...catalog.drops]
     .sort((a, b) => b.no - a.no)
     .map((d) => ({
       value: String(d.no),

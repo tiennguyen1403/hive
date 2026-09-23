@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { CUSTOMERS } from "@/data/customers";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { ORDERS, ordersOf } from "@/data/orders";
 import type { Order } from "@/data/types";
 import {
@@ -40,18 +41,18 @@ describe("longestStreak", () => {
 describe("issueOf", () => {
   it("reads the issue off the style that was ordered", () => {
     const order = ORDERS.find((o) => o.code === "DH-2429")!;
-    expect(issueOf(order)).toBe(5);
+    expect(issueOf(FIXTURE_CATALOG, order)).toBe(5);
   });
 
   it("answers for every order in the book", () => {
-    for (const o of ORDERS) expect(issueOf(o)).toBeGreaterThan(0);
+    for (const o of ORDERS) expect(issueOf(FIXTURE_CATALOG, o)).toBeGreaterThan(0);
   });
 });
 
 describe("the label is derived, never typed", () => {
   it("calls somebody who bought in three straight issues thân thiết", () => {
-    const facts = customerFacts(ordersOf(CUSTOMERS[0]!.id), OPEN, NOW);
-    const streaky = CUSTOMERS.map((c) => customerFacts(ordersOf(c.id), OPEN, NOW)).filter(
+    const facts = customerFacts(FIXTURE_CATALOG, ordersOf(CUSTOMERS[0]!.id), OPEN, NOW);
+    const streaky = CUSTOMERS.map((c) => customerFacts(FIXTURE_CATALOG, ordersOf(c.id), OPEN, NOW)).filter(
       (f) => f.streak >= LOYAL_ISSUES,
     );
     expect(streaky.length).toBeGreaterThan(0);
@@ -64,7 +65,7 @@ describe("the label is derived, never typed", () => {
   });
 
   it("calls somebody with two paid orders and no streak quay lại", () => {
-    const back = CUSTOMERS.map((c) => customerFacts(ordersOf(c.id), OPEN, NOW)).filter(
+    const back = CUSTOMERS.map((c) => customerFacts(FIXTURE_CATALOG, ordersOf(c.id), OPEN, NOW)).filter(
       (f) => f.streak < LOYAL_ISSUES && f.booked.length >= RETURNING_ORDERS,
     );
     expect(back.length).toBeGreaterThan(0);
@@ -76,25 +77,25 @@ describe("the label is derived, never typed", () => {
   });
 
   it("calls somebody whose first paid order is in the open issue mới", () => {
-    const fresh = CUSTOMERS.map((c) => customerFacts(ordersOf(c.id), OPEN, NOW)).filter(
+    const fresh = CUSTOMERS.map((c) => customerFacts(FIXTURE_CATALOG, ordersOf(c.id), OPEN, NOW)).filter(
       (f) => f.tag?.key === "new",
     );
     for (const f of fresh) {
       expect(f.booked.length).toBe(1);
-      expect(issueOf(f.booked[0]!)).toBe(OPEN);
+      expect(issueOf(FIXTURE_CATALOG, f.booked[0]!)).toBe(OPEN);
       expect(f.tag?.tone).toBe("new");
     }
   });
 
   it("prefers the strongest label when two apply", () => {
-    const loyal = CUSTOMERS.map((c) => customerFacts(ordersOf(c.id), OPEN, NOW)).find(
+    const loyal = CUSTOMERS.map((c) => customerFacts(FIXTURE_CATALOG, ordersOf(c.id), OPEN, NOW)).find(
       (f) => f.streak >= LOYAL_ISSUES && f.booked.length >= RETURNING_ORDERS,
     );
     expect(loyal?.tag?.key).toBe("loyal");
   });
 
   it("labels nobody who has never been paid for", () => {
-    const facts = customerFacts([], OPEN, NOW);
+    const facts = customerFacts(FIXTURE_CATALOG, [], OPEN, NOW);
     expect(facts.tag).toBeNull();
     expect(facts.spentVnd).toBe(0);
     expect(facts.issues).toEqual([]);
@@ -102,7 +103,7 @@ describe("the label is derived, never typed", () => {
 
   it("does not call anybody new between two issues", () => {
     for (const c of CUSTOMERS) {
-      const facts = customerFacts(ordersOf(c.id), null, NOW);
+      const facts = customerFacts(FIXTURE_CATALOG, ordersOf(c.id), null, NOW);
       expect(facts.tag?.key).not.toBe("new");
     }
   });
@@ -117,7 +118,7 @@ describe("only money that arrived counts", () => {
 
   it("a cancelled order adds nothing to the spend or to the issues", () => {
     const one = cancelled[0]!;
-    const facts = customerFacts([one], OPEN, NOW);
+    const facts = customerFacts(FIXTURE_CATALOG, [one], OPEN, NOW);
     expect(facts.booked).toEqual([]);
     expect(facts.spentVnd).toBe(0);
     expect(facts.issues).toEqual([]);
@@ -130,7 +131,7 @@ describe("only money that arrived counts", () => {
     const waiting = ORDERS.find((o) => o.status.state === "AWAITING_TRANSFER")!;
     const dueAt = waiting.status.state === "AWAITING_TRANSFER" ? waiting.status.dueAt : "";
     const after = new Date(Date.parse(dueAt) + 60_000);
-    const facts = customerFacts([waiting], OPEN, after);
+    const facts = customerFacts(FIXTURE_CATALOG, [waiting], OPEN, after);
     expect(facts.booked).toEqual([]);
     expect(facts.orders[0]!.status.state).toBe("CANCELLED");
   });
@@ -138,20 +139,20 @@ describe("only money that arrived counts", () => {
   it("an unpaid transfer inside its deadline is still waiting on the shop", () => {
     const waiting = ORDERS.find((o) => o.status.state === "AWAITING_TRANSFER")!;
     const before = new Date(Date.parse(waiting.placedAt) + 60_000);
-    expect(customerFacts([waiting], OPEN, before).pending).toBe(true);
+    expect(customerFacts(FIXTURE_CATALOG, [waiting], OPEN, before).pending).toBe(true);
   });
 });
 
 describe("the groups", () => {
   it("puts everybody in Tất cả", () => {
     for (const c of CUSTOMERS) {
-      expect(inGroup("all", customerFacts(ordersOf(c.id), OPEN, NOW))).toBe(true);
+      expect(inGroup("all", customerFacts(FIXTURE_CATALOG, ordersOf(c.id), OPEN, NOW))).toBe(true);
     }
   });
 
   it("puts each labelled person in exactly their own group", () => {
     for (const c of CUSTOMERS) {
-      const facts = customerFacts(ordersOf(c.id), OPEN, NOW);
+      const facts = customerFacts(FIXTURE_CATALOG, ordersOf(c.id), OPEN, NOW);
       for (const key of ["loyal", "returning", "new"] as const) {
         expect(inGroup(key, facts)).toBe(facts.tag?.key === key);
       }

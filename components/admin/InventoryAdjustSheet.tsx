@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Icon } from "@/components/icon/Icon";
 import { Select } from "@/components/ui/Select";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
 import type { InventoryCell } from "@/lib/admin-sim";
 import {

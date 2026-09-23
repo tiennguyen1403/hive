@@ -5,7 +5,8 @@ import { AdminTop } from "@/components/admin/AdminTop";
 import { useSim } from "@/components/admin/SimContext";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Empty } from "@/components/shop/Empty";
-import { byId, COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { ORDERS } from "@/data/orders";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
 import { addressEditReason, carrierOf, simOrders } from "@/lib/admin-sim";
@@ -36,6 +37,7 @@ import { deliveryOption, COD_SURCHARGE_VND, EXPRESS_FEE_VND } from "@/lib/shippi
  * be the worst kind of placeholder, because somebody would try it.
  */
 export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string }) {
+  const catalog = useCatalog();
   const { sim } = useSim();
   const book = simOrders(ORDERS, sim);
   /**
@@ -126,7 +128,7 @@ export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string 
                 <table>
                   <tbody>
                     {o.lines.map((l, i) => {
-                      const p = byId.get(l.productId);
+                      const p = catalog.byId.get(l.productId);
                       return (
                         <tr key={`${l.productId}-${l.size}-${l.color}-${i}`}>
                           <td>
@@ -162,7 +164,7 @@ export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string 
                 )}
 
                 <p className="foot">
-                  Mã vận đơn: {tracking ?? "chờ bàn giao"} · {LEX.t} {issueNo(issueOf(o) ?? 0)} ·
+                  Mã vận đơn: {tracking ?? "chờ bàn giao"} · {LEX.t} {issueNo(issueOf(catalog, o) ?? 0)} ·
                   in {clockLabel(nowIso)} · {dayMonth(nowIso)}
                 </p>
               </section>

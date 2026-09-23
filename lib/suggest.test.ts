@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { CURRENT_DROP_NO } from "@/data/catalog";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { productsInDrop } from "./inventory";
 import { MAX_GROUPS, MAX_STYLES, matchRange, suggestFor } from "./suggest";
 
-const pool = productsInDrop(CURRENT_DROP_NO);
+const pool = productsInDrop(FIXTURE_CATALOG, FIXTURE_CATALOG.currentDropNo);
 
 describe("matchRange", () => {
   it("finds the term where it sits in the original text", () => {

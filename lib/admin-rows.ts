@@ -1,4 +1,4 @@
-import { byId, teasersIn } from "@/data/catalog";
+import { teasersIn, type Catalog } from "./catalog";
 import { customerById } from "@/data/customers";
 import type { DropState, Order, Promotion } from "@/data/types";
 import { needsAction } from "./admin-metrics";
@@ -29,8 +29,10 @@ import { demoNow } from "./clock";
 
 // ───────────────────────────────────────────────────────────────── orders
 /** "MUỐI ×2, KHÓI ×1" — what is in the box, in the fewest characters. */
-export function orderItemsLabel(o: Order): string {
-  return o.lines.map((l) => `${byId.get(l.productId)?.name ?? "?"} ×${l.qty}`).join(", ");
+export function orderItemsLabel(catalog: Catalog, o: Order): string {
+  return o.lines
+    .map((l) => `${catalog.byId.get(l.productId)?.name ?? "?"} ×${l.qty}`)
+    .join(", ");
 }
 
 /**
@@ -99,7 +101,7 @@ export interface QueueRow {
  * were just told about. The lateness is on the row rather than in the
  * ordering, so nothing jumps position while somebody is reading it.
  */
-export function queueRows(orders: Order[], now: Date): QueueRow[] {
+export function queueRows(catalog: Catalog, orders: Order[], now: Date): QueueRow[] {
   return needsAction(orders)
     .slice()
     .sort((a, b) => b.placedAt.localeCompare(a.placedAt))
@@ -114,7 +116,7 @@ export function queueRows(orders: Order[], now: Date): QueueRow[] {
           due: `hạn ${dateTimeLabel(o.status.dueAt)}`,
           late: note?.late ?? false,
           action: "MARK_PAID" as const,
-          items: orderItemsLabel(o),
+          items: orderItemsLabel(catalog, o),
         };
       }
       const paidAt = o.status.state === "PAID" ? o.status.paidAt : o.placedAt;
@@ -126,7 +128,7 @@ export function queueRows(orders: Order[], now: Date): QueueRow[] {
         due: note?.late ? note.text.replace("chưa bàn giao · ", "") : null,
         late: note?.late ?? false,
         action: "HAND_OVER" as const,
-        items: orderItemsLabel(o),
+        items: orderItemsLabel(catalog, o),
       };
     });
 }
@@ -214,22 +216,22 @@ export const DROP_STATE_LABEL: Record<DropState, string> = {
  * on the shop front would read as a mistake. The state stays derived — see
  * `simDrops`, where closing early is a moved closing hour and not a flag.
  */
-export function simDropRows(drops: SimDrop[], now: Date): DropRow[] {
+export function simDropRows(catalog: Catalog, drops: SimDrop[], now: Date): DropRow[] {
   return [...drops]
     .sort((a, b) => b.no - a.no)
     .map((d) => {
-      const s = dropSummary(d.no);
+      const s = dropSummary(catalog, d.no);
       return {
         no: d.no,
         label: `Số ${String(d.no).padStart(2, "0")}`,
         window: rangeLabel(d.opensAt, d.closesAt),
         state: dropState(d, now),
         styles: s.styles,
-        teasers: teasersIn(d.no).length,
+        teasers: teasersIn(catalog, d.no).length,
         cutUnits: s.cutUnits,
         soldUnits: s.soldUnits,
         onHand: s.onHand,
-        revenueVnd: dropRevenueVnd(d.no),
+        revenueVnd: dropRevenueVnd(catalog, d.no),
         simulated: d.simulated,
         rescheduled: d.rescheduled,
       };

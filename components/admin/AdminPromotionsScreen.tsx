@@ -8,8 +8,7 @@ import { useSim, useSimNow } from "@/components/admin/SimContext";
 import { ActionMenu, Stabs } from "@/components/admin/Table3";
 import { Badge, type BadgeTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { DROPS } from "@/data/catalog";
-import { PROMOTIONS } from "@/data/promotions";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Promotion } from "@/data/types";
 import { PROMO_KIND_LABEL, SIM_SUFFIX, promoState, promoValueLabel } from "@/lib/admin-rows";
 import { simPromotions, type SimPromotion } from "@/lib/admin-sim";
@@ -80,12 +79,13 @@ function standingOf(row: SimPromotion, now: Date): Standing {
  * there is none.
  */
 export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query: Query }) {
+  const catalog = useCatalog();
   const { sim, run } = useSim();
   const now = useSimNow(nowIso);
   const [editing, setEditing] = useState<SimPromotion | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const rows = simPromotions(PROMOTIONS, sim).map((r) => ({
+  const rows = simPromotions(catalog.promotions, sim).map((r) => ({
     row: r,
     standing: standingOf(r, now),
   }));
@@ -99,7 +99,7 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
     .join(" · ");
 
   /** The issue a copy of a code would run with: the next one not yet open. */
-  const nextIssue = [...DROPS]
+  const nextIssue = [...catalog.drops]
     .sort((a, b) => a.no - b.no)
     .find((d) => dropState(d, now) === "UPCOMING");
 

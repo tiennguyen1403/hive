@@ -10,6 +10,7 @@ import { addressBookFor } from "@/lib/address-book";
 import { initialsOf } from "@/lib/initials";
 import { deviceOrdersOf } from "@/lib/order-rows";
 import { formatPhone } from "@/lib/phone";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { resolveWishlist } from "@/lib/wishlist";
 import { useAddressBook } from "./AddressBookContext";
 import { useNotifCenter } from "./notif-center";
@@ -47,16 +48,17 @@ export type RailKey =
  */
 export function AccountRail({ me, active }: { me: Customer; active?: RailKey }) {
   const { signOut } = useSession();
+  const catalog = useCatalog();
   const { list, ready: wishReady } = useWishlist();
   const { device, ready: bookReady } = useAddressBook();
   const { orders: placed } = usePlacedOrders();
-  const { unread, ready: notifReady } = useNotifCenter(me);
+  const { unread, ready: notifReady } = useNotifCenter(catalog, me);
   const router = useRouter();
 
   const orders = ordersOf(me.id).length + deviceOrdersOf(me.id, placed).length;
   // `ready` is false for one paint on each of these. Nothing beats a zero:
   // "0 mẫu đã lưu" is a claim, and it would be wrong for that paint.
-  const saved = wishReady ? resolveWishlist(demoNow(), list).items.length : undefined;
+  const saved = wishReady ? resolveWishlist(catalog, demoNow(), list).items.length : undefined;
   const addresses = bookReady ? addressBookFor(me, device).length : undefined;
 
   return (

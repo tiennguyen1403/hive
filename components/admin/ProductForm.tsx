@@ -6,7 +6,7 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Icon } from "@/components/icon/Icon";
 import { Select, type SelectOption } from "@/components/ui/Select";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import { SIZES, type ColorKey, type Size } from "@/data/types";
 import { LEX } from "@/lib/lexicon";
 import { moneyInitial, moneyInput, parseVnd, plainVnd } from "@/lib/money";

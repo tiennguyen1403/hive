@@ -1,4 +1,3 @@
-import { byId } from "@/data/catalog";
 import {
   COLOR_KEYS,
   SIZES,
@@ -8,6 +7,7 @@ import {
   type ProductId,
   type Size,
 } from "@/data/types";
+import type { Catalog } from "./catalog";
 import { dropState, getDrop } from "./drop";
 import { onHandOf } from "./inventory";
 
@@ -44,8 +44,11 @@ export function lineKey(l: Pick<CartLine, "productId" | "size" | "color">): stri
 }
 
 /** Units on hand for exactly this choice. 0 for a product that has gone. */
-function availableFor(l: Pick<CartLine, "productId" | "size" | "color">): number {
-  const p = byId.get(l.productId);
+function availableFor(
+  catalog: Catalog,
+  l: Pick<CartLine, "productId" | "size" | "color">,
+): number {
+  const p = catalog.byId.get(l.productId);
   return p ? onHandOf(p, l.color, l.size) : 0;
 }
 
@@ -57,8 +60,8 @@ function availableFor(l: Pick<CartLine, "productId" | "size" | "color">): number
  * stock would put a promise in the cart that no later screen can keep. A
  * choice with nothing left is refused outright rather than added at zero.
  */
-export function addToCart(cart: Cart, add: CartLine): Cart {
-  const stock = availableFor(add);
+export function addToCart(catalog: Catalog, cart: Cart, add: CartLine): Cart {
+  const stock = availableFor(catalog, add);
   if (stock <= 0) return cart;
 
   const key = lineKey(add);
@@ -72,10 +75,15 @@ export function addToCart(cart: Cart, add: CartLine): Cart {
 }
 
 /** Set a line's quantity. Zero or less removes it — an empty line is noise. */
-export function setLineQty(cart: Cart, key: string, qty: number): Cart {
+export function setLineQty(
+  catalog: Catalog,
+  cart: Cart,
+  key: string,
+  qty: number,
+): Cart {
   if (qty <= 0) return removeLine(cart, key);
   return cart.map((l) =>
-    lineKey(l) === key ? { ...l, qty: Math.min(qty, availableFor(l)) } : l,
+    lineKey(l) === key ? { ...l, qty: Math.min(qty, availableFor(catalog, l)) } : l,
   );
 }
 
@@ -124,18 +132,18 @@ export interface ResolvedCart {
  * for sale even though the shelf still shows units. Passing the instant in
  * keeps that testable instead of true-until-next-Tuesday.
  */
-export function resolveCart(now: Date, cart: Cart): ResolvedCart {
+export function resolveCart(catalog: Catalog, now: Date, cart: Cart): ResolvedCart {
   const lines: ResolvedLine[] = [];
   const unknown: CartLine[] = [];
 
   for (const line of cart) {
-    const product = byId.get(line.productId);
+    const product = catalog.byId.get(line.productId);
     if (!product) {
       unknown.push(line);
       continue;
     }
     const available = onHandOf(product, line.color, line.size);
-    const drop = getDrop(product.dropNo);
+    const drop = getDrop(catalog, product.dropNo);
     const dropOpen = drop ? dropState(drop, now) === "OPEN" : false;
 
     lines.push({
@@ -183,8 +191,8 @@ export function hasBlockingIssue(lines: ResolvedLine[]): boolean {
 }
 
 /** Sizes of the same colourway that could be swapped to. Powers "Đổi sang size L". */
-export function swapSizesFor(line: CartLine): Size[] {
-  const p = byId.get(line.productId);
+export function swapSizesFor(catalog: Catalog, line: CartLine): Size[] {
+  const p = catalog.byId.get(line.productId);
   if (!p) return [];
   return SIZES.filter((s) => s !== line.size && onHandOf(p, line.color, s) > 0);
 }

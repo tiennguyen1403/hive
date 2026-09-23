@@ -1,5 +1,5 @@
-import { byId, bySlug } from "@/data/catalog";
 import type { CustomerId, Order, OrderState, PaymentMethod } from "@/data/types";
+import type { Catalog } from "./catalog";
 import {
   effectiveStatus,
   eventStamp,
@@ -95,8 +95,8 @@ const MAX_THUMBS = 2;
  * about the clock (`effectiveStatus`). The row reads the status through it
  * so the list, the tabs and the detail cannot disagree.
  */
-export function rowOfOrder(o: Order, now: Date = demoNow()): OrderRow {
-  const products = o.lines.map((l) => byId.get(l.productId));
+export function rowOfOrder(catalog: Catalog, o: Order, now: Date = demoNow()): OrderRow {
+  const products = o.lines.map((l) => catalog.byId.get(l.productId));
   const status = effectiveStatus(o, now);
 
   return {
@@ -174,7 +174,11 @@ export function canCancel(state: RowState): boolean {
   return state === "AWAITING_TRANSFER" || state === "RECEIVED";
 }
 
-export function rowOfPlaced(p: PlacedOrder, now: Date = demoNow()): OrderRow {
+export function rowOfPlaced(
+  catalog: Catalog,
+  p: PlacedOrder,
+  now: Date = demoNow(),
+): OrderRow {
   const state = deviceState(p, now);
   const due = transferDeadlineIso(p.placedAt);
 
@@ -188,8 +192,8 @@ export function rowOfPlaced(p: PlacedOrder, now: Date = demoNow()): OrderRow {
     items: p.lines.map((l) => ({ name: l.name, qty: l.qty })),
     // A device order stores the style's slug, so the issue is one lookup
     // away; a slug the catalog no longer carries leaves the field off.
-    ...(dropNoOfSlug(p.lines[0]?.slug) !== undefined
-      ? { dropNo: dropNoOfSlug(p.lines[0]?.slug) }
+    ...(dropNoOfSlug(catalog, p.lines[0]?.slug) !== undefined
+      ? { dropNo: dropNoOfSlug(catalog, p.lines[0]?.slug) }
       : {}),
     photoKeys: p.lines.slice(0, MAX_THUMBS).map((l) => l.photoKey),
     note: state === "CANCELLED" ? cancelNote(p) : PAYMENT_IN_LINE[p.payment],
@@ -203,8 +207,8 @@ export function cancelNote(p: PlacedOrder): string {
   return p.cancelReason === "customer" ? "khách huỷ" : "quá hạn chuyển khoản";
 }
 
-function dropNoOfSlug(slug: string | undefined): number | undefined {
-  return slug ? bySlug.get(slug)?.dropNo : undefined;
+function dropNoOfSlug(catalog: Catalog, slug: string | undefined): number | undefined {
+  return slug ? catalog.bySlug.get(slug)?.dropNo : undefined;
 }
 
 /**
@@ -245,17 +249,18 @@ export function visibleDeviceOrder(
  * the one with a history behind it.
  */
 export function orderRows(
+  catalog: Catalog,
   orders: Order[],
   placed: PlacedOrder[],
   now: Date = demoNow(),
 ): OrderRow[] {
-  const rows = orders.map((o) => rowOfOrder(o, now));
+  const rows = orders.map((o) => rowOfOrder(catalog, o, now));
   const taken = new Set(rows.map((r) => r.code));
 
   for (const p of placed) {
     if (taken.has(p.code)) continue;
     taken.add(p.code);
-    rows.push(rowOfPlaced(p, now));
+    rows.push(rowOfPlaced(catalog, p, now));
   }
 
   return rows.sort((a, b) => Date.parse(b.placedAt) - Date.parse(a.placedAt));

@@ -7,6 +7,7 @@ import { ShopFrame } from "@/components/shop/ShopFrame";
 import { usePrefs } from "@/components/shop/prefs";
 import { ProductCard } from "@/components/product/ProductCard";
 import { LEX, issueNo } from "@/lib/lexicon";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { resolveWishlist } from "@/lib/wishlist";
 import { AccountLayout } from "./AccountLayout";
 import { useSession } from "./SessionContext";
@@ -31,6 +32,7 @@ import { demoNow } from "@/lib/clock";
  * size preselected in the sheet the button opens.
  */
 export function WishlistScreen({ currentDropNo }: { currentDropNo: number }) {
+  const catalog = useCatalog();
   const { list, ready, toggle } = useWishlist();
   const { prefs } = usePrefs();
   const { me } = useSession();
@@ -38,7 +40,7 @@ export function WishlistScreen({ currentDropNo }: { currentDropNo: number }) {
   // One instant per change of the list, so every card is judged against the
   // same clock (whether its issue is still open decides the button).
   const now = useMemo(() => demoNow(), [list]);
-  const saved = resolveWishlist(now, list);
+  const saved = resolveWishlist(catalog, now, list);
 
   if (!ready) {
     return (

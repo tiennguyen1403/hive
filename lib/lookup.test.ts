@@ -15,6 +15,7 @@ import {
   trackedOfPlaced,
 } from "./lookup";
 import type { PlacedOrder } from "./placed-order";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 
 /** DH-2425 belongs to Lê Hoàng Nam, whose number is 0908 221 447. */
 const NAM = "0908 221 447";
@@ -174,7 +175,7 @@ describe("clockFirst", () => {
 
 describe("trackedOfOrder", () => {
   const order = findFixtureOrder("DH-2425", NAM)!;
-  const tracked = trackedOfOrder(order, "88 Xuân Thuỷ, Phường Cầu Giấy, TP. Hà Nội", DURING_5);
+  const tracked = trackedOfOrder(FIXTURE_CATALOG, order, "88 Xuân Thuỷ, Phường Cầu Giấy, TP. Hà Nội", DURING_5);
 
   it("carries the courier's number on a shipping order", () => {
     expect(tracked.trackingCode).toBe("VNP-8842204");
@@ -207,7 +208,7 @@ describe("trackedOfOrder — a transfer that ran out of time", () => {
   const order = findFixtureOrder("DH-2430", OTHER)!;
 
   it("is only waiting while the deadline is ahead", () => {
-    const t = trackedOfOrder(order, "…", new Date("2026-09-21T10:00:00+07:00"));
+    const t = trackedOfOrder(FIXTURE_CATALOG, order, "…", new Date("2026-09-21T10:00:00+07:00"));
     expect(t.steps.find((s) => s.title === "Chờ chuyển khoản")!.state).toBe("todo");
   });
 
@@ -215,7 +216,7 @@ describe("trackedOfOrder — a transfer that ran out of time", () => {
     // `effectiveStatus`: the hold is the shop's own promise, so an unpaid
     // transfer past its deadline is cancelled on every surface that reads
     // it — the stamp is the DEADLINE, not the moment somebody looked.
-    const t = trackedOfOrder(order, "…", new Date("2026-09-22T10:00:00+07:00"));
+    const t = trackedOfOrder(FIXTURE_CATALOG, order, "…", new Date("2026-09-22T10:00:00+07:00"));
     expect(t.state).toBe("CANCELLED");
     expect(t.steps.some((s) => s.title === "Chờ chuyển khoản")).toBe(false);
     const last = t.steps[t.steps.length - 1]!;
@@ -262,7 +263,7 @@ describe("totalRowLabel", () => {
 describe("lastUpdateLabel", () => {
   it("is the stamp of the newest milestone that actually happened", () => {
     const order = findFixtureOrder("DH-2425", NAM)!;
-    const t = trackedOfOrder(order, "…", DURING_5);
+    const t = trackedOfOrder(FIXTURE_CATALOG, order, "…", DURING_5);
     expect(lastUpdateLabel(t.steps)).toBe("09:15 · 17/09");
   });
 

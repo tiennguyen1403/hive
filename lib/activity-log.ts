@@ -1,5 +1,6 @@
-import { byId, COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import { customerById } from "@/data/customers";
+import type { Catalog } from "./catalog";
 import type { Drop, Order, OrderState, Product } from "@/data/types";
 import {
   cellDelta,
@@ -99,17 +100,19 @@ function orderSubject(book: Book, code: string): { subject: string; href: string
  *
  * `orders`, `drops` and `products` are passed in rather than imported so the
  * module stays pure and the test can feed it three rows instead of the whole
- * fixture set. The screen hands it `ORDERS`, `DROPS` and `CATALOG`.
+ * fixture set. The screen hands it `ORDERS` and the catalogue's own drops and
+ * products — overlaid with whatever this browser adjusted.
  */
 export function logRows(
+  catalog: Catalog,
   overlay: SimOverlay,
-  fixtures: { orders: Order[]; drops: Drop[]; products: Product[] },
+  fixtures: { orders: Order[]; drops: readonly Drop[]; products: readonly Product[] },
   now: Date,
 ): LogRow[] {
   const book: Book = new Map(fixtures.orders.map((o) => [String(o.code), o]));
   const rows = [
-    ...fromOverlay(overlay, book, fixtures.products),
-    ...fromFixtures(overlay, book, fixtures, now),
+    ...fromOverlay(catalog, overlay, book, fixtures.products),
+    ...fromFixtures(catalog, overlay, book, fixtures, now),
   ];
 
   // Newest first, and ties broken on the id so two events stamped at the
@@ -118,7 +121,12 @@ export function logRows(
 }
 
 // ─────────────────────────────────────────────────────────── what was pressed
-function fromOverlay(overlay: SimOverlay, book: Book, products: Product[]): LogRow[] {
+function fromOverlay(
+  catalog: Catalog,
+  overlay: SimOverlay,
+  book: Book,
+  products: readonly Product[],
+): LogRow[] {
   /** The state each order was in as the log is replayed forward. */
   const state = new Map<string, OrderState>(
     [...book.values()].map((o) => [String(o.code), o.status.state]),
@@ -126,18 +134,19 @@ function fromOverlay(overlay: SimOverlay, book: Book, products: Product[]): LogR
   const rows: LogRow[] = [];
 
   overlay.actions.forEach((a, i) => {
-    const row = overlayRow(a, `sim-${i}`, state, book, products);
+    const row = overlayRow(catalog, a, `sim-${i}`, state, book, products);
     if (row) rows.push(row);
   });
   return rows;
 }
 
 function overlayRow(
+  catalog: Catalog,
   a: SimAction,
   id: string,
   state: Map<string, OrderState>,
   book: Book,
-  products: Product[],
+  products: readonly Product[],
 ): LogRow | null {
   switch (a.kind) {
     case "ORDER_PAID": {
@@ -184,7 +193,7 @@ function overlayRow(
         ...orderSubject(book, a.code),
         ...(before ? { before: stateWord(before) } : {}),
         after: stateWord("CANCELLED"),
-        ...backOnShelfTail(book, a.code),
+        ...backOnShelfTail(catalog, book, a.code),
       };
     }
     case "ORDER_CANCELLED_BY_CUSTOMER": {
@@ -200,7 +209,7 @@ function overlayRow(
         ...orderSubject(book, a.code),
         ...(before ? { before: stateWord(before) } : {}),
         after: stateWord("CANCELLED"),
-        ...backOnShelfTail(book, a.code),
+        ...backOnShelfTail(catalog, book, a.code),
       };
     }
     case "ORDER_NOTE":
@@ -382,16 +391,17 @@ function totalTail(book: Book, code: string): { tail?: string } {
  * the operator looking for a unit that is not there. Putting it back is its
  * own action ("Điều chỉnh tồn kho"), with its own row.
  */
-function backOnShelfTail(book: Book, code: string): { tail?: string } {
+function backOnShelfTail(catalog: Catalog, book: Book, code: string): { tail?: string } {
   const order = book.get(code);
-  return order ? { tail: orderItemsLabel(order) } : {};
+  return order ? { tail: orderItemsLabel(catalog, order) } : {};
 }
 
 // ───────────────────────────────────────────── what the clock and the data did
 function fromFixtures(
+  catalog: Catalog,
   overlay: SimOverlay,
   book: Book,
-  fixtures: { orders: Order[]; drops: Drop[]; products: Product[] },
+  fixtures: { orders: Order[]; drops: readonly Drop[]; products: readonly Product[] },
   now: Date,
 ): LogRow[] {
   const rows: LogRow[] = [];
@@ -445,7 +455,9 @@ function fromFixtures(
         });
         break;
       case "CANCELLED":
-        rows.push(cancelRow(book, `fix-cancel-${code}`, o, o.status.cancelledAt, o.status.reason));
+        rows.push(
+          cancelRow(catalog, book, `fix-cancel-${code}`, o, o.status.cancelledAt, o.status.reason),
+        );
         break;
       default:
         break;
@@ -458,13 +470,13 @@ function fromFixtures(
     if (o.status.state !== "AWAITING_TRANSFER") continue;
     const status = effectiveStatus(o, now);
     if (status.state !== "CANCELLED") continue;
-    rows.push(cancelRow(book, `due-${o.code}`, o, status.cancelledAt, OVERDUE_REASON));
+    rows.push(cancelRow(catalog, book, `due-${o.code}`, o, status.cancelledAt, OVERDUE_REASON));
   }
 
   // An issue opens and closes on its own schedule. Both instants are stored
   // facts, so both are real events; nothing else about an issue is.
   for (const d of fixtures.drops) {
-    const summary = dropSummary(d.no, fixtures.products);
+    const summary = dropSummary(catalog, d.no, fixtures.products);
     const href = `/admin/drops/${String(d.no).padStart(2, "0")}`;
     if (Date.parse(d.opensAt) <= now.getTime()) {
       rows.push({
@@ -497,7 +509,14 @@ function fromFixtures(
   return rows;
 }
 
-function cancelRow(book: Book, id: string, o: Order, at: string, reason: string): LogRow {
+function cancelRow(
+  catalog: Catalog,
+  book: Book,
+  id: string,
+  o: Order,
+  at: string,
+  reason: string,
+): LogRow {
   const overdue = reason.toLocaleLowerCase("vi") === OVERDUE_REASON;
   return {
     id,
@@ -513,7 +532,7 @@ function cancelRow(book: Book, id: string, o: Order, at: string, reason: string)
     ...orderSubject(book, String(o.code)),
     before: stateWord(overdue ? "AWAITING_TRANSFER" : o.status.state),
     after: stateWord("CANCELLED"),
-    tail: orderItemsLabel(o),
+    tail: orderItemsLabel(catalog, o),
   };
 }
 

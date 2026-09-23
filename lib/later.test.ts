@@ -10,6 +10,7 @@ import {
   type LaterLine,
 } from "./later";
 import { productId } from "@/data/types";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 
 const KHOI: LaterLine = { productId: productId("p-khoi"), size: "M", color: "black" };
 const KHOI_L: LaterLine = { productId: productId("p-khoi"), size: "L", color: "black" };
@@ -61,20 +62,20 @@ describe("removeLater / hasLater", () => {
 
 describe("resolveLater", () => {
   it("joins each line to its style and reads the stock now", () => {
-    const r = resolveLater([KHOI]);
+    const r = resolveLater(FIXTURE_CATALOG, [KHOI]);
     expect(r.items[0]!.product.name).toBe("KHÓI");
     // black M is cut at 4 in data/catalog.ts
     expect(r.items[0]!.available).toBe(4);
   });
 
   it("keeps a sold-out size, with zero on it", () => {
-    const r = resolveLater([BUI_M]);
+    const r = resolveLater(FIXTURE_CATALOG, [BUI_M]);
     expect(r.items).toHaveLength(1);
     expect(r.items[0]!.available).toBe(0);
   });
 
   it("drops a line whose style has left the catalog", () => {
-    const r = resolveLater([{ ...KHOI, productId: productId("p-khong-co") }]);
+    const r = resolveLater(FIXTURE_CATALOG, [{ ...KHOI, productId: productId("p-khong-co") }]);
     expect(r.items).toHaveLength(0);
     expect(r.unknown).toHaveLength(1);
   });

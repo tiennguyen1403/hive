@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { AdminSheet } from "@/components/admin/AdminSheet";
 import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
-import { DROPS } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
+import type { Catalog } from "@/lib/catalog";
 import { dayFromIsoDay, dayInput, dayMonthYear, isoDayFromInput } from "@/lib/datetime";
 import { LEX, issueNo } from "@/lib/lexicon";
 
@@ -15,18 +16,21 @@ import { LEX, issueNo } from "@/lib/lexicon";
  * close at 20:00, and a form that offered some other hour would be inventing
  * a habit the shop does not have. Change the fixtures and the form follows.
  */
-export const DROP_HOUR = (DROPS.at(-1) ?? DROPS[0]!).opensAt.slice(11, 16);
+export function dropHour(catalog: Catalog): string {
+  const drops = catalog.drops;
+  return (drops.at(-1) ?? drops[0])?.opensAt.slice(11, 16) ?? "20:00";
+}
 
 /** How long an issue runs, in days, taken from the last one that did. */
-export function dropLengthDays(): number {
-  const last = DROPS.at(-1);
+export function dropLengthDays(catalog: Catalog): number {
+  const last = catalog.drops.at(-1);
   if (!last) return 14;
   return Math.round((Date.parse(last.closesAt) - Date.parse(last.opensAt)) / 86_400_000);
 }
 
 /** `2026-11-06` → `2026-11-06T20:00:00+07:00`, the shape everything stores. */
-export function atDropHour(day: string): string {
-  return `${day}T${DROP_HOUR}:00+07:00`;
+export function atDropHour(catalog: Catalog, day: string): string {
+  return `${day}T${dropHour(catalog)}:00+07:00`;
 }
 
 /** An instant → the day in the box, `21/09/2026`. */
@@ -84,6 +88,8 @@ export function DropFormModal({
   closesAt,
   onConfirm,
 }: DropFormModalProps) {
+  const catalog = useCatalog();
+  const hour = dropHour(catalog);
   const [from, setFrom] = useState(dayValue(opensAt));
   const [to, setTo] = useState(dayValue(closesAt));
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +134,7 @@ export function DropFormModal({
               if (Date.parse(days.to) <= Date.parse(days.from)) {
                 return setError("Ngày đóng phải sau ngày mở.");
               }
-              onConfirm(atDropHour(days.from), atDropHour(days.to));
+              onConfirm(atDropHour(catalog, days.from), atDropHour(catalog, days.to));
             }}
           >
             {!ready
@@ -141,7 +147,7 @@ export function DropFormModal({
       }
     >
       <div className="fgrid">
-        <Field3 label={`Mở lúc ${DROP_HOUR} ngày`} error={error ?? undefined}>
+        <Field3 label={`Mở lúc ${hour} ngày`} error={error ?? undefined}>
           {({ id }) => (
             <input
               id={id}
@@ -156,13 +162,13 @@ export function DropFormModal({
                 const a = isoDayFromInput(next);
                 const b = isoDayFromInput(to);
                 if (a && (!b || Date.parse(b) <= Date.parse(a))) {
-                  setTo(shiftDays(next, dropLengthDays()));
+                  setTo(shiftDays(next, dropLengthDays(catalog)));
                 }
               }}
             />
           )}
         </Field3>
-        <Field3 label={`Đóng lúc ${DROP_HOUR} ngày`}>
+        <Field3 label={`Đóng lúc ${hour} ngày`}>
           {({ id }) => (
             <input
               id={id}
@@ -179,10 +185,12 @@ export function DropFormModal({
         </Field3>
       </div>
       <p className="fine3">
-        Xem trước: {LEX.t} {issueNo(no)} mở {DROP_HOUR} ngày{" "}
-        {isoDayFromInput(from) ? dayMonthYear(atDropHour(isoDayFromInput(from)!)) : "—"}, đóng{" "}
-        {DROP_HOUR} ngày{" "}
-        {isoDayFromInput(to) ? dayMonthYear(atDropHour(isoDayFromInput(to)!)) : "—"}
+        Xem trước: {LEX.t} {issueNo(no)} mở {hour} ngày{" "}
+        {isoDayFromInput(from)
+          ? dayMonthYear(atDropHour(catalog, isoDayFromInput(from)!))
+          : "—"}
+        , đóng {hour} ngày{" "}
+        {isoDayFromInput(to) ? dayMonthYear(atDropHour(catalog, isoDayFromInput(to)!)) : "—"}
         {ready
           ? ` · ${Math.round((Date.parse(days.to) - Date.parse(days.from)) / 86_400_000)} ngày`
           : ""}

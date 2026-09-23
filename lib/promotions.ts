@@ -1,4 +1,4 @@
-import { PROMOTIONS, promoByCode } from "@/data/promotions";
+import type { Catalog } from "./catalog";
 import type { Promotion } from "@/data/types";
 import { dayMonth } from "./datetime";
 import { vnd } from "./money";
@@ -8,7 +8,7 @@ import { demoNow } from "./clock";
 /**
  * Discount codes, as rules rather than as a text field.
  *
- * Every code here is a real row of `data/promotions.ts`: its window, its
+ * Every code here is a real row of the catalogue it is handed: its window, its
  * usage cap and its minimum order are the ones the admin screen shows. A
  * code that cannot be used is REFUSED WITH THE REASON, because "mã không
  * hợp lệ" leaves the shopper retyping a code that was never going to work.
@@ -36,6 +36,7 @@ export type PromoCheck =
  * give up on this one.
  */
 export function checkPromoCode(
+  catalog: Catalog,
   raw: string,
   subtotalVnd: number,
   now: Date = demoNow(),
@@ -43,7 +44,7 @@ export function checkPromoCode(
   const code = normalisePromoCode(raw);
   if (!code) return { ok: false, message: "Nhập mã giảm giá trước khi áp dụng." };
 
-  const promo = promoByCode.get(code as never);
+  const promo = catalog.promoByCode.get(code as never);
   if (!promo) return { ok: false, message: `Không có mã ${code}.` };
 
   const t = now.getTime();
@@ -82,9 +83,9 @@ export function normalisePromoCode(raw: string): string {
  * table is where those two states have to be told apart (`promoState` in
  * `admin-rows.ts`); to a shopper they are the same non-event.
  */
-export function livePromotions(now: Date = demoNow()): Promotion[] {
+export function livePromotions(catalog: Catalog, now: Date = demoNow()): Promotion[] {
   const t = now.getTime();
-  return PROMOTIONS.filter(
+  return catalog.promotions.filter(
     (p) =>
       t >= Date.parse(p.startsAt) &&
       t < Date.parse(p.endsAt) &&
@@ -151,12 +152,13 @@ export function promoWindowLabel(list: Promotion[]): string {
  * held something else, and both the basket and the calendar move.
  */
 export function appliedPromo(
+  catalog: Catalog,
   code: string | null,
   subtotalVnd: number,
   now: Date = demoNow(),
 ): Promotion | undefined {
   if (!code) return undefined;
-  const check = checkPromoCode(code, subtotalVnd, now);
+  const check = checkPromoCode(catalog, code, subtotalVnd, now);
   return check.ok ? check.promo : undefined;
 }
 

@@ -9,7 +9,7 @@ import { SearchBox } from "@/components/admin/AdminOrdersScreen";
 import { useSim } from "@/components/admin/SimContext";
 import { ChipMenu, ToggleChip } from "@/components/admin/Table3";
 import { Empty } from "@/components/shop/Empty";
-import { CATALOG, DROPS } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { ORDERS } from "@/data/orders";
 import {
   LOG_FILTERS,
@@ -54,11 +54,17 @@ const LOG_WINDOW_DAYS = 7;
  * did it.
  */
 export function ActivityLogScreen({ nowIso, query }: { nowIso: string; query: Query }) {
+  const catalog = useCatalog();
   const { sim } = useSim();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
 
-  const all = logRows(sim, { orders: ORDERS, drops: DROPS, products: CATALOG }, now);
+  const all = logRows(
+    catalog,
+    sim,
+    { orders: ORDERS, drops: catalog.drops, products: catalog.products },
+    now,
+  );
   const filter = logFilter(query.kind);
   const today = query.today === "1";
   const week = query.week === "1";

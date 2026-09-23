@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon/Icon";
 import { Sheet } from "@/components/ui/Sheet";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import {
   FAMILY_SHORT_LABELS,
   type ColorKey,

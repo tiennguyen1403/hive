@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/icon/Icon";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { usePrefs, writePrefs } from "@/components/shop/prefs";
 import { useReminders, writeReminders } from "@/components/shop/reminders";
 import type { Customer } from "@/data/types";
@@ -52,9 +53,10 @@ export function NotificationsScreen({ nextDropNo }: NotificationsScreenProps) {
  * with it every piece of state the hooks below keep.
  */
 function NotificationsBody({ me, nextDropNo }: { me: Customer; nextDropNo?: number }) {
+  const catalog = useCatalog();
   const { prefs, ready: prefsReady } = usePrefs();
   const { list: reminders, ready: remindersReady } = useReminders();
-  const { list, unread, ready, markAllRead } = useNotifCenter(me);
+  const { list, unread, ready, markAllRead } = useNotifCenter(catalog, me);
 
   // One instant for the whole render, so the groups and the stamps inside
   // them are judged against the same clock.

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icon/Icon";
 import { useReminders } from "@/components/shop/reminders";
-import { DROPS } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { reminderNotice } from "@/lib/reminder";
 import { demoNow } from "@/lib/clock";
 
@@ -21,6 +21,7 @@ import { demoNow } from "@/lib/clock";
  * means someone who leaves the page open watches the band appear on its own.
  */
 export function ReminderBand() {
+  const catalog = useCatalog();
   const { list, ready } = useReminders();
   const [now, setNow] = useState<Date | null>(null);
 
@@ -31,7 +32,7 @@ export function ReminderBand() {
   }, []);
 
   if (!ready || !now) return null;
-  const notice = reminderNotice(DROPS, list, now);
+  const notice = reminderNotice(catalog.drops, list, now);
   if (!notice) return null;
 
   return (

@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { ProductForm } from "@/components/admin/ProductForm";
-import { byId } from "@/data/catalog";
 import { SIZES, productId } from "@/data/types";
+import { loadCatalog } from "@/lib/db/catalog";
 import { dropOptions, kindOptions } from "@/lib/admin-options";
 import { onHandOf } from "@/lib/inventory";
 import { issueLabel } from "@/lib/lexicon";
@@ -21,7 +21,8 @@ export const metadata = { title: "Sửa mẫu" };
 export default async function AdminEditProductPage(props: PageProps<"/admin/products/[id]">) {
   await connection();
   const { id } = await props.params;
-  const product = byId.get(productId(id));
+  const catalog = await loadCatalog();
+  const product = catalog.byId.get(productId(id));
   if (!product) notFound();
 
   const now = demoNow();
@@ -40,8 +41,8 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
       />
       <ProductForm
         mode="edit"
-        kindOptions={kindOptions()}
-        dropOptions={dropOptions(now)}
+        kindOptions={kindOptions(catalog)}
+        dropOptions={dropOptions(catalog, now)}
         cutUnits={product.cutUnits}
         values={{
           name: product.name,

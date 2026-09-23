@@ -12,7 +12,7 @@ import {
   setLineQty,
   type Cart,
 } from "./cart";
-import { bySlug } from "@/data/catalog";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { productId, type ColorKey, type Size } from "@/data/types";
 
 /** The fixtures this file leans on, spelled out so a failure reads plainly.
@@ -57,46 +57,46 @@ describe("lineKey", () => {
 
 describe("addToCart", () => {
   it("adds a first line", () => {
-    const cart = addToCart([], line("p-khoi", "black", "M", 1));
+    const cart = addToCart(FIXTURE_CATALOG, [], line("p-khoi", "black", "M", 1));
     expect(cart).toHaveLength(1);
     expect(cart[0]!.qty).toBe(1);
   });
 
   it("merges into the existing line when size and colour both match", () => {
-    let cart: Cart = addToCart([], line("p-khoi", "black", "M", 1));
-    cart = addToCart(cart, line("p-khoi", "black", "M", 2));
+    let cart: Cart = addToCart(FIXTURE_CATALOG, [], line("p-khoi", "black", "M", 1));
+    cart = addToCart(FIXTURE_CATALOG, cart, line("p-khoi", "black", "M", 2));
     expect(cart).toHaveLength(1);
     expect(cart[0]!.qty).toBe(3);
   });
 
   it("keeps a separate line for the same style in another colour", () => {
-    let cart: Cart = addToCart([], line("p-khoi", "black", "M", 1));
-    cart = addToCart(cart, line("p-khoi", "cream", "M", 1));
+    let cart: Cart = addToCart(FIXTURE_CATALOG, [], line("p-khoi", "black", "M", 1));
+    cart = addToCart(FIXTURE_CATALOG, cart, line("p-khoi", "cream", "M", 1));
     expect(cart).toHaveLength(2);
   });
 
   it("clamps the merged quantity to what that colour and size actually has", () => {
     // KHÓI đen M has 4 on hand. Asking for 6 gets 4, not 6.
-    const cart = addToCart([], line("p-khoi", "black", "M", 6));
+    const cart = addToCart(FIXTURE_CATALOG, [], line("p-khoi", "black", "M", 6));
     expect(cart[0]!.qty).toBe(4);
   });
 
   it("refuses a line for a colour and size with nothing left", () => {
     // BỤI đen S is 0. A cart line for it would be a promise the drop cannot keep.
-    const cart = addToCart([], line("p-bui", "black", "S", 1));
+    const cart = addToCart(FIXTURE_CATALOG, [], line("p-bui", "black", "S", 1));
     expect(cart).toEqual([]);
   });
 
   it("does not mutate the cart it was given", () => {
     const before: Cart = [line("p-khoi", "black", "M", 1)];
-    const after = addToCart(before, line("p-khoi", "black", "M", 1));
+    const after = addToCart(FIXTURE_CATALOG, before, line("p-khoi", "black", "M", 1));
     expect(before[0]!.qty).toBe(1);
     expect(after[0]!.qty).toBe(2);
   });
 
   it("puts the newest line last, so the cart reads in the order things were chosen", () => {
-    let cart: Cart = addToCart([], line("p-khoi", "black", "M", 1));
-    cart = addToCart(cart, line("p-nguoi", "black", "L", 1));
+    let cart: Cart = addToCart(FIXTURE_CATALOG, [], line("p-khoi", "black", "M", 1));
+    cart = addToCart(FIXTURE_CATALOG, cart, line("p-nguoi", "black", "L", 1));
     expect(cart.map((l) => l.productId)).toEqual([KHOI, NGUOI]);
   });
 });
@@ -106,24 +106,24 @@ describe("setLineQty", () => {
   const key = lineKey(cart[0]!);
 
   it("changes the quantity of the addressed line", () => {
-    expect(setLineQty(cart, key, 3)[0]!.qty).toBe(3);
+    expect(setLineQty(FIXTURE_CATALOG, cart, key, 3)[0]!.qty).toBe(3);
   });
 
   it("clamps upward requests to the units on hand", () => {
-    expect(setLineQty(cart, key, 99)[0]!.qty).toBe(4);
+    expect(setLineQty(FIXTURE_CATALOG, cart, key, 99)[0]!.qty).toBe(4);
   });
 
   it("removes the line at zero rather than keeping an empty one", () => {
-    expect(setLineQty(cart, key, 0)).toEqual([]);
+    expect(setLineQty(FIXTURE_CATALOG, cart, key, 0)).toEqual([]);
   });
 
   it("treats a negative as zero", () => {
-    expect(setLineQty(cart, key, -3)).toEqual([]);
+    expect(setLineQty(FIXTURE_CATALOG, cart, key, -3)).toEqual([]);
   });
 
   it("leaves other lines alone", () => {
     const two: Cart = [...cart, line("p-nguoi", "black", "L", 1)];
-    expect(setLineQty(two, key, 1)[1]!.qty).toBe(1);
+    expect(setLineQty(FIXTURE_CATALOG, two, key, 1)[1]!.qty).toBe(1);
   });
 });
 
@@ -151,30 +151,30 @@ describe("cartUnits", () => {
 
 describe("resolveCart", () => {
   it("joins each line to its product and prices it", () => {
-    const { lines } = resolveCart(DURING_5, [line("p-khoi", "black", "M", 2)]);
+    const { lines } = resolveCart(FIXTURE_CATALOG, DURING_5, [line("p-khoi", "black", "M", 2)]);
     expect(lines[0]!.product.name).toBe("KHÓI");
     expect(lines[0]!.lineTotalVnd).toBe(780_000);
     expect(lines[0]!.issue).toBeNull();
   });
 
   it("reports the units left for that colour and size, not the whole style", () => {
-    const { lines } = resolveCart(DURING_5, [line("p-bui", "black", "L", 1)]);
+    const { lines } = resolveCart(FIXTURE_CATALOG, DURING_5, [line("p-bui", "black", "L", 1)]);
     expect(lines[0]!.available).toBe(1);
   });
 
   it("flags a line whose colour and size sold out while it sat in the cart", () => {
     // Someone else took the last BỤI đen L. The cart still holds the line.
-    const { lines } = resolveCart(DURING_5, [line("p-bui", "black", "S", 1)]);
+    const { lines } = resolveCart(FIXTURE_CATALOG, DURING_5, [line("p-bui", "black", "S", 1)]);
     expect(lines[0]!.issue).toEqual({ kind: "SOLD_OUT" });
   });
 
   it("flags a line that wants more than is left, and says how many that is", () => {
-    const { lines } = resolveCart(DURING_5, [line("p-nguoi", "black", "M", 5)]);
+    const { lines } = resolveCart(FIXTURE_CATALOG, DURING_5, [line("p-nguoi", "black", "M", 5)]);
     expect(lines[0]!.issue).toEqual({ kind: "SHORT", available: 2 });
   });
 
   it("separates a line pointing at a product that no longer exists", () => {
-    const { lines, unknown } = resolveCart(DURING_5, [line("p-khong-co", "black", "M", 1)]);
+    const { lines, unknown } = resolveCart(FIXTURE_CATALOG, DURING_5, [line("p-khong-co", "black", "M", 1)]);
     expect(lines).toEqual([]);
     expect(unknown).toHaveLength(1);
   });
@@ -185,25 +185,25 @@ describe("resolveCart · the drop window", () => {
     // Stock is not the only thing that can run out. A drop is a window, and
     // a cart left open across the closing bell is holding something that is
     // no longer for sale — even though the shelf still shows units.
-    const { lines } = resolveCart(AFTER_5, [line("p-khoi", "black", "M", 1)]);
+    const { lines } = resolveCart(FIXTURE_CATALOG, AFTER_5, [line("p-khoi", "black", "M", 1)]);
     expect(lines[0]!.available).toBeGreaterThan(0);
     expect(lines[0]!.issue).toEqual({ kind: "DROP_CLOSED", dropNo: 5 });
   });
 
   it("leaves the same line alone while the drop is still open", () => {
-    const { lines } = resolveCart(DURING_5, [line("p-khoi", "black", "M", 1)]);
+    const { lines } = resolveCart(FIXTURE_CATALOG, DURING_5, [line("p-khoi", "black", "M", 1)]);
     expect(lines[0]!.issue).toBeNull();
   });
 
   it("reports the emptier shelf first when a line is both closed and sold out", () => {
     // Sold out is the more useful thing to say: it points at another size.
     // "Số đã đóng" points at nothing the shopper can do on this screen.
-    const { lines } = resolveCart(AFTER_5, [line("p-bui", "black", "S", 1)]);
+    const { lines } = resolveCart(FIXTURE_CATALOG, AFTER_5, [line("p-bui", "black", "S", 1)]);
     expect(lines[0]!.issue).toEqual({ kind: "SOLD_OUT" });
   });
 
   it("keeps a closed line out of the money", () => {
-    const { lines } = resolveCart(AFTER_5, [line("p-khoi", "black", "M", 1)]);
+    const { lines } = resolveCart(FIXTURE_CATALOG, AFTER_5, [line("p-khoi", "black", "M", 1)]);
     expect(cartSubtotalVnd(lines)).toBe(0);
     expect(hasBlockingIssue(lines)).toBe(true);
   });
@@ -211,7 +211,7 @@ describe("resolveCart · the drop window", () => {
 
 describe("cartSubtotalVnd", () => {
   it("adds up the lines that can actually be bought", () => {
-    const { lines } = resolveCart(DURING_5, [
+    const { lines } = resolveCart(FIXTURE_CATALOG, DURING_5, [
       line("p-khoi", "black", "M", 2), // 780.000
       line("p-nguoi", "black", "L", 1), // 1.290.000
     ]);
@@ -221,7 +221,7 @@ describe("cartSubtotalVnd", () => {
   it("leaves a blocked line out of the money, the way the screen shows it", () => {
     // "Tạm tính · 1 món" beside "Món đang vướng — chưa tính": a line the
     // shopper cannot buy must not be in a total they are asked to pay.
-    const { lines } = resolveCart(DURING_5, [
+    const { lines } = resolveCart(FIXTURE_CATALOG, DURING_5, [
       line("p-bui", "black", "S", 1), // sold out
       line("p-nguoi", "black", "L", 1), // 1.290.000
     ]);
@@ -231,12 +231,12 @@ describe("cartSubtotalVnd", () => {
 
 describe("hasBlockingIssue", () => {
   it("is false for a clean cart", () => {
-    const { lines } = resolveCart(DURING_5, [line("p-khoi", "black", "M", 1)]);
+    const { lines } = resolveCart(FIXTURE_CATALOG, DURING_5, [line("p-khoi", "black", "M", 1)]);
     expect(hasBlockingIssue(lines)).toBe(false);
   });
 
   it("is true once any line is short or sold out — checkout stays shut", () => {
-    const { lines } = resolveCart(DURING_5, [
+    const { lines } = resolveCart(FIXTURE_CATALOG, DURING_5, [
       line("p-khoi", "black", "M", 1),
       line("p-bui", "black", "S", 1),
     ]);
@@ -309,11 +309,11 @@ describe("parseCart", () => {
 
 describe("catalog assumptions these tests rest on", () => {
   it("still has the stock the cases above are written against", () => {
-    expect(bySlug.get("khoi")?.stock.black?.M).toBe(4);
-    expect(bySlug.get("bui")?.stock.black?.S).toBe(0);
-    expect(bySlug.get("bui")?.stock.black?.L).toBe(1);
-    expect(bySlug.get("nguoi")?.stock.black?.M).toBe(2);
-    expect(bySlug.get("khoi")?.id).toBe(KHOI);
-    expect(bySlug.get("bui")?.id).toBe(BUI);
+    expect(FIXTURE_CATALOG.bySlug.get("khoi")?.stock.black?.M).toBe(4);
+    expect(FIXTURE_CATALOG.bySlug.get("bui")?.stock.black?.S).toBe(0);
+    expect(FIXTURE_CATALOG.bySlug.get("bui")?.stock.black?.L).toBe(1);
+    expect(FIXTURE_CATALOG.bySlug.get("nguoi")?.stock.black?.M).toBe(2);
+    expect(FIXTURE_CATALOG.bySlug.get("khoi")?.id).toBe(KHOI);
+    expect(FIXTURE_CATALOG.bySlug.get("bui")?.id).toBe(BUI);
   });
 });

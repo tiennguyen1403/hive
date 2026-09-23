@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { NeedWrite } from "@/components/shop/NeedWrite";
-import { teasersIn } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Drop } from "@/data/types";
+import { teasersIn, type Catalog } from "@/lib/catalog";
 import { clockDayLabel, dayMonth } from "@/lib/datetime";
 import { closesInLabel, dropCalendar } from "@/lib/drop";
 import { productsInDrop, soldUnits } from "@/lib/inventory";
@@ -38,7 +39,8 @@ import { demoNow } from "@/lib/clock";
  * the HTML it hydrates.
  */
 export function SiteFooter() {
-  const cal = dropCalendar();
+  const catalog = useCatalog();
+  const cal = dropCalendar(catalog);
   const [closesIn, setClosesIn] = useState("");
 
   const open = cal.open;
@@ -53,7 +55,10 @@ export function SiteFooter() {
   // The size table lives on a product page, so the link has to name one. The
   // newest issue that actually has styles in it is the one whose
   // measurements a shopper is about to need.
-  const guideSlug = productsInDrop((cal.open ?? cal.closed ?? cal.upcoming)?.no ?? 0)[0]?.slug;
+  const guideSlug = productsInDrop(
+    catalog,
+    (cal.open ?? cal.closed ?? cal.upcoming)?.no ?? 0,
+  )[0]?.slug;
 
   const payment = [PAYMENT_LABEL.BANK_TRANSFER, PAYMENT_LABEL.COD, PAYMENT_LABEL.CARD].join(
     " · ",
@@ -83,8 +88,8 @@ export function SiteFooter() {
                         count days on their fingers (`clockDayLabel`). */}
                     <span className="st">
                       {clockDayLabel(cal.upcoming.opensAt)}
-                      {teasersIn(cal.upcoming.no).length > 0 &&
-                        ` · ${teasersIn(cal.upcoming.no).length} mẫu hé lộ`}
+                      {teasersIn(catalog, cal.upcoming.no).length > 0 &&
+                        ` · ${teasersIn(catalog, cal.upcoming.no).length} mẫu hé lộ`}
                     </span>
                   </Link>
                 </li>
@@ -99,7 +104,7 @@ export function SiteFooter() {
                         were: on an issue that is over, that ratio is the one
                         stock fact still worth printing. */}
                     <span className="st">
-                      {dayMonth(cal.closed.closesAt)} · {soldInDrop(cal.closed)} đã bán · xem lại
+                      {dayMonth(cal.closed.closesAt)} · {soldInDrop(catalog, cal.closed)} đã bán · xem lại
                     </span>
                   </Link>
                 </li>
@@ -184,8 +189,8 @@ export function SiteFooter() {
 }
 
 /** `"30 / 30"` — how much of a finished issue's cut went. */
-function soldInDrop(drop: Drop): string {
-  const styles = productsInDrop(drop.no);
+function soldInDrop(catalog: Catalog, drop: Drop): string {
+  const styles = productsInDrop(catalog, drop.no);
   const sold = styles.reduce((n, p) => n + soldUnits(p), 0);
   const cut = styles.reduce((n, p) => n + p.cutUnits, 0);
   return `${sold} / ${cut}`;

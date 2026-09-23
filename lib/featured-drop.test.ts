@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { dropBandLabel, dropCalendar, featuredDrop, previousDropNote } from "./drop";
 import { DROPS } from "@/data/catalog";
 import { TEASERS } from "@/data/catalog";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 
 /** Fixture windows, so a failure below reads without opening the catalog.
  *
@@ -14,7 +15,7 @@ const AFTER_EVERYTHING = new Date("2027-01-01T10:00:00+07:00");
 
 describe("featuredDrop · no drop asked for", () => {
   it("features the drop that is open right now", () => {
-    const { drop, state } = featuredDrop(undefined, DURING_5);
+    const { drop, state } = featuredDrop(FIXTURE_CATALOG, undefined, DURING_5);
     expect(drop.no).toBe(5);
     expect(state).toBe("OPEN");
   });
@@ -22,13 +23,13 @@ describe("featuredDrop · no drop asked for", () => {
   it("features the next one once the open drop has closed", () => {
     // The gap between two drops is not a dead shop. It is the moment the
     // countdown to the next one is the most useful thing on the page.
-    const { drop, state } = featuredDrop(undefined, BETWEEN_5_AND_6);
+    const { drop, state } = featuredDrop(FIXTURE_CATALOG, undefined, BETWEEN_5_AND_6);
     expect(drop.no).toBe(6);
     expect(state).toBe("UPCOMING");
   });
 
   it("falls back to the last drop that ran when nothing is scheduled", () => {
-    const { drop, state } = featuredDrop(undefined, AFTER_EVERYTHING);
+    const { drop, state } = featuredDrop(FIXTURE_CATALOG, undefined, AFTER_EVERYTHING);
     expect(drop.no).toBe(6);
     expect(state).toBe("CLOSED");
   });
@@ -37,7 +38,7 @@ describe("featuredDrop · no drop asked for", () => {
 describe("featuredDrop · a drop asked for by number", () => {
   it("features the drop named in the URL", () => {
     // "Số 04 đã đóng · xem lại" is a link, and it has to land somewhere.
-    const { drop, state } = featuredDrop(4, DURING_5);
+    const { drop, state } = featuredDrop(FIXTURE_CATALOG, 4, DURING_5);
     expect(drop.no).toBe(4);
     expect(state).toBe("CLOSED");
   });
@@ -45,23 +46,23 @@ describe("featuredDrop · a drop asked for by number", () => {
   it("still reads the state off the clock, never off the request", () => {
     // Asking for a drop picks WHICH one. It never says what state to draw it
     // in — that stays derived, so a drop cannot be shown as open after it shut.
-    expect(featuredDrop(6, DURING_5).state).toBe("UPCOMING");
-    expect(featuredDrop(6, AFTER_EVERYTHING).state).toBe("CLOSED");
+    expect(featuredDrop(FIXTURE_CATALOG, 6, DURING_5).state).toBe("UPCOMING");
+    expect(featuredDrop(FIXTURE_CATALOG, 6, AFTER_EVERYTHING).state).toBe("CLOSED");
   });
 
   it("ignores a number that is not a drop and features the live one instead", () => {
-    expect(featuredDrop(99, DURING_5).drop.no).toBe(5);
-    expect(featuredDrop(Number.NaN, DURING_5).drop.no).toBe(5);
+    expect(featuredDrop(FIXTURE_CATALOG, 99, DURING_5).drop.no).toBe(5);
+    expect(featuredDrop(FIXTURE_CATALOG, Number.NaN, DURING_5).drop.no).toBe(5);
   });
 });
 
 describe("the drop before the featured one", () => {
   it("is named, so the home page can offer 'xem lại'", () => {
-    expect(featuredDrop(undefined, DURING_5).previous?.no).toBe(4);
+    expect(featuredDrop(FIXTURE_CATALOG, undefined, DURING_5).previous?.no).toBe(4);
   });
 
   it("is absent for the very first drop, rather than a number that is not there", () => {
-    expect(featuredDrop(3, DURING_5).previous).toBeUndefined();
+    expect(featuredDrop(FIXTURE_CATALOG, 3, DURING_5).previous).toBeUndefined();
   });
 });
 
@@ -72,7 +73,7 @@ describe("previousDropNote · L4", () => {
   it("says the previous drop is OPEN when it still is, and counts it down", () => {
     // The bug: featuring the upcoming drop 06 printed "Số 05 đã đóng · xem
     // lại" while drop 05 was selling. Same instant, read off the clock.
-    const { previous } = featuredDrop(6, DURING_5);
+    const { previous } = featuredDrop(FIXTURE_CATALOG, 6, DURING_5);
     const note = previousDropNote(previous, DURING_5)!;
     expect(note.drop.no).toBe(5);
     expect(note.state).toBe("OPEN");
@@ -111,22 +112,22 @@ describe("previousDropNote · L4", () => {
 
 describe("dropCalendar · the footer's three rows", () => {
   it("names the drop selling now, the next one, and the last one that ran", () => {
-    const cal = dropCalendar(DURING_5);
+    const cal = dropCalendar(FIXTURE_CATALOG, DURING_5);
     expect(cal.open?.no).toBe(5);
     expect(cal.upcoming?.no).toBe(6);
     expect(cal.closed?.no).toBe(4);
   });
 
   it("leaves the open row out in the gap between two drops", () => {
-    const cal = dropCalendar(BETWEEN_5_AND_6);
+    const cal = dropCalendar(FIXTURE_CATALOG, BETWEEN_5_AND_6);
     expect(cal.open).toBeUndefined();
     expect(cal.upcoming?.no).toBe(6);
     expect(cal.closed?.no).toBe(5);
   });
 
   it("keeps only the MOST RECENT closed drop, not the first one", () => {
-    expect(dropCalendar(AFTER_EVERYTHING).closed?.no).toBe(6);
-    expect(dropCalendar(AFTER_EVERYTHING).upcoming).toBeUndefined();
+    expect(dropCalendar(FIXTURE_CATALOG, AFTER_EVERYTHING).closed?.no).toBe(6);
+    expect(dropCalendar(FIXTURE_CATALOG, AFTER_EVERYTHING).upcoming).toBeUndefined();
   });
 });
 

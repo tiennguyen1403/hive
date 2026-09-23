@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import {
   FAMILY_SHORT_LABELS,
   type ColorKey,

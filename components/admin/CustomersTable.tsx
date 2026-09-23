@@ -10,7 +10,7 @@ import { useSim } from "@/components/admin/SimContext";
 import { ActionMenu, Stabs, TableFoot } from "@/components/admin/Table3";
 import { Badge } from "@/components/ui/Badge";
 import { CUSTOMERS } from "@/data/customers";
-import { DROPS } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { ORDERS } from "@/data/orders";
 import type { Customer } from "@/data/types";
 import { simOrders } from "@/lib/admin-sim";
@@ -47,16 +47,18 @@ const PATH = "/admin/customers";
  * no behaviour to score.
  */
 export function CustomersTable({ nowIso, query }: { nowIso: string; query: Query }) {
+  const catalog = useCatalog();
   const { sim, say } = useSim();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
 
   const orders = simOrders(ORDERS, sim);
-  const openIssue = DROPS.find((d) => dropState(d, now) === "OPEN")?.no ?? null;
+  const openIssue = catalog.drops.find((d) => dropState(d, now) === "OPEN")?.no ?? null;
 
   const all = CUSTOMERS.map((c) => ({
     customer: c,
     facts: customerFacts(
+      catalog,
       orders.filter((o) => o.customerId === c.id),
       openIssue,
       now,

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import type { ResolvedLaterLine } from "@/lib/later";

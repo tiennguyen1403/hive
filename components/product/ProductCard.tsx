@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Icon } from "@/components/icon/Icon";
 import { useCart } from "@/components/cart/CartContext";
 import { Toast } from "@/components/shop/Toast";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
 import { isSoldOut, onHand, onHandBySize, soldOutSizes, soldUnits } from "@/lib/inventory";
 import { LOW_STOCK_AT } from "@/lib/inventory";

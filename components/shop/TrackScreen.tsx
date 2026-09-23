@@ -10,6 +10,7 @@ import { Field3 } from "@/components/ui/Field3";
 import { CopyButton } from "@/components/shop/CopyButton";
 import { InvoiceSheet } from "@/components/shop/InvoiceSheet";
 import { ShopFrame } from "@/components/shop/ShopFrame";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { usePlacedOrders } from "@/components/shop/placed-order";
 import { useSimOverlay } from "@/components/shop/sim-store";
 import type { Order } from "@/data/types";
@@ -71,6 +72,7 @@ interface TrackScreenProps {
  */
 export function TrackScreen({ code, phone, found, base, addressLine }: TrackScreenProps) {
   const router = useRouter();
+  const catalog = useCatalog();
   const { orders, ready } = usePlacedOrders();
   const { sim } = useSimOverlay();
   const [typedCode, setTypedCode] = useState(code);
@@ -107,8 +109,8 @@ export function TrackScreen({ code, phone, found, base, addressLine }: TrackScre
   const patched = useMemo(() => {
     if (!base) return found;
     const next = shopOrders([base], sim)[0]!;
-    return next === base ? found : trackedOfOrder(next, addressLine);
-  }, [base, sim, found, addressLine]);
+    return next === base ? found : trackedOfOrder(catalog, next, addressLine);
+  }, [catalog, base, sim, found, addressLine]);
 
   const order: TrackedOrder | null =
     patched ?? (device ? trackedOfPlaced(device, now) : null);

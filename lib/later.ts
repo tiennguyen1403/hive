@@ -1,4 +1,4 @@
-import { byId } from "@/data/catalog";
+import type { Catalog } from "./catalog";
 import {
   COLOR_KEYS,
   SIZES,
@@ -82,12 +82,12 @@ export interface ResolvedLater {
  * row says "hết size M" and its button goes quiet, which is information, not
  * an error.
  */
-export function resolveLater(list: LaterList): ResolvedLater {
+export function resolveLater(catalog: Catalog, list: LaterList): ResolvedLater {
   const items: ResolvedLaterLine[] = [];
   const unknown: LaterLine[] = [];
 
   for (const line of list) {
-    const product = byId.get(line.productId);
+    const product = catalog.byId.get(line.productId);
     if (!product) {
       unknown.push(line);
       continue;

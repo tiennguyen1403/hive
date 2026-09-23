@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { ClosedContents, ClosedCover } from "@/components/shop/ClosedIssue";
 import { ShopFrame } from "@/components/shop/ShopFrame";
-import { DROPS } from "@/data/catalog";
 import type { Drop } from "@/data/types";
+import type { Catalog } from "@/lib/catalog";
+import { loadCatalog } from "@/lib/db/catalog";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { dropState } from "@/lib/drop";
 import { dropSummary, productsInDrop } from "@/lib/inventory";
@@ -30,7 +31,8 @@ import { soldOutTimes, type SoldOutRow } from "@/lib/sold-out-times";
 export async function generateMetadata(
   props: PageProps<"/so/[no]">,
 ): Promise<Metadata> {
-  const drop = await askedDrop(props);
+  const catalog = await loadCatalog();
+  const drop = await askedDrop(catalog, props);
   if (!drop) return { title: "Không tìm thấy số" };
   return {
     title: `${issueLabel(drop.no)} · đã đóng`,
@@ -38,14 +40,18 @@ export async function generateMetadata(
   };
 }
 
-async function askedDrop(props: PageProps<"/so/[no]">): Promise<Drop | undefined> {
+async function askedDrop(
+  catalog: Catalog,
+  props: PageProps<"/so/[no]">,
+): Promise<Drop | undefined> {
   const { no } = await props.params;
   const asked = Number(no);
-  return Number.isFinite(asked) ? DROPS.find((d) => d.no === asked) : undefined;
+  return Number.isFinite(asked) ? catalog.dropByNo.get(asked) : undefined;
 }
 
 export default async function IssuePage(props: PageProps<"/so/[no]">) {
-  const drop = await askedDrop(props);
+  const catalog = await loadCatalog();
+  const drop = await askedDrop(catalog, props);
   if (!drop) notFound();
 
   // The state is read off the clock, never off the URL — the same rule the
@@ -55,20 +61,20 @@ export default async function IssuePage(props: PageProps<"/so/[no]">) {
   if (state === "OPEN") redirect("/products");
   if (state === "UPCOMING") redirect("/#next");
 
-  const byNo = [...DROPS].sort((a, b) => a.no - b.no);
+  const byNo = [...catalog.drops].sort((a, b) => a.no - b.no);
   const previous = byNo.filter((d) => d.no < drop.no && dropState(d) === "CLOSED").pop();
   const closed = byNo.filter((d) => dropState(d) === "CLOSED").sort((a, b) => b.no - a.no);
 
-  const rows = soldOutTimes(productsInDrop(drop.no), ORDERS, drop.closesAt);
+  const rows = soldOutTimes(productsInDrop(catalog, drop.no), ORDERS, drop.closesAt);
 
   return (
     <ShopFrame>
-      <ClosedCover drop={drop} previous={previous} priority />
+      <ClosedCover catalog={catalog} drop={drop} previous={previous} priority />
 
       <div className="wrap3">
         <SoldOutTable rows={rows} />
-        <ClosedContents drop={drop} />
-        <PastIssues closed={closed} current={drop.no} />
+        <ClosedContents catalog={catalog} drop={drop} />
+        <PastIssues catalog={catalog} closed={closed} current={drop.no} />
       </div>
     </ShopFrame>
   );
@@ -137,7 +143,15 @@ function SoldOutTable({ rows }: { rows: SoldOutRow[] }) {
 }
 
 /** The line that says which issues are in the archive, and where the next one is. */
-function PastIssues({ closed, current }: { closed: Drop[]; current: number }) {
+function PastIssues({
+  catalog,
+  closed,
+  current,
+}: {
+  catalog: Catalog;
+  closed: Drop[];
+  current: number;
+}) {
   const others = closed.filter((d) => d.no !== current);
 
   return (
@@ -152,7 +166,7 @@ function PastIssues({ closed, current }: { closed: Drop[]; current: number }) {
         ))}
       </span>
       {others.map((d) => {
-        const summary = dropSummary(d.no);
+        const summary = dropSummary(catalog, d.no);
         return (
           <Link className="lnk" key={d.no} href={`/so/${d.no}`}>
             {issueLabel(d.no)} · {summary.styles} mẫu · {dayMonth(d.closesAt)}

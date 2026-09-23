@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon/Icon";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import type { ColorKey, Fit, Product, Size } from "@/data/types";
 import {
   FIT_LABELS,

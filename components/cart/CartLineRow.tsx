@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/icon/Icon";
-import { COLORS } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
+import { COLORS } from "@/data/colors";
 import type { Size } from "@/data/types";
 import { swapSizesFor, type ResolvedLine } from "@/lib/cart";
 import { issueLabel } from "@/lib/lexicon";
@@ -48,6 +49,7 @@ export function CartLineRow({
   onKeep,
   onToast,
 }: CartLineRowProps) {
+  const catalog = useCatalog();
   const { product, issue, available } = line;
   const { size, color, qty } = line.line;
   const [typed, setTyped] = useState(String(qty));
@@ -131,7 +133,7 @@ export function CartLineRow({
             </button>
           )}
           {issue.kind === "SOLD_OUT" &&
-            swapSizesFor(line.line)
+            swapSizesFor(catalog, line.line)
               .slice(0, 2)
               .map((s) => (
                 <button key={s} type="button" className="lnk" onClick={() => onSwap(s)}>

@@ -10,7 +10,7 @@ import { useSim } from "@/components/admin/SimContext";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/icon/Icon";
-import { CATALOG, CURRENT_DROP_NO, DROPS } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { customerById } from "@/data/customers";
 import { ORDERS } from "@/data/orders";
 import {
@@ -56,6 +56,8 @@ import { photoUrl } from "@/lib/photos";
  * which is what keeps hydration quiet and the clock honest.
  */
 export function DashboardScreen({ nowIso, days }: { nowIso: string; days: WindowDays }) {
+  const catalog = useCatalog();
+  const currentDropNo = catalog.currentDropNo;
   const { sim, run } = useSim();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   /** Rows just acted on, kept lit until the operator leaves the screen. */
@@ -64,18 +66,18 @@ export function DashboardScreen({ nowIso, days }: { nowIso: string; days: Window
   // Two lenses over the same book, in this order: what this browser did, then
   // what the twelve-hour clock has already decided about what is left.
   const orders = simOrders(ORDERS, sim).map((o) => effectiveOrder(o, now));
-  const products = simProducts(CATALOG, sim);
+  const products = simProducts(catalog.products, sim);
 
   const window = salesWindow(now, orders, days);
-  const queue = queueRows(orders, now);
+  const queue = queueRows(catalog, orders, now);
   const awaiting = queue.filter((q) => q.action === "MARK_PAID").length;
-  const drop = simDrops(DROPS, sim).find((d) => d.no === CURRENT_DROP_NO);
+  const drop = simDrops(catalog.drops, sim).find((d) => d.no === currentDropNo);
   const state = drop ? dropState(drop, now) : "CLOSED";
-  const summary = dropSummary(CURRENT_DROP_NO, products);
+  const summary = dropSummary(catalog, currentDropNo, products);
   const soldPercent =
     summary.cutUnits === 0 ? 0 : Math.round((summary.soldUnits / summary.cutUnits) * 100);
-  const alerts = stockAlerts(CURRENT_DROP_NO, products);
-  const ranking = dropRanking(CURRENT_DROP_NO, products);
+  const alerts = stockAlerts(catalog, currentDropNo, products);
+  const ranking = dropRanking(catalog, currentDropNo, products);
   const latest = recentOrders(orders, 5);
   const split = customerSplit(now, orders, days, drop?.opensAt ?? nowIso);
 
@@ -154,7 +156,7 @@ export function DashboardScreen({ nowIso, days }: { nowIso: string; days: Window
         </div>
         <div className="kpi3">
           <span className="k">
-            Còn trong {LEX.tl} {issueNo(CURRENT_DROP_NO)}
+            Còn trong {LEX.tl} {issueNo(currentDropNo)}
           </span>
           <b>{summary.onHand} chiếc</b>
           {summary.soldUnits} / {summary.cutUnits} đã bán · {soldPercent}% · {summary.styles} mẫu
@@ -245,7 +247,7 @@ export function DashboardScreen({ nowIso, days }: { nowIso: string; days: Window
 
         <section className="panel3">
           <h2>
-            Bán chạy trong {LEX.tl} {issueNo(CURRENT_DROP_NO)}
+            Bán chạy trong {LEX.tl} {issueNo(currentDropNo)}
             <span className="meta">đã bán / đã cắt</span>
           </h2>
           <div className="bd rank3">
@@ -273,7 +275,7 @@ export function DashboardScreen({ nowIso, days }: { nowIso: string; days: Window
               </div>
             ))}
             <p className="fine3">
-              <Link className="lnk" href={`/admin/drops/${issueNo(CURRENT_DROP_NO)}`}>
+              <Link className="lnk" href={`/admin/drops/${issueNo(currentDropNo)}`}>
                 Xem cả {ranking.length} mẫu của {LEX.tl}
               </Link>
             </p>
@@ -330,7 +332,7 @@ export function DashboardScreen({ nowIso, days }: { nowIso: string; days: Window
             <div className="bd rank3">
               {alerts.length === 0 ? (
                 <p className="none">
-                  Chưa mẫu nào trong {LEX.tl} {issueNo(CURRENT_DROP_NO)} xuống tới {LOW_STOCK_AT}{" "}
+                  Chưa mẫu nào trong {LEX.tl} {issueNo(currentDropNo)} xuống tới {LOW_STOCK_AT}{" "}
                   chiếc.
                 </p>
               ) : (

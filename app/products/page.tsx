@@ -9,8 +9,9 @@ import { SortControl } from "@/components/product/SortControl";
 import { DropClock } from "@/components/shop/DropClock";
 import { Empty } from "@/components/shop/Empty";
 import { ShopFrame } from "@/components/shop/ShopFrame";
-import { DROPS } from "@/data/catalog";
 import type { Drop } from "@/data/types";
+import type { Catalog } from "@/lib/catalog";
+import { loadCatalog } from "@/lib/db/catalog";
 import { dayMonth } from "@/lib/datetime";
 import { dropBandLabel, dropState, featuredDrop } from "@/lib/drop";
 import { dropSummary, productsInDrop } from "@/lib/inventory";
@@ -33,9 +34,10 @@ import { demoNow } from "@/lib/clock";
  * template adds "· BRAND".
  */
 export async function generateMetadata(): Promise<Metadata> {
-  const { drop } = featuredDrop(undefined);
+  const catalog = await loadCatalog();
+  const { drop } = featuredDrop(catalog, undefined);
   return {
-    title: `${issueLabel(drop.no)} · ${styleCountLabel(productsInDrop(drop.no).length)}`,
+    title: `${issueLabel(drop.no)} · ${styleCountLabel(productsInDrop(catalog, drop.no).length)}`,
   };
 }
 
@@ -57,11 +59,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function ProductsPage(props: PageProps<"/products">) {
   const sp = await props.searchParams;
   const query = parseListingQuery(sp);
+  const catalog = await loadCatalog();
 
-  const { drop, state } = featuredDrop(undefined);
-  const pool = productsInDrop(drop.no);
+  const { drop, state } = featuredDrop(catalog, undefined);
+  const pool = productsInDrop(catalog, drop.no);
   const shown = runListingQuery(pool, query);
-  const summary = dropSummary(drop.no);
+  const summary = dropSummary(catalog, drop.no);
   const closed = state !== "OPEN";
   const no = issueNo(drop.no);
   const filtered = isFiltered(query) || Boolean(query.q);
@@ -136,6 +139,7 @@ export default async function ProductsPage(props: PageProps<"/products">) {
                   ))}
                 </div>
                 <ListEnd
+                  catalog={catalog}
                   query={query}
                   filtered={filtered}
                   shown={shown.length}
@@ -162,6 +166,7 @@ export default async function ProductsPage(props: PageProps<"/products">) {
  * survived the conditions, and offers the way back to all of them.
  */
 function ListEnd({
+  catalog,
   query,
   filtered,
   shown,
@@ -170,6 +175,7 @@ function ListEnd({
   cutUnits,
   drop,
 }: {
+  catalog: Catalog;
   query: ListingQuery;
   filtered: boolean;
   shown: number;
@@ -179,7 +185,7 @@ function ListEnd({
   drop: Drop;
 }) {
   const now = demoNow();
-  const past = [...DROPS]
+  const past = [...catalog.drops]
     .sort((a, b) => b.no - a.no)
     .filter((d) => d.no !== drop.no && dropState(d, now) === "CLOSED");
 

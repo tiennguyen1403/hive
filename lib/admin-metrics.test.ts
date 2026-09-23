@@ -12,7 +12,7 @@ import {
   windowDays,
 } from "./admin-metrics";
 import { ORDERS } from "@/data/orders";
-import { CURRENT_DROP_NO } from "@/data/catalog";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import type { Order, OrderStatus } from "@/data/types";
 import { customerId, orderCode } from "@/data/types";
 
@@ -197,26 +197,26 @@ describe("recentOrders", () => {
 
 describe("stockAlerts", () => {
   it("puts what has run out above what is merely low", () => {
-    const rows = stockAlerts(CURRENT_DROP_NO);
+    const rows = stockAlerts(FIXTURE_CATALOG, FIXTURE_CATALOG.currentDropNo);
     const firstLow = rows.findIndex((r) => r.left > 0);
     const lastGone = rows.map((r) => r.left).lastIndexOf(0);
     if (firstLow !== -1 && lastGone !== -1) expect(lastGone).toBeLessThan(firstLow);
   });
 
   it("says which sizes went, not just that something did", () => {
-    for (const r of stockAlerts(CURRENT_DROP_NO)) {
+    for (const r of stockAlerts(FIXTURE_CATALOG, FIXTURE_CATALOG.currentDropNo)) {
       expect(r.note.length).toBeGreaterThan(0);
     }
   });
 
   it("only reports styles from the drop it was asked about", () => {
-    for (const r of stockAlerts(CURRENT_DROP_NO)) {
-      expect(r.product.dropNo).toBe(CURRENT_DROP_NO);
+    for (const r of stockAlerts(FIXTURE_CATALOG, FIXTURE_CATALOG.currentDropNo)) {
+      expect(r.product.dropNo).toBe(FIXTURE_CATALOG.currentDropNo);
     }
   });
 
   it("leaves a fully stocked style out", () => {
-    const rows = stockAlerts(CURRENT_DROP_NO);
+    const rows = stockAlerts(FIXTURE_CATALOG, FIXTURE_CATALOG.currentDropNo);
     expect(rows.every((r) => r.left <= 3)).toBe(true);
   });
 });
@@ -267,7 +267,7 @@ describe("customerSplit", () => {
 
 describe("dropRanking", () => {
   it("ranks by units gone, best first", () => {
-    const rows = dropRanking(CURRENT_DROP_NO);
+    const rows = dropRanking(FIXTURE_CATALOG, FIXTURE_CATALOG.currentDropNo);
     expect(rows.length).toBeGreaterThan(0);
     for (let i = 1; i < rows.length; i++) {
       expect(rows[i - 1]!.sold).toBeGreaterThanOrEqual(rows[i]!.sold);
@@ -275,14 +275,14 @@ describe("dropRanking", () => {
   });
 
   it("reports the share of the cut beside the count", () => {
-    for (const r of dropRanking(CURRENT_DROP_NO)) {
+    for (const r of dropRanking(FIXTURE_CATALOG, FIXTURE_CATALOG.currentDropNo)) {
       expect(r.percent).toBe(Math.round((r.sold / r.cut) * 100));
       expect(r.sold + r.left).toBe(r.cut);
     }
   });
 
   it("holds every style of the drop and nothing from another", () => {
-    const rows = dropRanking(CURRENT_DROP_NO);
-    expect(rows.every((r) => r.product.dropNo === CURRENT_DROP_NO)).toBe(true);
+    const rows = dropRanking(FIXTURE_CATALOG, FIXTURE_CATALOG.currentDropNo);
+    expect(rows.every((r) => r.product.dropNo === FIXTURE_CATALOG.currentDropNo)).toBe(true);
   });
 });

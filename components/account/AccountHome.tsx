@@ -22,6 +22,7 @@ import { deviceOrdersOf, orderRows, type OrderRow } from "@/lib/order-rows";
 import { photoUrl } from "@/lib/photos";
 import { setPref, setSizePref, type PrefKey } from "@/lib/prefs";
 import { hasReminder, toggleReminder } from "@/lib/reminder";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { resolveWishlist } from "@/lib/wishlist";
 import { AccountGuard } from "./AccountGuard";
 import { useNotifCenter } from "./notif-center";
@@ -80,6 +81,7 @@ export function AccountHome({
   nextDropNo,
   nextDropLine,
 }: AccountHomeProps) {
+  const catalog = useCatalog();
   const { list, ready: wishReady } = useWishlist();
   const { orders: placed } = usePlacedOrders();
   const { prefs, ready: prefsReady } = usePrefs();
@@ -89,7 +91,7 @@ export function AccountHome({
   const label = useDropLabel(drop, state, dropLabel);
 
   const now = useMemo(() => demoNow(), []);
-  const saved = resolveWishlist(now, list);
+  const saved = resolveWishlist(catalog, now, list);
 
   function flip(key: PrefKey) {
     writePrefs(setPref(prefs, key, !prefs[key]));
@@ -99,6 +101,7 @@ export function AccountHome({
     <AccountGuard title="Tổng quan" active="home">
       {(me) => {
         const rows = orderRows(
+          catalog,
           shopOrders(ordersOf(me.id), sim),
           deviceOrdersOf(me.id, placed),
           now,
@@ -306,7 +309,8 @@ export function AccountHome({
  * never disagree about what is new.
  */
 function NewNotifications({ me, now }: { me: Customer; now: Date }) {
-  const { list, ready } = useNotifCenter(me);
+  const catalog = useCatalog();
+  const { list, ready } = useNotifCenter(catalog, me);
   if (!ready) return null;
 
   const unread = list.filter((n) => !n.read).slice(0, 2);

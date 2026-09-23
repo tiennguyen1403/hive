@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AccountHome, type LiveCode } from "@/components/account/AccountHome";
-import { DROPS } from "@/data/catalog";
+import { loadCatalog } from "@/lib/db/catalog";
 import { clockLabel, dayMonth, openingLabel } from "@/lib/datetime";
 import { dropBandLabel, dropCalendar, featuredDrop } from "@/lib/drop";
 import { issueLabel } from "@/lib/lexicon";
@@ -24,14 +24,15 @@ export const metadata: Metadata = {
  * as plain strings — which codes are running, when they expire, when the
  * next issue opens. All are read off the clock, and a clock read twice
  * (once on the server, once on the client) is two different answers and a
- * hydration mismatch. It also keeps `data/promotions.ts` out of the browser
- * bundle.
+ * hydration mismatch. The codes arrive as finished strings rather than as
+ * `Promotion` rows the screen would have to re-judge against the clock.
  */
-export default function AccountPage() {
+export default async function AccountPage() {
   const now = demoNow();
-  const { drop, state } = featuredDrop(undefined, now);
+  const catalog = await loadCatalog();
+  const { drop, state } = featuredDrop(catalog, undefined, now);
 
-  const live = livePromotions(now);
+  const live = livePromotions(catalog, now);
   const codes: LiveCode[] = live.map((p) => ({
     code: String(p.code),
     offer: promoOfferLabel(p),
@@ -48,13 +49,15 @@ export default function AccountPage() {
   const issues = new Set(
     live.map((p) => {
       const t = Date.parse(p.endsAt);
-      return DROPS.find((d) => t > Date.parse(d.opensAt) && t <= Date.parse(d.closesAt))?.no;
+      return catalog.drops.find(
+        (d) => t > Date.parse(d.opensAt) && t <= Date.parse(d.closesAt),
+      )?.no;
     }),
   );
   const codesIssueNo =
     issues.size === 1 ? [...issues][0] : undefined;
 
-  const next = dropCalendar(now).upcoming;
+  const next = dropCalendar(catalog, now).upcoming;
 
   return (
     <AccountHome

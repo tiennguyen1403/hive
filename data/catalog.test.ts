@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { CATALOG, COLORS, DROPS, CURRENT_DROP_NO } from "./catalog";
+import { CATALOG, DROPS, CURRENT_DROP_NO } from "./catalog";
+import { COLORS } from "./colors";
+import { FIXTURE_CATALOG } from "./fixture-catalog";
 import { COLOR_KEYS, SIZES } from "./types";
 import { onHand, soldUnits, dropSummary, dropRevenueVnd } from "@/lib/inventory";
 
@@ -106,7 +108,7 @@ describe("drop 5 matches the approved prototype", () => {
   );
 
   it("totals ten styles, 181 cut, 108 sold, 73 left", () => {
-    expect(dropSummary(CURRENT_DROP_NO)).toEqual({
+    expect(dropSummary(FIXTURE_CATALOG, CURRENT_DROP_NO)).toEqual({
       styles: 10,
       cutUnits: 181,
       soldUnits: 108,
@@ -115,12 +117,12 @@ describe("drop 5 matches the approved prototype", () => {
   });
 
   it("earns 77.500.000₫, derived rather than typed in", () => {
-    expect(dropRevenueVnd(5)).toBe(77_500_000);
+    expect(dropRevenueVnd(FIXTURE_CATALOG, 5)).toBe(77_500_000);
   });
 
   it("carries the closed drops forward unchanged", () => {
-    expect(dropRevenueVnd(4)).toBe(171_600_000);
-    expect(dropRevenueVnd(3)).toBe(133_020_000);
+    expect(dropRevenueVnd(FIXTURE_CATALOG, 4)).toBe(171_600_000);
+    expect(dropRevenueVnd(FIXTURE_CATALOG, 3)).toBe(133_020_000);
   });
 });
 

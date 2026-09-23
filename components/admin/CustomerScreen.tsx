@@ -6,7 +6,7 @@ import { AdminTop } from "@/components/admin/AdminTop";
 import { useSim } from "@/components/admin/SimContext";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { DROPS } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { customerById } from "@/data/customers";
 import { ORDERS } from "@/data/orders";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
@@ -36,12 +36,14 @@ import { formatPhone } from "@/lib/phone";
  * columns deliberately disagree, and the screen says why.
  */
 export function CustomerScreen({ id, nowIso }: { id: string; nowIso: string }) {
+  const catalog = useCatalog();
   const { sim } = useSim();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const customer = customerById.get(toCustomerId(id))!;
 
-  const openIssue = DROPS.find((d) => dropState(d, now) === "OPEN")?.no ?? null;
+  const openIssue = catalog.drops.find((d) => dropState(d, now) === "OPEN")?.no ?? null;
   const facts = customerFacts(
+    catalog,
     simOrders(ORDERS, sim).filter((o) => o.customerId === customer.id),
     openIssue,
     now,
@@ -131,7 +133,7 @@ export function CustomerScreen({ id, nowIso }: { id: string; nowIso: string }) {
                       <td className="nw">
                         {dayMonth(o.placedAt)} · {clockLabel(o.placedAt)}
                       </td>
-                      <td>{issueNo(issueOf(o) ?? 0)}</td>
+                      <td>{issueNo(issueOf(catalog, o) ?? 0)}</td>
                       <td className="right">{plainVnd(orderTotalVnd(o))}</td>
                       <td>
                         <Badge tone={s.tone}>{s.text}</Badge>

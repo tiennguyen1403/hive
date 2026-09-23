@@ -11,8 +11,8 @@ import { useSim, useSimNow } from "@/components/admin/SimContext";
 import { ActionMenu } from "@/components/admin/Table3";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { CATALOG, DROPS, TEASERS } from "@/data/catalog";
-import { SIZES } from "@/data/types";
+import { SIZES, type Product, type Teaser } from "@/data/types";
+import type { Catalog } from "@/lib/catalog";
 import { stockAlerts } from "@/lib/admin-metrics";
 import { DROP_STATE_LABEL, SIM_SUFFIX, simDropRows } from "@/lib/admin-rows";
 import { isSimTeaser, nextDropNo, simDrops, simProducts, simTeasers } from "@/lib/admin-sim";
@@ -33,7 +33,8 @@ import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import { compactVnd, plainVnd, vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import { soldOutTimes } from "@/lib/sold-out-times";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { ORDERS } from "@/data/orders";
 import { orderTotalVnd } from "@/lib/orders";
 import { LOW_STOCK_AT } from "@/lib/inventory";
@@ -55,6 +56,7 @@ import { demoNow } from "@/lib/clock";
  * than a fourth state, exactly as the mock's own footnote says.
  */
 export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: string }) {
+  const catalog = useCatalog();
   const { sim, run } = useSim();
   const now = useSimNow(nowIso);
   const [creating, setCreating] = useState(false);
@@ -62,15 +64,15 @@ export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: st
   const [closing, setClosing] = useState<number | null>(null);
   const [teasing, setTeasing] = useState<number | null>(null);
 
-  const products = simProducts(CATALOG, sim);
-  const drops = simDrops(DROPS, sim);
-  const rows = simDropRows(drops, now).map((r) => ({
+  const products = simProducts(catalog.products, sim);
+  const drops = simDrops(catalog.drops, sim);
+  const rows = simDropRows(catalog, drops, now).map((r) => ({
     ...r,
-    styles: productsInDrop(r.no, products).length,
-    cutUnits: dropSummary(r.no, products).cutUnits,
-    soldUnits: dropSummary(r.no, products).soldUnits,
-    onHand: dropSummary(r.no, products).onHand,
-    revenueVnd: dropRevenueVnd(r.no, products),
+    styles: productsInDrop(catalog, r.no, products).length,
+    cutUnits: dropSummary(catalog, r.no, products).cutUnits,
+    soldUnits: dropSummary(catalog, r.no, products).soldUnits,
+    onHand: dropSummary(catalog, r.no, products).onHand,
+    revenueVnd: dropRevenueVnd(catalog, r.no, products),
   }));
   const newNo = nextDropNo(drops);
 
@@ -114,7 +116,9 @@ export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: st
             {rows.map((r) => {
               const percent =
                 r.cutUnits === 0 ? 0 : Math.round((r.soldUnits / r.cutUnits) * 100);
-              const teasers = simTeasers(TEASERS, sim).filter((t) => t.dropNo === r.no).length;
+              const teasers = simTeasers(catalog.teasers, sim).filter(
+                (t) => t.dropNo === r.no,
+              ).length;
               return (
                 <tr key={r.no} className={r.no === openNo ? "on" : undefined}>
                   <td>
@@ -160,7 +164,7 @@ export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: st
                         {
                           label: "Tải CSV",
                           icon: "export",
-                          onRun: () => downloadIssueCsv(r.no, products),
+                          onRun: () => downloadIssueCsv(catalog, r.no, products),
                         },
                         ...(r.state === "OPEN"
                           ? [
@@ -197,7 +201,7 @@ export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: st
           products={products}
           opensAt={drop.opensAt}
           closesAt={drop.closesAt}
-          teasers={simTeasers(TEASERS, sim).filter((t) => t.dropNo === drop.no + 1)}
+          teasers={simTeasers(catalog.teasers, sim).filter((t) => t.dropNo === drop.no + 1)}
           onClose={() => setClosing(drop.no)}
           onTease={() => setTeasing(drop.no + 1)}
           simTeaser={(slug) => isSimTeaser(slug, sim)}
@@ -209,8 +213,8 @@ export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: st
         onClose={() => setCreating(false)}
         mode="create"
         no={newNo}
-        opensAt={defaultOpening(nowIso)}
-        closesAt={defaultClosing(nowIso)}
+        opensAt={defaultOpening(catalog, nowIso)}
+        closesAt={defaultClosing(catalog, nowIso)}
         onConfirm={(opensAt, closesAt) => {
           run(
             { kind: "DROP_ADDED", no: newNo, opensAt, closesAt },
@@ -245,7 +249,7 @@ export function AdminDropsScreen({ no, nowIso }: { no: number | null; nowIso: st
           closing !== null && (
             <>
               Giờ đóng đổi từ {dateTimeLabel(drops.find((d) => d.no === closing)?.closesAt ?? "")}{" "}
-              thành bây giờ. {dropSummary(closing, products).onHand} chiếc còn lại rời kệ; đơn đã
+              thành bây giờ. {dropSummary(catalog, closing, products).onHand} chiếc còn lại rời kệ; đơn đã
               đặt không bị ảnh hưởng. Cùng một cơ chế, không phải một trạng thái thứ tư.
             </>
           )
@@ -307,25 +311,26 @@ function IssueDetail({
 }: {
   no: number;
   nowIso: string;
-  products: typeof CATALOG;
+  products: readonly Product[];
   opensAt: string;
   closesAt: string;
-  teasers: typeof TEASERS;
+  teasers: Teaser[];
   onClose: () => void;
   onTease: () => void;
   /** Whether this teaser was announced in this browser rather than shipped. */
   simTeaser: (slug: string) => boolean;
 }) {
+  const catalog = useCatalog();
   const now = new Date(nowIso);
   const state = dropState({ no, opensAt, closesAt }, now);
-  const summary = dropSummary(no, products);
-  const styles = productsInDrop(no, products).sort(
+  const summary = dropSummary(catalog, no, products);
+  const styles = productsInDrop(catalog, no, products).sort(
     (a, b) => soldUnits(b) - soldUnits(a) || a.name.localeCompare(b.name, "vi"),
   );
-  const revenue = dropRevenueVnd(no, products);
+  const revenue = dropRevenueVnd(catalog, no, products);
   const soldPercent =
     summary.cutUnits === 0 ? 0 : Math.round((summary.soldUnits / summary.cutUnits) * 100);
-  const alerts = stockAlerts(no, products);
+  const alerts = stockAlerts(catalog, no, products);
   const gone = alerts.filter((a) => a.left === 0);
   const low = alerts.filter((a) => a.left > 0);
   /**
@@ -364,7 +369,7 @@ function IssueDetail({
               : `đã đóng ${dayMonthYear(closesAt)}`}
         </span>
         <span className="acts">
-          <Button tone="ink sm" icon="export" onClick={() => downloadIssueCsv(no, products)}>
+          <Button tone="ink sm" icon="export" onClick={() => downloadIssueCsv(catalog, no, products)}>
             Tải CSV {LEX.tl} này
           </Button>
           {state === "OPEN" && (
@@ -534,7 +539,7 @@ function IssueDetail({
  * so — a flat file has no other way to carry two levels, and silently
  * printing a style's revenue against one size would read as that size's.
  */
-function downloadIssueCsv(no: number, products: typeof CATALOG) {
+function downloadIssueCsv(catalog: Catalog, no: number, products: readonly Product[]) {
   const rows: Array<Array<string | number>> = [
     [
       "Mẫu",
@@ -547,7 +552,7 @@ function downloadIssueCsv(no: number, products: typeof CATALOG) {
       "Doanh thu mẫu (VND)",
     ],
   ];
-  for (const p of productsInDrop(no, products)) {
+  for (const p of productsInDrop(catalog, no, products)) {
     for (const color of p.colors) {
       for (const size of SIZES) {
         rows.push([
@@ -567,17 +572,18 @@ function downloadIssueCsv(no: number, products: typeof CATALOG) {
 }
 
 /** A new issue opens a week out by default — a date, not a claim. */
-function defaultOpening(nowIso: string): string {
-  return atDay(nowIso, 7);
+function defaultOpening(catalog: Catalog, nowIso: string): string {
+  return atDay(catalog, nowIso, 7);
 }
 
-function defaultClosing(nowIso: string): string {
-  return atDay(nowIso, 7 + dropLengthDays());
+function defaultClosing(catalog: Catalog, nowIso: string): string {
+  return atDay(catalog, nowIso, 7 + dropLengthDays(catalog));
 }
 
 /** The shop's own opening hour, read off the issues it has already run. */
-function atDay(nowIso: string, plusDays: number): string {
+function atDay(catalog: Catalog, nowIso: string, plusDays: number): string {
   return atDropHour(
+    catalog,
     toVnIso(new Date(Date.parse(nowIso) + plusDays * 86_400_000)).slice(0, 10),
   );
 }

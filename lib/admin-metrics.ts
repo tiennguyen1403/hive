@@ -1,5 +1,6 @@
 import { customerById } from "@/data/customers";
 import type { CustomerId, Order, OrderState, Product } from "@/data/types";
+import type { Catalog } from "./catalog";
 import { toVnIso } from "./datetime";
 import {
   LOW_STOCK_AT,
@@ -197,8 +198,12 @@ export interface SellerRank {
  * wildly, and a style that sold eighteen pieces is the one that mattered to
  * the week. The share is on the row anyway, so neither reading is hidden.
  */
-export function dropRanking(dropNo: number, products?: Product[]): SellerRank[] {
-  return productsInDrop(dropNo, products)
+export function dropRanking(
+  catalog: Catalog,
+  dropNo: number,
+  products?: readonly Product[],
+): SellerRank[] {
+  return productsInDrop(catalog, dropNo, products)
     .map((product) => {
       const sold = soldUnits(product);
       const left = onHand(product);
@@ -229,8 +234,12 @@ export interface StockAlert {
  * prompt — it is how long the shelf has left. Styles fully gone come first,
  * then those down to `LOW_STOCK_AT` or fewer.
  */
-export function stockAlerts(dropNo: number, products?: Product[]): StockAlert[] {
-  return productsInDrop(dropNo, products)
+export function stockAlerts(
+  catalog: Catalog,
+  dropNo: number,
+  products?: readonly Product[],
+): StockAlert[] {
+  return productsInDrop(catalog, dropNo, products)
     .map((product) => {
       const left = onHand(product);
       const gone = soldOutSizes(product);

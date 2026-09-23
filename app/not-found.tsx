@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/Button";
 import { ShopFrame } from "@/components/shop/ShopFrame";
+import { loadCatalog } from "@/lib/db/catalog";
 import { closesInLabel, dropCalendar } from "@/lib/drop";
 import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 
@@ -13,8 +14,9 @@ import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
  * answers are read off the clock, so neither can point at an issue that has
  * closed since the page was written.
  */
-export default function NotFound() {
-  const cal = dropCalendar();
+export default async function NotFound() {
+  const catalog = await loadCatalog();
+  const cal = dropCalendar(catalog);
   const open = cal.open;
   const closed = cal.closed;
 

@@ -6,6 +6,7 @@ import { Icon } from "@/components/icon/Icon";
 import { useCart } from "@/components/cart/CartContext";
 import { useSession } from "@/components/account/SessionContext";
 import { useWishlist } from "@/components/account/WishlistContext";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { FAMILY_SHORT_LABELS, type Family } from "@/data/types";
 import { closesInLabel, featuredDrop, opensInLabel } from "@/lib/drop";
 import { issueLabel } from "@/lib/lexicon";
@@ -53,8 +54,9 @@ export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
   const { units, ready: cartReady } = useCart();
   const { list, ready: wishReady } = useWishlist();
   const { me, ready: meReady } = useSession();
+  const catalog = useCatalog();
 
-  const { drop, state } = featuredDrop(undefined);
+  const { drop, state } = featuredDrop(catalog, undefined);
   const label = issueLabel(drop.no);
   const [countdown, setCountdown] = useState("");
 

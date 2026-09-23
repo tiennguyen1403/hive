@@ -6,16 +6,17 @@ import { AdminSheet } from "@/components/admin/AdminSheet";
 import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
 import { Select } from "@/components/ui/Select";
-import { CATALOG } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
+import type { Catalog } from "@/lib/catalog";
 import { FAMILIES, FAMILY_LABELS, type Family } from "@/data/types";
 import type { SimActionInput } from "@/components/admin/SimContext";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { photoUrl } from "@/lib/photos";
 
 /** The kinds the catalogue actually uses, so the menu cannot invent one. */
-function kindOptions() {
+function kindOptions(catalog: Catalog) {
   const seen = new Map<string, Family>();
-  for (const p of CATALOG) seen.set(p.kind, p.family);
+  for (const p of catalog.products) seen.set(p.kind, p.family);
   return [...seen].sort((a, b) => a[0].localeCompare(b[0], "vi")).map(([kind, family]) => ({
     value: kind,
     label: kind,
@@ -31,8 +32,8 @@ function kindOptions() {
  * the borrowed set is the honest version of the same decision, and the sheet
  * says which set it is.
  */
-function photoKeys(): string[] {
-  return [...new Set(CATALOG.flatMap((p) => p.photoKeys))];
+function photoKeys(catalog: Catalog): string[] {
+  return [...new Set(catalog.products.flatMap((p) => p.photoKeys))];
 }
 
 /**
@@ -57,6 +58,7 @@ export function TeaserFormSheet({
   onClose: () => void;
   onConfirm: (action: Extract<SimActionInput, { kind: "TEASER_ADDED" }>) => void;
 }) {
+  const catalog = useCatalog();
   const [name, setName] = useState("");
   const [kind, setKind] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export function TeaserFormSheet({
     setError(null);
   }, [open]);
 
-  const kinds = kindOptions();
+  const kinds = kindOptions(catalog);
   const clean = name.trim().toLocaleUpperCase("vi");
   const ready = clean !== "" && kind !== null && photo !== null;
   /** The first thing still missing, so the button can name it. */
@@ -105,7 +107,7 @@ export function TeaserFormSheet({
                 no,
                 name: clean,
                 garment: kind,
-                family: familyOf(kind),
+                family: familyOf(catalog, kind),
                 photoKey: photo,
               });
             }}
@@ -151,7 +153,7 @@ export function TeaserFormSheet({
       >
         {() => (
           <div className="photopick" role="radiogroup" aria-label="Ảnh">
-            {photoKeys().map((k) => (
+            {photoKeys(catalog).map((k) => (
               <button
                 key={k}
                 type="button"
@@ -175,6 +177,6 @@ export function TeaserFormSheet({
 }
 
 /** The family a kind belongs to, read off the catalogue rather than typed. */
-function familyOf(kind: string): Family {
-  return CATALOG.find((p) => p.kind === kind)?.family ?? FAMILIES[0];
+function familyOf(catalog: Catalog, kind: string): Family {
+  return catalog.products.find((p) => p.kind === kind)?.family ?? FAMILIES[0];
 }

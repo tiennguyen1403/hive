@@ -1,4 +1,4 @@
-import { byId } from "@/data/catalog";
+import type { Catalog } from "./catalog";
 import type { Order } from "@/data/types";
 import { BOOKED_STATES } from "./admin-metrics";
 import { effectiveOrder } from "./customer-orders";
@@ -67,9 +67,9 @@ export interface CustomerFacts {
 }
 
 /** Which issue an order belongs to — the issue its first line was cut for. */
-export function issueOf(order: Order): number | undefined {
+export function issueOf(catalog: Catalog, order: Order): number | undefined {
   const first = order.lines[0];
-  return first ? byId.get(first.productId)?.dropNo : undefined;
+  return first ? catalog.byId.get(first.productId)?.dropNo : undefined;
 }
 
 /** `[3,4,5]` → 3; `[3,5]` → 1. The longest unbroken run. */
@@ -94,6 +94,7 @@ export function longestStreak(issues: number[]): number {
  * to the newest issue and calling three-month-old customers new.
  */
 export function customerFacts(
+  catalog: Catalog,
   placed: Order[],
   openIssueNo: number | null,
   now: Date,
@@ -103,7 +104,9 @@ export function customerFacts(
     .sort((a, b) => Date.parse(b.placedAt) - Date.parse(a.placedAt));
   const booked = orders.filter((o) => BOOKED.has(o.status.state));
   const issues = [
-    ...new Set(booked.map(issueOf).filter((n): n is number => n !== undefined)),
+    ...new Set(
+      booked.map((o) => issueOf(catalog, o)).filter((n): n is number => n !== undefined),
+    ),
   ].sort((a, b) => a - b);
   const streak = longestStreak(issues);
   const oldest = booked[booked.length - 1];
@@ -118,11 +121,12 @@ export function customerFacts(
     pending: orders.some(
       (o) => o.status.state === "AWAITING_TRANSFER" || o.status.state === "PAID",
     ),
-    tag: tagOf(booked.length, streak, oldest, openIssueNo),
+    tag: tagOf(catalog, booked.length, streak, oldest, openIssueNo),
   };
 }
 
 function tagOf(
+  catalog: Catalog,
   bookedCount: number,
   streak: number,
   oldest: Order | undefined,
@@ -134,7 +138,7 @@ function tagOf(
   if (bookedCount >= RETURNING_ORDERS) {
     return { key: "returning", label: "quay lại", tone: "back" };
   }
-  if (oldest && openIssueNo !== null && issueOf(oldest) === openIssueNo) {
+  if (oldest && openIssueNo !== null && issueOf(catalog, oldest) === openIssueNo) {
     return { key: "new", label: "mới", tone: "new" };
   }
   return null;

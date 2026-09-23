@@ -13,6 +13,7 @@ import {
   visibleDeviceOrder,
 } from "./order-rows";
 import { ordersOf, orderByCode } from "@/data/orders";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { customerId, orderCode } from "@/data/types";
 import type { PlacedOrder } from "./placed-order";
 
@@ -57,7 +58,7 @@ function placed(over: Partial<PlacedOrder> = {}): PlacedOrder {
 
 describe("a fixture order as a row", () => {
   it("carries the styles, the count, the total and the thumbnails", () => {
-    const row = rowOfOrder(orderByCode.get(orderCode("DH-2430"))!, NOW);
+    const row = rowOfOrder(FIXTURE_CATALOG, orderByCode.get(orderCode("DH-2430"))!, NOW);
     expect(row.code).toBe("DH-2430");
     expect(row.names).toBe("SƯƠNG, THAN");
     expect(row.units).toBe(2);
@@ -72,7 +73,7 @@ describe("a fixture order as a row", () => {
   it("says where each state got to, and nothing it cannot know", () => {
     // NOW is inside DH-2430's twelve-hour hold, so the row still reads it as
     // waiting. Past that hour it is a cancelled order — see the block below.
-    const note = (code: string) => rowOfOrder(orderByCode.get(orderCode(code))!, NOW).note;
+    const note = (code: string) => rowOfOrder(FIXTURE_CATALOG, orderByCode.get(orderCode(code))!, NOW).note;
     // Waiting on money: how it is being paid.
     expect(note("DH-2430")).toBe("chuyển khoản");
     // On the road: the day it LEFT. No arrival date is stored anywhere.
@@ -82,10 +83,10 @@ describe("a fixture order as a row", () => {
   });
 
   it("keeps the transfer deadline only while one is owed", () => {
-    expect(rowOfOrder(orderByCode.get(orderCode("DH-2430"))!, NOW).dueAt).toBe(
+    expect(rowOfOrder(FIXTURE_CATALOG, orderByCode.get(orderCode("DH-2430"))!, NOW).dueAt).toBe(
       "2026-09-21T19:50:00+07:00",
     );
-    expect(rowOfOrder(orderByCode.get(orderCode("DH-2422"))!, NOW).dueAt).toBeUndefined();
+    expect(rowOfOrder(FIXTURE_CATALOG, orderByCode.get(orderCode("DH-2422"))!, NOW).dueAt).toBeUndefined();
   });
 
   it("reads an unpaid transfer past its hold as cancelled, not as waiting", () => {
@@ -93,7 +94,7 @@ describe("a fixture order as a row", () => {
     // The fixtures are a snapshot; two days later a stored "chờ chuyển
     // khoản" is a flag nobody flipped.
     const after = new Date("2026-09-22T10:00:00+07:00");
-    const row = rowOfOrder(orderByCode.get(orderCode("DH-2430"))!, after);
+    const row = rowOfOrder(FIXTURE_CATALOG, orderByCode.get(orderCode("DH-2430"))!, after);
     expect(row.state).toBe("CANCELLED");
     expect(row.note).toBe("quá hạn chuyển khoản");
     expect(row.dueAt).toBeUndefined();
@@ -101,11 +102,11 @@ describe("a fixture order as a row", () => {
 
   it("moves it between the tabs on the same clock", () => {
     const orders = [orderByCode.get(orderCode("DH-2430"))!];
-    const before = orderRows(orders, [], NOW);
+    const before = orderRows(FIXTURE_CATALOG, orders, [], NOW);
     expect(rowCount(before, "processing")).toBe(1);
     expect(rowCount(before, "cancelled")).toBe(0);
 
-    const after = orderRows(orders, [], new Date("2026-09-22T10:00:00+07:00"));
+    const after = orderRows(FIXTURE_CATALOG, orders, [], new Date("2026-09-22T10:00:00+07:00"));
     expect(rowCount(after, "processing")).toBe(0);
     expect(rowCount(after, "cancelled")).toBe(1);
   });
@@ -130,7 +131,7 @@ describe("an order placed in this browser", () => {
   });
 
   it("reads its row off the frozen copy, not out of the catalog", () => {
-    const row = rowOfPlaced(placed(), NOW);
+    const row = rowOfPlaced(FIXTURE_CATALOG, placed(), NOW);
     expect(row).toMatchObject({
       code: "DH-9001",
       names: "KHÓI",
@@ -145,7 +146,7 @@ describe("an order placed in this browser", () => {
   });
 
   it("says why it died once the deadline passed", () => {
-    const row = rowOfPlaced(placed(), new Date("2026-09-22T00:00:00+07:00"));
+    const row = rowOfPlaced(FIXTURE_CATALOG, placed(), new Date("2026-09-22T00:00:00+07:00"));
     expect(row.state).toBe("CANCELLED");
     expect(row.note).toBe("quá hạn chuyển khoản");
     expect(row.dueAt).toBeUndefined();
@@ -194,7 +195,7 @@ describe("the merged list", () => {
   const mine = ordersOf(MINHANH);
 
   it("puts the order just placed at the top, newest first throughout", () => {
-    const rows = orderRows(mine, [placed()], NOW);
+    const rows = orderRows(FIXTURE_CATALOG, mine, [placed()], NOW);
     expect(rows).toHaveLength(6);
     expect(rows.map((r) => r.code)).toEqual([
       "DH-9001",
@@ -208,21 +209,21 @@ describe("the merged list", () => {
   });
 
   it("is exactly the fixtures when nothing was placed here", () => {
-    const rows = orderRows(mine, [], NOW);
+    const rows = orderRows(FIXTURE_CATALOG, mine, [], NOW);
     expect(rows).toHaveLength(5);
     expect(rows.every((r) => !r.onDevice)).toBe(true);
   });
 
   it("does not show one order twice when a generated code collides", () => {
     const clash = placed({ code: "DH-2430" });
-    const rows = orderRows(mine, [clash], NOW);
+    const rows = orderRows(FIXTURE_CATALOG, mine, [clash], NOW);
     expect(rows).toHaveLength(5);
     // The fixture is the one with a history behind it, so it is the one kept.
     expect(rows.find((r) => r.code === "DH-2430")!.onDevice).toBe(false);
   });
 
   it("counts the merged list under each tab", () => {
-    const rows = orderRows(mine, [placed()], NOW);
+    const rows = orderRows(FIXTURE_CATALOG, mine, [placed()], NOW);
     expect(rowCount(rows, "all")).toBe(6);
     // Two fixture orders in flight, plus the one waiting for its transfer.
     expect(rowCount(rows, "processing")).toBe(3);
@@ -232,7 +233,7 @@ describe("the merged list", () => {
 
   it("moves an expired device order from Đang xử lý to Đã huỷ", () => {
     const late = new Date("2026-09-22T00:00:00+07:00");
-    const rows = orderRows(mine, [placed()], late);
+    const rows = orderRows(FIXTURE_CATALOG, mine, [placed()], late);
     expect(rowsForTab(rows, "processing").map((r) => r.code)).not.toContain("DH-9001");
     expect(rowsForTab(rows, "cancelled").map((r) => r.code)).toContain("DH-9001");
   });
@@ -297,7 +298,7 @@ describe("an order the shopper cancelled themselves", () => {
   });
 
   it("puts that on the row and on the timeline, at the minute it happened", () => {
-    const row = rowOfPlaced(cancelled(), NOW);
+    const row = rowOfPlaced(FIXTURE_CATALOG, cancelled(), NOW);
     expect(row.state).toBe("CANCELLED");
     expect(row.note).toBe("khách huỷ");
     expect(row.dueAt).toBeUndefined();
@@ -308,7 +309,7 @@ describe("an order the shopper cancelled themselves", () => {
   });
 
   it("falls into the cancelled tab and out of the processing one", () => {
-    const rows = orderRows([], [cancelled()], NOW);
+    const rows = orderRows(FIXTURE_CATALOG, [], [cancelled()], NOW);
     expect(rowsForTab(rows, "cancelled").map((r) => r.code)).toContain("DH-9001");
     expect(rowsForTab(rows, "processing")).toHaveLength(0);
   });
@@ -330,7 +331,7 @@ describe("canCancel", () => {
 
 describe("what a row carries for the line under the code", () => {
   it("counts each style in a fixture order and names its issue", () => {
-    const row = rowOfOrder(orderByCode.get(orderCode("DH-2430"))!, NOW);
+    const row = rowOfOrder(FIXTURE_CATALOG, orderByCode.get(orderCode("DH-2430"))!, NOW);
     expect(row.items).toEqual([
       { name: "SƯƠNG", qty: 1 },
       { name: "THAN", qty: 1 },
@@ -339,7 +340,7 @@ describe("what a row carries for the line under the code", () => {
   });
 
   it("does the same for an order placed on this device", () => {
-    const row = rowOfPlaced(placed(), NOW);
+    const row = rowOfPlaced(FIXTURE_CATALOG, placed(), NOW);
     expect(row.items).toEqual([{ name: "KHÓI", qty: 1 }]);
     expect(row.dropNo).toBe(5);
   });
@@ -348,6 +349,6 @@ describe("what a row carries for the line under the code", () => {
     const gone = placed({
       lines: [{ ...placed().lines[0]!, slug: "khong-co" }],
     });
-    expect(rowOfPlaced(gone, NOW).dropNo).toBeUndefined();
+    expect(rowOfPlaced(FIXTURE_CATALOG, gone, NOW).dropNo).toBeUndefined();
   });
 });

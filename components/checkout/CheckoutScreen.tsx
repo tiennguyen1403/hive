@@ -19,7 +19,8 @@ import { AddressPicker } from "./AddressPicker";
 import { OrderBox } from "./OrderBox";
 import { WardSelect } from "./WardSelect";
 import { useWardLabels } from "./wards";
-import { COLORS } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
+import { COLORS } from "@/data/colors";
 import { ADDRESS_LABELS, type AddressLabel } from "@/lib/account-form";
 import { addressBookFor, defaultAddress, type SavedAddress } from "@/lib/address-book";
 import { cartSubtotalVnd, cartUnits, hasBlockingIssue, resolveCart } from "@/lib/cart";
@@ -96,6 +97,7 @@ const ADDRESS_FIELDS: FieldName[] = [
  */
 export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
   const router = useRouter();
+  const catalog = useCatalog();
   const { cart, ready, clear, promoCode } = useCart();
   const { me, ready: sessionReady } = useSession();
   const { device, ready: bookReady, save } = useAddressBook();
@@ -167,12 +169,12 @@ export function CheckoutScreen({ provinces }: CheckoutScreenProps) {
   // rendered, so reading the clock here cannot desync a hydration.
   const now = useMemo(() => demoNow(), [cart]);
   const nowIso = toVnIso(now);
-  const { lines } = resolveCart(now, cart);
+  const { lines } = resolveCart(catalog, now, cart);
   const subtotalVnd = cartSubtotalVnd(lines);
   const blocked = hasBlockingIssue(lines);
 
   const errors = validateCheckout(draft);
-  const promo = appliedPromo(promoCode, subtotalVnd, now);
+  const promo = appliedPromo(catalog, promoCode, subtotalVnd, now);
   const totals = checkoutTotals({
     subtotalVnd,
     delivery: draft.delivery,

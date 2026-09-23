@@ -4,8 +4,9 @@ import { notFound } from "next/navigation";
 import { ProductView } from "@/components/product/ProductView";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ShopFrame } from "@/components/shop/ShopFrame";
-import { CATALOG, bySlug } from "@/data/catalog";
 import type { Product } from "@/data/types";
+import type { Catalog } from "@/lib/catalog";
+import { loadCatalog } from "@/lib/db/catalog";
 import { dropBandLabel, dropState, getDrop } from "@/lib/drop";
 import { productsInDrop } from "@/lib/inventory";
 import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
@@ -21,15 +22,17 @@ const NEAR_PRICE = 0.5;
  * the first thing a shopper shares, so there is no reason for any of them to
  * be built on demand.
  */
-export function generateStaticParams() {
-  return CATALOG.map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  const catalog = await loadCatalog();
+  return catalog.products.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata(
   props: PageProps<"/products/[slug]">,
 ): Promise<Metadata> {
   const { slug } = await props.params;
-  const p = bySlug.get(slug);
+  const catalog = await loadCatalog();
+  const p = catalog.bySlug.get(slug);
   if (!p) return { title: "Không tìm thấy" };
   // "KHÓI · Số 05": the style, then the issue it was cut for. A shopper who
   // kept three tabs open is choosing between them by this line.
@@ -49,18 +52,19 @@ export async function generateMetadata(
  */
 export default async function ProductPage(props: PageProps<"/products/[slug]">) {
   const { slug } = await props.params;
-  const product = bySlug.get(slug);
+  const catalog = await loadCatalog();
+  const product = catalog.bySlug.get(slug);
   if (!product) notFound();
 
   // Every style in the fixtures belongs to an issue the fixtures also list,
   // so this cannot fail today; the page still refuses to invent a window for
   // a style whose issue record is missing rather than drawing a dead clock.
-  const drop = getDrop(product.dropNo);
+  const drop = getDrop(catalog, product.dropNo);
   if (!drop) notFound();
 
   const state = dropState(drop);
   const no = issueNo(product.dropNo);
-  const related = relatedTo(product);
+  const related = relatedTo(catalog, product);
 
   return (
     <ShopFrame activeFamily={product.family}>
@@ -80,7 +84,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
               </h2>
               <span className="meta">cùng loại, cùng tầm giá</span>
               <Link className="more" href="/products">
-                Xem cả {productsInDrop(product.dropNo).length} mẫu
+                Xem cả {productsInDrop(catalog, product.dropNo).length} mẫu
               </Link>
             </div>
             <div className="grid3 four">
@@ -117,8 +121,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
  * load. Catalog order inside each pass, so it does not reshuffle between two
  * renders of the same issue.
  */
-function relatedTo(product: Product): Product[] {
-  const rest = productsInDrop(product.dropNo).filter((p) => p.id !== product.id);
+function relatedTo(catalog: Catalog, product: Product): Product[] {
+  const rest = productsInDrop(catalog, product.dropNo).filter((p) => p.id !== product.id);
   const near = (p: Product) =>
     p.priceVnd >= product.priceVnd * (1 - NEAR_PRICE) &&
     p.priceVnd <= product.priceVnd * (1 + NEAR_PRICE);

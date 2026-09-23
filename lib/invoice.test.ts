@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { invoiceOf } from "./invoice";
 import { findFixtureOrder, trackedOfOrder, trackedOfPlaced } from "./lookup";
 import type { PlacedOrder } from "./placed-order";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 
 const NAM = "0908 221 447";
 const DURING_5 = new Date("2026-09-20T10:00:00+07:00");
@@ -38,7 +39,7 @@ const placed: PlacedOrder = {
 
 describe("invoiceOf — an order the shop shipped", () => {
   const order = findFixtureOrder("DH-2425", NAM)!;
-  const inv = invoiceOf(trackedOfOrder(order, "88 Xuân Thuỷ, Phường Cầu Giấy, TP. Hà Nội", DURING_5));
+  const inv = invoiceOf(trackedOfOrder(FIXTURE_CATALOG, order, "88 Xuân Thuỷ, Phường Cầu Giấy, TP. Hà Nội", DURING_5));
 
   it("carries the order's own identity", () => {
     expect(inv.brand).toBe("BRAND");

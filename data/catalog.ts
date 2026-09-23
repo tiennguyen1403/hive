@@ -1,6 +1,4 @@
 import {
-  type Color,
-  type ColorKey,
   type Drop,
   type Family,
   type Product,
@@ -16,19 +14,16 @@ import {
  *
  * The figures themselves are carried over unchanged from the approved
  * prototype, and `catalog.test.ts` pins them against it style by style.
+ *
+ * The fabric colours used to sit at the top of this file. They moved to
+ * `data/colors.ts`: the palette is static reference data rather than
+ * something an issue publishes, and keeping it here made every screen that
+ * only wanted a colour label import the whole catalogue.
+ *
+ * These lists are the SOURCE. Nothing outside `data/` reads them directly any
+ * more — `data/fixture-catalog.ts` turns them into a `Catalog` value and
+ * `lib/db/catalog.ts` is the one door the app comes through.
  */
-
-// ───────────────────────────────────────────────────────── fabric colours
-// `label` is shown to the shopper, so it stays Vietnamese. The key is code.
-export const COLORS: Record<ColorKey, Color> = {
-  black: { key: "black", label: "Đen", hex: "#1C1C1C" },
-  cream: { key: "cream", label: "Kem", hex: "#E6DFD1" },
-  grey: { key: "grey", label: "Xám", hex: "#8C8C8C" },
-  moss: { key: "moss", label: "Rêu", hex: "#4A5240" },
-  brown: { key: "brown", label: "Nâu", hex: "#5C4536" },
-  white: { key: "white", label: "Trắng", hex: "#F2F1ED" },
-  navy: { key: "navy", label: "Xanh than", hex: "#2B3A52" },
-};
 
 // ─────────────────────────────────────────────────────────────────── drops
 export const CURRENT_DROP_NO = 5;

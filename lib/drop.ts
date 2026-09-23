@@ -1,4 +1,4 @@
-import { DROPS, CURRENT_DROP_NO } from "@/data/catalog";
+import type { Catalog } from "./catalog";
 import { closedAtLabel } from "./datetime";
 import type { Drop, DropState } from "@/data/types";
 import { demoNow } from "./clock";
@@ -23,13 +23,13 @@ export function dropState(drop: Drop, now: Date = demoNow()): DropState {
   return "OPEN";
 }
 
-export function getDrop(no: number): Drop | undefined {
-  return DROPS.find((d) => d.no === no);
+export function getDrop(catalog: Catalog, no: number): Drop | undefined {
+  return catalog.dropByNo.get(no);
 }
 
-export function currentDrop(): Drop {
-  const d = getDrop(CURRENT_DROP_NO);
-  if (!d) throw new Error(`no drop record for ${CURRENT_DROP_NO}`);
+export function currentDrop(catalog: Catalog): Drop {
+  const d = getDrop(catalog, catalog.currentDropNo);
+  if (!d) throw new Error(`no drop record for ${catalog.currentDropNo}`);
   return d;
 }
 
@@ -101,10 +101,11 @@ export interface FeaturedDrop {
  * on the page.
  */
 export function featuredDrop(
+  catalog: Catalog,
   requestedNo: number | undefined,
   now: Date = demoNow(),
 ): FeaturedDrop {
-  const byNo = [...DROPS].sort((a, b) => a.no - b.no);
+  const byNo = [...catalog.drops].sort((a, b) => a.no - b.no);
 
   const asked =
     requestedNo !== undefined ? byNo.find((d) => d.no === requestedNo) : undefined;
@@ -179,8 +180,8 @@ export interface DropCalendar {
   closed: Drop | undefined;
 }
 
-export function dropCalendar(now: Date = demoNow()): DropCalendar {
-  const byNo = [...DROPS].sort((a, b) => a.no - b.no);
+export function dropCalendar(catalog: Catalog, now: Date = demoNow()): DropCalendar {
+  const byNo = [...catalog.drops].sort((a, b) => a.no - b.no);
   const closed = byNo.filter((d) => dropState(d, now) === "CLOSED");
 
   return {

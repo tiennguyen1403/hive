@@ -14,7 +14,8 @@ import { LaterList } from "./LaterList";
 import { useLater } from "./later";
 import { PromoBox } from "./PromoBox";
 import { ShipBar } from "./ShipBar";
-import { COLORS } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
+import { COLORS } from "@/data/colors";
 import type { Size } from "@/data/types";
 import {
   buyableUnits,
@@ -59,6 +60,7 @@ interface CartScreenProps {
  * order, so nothing moves in the reading order to get there.
  */
 export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps) {
+  const catalog = useCatalog();
   const { cart, ready, add, setQty, remove, promoCode } = useCart();
   const { list, ready: laterReady, keep, drop: dropLater } = useLater();
   const [toast, setToast] = useState<string | null>(null);
@@ -67,12 +69,12 @@ export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps
   // same clock rather than each against its own. Safe from the hydration
   // problem a clock usually brings: nothing below `ready` is server-rendered.
   const now = useMemo(() => demoNow(), [cart]);
-  const { lines } = resolveCart(now, cart);
+  const { lines } = resolveCart(catalog, now, cart);
 
   const subtotalVnd = cartSubtotalVnd(lines);
   const blocked = hasBlockingIssue(lines);
   const buyable = buyableUnits(lines);
-  const promo = appliedPromo(promoCode, subtotalVnd, now);
+  const promo = appliedPromo(catalog, promoCode, subtotalVnd, now);
   const totals = checkoutTotals({
     subtotalVnd,
     delivery: "STANDARD",
@@ -80,7 +82,7 @@ export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps
     ...(promo ? { promo } : {}),
   });
   const [leadFrom, leadTo] = deliveryOption("STANDARD").leadDays;
-  const later = resolveLater(list);
+  const later = resolveLater(catalog, list);
 
   /** Swap a blocked line to a size the same colourway still has. */
   function swap(line: ResolvedLine, size: Size) {

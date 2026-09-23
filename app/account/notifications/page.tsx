@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { NotificationsScreen } from "@/components/account/NotificationsScreen";
+import { loadCatalog } from "@/lib/db/catalog";
 import { dropCalendar } from "@/lib/drop";
 
 export const metadata: Metadata = {
@@ -14,7 +15,8 @@ export const metadata: Metadata = {
  * answered here rather than in the browser — the same reason the account
  * overview reads its codes on the server.
  */
-export default function NotificationsPage() {
-  const next = dropCalendar().upcoming;
+export default async function NotificationsPage() {
+  const catalog = await loadCatalog();
+  const next = dropCalendar(catalog).upcoming;
   return <NotificationsScreen {...(next ? { nextDropNo: next.no } : {})} />;
 }

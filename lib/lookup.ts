@@ -1,4 +1,5 @@
-import { COLORS, byId } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
+import type { Catalog } from "./catalog";
 import { customerById } from "@/data/customers";
 import { orderByCode } from "@/data/orders";
 import type { Order, PaymentMethod, Size } from "@/data/types";
@@ -261,6 +262,7 @@ function deviceSteps(p: PlacedOrder, now: Date): TrackStep[] {
  * and hands it in.
  */
 export function trackedOfOrder(
+  catalog: Catalog,
   base: Order,
   addressLine: string,
   now: Date = demoNow(),
@@ -278,7 +280,7 @@ export function trackedOfOrder(
     state,
     units: orderUnits(o),
     lines: o.lines.map((l): TrackedLine => {
-      const p = byId.get(l.productId);
+      const p = catalog.byId.get(l.productId);
       return {
         name: p?.name ?? "—",
         kind: p?.kind ?? "",

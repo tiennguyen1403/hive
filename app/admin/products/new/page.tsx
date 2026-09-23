@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { loadCatalog } from "@/lib/db/catalog";
 import { kindOptions, dropOptions } from "@/lib/admin-options";
 import { LEX } from "@/lib/lexicon";
 import { demoNow } from "@/lib/clock";
@@ -17,6 +18,8 @@ export const metadata = { title: "Thêm mẫu" };
 export default async function AdminNewProductPage() {
   await connection();
   const now = demoNow();
+  const catalog = await loadCatalog();
+  const drops = dropOptions(catalog, now);
 
   return (
     <>
@@ -27,14 +30,14 @@ export default async function AdminNewProductPage() {
       />
       <ProductForm
         mode="new"
-        kindOptions={kindOptions()}
-        dropOptions={dropOptions(now)}
+        kindOptions={kindOptions(catalog)}
+        dropOptions={drops}
         values={{
           name: "",
           kind: "",
           slug: "",
           priceVnd: 0,
-          dropNo: Math.max(...dropOptions(now).map((o) => Number(o.value))),
+          dropNo: Math.max(...drops.map((o) => Number(o.value))),
           material: "",
           colors: [],
           stock: {},

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { TrackScreen } from "@/components/shop/TrackScreen";
 import { formatAddressLine } from "@/data/regions";
+import { loadCatalog } from "@/lib/db/catalog";
 import { findFixtureOrder, trackedOfOrder } from "@/lib/lookup";
 
 export const metadata: Metadata = {
@@ -34,9 +35,10 @@ export default async function TrackPage(props: PageProps<"/track">) {
   const code = first(sp.code);
   const phone = first(sp.phone);
 
+  const catalog = await loadCatalog();
   const order = findFixtureOrder(code, phone) ?? null;
   const addressLine = order ? formatAddressLine(order.shipTo) : "";
-  const found = order ? trackedOfOrder(order, addressLine) : null;
+  const found = order ? trackedOfOrder(catalog, order, addressLine) : null;
 
   return (
     <TrackScreen

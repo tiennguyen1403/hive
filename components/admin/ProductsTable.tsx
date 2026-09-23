@@ -11,8 +11,9 @@ import { ActionMenu, ChipMenu, Stabs, ToggleChip } from "@/components/admin/Tabl
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
-import { CATALOG, COLORS, DROPS, TEASERS } from "@/data/catalog";
-import { SIZES, type Product } from "@/data/types";
+import { COLORS } from "@/data/colors";
+import { useCatalog } from "@/components/shop/CatalogContext";
+import { SIZES, type Product, type Teaser } from "@/data/types";
 import { simDrops, simProducts, simTeasers } from "@/lib/admin-sim";
 import { hrefWith, type Query } from "@/lib/admin-url";
 import { dropState } from "@/lib/drop";
@@ -43,14 +44,15 @@ const PATH = "/admin/products";
  * shows here, on the issue's KPIs and on the overview the moment it is saved.
  */
 export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query }) {
+  const catalog = useCatalog();
   const { sim, run, say } = useSim();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [adjusting, setAdjusting] = useState<Product | null>(null);
 
-  const products = simProducts(CATALOG, sim);
-  const drops = simDrops(DROPS, sim);
-  const teasers = simTeasers(TEASERS, sim);
+  const products = simProducts(catalog.products, sim);
+  const drops = simDrops(catalog.drops, sim);
+  const teasers = simTeasers(catalog.teasers, sim);
 
   const openIssue = drops.find((d) => dropState(d, now) === "OPEN")?.no ?? drops[0]?.no ?? 0;
 
@@ -62,11 +64,15 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
    * place to work, and the work is in the open one.
    */
   const tabs = drops
-    .filter((d) => productsInDrop(d.no, products).length > 0 || teasers.some((t) => t.dropNo === d.no))
+    .filter(
+      (d) =>
+        productsInDrop(catalog, d.no, products).length > 0 ||
+        teasers.some((t) => t.dropNo === d.no),
+    )
     .sort((a, b) => (b.no === openIssue ? 1 : 0) - (a.no === openIssue ? 1 : 0) || b.no - a.no)
     .map((d) => ({
       no: d.no,
-      styles: productsInDrop(d.no, products).length,
+      styles: productsInDrop(catalog, d.no, products).length,
       teasers: teasers.filter((t) => t.dropNo === d.no).length,
     }));
 
@@ -76,7 +82,7 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
   const goneOnly = query.gone === "1";
   const text = (query.q ?? "").trim().toLocaleLowerCase("vi");
 
-  const inIssue = productsInDrop(dropNo, products);
+  const inIssue = productsInDrop(catalog, dropNo, products);
   const kinds = [...new Set(inIssue.map((p) => p.kind))].sort((a, b) => a.localeCompare(b, "vi"));
 
   const rows = inIssue
@@ -92,7 +98,7 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
   const left = inIssue.reduce((n, p) => n + onHand(p), 0);
   const selling = drops
     .filter((d) => dropState(d, now) === "OPEN")
-    .reduce((n, d) => n + productsInDrop(d.no, products).length, 0);
+    .reduce((n, d) => n + productsInDrop(catalog, d.no, products).length, 0);
 
   const issueTeasers = teasers.filter((t) => t.dropNo === dropNo);
   const state = drops.find((d) => d.no === dropNo);
@@ -118,7 +124,7 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
     <>
       <AdminTop
         title="Mẫu"
-        sub={`${products.length} mẫu qua ${drops.filter((d) => productsInDrop(d.no, products).length > 0).length} ${LEX.tl} · ${selling} đang bán · tồn kho theo size và màu`}
+        sub={`${products.length} mẫu qua ${drops.filter((d) => productsInDrop(catalog, d.no, products).length > 0).length} ${LEX.tl} · ${selling} đang bán · tồn kho theo size và màu`}
       >
         <ExportCsvButton label="Tải CSV" filename="mau.csv" rows={csvRows} />
         <ButtonLink tone="sm" icon="plus" href="/admin/products/new">
@@ -325,7 +331,7 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
  * and a borrowed photo, and the two missing numbers are published at the
  * hour the issue opens (`Teaser` in `data/types.ts`).
  */
-function TeaserRows({ teasers }: { teasers: typeof TEASERS }) {
+function TeaserRows({ teasers }: { teasers: Teaser[] }) {
   if (teasers.length === 0) {
     return <p className="none">{LEX.t} này chưa có mẫu nào.</p>;
   }

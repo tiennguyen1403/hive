@@ -5,8 +5,9 @@ import { RecentSearches } from "@/components/product/RecentSearches";
 import { SearchBox } from "@/components/product/SearchBox";
 import { Empty } from "@/components/shop/Empty";
 import { ShopFrame } from "@/components/shop/ShopFrame";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import { FAMILY_SHORT_LABELS, type Product } from "@/data/types";
+import { loadCatalog } from "@/lib/db/catalog";
 import { featuredDrop } from "@/lib/drop";
 import { productsInDrop } from "@/lib/inventory";
 import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
@@ -28,7 +29,8 @@ import {
 export async function generateMetadata(props: PageProps<"/search">): Promise<Metadata> {
   const sp = await props.searchParams;
   const q = parseListingQuery(sp).q;
-  const { drop } = featuredDrop(undefined);
+  const catalog = await loadCatalog();
+  const { drop } = featuredDrop(catalog, undefined);
   const issue = issueLabel(drop.no);
   return { title: q ? `Tìm “${q}” · ${issue}` : `Tìm kiếm · ${issue}` };
 }
@@ -50,10 +52,11 @@ const COLOR_CHIPS = 2;
 export default async function SearchPage(props: PageProps<"/search">) {
   const sp = await props.searchParams;
   const query = parseListingQuery(sp);
+  const catalog = await loadCatalog();
 
-  const { drop } = featuredDrop(undefined);
+  const { drop } = featuredDrop(catalog, undefined);
   const no = issueNo(drop.no);
-  const pool = productsInDrop(drop.no);
+  const pool = productsInDrop(catalog, drop.no);
   const results = query.q ? runListingQuery(pool, query) : [];
 
   return (

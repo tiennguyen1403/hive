@@ -20,6 +20,7 @@ import {
   type OrderTabKey,
 } from "@/lib/customer-orders";
 import { LEX, issueNo } from "@/lib/lexicon";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { trackedOfOrder, trackedOfPlaced, type TrackedOrder } from "@/lib/lookup";
 import {
   deviceOrdersOf,
@@ -61,6 +62,7 @@ interface OrdersScreenProps {
  * The tab lives in the URL (QĐ-8), like the listing's filters.
  */
 export function OrdersScreen({ currentDropNo, tab, openCode }: OrdersScreenProps) {
+  const catalog = useCatalog();
   const { orders: placed, ready } = usePlacedOrders();
   const { sim, ready: simReady } = useSimOverlay();
   const [toast, setToast] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export function OrdersScreen({ currentDropNo, tab, openCode }: OrdersScreenProps
     <AccountGuard title="Đơn hàng" active="orders">
       {(me) => {
         const mine = shopOrders(ordersOf(me.id), sim);
-        const rows = orderRows(mine, deviceOrdersOf(me.id, placed), now);
+        const rows = orderRows(catalog, mine, deviceOrdersOf(me.id, placed), now);
         const shown = rowsForTab(rows, current);
         const waiting = rows.filter((r) => r.state === "AWAITING_TRANSFER").length;
 
@@ -184,6 +186,7 @@ function OpenOrder({
   now: Date;
   onCancelled: (message: string) => void;
 }) {
+  const catalog = useCatalog();
   const found = orders.find((o) => o.code === code);
   if (found) {
     // The status the clock says it is in: an unpaid transfer past its hold
@@ -191,6 +194,7 @@ function OpenOrder({
     // it, in the tab counts and in the back office (`effectiveStatus`).
     const fixture = effectiveOrder(found, now);
     const tracked: TrackedOrder = trackedOfOrder(
+      catalog,
       fixture,
       formatAddressLine(fixture.shipTo),
       now,

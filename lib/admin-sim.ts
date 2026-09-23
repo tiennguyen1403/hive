@@ -584,7 +584,7 @@ export interface SimDrop extends Drop {
  * closing hour moved to now — which is exactly what the mock's own note says,
  * and what keeps `dropState` the single answer to "is it open".
  */
-export function simDrops(base: Drop[], overlay: SimOverlay): SimDrop[] {
+export function simDrops(base: readonly Drop[], overlay: SimOverlay): SimDrop[] {
   const rows = new Map<number, SimDrop>(
     base.map((d) => [d.no, { ...d, simulated: false, rescheduled: false }]),
   );
@@ -633,7 +633,10 @@ export interface SimPromotion {
  * resumed — and burying the difference in a date would make "Tiếp tục"
  * impossible to express.
  */
-export function simPromotions(base: Promotion[], overlay: SimOverlay): SimPromotion[] {
+export function simPromotions(
+  base: readonly Promotion[],
+  overlay: SimOverlay,
+): SimPromotion[] {
   const rows: SimPromotion[] = base.map((promo) => ({
     promo,
     simulated: false,
@@ -735,7 +738,10 @@ function buildPromo(a: PromoTerms, usedCount = 0): Promotion {
  * The array keeps its order and its length. Nothing here adds or removes a
  * style; `/admin/products/new` still says out loud that it cannot save.
  */
-export function simProducts(base: Product[], overlay: SimOverlay): Product[] {
+export function simProducts(
+  base: readonly Product[],
+  overlay: SimOverlay,
+): readonly Product[] {
   const byProduct = new Map<string, InventoryCell[]>();
   for (const a of overlay.actions) {
     if (a.kind !== "INVENTORY_ADJUSTED") continue;
@@ -765,7 +771,10 @@ export function simProducts(base: Product[], overlay: SimOverlay): Product[] {
  * form that asked for them would be collecting numbers the shop has not
  * decided (`Teaser` in data/types.ts says the same).
  */
-export function simTeasers(base: Teaser[], overlay: SimOverlay): Teaser[] {
+export function simTeasers(
+  base: readonly Teaser[],
+  overlay: SimOverlay,
+): readonly Teaser[] {
   const added: Teaser[] = [];
   for (const a of overlay.actions) {
     if (a.kind !== "TEASER_ADDED") continue;

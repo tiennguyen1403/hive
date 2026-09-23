@@ -10,7 +10,7 @@ import { useWishlist } from "@/components/account/WishlistContext";
 import { DropClock } from "@/components/shop/DropClock";
 import { Toast } from "@/components/shop/Toast";
 import { usePrefs, writePrefs } from "@/components/shop/prefs";
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import {
   FAMILY_SHORT_LABELS,
   type ColorKey,

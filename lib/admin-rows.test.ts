@@ -8,7 +8,8 @@ import {
   simDropRows,
 } from "./admin-rows";
 import { EMPTY_SIM, pushSim, simDrops } from "./admin-sim";
-import { DROPS, CURRENT_DROP_NO } from "@/data/catalog";
+import { DROPS } from "@/data/catalog";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { ORDERS } from "@/data/orders";
 import { promoCode, type Order, type OrderStatus, type Promotion } from "@/data/types";
 
@@ -137,7 +138,7 @@ describe("orderNote", () => {
 
 describe("queueRows", () => {
   it("holds exactly the orders waiting on the shop, newest first", () => {
-    const rows = queueRows(ORDERS, NOW);
+    const rows = queueRows(FIXTURE_CATALOG, ORDERS, NOW);
     expect(rows).toHaveLength(
       ORDERS.filter((o) => ["AWAITING_TRANSFER", "PAID"].includes(o.status.state)).length,
     );
@@ -146,7 +147,7 @@ describe("queueRows", () => {
   });
 
   it("offers the one action that state allows", () => {
-    for (const row of queueRows(ORDERS, NOW)) {
+    for (const row of queueRows(FIXTURE_CATALOG, ORDERS, NOW)) {
       const order = ORDERS.find((o) => o.code === row.code)!;
       expect(row.action).toBe(
         order.status.state === "AWAITING_TRANSFER" ? "MARK_PAID" : "HAND_OVER",
@@ -155,22 +156,22 @@ describe("queueRows", () => {
   });
 
   it("names what is in the box and what it came to", () => {
-    const row = queueRows(ORDERS, NOW)[0]!;
+    const row = queueRows(FIXTURE_CATALOG, ORDERS, NOW)[0]!;
     const order = ORDERS.find((o) => o.code === row.code)!;
-    expect(row.items).toBe(orderItemsLabel(order));
+    expect(row.items).toBe(orderItemsLabel(FIXTURE_CATALOG, order));
     expect(row.totalVnd).toBeGreaterThan(0);
     expect(row.customer).not.toBe("—");
   });
 
   it("marks only a paid order that has waited too long", () => {
-    const rows = queueRows(ORDERS, NOW).filter((r) => r.action === "HAND_OVER");
+    const rows = queueRows(FIXTURE_CATALOG, ORDERS, NOW).filter((r) => r.action === "HAND_OVER");
     for (const r of rows) expect(r.due === null).toBe(!r.late);
   });
 });
 
 describe("simDropRows", () => {
   it("counts teased styles apart from styles on sale", () => {
-    const rows = simDropRows(simDrops(DROPS, EMPTY_SIM), NOW);
+    const rows = simDropRows(FIXTURE_CATALOG, simDrops(DROPS, EMPTY_SIM), NOW);
     const six = rows.find((r) => r.no === 6)!;
     expect(six.styles).toBe(0);
     expect(six.teasers).toBe(2);
@@ -180,11 +181,11 @@ describe("simDropRows", () => {
     const overlay = pushSim(EMPTY_SIM, {
       kind: "DROP_SCHEDULED",
       at: "2026-09-20T09:00:00+07:00",
-      no: CURRENT_DROP_NO,
+      no: FIXTURE_CATALOG.currentDropNo,
       opensAt: "2026-09-11T20:00:00+07:00",
       closesAt: "2026-09-20T09:00:00+07:00",
     });
-    const row = simDropRows(simDrops(DROPS, overlay), NOW).find((r) => r.no === CURRENT_DROP_NO)!;
+    const row = simDropRows(FIXTURE_CATALOG, simDrops(DROPS, overlay), NOW).find((r) => r.no === FIXTURE_CATALOG.currentDropNo)!;
     expect(row.state).toBe("CLOSED");
     expect(row.rescheduled).toBe(true);
   });

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { OrdersScreen } from "@/components/account/OrdersScreen";
+import { loadCatalog } from "@/lib/db/catalog";
 import { featuredDrop } from "@/lib/drop";
 
 export async function generateMetadata(
@@ -19,6 +20,7 @@ export async function generateMetadata(
  */
 export default async function OrderPage(props: PageProps<"/account/orders/[code]">) {
   const { code } = await props.params;
-  const { drop } = featuredDrop(undefined);
+  const catalog = await loadCatalog();
+  const { drop } = featuredDrop(catalog, undefined);
   return <OrdersScreen currentDropNo={drop.no} openCode={code} />;
 }

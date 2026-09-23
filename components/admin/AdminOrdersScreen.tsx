@@ -11,7 +11,8 @@ import { ActionMenu, Cb, ChipMenu, Stabs, TableFoot } from "@/components/admin/T
 import { useAdminCols } from "@/components/admin/useAdminCols";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { byId } from "@/data/catalog";
+import { useCatalog } from "@/components/shop/CatalogContext";
+import type { Catalog } from "@/lib/catalog";
 import { customerById } from "@/data/customers";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
 import { ORDERS } from "@/data/orders";
@@ -74,6 +75,7 @@ const COLS_DEFAULT = ["items", "payment"];
  * and in the sidebar's badge, whether or not anybody wrote it down.
  */
 export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Query }) {
+  const catalog = useCatalog();
   const { sim, run, runMany, say } = useSim();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
@@ -92,13 +94,13 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
   const text = (query.q ?? "").trim().toLocaleLowerCase("vi");
 
   const issues = useMemo(
-    () => [...new Set(ORDERS.map(issueOfOrder))].sort((a, b) => b - a),
-    [],
+    () => [...new Set(ORDERS.map((o) => issueOfOrder(catalog, o)))].sort((a, b) => b - a),
+    [catalog],
   );
 
   const matches = (o: Order) => {
     if (pay && o.payment !== pay) return false;
-    if (dropNo !== null && issueOfOrder(o) !== dropNo) return false;
+    if (dropNo !== null && issueOfOrder(catalog, o) !== dropNo) return false;
     if (customer && String(o.customerId) !== customer) return false;
     if (!text) return true;
     const person = customerById.get(o.customerId);
@@ -133,7 +135,7 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
       customerById.get(o.customerId)?.name ?? "—",
       o.shipTo.phone,
       `${dayMonth(o.placedAt)} ${clockLabel(o.placedAt)}`,
-      orderItemsLabel(o),
+      orderItemsLabel(catalog, o),
       orderTotalVnd(o),
       PAYMENT_LABEL[o.payment],
       STATE_LABEL[o.status.state].text,
@@ -320,7 +322,7 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
                   <td className="nw">
                     {dayMonth(o.placedAt)} · {clockLabel(o.placedAt)}
                   </td>
-                  {cols.includes("items") && <td>{orderItemsLabel(o)}</td>}
+                  {cols.includes("items") && <td>{orderItemsLabel(catalog, o)}</td>}
                   <td className="right">{plainVnd(orderTotalVnd(o))}</td>
                   {cols.includes("payment") && <td>{paymentCell(o)}</td>}
                   {cols.includes("address") && <td>{addressCell(o)}</td>}
@@ -412,9 +414,9 @@ export function AdminOrdersScreen({ nowIso, query }: { nowIso: string; query: Qu
 }
 
 /** Which issue an order belongs to — the issue its first line was cut for. */
-function issueOfOrder(o: Order): number {
+function issueOfOrder(catalog: Catalog, o: Order): number {
   const first = o.lines[0];
-  return (first && byId.get(first.productId)?.dropNo) ?? 0;
+  return (first && catalog.byId.get(first.productId)?.dropNo) ?? 0;
 }
 
 /**

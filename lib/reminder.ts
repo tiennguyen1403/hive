@@ -107,7 +107,7 @@ export interface ReminderNotice {
  * the freak case where a device asked about both.
  */
 export function reminderNotice(
-  drops: Drop[],
+  drops: readonly Drop[],
   list: Reminders,
   now: Date = demoNow(),
 ): ReminderNotice | undefined {

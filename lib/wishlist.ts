@@ -1,4 +1,4 @@
-import { byId } from "@/data/catalog";
+import type { Catalog } from "./catalog";
 import { productId, type Product, type ProductId } from "@/data/types";
 import { dropState, getDrop } from "./drop";
 import { LOW_STOCK_AT, isSoldOut, onHand } from "./inventory";
@@ -76,17 +76,21 @@ export interface ResolvedWishlist {
   buyable: WishItem[];
 }
 
-export function resolveWishlist(now: Date, list: Wishlist): ResolvedWishlist {
+export function resolveWishlist(
+  catalog: Catalog,
+  now: Date,
+  list: Wishlist,
+): ResolvedWishlist {
   const items: WishItem[] = [];
   const unknown: ProductId[] = [];
 
   for (const entry of list) {
-    const product = byId.get(entry.id);
+    const product = catalog.byId.get(entry.id);
     if (!product) {
       unknown.push(entry.id);
       continue;
     }
-    const drop = getDrop(product.dropNo);
+    const drop = getDrop(catalog, product.dropNo);
     const open = drop ? dropState(drop, now) === "OPEN" : false;
     const left = onHand(product);
     const soldOut = isSoldOut(product);

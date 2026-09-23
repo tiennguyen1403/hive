@@ -5,9 +5,9 @@ import { usePlacedOrders } from "@/components/shop/placed-order";
 import { usePrefs } from "@/components/shop/prefs";
 import { useReminders } from "@/components/shop/reminders";
 import { useSimOverlay } from "@/components/shop/sim-store";
-import { DROPS, teasersIn } from "@/data/catalog";
 import { ordersOf } from "@/data/orders";
 import type { Customer } from "@/data/types";
+import { teasersIn, type Catalog } from "@/lib/catalog";
 import { shopOrders } from "@/lib/admin-sim";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { dropState } from "@/lib/drop";
@@ -75,7 +75,7 @@ export interface NotifCenter {
   markAllRead: () => void;
 }
 
-export function useNotifCenter(me: Customer | null): NotifCenter {
+export function useNotifCenter(catalog: Catalog, me: Customer | null): NotifCenter {
   const { orders: placed, ready: placedReady } = usePlacedOrders();
   const { list: reminders, ready: remindersReady } = useReminders();
   const { prefs, ready: prefsReady } = usePrefs();
@@ -127,15 +127,15 @@ export function useNotifCenter(me: Customer | null): NotifCenter {
     }));
 
     const asked: NotifReminder[] = reminders
-      .map((no) => DROPS.find((d) => d.no === no))
+      .map((no) => catalog.dropByNo.get(no))
       .filter((d): d is NonNullable<typeof d> => d !== undefined)
       .map((d) => ({
         no: d.no,
         opensAt: d.opensAt,
-        teasers: teasersIn(d.no).map((t) => t.name),
+        teasers: teasersIn(catalog, d.no).map((t) => t.name),
       }));
 
-    const promos: NotifPromo[] = livePromotions(now).map((p) => ({
+    const promos: NotifPromo[] = livePromotions(catalog, now).map((p) => ({
       code: String(p.code),
       endsAt: p.endsAt,
       offer: promoOfferLabel(p),
@@ -143,20 +143,20 @@ export function useNotifCenter(me: Customer | null): NotifCenter {
       // Which issue a code runs with is not a field on the promotion — it is
       // the issue whose window contains its end. Left off when none does,
       // rather than guessed.
-      ...issueOf(p.endsAt),
+      ...issueOf(catalog, p.endsAt),
     }));
 
-    const issues: NotifIssue[] = DROPS.filter((d) => dropState(d, now) === "CLOSED").map(
-      (d) => {
-        const summary = dropSummary(d.no);
+    const issues: NotifIssue[] = catalog.drops
+      .filter((d) => dropState(d, now) === "CLOSED")
+      .map((d) => {
+        const summary = dropSummary(catalog, d.no);
         return {
           no: d.no,
           closesAt: d.closesAt,
           soldUnits: summary.soldUnits,
           cutUnits: summary.cutUnits,
         };
-      },
-    );
+      });
 
     return notifications({
       now,
@@ -171,7 +171,7 @@ export function useNotifCenter(me: Customer | null): NotifCenter {
       },
       read,
     });
-  }, [ready, me, placed, reminders, prefs, sim, read]);
+  }, [catalog, ready, me, placed, reminders, prefs, sim, read]);
 
   const markAllRead = useCallback(() => {
     const next = markRead(readIds(), allIds(list));
@@ -183,9 +183,9 @@ export function useNotifCenter(me: Customer | null): NotifCenter {
 }
 
 /** Which issue's window an instant falls inside, when one does. */
-function issueOf(iso: string): { issueNo?: number } {
+function issueOf(catalog: Catalog, iso: string): { issueNo?: number } {
   const t = Date.parse(iso);
-  const drop = DROPS.find(
+  const drop = catalog.drops.find(
     (d) => t > Date.parse(d.opensAt) && t <= Date.parse(d.closesAt),
   );
   return drop ? { issueNo: drop.no } : {};

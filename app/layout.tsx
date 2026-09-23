@@ -4,6 +4,8 @@ import { CartProvider } from "@/components/cart/CartContext";
 import { AddressBookProvider } from "@/components/account/AddressBookContext";
 import { SessionProvider } from "@/components/account/SessionContext";
 import { WishlistProvider } from "@/components/account/WishlistContext";
+import { CatalogProvider } from "@/components/shop/CatalogContext";
+import { catalogInput, loadCatalog } from "@/lib/db/catalog";
 import "./globals.css";
 
 // Self-hosted by next/font — no runtime call to fonts.googleapis.com.
@@ -62,11 +64,16 @@ addEventListener('pointerdown', function(){ de.setAttribute('data-pointer',''); 
 addEventListener('keydown', function(e){ if (e.key === 'Tab') de.removeAttribute('data-pointer'); }, true);
 `;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // One read of the catalogue per render, at the top of the tree. Server
+  // Components below get theirs from `loadCatalog()` too; Client Components
+  // get this one through the provider, because they cannot read a database.
+  const catalog = await loadCatalog();
+
   return (
     <html
       lang="vi"
@@ -77,15 +84,19 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: POINTER_PROBE }} />
         {/* One of each, above the router, so a line added on the product
             page is already there when the cart route renders — no round
-            trip. Session is outermost because the other two are readable
-            signed out: a shortlist and a basket are not an account. */}
-        <SessionProvider>
-          <AddressBookProvider>
-            <WishlistProvider>
-              <CartProvider>{children}</CartProvider>
-            </WishlistProvider>
-          </AddressBookProvider>
-        </SessionProvider>
+            trip. Catalog is outermost because it is the only one that is not
+            the device's: the other three read storage, this one reads the
+            shop. Session then wraps the last two, which are readable signed
+            out: a shortlist and a basket are not an account. */}
+        <CatalogProvider input={catalogInput(catalog)}>
+          <SessionProvider>
+            <AddressBookProvider>
+              <WishlistProvider>
+                <CartProvider>{children}</CartProvider>
+              </WishlistProvider>
+            </AddressBookProvider>
+          </SessionProvider>
+        </CatalogProvider>
       </body>
     </html>
   );

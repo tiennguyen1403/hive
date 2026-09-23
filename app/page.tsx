@@ -16,8 +16,9 @@ import { ReminderBand } from "@/components/shop/ReminderBand";
 import { ShopFrame } from "@/components/shop/ShopFrame";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { DROPS, teasersIn } from "@/data/catalog";
 import { FAMILY_SHORT_LABELS, type Drop, type Product } from "@/data/types";
+import { teasersIn, type Catalog } from "@/lib/catalog";
+import { loadCatalog } from "@/lib/db/catalog";
 import { clockDayLabel, closedAtLabel, dayMonth } from "@/lib/datetime";
 import { dropCalendar, dropState, featuredDrop, previousDropNote } from "@/lib/drop";
 import {
@@ -60,24 +61,25 @@ export default async function HomePage(props: PageProps<"/">) {
   const sp = await props.searchParams;
   const asked = Number(Array.isArray(sp.drop) ? sp.drop[0] : sp.drop);
   const requested = Number.isFinite(asked) ? asked : undefined;
+  const catalog = await loadCatalog();
 
   // A closed issue has a page of its own since v3 slice 4 — a record needs
   // an address, not a query string on the shop's front door. `?drop=` is
   // kept working because it is in browser histories and in printed links.
   if (requested !== undefined) {
-    const one = DROPS.find((d) => d.no === requested);
+    const one = catalog.dropByNo.get(requested);
     if (!one) notFound();
     if (dropState(one) === "CLOSED") redirect(`/so/${one.no}`);
   }
 
-  const { drop, state, previous } = featuredDrop(requested);
+  const { drop, state, previous } = featuredDrop(catalog, requested);
 
   // The issue standing at the end of the page is always the next one to
   // OPEN, not the next one by number: read from a closed issue, "số kế
   // tiếp" by number is the one selling right now, and this block is only
   // ever about something that has not opened yet. When that issue is the
   // one being read it is already the cover, so the page does not repeat it.
-  const upcoming = dropCalendar().upcoming;
+  const upcoming = dropCalendar(catalog).upcoming;
   const teaser = upcoming && upcoming.no !== drop.no ? upcoming : undefined;
 
   return (
@@ -89,24 +91,26 @@ export default async function HomePage(props: PageProps<"/">) {
           the current minute. */}
       <ReminderBand />
 
-      {state === "OPEN" && <OpenCover drop={drop} />}
-      {state === "UPCOMING" && <NextIssue drop={drop} first />}
-      {state === "CLOSED" && <ClosedCover drop={drop} previous={previous} />}
+      {state === "OPEN" && <OpenCover catalog={catalog} drop={drop} />}
+      {state === "UPCOMING" && <NextIssue catalog={catalog} drop={drop} first />}
+      {state === "CLOSED" && (
+        <ClosedCover catalog={catalog} drop={drop} previous={previous} />
+      )}
 
       <div className="wrap3">
         {state === "OPEN" && (
           <>
-            <IssueContents drop={drop} />
-            <FamilyIndex drop={drop} />
+            <IssueContents catalog={catalog} drop={drop} />
+            <FamilyIndex catalog={catalog} drop={drop} />
           </>
         )}
-        {state === "CLOSED" && <ClosedContents drop={drop} />}
+        {state === "CLOSED" && <ClosedContents catalog={catalog} drop={drop} />}
         <FourRules anchor />
       </div>
 
-      {teaser && <NextIssue drop={teaser} />}
+      {teaser && <NextIssue catalog={catalog} drop={teaser} />}
 
-      <PastIssue previous={previous} />
+      <PastIssue catalog={catalog} previous={previous} />
     </ShopFrame>
   );
 }
@@ -117,9 +121,9 @@ export default async function HomePage(props: PageProps<"/">) {
  * The issue that is selling: what it is, when it shuts, how long that is,
  * one sentence, one way in, and the styles that are nearly gone.
  */
-function OpenCover({ drop }: { drop: Drop }) {
-  const products = productsInDrop(drop.no);
-  const low = lowStockIn(drop.no);
+function OpenCover({ catalog, drop }: { catalog: Catalog; drop: Drop }) {
+  const products = productsInDrop(catalog, drop.no);
+  const low = lowStockIn(catalog, drop.no);
 
   return (
     <section className="cover open" aria-labelledby="cover-t">
@@ -213,9 +217,9 @@ function LowRow({ product }: { product: Product }) {
  * and the whole issue is one tap away in the heading. The order is the
  * catalog's, which is the order the issue was laid out in.
  */
-function IssueContents({ drop }: { drop: Drop }) {
-  const products = productsInDrop(drop.no);
-  const summary = dropSummary(drop.no);
+function IssueContents({ catalog, drop }: { catalog: Catalog; drop: Drop }) {
+  const products = productsInDrop(catalog, drop.no);
+  const summary = dropSummary(catalog, drop.no);
 
   return (
     <section className="sec" aria-labelledby="h-in">
@@ -247,8 +251,8 @@ function IssueContents({ drop }: { drop: Drop }) {
  * CATEGORY exists, and standing one garment in for the group is the most
  * the fixtures can honestly supply.
  */
-function FamilyIndex({ drop }: { drop: Drop }) {
-  const families = familyGroupsIn(drop.no);
+function FamilyIndex({ catalog, drop }: { catalog: Catalog; drop: Drop }) {
+  const families = familyGroupsIn(catalog, drop.no);
   if (families.length === 0) return null;
 
   return (
@@ -305,8 +309,16 @@ function FamilyIndex({ drop }: { drop: Drop }) {
  * `first` is for the state where nothing is selling: then this IS the cover,
  * standing at the top of the page instead of at the end of it.
  */
-function NextIssue({ drop, first = false }: { drop: Drop; first?: boolean }) {
-  const teasers = teasersIn(drop.no);
+function NextIssue({
+  catalog,
+  drop,
+  first = false,
+}: {
+  catalog: Catalog;
+  drop: Drop;
+  first?: boolean;
+}) {
+  const teasers = teasersIn(catalog, drop.no);
 
   return (
     <section
@@ -368,11 +380,17 @@ function NextIssue({ drop, first = false }: { drop: Drop; first?: boolean }) {
  * reading the issue that has not opened yet was told the shop that was open
  * right then had shut.
  */
-function PastIssue({ previous }: { previous: Drop | undefined }) {
+function PastIssue({
+  catalog,
+  previous,
+}: {
+  catalog: Catalog;
+  previous: Drop | undefined;
+}) {
   const note = previousDropNote(previous);
   if (!note) return null;
 
-  const summary = dropSummary(note.drop.no);
+  const summary = dropSummary(catalog, note.drop.no);
 
   return (
     <div className="wrap3">

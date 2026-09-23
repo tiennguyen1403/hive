@@ -4,6 +4,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import type { Drop } from "@/data/types";
+import type { Catalog } from "@/lib/catalog";
 import { closedAtLabel } from "@/lib/datetime";
 import { dropCalendar } from "@/lib/drop";
 import { dropSummary, productsInDrop } from "@/lib/inventory";
@@ -67,23 +68,25 @@ export function IssueNumber({ no }: { no: number }) {
  * really is empty, and no button that pretends the window is still open.
  */
 export function ClosedCover({
+  catalog,
   drop,
   previous,
   headingId = "cover-t",
   priority,
 }: {
+  catalog: Catalog;
   drop: Drop;
   /** The issue before this one, for "Về số 03". */
   previous?: Drop | undefined;
   headingId?: string;
   priority?: boolean;
 }) {
-  const summary = dropSummary(drop.no);
-  const forward = forwardIssue(drop);
+  const summary = dropSummary(catalog, drop.no);
+  const forward = forwardIssue(catalog, drop);
   // An issue that is over is a record of ITS OWN styles, so the cover is one
   // of them — the first in the catalog — rather than the shop's standing
   // hero, which belongs to whichever issue is selling now.
-  const cover = productsInDrop(drop.no)[0]?.photoKeys[0] ?? "hero";
+  const cover = productsInDrop(catalog, drop.no)[0]?.photoKeys[0] ?? "hero";
 
   return (
     <section className="cover shut" aria-labelledby={headingId}>
@@ -133,8 +136,11 @@ export function ClosedCover({
  * neither exists there is nowhere honest to send anyone, and the button is
  * not drawn.
  */
-function forwardIssue(drop: Drop): { href: string; label: string } | undefined {
-  const cal = dropCalendar();
+function forwardIssue(
+  catalog: Catalog,
+  drop: Drop,
+): { href: string; label: string } | undefined {
+  const cal = dropCalendar(catalog);
   if (cal.open && cal.open.no !== drop.no) {
     return { href: "/products", label: `Xem ${LEX.tl} ${issueNo(cal.open.no)} đang bán` };
   }
@@ -145,9 +151,9 @@ function forwardIssue(drop: Drop): { href: string; label: string } | undefined {
 }
 
 /** Every style of an issue that is over, and how much of each cut went. */
-export function ClosedContents({ drop }: { drop: Drop }) {
-  const products = productsInDrop(drop.no);
-  const summary = dropSummary(drop.no);
+export function ClosedContents({ catalog, drop }: { catalog: Catalog; drop: Drop }) {
+  const products = productsInDrop(catalog, drop.no);
+  const summary = dropSummary(catalog, drop.no);
 
   return (
     <section className="sec" aria-labelledby="h-all">

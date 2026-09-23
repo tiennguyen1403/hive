@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { useCart } from "./CartContext";
 import type { Promotion } from "@/data/types";
 import { vnd } from "@/lib/money";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { checkPromoCode, promoAppliedMessage, promoOfferLabel } from "@/lib/promotions";
 
 interface PromoBoxProps {
@@ -43,13 +44,14 @@ export function PromoBox({
   shippingFeeVnd,
   onToast,
 }: PromoBoxProps) {
+  const catalog = useCatalog();
   const { promoCode, setPromoCode } = useCart();
   const id = useId();
   const [typed, setTyped] = useState("");
   const [refused, setRefused] = useState<string | null>(null);
 
   function apply() {
-    const check = checkPromoCode(typed, subtotalVnd);
+    const check = checkPromoCode(catalog, typed, subtotalVnd);
     if (!check.ok) {
       setRefused(check.message);
       return;
@@ -70,7 +72,7 @@ export function PromoBox({
   // out still belongs to the cart — but it is worth nothing, and the screen
   // has to say which of those two things is true rather than silently
   // dropping it or silently keeping it.
-  const stale = promoCode && !promo ? checkPromoCode(promoCode, subtotalVnd) : null;
+  const stale = promoCode && !promo ? checkPromoCode(catalog, promoCode, subtotalVnd) : null;
 
   return (
     <div className="field3">

@@ -2,12 +2,13 @@ import { describe, it, expect } from "vitest";
 import { anySoldOutTime, soldOutTimes } from "./sold-out-times";
 import { productsInDrop } from "./inventory";
 import { ORDERS } from "@/data/orders";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { getDrop } from "./drop";
 import type { Order, OrderStatus, Product } from "@/data/types";
 import { customerId, orderCode } from "@/data/types";
 
-const DROP_4 = getDrop(4)!;
-const STYLES_4 = productsInDrop(4);
+const DROP_4 = getDrop(FIXTURE_CATALOG, 4)!;
+const STYLES_4 = productsInDrop(FIXTURE_CATALOG, 4);
 
 /** An order carrying `qty` of one style, with whatever status is handed in. */
 function order(code: string, at: string, status: OrderStatus, product: Product, qty: number): Order {
@@ -123,7 +124,7 @@ describe("soldOutTimes", () => {
   it("refuses to call a style sold out while it still has stock", () => {
     // Issue 05 is open and KHÓI has units on the shelf. Even a pile of paid
     // orders cannot make "hết lúc" true for it.
-    const open = productsInDrop(5)[0]!;
+    const open = productsInDrop(FIXTURE_CATALOG, 5)[0]!;
     const orders = [
       order("DH-1", "2026-09-12T10:00:00+07:00", delivered("2026-09-15T10:00:00+07:00"), open, open.cutUnits),
     ];

@@ -11,7 +11,9 @@ import { useSim } from "@/components/admin/SimContext";
 import { ActionMenu } from "@/components/admin/Table3";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { byId, COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
+import { useCatalog } from "@/components/shop/CatalogContext";
+import type { Catalog } from "@/lib/catalog";
 import { customerById } from "@/data/customers";
 import { ORDERS, ordersOf } from "@/data/orders";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
@@ -28,7 +30,6 @@ import { customerFacts, issueOf } from "@/lib/customer-tags";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "@/lib/datetime";
 import { LEX, issueNo } from "@/lib/lexicon";
-import { CURRENT_DROP_NO } from "@/data/catalog";
 import { plainVnd, vnd } from "@/lib/money";
 import { PAYMENT_LABEL, STATE_LABEL } from "@/lib/order-labels";
 import { transferReference } from "@/lib/placed-order";
@@ -64,6 +65,7 @@ export function AdminOrderScreen({
   /** Arrived from the queue's "Đóng gói và bàn giao" — open the panel at once. */
   openHandover: boolean;
 }) {
+  const catalog = useCatalog();
   const { sim, run, runMany, say } = useSim();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [handing, setHanding] = useState(openHandover);
@@ -85,7 +87,7 @@ export function AdminOrderScreen({
   );
   const editReason = addressEditReason(code, sim);
   const facts = customer
-    ? customerFacts(ordersOf(customer.id), CURRENT_DROP_NO, now)
+    ? customerFacts(catalog, ordersOf(customer.id), catalog.currentDropNo, now)
     : null;
 
   const notes = [...baseNotes(base), ...simNotes(code, sim)].sort(
@@ -121,7 +123,7 @@ export function AdminOrderScreen({
           <span>
             Đặt {clockLabel(order.placedAt)} · {dayMonth(order.placedAt)}
             {customer ? ` · ${customer.name} · ${formatPhone(order.shipTo.phone)}` : ""} ·{" "}
-            {PAYMENT_LABEL[order.payment]} · {LEX.t} {issueNo(issueOf(order) ?? 0)}
+            {PAYMENT_LABEL[order.payment]} · {LEX.t} {issueNo(issueOf(catalog, order) ?? 0)}
           </span>
         }
       >
@@ -147,7 +149,7 @@ export function AdminOrderScreen({
         )}
       </AdminTop>
 
-      {!handing && <NextStep order={order} now={now} onHandover={() => setHanding(true)} onPaid={() =>
+      {!handing && <NextStep catalog={catalog} order={order} now={now} onHandover={() => setHanding(true)} onPaid={() =>
         run({ kind: "ORDER_PAID", code }, `${code} → đã thanh toán · ghi nhật ký`)
       } />}
 
@@ -200,7 +202,7 @@ export function AdminOrderScreen({
               </thead>
               <tbody>
                 {order.lines.map((l, i) => {
-                  const p = byId.get(l.productId);
+                  const p = catalog.byId.get(l.productId);
                   return (
                     <tr key={`${l.productId}-${l.size}-${l.color}-${i}`}>
                       <td className="nw">
@@ -415,11 +417,13 @@ export function AdminOrderScreen({
  * not drawn — an empty banner saying "nothing to do" is furniture.
  */
 function NextStep({
+  catalog,
   order,
   now,
   onHandover,
   onPaid,
 }: {
+  catalog: Catalog;
   order: Order;
   now: Date;
   onHandover: () => void;
@@ -446,7 +450,7 @@ function NextStep({
         <b>Bước tiếp theo: đóng gói và bàn giao</b>
         <span>
           Đã thanh toán {sinceLabel(order.status.paidAt, now)} · {orderUnits(order)} chiếc{" "}
-          {orderItemsLabel(order)}
+          {orderItemsLabel(catalog, order)}
           {days >= HANDOVER_LATE_DAYS ? ` · trễ ${days} ngày` : ""}
         </span>
         <Button tone="sm" icon="box" onClick={onHandover}>

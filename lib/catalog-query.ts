@@ -1,4 +1,4 @@
-import { COLORS } from "@/data/catalog";
+import { COLORS } from "@/data/colors";
 import {
   COLOR_KEYS,
   FAMILIES,
