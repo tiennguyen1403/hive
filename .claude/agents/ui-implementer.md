@@ -2,7 +2,7 @@
 name: ui-implementer
 description: Implements a user-approved mock screen from the current mock round (prototype/v3 since 22/09/2026; prototype/v2 is the previous round) into the Next.js app (app/, components/, lib/, data/) and proves it with vitest, tsc, next build and playwright cli screenshots. Use only with a full brief from the main session, for screens the user has approved. Runs on Opus 5. Never redesigns, never edits the mock.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: claude-opus-5
+model: claude-opus-5-5
 effort: max
 skills:
   - playwright-cli

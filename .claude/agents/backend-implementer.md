@@ -2,7 +2,7 @@
 name: backend-implementer
 description: Implements one backend slice (Supabase Postgres + Auth reached only through Next.js 16 Server Components, Server Actions and Route Handlers) from a full brief written by the main session, for the demo storefront in D:\Code\e-commerce. Owns supabase/ migrations and seed, the lib/db data-access layer, server actions, proxy.ts, and the app/ and components/ edits the slice needs; proves it with vitest, tsc, supabase db reset, next build and playwright cli. Runs on Opus 5. Never designs UI, never edits the mock or the docs, never adds payment gateways, carriers or email providers.
 tools: Read, Write, Edit, Bash, Glob, Grep, WebFetch
-model: claude-opus-5
+model: claude-opus-5-5
 effort: max
 skills:
   - playwright-cli
