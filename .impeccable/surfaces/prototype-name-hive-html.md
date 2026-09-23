@@ -2,7 +2,7 @@
 version: 1
 slug: "prototype-name-hive-html"
 primary_target: "prototype/name/hive.html"
-related_targets: ["prototype/name/index.html","prototype/name/hive-2.html","prototype/name/hive-g.html"]
+related_targets: ["prototype/name/index.html","prototype/name/hive-2.html","prototype/name/hive-g.html","prototype/name/hive-bee.html"]
 ---
 
 # prototype/name/hive.html — bảng hướng logo HIVE (mock so sánh, chưa duyệt)
@@ -47,3 +47,16 @@ thân trái, sâu 1/6 cap), **G4 Theo thanh ngang** (cắt ngang đúng tim than
 Unbounded 800 đo bằng canvas trong Chromium (HIVE 104px: ink 70,7–372,8, cap 78; H 100px: ink 8,65–91,65, cap 75), không ước
 lượng. Đề xuất G2. Lỗi kỹ thuật đã sửa ở cả hive-2 và hive-g: `<use>` của symbol có viewBox lệch gốc bị khung ngoài che 56 đơn vị
 đầu → khung ngoài dùng viewBox bắt đầu từ 0.
+
+## Tay bài 3 (23/09/2026, `prototype/name/hive-bee.html`)
+Người dùng loại họ G: "chữ H không thì đơn giản quá", "vết cắt chưa đủ ấn tượng và ý nghĩa", muốn thêm con vật. Hỏi hai câu: lối vẽ
+(đặc / nét) → "dựng cả hai"; nhát cắt (giữ nhưng do ong gây ra / bỏ) → "xem cả hai". Bảng 2×2, đặt tên từ K để không lẫn chữ H và I:
+**K · Ong là thanh ngang** (đặc, giữ cắt: con ong nằm giữa hai thân chữ H thay thanh ngang, đuôi cắm thân trái, đầu chạm thân phải, hai sọc
+bụng là hai nhát cắt; dưới 40px H lấy lại thanh ngang, ong nằm ngang đứng riêng), **L · Một nét bay** (nét, giữ cắt: một nét rộng 4 đơn vị,
+trong tên là khe cắt theo góc 12° của họ G, ra khỏi chữ E là mực và vẽ con ong ở đầu đường bay; nét ong 8 × tỉ lệ 0,5 = 4), **M · Huy hiệu
+ong** (đặc, bỏ cắt, ong cao bằng cap 78 đứng trước tên), **N · Ong đường chỉ** (nét, bỏ cắt; trên vải đen là chỉ mật ong thêu). Một con ong
+duy nhất nhìn từ trên (khung 100×100, đối xứng qua x=50; bụng là path, hai sọc là mask cắt 6 đơn vị; cánh, râu, chân là nét `--bs`), ba dạng:
+`bee-top` đặc, `bee-top-line` nét (mask giấu chỗ chồng nét), `bee-top-sm` cho ≤32px (chỉ cánh trước, sọc 7, khe 4,5 quanh thân); K xoay 90°,
+L xoay 90° rồi −12°. Đề xuất K. Đã dựng con ong nhìn ngang cho K/L và loại sau khi chụp: dưới 24px đọc thành con ruồi. Sáu hướng demoted ghi
+trên bảng (ong nhìn ngang, ong cắt rập, V là hai cánh, đường bay vòng, ong chúa, ong trong lục giác). Kiểm: 8 hàng chụp 2x, 0 lỗi console,
+0 tràn ngang ở 1280 và 390; lỗi tràn 390 lúc đầu do `style` inline `grid-template-columns` thắng media query → chuyển sang class `.row.wide`.
