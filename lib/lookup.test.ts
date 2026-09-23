@@ -1,10 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   clockFirst,
-  findDeviceOrder,
-  findFixtureOrder,
+  isOrderCode,
   lastUpdateLabel,
-  lookupOrder,
   normaliseOrderCode,
   notFoundMessage,
   phoneDigits,
@@ -12,45 +10,42 @@ import {
   totalRowLabel,
   trackHref,
   trackedOfOrder,
-  trackedOfPlaced,
 } from "./lookup";
-import type { PlacedOrder } from "./placed-order";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
-
-/** DH-2425 belongs to Lê Hoàng Nam, whose number is 0908 221 447. */
-const NAM = "0908 221 447";
-/** Somebody else's — Trần Minh Anh's. */
-const OTHER = "0912 345 678";
+import { orderByCode } from "@/data/orders";
+import { orderCode, productId, type Order } from "@/data/types";
 
 const DURING_5 = new Date("2026-09-20T10:00:00+07:00");
 
-const placed: PlacedOrder = {
-  code: "DH-9001",
-  placedAt: "2026-09-20T09:00:00+07:00",
+/** A sample order, by its code. */
+const sample = (code: string) => orderByCode.get(orderCode(code))!;
+
+/**
+ * An order checkout placed since slice B2 — cash on delivery, with a note for
+ * the courier and the handling fee on it — as `order_json()` returns it.
+ */
+const placed: Order = {
+  code: orderCode("DH-2432"),
+  customerId: "" as Order["customerId"],
   lines: [
-    {
-      slug: "khoi",
-      name: "KHÓI",
-      kind: "Áo thun oversize",
-      colorLabel: "Đen",
-      size: "M",
-      qty: 1,
-      unitPriceVnd: 390_000,
-      photoKey: "khoi",
-    },
+    { productId: productId("p-khoi"), size: "M", color: "black", qty: 1, unitPriceVnd: 390_000 },
   ],
-  recipient: "Trần Minh Anh",
-  phone: "0912345678",
-  email: "minhanh@vidu.vn",
-  addressLine: "12 Nguyễn Huệ, Phường Sài Gòn, TP. Hồ Chí Minh",
-  note: "Gọi trước 10 phút",
-  delivery: "STANDARD",
-  payment: "BANK_TRANSFER",
-  subtotalVnd: 390_000,
-  shippingFeeVnd: 30_000,
-  codFeeVnd: 0,
+  status: { state: "RECEIVED" },
+  payment: "COD",
+  delivery: "EXPRESS",
+  shippingFeeVnd: 45_000,
+  codFeeVnd: 15_000,
   discountVnd: 0,
-  totalVnd: 420_000,
+  shipTo: {
+    recipient: "Trần Minh Anh",
+    phone: "0912345678",
+    line: "12 Nguyễn Huệ",
+    provinceCode: "29",
+    wardCode: "70101063",
+  },
+  email: "minhanh@vidu.vn",
+  note: "Gọi trước 10 phút",
+  placedAt: "2026-09-20T09:00:00+07:00",
 };
 
 describe("normaliseOrderCode", () => {
@@ -92,54 +87,21 @@ describe("phoneDigits / samePhone", () => {
   });
 });
 
-describe("findFixtureOrder", () => {
-  it("finds an order for the number it was placed with", () => {
-    expect(findFixtureOrder("DH-2425", NAM)?.code).toBe("DH-2425");
+describe("isOrderCode", () => {
+  it("accepts a code the database issues, four digits or more", () => {
+    expect(isOrderCode("DH-2432")).toBe(true);
+    expect(isOrderCode("DH-12345")).toBe(true);
   });
 
-  it("accepts the code typed loosely", () => {
-    expect(findFixtureOrder("dh2425", "0908.221.447")?.code).toBe("DH-2425");
+  it("refuses anything else, so the question is never sent", () => {
+    for (const bad of ["", "2432", "dh-2432", "DH-243", "DH-2432 ", "DH-24a2", "DH--2432"]) {
+      expect(isOrderCode(bad), bad).toBe(false);
+    }
   });
 
-  it("refuses the right code with somebody else's number", () => {
-    expect(findFixtureOrder("DH-2425", OTHER)).toBeUndefined();
-  });
-
-  it("refuses a code that does not exist", () => {
-    expect(findFixtureOrder("DH-0000", NAM)).toBeUndefined();
-  });
-
-  it("refuses a code with no number at all — that is the whole point", () => {
-    expect(findFixtureOrder("DH-2425", "")).toBeUndefined();
-  });
-});
-
-describe("findDeviceOrder", () => {
-  it("finds an order placed in this browser", () => {
-    expect(findDeviceOrder("DH-9001", "0912 345 678", [placed])?.code).toBe("DH-9001");
-  });
-
-  it("refuses it to a different number", () => {
-    expect(findDeviceOrder("DH-9001", NAM, [placed])).toBeUndefined();
-  });
-});
-
-describe("lookupOrder", () => {
-  it("prefers the fixtures when a device order shares the code", () => {
-    const clash: PlacedOrder = { ...placed, code: "DH-2425", phone: "0912345678" };
-    expect(lookupOrder("DH-2425", NAM, [clash])).toEqual({
-      source: "fixture",
-      order: expect.objectContaining({ code: "DH-2425" }),
-    });
-  });
-
-  it("falls back to the device list", () => {
-    const hit = lookupOrder("DH-9001", OTHER, [placed]);
-    expect(hit?.source).toBe("device");
-  });
-
-  it("returns nothing when neither matches", () => {
-    expect(lookupOrder("DH-9001", NAM, [placed])).toBeNull();
+  it("agrees with normaliseOrderCode on what a shopper types", () => {
+    expect(isOrderCode(normaliseOrderCode("dh2432"))).toBe(true);
+    expect(isOrderCode(normaliseOrderCode(" 2432 "))).toBe(true);
   });
 });
 
@@ -174,7 +136,8 @@ describe("clockFirst", () => {
 });
 
 describe("trackedOfOrder", () => {
-  const order = findFixtureOrder("DH-2425", NAM)!;
+  // DH-2425 belongs to Lê Hoàng Nam and is on the road.
+  const order = sample("DH-2425");
   const tracked = trackedOfOrder(FIXTURE_CATALOG, order, "88 Xuân Thuỷ, Phường Cầu Giấy, TP. Hà Nội", DURING_5);
 
   it("carries the courier's number on a shipping order", () => {
@@ -201,11 +164,46 @@ describe("trackedOfOrder", () => {
   it("counts a shipped order as paid", () => {
     expect(tracked.paid).toBe(true);
   });
+
+  it("carries what the sample recorded about delivery: the standard service, no note", () => {
+    expect(tracked.delivery).toBe("STANDARD");
+    expect(tracked.note).toBe("");
+    expect(tracked.codFeeVnd).toBe(0);
+  });
+});
+
+describe("trackedOfOrder — an order placed at checkout", () => {
+  const t = trackedOfOrder(FIXTURE_CATALOG, placed, "12 Nguyễn Huệ, Phường Sài Gòn, TP. Hồ Chí Minh", DURING_5);
+
+  it("keeps the note typed for the courier, and the service chosen", () => {
+    expect(t.note).toBe("Gọi trước 10 phút");
+    expect(t.delivery).toBe("EXPRESS");
+  });
+
+  it("prints the handling fee and counts it into the total", () => {
+    expect(t.codFeeVnd).toBe(15_000);
+    expect(t.totalVnd).toBe(390_000 + 45_000 + 15_000);
+  });
+
+  it("never claims a COD order was paid — the money is collected at the door", () => {
+    expect(t.state).toBe("RECEIVED");
+    expect(t.paid).toBe(false);
+    expect(totalRowLabel(t.state)).toBe("Cần thanh toán");
+  });
+
+  it("reads its names and photos out of the catalogue", () => {
+    expect(t.lines[0]).toMatchObject({ name: "KHÓI", colorLabel: "Đen", size: "M", qty: 1 });
+  });
+
+  it("shows the order and the two steps still ahead", () => {
+    expect(t.steps.map((s) => s.title)).toEqual(["Đã nhận đơn", "Đóng gói", "Giao hàng"]);
+    expect(t.steps[0]!.detail).toBe("09:00 · 20/09");
+  });
 });
 
 describe("trackedOfOrder — a transfer that ran out of time", () => {
   // DH-2430 waits for a transfer, due 21/09 19:50.
-  const order = findFixtureOrder("DH-2430", OTHER)!;
+  const order = sample("DH-2430");
 
   it("is only waiting while the deadline is ahead", () => {
     const t = trackedOfOrder(FIXTURE_CATALOG, order, "…", new Date("2026-09-21T10:00:00+07:00"));
@@ -226,32 +224,6 @@ describe("trackedOfOrder — a transfer that ran out of time", () => {
   });
 });
 
-describe("trackedOfPlaced", () => {
-  it("keeps the note typed for the courier", () => {
-    expect(trackedOfPlaced(placed, DURING_5).note).toBe("Gọi trước 10 phút");
-  });
-
-  it("never claims a device order was paid — no server took any money", () => {
-    const paidLooking: PlacedOrder = { ...placed, payment: "COD" };
-    expect(trackedOfPlaced(paidLooking, DURING_5).paid).toBe(false);
-  });
-
-  it("marks the wait late once the twelve hours are up", () => {
-    const after = new Date("2026-09-20T22:00:00+07:00");
-    const t = trackedOfPlaced(placed, after);
-    expect(t.state).toBe("CANCELLED");
-    expect(t.steps.some((s) => s.state === "late")).toBe(false); // cancelled has no wait left
-  });
-
-  it("marks it late while the wait is still on screen but overdue", () => {
-    // Placed at 09:00, so the hold runs to 21:00. One minute before the
-    // device state flips, the wait itself is still the current step.
-    const t = trackedOfPlaced(placed, new Date("2026-09-20T20:59:00+07:00"));
-    expect(t.state).toBe("AWAITING_TRANSFER");
-    expect(t.steps.find((s) => s.title === "Chờ chuyển khoản")!.state).toBe("todo");
-  });
-});
-
 describe("totalRowLabel", () => {
   it("says what the number means for each state", () => {
     expect(totalRowLabel("DELIVERED")).toBe("Đã thanh toán");
@@ -262,7 +234,7 @@ describe("totalRowLabel", () => {
 
 describe("lastUpdateLabel", () => {
   it("is the stamp of the newest milestone that actually happened", () => {
-    const order = findFixtureOrder("DH-2425", NAM)!;
+    const order = sample("DH-2425");
     const t = trackedOfOrder(FIXTURE_CATALOG, order, "…", DURING_5);
     expect(lastUpdateLabel(t.steps)).toBe("09:15 · 17/09");
   });

@@ -1,6 +1,7 @@
 import { AccountLayout } from "@/components/account/AccountLayout";
 import { ShopFrame } from "@/components/shop/ShopFrame";
 import { listAddresses } from "@/lib/db/addresses";
+import { listMyOrders } from "@/lib/db/orders";
 import { loadMe } from "@/lib/db/profiles";
 
 /**
@@ -25,13 +26,16 @@ export default async function AccountAreaLayout({
   children: React.ReactNode;
 }) {
   const me = await loadMe();
-  // The count in the rail. One query for the layout; `React.cache` hands the
-  // same rows to `/account/addresses` below without a second round trip.
-  const addresses = me ? await listAddresses() : [];
+  // The rail counts both, and its unread dot reads the orders too. One query
+  // each for the layout; `React.cache` hands the same rows to the page below
+  // (`/account/addresses`, `/account/orders`, …) without a second round trip.
+  const [addresses, orders] = me
+    ? await Promise.all([listAddresses(), listMyOrders()])
+    : [[], []];
 
   return (
     <ShopFrame>
-      <AccountLayout me={me} {...(me ? { addressCount: addresses.length } : {})}>
+      <AccountLayout me={me} {...(me ? { addressCount: addresses.length, orders } : {})}>
         {children}
       </AccountLayout>
     </ShopFrame>

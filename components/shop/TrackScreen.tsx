@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon/Icon";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -10,44 +10,32 @@ import { Field3 } from "@/components/ui/Field3";
 import { CopyButton } from "@/components/shop/CopyButton";
 import { InvoiceSheet } from "@/components/shop/InvoiceSheet";
 import { ShopFrame } from "@/components/shop/ShopFrame";
-import { useCatalog } from "@/components/shop/CatalogContext";
-import { usePlacedOrders } from "@/components/shop/placed-order";
-import { useSimOverlay } from "@/components/shop/sim-store";
-import type { Order } from "@/data/types";
-import { shopOrders } from "@/lib/admin-sim";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { invoiceOf } from "@/lib/invoice";
 import {
-  findDeviceOrder,
   lastUpdateLabel,
   normaliseOrderCode,
   notFoundMessage,
   phoneDigits,
   totalRowLabel,
-  trackedOfOrder,
-  trackedOfPlaced,
   type TrackedOrder,
 } from "@/lib/lookup";
 import { vnd } from "@/lib/money";
-import { ROW_STATE_LABEL } from "@/lib/order-labels";
+import { STATE_LABEL } from "@/lib/order-labels";
 import { formatPhone } from "@/lib/phone";
 import { photoUrl } from "@/lib/photos";
-import { demoNow } from "@/lib/clock";
 
 interface TrackScreenProps {
   /** Whatever came in on `?code=`, shown back in the box. */
   code: string;
   phone: string;
   /**
-   * The fixture order this pair unlocks, resolved on the SERVER — building
-   * its address line needs `data/regions.ts` and the 3.321 communes behind
-   * it, which never cross into the browser.
+   * The order this pair unlocks, resolved on the SERVER by `track_order()` —
+   * and its address line built there too, because that needs
+   * `data/regions.ts` and the 3.321 communes behind it, which never cross
+   * into the browser. Null for any miss.
    */
   found: TrackedOrder | null;
-  /** The same order, raw, so a handover recorded here can be folded in. */
-  base: Order | null;
-  /** What the server made of its address; the browser cannot rebuild it. */
-  addressLine: string;
 }
 
 /**
@@ -60,21 +48,17 @@ interface TrackScreenProps {
  * the same link beside its QR slot (QĐ-8, the same rule the listing filters
  * follow).
  *
- * Two places are searched, because an order lives in one of two. The
- * fixtures are server-side and arrive as `found`; an order placed in THIS
- * browser is in `localStorage` and is matched here. Neither can see the
- * other, and the shopper should not have to know which they have.
+ * One place is searched since slice B2 — the shop's database, where every
+ * order is a row whoever placed it — and the search runs on the server, so
+ * the answer is already in `found` on first paint.
  *
  * The phone number is not decoration. Order codes are short and sequential,
  * so a code alone would hand a stranger somebody's name, address and phone
  * number. And the answer is the same whichever half is wrong: the screen
  * never confirms that a code exists.
  */
-export function TrackScreen({ code, phone, found, base, addressLine }: TrackScreenProps) {
+export function TrackScreen({ code, phone, found }: TrackScreenProps) {
   const router = useRouter();
-  const catalog = useCatalog();
-  const { orders, ready } = usePlacedOrders();
-  const { sim } = useSimOverlay();
   const [typedCode, setTypedCode] = useState(code);
   const [typedPhone, setTypedPhone] = useState(phone);
   const trackingRef = useRef<HTMLElement>(null);
@@ -90,35 +74,9 @@ export function TrackScreen({ code, phone, found, base, addressLine }: TrackScre
     setTypedPhone(phone);
   }
 
-  // One instant for the whole render, so the timeline and the state of a
-  // device order are judged against the same clock.
-  const now = useMemo(() => demoNow(), [orders]);
-  const device = findDeviceOrder(code, phone, orders);
-  /**
-   * The fixture order, plus what the back office did to it in THIS browser.
-   *
-   * Only the actions a shopper is entitled to see (`shopOrders`): a handover
-   * and its tracking number, and a cancellation with its reason. The
-   * handover form promises the shopper this number — "khách thấy mã này ở
-   * tra cứu đơn" — so the promise is kept here or it is not a promise.
-   *
-   * The address line stays the server's. Rebuilding it from an edited
-   * `shipTo` would mean shipping `data/wards.json` — 218KB of communes — to
-   * every shopper who looks an order up.
-   */
-  const patched = useMemo(() => {
-    if (!base) return found;
-    const next = shopOrders([base], sim)[0]!;
-    return next === base ? found : trackedOfOrder(catalog, next, addressLine);
-  }, [catalog, base, sim, found, addressLine]);
-
-  const order: TrackedOrder | null =
-    patched ?? (device ? trackedOfPlaced(device, now) : null);
-
+  const order = found;
   const asked = code.trim() !== "" && phone.trim() !== "";
-  // "Not found" only once the device list has been read: saying it while
-  // storage is still answering would be a wrong answer that arrives first.
-  const missing = asked && ready && !order;
+  const missing = asked && !order;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -206,7 +164,7 @@ function Result({
   order: TrackedOrder;
   trackingRef: React.RefObject<HTMLElement | null>;
 }) {
-  const state = ROW_STATE_LABEL[order.state];
+  const state = STATE_LABEL[order.state];
   const updated = lastUpdateLabel(order.steps);
 
   return (
@@ -241,17 +199,6 @@ function Result({
               ))}
             </div>
           </div>
-
-          {order.onDevice && (
-            <p className="note3" style={{ marginTop: 16 }}>
-              <Icon name="info" className="ic sm" />
-              <span>
-                Đơn này đặt trên thiết bị này và lưu ở đây. Chưa có máy chủ nhận đơn,
-                nên cửa hàng chưa thấy nó và hành trình chỉ có những mốc trình duyệt
-                biết.
-              </span>
-            </p>
-          )}
         </div>
 
         <aside>

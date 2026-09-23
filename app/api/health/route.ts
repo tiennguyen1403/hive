@@ -1,4 +1,6 @@
 import type { NextRequest } from "next/server";
+import { demoNow } from "@/lib/clock";
+import { toVnIso } from "@/lib/datetime";
 import { getSupabase } from "@/lib/db/server";
 
 /**
@@ -44,8 +46,18 @@ export async function GET(request: NextRequest) {
     return Response.json({ ok: false }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }
 
+  // The daily sweep (slice B2): unpaid transfers whose twelve hours ran out
+  // put their pieces back on the shelf. `place_order()` does the same at the
+  // top of every order; this catches the days nobody orders. The clock is the
+  // app's, like every other business time (QĐ-24), and the function only
+  // applies the shop's own rule, which is why `anon` may call it.
+  const sweep = await supabase.rpc("expire_transfers", { p_now: toVnIso(demoNow()) });
+  if (sweep.error) {
+    return Response.json({ ok: false }, { status: 503, headers: { "Cache-Control": "no-store" } });
+  }
+
   return Response.json(
-    { ok: true, drops: count },
+    { ok: true, drops: count, expired: sweep.data },
     // A cached health check answers for the shape the cache was in, not for
     // the shape the database is in now.
     { headers: { "Cache-Control": "no-store" } },

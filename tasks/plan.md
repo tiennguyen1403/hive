@@ -1404,3 +1404,25 @@ ngoài 3200**, 0 lỗi console; sweep **61 lượt** 0 console / 0 tràn / 0 ch�
 44 ảnh kịch bản `.playwright-cli/shots/backend/b1/` + 16 ảnh `b1/after/` so `b0b/after/` chỉ lệch ở đồng hồ mẫu (agent đo pixel). Không gói mới.
 **Mở:** form sửa hồ sơ; `joined_at` người mới là `now()`; mỗi lần đổi mật khẩu để lại một phiên ngắn hạn 1 giờ không thu hồi (cố ý); chưa đo hai
 tab cùng làm mới token.
+
+**Lát B2 ĐẠT (23/09/2026, `backend-implementer` trên Opus 5.5, phiên chính duyệt độc lập).** Đơn hàng trong Postgres:
+`supabase/migrations/20260923170000_orders.sql` (3 enum, `order_seq` từ 2432, `orders` + `order_lines` với check theo trạng thái, bảng seed,
+RLS 2 policy select own, mọi quyền ghi thu khỏi `anon`/`authenticated`; hàm `place_order(p_input, p_now)`, `cancel_order`, `expire_transfers`,
+`expire_and_lock` (khoá đơn quá hạn + mọi ô tồn kho trong một lượt đã sắp xếp, chống deadlock), `track_order`, `receipt_order`, `order_json`,
+`my_orders`, `reset_demo` bản 3 đặt sequence theo mã lớn nhất trong seed). **Thời gian nghiệp vụ là `p_now` do app truyền** (đồng hồ mẫu
+QĐ-24 còn sống), DB không đọc `now()`. Một `Order` cho fixture, DB và màn hình: `OrderStatus` thêm `RECEIVED`; `Order` thêm `email`, `note`,
+`delivery`, `codFeeVnd` (đơn mẫu `codFeeVnd = 0`, có chú giải). DAL `lib/db/orders.ts` (+ `order-dto.ts`, `guest-orders.ts`, `order-payload.ts`),
+actions `placeOrderAction`/`cancelOrderAction` (cả hai `revalidatePath("/", "layout")` vì tồn kho đổi; `CheckoutScreen` giữ ảnh chụp giỏ
+tới khi sang biên nhận nên không chớp), cookie httpOnly `guest_orders` (10 mã, 30 ngày, lax), `/order-confirmed/[code]`, `/track` qua
+`track_order`, `/account/orders*` qua RLS → mọi 404 ở server; `/api/health` gọi `expire_transfers`. Xoá `brand.orders`, `lib/placed-order.ts`,
+`components/shop/{placed-order,sim-store}.ts`, `fixtureOrdersOf`; lớp phủ `brand.adminSim` rút khỏi màn khách. **Kiểm:** typecheck sạch;
+`npm test` **50 tệp / 1.072 test**; `npm run test:db` **3 tệp / 66 test** (đối chiếu tổng tiền TS ↔ SQL 16 ca trùng khớp; 5 vòng hai client
+tranh chiếc cuối → đúng 1 thắng; 10 vòng hai ô ngược thứ tự không deadlock; probe khoá dòng chờ 2,08 s rồi `OUT_OF_STOCK`); build 44 route `ƒ`;
+phiên chính tự đi: biên nhận đơn mẫu khi vãng lai 404, tra cứu đúng/sai SĐT, 5 đơn mẫu của tài khoản thử, đơn người khác 404, mã không tồn tại
+404 (khép việc mở B1), `/api/health` `{ok,drops,expired}`, **0 request ngoài 3200**; chạy lại kịch bản 20 bước của agent: `DH-2432` vãng lai
+có đếm ngược 12 giờ, mua chiếc XL cuối → "XL hết" → huỷ → "XL còn 1", hai tab tranh chiếc cuối → 1 thắng + toast "Một món vừa hết"; sweep
+61 lượt 0 console / 0 tràn / 0 chữ nhỏ / 0 cắt (tồn dư 48 + 2). **Phiên chính sửa thêm:** ba câu quản trị nay sai ("khách thấy mã này…",
+"khách thấy lý do…") đổi thành "mô phỏng, khách chưa thấy…" tới B3; DESIGN.md §8 cập nhật `brand.session`/`brand.orders` đã bỏ và
+`brand.adminSim` một chiều; chú giải `vitest.db.config.mts`. **Mở (B3):** `p_now` là tham số hàm `anon` gọi được — khi sang giờ thật phải bỏ
+khỏi chữ ký công khai hoặc kẹp theo `now()`; `track_order` chưa giới hạn tần suất; admin vẫn fixture nên đơn từ `DH-2432` chưa hiện ở admin;
+tab thua cuộc đua đứng cuối trang (chỉ thấy toast); đơn chuyển khoản đặt ngày mẫu 21/09 có hạn rơi vào 22/09 mà đồng hồ mẫu không tới.

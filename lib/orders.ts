@@ -1,5 +1,6 @@
 import type { Order, Promotion } from "@/data/types";
 import { demoNow } from "./clock";
+import { addHoursIso } from "./datetime";
 
 /**
  * Order arithmetic. The same rules the checkout screen shows the shopper and
@@ -15,8 +16,17 @@ export function orderUnits(o: Order): number {
   return o.lines.reduce((n, l) => n + l.qty, 0);
 }
 
+/**
+ * Goods, delivery and the cash-handling fee, less the discount.
+ *
+ * `codFeeVnd` joined at slice B2, when an order placed through checkout
+ * started carrying the fee it was charged — the same four terms
+ * `lib/shipping.ts#checkoutTotals` adds up, so the receipt and the button that
+ * placed the order print one number. The sample orders keep it at 0
+ * (`data/orders.ts` says why).
+ */
 export function orderTotalVnd(o: Order): number {
-  return orderSubtotalVnd(o) + o.shippingFeeVnd - o.discountVnd;
+  return orderSubtotalVnd(o) + o.shippingFeeVnd + o.codFeeVnd - o.discountVnd;
 }
 
 /**
@@ -53,4 +63,36 @@ export function isPromoLive(promo: Promotion, now: Date = demoNow()): boolean {
   const t = now.getTime();
   if (t < Date.parse(promo.startsAt) || t >= Date.parse(promo.endsAt)) return false;
   return promo.usageLimit === null || promo.usedCount < promo.usageLimit;
+}
+
+// ───────────────────────────────────────────────── the bank-transfer hold
+/**
+ * How long a bank transfer holds the goods.
+ *
+ * Twelve hours is a promise made twice before the confirmation screen — on
+ * the payment row at checkout and in the note under the order button — and it
+ * is the reason the cart is allowed to say it holds no stock: the hold starts
+ * when the order is placed, not when the cart was filled.
+ *
+ * Moved here at slice B2, when orders stopped living in the browser.
+ * `place_order()` restates it as `interval '12 hours'` and writes `due_at`
+ * itself; this constant is what the screens print.
+ */
+export const TRANSFER_HOLD_HOURS = 12;
+
+/** When an unpaid transfer order cancels itself and the pieces go back. */
+export function transferDeadlineIso(placedAtIso: string): string {
+  return addHoursIso(placedAtIso, TRANSFER_HOLD_HOURS);
+}
+
+/**
+ * What goes in the bank's memo field, which will not take a dash.
+ *
+ * The shopper is shown the order code as it reads everywhere else —
+ * `DH-1494`, dash and all. The dashless form belongs to the OTHER side of the
+ * transfer: when the back office matches a bank line against an order, the
+ * statement it reads will have had the dash stripped by the bank.
+ */
+export function transferReference(code: string): string {
+  return code.replace(/-/g, "");
 }

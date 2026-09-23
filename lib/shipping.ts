@@ -1,4 +1,4 @@
-import type { PaymentMethod, Promotion } from "@/data/types";
+import type { DeliveryMethod, PaymentMethod, Promotion } from "@/data/types";
 import { addDaysIso, shortRangeLabel } from "./datetime";
 import { promoDiscountVnd } from "./orders";
 
@@ -12,7 +12,16 @@ import { promoDiscountVnd } from "./orders";
  * another.
  */
 
-export type DeliveryMethod = "STANDARD" | "EXPRESS";
+/**
+ * Defined in `data/types.ts` since slice B2, when it became a field of
+ * `Order`; re-exported so every import from here still reads.
+ *
+ * The four figures below are restated as constants in `place_order()`
+ * (`supabase/migrations/…_orders.sql`), because the database prices an order
+ * itself. `lib/db/orders.dbtest.ts` places the same baskets through both and
+ * fails the moment the two disagree.
+ */
+export type { DeliveryMethod };
 
 export const STANDARD_FEE_VND = 30_000;
 export const EXPRESS_FEE_VND = 45_000;

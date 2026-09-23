@@ -24,12 +24,15 @@ export function CancelOrderSheet({
   code,
   units,
   open,
+  pending = false,
   onClose,
   onConfirm,
 }: {
   code: string;
   units: number;
   open: boolean;
+  /** The cancellation is on its way to the server; the button says so and waits. */
+  pending?: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }) {
@@ -53,9 +56,17 @@ export function CancelOrderSheet({
         <Button tone="ink wide" icon="back" onClick={onClose}>
           Giữ đơn
         </Button>
-        <Button tone="wide" icon="trash" onClick={onConfirm}>
-          Huỷ đơn
-        </Button>
+        {pending ? (
+          /* Running: shut, and without the icon — a disabled button names no
+             action, the project's rule for every one of them. */
+          <Button tone="wide" disabled>
+            Đang huỷ…
+          </Button>
+        ) : (
+          <Button tone="wide" icon="trash" onClick={onConfirm}>
+            Huỷ đơn
+          </Button>
+        )}
       </div>
     </Sheet>
   );

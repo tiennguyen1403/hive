@@ -1,5 +1,4 @@
-import { ordersOf } from "@/data/orders";
-import type { CustomerId, Order } from "@/data/types";
+import type { CustomerId } from "@/data/types";
 
 /**
  * Who is signed in — for real, since slice B1.
@@ -24,10 +23,10 @@ export interface Me {
    * The fixture id this demo account stands for — 'c-minhanh' — or null for
    * an account somebody created themselves.
    *
-   * It exists because `data/orders.ts` is still a fixture keyed by it, and
-   * stays until slice B2 moves orders into Postgres. A real sign-up has no
-   * handle and therefore no sample orders, which is the honest answer: an
-   * account made a minute ago has not bought anything.
+   * Since slice B2 the sample orders live in Postgres and reach the account
+   * through `profile_id`; the handle is what `reset_demo()` matched them up
+   * by. A real sign-up has no handle and no sample orders, which is the
+   * honest answer: an account made a minute ago has not bought anything.
    */
   handle: CustomerId | null;
   /** Shown as-is. */
@@ -36,15 +35,4 @@ export interface Me {
   /** Ten digits starting with zero, or "" when the account has not given one. */
   phone: string;
   joinedAt: string;
-}
-
-/**
- * The sample orders this account can see, if any.
- *
- * One function rather than `ordersOf(me.handle ?? …)` repeated on four
- * screens, because the fallback is the interesting part: no handle is not an
- * error, it is a new account, and it means an empty list.
- */
-export function fixtureOrdersOf(me: Me): Order[] {
-  return me.handle ? ordersOf(me.handle) : [];
 }

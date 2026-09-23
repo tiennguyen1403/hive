@@ -1,17 +1,22 @@
 import { describe, it, expect } from "vitest";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
+  CUSTOMER_CANCEL_REASON,
   ORDER_TABS,
   OVERDUE_REASON,
+  REFUND_NONE,
+  REFUND_TO_SOURCE,
   effectiveOrder,
   effectiveStatus,
+  inTab,
   orderTimeline,
   ordersForTab,
   refundNote,
-  visibleOrder,
 } from "./customer-orders";
 import { CUSTOMERS } from "@/data/customers";
 import { ORDERS, orderByCode, ordersOf } from "@/data/orders";
-import { orderCode } from "@/data/types";
+import { orderCode, type Order } from "@/data/types";
 
 const ME = CUSTOMERS[0]!;
 const MINE = ordersOf(ME.id);
@@ -75,21 +80,52 @@ describe("ordersForTab", () => {
   });
 });
 
-describe("visibleOrder", () => {
-  it("returns an order the customer placed", () => {
-    expect(visibleOrder(ME.id, MINE[0]!.code)?.code).toBe(MINE[0]!.code);
+/**
+ * An order checkout placed for cash on delivery: taken, and nobody has paid.
+ * The state the fixtures never needed and the database now issues.
+ */
+const RECEIVED: Order = {
+  ...orderByCode.get(orderCode("DH-2430"))!,
+  code: orderCode("DH-2432"),
+  status: { state: "RECEIVED" },
+  payment: "COD",
+  codFeeVnd: 15_000,
+  placedAt: "2026-09-20T19:00:00+07:00",
+};
+
+describe("a RECEIVED order — taken, nobody paid yet", () => {
+  it("is still being handled", () => {
+    expect(inTab("processing", "RECEIVED")).toBe(true);
+    expect(inTab("delivered", "RECEIVED")).toBe(false);
+    expect(inTab("cancelled", "RECEIVED")).toBe(false);
+    expect(ordersForTab([RECEIVED], "processing")).toHaveLength(1);
   });
 
-  it("refuses an order belonging to somebody else", () => {
-    // Order codes are short and guessable. Reading them back without
-    // checking who is asking would hand over another person's address.
-    const theirs = ORDERS.find((o) => o.customerId !== ME.id);
-    if (!theirs) throw new Error("fixture has only one customer with orders");
-    expect(visibleOrder(ME.id, theirs.code)).toBeUndefined();
+  it("reads as the order, then the two steps still ahead — nothing claimed as done", () => {
+    const steps = orderTimeline(RECEIVED);
+    expect(steps.map((s) => s.title)).toEqual(["Đã nhận đơn", "Đóng gói", "Giao hàng"]);
+    expect(steps.map((s) => s.state)).toEqual(["now", "todo", "todo"]);
+    expect(steps[0]!.detail).toBe("20/09 · 19:00");
   });
 
-  it("returns nothing for a code that does not exist", () => {
-    expect(visibleOrder(ME.id, orderCode("DH-0000"))).toBeUndefined();
+  it("is not something the clock can cancel", () => {
+    const late = new Date("2026-10-30T10:00:00+07:00");
+    expect(effectiveStatus(RECEIVED, late)).toBe(RECEIVED.status);
+  });
+
+  it("has nothing to refund once the shopper calls it off", () => {
+    // COD money is collected at the door, and a cancelled order never got
+    // there. The payment-method rule alone would say "sẽ được hoàn".
+    const called: Order = {
+      ...RECEIVED,
+      status: {
+        state: "CANCELLED",
+        cancelledAt: "2026-09-20T19:30:00+07:00",
+        reason: CUSTOMER_CANCEL_REASON,
+      },
+    };
+    expect(refundNote(called)).toBe(REFUND_NONE);
+    expect(refundNote({ ...called, payment: "CARD" })).toBe(REFUND_NONE);
   });
 });
 
@@ -156,6 +192,24 @@ describe("refundNote", () => {
     expect(refundNote(o)).toMatch(/không/i);
   });
 
+  it("reads a missed deadline as never paid, whatever the method", () => {
+    const overdue: Order = {
+      ...RECEIVED,
+      payment: "CARD",
+      status: { state: "CANCELLED", cancelledAt: "2026-09-21T07:00:00+07:00", reason: OVERDUE_REASON },
+    };
+    expect(refundNote(overdue)).toBe(REFUND_NONE);
+  });
+
+  it("still promises the money back on a paid order the shop cancelled for its own reason", () => {
+    const shop: Order = {
+      ...RECEIVED,
+      payment: "CARD",
+      status: { state: "CANCELLED", cancelledAt: "2026-09-21T07:00:00+07:00", reason: "hết hàng" },
+    };
+    expect(refundNote(shop)).toBe(REFUND_TO_SOURCE);
+  });
+
   it("says nothing at all for an order that was not cancelled", () => {
     const o = MINE.find((o) => o.status.state !== "CANCELLED");
     if (!o) throw new Error("every fixture order is cancelled");
@@ -206,5 +260,27 @@ describe("effectiveStatus — the status is read off the clock", () => {
   it("does not mutate the order it was handed", () => {
     effectiveOrder(waiting, new Date("2026-09-22T10:00:00+07:00"));
     expect(waiting.status.state).toBe("AWAITING_TRANSFER");
+  });
+});
+
+/**
+ * The two reasons the database writes itself are the two constants the
+ * screens compare against. If a migration respelled one — "khách hủy" with
+ * the other accent, say — every refund note and every timeline would quietly
+ * take the wrong branch, with every other test still green.
+ */
+describe("the reasons the database writes are the ones the screens read", () => {
+  const dir = join(process.cwd(), "supabase", "migrations");
+  const sql = readdirSync(dir)
+    .filter((f) => f.endsWith(".sql"))
+    .map((f) => readFileSync(join(dir, f), "utf8"))
+    .join("\n");
+
+  it("cancels an overdue transfer with OVERDUE_REASON, verbatim", () => {
+    expect(sql).toContain(`cancel_reason = '${OVERDUE_REASON}'`);
+  });
+
+  it("cancels at the shopper's request with CUSTOMER_CANCEL_REASON, verbatim", () => {
+    expect(sql).toContain(`cancel_reason = '${CUSTOMER_CANCEL_REASON}'`);
   });
 });

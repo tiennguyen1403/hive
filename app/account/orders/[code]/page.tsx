@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { OrdersScreen } from "@/components/account/OrdersScreen";
-import { orderByCode } from "@/data/orders";
-import { orderCode } from "@/data/types";
 import { loadCatalog } from "@/lib/db/catalog";
+import { findMyOrder, listMyOrders } from "@/lib/db/orders";
 import { requireMe } from "@/lib/db/profiles";
 import { featuredDrop } from "@/lib/drop";
-import { fixtureOrdersOf } from "@/lib/me";
 
 export async function generateMetadata(
   props: PageProps<"/account/orders/[code]">,
@@ -18,32 +16,25 @@ export async function generateMetadata(
 /**
  * The same list, with one order open under it.
  *
- * The code comes from the URL; WHO may see it is decided by the session,
- * which is read here on the server. A miss is a 404 rather than a refusal:
- * "bạn không có quyền" confirms that the order exists and belongs to
+ * The code comes from the URL; WHO may see it is decided on the server, by
+ * the database: `findMyOrder` goes through row level security, so another
+ * account's order, an order that does not exist and a string that is not a
+ * code all come back as the same null — and the page answers each with a
+ * real 404, before a byte of the list is rendered. A refusal would be
+ * politer, and it would confirm that the order exists and belongs to
  * somebody (QĐ-16).
  *
- * The check happens TWICE, in two places, because an order can still be in
- * one of two until slice B2 moves them into Postgres:
- *
- * · a code the sample data knows, belonging to somebody else, is answered
- *   here — a real 404 status, before a byte of the order list is rendered;
- * · a code the sample data does not know may yet be an order placed in this
- *   browser (`brand.orders`), which only the browser can see, so that one is
- *   left to the screen and becomes a 404 after hydration.
+ * Until slice B2 half of this check had to wait for the browser, because an
+ * order could live in `localStorage`; every order is a row now, so there is
+ * no second half.
  */
 export default async function OrderPage(props: PageProps<"/account/orders/[code]">) {
   const { code } = await props.params;
-  const me = await requireMe(`/account/orders/${code}`);
+  await requireMe(`/account/orders/${code}`);
 
-  if (
-    orderByCode.has(orderCode(code)) &&
-    !fixtureOrdersOf(me).some((order) => String(order.code) === code)
-  ) {
-    notFound();
-  }
+  if (!(await findMyOrder(code))) notFound();
 
-  const catalog = await loadCatalog();
+  const [catalog, orders] = await Promise.all([loadCatalog(), listMyOrders()]);
   const { drop } = featuredDrop(catalog, undefined);
-  return <OrdersScreen me={me} currentDropNo={drop.no} openCode={code} />;
+  return <OrdersScreen orders={orders} currentDropNo={drop.no} openCode={code} />;
 }

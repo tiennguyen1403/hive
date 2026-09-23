@@ -1,44 +1,47 @@
 import { describe, it, expect } from "vitest";
 import { invoiceOf } from "./invoice";
-import { findFixtureOrder, trackedOfOrder, trackedOfPlaced } from "./lookup";
-import type { PlacedOrder } from "./placed-order";
+import { trackedOfOrder } from "./lookup";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
+import { orderByCode } from "@/data/orders";
+import { orderCode, productId, promoCode, type Order } from "@/data/types";
 
-const NAM = "0908 221 447";
 const DURING_5 = new Date("2026-09-20T10:00:00+07:00");
+const ADDRESS = "12 Nguyễn Huệ, Phường Sài Gòn, TP. Hồ Chí Minh";
 
-const placed: PlacedOrder = {
-  code: "DH-9001",
-  placedAt: "2026-09-20T09:00:00+07:00",
+/**
+ * An order placed at checkout since slice B2: two KHÓI, cash on delivery,
+ * DOT05 applied, a note for the courier — as `order_json()` returns it.
+ */
+const placed: Order = {
+  code: orderCode("DH-2432"),
+  customerId: "" as Order["customerId"],
   lines: [
-    {
-      slug: "khoi",
-      name: "KHÓI",
-      kind: "Áo thun oversize",
-      colorLabel: "Đen",
-      size: "M",
-      qty: 2,
-      unitPriceVnd: 390_000,
-      photoKey: "khoi",
-    },
+    { productId: productId("p-khoi"), size: "M", color: "black", qty: 2, unitPriceVnd: 390_000 },
   ],
-  recipient: "Trần Minh Anh",
-  phone: "0912345678",
-  email: "minhanh@vidu.vn",
-  addressLine: "12 Nguyễn Huệ, Phường Sài Gòn, TP. Hồ Chí Minh",
-  note: "Gọi trước 10 phút",
-  delivery: "STANDARD",
+  status: { state: "RECEIVED" },
   payment: "COD",
-  subtotalVnd: 780_000,
+  delivery: "STANDARD",
   shippingFeeVnd: 30_000,
   codFeeVnd: 15_000,
   discountVnd: 78_000,
-  promo: "DOT05",
-  totalVnd: 747_000,
+  shipTo: {
+    recipient: "Trần Minh Anh",
+    phone: "0912345678",
+    line: "12 Nguyễn Huệ",
+    provinceCode: "29",
+    wardCode: "70101063",
+  },
+  email: "minhanh@vidu.vn",
+  note: "Gọi trước 10 phút",
+  placedAt: "2026-09-20T09:00:00+07:00",
+  promo: promoCode("DOT05"),
 };
 
+const bill = (o: Order) => invoiceOf(trackedOfOrder(FIXTURE_CATALOG, o, ADDRESS, DURING_5));
+
 describe("invoiceOf — an order the shop shipped", () => {
-  const order = findFixtureOrder("DH-2425", NAM)!;
+  // DH-2425 belongs to Lê Hoàng Nam and is on the road.
+  const order = orderByCode.get(orderCode("DH-2425"))!;
   const inv = invoiceOf(trackedOfOrder(FIXTURE_CATALOG, order, "88 Xuân Thuỷ, Phường Cầu Giấy, TP. Hà Nội", DURING_5));
 
   it("carries the order's own identity", () => {
@@ -79,8 +82,8 @@ describe("invoiceOf — an order the shop shipped", () => {
   });
 });
 
-describe("invoiceOf — an order placed in this browser", () => {
-  const inv = invoiceOf(trackedOfPlaced(placed, DURING_5));
+describe("invoiceOf — an order placed at checkout, cash on delivery", () => {
+  const inv = bill(placed);
 
   it("never says the money arrived", () => {
     expect(inv.paidLabel).toBe("Chưa thu tiền");
@@ -103,21 +106,26 @@ describe("invoiceOf — an order placed in this browser", () => {
   it("names how it is being paid", () => {
     expect(inv.paymentLabel).toBe("COD");
   });
+
+  it("totals goods, delivery and handling, less the discount — the number checkout charged", () => {
+    expect(inv.totalVnd).toBe(780_000 + 30_000 + 15_000 - 78_000);
+  });
 });
 
 describe("invoiceOf — rows that do not apply are absent", () => {
   it("leaves out the handling fee and the discount when both are zero", () => {
-    const plain = invoiceOf(
-      trackedOfPlaced(
-        { ...placed, codFeeVnd: 0, discountVnd: 0, payment: "BANK_TRANSFER" },
-        DURING_5,
-      ),
-    );
+    const plain = bill({
+      ...placed,
+      codFeeVnd: 0,
+      discountVnd: 0,
+      payment: "BANK_TRANSFER",
+      status: { state: "AWAITING_TRANSFER", dueAt: "2026-09-20T21:00:00+07:00" },
+    });
     expect(plain.rows.map((r) => r.label)).toEqual(["Tạm tính", "Phí giao"]);
   });
 
   it("writes free delivery as a word, not as a zero", () => {
-    const free = invoiceOf(trackedOfPlaced({ ...placed, shippingFeeVnd: 0 }, DURING_5));
+    const free = bill({ ...placed, shippingFeeVnd: 0 });
     expect(free.rows).toContainEqual({ label: "Phí giao", value: "Miễn phí" });
   });
 });

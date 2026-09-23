@@ -1,9 +1,24 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { SEED_PATH, fixtureCustomers, fixtureInput, renderSeedSql } from "./gen-seed";
+import { ORDERS } from "@/data/orders";
+import {
+  SEED_PATH,
+  fixtureCustomers,
+  fixtureInput,
+  fixtureOrders,
+  renderSeedSql,
+} from "./gen-seed";
 
 /** The one call every assertion below compares against. */
-const render = () => renderSeedSql(fixtureInput(), fixtureCustomers());
+const render = () => renderSeedSql(fixtureInput(), fixtureCustomers(), fixtureOrders());
+
+/** The rows of one `insert`, as the lines of text between the header and `;`. */
+function rowsIn(sql: string, table: string): string[] {
+  const start = sql.indexOf(`insert into public.${table} (`);
+  expect(start, `no insert for ${table}`).toBeGreaterThan(-1);
+  const end = sql.indexOf(";\n", start);
+  return sql.slice(start, end).split("\n").slice(1);
+}
 
 /**
  * The anti-drift catch.
@@ -36,13 +51,8 @@ describe("supabase/seed.sql", () => {
 describe("the generator itself", () => {
   const sql = render();
 
-  it("writes one row per fixture entry — 21 · 38 · 152 · 4 · 2 · 6 · 8 · 9", () => {
-    const rowsOf = (table: string) => {
-      const start = sql.indexOf(`insert into public.${table} (`);
-      expect(start, `no insert for ${table}`).toBeGreaterThan(-1);
-      const end = sql.indexOf(";\n", start);
-      return sql.slice(start, end).split("\n").length - 1;
-    };
+  it("writes one row per fixture entry — 21 · 38 · 152 · 4 · 2 · 6 · 8 · 9 · 24 · 33", () => {
+    const rowsOf = (table: string) => rowsIn(sql, table).length;
 
     expect(rowsOf("seed_drops")).toBe(4);
     expect(rowsOf("seed_products")).toBe(21);
@@ -52,6 +62,8 @@ describe("the generator itself", () => {
     expect(rowsOf("seed_promotions")).toBe(6);
     expect(rowsOf("seed_customers")).toBe(8);
     expect(rowsOf("seed_addresses")).toBe(9);
+    expect(rowsOf("seed_orders")).toBe(24);
+    expect(rowsOf("seed_order_lines")).toBe(33);
   });
 
   it("stores every phone as ten digits, however the fixture punctuates it", () => {
@@ -59,6 +71,16 @@ describe("the generator itself", () => {
     const block = sql.slice(start, sql.indexOf(";\n", start));
     for (const quoted of block.match(/'0[^']*'/g) ?? []) {
       expect(quoted).toMatch(/^'0\d{9}'$/);
+    }
+  });
+
+  it("stores every order's phone as ten digits too", () => {
+    // The column checks `phone ~ '^0[0-9]{9}$'`; the fixture copies the
+    // customer's number as typed, spaces and all.
+    for (const row of rowsIn(sql, "seed_orders")) {
+      // code, handle, email, recipient, phone — the fifth quoted literal.
+      const phone = row.match(/'[^']*'/g)?.[4];
+      expect(phone).toMatch(/^'0\d{9}'$/);
     }
   });
 
@@ -82,7 +104,47 @@ describe("the generator itself", () => {
         products: [{ ...input.products[0]!, name: "KH'ÓI" }, ...input.products.slice(1)],
       },
       fixtureCustomers(),
+      fixtureOrders(),
     );
     expect(quoted).toContain("'KH''ÓI'");
+  });
+});
+
+/**
+ * The orders' own anti-drift catch: the seed carries the fixture's orders,
+ * all of them, each with its lines — and the numbering the database takes
+ * over from them (`order_seq`, `reset_demo()`) starts after the last one.
+ */
+describe("the sample orders in the seed", () => {
+  const sql = render();
+  const orderRows = rowsIn(sql, "seed_orders");
+  const lineRows = rowsIn(sql, "seed_order_lines");
+  const codeOf = (row: string) => /^ {2}\('(DH-\d+)'/.exec(row)?.[1];
+
+  it("holds exactly the fixture's orders, in the fixture's order", () => {
+    expect(orderRows.map(codeOf)).toEqual(ORDERS.map((o) => String(o.code)));
+  });
+
+  it("keeps every code distinct", () => {
+    const codes = orderRows.map(codeOf);
+    expect(new Set(codes).size).toBe(codes.length);
+  });
+
+  it("gives every order at least one line, and every line an order", () => {
+    const withLines = new Set(lineRows.map(codeOf));
+    for (const code of orderRows.map(codeOf)) {
+      expect(withLines.has(code), `${code} has no line`).toBe(true);
+    }
+    const known = new Set(orderRows.map(codeOf));
+    for (const code of withLines) expect(known.has(code), `${code} is not an order`).toBe(true);
+  });
+
+  it("writes as many lines as the fixture's orders carry", () => {
+    expect(lineRows).toHaveLength(ORDERS.reduce((n, o) => n + o.lines.length, 0));
+  });
+
+  it("ends on DH-2431, the number the database carries on from", () => {
+    const numbers = orderRows.map((row) => Number(codeOf(row)!.slice(3)));
+    expect(Math.max(...numbers)).toBe(2431);
   });
 });

@@ -30,7 +30,7 @@ import { closesInLabel } from "@/lib/drop";
 import { resolveLater, type ResolvedLaterLine } from "@/lib/later";
 import { LEX, issueLabel } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
-import { TRANSFER_HOLD_HOURS } from "@/lib/placed-order";
+import { TRANSFER_HOLD_HOURS } from "@/lib/orders";
 import { appliedPromo } from "@/lib/promotions";
 import {
   RETURN_WINDOW_DAYS,

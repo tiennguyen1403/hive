@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { NotificationsScreen } from "@/components/account/NotificationsScreen";
 import { loadCatalog } from "@/lib/db/catalog";
+import { listMyOrders } from "@/lib/db/orders";
 import { requireMe } from "@/lib/db/profiles";
 import { dropCalendar } from "@/lib/drop";
 
@@ -18,7 +19,9 @@ export const metadata: Metadata = {
  */
 export default async function NotificationsPage() {
   const me = await requireMe("/account/notifications");
-  const catalog = await loadCatalog();
+  const [catalog, orders] = await Promise.all([loadCatalog(), listMyOrders()]);
   const next = dropCalendar(catalog).upcoming;
-  return <NotificationsScreen me={me} {...(next ? { nextDropNo: next.no } : {})} />;
+  return (
+    <NotificationsScreen me={me} orders={orders} {...(next ? { nextDropNo: next.no } : {})} />
+  );
 }

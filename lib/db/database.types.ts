@@ -99,6 +99,153 @@ export type Database = {
         }
         Relationships: []
       }
+      order_lines: {
+        Row: {
+          color: Database["public"]["Enums"]["color_key"]
+          order_code: string
+          position: number
+          product_id: string
+          qty: number
+          size: Database["public"]["Enums"]["garment_size"]
+          unit_price_vnd: number
+        }
+        Insert: {
+          color: Database["public"]["Enums"]["color_key"]
+          order_code: string
+          position: number
+          product_id: string
+          qty: number
+          size: Database["public"]["Enums"]["garment_size"]
+          unit_price_vnd: number
+        }
+        Update: {
+          color?: Database["public"]["Enums"]["color_key"]
+          order_code?: string
+          position?: number
+          product_id?: string
+          qty?: number
+          size?: Database["public"]["Enums"]["garment_size"]
+          unit_price_vnd?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_lines_order_code_fkey"
+            columns: ["order_code"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          access_key: string
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cod_fee_vnd: number
+          code: string
+          customer_handle: string | null
+          delivered_at: string | null
+          delivery: Database["public"]["Enums"]["delivery_method"]
+          discount_vnd: number
+          due_at: string | null
+          email: string
+          line: string
+          note: string
+          paid_at: string | null
+          payment: Database["public"]["Enums"]["payment_method"]
+          phone: string
+          placed_at: string
+          profile_id: string | null
+          promo_code: string | null
+          province_code: string
+          recipient: string
+          shipped_at: string | null
+          shipping_fee_vnd: number
+          state: Database["public"]["Enums"]["order_state"]
+          tracking_code: string | null
+          ward_code: string
+        }
+        Insert: {
+          access_key?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cod_fee_vnd: number
+          code: string
+          customer_handle?: string | null
+          delivered_at?: string | null
+          delivery: Database["public"]["Enums"]["delivery_method"]
+          discount_vnd: number
+          due_at?: string | null
+          email: string
+          line: string
+          note?: string
+          paid_at?: string | null
+          payment: Database["public"]["Enums"]["payment_method"]
+          phone: string
+          placed_at: string
+          profile_id?: string | null
+          promo_code?: string | null
+          province_code: string
+          recipient: string
+          shipped_at?: string | null
+          shipping_fee_vnd: number
+          state: Database["public"]["Enums"]["order_state"]
+          tracking_code?: string | null
+          ward_code: string
+        }
+        Update: {
+          access_key?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cod_fee_vnd?: number
+          code?: string
+          customer_handle?: string | null
+          delivered_at?: string | null
+          delivery?: Database["public"]["Enums"]["delivery_method"]
+          discount_vnd?: number
+          due_at?: string | null
+          email?: string
+          line?: string
+          note?: string
+          paid_at?: string | null
+          payment?: Database["public"]["Enums"]["payment_method"]
+          phone?: string
+          placed_at?: string
+          profile_id?: string | null
+          promo_code?: string | null
+          province_code?: string
+          recipient?: string
+          shipped_at?: string | null
+          shipping_fee_vnd?: number
+          state?: Database["public"]["Enums"]["order_state"]
+          tracking_code?: string | null
+          ward_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_promo_code_fkey"
+            columns: ["promo_code"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       product_colors: {
         Row: {
           color: Database["public"]["Enums"]["color_key"]
@@ -333,6 +480,123 @@ export type Database = {
           closes_at?: string
           no?: number
           opens_at?: string
+        }
+        Relationships: []
+      }
+      seed_order_lines: {
+        Row: {
+          color: Database["public"]["Enums"]["color_key"]
+          order_code: string
+          position: number
+          product_id: string
+          qty: number
+          size: Database["public"]["Enums"]["garment_size"]
+          unit_price_vnd: number
+        }
+        Insert: {
+          color: Database["public"]["Enums"]["color_key"]
+          order_code: string
+          position: number
+          product_id: string
+          qty: number
+          size: Database["public"]["Enums"]["garment_size"]
+          unit_price_vnd: number
+        }
+        Update: {
+          color?: Database["public"]["Enums"]["color_key"]
+          order_code?: string
+          position?: number
+          product_id?: string
+          qty?: number
+          size?: Database["public"]["Enums"]["garment_size"]
+          unit_price_vnd?: number
+        }
+        Relationships: []
+      }
+      seed_orders: {
+        Row: {
+          access_key: string
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cod_fee_vnd: number
+          code: string
+          customer_handle: string | null
+          delivered_at: string | null
+          delivery: Database["public"]["Enums"]["delivery_method"]
+          discount_vnd: number
+          due_at: string | null
+          email: string
+          line: string
+          note: string
+          paid_at: string | null
+          payment: Database["public"]["Enums"]["payment_method"]
+          phone: string
+          placed_at: string
+          profile_id: string | null
+          promo_code: string | null
+          province_code: string
+          recipient: string
+          shipped_at: string | null
+          shipping_fee_vnd: number
+          state: Database["public"]["Enums"]["order_state"]
+          tracking_code: string | null
+          ward_code: string
+        }
+        Insert: {
+          access_key?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cod_fee_vnd: number
+          code: string
+          customer_handle?: string | null
+          delivered_at?: string | null
+          delivery: Database["public"]["Enums"]["delivery_method"]
+          discount_vnd: number
+          due_at?: string | null
+          email: string
+          line: string
+          note?: string
+          paid_at?: string | null
+          payment: Database["public"]["Enums"]["payment_method"]
+          phone: string
+          placed_at: string
+          profile_id?: string | null
+          promo_code?: string | null
+          province_code: string
+          recipient: string
+          shipped_at?: string | null
+          shipping_fee_vnd: number
+          state: Database["public"]["Enums"]["order_state"]
+          tracking_code?: string | null
+          ward_code: string
+        }
+        Update: {
+          access_key?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cod_fee_vnd?: number
+          code?: string
+          customer_handle?: string | null
+          delivered_at?: string | null
+          delivery?: Database["public"]["Enums"]["delivery_method"]
+          discount_vnd?: number
+          due_at?: string | null
+          email?: string
+          line?: string
+          note?: string
+          paid_at?: string | null
+          payment?: Database["public"]["Enums"]["payment_method"]
+          phone?: string
+          placed_at?: string
+          profile_id?: string | null
+          promo_code?: string | null
+          province_code?: string
+          recipient?: string
+          shipped_at?: string | null
+          shipping_fee_vnd?: number
+          state?: Database["public"]["Enums"]["order_state"]
+          tracking_code?: string | null
+          ward_code?: string
         }
         Relationships: []
       }
@@ -579,10 +843,29 @@ export type Database = {
         }
         Returns: string
       }
+      cancel_order: {
+        Args: { p_code: string; p_now: string }
+        Returns: undefined
+      }
       catalog_snapshot: { Args: never; Returns: Json }
+      expire_and_lock: {
+        Args: {
+          p_colors: Database["public"]["Enums"]["color_key"][]
+          p_now: string
+          p_pids: string[]
+          p_sizes: Database["public"]["Enums"]["garment_size"][]
+        }
+        Returns: number
+      }
+      expire_transfers: { Args: { p_now: string }; Returns: number }
+      my_orders: { Args: never; Returns: Json }
+      order_json: { Args: { p_code: string }; Returns: Json }
+      place_order: { Args: { p_input: Json; p_now: string }; Returns: Json }
+      receipt_order: { Args: { p_code: string; p_key: string }; Returns: Json }
       remove_address: { Args: { p_id: string }; Returns: boolean }
       reset_demo: { Args: { p_anchor?: string }; Returns: undefined }
       set_default_address: { Args: { p_id: string }; Returns: boolean }
+      track_order: { Args: { p_code: string; p_phone: string }; Returns: Json }
       update_address: {
         Args: {
           p_default: boolean
@@ -606,7 +889,16 @@ export type Database = {
         | "brown"
         | "white"
         | "navy"
+      delivery_method: "STANDARD" | "EXPRESS"
       garment_size: "S" | "M" | "L" | "XL"
+      order_state:
+        | "AWAITING_TRANSFER"
+        | "RECEIVED"
+        | "PAID"
+        | "SHIPPING"
+        | "DELIVERED"
+        | "CANCELLED"
+      payment_method: "BANK_TRANSFER" | "CARD" | "COD"
       product_family: "TEE" | "HOODIE" | "JACKET" | "VEST" | "SHIRT" | "PANTS"
       product_fit: "OVERSIZE" | "REGULAR"
       promo_kind: "PERCENT" | "AMOUNT" | "FREE_SHIPPING"
@@ -741,7 +1033,17 @@ export const Constants = {
   public: {
     Enums: {
       color_key: ["black", "cream", "grey", "moss", "brown", "white", "navy"],
+      delivery_method: ["STANDARD", "EXPRESS"],
       garment_size: ["S", "M", "L", "XL"],
+      order_state: [
+        "AWAITING_TRANSFER",
+        "RECEIVED",
+        "PAID",
+        "SHIPPING",
+        "DELIVERED",
+        "CANCELLED",
+      ],
+      payment_method: ["BANK_TRANSFER", "CARD", "COD"],
       product_family: ["TEE", "HOODIE", "JACKET", "VEST", "SHIRT", "PANTS"],
       product_fit: ["OVERSIZE", "REGULAR"],
       promo_kind: ["PERCENT", "AMOUNT", "FREE_SHIPPING"],

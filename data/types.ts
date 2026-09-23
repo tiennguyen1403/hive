@@ -1,10 +1,11 @@
 /**
  * The data contract for the whole storefront.
  *
- * There is no backend yet, so every one of these types is served from a local
- * fixture. That is temporary; the contract is not. When a real API arrives it
- * has to produce exactly these shapes, so treat this file as the wire format
- * rather than as convenience types for the mock:
+ * These types were first served from local fixtures; since the backend slices
+ * (QĐ-25) the catalogue, the accounts and the orders come out of Postgres, and
+ * the fixtures in `data/` are what the database is seeded from. The contract
+ * did not move: the database has to produce exactly these shapes, so treat
+ * this file as the wire format rather than as convenience types:
  *
  *   · enum-like values are UPPER_SNAKE string literals, never free `string`
  *   · ids are branded, so a CustomerId cannot be passed where a ProductId goes
@@ -233,13 +234,27 @@ export interface Customer {
 export type PaymentMethod = "BANK_TRANSFER" | "CARD" | "COD";
 
 /**
+ * How the parcel travels. Defined here since slice B2, when it became a field
+ * of `Order` and a column of `orders`; `lib/shipping.ts` re-exports it, so
+ * every existing import still reads.
+ */
+export type DeliveryMethod = "STANDARD" | "EXPRESS";
+
+/**
  * Order state as a discriminated union rather than a flat enum, because the
  * states do not carry the same information: only a shipped order has a
  * tracking code, only a cancelled one has a reason. A flat enum would force
  * every consumer to handle `trackingCode?: string` on a pending order.
+ *
+ * `RECEIVED` joined at slice B2: an order the shop has taken and nobody has
+ * paid for yet — every COD order, and a card order while no gateway is
+ * connected. Until then only an order kept in the browser could be in it;
+ * now the database issues it, and calling such an order `PAID` would be the
+ * screen claiming money changed hands.
  */
 export type OrderStatus =
   | { state: "AWAITING_TRANSFER"; dueAt: string }
+  | { state: "RECEIVED" }
   | { state: "PAID"; paidAt: string }
   | { state: "SHIPPING"; shippedAt: string; trackingCode: string }
   | { state: "DELIVERED"; deliveredAt: string }
@@ -258,11 +273,20 @@ export interface OrderLine {
 
 export interface Order {
   code: OrderCode;
+  /**
+   * The demo account the order belongs to, by its fixture id ('c-minhanh'),
+   * or "" for an order placed signed out or by an account made through the
+   * sign-up form. Never an auth uuid: an order read through the public lookup
+   * must not carry its owner's account id with it.
+   */
   customerId: CustomerId;
   lines: OrderLine[];
   status: OrderStatus;
   payment: PaymentMethod;
+  delivery: DeliveryMethod;
   shippingFeeVnd: number;
+  /** Cash-on-delivery handling, its own line on every receipt. 0 otherwise. */
+  codFeeVnd: number;
   discountVnd: number;
   /**
    * Frozen copy — the shopper's address book may change after the order
@@ -270,6 +294,10 @@ export interface Order {
    * in their own book, not something a courier reads.
    */
   shipTo: Omit<Address, "id" | "isDefault" | "label">;
+  /** Where the confirmation goes. */
+  email: string;
+  /** What was typed for the courier at checkout, or "". */
+  note: string;
   placedAt: string;
   promo?: PromoCode;
 }

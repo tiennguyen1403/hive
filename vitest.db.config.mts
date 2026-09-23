@@ -62,7 +62,7 @@ export default defineConfig({
     environment: "node",
     env: readEnvLocal(),
     include: ["lib/db/**/*.dbtest.ts"],
-    // Both db test files rebuild the same local database through reset_demo(); run them one after another.
+    // Every db test file rebuilds the same local database through reset_demo(); run them one after another.
     fileParallelism: false,
   },
 });

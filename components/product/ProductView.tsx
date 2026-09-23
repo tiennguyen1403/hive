@@ -33,7 +33,7 @@ import {
   RETURN_WINDOW_DAYS,
   STANDARD_FEE_VND,
 } from "@/lib/shipping";
-import { TRANSFER_HOLD_HOURS } from "@/lib/placed-order";
+import { TRANSFER_HOLD_HOURS } from "@/lib/orders";
 import { BuyBar } from "./BuyBar";
 import { SizeGuideSheet } from "./SizeGuideSheet";
 import { SizeTable } from "./SizeTable";

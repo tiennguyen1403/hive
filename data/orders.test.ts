@@ -124,12 +124,18 @@ describe("order money adds up", () => {
     expect(orderSubtotalVnd(o)).toBe(byHand);
   });
 
-  it("reaches the total as subtotal plus shipping minus discount", () => {
+  it("reaches the total as subtotal plus shipping and handling minus discount", () => {
     for (const o of ORDERS) {
       expect(orderTotalVnd(o)).toBe(
-        orderSubtotalVnd(o) + o.shippingFeeVnd - o.discountVnd,
+        orderSubtotalVnd(o) + o.shippingFeeVnd + o.codFeeVnd - o.discountVnd,
       );
     }
+  });
+
+  it("keeps the sample's handling fee at zero, so reviewed figures do not move", () => {
+    // `codFeeVnd` joined the wire format at slice B2. The sample orders were
+    // priced before it existed and keep 0 — COD ones included.
+    for (const o of ORDERS) expect(o.codFeeVnd, o.code).toBe(0);
   });
 
   it("never discounts more than the goods are worth", () => {
@@ -160,6 +166,8 @@ describe("order status carries what that state needs", () => {
       const placed = Date.parse(o.placedAt);
       const at = {
         AWAITING_TRANSFER: () => Date.parse((o.status as any).dueAt),
+        // Nothing has happened since the order was taken.
+        RECEIVED: () => placed,
         PAID: () => Date.parse((o.status as any).paidAt),
         SHIPPING: () => Date.parse((o.status as any).shippedAt),
         DELIVERED: () => Date.parse((o.status as any).deliveredAt),
@@ -191,6 +199,22 @@ describe("order status carries what that state needs", () => {
       "CANCELLED",
     ]) {
       expect(seen.has(s as never), `no order is ${s}`).toBe(true);
+    }
+  });
+});
+
+describe("the fields slice B2 added to every order", () => {
+  it("sends the confirmation to the customer's own address", () => {
+    for (const o of ORDERS) {
+      const customer = CUSTOMERS.find((c) => c.id === o.customerId);
+      expect(o.email, o.code).toBe(customer!.email);
+    }
+  });
+
+  it("carries no note and the one delivery service there was", () => {
+    for (const o of ORDERS) {
+      expect(o.note, o.code).toBe("");
+      expect(o.delivery, o.code).toBe("STANDARD");
     }
   });
 });

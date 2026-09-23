@@ -1,89 +1,78 @@
 "use client";
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ButtonLink } from "@/components/ui/Button";
 import { Empty } from "@/components/shop/Empty";
-import { usePlacedOrders } from "@/components/shop/placed-order";
-import { useSimOverlay } from "@/components/shop/sim-store";
 import { Toast } from "@/components/shop/Toast";
 import { formatAddressLine } from "@/data/regions";
 import type { Order } from "@/data/types";
-import { shopOrders } from "@/lib/admin-sim";
 import {
   ORDER_TABS,
-  REFUND_NONE,
   effectiveOrder,
   refundNote,
   type OrderTabKey,
 } from "@/lib/customer-orders";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { trackedOfOrder, trackedOfPlaced, type TrackedOrder } from "@/lib/lookup";
-import {
-  deviceOrdersOf,
-  orderRows,
-  rowCount,
-  rowsForTab,
-  visibleDeviceOrder,
-} from "@/lib/order-rows";
-import { transferDeadlineIso } from "@/lib/placed-order";
-import { fixtureOrdersOf, type Me } from "@/lib/me";
+import { trackedOfOrder } from "@/lib/lookup";
+import { orderRows, rowCount, rowsForTab } from "@/lib/order-rows";
 import { OrderDetailScreen } from "./OrderDetailScreen";
 import { OrderRow3 } from "./OrderRow3";
 import { demoNow } from "@/lib/clock";
 
 interface OrdersScreenProps {
-  /** Read on the server; the page redirects when nobody is signed in. */
-  me: Me;
+  /**
+   * The account's orders, read on the SERVER (`listMyOrders()`): row level
+   * security has already decided which ones are this person's, and the page
+   * redirects when nobody is signed in.
+   */
+  orders: Order[];
   /** The issue selling now — the rows date themselves against it. */
   currentDropNo: number;
   /** `?tab=`, so a filtered list is a URL somebody can come back to (QĐ-8). */
   tab?: string;
-  /** `/account/orders/[code]` — the order whose detail opens under the list. */
+  /**
+   * `/account/orders/[code]` — the order whose detail opens under the list.
+   * The page has already answered 404 for a code that is not this account's.
+   */
   openCode?: string;
 }
 
 /**
- * Order history — the fixtures' orders and the ones placed on this device,
- * in one list, newest first, with one of them open underneath.
+ * Order history — every order of this account, newest first, with one of them
+ * open underneath.
  *
  * THE DETAIL IS NOT A SEPARATE PAGE. `/account/orders/DH-2430` renders this
  * same list with that row marked and its detail below, because the next
  * thing somebody does after reading one order is usually to open another —
  * and a page of its own would make that two taps and a scroll.
  *
- * The device order is marked rather than hidden or faked: it carries "lưu
- * trên thiết bị này" because it exists in no account on any other machine,
- * and losing that distinction is how a mock starts lying. The merge, the
- * ownership check and the counting are pure functions in
- * `lib/order-rows.ts`.
+ * Since slice B2 the list has one source, the database, whoever placed the
+ * order and from whichever browser; the counting and the rows are pure
+ * functions in `lib/order-rows.ts`.
  *
  * The tab lives in the URL (QĐ-8), like the listing's filters.
  */
-export function OrdersScreen({ me, currentDropNo, tab, openCode }: OrdersScreenProps) {
+export function OrdersScreen({ orders, currentDropNo, tab, openCode }: OrdersScreenProps) {
   const catalog = useCatalog();
-  const { orders: placed, ready } = usePlacedOrders();
-  const { sim, ready: simReady } = useSimOverlay();
   const [toast, setToast] = useState<string | null>(null);
 
   // One instant for the whole render, so a deadline and the state derived
-  // from it are judged against the same clock. Re-taken whenever either
-  // store changes, which is also when a cancellation lands.
-  const now = useMemo(() => demoNow(), [placed, sim]);
+  // from it are judged against the same clock. Re-taken whenever the orders
+  // change, which is also when a cancellation lands.
+  const now = useMemo(() => demoNow(), [orders]);
   const current: OrderTabKey =
     (ORDER_TABS.find((t) => t.key === tab)?.key as OrderTabKey | undefined) ?? "all";
 
   // Land on the order that was opened. `.sec.anchor` carries the
   // scroll-margin, so the heading does not end up under the sticky bar.
   useEffect(() => {
-    if (!openCode || !ready) return;
+    if (!openCode) return;
     document.getElementById(openCode)?.scrollIntoView({ block: "start" });
-  }, [openCode, ready]);
+  }, [openCode]);
 
-  const mine = shopOrders(fixtureOrdersOf(me), sim);
-  const rows = orderRows(catalog, mine, deviceOrdersOf(me.id, placed), now);
+  const rows = orderRows(catalog, orders, now);
   const shown = rowsForTab(rows, current);
   const waiting = rows.filter((r) => r.state === "AWAITING_TRANSFER").length;
 
@@ -117,7 +106,7 @@ export function OrdersScreen({ me, currentDropNo, tab, openCode }: OrdersScreenP
         <Empty
           icon="bag"
           title="Chưa có đơn nào"
-          text="Đơn đặt trên thiết bị này cũng hiện ở đây, với nhãn “lưu trên thiết bị này”."
+          text="Đơn đặt khi đã đăng nhập hiện ở đây. Đơn đặt khi chưa đăng nhập tra cứu bằng mã đơn và số điện thoại."
           action={
             <ButtonLink icon="grid" href="/products">
               Xem {LEX.tl} {issueNo(currentDropNo)}
@@ -139,15 +128,8 @@ export function OrdersScreen({ me, currentDropNo, tab, openCode }: OrdersScreenP
         </div>
       )}
 
-      {openCode && ready && simReady && (
-        <OpenOrder
-          me={me}
-          code={openCode}
-          orders={mine}
-          placed={placed}
-          now={now}
-          onCancelled={setToast}
-        />
+      {openCode && (
+        <OpenOrder code={openCode} orders={orders} now={now} onDone={setToast} />
       )}
 
       <Toast message={toast} onDone={() => setToast(null)} />
@@ -158,71 +140,36 @@ export function OrdersScreen({ me, currentDropNo, tab, openCode }: OrdersScreenP
 /**
  * The order behind the URL, in the one shape the detail renders.
  *
- * Two places to look, because an order lives in one of two: the fixtures and
- * `brand.orders`. Both are checked against the person asking — order codes
- * are short and sequential, and the page behind one holds a name, a phone
- * number and a home address (QĐ-16).
- *
- * A code that matches neither is a 404 rather than a message: "bạn không có
- * quyền" would confirm that the order exists and belongs to somebody.
+ * Found in the list the server already filtered: the page asked the database
+ * for this code first and answered a real 404 when the account does not own
+ * it (QĐ-16), so a miss here can only be the list and the page disagreeing
+ * mid-flight — and then nothing is drawn rather than somebody else's order.
  */
 function OpenOrder({
-  me,
   code,
   orders,
-  placed,
   now,
-  onCancelled,
+  onDone,
 }: {
-  me: Me;
   code: string;
   orders: Order[];
-  placed: ReturnType<typeof usePlacedOrders>["orders"];
   now: Date;
-  onCancelled: (message: string) => void;
+  onDone: (message: string) => void;
 }) {
   const catalog = useCatalog();
   const found = orders.find((o) => o.code === code);
-  if (found) {
-    // The status the clock says it is in: an unpaid transfer past its hold
-    // is a cancelled order, and it must read that way here, on the row above
-    // it, in the tab counts and in the back office (`effectiveStatus`).
-    const fixture = effectiveOrder(found, now);
-    const tracked: TrackedOrder = trackedOfOrder(
-      catalog,
-      fixture,
-      formatAddressLine(fixture.shipTo),
-      now,
-    );
-    return (
-      <OrderDetailScreen
-        order={tracked}
-        {...(fixture.status.state === "AWAITING_TRANSFER"
-          ? { dueAt: fixture.status.dueAt }
-          : {})}
-        refund={refundNote(fixture)}
-        onCancelled={onCancelled}
-      />
-    );
-  }
+  if (!found) return null;
 
-  const device = visibleDeviceOrder(me.id, code, placed);
-  if (device) {
-    const tracked = trackedOfPlaced(device, now);
-    return (
-      <OrderDetailScreen
-        order={tracked}
-        {...(device.payment === "BANK_TRANSFER"
-          ? { dueAt: transferDeadlineIso(device.placedAt) }
-          : {})}
-        // No device order has ever been paid, so a cancelled one never has
-        // anything to refund. Same sentence as the fixtures', from the same
-        // module.
-        refund={tracked.state === "CANCELLED" ? REFUND_NONE : null}
-        onCancelled={onCancelled}
-      />
-    );
-  }
-
-  notFound();
+  // The status the clock says it is in: an unpaid transfer past its hold is
+  // a cancelled order, and it must read that way here, on the row above it,
+  // in the tab counts and in the back office (`effectiveStatus`).
+  const order = effectiveOrder(found, now);
+  return (
+    <OrderDetailScreen
+      order={trackedOfOrder(catalog, order, formatAddressLine(order.shipTo), now)}
+      {...(order.status.state === "AWAITING_TRANSFER" ? { dueAt: order.status.dueAt } : {})}
+      refund={refundNote(order)}
+      onDone={onDone}
+    />
+  );
 }

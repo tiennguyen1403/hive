@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { useSim } from "@/components/admin/SimContext";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -14,7 +13,6 @@ import { issueOf } from "@/lib/customer-tags";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
-import { PLACED_ORDERS_KEY, parsePlacedOrders } from "@/lib/placed-order";
 import { orderTotalVnd, orderUnits } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
 import { deliveryOption, COD_SURCHARGE_VND, EXPRESS_FEE_VND } from "@/lib/shipping";
@@ -31,6 +29,10 @@ import { deliveryOption, COD_SURCHARGE_VND, EXPRESS_FEE_VND } from "@/lib/shippi
  * COD is the one line that changes the parcel's handling, so it is stated in
  * full where the courier will look — including the surcharge, which is what
  * they actually collect (`lib/shipping.ts`).
+ *
+ * The shopper's delivery note is not printed yet: it lives on the order in
+ * the database since slice B2, and this screen still reads the fixtures —
+ * putting it on the slip is the back office's slice (B3).
  *
  * The QR box is EMPTY and says so. There is no encoder in this build and no
  * bank account behind one; a drawn square pretending to be scannable would
@@ -108,10 +110,7 @@ export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string 
                     {ward ? `, ${wardLabel(ward)}` : ""}
                     {province ? `, ${provinceLabel(province)}` : ""}
                     <br />
-                    <span className="muted">
-                      {carrier ?? delivery.label}
-                      <ShopperNote code={code} />
-                    </span>
+                    <span className="muted">{carrier ?? delivery.label}</span>
                     {edited && (
                       <>
                         <br />
@@ -182,31 +181,4 @@ export function SlipScreen({ codes, nowIso }: { codes: string[]; nowIso: string 
       )}
     </>
   );
-}
-
-/**
- * What the shopper asked for at checkout, when this browser is the one that
- * placed the order.
- *
- * `Order` in the fixtures carries no delivery note — the field arrived with
- * the checkout form and lives on the device record (`brand.orders`). So the
- * slip looks there, and prints nothing at all when there is nothing: a
- * courier reading "ghi chú: —" learns less than a courier reading no line.
- */
-function ShopperNote({ code }: { code: string }) {
-  const [note, setNote] = useState("");
-
-  useEffect(() => {
-    try {
-      const mine = parsePlacedOrders(window.localStorage.getItem(PLACED_ORDERS_KEY)).find(
-        (o) => o.code === code,
-      );
-      setNote(mine?.note.trim() ?? "");
-    } catch {
-      setNote("");
-    }
-  }, [code]);
-
-  if (!note) return null;
-  return <> · ghi chú: {note}</>;
 }

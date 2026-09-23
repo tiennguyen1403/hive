@@ -1,13 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePlacedOrders } from "@/components/shop/placed-order";
 import { usePrefs } from "@/components/shop/prefs";
 import { useReminders } from "@/components/shop/reminders";
-import { useSimOverlay } from "@/components/shop/sim-store";
-import { fixtureOrdersOf, type Me } from "@/lib/me";
+import type { Order } from "@/data/types";
+import type { Me } from "@/lib/me";
 import { teasersIn, type Catalog } from "@/lib/catalog";
-import { shopOrders } from "@/lib/admin-sim";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { dropState } from "@/lib/drop";
 import { dropSummary } from "@/lib/inventory";
@@ -25,25 +23,28 @@ import {
   type NotifPromo,
   type NotifReminder,
 } from "@/lib/notifications";
-import { deviceOrdersOf, deviceState } from "@/lib/order-rows";
 import { orderTotalVnd } from "@/lib/orders";
-import { transferDeadlineIso } from "@/lib/placed-order";
 import { livePromotions, promoOfferLabel, promoTermsLabel } from "@/lib/promotions";
 import { demoNow } from "@/lib/clock";
 
 /**
- * The five sources, gathered from this device, and the list they produce.
+ * The five sources, gathered, and the list they produce.
  *
  * All the deciding lives in `lib/notifications.ts`, which is pure and
- * tested; this is the shell that reads storage and the fixtures (QĐ-9, the
- * same split the cart uses). It is a hook rather than a provider because
- * exactly two screens need it — the rail's unread dot and the notifications
- * page — and a sixth context around the whole router would cost every other
- * route a re-render.
+ * tested; this is the shell that reads the device's storage (reminders,
+ * switches, what was read) and takes the account's orders as they came from
+ * the server (QĐ-9, the same split the cart uses). It is a hook rather than a
+ * provider because only the rail's unread dot, the overview and the
+ * notifications page need it, and a sixth context around the whole router
+ * would cost every other route a re-render.
+ *
+ * The orders are an ARGUMENT since slice B2: they are rows in Postgres,
+ * read by the page on the server (`listMyOrders()`), and a Client Component
+ * cannot read a database.
  *
  * NOTHING HERE IS ANNOUNCED THAT DID NOT HAPPEN. Every item is arithmetic
- * over an order, a reminder, a code or an issue that already exists on this
- * machine; there is no server pushing anything, and the screen says so.
+ * over an order, a reminder, a code or an issue that already exists; there is
+ * no server pushing anything, and the screen says so.
  */
 const CHANGED = "brand:notif-read";
 
@@ -74,11 +75,9 @@ export interface NotifCenter {
   markAllRead: () => void;
 }
 
-export function useNotifCenter(catalog: Catalog, me: Me | null): NotifCenter {
-  const { orders: placed, ready: placedReady } = usePlacedOrders();
+export function useNotifCenter(catalog: Catalog, me: Me | null, orders: Order[]): NotifCenter {
   const { list: reminders, ready: remindersReady } = useReminders();
   const { prefs, ready: prefsReady } = usePrefs();
-  const { sim, ready: simReady } = useSimOverlay();
   const [read, setRead] = useState<string[]>([]);
   const [readReady, setReadReady] = useState(false);
 
@@ -95,35 +94,23 @@ export function useNotifCenter(catalog: Catalog, me: Me | null): NotifCenter {
     };
   }, []);
 
-  const ready = placedReady && remindersReady && prefsReady && simReady && readReady;
+  const ready = remindersReady && prefsReady && readReady;
 
   const list = useMemo<Notif[]>(() => {
     if (!ready || !me) return [];
     const now = demoNow();
 
-    // The shopper's own orders, from both places they can live. The overlay
-    // is read for ONE thing only: an order they cancelled themselves.
-    const mine = shopOrders(fixtureOrdersOf(me), sim).map((o) =>
-      effectiveOrder(o, now),
-    );
-    const fixtures: NotifOrder[] = mine.map((o) => ({
-      code: o.code,
-      state: o.status.state,
-      placedAt: o.placedAt,
-      totalVnd: orderTotalVnd(o),
-      ...(o.status.state === "AWAITING_TRANSFER" ? { dueAt: o.status.dueAt } : {}),
-      ...(o.status.state === "DELIVERED" ? { deliveredAt: o.status.deliveredAt } : {}),
-    }));
-
-    const onDevice: NotifOrder[] = deviceOrdersOf(me.id, placed).map((p) => ({
-      code: p.code,
-      state: deviceState(p, now),
-      placedAt: p.placedAt,
-      totalVnd: p.totalVnd,
-      ...(deviceState(p, now) === "AWAITING_TRANSFER"
-        ? { dueAt: transferDeadlineIso(p.placedAt) }
-        : {}),
-    }));
+    // The shopper's own orders, with the status the clock says they are in.
+    const mine: NotifOrder[] = orders
+      .map((o) => effectiveOrder(o, now))
+      .map((o) => ({
+        code: o.code,
+        state: o.status.state,
+        placedAt: o.placedAt,
+        totalVnd: orderTotalVnd(o),
+        ...(o.status.state === "AWAITING_TRANSFER" ? { dueAt: o.status.dueAt } : {}),
+        ...(o.status.state === "DELIVERED" ? { deliveredAt: o.status.deliveredAt } : {}),
+      }));
 
     const asked: NotifReminder[] = reminders
       .map((no) => catalog.dropByNo.get(no))
@@ -159,7 +146,7 @@ export function useNotifCenter(catalog: Catalog, me: Me | null): NotifCenter {
 
     return notifications({
       now,
-      orders: [...fixtures, ...onDevice],
+      orders: mine,
       reminders: asked,
       promos,
       issues,
@@ -170,7 +157,7 @@ export function useNotifCenter(catalog: Catalog, me: Me | null): NotifCenter {
       },
       read,
     });
-  }, [catalog, ready, me, placed, reminders, prefs, sim, read]);
+  }, [catalog, ready, me, orders, reminders, prefs, read]);
 
   const markAllRead = useCallback(() => {
     const next = markRead(readIds(), allIds(list));

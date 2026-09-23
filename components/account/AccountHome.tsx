@@ -5,25 +5,22 @@ import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/icon/Icon";
 import { CopyButton } from "@/components/shop/CopyButton";
-import { usePlacedOrders } from "@/components/shop/placed-order";
 import { usePrefs, writePrefs } from "@/components/shop/prefs";
 import { useReminders, writeReminders } from "@/components/shop/reminders";
-import { useSimOverlay } from "@/components/shop/sim-store";
 import { Toast } from "@/components/shop/Toast";
 import { useDropLabel } from "@/components/shop/useDropLabel";
-import type { Drop, DropState } from "@/data/types";
-import { shopOrders } from "@/lib/admin-sim";
+import type { Drop, DropState, Order } from "@/data/types";
 import { dayMonth } from "@/lib/datetime";
 import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { stampLabel } from "@/lib/notifications";
-import { deviceOrdersOf, orderRows, type OrderRow } from "@/lib/order-rows";
+import { orderRows, type OrderRow } from "@/lib/order-rows";
 import { photoUrl } from "@/lib/photos";
 import { setPref, setSizePref, type PrefKey } from "@/lib/prefs";
 import { hasReminder, toggleReminder } from "@/lib/reminder";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { resolveWishlist } from "@/lib/wishlist";
-import { fixtureOrdersOf, type Me } from "@/lib/me";
+import type { Me } from "@/lib/me";
 import { useNotifCenter } from "./notif-center";
 import { OrderRow3 } from "./OrderRow3";
 import { useWishlist } from "./WishlistContext";
@@ -41,6 +38,8 @@ export interface LiveCode {
 interface AccountHomeProps {
   /** Read on the server; the page redirects when nobody is signed in. */
   me: Me;
+  /** The account's orders, read on the server (`listMyOrders()`). */
+  orders: Order[];
   drop: Drop;
   dropState: DropState;
   dropLabel: string;
@@ -73,6 +72,7 @@ interface AccountHomeProps {
  */
 export function AccountHome({
   me,
+  orders,
   drop,
   dropState: state,
   dropLabel,
@@ -85,10 +85,8 @@ export function AccountHome({
 }: AccountHomeProps) {
   const catalog = useCatalog();
   const { list, ready: wishReady } = useWishlist();
-  const { orders: placed } = usePlacedOrders();
   const { prefs, ready: prefsReady } = usePrefs();
   const { list: reminders, ready: remindersReady } = useReminders();
-  const { sim } = useSimOverlay();
   const [toast, setToast] = useState<string | null>(null);
   const label = useDropLabel(drop, state, dropLabel);
 
@@ -99,12 +97,7 @@ export function AccountHome({
     writePrefs(setPref(prefs, key, !prefs[key]));
   }
 
-  const rows = orderRows(
-    catalog,
-    shopOrders(fixtureOrdersOf(me), sim),
-    deviceOrdersOf(me.id, placed),
-    now,
-  );
+  const rows = orderRows(catalog, orders, now);
   const bought = boughtByIssue(rows);
 
   return (
@@ -118,11 +111,14 @@ export function AccountHome({
         </span>
       </div>
 
+      {/* Where an order placed signed out went: not into this list, because
+          it was placed without an account. Said here because an account that
+          cannot find its order is the first thing somebody would ask. */}
       <p className="note3">
         <Icon name="info" className="ic sm" />
         <span>
-          Đơn đặt trên thiết bị này hiện trong Đơn hàng với nhãn “lưu trên thiết bị
-          này”.
+          Đơn đặt khi chưa đăng nhập không nằm trong tài khoản — tra cứu bằng mã đơn và
+          số điện thoại.
         </span>
       </p>
 
@@ -174,7 +170,7 @@ export function AccountHome({
           </section>
         )}
 
-        <NewNotifications me={me} now={now} />
+        <NewNotifications me={me} orders={orders} now={now} />
 
         {wishReady && saved.items.length > 0 && (
           <section className="panel3">
@@ -304,9 +300,9 @@ export function AccountHome({
  * It reads the same module the notifications screen does, so the two can
  * never disagree about what is new.
  */
-function NewNotifications({ me, now }: { me: Me; now: Date }) {
+function NewNotifications({ me, orders, now }: { me: Me; orders: Order[]; now: Date }) {
   const catalog = useCatalog();
-  const { list, ready } = useNotifCenter(catalog, me);
+  const { list, ready } = useNotifCenter(catalog, me, orders);
   if (!ready) return null;
 
   const unread = list.filter((n) => !n.read).slice(0, 2);

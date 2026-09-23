@@ -80,7 +80,7 @@ export function CancelOrderModal({
             {paid
               ? `Đơn đã thanh toán ${vnd(total)}. Huỷ thì phải hoàn tiền tay — chưa nối cổng thanh toán nào.`
               : `Đơn ${vnd(total)} chưa nhận được tiền. Huỷ là đóng lại, không có gì phải hoàn.`}{" "}
-            Khách thấy lý do ở màn đơn của họ. Tồn kho không tự đổi: muốn đưa{" "}
+            Mô phỏng: khách chưa thấy lý do này. Tồn kho không tự đổi: muốn đưa{" "}
             {orderItemsLabel(catalog, order)} lại lên kệ thì dùng Điều chỉnh tồn kho ở Mẫu.
           </>
         )

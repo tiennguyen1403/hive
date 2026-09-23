@@ -12,6 +12,7 @@ import type {
   Teaser,
 } from "@/data/types";
 import { promoCode } from "@/data/types";
+import { CUSTOMER_CANCEL_REASON } from "./customer-orders";
 
 /** The three shapes a code can take, named once so the log can store it. */
 export type PromoKind = Promotion["kind"];
@@ -60,8 +61,12 @@ export const NOTE_AUTHOR = "Cửa hàng";
  */
 export const CUSTOMER_AUTHOR = "Khách";
 
-/** The reason recorded on an order the shopper called off themselves. */
-export const CUSTOMER_CANCEL_REASON = "khách huỷ";
+/**
+ * The reason recorded on an order the shopper called off themselves. Defined
+ * beside `OVERDUE_REASON` since slice B2, where `cancel_order()` in the
+ * database writes the same words; re-exported so this log keeps its name.
+ */
+export { CUSTOMER_CANCEL_REASON };
 
 export type SimAction =
   | { kind: "ORDER_PAID"; at: string; code: string }

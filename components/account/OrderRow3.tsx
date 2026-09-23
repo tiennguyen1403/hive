@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { issueLabel } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
-import { ROW_STATE_LABEL } from "@/lib/order-labels";
+import { STATE_LABEL } from "@/lib/order-labels";
 import type { OrderRow } from "@/lib/order-rows";
 import { photoUrl } from "@/lib/photos";
 
@@ -38,7 +38,7 @@ interface OrderRow3Props {
  * what places it and the minute means nothing.
  */
 export function OrderRow3({ row, currentDropNo, variant = "full", open }: OrderRow3Props) {
-  const label = ROW_STATE_LABEL[row.state];
+  const label = STATE_LABEL[row.state];
   const recent = row.dropNo === undefined || row.dropNo === currentDropNo;
 
   const when = recent
@@ -58,16 +58,7 @@ export function OrderRow3({ row, currentDropNo, variant = "full", open }: OrderR
       ? `giữ hàng tới ${clockLabel(row.dueAt)} ${dayMonth(row.dueAt)}`
       : row.note;
 
-  const sub = [
-    when,
-    // On the overview there is no room for counts, so the fact that the
-    // order lives only in this browser takes that space instead.
-    variant === "compact" && row.onDevice ? "lưu trên thiết bị này" : null,
-    styles,
-    variant === "full" ? tail : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const sub = [when, styles, variant === "full" ? tail : null].filter(Boolean).join(" · ");
 
   return (
     <Link
@@ -77,11 +68,6 @@ export function OrderRow3({ row, currentDropNo, variant = "full", open }: OrderR
     >
       <b>
         <span className="nm">{row.code}</span>
-        {variant === "full" && row.onDevice && (
-          <Badge tone="flat" dot={false}>
-            lưu trên thiết bị này
-          </Badge>
-        )}
       </b>
       <span className="sub">{sub}</span>
       <span className="right">

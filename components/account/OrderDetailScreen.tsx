@@ -2,25 +2,23 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
-import { Icon } from "@/components/icon/Icon";
 import { Countdown } from "@/components/shop/Countdown";
 import { CopyButton } from "@/components/shop/CopyButton";
 import { InvoiceSheet } from "@/components/shop/InvoiceSheet";
-import { pushSimAction } from "@/components/shop/sim-store";
-import { updatePlacedOrders } from "@/components/shop/placed-order";
-import { clockLabel, dayMonth, toVnIso } from "@/lib/datetime";
+import { cancelOrderAction } from "@/lib/actions/orders";
+import { clockLabel, dayMonth } from "@/lib/datetime";
 import { invoiceOf } from "@/lib/invoice";
 import { totalRowLabel, type TrackedOrder } from "@/lib/lookup";
 import { countWord, vnd } from "@/lib/money";
-import { ROW_STATE_LABEL, PAYMENT_LABEL } from "@/lib/order-labels";
+import { STATE_LABEL, PAYMENT_LABEL } from "@/lib/order-labels";
 import { canCancel } from "@/lib/order-rows";
-import { cancelPlacedOrder } from "@/lib/placed-order";
 import { formatPhone } from "@/lib/phone";
 import { photoUrl } from "@/lib/photos";
+import { deliveryShortLabel } from "@/lib/shipping";
 import { CancelOrderSheet } from "./CancelOrderSheet";
-import { demoNow, demoNowMs } from "@/lib/clock";
+import { demoNowMs } from "@/lib/clock";
 
 interface OrderDetailScreenProps {
   order: TrackedOrder;
@@ -28,8 +26,8 @@ interface OrderDetailScreenProps {
   dueAt?: string;
   /** What the money does on an order that was called off. */
   refund?: string | null;
-  /** Called after the cancellation is written, so the list can re-read it. */
-  onCancelled: (message: string) => void;
+  /** The sentence to show once "Huỷ đơn" has been answered, either way. */
+  onDone: (message: string) => void;
 }
 
 /**
@@ -40,43 +38,46 @@ interface OrderDetailScreenProps {
  * screen and the row they opened is marked. "Đóng chi tiết" goes back to
  * `/account/orders`, which is the same list without this section.
  *
- * CANCELLING IS REAL STATE, in the only sense this build allows. An order
- * placed in this browser is stamped in `brand.orders`; a fixture order is
- * recorded in `brand.adminSim`, the same log the back office reads, so
- * `/admin/orders` shows "Đã huỷ · khách huỷ" on the next load. Both are
- * simulation, both live in one browser, and the reset button in the back
- * office clears both.
+ * CANCELLING IS A WRITE TO THE SHOP'S DATABASE since slice B2
+ * (`cancelOrderAction` → `cancel_order()`): the order is marked "khách huỷ",
+ * its pieces go back on the shelf in the same transaction, and the list, the
+ * rail and the product page all read the result. The database decides
+ * whether this account may cancel this order; the button only decides
+ * whether to be drawn.
  *
  * It is offered only where nobody has been paid — a transfer inside its
  * hold, or a COD/card order the shop has not handled. Past that the screen
  * says who to ask instead of drawing a button that would lie.
  */
-export function OrderDetailScreen({
-  order,
-  dueAt,
-  refund,
-  onCancelled,
-}: OrderDetailScreenProps) {
+export function OrderDetailScreen({ order, dueAt, refund, onDone }: OrderDetailScreenProps) {
   const [sheet, setSheet] = useState(false);
+  const [cancelling, startCancel] = useTransition();
   const amountRef = useRef<HTMLElement>(null);
   const refRef = useRef<HTMLElement>(null);
   const trackingRef = useRef<HTMLElement>(null);
 
-  const label = ROW_STATE_LABEL[order.state];
+  const label = STATE_LABEL[order.state];
   const overdue = dueAt !== undefined && demoNowMs() >= Date.parse(dueAt);
   const waiting = order.state === "AWAITING_TRANSFER" && dueAt !== undefined && !overdue;
 
+  /**
+   * The action answers with a value either way; on success it also refreshes
+   * every account screen in the same response (`revalidatePath`), so the
+   * order below already reads "Đã huỷ" when the sheet closes.
+   */
   function cancel() {
-    const at = toVnIso(demoNow());
-    if (order.onDevice) {
-      updatePlacedOrders((list) => cancelPlacedOrder(list, order.code, at));
-    } else {
-      // The shop's own log, so the back office sees it. `lib/admin-sim.ts`
-      // says why the shopper writes there.
-      pushSimAction({ kind: "ORDER_CANCELLED_BY_CUSTOMER", code: order.code, at });
-    }
-    setSheet(false);
-    onCancelled(`Đã huỷ ${order.code} · ${countWord(order.units)} chiếc về kệ`);
+    if (cancelling) return;
+    startCancel(async () => {
+      const result = await cancelOrderAction(order.code);
+      startCancel(() => {
+        setSheet(false);
+        onDone(
+          result.ok
+            ? `Đã huỷ ${order.code} · ${countWord(order.units)} chiếc về kệ`
+            : result.message,
+        );
+      });
+    });
   }
 
   return (
@@ -137,16 +138,6 @@ export function OrderDetailScreen({
             </div>
             {refund && <p className="fine3">{refund}</p>}
           </div>
-
-          {order.onDevice && (
-            <p className="note3" style={{ marginTop: 16 }}>
-              <Icon name="info" className="ic sm" />
-              <span>
-                Đơn này đặt trên thiết bị này và lưu ở đây. Chưa có máy chủ nhận đơn,
-                nên cửa hàng chưa thấy nó và hành trình chỉ có những mốc trình duyệt biết.
-              </span>
-            </p>
-          )}
         </div>
 
         <aside>
@@ -202,7 +193,10 @@ export function OrderDetailScreen({
               <dt>Địa chỉ</dt>
               <dd>{order.addressLine}</dd>
               <dt>Cách giao</dt>
-              <dd>Tiêu chuẩn{order.shippingFeeVnd === 0 ? " · miễn phí" : ""}</dd>
+              <dd>
+                {deliveryShortLabel(order.delivery)}
+                {order.shippingFeeVnd === 0 ? " · miễn phí" : ""}
+              </dd>
               <dt>Thanh toán</dt>
               <dd>{PAYMENT_LABEL[order.payment]}</dd>
               {order.trackingCode && (
@@ -263,6 +257,7 @@ export function OrderDetailScreen({
         code={order.code}
         units={order.units}
         open={sheet}
+        pending={cancelling}
         onClose={() => setSheet(false)}
         onConfirm={cancel}
       />

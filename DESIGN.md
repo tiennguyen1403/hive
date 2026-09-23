@@ -615,13 +615,11 @@ trước khi đặt): `.sec` (mục trang chủ) vs `.btn.sec` của mock → `.
 `.kick` v2 rò rỉ đã xoá cùng lớp v2; preflight `img{display:block}` trong ô bảng.
 
 **Kho trên thiết bị** (localStorage, mỗi khoá một phiên bản `v` và parse phòng
-thủ): `brand.session` phiên mô phỏng · `brand.cart` giỏ · `brand.later` để dành
-· `brand.promo` mã đang áp · `brand.wishlist` · `brand.orders` đơn đặt trên thiết
-bị (tối đa 20, gắn `customerId`, chỉ chủ đơn đọc — QĐ-16) · `brand.addresses`
+thủ): `brand.session` (bỏ ở B1: phiên là cookie Supabase Auth) · `brand.cart` giỏ · `brand.later` để dành
+· `brand.promo` mã đang áp · `brand.wishlist` · `brand.orders` (bỏ ở B2: đơn nằm trong Postgres; người vãng lai giữ khoá biên nhận trong cookie httpOnly `guest_orders`) · `brand.addresses`
 sổ địa chỉ · `brand.reminder` nhắc Số · `brand.searches` tìm gần đây ·
 `brand.prefs` công tắc · `brand.notif.read` thông báo đã đọc · `brand.adminSim`
-nhật ký sự kiện của khu quản trị (**hai chiều cho đúng ba loại thao tác** qua
-`shopOrders`: nhận tiền, bàn giao, huỷ — cửa hàng thấy trạng thái mới sau reload)
+nhật ký sự kiện của khu quản trị (**một chiều từ B2**: chỉ khu quản trị đọc; màn khách đọc Postgres, nên nhận tiền / bàn giao / huỷ mô phỏng chưa tới khách cho tới B3)
 · `brand.adminCols` cột bảng. Không khoá nào ở `sessionStorage`.
 
 **Đồng hồ mẫu (QĐ-24).** App sống trong 24 giờ sau mốc

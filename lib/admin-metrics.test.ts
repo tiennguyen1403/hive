@@ -34,6 +34,10 @@ function order(placedAt: string, status: OrderStatus, unitPriceVnd: number): Ord
     payment: "BANK_TRANSFER",
     shippingFeeVnd: 0,
     discountVnd: 0,
+    delivery: "STANDARD",
+    codFeeVnd: 0,
+    email: "minhanh@email.com",
+    note: "",
     shipTo: {
       recipient: "Trần Minh Anh",
       phone: "0912345678",

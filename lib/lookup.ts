@@ -1,31 +1,26 @@
 import { COLORS } from "@/data/colors";
 import type { Catalog } from "./catalog";
-import { customerById } from "@/data/customers";
-import { orderByCode } from "@/data/orders";
-import type { Order, PaymentMethod, Size } from "@/data/types";
-import { orderCode as asOrderCode } from "@/data/types";
+import type { DeliveryMethod, Order, OrderState, PaymentMethod, Size } from "@/data/types";
 import { effectiveStatus, orderTimeline, type TimelineStep } from "./customer-orders";
 import { orderSubtotalVnd, orderTotalVnd, orderUnits } from "./orders";
-import { deviceState, deviceTimeline, type RowState } from "./order-rows";
-import { transferDeadlineIso, type PlacedOrder } from "./placed-order";
 import { demoNow } from "./clock";
 
 /**
  * Looking an order up WITHOUT signing in — a code plus the phone number it
- * was placed with.
+ * was placed with — and the one shape every order screen renders.
  *
- * Two things make this safe enough to offer. Order codes are short and
+ * Two things make the lookup safe enough to offer. Order codes are short and
  * sequential (`DH-2425`, `DH-2431`), so a code alone would hand a stranger
  * somebody's name, address and phone number — that is QĐ-16 again, with the
  * phone number standing in for the session. And the answer is the same
  * whichever of the two is wrong, so the screen never confirms that a code
  * exists.
  *
- * Two places to look, because an order lives in one of two: the fixtures
- * (placed before this build existed, with a courier behind them) and
- * `brand.orders`, this browser's own. Neither is reachable from the other —
- * the fixtures are server-side data, the device list is `localStorage` — so
- * the lookup is split in two and the screen asks both.
+ * The matching itself happens in Postgres since slice B2
+ * (`track_order()`, reached through `lib/db/orders.ts#trackOrder`): every
+ * order is a row there, whoever placed it. What stays here is pure — reading
+ * a code and a number the way people type them, and turning an `Order` into
+ * what the screens print.
  */
 
 // ─────────────────────────────────────────────────────────── normalisation
@@ -66,54 +61,13 @@ export function samePhone(a: string, b: string): boolean {
   return left !== "" && left === phoneDigits(b);
 }
 
-// ──────────────────────────────────────────────────────────── the two finds
-/** A fixture order, but only for somebody holding the number it was placed with. */
-export function findFixtureOrder(code: string, phone: string): Order | undefined {
-  const wanted = normaliseOrderCode(code);
-  if (!wanted || !phoneDigits(phone)) return undefined;
-
-  const order = orderByCode.get(asOrderCode(wanted));
-  if (!order) return undefined;
-
-  // The order's own `shipTo` number first — it is what was written on the
-  // parcel — then the account's, for an order shipped to someone else.
-  const customer = customerById.get(order.customerId);
-  const numbers = [order.shipTo.phone, customer?.phone ?? ""];
-  return numbers.some((n) => samePhone(phone, n)) ? order : undefined;
-}
-
-/** An order placed in THIS browser, matched the same way. */
-export function findDeviceOrder(
-  code: string,
-  phone: string,
-  placed: PlacedOrder[],
-): PlacedOrder | undefined {
-  const wanted = normaliseOrderCode(code);
-  if (!wanted || !phoneDigits(phone)) return undefined;
-  return placed.find((p) => p.code === wanted && samePhone(phone, p.phone));
-}
-
-export type LookupHit =
-  | { source: "fixture"; order: Order }
-  | { source: "device"; order: PlacedOrder };
-
 /**
- * Both places, fixtures first.
- *
- * A device order can carry a code the fixtures already use —
- * `nextOrderCode` is minutes-based and wraps — and the fixture is the one
- * with a history behind it, the same tie-break `orderRows` makes.
+ * A code as the database issues it — `DH-` and four or more digits — which is
+ * the only shape worth sending to it. Anything else cannot match a row, so
+ * the question is not asked at all.
  */
-export function lookupOrder(
-  code: string,
-  phone: string,
-  placed: PlacedOrder[] = [],
-): LookupHit | null {
-  const fixture = findFixtureOrder(code, phone);
-  if (fixture) return { source: "fixture", order: fixture };
-
-  const device = findDeviceOrder(code, phone, placed);
-  return device ? { source: "device", order: device } : null;
+export function isOrderCode(code: string): boolean {
+  return /^DH-\d{4,}$/.test(code);
 }
 
 /**
@@ -138,12 +92,11 @@ export function trackHref(code: string, phone?: string): string {
 
 // ────────────────────────────────────────────────── one shape for one screen
 /**
- * A found order, whichever of the two it came from.
+ * An order as the screens print it: names and photos looked up, money
+ * summed, the timeline derived.
  *
- * The screen renders ONE shape. The fixtures and the device list disagree
- * about almost everything — one stores product ids and a status union, the
- * other stores a frozen copy — and reconciling that in the markup would be
- * two code paths through every panel.
+ * The detail under "Đơn hàng", the lookup and the printed bill all render
+ * this, so the three cannot disagree about what an order says.
  */
 export interface TrackedLine {
   name: string;
@@ -156,21 +109,26 @@ export interface TrackedLine {
 }
 
 export interface TrackStep extends Omit<TimelineStep, "state"> {
-  /** `late` is the fourth: a wait whose deadline has already passed. */
+  /**
+   * `late` is the fourth: a wait whose deadline has already passed. Nothing
+   * produces it since slice B2 — an order past its hold arrives here already
+   * cancelled (`effectiveStatus`) — but `.tl3 .m.late` still draws it.
+   */
   state: "done" | "now" | "todo" | "late";
 }
 
 export interface TrackedOrder {
   code: string;
   placedAt: string;
-  state: RowState;
+  state: OrderState;
   units: number;
   lines: TrackedLine[];
   recipient: string;
   phone: string;
   addressLine: string;
-  /** What was typed for the courier. The fixtures never carried one. */
+  /** What was typed for the courier at checkout, or "". */
   note: string;
+  delivery: DeliveryMethod;
   subtotalVnd: number;
   shippingFeeVnd: number;
   codFeeVnd: number;
@@ -181,19 +139,17 @@ export interface TrackedOrder {
   /** The courier's number, on the states that have one. */
   trackingCode?: string;
   steps: TrackStep[];
-  /** Money has actually been received. False for every device order. */
+  /** Money has actually been received. False for a `RECEIVED` order. */
   paid: boolean;
-  /** Placed in this browser, so it exists nowhere else. */
-  onDevice: boolean;
 }
 
 /** Paid means received, not promised. COD and a card with no gateway are not. */
-function isPaid(state: RowState): boolean {
+function isPaid(state: OrderState): boolean {
   return state === "PAID" || state === "SHIPPING" || state === "DELIVERED";
 }
 
 /** The last line of the summary box, in the fewest words that are true. */
-export function totalRowLabel(state: RowState): string {
+export function totalRowLabel(state: OrderState): string {
   if (isPaid(state)) return "Đã thanh toán";
   if (state === "CANCELLED") return "Tổng đơn";
   return "Cần thanh toán";
@@ -226,18 +182,16 @@ function restamp(step: TimelineStep): TrackStep {
 }
 
 /**
- * The fixtures' timeline, plus the one thing this screen knows that the
+ * The account's timeline, plus the one thing this screen knows that the
  * account's version does not: a parcel "đang giao" is only as current as the
  * last hand update.
  *
  * It is handed the order with the status the CLOCK says it is in
  * (`effectiveStatus`), so a transfer whose hold has run out arrives here
  * already cancelled and the timeline ends with "Đã huỷ — quá hạn chuyển
- * khoản" rather than a step marked late under a live deadline. The `late`
- * state stays in the type for the device orders below, whose deadline is
- * the only thing that can still move.
+ * khoản" rather than a step marked late under a live deadline.
  */
-function fixtureSteps(o: Order): TrackStep[] {
+function trackSteps(o: Order): TrackStep[] {
   return orderTimeline(o).map(restamp).map((step): TrackStep => {
     if (o.status.state === "SHIPPING" && step.state === "now") {
       return { ...step, detail: `${step.detail} · ${HAND_UPDATED}` };
@@ -246,16 +200,8 @@ function fixtureSteps(o: Order): TrackStep[] {
   });
 }
 
-/** The device order's shorter timeline, with the same late rule. */
-function deviceSteps(p: PlacedOrder, now: Date): TrackStep[] {
-  const overdue = now.getTime() >= Date.parse(transferDeadlineIso(p.placedAt));
-  return deviceTimeline(p, now).map(restamp).map((step): TrackStep =>
-    step.title === "Chờ chuyển khoản" && overdue ? { ...step, state: "late" } : step,
-  );
-}
-
 /**
- * A fixture order in the screen's shape.
+ * An order in the screen's shape.
  *
  * `addressLine` is a PARAMETER: building it needs `data/regions.ts`, which
  * carries 3.321 communes and stays on the server. The page formats it there
@@ -294,55 +240,18 @@ export function trackedOfOrder(
     recipient: o.shipTo.recipient,
     phone: o.shipTo.phone,
     addressLine,
-    note: "",
+    note: o.note,
+    delivery: o.delivery,
     subtotalVnd: orderSubtotalVnd(o),
     shippingFeeVnd: o.shippingFeeVnd,
-    codFeeVnd: 0,
+    codFeeVnd: o.codFeeVnd,
     discountVnd: o.discountVnd,
     totalVnd: orderTotalVnd(o),
     ...(o.promo ? { promo: o.promo } : {}),
     payment: o.payment,
     ...(status.state === "SHIPPING" ? { trackingCode: status.trackingCode } : {}),
-    steps: fixtureSteps(o),
+    steps: trackSteps(o),
     paid: isPaid(state),
-    onDevice: false,
-  };
-}
-
-/** An order placed in this browser, in the same shape. */
-export function trackedOfPlaced(p: PlacedOrder, now: Date = demoNow()): TrackedOrder {
-  const state = deviceState(p, now);
-
-  return {
-    code: p.code,
-    placedAt: p.placedAt,
-    state,
-    units: p.lines.reduce((n, l) => n + l.qty, 0),
-    lines: p.lines.map((l) => ({
-      name: l.name,
-      kind: l.kind,
-      colorLabel: l.colorLabel,
-      size: l.size,
-      qty: l.qty,
-      unitPriceVnd: l.unitPriceVnd,
-      photoKey: l.photoKey,
-    })),
-    recipient: p.recipient,
-    phone: p.phone,
-    addressLine: p.addressLine,
-    note: p.note,
-    subtotalVnd: p.subtotalVnd,
-    shippingFeeVnd: p.shippingFeeVnd,
-    codFeeVnd: p.codFeeVnd,
-    discountVnd: p.discountVnd,
-    totalVnd: p.totalVnd,
-    ...(p.promo ? { promo: p.promo } : {}),
-    payment: p.payment,
-    steps: deviceSteps(p, now),
-    // No server took any money, so no device order is ever paid. Saying
-    // otherwise would be the screen inventing a payment.
-    paid: false,
-    onDevice: true,
   };
 }
 

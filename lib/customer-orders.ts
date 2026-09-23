@@ -1,11 +1,15 @@
-import { orderByCode } from "@/data/orders";
-import type { CustomerId, Order, OrderCode, OrderStatus } from "@/data/types";
+import type { Order, OrderStatus } from "@/data/types";
 import { clockLabel, dayMonth } from "./datetime";
 import { demoNow } from "./clock";
 
 /**
- * A shopper's own orders: which ones they may see, how they are grouped, and
- * how one reads as a sequence of events.
+ * A shopper's own orders: how they are grouped, and how one reads as a
+ * sequence of events.
+ *
+ * WHICH orders a shopper may see is no longer decided here. Until slice B2
+ * `visibleOrder()` filtered the fixtures by customer; the orders are rows in
+ * Postgres now, and row level security answers that question before a single
+ * order reaches the app (`lib/db/orders.ts`, QĐ-16).
  */
 
 export type OrderTabKey = "all" | "processing" | "delivered" | "cancelled";
@@ -29,10 +33,10 @@ const PROCESSING: string[] = ["AWAITING_TRANSFER", "PAID", "SHIPPING", "RECEIVED
 /**
  * Does a state belong under this tab?
  *
- * Takes the state as a string rather than as `OrderState` so the merged
- * list can ask the same question about a device order, whose `RECEIVED`
- * state the fixtures never needed (`order-rows.ts`). One definition, or the
- * tab and its count would eventually disagree.
+ * `RECEIVED` — taken, nobody paid yet — is still being handled, like a
+ * transfer being waited on. Takes a string so the rows (`order-rows.ts`) and
+ * the orders ask the same question through one definition; two would let the
+ * tab and its count disagree.
  */
 export function inTab(tab: OrderTabKey, state: string): boolean {
   switch (tab) {
@@ -52,20 +56,6 @@ export function ordersForTab(orders: Order[], tab: OrderTabKey): Order[] {
   return orders
     .filter((o) => inTab(tab, o.status.state))
     .sort((a, b) => Date.parse(b.placedAt) - Date.parse(a.placedAt));
-}
-
-/**
- * One order, but only if it belongs to the person asking.
- *
- * Order codes are short and sequential — `DH-2419`, `DH-2431`. Looking one
- * up without checking who is asking would hand a stranger somebody else's
- * name, phone number and home address. The route treats `undefined` as a
- * 404, which also avoids confirming that a code exists at all.
- */
-export function visibleOrder(customer: CustomerId, code: OrderCode): Order | undefined {
-  const order = orderByCode.get(code);
-  if (!order || order.customerId !== customer) return undefined;
-  return order;
 }
 
 // ───────────────────────────────────────────── the status, read off the clock
@@ -92,6 +82,15 @@ export function visibleOrder(customer: CustomerId, code: OrderCode): Order | und
  */
 export const OVERDUE_REASON = "quá hạn chuyển khoản";
 
+/**
+ * Why an order the shopper called off themselves is cancelled — the words
+ * `cancel_order()` writes into `cancel_reason`, and the ones every screen
+ * prints after "Đã huỷ —". Kept beside `OVERDUE_REASON` because the two are
+ * the only reasons the shop itself writes, and `customer-orders.test.ts`
+ * checks that the migration still spells both exactly this way.
+ */
+export const CUSTOMER_CANCEL_REASON = "khách huỷ";
+
 export function effectiveStatus(o: Order, now: Date = demoNow()): OrderStatus {
   if (o.status.state !== "AWAITING_TRANSFER") return o.status;
   if (now.getTime() < Date.parse(o.status.dueAt)) return o.status;
@@ -114,8 +113,8 @@ export interface TimelineStep {
 
 /**
  * `"18/09 · 07:15"` — how every step of every timeline is stamped. Exported
- * so the device order's timeline (`order-rows.ts`) stamps its steps the same
- * way; two timelines on the same screen in two date formats read as a bug.
+ * so anything else that dates a milestone dates it the same way; two
+ * timelines on the same screen in two date formats read as a bug.
  */
 export function eventStamp(iso: string): string {
   return `${dayMonth(iso)} · ${clockLabel(iso)}`;
@@ -145,6 +144,16 @@ export function orderTimeline(o: Order): TimelineStep[] {
       return [
         { ...placed, state: "now" },
         { title: "Chờ chuyển khoản", detail: `hạn ${at(o.status.dueAt)}`, state: "todo" },
+        { title: "Đóng gói", state: "todo" },
+        { title: "Giao hàng", state: "todo" },
+      ];
+
+    // Taken, and nobody has paid or packed anything yet — a COD order, or a
+    // card order with no gateway behind it. What is known is the order and
+    // the two steps still ahead of it, and nothing is claimed as done.
+    case "RECEIVED":
+      return [
+        { ...placed, state: "now" },
         { title: "Đóng gói", state: "todo" },
         { title: "Giao hàng", state: "todo" },
       ];
@@ -190,10 +199,17 @@ export function orderTimeline(o: Order): TimelineStep[] {
 /**
  * What happens to the money on a cancelled order.
  *
- * Only two of the five states can precede a cancellation in this data, and
- * they differ in exactly the way that matters: one had been paid, the other
- * never was. Saying "không có gì để hoàn" on an order somebody had paid for
- * would be the worst sentence on the site.
+ * The two reasons the shop writes itself settle it: the shopper can only call
+ * off an order nobody has paid for (`cancel_order()` allows a transfer inside
+ * its hold or a `RECEIVED` order, nothing else), and the clock only cancels a
+ * transfer that never arrived. Neither can have anything to refund — a COD
+ * order cancelled before delivery included, which the payment-method rule
+ * below would get wrong. For any other reason the method decides, as it
+ * always has.
+ *
+ * Saying "không có gì để hoàn" on an order somebody had paid for would be the
+ * worst sentence on the site; saying "sẽ được hoàn" on one nobody paid for is
+ * the second worst.
  */
 export const REFUND_NONE =
   "Không có gì để hoàn. Đơn chưa từng được thanh toán nên không phát sinh hoàn tiền.";
@@ -201,5 +217,7 @@ export const REFUND_TO_SOURCE = "Khoản đã thanh toán sẽ được hoàn v�
 
 export function refundNote(o: Order): string | null {
   if (o.status.state !== "CANCELLED") return null;
+  const reason = o.status.reason;
+  if (reason === CUSTOMER_CANCEL_REASON || reason === OVERDUE_REASON) return REFUND_NONE;
   return o.payment === "BANK_TRANSFER" ? REFUND_NONE : REFUND_TO_SOURCE;
 }

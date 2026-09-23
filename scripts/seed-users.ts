@@ -64,8 +64,8 @@ async function main(): Promise<void> {
       // false for the same reason.
       email_confirm: true,
       // Read by the `handle_new_user()` trigger, which is what actually
-      // writes `public.profiles`. `handle` is the fixture id that still ties
-      // this account to the sample orders until slice B2.
+      // writes `public.profiles`. `handle` is the fixture id that ties this
+      // account to its sample orders: `reset_demo()` matches them up by it.
       user_metadata: {
         handle: customer.id,
         name: customer.name,
@@ -84,13 +84,14 @@ async function main(): Promise<void> {
   }
 
   // The trigger fills a profile from the metadata; this puts the rest of the
-  // fixture on top of it — the real `joined_at`, and the nine addresses.
+  // fixture on top of it — the real `joined_at`, the nine addresses, and
+  // (slice B2) the twenty-four sample orders, given back to their owners.
   const { error } = await admin.rpc("reset_demo");
   if (error) throw new Error(`reset_demo failed: ${error.message}`);
 
   process.stdout.write(
     `demo accounts: ${created} created, ${skipped} already there (of ${CUSTOMERS.length})\n` +
-      "profiles and addresses reset from the fixture\n",
+      "profiles, addresses and sample orders reset from the fixture\n",
   );
 }
 

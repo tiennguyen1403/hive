@@ -5,6 +5,7 @@ import type { OrderState, PaymentMethod } from "@/data/types";
 
 const STATES: OrderState[] = [
   "AWAITING_TRANSFER",
+  "RECEIVED",
   "PAID",
   "SHIPPING",
   "DELIVERED",
@@ -42,6 +43,10 @@ describe("order labels", () => {
     expect(STATE_LABEL.DELIVERED.tone).toBe("ok");
     expect(STATE_LABEL.SHIPPING.tone).toBe("info");
     expect(STATE_LABEL.AWAITING_TRANSFER.tone).toBe("warn");
+    // Taken and live, with no money moved — the same family as a live issue,
+    // and never "Đã thanh toán".
+    expect(STATE_LABEL.RECEIVED.tone).toBe("ok");
+    expect(STATE_LABEL.RECEIVED.text).toBe("Đã nhận đơn");
     expect(STATE_LABEL.CANCELLED.tone).toBe("shut");
   });
 

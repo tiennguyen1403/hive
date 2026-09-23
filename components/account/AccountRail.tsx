@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/icon/Icon";
-import { usePlacedOrders } from "@/components/shop/placed-order";
+import type { Order } from "@/data/types";
 import { initialsOf } from "@/lib/initials";
-import { deviceOrdersOf } from "@/lib/order-rows";
 import { formatPhone } from "@/lib/phone";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { resolveWishlist } from "@/lib/wishlist";
 import { signOut } from "@/lib/actions/auth";
-import { fixtureOrdersOf, type Me } from "@/lib/me";
+import type { Me } from "@/lib/me";
 import { useNotifCenter } from "./notif-center";
 import { useWishlist } from "./WishlistContext";
 import { demoNow } from "@/lib/clock";
@@ -54,27 +53,31 @@ function railKeyOf(path: string): RailKey | undefined {
  * control: the row scrolls past the page gutter, which is how a phone says
  * "there is more this way" without a second navigation pattern.
  *
- * Every number beside a door is COUNTED, not typed: orders from the fixtures
- * plus whatever was placed in this browser, unread notifications from
- * `lib/notifications.ts`, saved styles from the device list, addresses from
- * the book in Postgres — that last one counted on the server and passed in,
- * because a Client Component cannot read a database. A count that is written
- * down is a count that goes wrong the first time somebody uses the screen
- * under it.
+ * Every number beside a door is COUNTED, not typed: orders and addresses
+ * from Postgres — read on the server and passed in, because a Client
+ * Component cannot read a database — unread notifications from
+ * `lib/notifications.ts`, saved styles from the device list. A count that is
+ * written down is a count that goes wrong the first time somebody uses the
+ * screen under it.
  *
  * Sign-out is a form and not a link on purpose: it does something rather than
  * going somewhere, a link that logs you out is a link a browser may prefetch,
  * and the something is now a Server Action that clears a cookie the browser
  * cannot touch.
  */
-export function AccountRail({ me, addressCount }: { me: Me; addressCount?: number }) {
+export function AccountRail({
+  me,
+  orders,
+  addressCount,
+}: {
+  me: Me;
+  orders: Order[];
+  addressCount?: number;
+}) {
   const catalog = useCatalog();
   const { list, ready: wishReady } = useWishlist();
-  const { orders: placed } = usePlacedOrders();
-  const { unread, ready: notifReady } = useNotifCenter(catalog, me);
+  const { unread, ready: notifReady } = useNotifCenter(catalog, me, orders);
   const active = railKeyOf(usePathname());
-
-  const orders = fixtureOrdersOf(me).length + deviceOrdersOf(me.id, placed).length;
   // `ready` is false for one paint here. Nothing beats a zero: "0 mẫu đã lưu"
   // is a claim, and it would be wrong for that paint.
   const saved = wishReady ? resolveWishlist(catalog, demoNow(), list).items.length : undefined;
@@ -103,7 +106,7 @@ export function AccountRail({ me, addressCount }: { me: Me; addressCount?: numbe
         <RailLink href="/account" icon="user" on={active === "home"}>
           Tổng quan
         </RailLink>
-        <RailLink href="/account/orders" icon="bag" on={active === "orders"} count={orders}>
+        <RailLink href="/account/orders" icon="bag" on={active === "orders"} count={orders.length}>
           Đơn hàng
         </RailLink>
         <RailLink

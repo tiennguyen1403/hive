@@ -16,6 +16,12 @@ import type { OrderState, PaymentMethod } from "@/data/types";
  */
 export const STATE_LABEL: Record<OrderState, { text: string; tone: BadgeTone }> = {
   AWAITING_TRANSFER: { text: "Chờ chuyển khoản", tone: "warn" },
+  // Taken, and waiting for nothing but the shop — a COD or card order. "Đã
+  // nhận đơn" and not "Đã thanh toán": no money has moved, and `PAID` on that
+  // row would be the screen inventing a payment. Until slice B2 only an order
+  // kept in the browser could be in this state, so it had a map of its own
+  // (`ROW_STATE_LABEL`); the database issues it now, and one map is enough.
+  RECEIVED: { text: "Đã nhận đơn", tone: "ok" },
   PAID: { text: "Đã thanh toán", tone: "ok" },
   SHIPPING: { text: "Đang giao", tone: "info" },
   DELIVERED: { text: "Đã giao", tone: "ok" },
@@ -24,19 +30,6 @@ export const STATE_LABEL: Record<OrderState, { text: string; tone: BadgeTone }> 
   // of uses). Family B, 22/09/2026.
   CANCELLED: { text: "Đã huỷ", tone: "shut" },
 };
-
-/**
- * The same map, plus the one state only an order placed in this browser can
- * be in: taken, and waiting for nothing but us (`lib/order-rows.ts`).
- *
- * "Đã nhận đơn" and not "Đã thanh toán": a COD order has had no money move,
- * and `PAID` on that row would be the screen inventing a payment.
- */
-export const ROW_STATE_LABEL: Record<OrderState | "RECEIVED", { text: string; tone: BadgeTone }> =
-  {
-    ...STATE_LABEL,
-    RECEIVED: { text: "Đã nhận đơn", tone: "ok" },
-  };
 
 export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
   BANK_TRANSFER: "Chuyển khoản",

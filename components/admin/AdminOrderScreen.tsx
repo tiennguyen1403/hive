@@ -32,8 +32,7 @@ import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "@/lib/datetime"
 import { LEX, issueNo } from "@/lib/lexicon";
 import { plainVnd, vnd } from "@/lib/money";
 import { PAYMENT_LABEL, STATE_LABEL } from "@/lib/order-labels";
-import { transferReference } from "@/lib/placed-order";
-import { orderSubtotalVnd, orderTotalVnd, orderUnits } from "@/lib/orders";
+import { orderSubtotalVnd, orderTotalVnd, orderUnits, transferReference } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
 import { photoUrl } from "@/lib/photos";
 import { initialsOf } from "@/lib/initials";
@@ -175,7 +174,7 @@ export function AdminOrderScreen({
                     ]
                   : []),
               ],
-              `${code} → đang giao · ${trackingCode} · khách thấy mã này ở tra cứu đơn`,
+              `${code} → đang giao · ${trackingCode} · mô phỏng, khách chưa thấy mã này`,
             );
             setHanding(false);
           }}
@@ -465,7 +464,7 @@ function NextStep({
         <b>Bước tiếp theo: chờ khách nhận</b>
         <span>
           Bàn giao {clockLabel(order.status.shippedAt)} · {dayMonth(order.status.shippedAt)} ·{" "}
-          {order.status.trackingCode} · khách tra được mã này ở màn đơn của họ
+          {order.status.trackingCode} · mô phỏng, khách chưa thấy mã này
         </span>
       </div>
     );
@@ -505,6 +504,17 @@ function timelineOf(order: Order, now: Date, carrier?: string): Milestone[] {
           state: "todo",
         },
         { title: "Chờ bàn giao", detail: "sau khi tiền về", state: "todo" },
+        { title: "Đang giao", detail: "sau khi bàn giao", state: "todo" },
+        { title: "Đã giao", detail: "2–4 ngày", state: "todo" },
+      ];
+    // A COD or card order the shop has taken, with nothing paid. The back
+    // office still reads the fixtures until slice B3 and none of them is in
+    // this state, but `OrderStatus` carries it since B2, so the switch says
+    // what it would draw: the order, then the steps still ahead of it.
+    case "RECEIVED":
+      return [
+        { ...placed, state: "now" },
+        { title: "Chờ bàn giao", detail: "", state: "todo" },
         { title: "Đang giao", detail: "sau khi bàn giao", state: "todo" },
         { title: "Đã giao", detail: "2–4 ngày", state: "todo" },
       ];

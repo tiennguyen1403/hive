@@ -9,97 +9,76 @@ import { CopyButton } from "@/components/shop/CopyButton";
 import { Empty } from "@/components/shop/Empty";
 import { ShopFrame } from "@/components/shop/ShopFrame";
 import { Steps } from "@/components/shop/Steps";
-import { useMe } from "@/components/account/MeContext";
+import { useCatalog } from "@/components/shop/CatalogContext";
+import type { Order, OrderState } from "@/data/types";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { LEX, issueNo } from "@/lib/lexicon";
-import { trackHref } from "@/lib/lookup";
+import { trackHref, trackedOfOrder } from "@/lib/lookup";
 import { countWord, vnd } from "@/lib/money";
 import { PAYMENT_LABEL } from "@/lib/order-labels";
+import { TRANSFER_HOLD_HOURS } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
 import { photoUrl } from "@/lib/photos";
-import { usePlacedOrders } from "@/components/shop/placed-order";
-import {
-  TRANSFER_HOLD_HOURS,
-  transferDeadlineIso,
-  type PlacedOrder,
-} from "@/lib/placed-order";
 import { deliveryShortLabel, deliveryWindowLabel } from "@/lib/shipping";
 
 interface OrderConfirmedProps {
+  /**
+   * The order, read on the SERVER — through the session for an account's own
+   * order, through the httpOnly receipt cookie for a guest's
+   * (`lib/db/orders.ts#loadReceipt`). With the status the clock says it is in.
+   */
+  order: Order;
+  /** Built on the server: the commune list it needs never reaches the browser. */
+  addressLine: string;
   /** Which issue the "Về số NN" link goes back to. */
   dropNo: number;
+  /**
+   * The order belongs to the signed-in account, so "Đơn hàng" lists it. False
+   * for a guest, and for an order this browser placed signed out and is now
+   * reopening signed in — the account's list would not have it.
+   */
+  inAccount: boolean;
 }
 
 /**
  * The receipt.
  *
- * The order is the newest one on this DEVICE, where checkout put it. It is a
- * frozen copy, so nothing here is looked up in the catalog again: a receipt
- * that changes when the shop's prices do is not a receipt.
+ * Since slice B2 the order is a row in Postgres: the number was issued by the
+ * database, the pieces are already off the shelf, and the money on this page
+ * is the money the database priced. Names and photos come from the catalogue;
+ * the price of each line is the one recorded at the time, never today's.
  *
- * What the page says next depends on how it is being paid for, and every
- * branch says something TRUE:
+ * What the page says next depends on how the order is being paid for, and on
+ * where it has got to since — a receipt can be reopened days later — and
+ * every branch says something TRUE:
  *
- * · a transfer gets the hold on the goods as a countdown on the issue's own
- *   black cloth, the amount and the reference to copy, and an empty account
- *   row — there is no bank account for this shop yet, so the row says that
- *   rather than showing a made-up number;
+ * · a transfer still being waited on gets the hold as a countdown on the
+ *   issue's own black cloth, the amount and the reference to copy, and an
+ *   empty account row — there is no bank account for this shop yet, so the
+ *   row says that rather than showing a made-up number;
  * · cash on delivery gets the sentence about the call before the courier
  *   comes, and no bank block at all;
  * · a card gets the plain admission that no gateway is connected, because
- *   the alternative is a screen implying money changed hands.
+ *   the alternative is a screen implying money changed hands;
+ * · an order that has moved on — paid, on its way, cancelled — says so, and
+ *   asks for no transfer.
  *
  * Neither QR slot draws a code. One cannot exist until there is an account;
  * the other needs an encoder this build does not carry. The lookup slot
  * prints the real link and a way to copy it, so the frame is a working thing
  * rather than a promise.
  */
-export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
-  const { orders, ready } = usePlacedOrders();
-  const order = orders[0] ?? null;
-  const me = useMe();
+export function OrderConfirmed({ order, addressLine, dropNo, inAccount }: OrderConfirmedProps) {
+  const catalog = useCatalog();
   const codeRef = useRef<HTMLElement>(null);
   const amountRef = useRef<HTMLElement>(null);
   const refRef = useRef<HTMLElement>(null);
   const linkRef = useRef<HTMLElement>(null);
 
-  if (!ready) {
-    return (
-      <ShopFrame>
-        <div className="wrap3">
-          <div className="pghead">
-            <h1>Đã nhận đơn</h1>
-            <span className="meta">đang mở đơn…</span>
-          </div>
-        </div>
-      </ShopFrame>
-    );
-  }
-
-  if (!order) {
-    return (
-      <ShopFrame>
-        <div className="wrap3">
-          <Steps at={3} />
-          <Empty
-            icon="doc"
-            title="Chưa có đơn nào vừa đặt"
-            text="Trang này hiện đơn vừa đặt trên thiết bị này. Mở trên thiết bị khác, hoặc sau khi xoá dữ liệu trình duyệt, thì không còn."
-            action={
-              <ButtonLink icon="grid" href="/products">
-                Về {LEX.tl} {issueNo(dropNo)}
-              </ButtonLink>
-            }
-          />
-        </div>
-      </ShopFrame>
-    );
-  }
-
-  const transfer = order.payment === "BANK_TRANSFER";
-  const units = order.lines.reduce((n, l) => n + l.qty, 0);
-  const deadline = transferDeadlineIso(order.placedAt);
-  const lookup = trackHref(order.code, order.phone);
+  const shown = trackedOfOrder(catalog, order, addressLine);
+  const transfer = shown.state === "AWAITING_TRANSFER" && order.status.state === "AWAITING_TRANSFER";
+  const deadline = order.status.state === "AWAITING_TRANSFER" ? order.status.dueAt : "";
+  const lookup = trackHref(order.code, order.shipTo.phone);
 
   return (
     <ShopFrame>
@@ -109,7 +88,7 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
         <div className="two3">
           <div>
             <div className="done3">
-              <h1 className="big">{headline(order.payment)}</h1>
+              <h1 className="big">{headline(shown.state, order)}</h1>
               <p className="code">
                 Mã đơn <b ref={codeRef}>{order.code}</b>
                 <CopyButton value={order.code} selectRef={codeRef} />
@@ -127,7 +106,7 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
                     over="Đã quá giờ giữ hàng"
                   />
                   <p>
-                    Quá giờ, đơn tự huỷ và {countWord(units)} chiếc này về kệ cho người
+                    Quá giờ, đơn tự huỷ và {countWord(shown.units)} chiếc này về kệ cho người
                     sau. Đã chuyển thì đơn đổi sang “đã thanh toán” khi cửa hàng nhận
                     được tiền.
                   </p>
@@ -141,10 +120,10 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
                   <div className="r">
                     <dt>Số tiền</dt>
                     <dd>
-                      <b ref={amountRef}>{vnd(order.totalVnd)}</b>
+                      <b ref={amountRef}>{vnd(shown.totalVnd)}</b>
                     </dd>
                     <dd>
-                      <CopyButton value={String(order.totalVnd)} selectRef={amountRef} />
+                      <CopyButton value={String(shown.totalVnd)} selectRef={amountRef} />
                     </dd>
                   </div>
                   <div className="r">
@@ -201,16 +180,13 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
           <aside className="aside3">
             <div className="panel3">
               <h3>
-                Đơn gồm {units} món
+                Đơn gồm {shown.units} món
                 <span className="meta">
                   đặt {clockLabel(order.placedAt)} · {dayMonth(order.placedAt)}
                 </span>
               </h3>
-              {order.lines.map((l, i) => (
-                <div
-                  className={i === 0 ? "ol first" : "ol"}
-                  key={`${l.slug}-${l.colorLabel}-${l.size}`}
-                >
+              {shown.lines.map((l, i) => (
+                <div className={i === 0 ? "ol first" : "ol"} key={`${l.name}-${l.colorLabel}-${l.size}-${i}`}>
                   <span className="thumb">
                     <Image
                       src={photoUrl(l.photoKey, 120, 60)}
@@ -229,27 +205,27 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
                 </div>
               ))}
               <div className="sum3">
-                {order.discountVnd > 0 && (
+                {shown.discountVnd > 0 && (
                   <div className="r">
-                    <span>Giảm giá{order.promo ? ` · ${order.promo}` : ""}</span>
-                    <span>−{vnd(order.discountVnd)}</span>
+                    <span>Giảm giá{shown.promo ? ` · ${shown.promo}` : ""}</span>
+                    <span>−{vnd(shown.discountVnd)}</span>
                   </div>
                 )}
                 <div className="r">
                   <span>Phí giao</span>
                   <span>
-                    {order.shippingFeeVnd === 0 ? "Miễn phí" : vnd(order.shippingFeeVnd)}
+                    {shown.shippingFeeVnd === 0 ? "Miễn phí" : vnd(shown.shippingFeeVnd)}
                   </span>
                 </div>
-                {order.codFeeVnd > 0 && (
+                {shown.codFeeVnd > 0 && (
                   <div className="r">
                     <span>Phí thu hộ</span>
-                    <span>{vnd(order.codFeeVnd)}</span>
+                    <span>{vnd(shown.codFeeVnd)}</span>
                   </div>
                 )}
                 <div className="r total">
                   <span>Tổng</span>
-                  <b>{vnd(order.totalVnd)}</b>
+                  <b>{vnd(shown.totalVnd)}</b>
                 </div>
               </div>
             </div>
@@ -259,10 +235,10 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
               <dl className="kvs">
                 <dt>Người nhận</dt>
                 <dd>
-                  {order.recipient} · <span className="nw">{formatPhone(order.phone)}</span>
+                  {shown.recipient} · <span className="nw">{formatPhone(shown.phone)}</span>
                 </dd>
                 <dt>Địa chỉ</dt>
-                <dd>{order.addressLine}</dd>
+                <dd>{addressLine}</dd>
                 <dt>Cách giao</dt>
                 <dd>
                   {deliveryShortLabel(order.delivery)} · nhận{" "}
@@ -276,7 +252,7 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
             </div>
 
             <div className="acts3">
-              {me ? (
+              {inAccount ? (
                 <ButtonLink tone="wide" icon="box" href={`/account/orders/${order.code}`}>
                   Xem đơn trong tài khoản
                 </ButtonLink>
@@ -285,11 +261,7 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
                   Xem hành trình đơn
                 </ButtonLink>
               )}
-              <ButtonLink
-                tone="ink wide"
-                icon="search"
-                href={trackHref(order.code)}
-              >
+              <ButtonLink tone="ink wide" icon="search" href={trackHref(order.code)}>
                 Tra cứu đơn không cần đăng nhập
               </ButtonLink>
               <ButtonLink tone="quiet" icon="grid" href="/products">
@@ -297,15 +269,15 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
               </ButtonLink>
             </div>
 
-            {/* No server takes an order and no server sends mail. Both are
-                said here, in the words that are true — "đã gửi" would be the
-                one sentence on this screen nobody could check. */}
+            {/* Where the order can be found again, and the mail that is not
+                sent yet — both in the words that are true. "Đã gửi" would be
+                the one sentence on this screen nobody could check. */}
             <p className="note3" style={{ marginTop: 14 }}>
               <Icon name="info" className="ic sm" />
               <span>
-                {me
-                  ? `Đơn lưu trên thiết bị này và hiện trong “Đơn hàng” của tài khoản. `
-                  : `Đơn lưu trên thiết bị này. Tra cứu lại bằng mã đơn và số điện thoại đã đặt. `}
+                {inAccount
+                  ? "Đơn nằm trong “Đơn hàng” của tài khoản. "
+                  : "Tra cứu lại bằng mã đơn và số điện thoại đã đặt. "}
                 Xác nhận qua email tới {order.email}: đang chuẩn bị, chưa có máy chủ gửi
                 thư.
               </span>
@@ -318,13 +290,57 @@ export function OrderConfirmed({ dropNo }: OrderConfirmedProps) {
 }
 
 /**
+ * `/order-confirmed` with no number: there is no receipt to show.
+ *
+ * The page used to open "the newest order on this device"; orders are not
+ * kept on the device any more, so the page says where an order can be found
+ * instead — the account's list, or the lookup by code and phone number.
+ */
+export function OrderConfirmedEmpty({ dropNo }: { dropNo: number }) {
+  return (
+    <ShopFrame>
+      <div className="wrap3">
+        <Steps at={3} />
+        <Empty
+          icon="doc"
+          title="Chưa có đơn nào vừa đặt"
+          text="Mở lại trong Đơn hàng của tài khoản, hoặc tra cứu bằng mã đơn và số điện thoại."
+          action={
+            <ButtonLink icon="grid" href="/products">
+              Về {LEX.tl} {issueNo(dropNo)}
+            </ButtonLink>
+          }
+        />
+      </div>
+    </ShopFrame>
+  );
+}
+
+/**
  * The first line of the page, and the only thing on it that is not a figure.
  *
  * Each says what has to happen next rather than congratulating anybody: the
- * order is taken, and what it is waiting for differs by method.
+ * order is taken, and what it is waiting for differs by method. Reopened
+ * later, the line follows the order rather than repeating a request that no
+ * longer applies.
  */
-function headline(payment: PlacedOrder["payment"]): string {
-  if (payment === "COD") return "Đã nhận đơn. Cửa hàng gọi xác nhận trước khi giao.";
-  if (payment === "CARD") return "Đã nhận đơn. Chưa thu tiền cho tới khi có cổng thẻ.";
-  return `Đã nhận đơn. Chuyển khoản trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng.`;
+function headline(state: OrderState, order: Order): string {
+  switch (state) {
+    case "AWAITING_TRANSFER":
+      return `Đã nhận đơn. Chuyển khoản trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng.`;
+    case "RECEIVED":
+      return order.payment === "CARD"
+        ? "Đã nhận đơn. Chưa thu tiền cho tới khi có cổng thẻ."
+        : "Đã nhận đơn. Cửa hàng gọi xác nhận trước khi giao.";
+    case "PAID":
+      return "Đã nhận đơn. Đã thanh toán.";
+    case "SHIPPING":
+      return "Đơn đang giao.";
+    case "DELIVERED":
+      return "Đơn đã giao.";
+    case "CANCELLED":
+      return order.status.state === "CANCELLED"
+        ? `Đơn đã huỷ — ${order.status.reason}.`
+        : "Đơn đã huỷ.";
+  }
 }

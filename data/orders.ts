@@ -67,7 +67,16 @@ function order(
     lines,
     status,
     payment,
+    // Four fields that arrived with slice B2, when an order placed at
+    // checkout started living in the same table as these. What the sample
+    // can honestly say: the confirmation went to the customer's own address,
+    // nobody typed a note, and the parcel went by the one service there was.
+    delivery: "STANDARD",
     shippingFeeVnd: SHIPPING_VND,
+    // Cash-on-delivery handling applies from B2. The sample orders keep 0 so
+    // the figures the back office was reviewed against do not move —
+    // including the COD ones, whose handling was never charged to them.
+    codFeeVnd: 0,
     discountVnd: promoDiscountVnd(promotion, subtotal, SHIPPING_VND),
     shipTo: {
       recipient: home.recipient,
@@ -76,6 +85,8 @@ function order(
       provinceCode: home.provinceCode,
       wardCode: home.wardCode,
     },
+    email: customer.email,
+    note: "",
     placedAt,
     ...(promo ? { promo: promoCode(promo) } : {}),
   };

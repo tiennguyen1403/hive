@@ -7,6 +7,7 @@ import { Icon } from "@/components/icon/Icon";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { usePrefs, writePrefs } from "@/components/shop/prefs";
 import { useReminders, writeReminders } from "@/components/shop/reminders";
+import type { Order } from "@/data/types";
 import type { Me } from "@/lib/me";
 import { LEX } from "@/lib/lexicon";
 import { groupNotifications, stampLabel, type Notif } from "@/lib/notifications";
@@ -18,6 +19,8 @@ import { demoNow } from "@/lib/clock";
 interface NotificationsScreenProps {
   /** Read on the server; the page redirects when nobody is signed in. */
   me: Me;
+  /** The account's orders, read on the server — two of the sources are orders. */
+  orders: Order[];
   /** The issue about to open — the only one a reminder can be set for. */
   nextDropNo?: number;
 }
@@ -25,9 +28,10 @@ interface NotificationsScreenProps {
 /**
  * "Thông báo" — computed on this device, every time the screen opens.
  *
- * Nothing was delivered here. There is no server and no push channel, so the
- * screen works out from what the browser already knows which things would
- * have been worth telling somebody: an order still owing a transfer, a
+ * Nothing was delivered here. There is no push channel, so the screen works
+ * out — from the account's orders, read on the server, and from what the
+ * browser keeps — which things would have been worth telling somebody: an
+ * order still owing a transfer, a
  * reminder that is set, a code about to expire, a parcel that arrived, an
  * issue that closed. The note at the top says exactly that, because a list
  * that looks like an inbox and is not one is the kind of thing a mock should
@@ -37,19 +41,33 @@ interface NotificationsScreenProps {
  * The three switches turn SOURCES off: a source that is off is not counted
  * anywhere, the rail included.
  */
-export function NotificationsScreen({ me, nextDropNo }: NotificationsScreenProps) {
-  return <NotificationsBody me={me} {...(nextDropNo !== undefined ? { nextDropNo } : {})} />;
+export function NotificationsScreen({ me, orders, nextDropNo }: NotificationsScreenProps) {
+  return (
+    <NotificationsBody
+      me={me}
+      orders={orders}
+      {...(nextDropNo !== undefined ? { nextDropNo } : {})}
+    />
+  );
 }
 
 /**
  * A component of its own, so the optional `nextDropNo` can be narrowed once
  * at the boundary and the hooks below can be read without it.
  */
-function NotificationsBody({ me, nextDropNo }: { me: Me; nextDropNo?: number }) {
+function NotificationsBody({
+  me,
+  orders,
+  nextDropNo,
+}: {
+  me: Me;
+  orders: Order[];
+  nextDropNo?: number;
+}) {
   const catalog = useCatalog();
   const { prefs, ready: prefsReady } = usePrefs();
   const { list: reminders, ready: remindersReady } = useReminders();
-  const { list, unread, ready, markAllRead } = useNotifCenter(catalog, me);
+  const { list, unread, ready, markAllRead } = useNotifCenter(catalog, me, orders);
 
   // One instant for the whole render, so the groups and the stamps inside
   // them are judged against the same clock.
@@ -83,8 +101,8 @@ function NotificationsBody({ me, nextDropNo }: { me: Me; nextDropNo?: number }) 
         <Icon name="info" bulk className="ic sm" />
         <span>
           Gom ba nguồn đang có: nhắc giờ mở, trạng thái đơn, mã sắp hết hạn. Không có
-          máy chủ đẩy: mục này tính từ đồng hồ và kho trên thiết bị mỗi lần mở, nên
-          không có “thông báo” nào bịa.
+          máy chủ đẩy: mục này tính lại mỗi lần mở, từ đồng hồ, đơn trong tài khoản và
+          kho trên thiết bị, nên không có “thông báo” nào bịa.
         </span>
       </p>
 

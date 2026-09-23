@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon, Tick } from "@/components/icon/Icon";
 import { Button, ButtonLink } from "@/components/ui/Button";
@@ -20,12 +20,18 @@ import { OrderBox } from "./OrderBox";
 import { WardSelect } from "./WardSelect";
 import { useWardLabels } from "./wards";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { COLORS } from "@/data/colors";
 import { ADDRESS_LABELS, type AddressLabel } from "@/lib/account-form";
 import { defaultAddress, type SavedAddress } from "@/lib/address-book";
 import { rememberAddress } from "@/lib/actions/addresses";
-import type { Address } from "@/data/types";
-import { cartSubtotalVnd, cartUnits, hasBlockingIssue, resolveCart } from "@/lib/cart";
+import { placeOrderAction } from "@/lib/actions/orders";
+import type { Address, Promotion } from "@/data/types";
+import {
+  cartSubtotalVnd,
+  cartUnits,
+  hasBlockingIssue,
+  resolveCart,
+  type ResolvedLine,
+} from "@/lib/cart";
 import {
   EMPTY_DRAFT,
   checkoutStep,
@@ -35,14 +41,10 @@ import {
   type CheckoutDraft,
   type FieldName,
 } from "@/lib/checkout-form";
-import { writePlacedOrder } from "@/components/shop/placed-order";
 import { toVnIso } from "@/lib/datetime";
 import { vnd } from "@/lib/money";
-import {
-  TRANSFER_HOLD_HOURS,
-  nextOrderCode,
-  type PlacedOrder,
-} from "@/lib/placed-order";
+import { MAX_NOTE_LENGTH, failureMovesCatalog } from "@/lib/order-payload";
+import { TRANSFER_HOLD_HOURS } from "@/lib/orders";
 import { appliedPromo } from "@/lib/promotions";
 import {
   COD_SURCHARGE_VND,
@@ -53,6 +55,7 @@ import {
   checkoutTotals,
   deliveryWindowLabel,
   isDeliveryAvailable,
+  type CheckoutTotals,
 } from "@/lib/shipping";
 import { demoNow } from "@/lib/clock";
 
@@ -93,6 +96,26 @@ function asSaved(a: Address): SavedAddress {
   };
 }
 
+/**
+ * What the basket and the money looked like when "Đặt hàng" was pressed.
+ *
+ * Held from the press until the receipt page takes over. The order is
+ * priced and written by the server, and while it travels anything can
+ * re-render this screen — a refreshed catalogue that already counts the
+ * pieces this very order took, the cart being emptied on the way out. Drawn
+ * from the live values, the screen would flash "Giỏ còn món đang vướng" over
+ * an order that went through. Released again if the order is refused, so the
+ * screen then shows what is true now.
+ */
+interface Held {
+  lines: ResolvedLine[];
+  subtotalVnd: number;
+  blocked: boolean;
+  promo: Promotion | undefined;
+  totals: CheckoutTotals;
+  units: number;
+}
+
 /** Everything the courier needs. Used to decide whether to open the form. */
 const ADDRESS_FIELDS: FieldName[] = [
   "recipient",
@@ -119,7 +142,9 @@ const ADDRESS_FIELDS: FieldName[] = [
  *
  * The order button stays shut until the order can actually be placed, and it
  * says WHICH of the two things is missing rather than sitting there greyed
- * out with the same word on it.
+ * out with the same word on it. Since slice B2 pressing it sends the order to
+ * the server, which prices it and takes the pieces off the shelf; while that
+ * is on its way the button says so and waits.
  *
  * From 900px the panels and the money become two columns (`.two3`), with the
  * money sticky on the right.
@@ -137,9 +162,11 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
   const [touched, setTouched] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  // Held beside the code because the receipt prints "Phường Sài Gòn" and the
-  // region module that knows the prefix is server-side only.
-  const [typedWardLabel, setTypedWardLabel] = useState("");
+  /** Why the last press did not become an order, in the shopper's words. */
+  const [failure, setFailure] = useState<string | null>(null);
+  const dismissFailure = useCallback(() => setFailure(null), []);
+  const [placing, startPlacing] = useTransition();
+  const [held, setHeld] = useState<Held | null>(null);
   /** The saved address being shipped to. `null` while a new one is typed. */
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -203,18 +230,26 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
   // rendered, so reading the clock here cannot desync a hydration.
   const now = useMemo(() => demoNow(), [cart]);
   const nowIso = toVnIso(now);
-  const { lines } = resolveCart(catalog, now, cart);
-  const subtotalVnd = cartSubtotalVnd(lines);
-  const blocked = hasBlockingIssue(lines);
+  const liveLines = resolveCart(catalog, now, cart).lines;
+  const liveSubtotal = cartSubtotalVnd(liveLines);
+  const livePromo = appliedPromo(catalog, promoCode, liveSubtotal, now);
+  const live: Held = {
+    lines: liveLines,
+    subtotalVnd: liveSubtotal,
+    blocked: hasBlockingIssue(liveLines),
+    promo: livePromo,
+    totals: checkoutTotals({
+      subtotalVnd: liveSubtotal,
+      delivery: draft.delivery,
+      payment: draft.payment,
+      ...(livePromo ? { promo: livePromo } : {}),
+    }),
+    units: cartUnits(cart),
+  };
+  // While an order is on its way, the screen keeps showing what was pressed.
+  const { lines, subtotalVnd, blocked, promo, totals, units } = held ?? live;
 
   const errors = validateCheckout(draft);
-  const promo = appliedPromo(catalog, promoCode, subtotalVnd, now);
-  const totals = checkoutTotals({
-    subtotalVnd,
-    delivery: draft.delivery,
-    payment: draft.payment,
-    ...(promo ? { promo } : {}),
-  });
 
   function set<K extends keyof CheckoutDraft>(key: K, value: CheckoutDraft[K]) {
     setDraft((d) => {
@@ -235,7 +270,6 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
   function pick(a: SavedAddress) {
     setPickedId(a.id);
     setAdding(false);
-    setTypedWardLabel("");
     setDraft((d) => ({
       ...d,
       recipient: a.recipient,
@@ -251,7 +285,6 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
   function startNewAddress() {
     setAdding(true);
     setPickedId(null);
-    setTypedWardLabel("");
     setDraft((d) => ({
       ...d,
       recipient: "",
@@ -277,8 +310,25 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
     setTouched((t) => (t.has(key) ? t : new Set(t).add(key)));
   }
 
+  /**
+   * "Đặt hàng" — the order goes to the server, which prices it, takes the
+   * pieces off the shelf and issues the number (`placeOrderAction`,
+   * `place_order()`).
+   *
+   * Called as a function inside a transition rather than as a form action:
+   * checkout is not a form posting to one endpoint, it validates, places the
+   * order, saves the address and navigates
+   * (`02-guides/server-actions.md`; `01-getting-started/07-mutating-data.md`,
+   * "Event Handlers"). Only the basket, the form and the applied code go up;
+   * no price does, and nothing the page computed is trusted.
+   *
+   * A refusal is a sentence in a toast. When the refusal is about stock, the
+   * issue's window or the code, the page reads the catalogue again so the
+   * cart and the summary show what is true now.
+   */
   function placeOrder() {
     setSubmitted(true);
+    if (placing) return;
     if (Object.keys(errors).length > 0 || blocked || lines.length === 0) {
       // The button is shut while anything is missing, so this only runs if
       // something got past it. Open the form and take them to the first
@@ -292,77 +342,62 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
       return;
     }
 
-    const wardName = pickedId
-      ? wardLabelFor(draft.provinceCode, draft.wardCode)
-      : typedWardLabel;
-
-    const order: PlacedOrder = {
-      code: nextOrderCode(now),
-      // Bound HERE, because this is the last moment the session and the
-      // order are in the same place. Reading an order later asks who is
-      // asking (QĐ-16), and without an owner written down the answer would
-      // have to be "whoever is holding the browser". A guest order gets no
-      // owner and therefore appears in no account list — it is still
-      // readable at /track, with the phone number it was placed with.
-      ...(me ? { customerId: me.id } : {}),
-      placedAt: nowIso,
+    const payload = {
       lines: lines.map((l) => ({
-        slug: l.product.slug,
-        name: l.product.name,
-        kind: l.product.kind,
-        colorLabel: COLORS[l.line.color].label,
+        productId: l.line.productId,
+        color: l.line.color,
         size: l.line.size,
         qty: l.line.qty,
-        unitPriceVnd: l.product.priceVnd,
-        photoKey:
-          l.product.photoKeys[l.product.colors.indexOf(l.line.color)] ??
-          l.product.photoKeys[0]!,
       })),
-      recipient: draft.recipient.trim(),
-      phone: normalisePhone(draft.phone),
-      email: draft.email.trim(),
-      addressLine: [draft.line.trim(), wardName, provinceName(draft.provinceCode)]
-        .filter(Boolean)
-        .join(", "),
-      note: draft.note.trim(),
-      delivery: draft.delivery,
-      payment: draft.payment,
-      subtotalVnd: totals.subtotalVnd,
-      shippingFeeVnd: totals.shippingFeeVnd,
-      codFeeVnd: totals.codFeeVnd,
-      discountVnd: totals.discountVnd,
-      totalVnd: totals.totalVnd,
-      ...(promo ? { promo: promo.code } : {}),
+      draft,
+      promoCode: promo ? promo.code : null,
     };
 
-    // The checkbox in the form promises this, so it happens before the
-    // navigation rather than being a sentence nothing backs up — and it
-    // only happens when the box is ticked.
-    if (!pickedId && saveToBook) {
-      const entry = {
-        recipient: order.recipient,
-        phone: order.phone,
-        provinceCode: draft.provinceCode,
-        wardCode: draft.wardCode,
-        line: draft.line.trim(),
-        label: addressLabel,
-        isDefault: book.length === 0,
-      };
-      // Where it goes depends on who is here, and the checkbox says which
-      // of the two it will be. A signed-in shopper's book is in Postgres;
-      // a guest's is this browser.
-      if (me) void rememberAddress(entry);
-      else save(entry);
-    }
+    setFailure(null);
+    setHeld({ lines, subtotalVnd, blocked, promo, totals, units });
 
-    // On the DEVICE, not in the tab: the account lists this order as one of
-    // the shopper's, and an order that vanished with the tab made that list
-    // a lie. `writePlacedOrder` swallows a storage refusal — the
-    // confirmation screen then says there is no order rather than
-    // pretending one was kept.
-    writePlacedOrder(order);
-    clear();
-    router.push("/order-confirmed");
+    startPlacing(async () => {
+      const result = await placeOrderAction(payload);
+
+      if (!result.ok) {
+        setHeld(null);
+        setFailure(result.message);
+        if (result.failure !== "INVALID" && failureMovesCatalog(result.failure)) {
+          router.refresh();
+        }
+        return;
+      }
+
+      // The checkbox in the form promises this, so it happens before the
+      // navigation rather than being a sentence nothing backs up — and it
+      // only happens when the box is ticked and the order went through.
+      if (!pickedId && saveToBook) {
+        const entry = {
+          recipient: draft.recipient.trim(),
+          phone: normalisePhone(draft.phone),
+          provinceCode: draft.provinceCode,
+          wardCode: draft.wardCode,
+          line: draft.line.trim(),
+          label: addressLabel,
+          isDefault: book.length === 0,
+        };
+        // Where it goes depends on who is here, and the checkbox says which
+        // of the two it will be. A signed-in shopper's book is in Postgres;
+        // a guest's is this browser.
+        if (me) void rememberAddress(entry);
+        else save(entry);
+      }
+
+      // The emptied cart and the receipt land together: both updates go in
+      // one transition, so the screen never draws an empty basket in
+      // between. After an `await` the transition has to be restated
+      // (react.dev/reference/react/useTransition, "React doesn't treat my
+      // state update after await as a Transition").
+      startPlacing(() => {
+        clear();
+        router.push(`/order-confirmed/${result.code}`);
+      });
+    });
   }
 
   if (!ready) {
@@ -398,12 +433,14 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
             }
           />
         </div>
+        {/* A refusal can arrive after the basket it was about has emptied —
+            another tab placed the same pieces — so it is said here too. */}
+        <Toast message={failure} ms={6000} onDone={dismissFailure} />
       </ShopFrame>
     );
   }
 
   const addressDone = isAddressComplete(draft);
-  const units = cartUnits(cart);
 
   return (
     <ShopFrame>
@@ -540,7 +577,6 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
                           value={draft.provinceCode || null}
                           onChange={(code) => {
                             set("provinceCode", code);
-                            setTypedWardLabel("");
                             markTouched("provinceCode");
                           }}
                           placeholder="Chọn tỉnh / thành"
@@ -554,9 +590,8 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
                           provinceCode={draft.provinceCode}
                           value={draft.wardCode}
                           ariaLabel="Phường / xã"
-                          onChange={(code, label) => {
+                          onChange={(code) => {
                             set("wardCode", code);
-                            setTypedWardLabel(label);
                             markTouched("wardCode");
                           }}
                         />
@@ -679,6 +714,7 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
                   <textarea
                     id={id}
                     className="inp area"
+                    maxLength={MAX_NOTE_LENGTH}
                     aria-describedby={describedBy}
                     placeholder="VD: gọi trước 10 phút, gửi bảo vệ toà nhà nếu không có người nhận"
                     value={draft.note}
@@ -755,7 +791,13 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
               </span>
             </button>
 
-            {addressDone && draft.agreed ? (
+            {placing ? (
+              /* On its way to the server. Shut, and without the icon — the
+                 same rule as every other button that cannot be pressed. */
+              <Button tone="wide" disabled>
+                Đang đặt hàng…
+              </Button>
+            ) : addressDone && draft.agreed ? (
               <Button tone="wide" icon="check" onClick={placeOrder}>
                 Đặt hàng · {vnd(totals.totalVnd)}
               </Button>
@@ -774,6 +816,7 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
       </div>
 
       <Toast message={toast} onDone={() => setToast(null)} />
+      <Toast message={failure} ms={6000} onDone={dismissFailure} />
     </ShopFrame>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { Order } from "@/data/types";
 import type { Me } from "@/lib/me";
 import { AccountRail, type RailKey } from "./AccountRail";
 
@@ -10,6 +11,8 @@ interface AccountLayoutProps {
   me: Me | null;
   /** Counted on the server — a Client Component cannot read the database. */
   addressCount?: number;
+  /** The account's orders, read on the server, for the rail's count and dot. */
+  orders?: Order[];
   children: React.ReactNode;
 }
 
@@ -34,7 +37,7 @@ interface AccountLayoutProps {
  * B1 moved the frame into `app/account/layout.tsx`, and a layout cannot know
  * which of its children is rendering.
  */
-export function AccountLayout({ me, addressCount, children }: AccountLayoutProps) {
+export function AccountLayout({ me, addressCount, orders = [], children }: AccountLayoutProps) {
   if (!me) {
     return <div className="wrap3">{children}</div>;
   }
@@ -42,7 +45,11 @@ export function AccountLayout({ me, addressCount, children }: AccountLayoutProps
   return (
     <div className="wrap3">
       <div className="acct3">
-        <AccountRail me={me} {...(addressCount !== undefined ? { addressCount } : {})} />
+        <AccountRail
+          me={me}
+          orders={orders}
+          {...(addressCount !== undefined ? { addressCount } : {})}
+        />
         <div className="content">{children}</div>
       </div>
     </div>

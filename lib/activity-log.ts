@@ -9,13 +9,12 @@ import {
   type SimOverlay,
 } from "./admin-sim";
 import { orderItemsLabel } from "./admin-rows";
-import { TRANSFER_HOLD_HOURS } from "./placed-order";
 import { OVERDUE_REASON, effectiveStatus } from "./customer-orders";
 import { clockLabel, dateTimeLabel, dayMonth } from "./datetime";
 import { dropSummary } from "./inventory";
 import { LEX, issueLabel } from "./lexicon";
 import { vnd } from "./money";
-import { orderTotalVnd } from "./orders";
+import { TRANSFER_HOLD_HOURS, orderTotalVnd } from "./orders";
 import { STATE_LABEL } from "./order-labels";
 
 /**
