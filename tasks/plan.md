@@ -1601,3 +1601,16 @@ chạy đúng phiên bản của hosted (storage v1.77.5, gotrue v2.197.0) vì `
 trước đó đã tiêu một token) — bằng chứng `take_rate` chạy trên hosted; `GET /api/reset` với `CRON_SECRET` → `passwordsChecked: 9,
 passwordsRestored: 0`; người đang đăng nhập vẫn giữ phiên sau đó; 0 request ra host ngoài. Lỗi console duy nhất: `/favicon.ico` 404 — app
 chưa có favicon (có từ trước, chờ vòng mock nhận diện).
+
+**Vòng mock favicon + ảnh chia sẻ (24/09/2026, CHỜ DUYỆT).** Người dùng bỏ CI ("tốn thời gian để check") và chọn làm favicon + ảnh
+chia sẻ. Bảng `prototype/name/share.html` (mở `cd prototype && python serve.py 3100` → `/name/share.html`), hợp đồng hướng
+`.impeccable/surfaces/prototype-name-share-html.md` (yêu cầu hẹp trong thế giới đã chốt, không concept-seed; **không vẽ mark** — QĐ-26).
+Favicon vẽ bằng canvas trên lưới 16 điểm ảnh: **F1 Tem mật ong** (ô mật ong, H mực), **F2 H chấm** (ô vải đen, H trắng, chấm mật ong của
+lockup HIVE.05), **F3 Số bìa** ("05" mật ong, tự đổi theo Số); mỗi cái ở 128/16/32/48, bản 16 px màn 1x phóng ×6, tab sáng/tối, kết
+quả tìm kiếm, màn điện thoại. Ảnh chia sẻ 1200×630 dựng bằng HTML theo đơn vị `--u` (1/1200 bề ngang khung): **O1 Nhãn dệt** (HIVE dọc
+mép trái, đường may, số và câu đề bìa, không ảnh), **O2 Bìa có ảnh** (bìa desktop), **O3 Nhãn trắng** (wordmark trên sàn trắng, dải vải
+đen mang số); mỗi cái trong bài đăng, tin nhắn và bản cắt vuông; hai nút: Số 05/06 và dòng mô tả A (như cửa hàng) / B (ghi rõ demo).
+Đề xuất **F1 + O1**. Chế độ xuất cho khâu tài sản: `?og=o1[&no=06]` (một ảnh đúng 1200×630), `?icon=f1&size=180[&bleed]`. Lượt soát: 0
+lỗi console, 0 tràn ở 1280/390; sửa một đợt (nhãn "SỐ" căn theo chân số, đường may 3/1200, số trong dải O3, va tên lớp `.line`, chữ
+thường "bán theo số", Be Vietnam Pro chỉ có tới 600). **Phát hiện:** ảnh bìa Số 05 (`hero-lg`, ảnh thay thế Unsplash) là áo in logo
+Champion — đang nằm trên bìa trang chủ thật, và là lý do O2 chỉ nên chọn khi có ảnh thật.

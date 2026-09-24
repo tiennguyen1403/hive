@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Favicon và ảnh chia sẻ · HIVE</title>
+<link rel="stylesheet" href="../v2/fonts.css">
+<style>
+  /* Unbounded 800, self-hosted exactly as prototype/name/index.html loads it. */
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-b89d52.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-vietnamese-0260aa.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-ext-d711e9.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+  /* The v3 world, from DESIGN.md: white floor, black cloth for the issue,
+     honey for the mark, the number and the one seam. */
+  :root {
+    --ink: #171410; --ink2: #6b6250; --hair: #ece7dd; --line: #9c937f;
+    --bg: #ffffff; --plate: #f4efe6;
+    --stage: #171410; --stage-ink: #ffffff; --stage-ink2: #b9b0a0; --stage-hair: #3a352e;
+    --brand: #eba400; --brand-text: #9e6817; --brand-soft: #fbf1da;
+    --sel: #171410; --sel-ink: #eba400; --focus: #c28800;
+    --r: 4px; --gut: 40px;
+    --display: "Unbounded", system-ui, sans-serif;
+    --sans: "Be Vietnam Pro", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--sans); }
+  ::selection { background: var(--brand-soft); color: var(--ink); }
+  a { color: var(--brand-text); text-underline-offset: 3px; }
+  code { font: 500 13px/1 var(--sans); background: var(--plate); padding: 2px 5px; border-radius: 3px; }
+
+  .board { max-width: 1280px; margin: 0 auto; padding: 56px var(--gut) 96px; }
+  h1 { font: 800 40px/1.05 var(--display); letter-spacing: -0.02em; margin: 0 0 16px; text-wrap: balance; }
+  .lead { max-width: 70ch; margin: 0; color: var(--ink2); font-size: 16px; }
+  section { margin-top: 80px; padding-top: 28px; border-top: 1px solid var(--ink); }
+  h2 { font: 800 26px/1.15 var(--display); letter-spacing: -0.02em; margin: 0 0 10px; }
+  h3 { font: 800 17px/1.25 var(--display); letter-spacing: -0.01em; margin: 0 0 6px; }
+  .sub { max-width: 72ch; margin: 0 0 32px; color: var(--ink2); }
+  .pick { margin: 28px 0 0; padding: 14px 16px; background: var(--brand-soft); border-radius: var(--r); max-width: 72ch; }
+  .pick b { font-weight: 600; }
+  figure { margin: 0; }
+  figcaption, .cap { font-size: 12px; line-height: 1.4; color: var(--ink2); margin-top: 8px; }
+  .why { margin: 0; }
+  .risk { margin: 10px 0 0; color: var(--ink2); font-size: 14px; }
+  .risk b { color: var(--ink); font-weight: 600; }
+
+  /* ── favicon grid: rows are contexts, columns are candidates ─────────── */
+  .fgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(7, auto); }
+  .fcol { grid-row: span 7; display: grid; grid-template-rows: subgrid; padding: 0 24px; border-left: 1px solid var(--hair); min-width: 0; }
+  .fcol:first-child { padding-left: 0; border-left: 0; }
+  .fcol:last-child { padding-right: 0; }
+  .fcol > * { padding: 18px 0; border-top: 1px solid var(--hair); min-width: 0; }
+  .fcol > :first-child { border-top: 0; padding-top: 0; }
+  .ico { display: block; }
+  .tile128 { border-radius: 0; }
+  .sizes { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; }
+  .sizes figure { display: flex; flex-direction: column; align-items: flex-start; }
+  .zoom { image-rendering: pixelated; box-shadow: 0 0 0 1px var(--hair); }
+
+  /* A browser's own chrome, drawn plainly: the tab strip and the address bar. */
+  .browser { border-radius: 10px 10px 0 0; overflow: hidden; }
+  .browser + .browser { margin-top: 12px; }
+  .strip { display: flex; gap: 2px; padding: 8px 8px 0; }
+  .tab { display: flex; align-items: center; gap: 8px; flex: 1 1 0; min-width: 0; max-width: 170px; height: 32px;
+    padding: 0 10px; border-radius: 8px 8px 0 0; font: 400 12.5px/1 var(--sans); }
+  .tab .t { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .tab .x { width: 10px; height: 10px; flex: none; opacity: .7; }
+  .tab .g { width: 16px; height: 16px; border-radius: 4px; flex: none; }
+  .omni { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; }
+  .omni .u { flex: 1; min-width: 0; height: 26px; border-radius: 13px; display: flex; align-items: center; padding: 0 12px;
+    font: 400 12.5px/1 var(--sans); overflow: hidden; white-space: nowrap; }
+  .light .strip { background: #dfe1e5; } .light .tab { color: #4a4d52; } .light .tab.on { background: #fff; color: #1f1f1f; }
+  .light .tab .g { background: #b9bdc3; } .light .omni { background: #fff; } .light .omni .u { background: #eef0f2; color: #3c4043; }
+  .dark .strip { background: #202124; } .dark .tab { color: #9aa0a6; } .dark .tab.on { background: #35363a; color: #e8eaed; }
+  .dark .tab .g { background: #5f6368; } .dark .omni { background: #35363a; } .dark .omni .u { background: #202124; color: #bdc1c6; }
+
+  .serp { font-family: Arial, var(--sans); }
+  .serp .site { display: flex; align-items: center; gap: 10px; }
+  .serp .disc { width: 28px; height: 28px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px #dadce0; display: grid; place-items: center; flex: none; }
+  .serp .site b { display: block; font: 400 14px/1.2 Arial, var(--sans); color: #202124; }
+  .serp .site small { display: block; font: 400 12px/1.3 Arial, var(--sans); color: #4d5156; }
+  .serp .title { display: block; margin-top: 6px; font: 400 19px/1.3 Arial, var(--sans); color: #1a0dab; }
+  .serp .snip { margin: 3px 0 0; font: 400 13.5px/1.45 Arial, var(--sans); color: #4d5156; }
+
+  .phone { display: flex; gap: 20px; padding: 20px 18px 16px; background: linear-gradient(160deg, #3c4a57, #26303a); border-radius: 14px; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 64px; }
+  .app canvas, .app i { width: 60px; height: 60px; border-radius: 14px; display: block; }
+  .app i { background: rgba(255, 255, 255, .22); }
+  .app span { font: 500 11px/1 var(--sans); color: #fff; }
+
+  /* ── share images: one component, sized by its frame ──────────────────
+     Every length in an image is written in units of --u, one 1200th of the
+     frame's width, so the same markup is the 1200×630 original and every
+     preview of it. */
+  .ogf { container-type: inline-size; position: relative; aspect-ratio: 1200 / 630; overflow: hidden; background: var(--stage); }
+  .og { --u: calc(100cqw / 1200); position: absolute; inset: 0; font-family: var(--sans); overflow: hidden; }
+  /* "SỐ" sits on the figure's baseline, as on the cover: aligned by baseline,
+     not by box bottom, so no margin has to guess the figure's descent. */
+  .og .issue { position: absolute; display: flex; align-items: baseline; }
+  .og .issue .k { font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--stage-ink); line-height: 1; }
+  .og .issue .no { font-family: var(--display); font-weight: 800; letter-spacing: -0.05em; line-height: .9; color: var(--brand); }
+  .og .hl { position: absolute; margin: 0; font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; }
+
+  /* O1 · the woven label: HIVE runs up a label stitched to the cloth. */
+  .o1 { background: var(--stage); color: var(--stage-ink); }
+  /* The seam is 3/1200 of the width: a 1px line on the site, but a share
+     image is seen at 40% of its size in a feed and a thinner seam vanishes. */
+  .o1 .label { position: absolute; left: 0; top: 0; bottom: 0; width: calc(200 * var(--u));
+    border-right: max(1px, calc(3 * var(--u))) dashed var(--brand); display: grid; place-items: center; }
+  .o1 .label b { writing-mode: vertical-rl; transform: rotate(180deg); font: 800 calc(64 * var(--u))/1 var(--display);
+    letter-spacing: -0.02em; color: var(--stage-ink); }
+  .o1 .issue { left: calc(300 * var(--u)); top: calc(40 * var(--u)); gap: calc(18 * var(--u)); }
+  .o1 .issue .k { font-size: calc(22 * var(--u)); }
+  .o1 .issue .no { font-size: calc(320 * var(--u)); }
+  .o1 .hl { left: calc(300 * var(--u)); top: calc(392 * var(--u)); font-size: calc(44 * var(--u)); line-height: 1.1; color: var(--stage-ink); }
+  .o1 .tag { position: absolute; left: calc(300 * var(--u)); bottom: calc(56 * var(--u)); font: 500 calc(22 * var(--u))/1.2 var(--sans); color: var(--stage-ink2); }
+
+  /* O2 · the desktop cover: cloth on the left, the issue's photo on the right. */
+  .o2 { background: var(--stage); color: var(--stage-ink); }
+  .o2 .photo { position: absolute; left: calc(600 * var(--u)); right: 0; top: 0; bottom: 0; overflow: hidden;
+    border-left: max(1px, calc(3 * var(--u))) dashed var(--brand); }
+  .o2 .photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; display: block; }
+  .o2 .issue { left: calc(64 * var(--u)); top: calc(34 * var(--u)); gap: calc(14 * var(--u)); }
+  .o2 .issue .k { font-size: calc(18 * var(--u)); }
+  .o2 .issue .no { font-size: calc(240 * var(--u)); }
+  .o2 .hl { left: calc(64 * var(--u)); top: calc(318 * var(--u)); font-size: calc(46 * var(--u)); line-height: 1.08; color: var(--stage-ink); }
+  .o2 .wm { position: absolute; left: calc(64 * var(--u)); bottom: calc(50 * var(--u)); font: 800 calc(34 * var(--u))/1 var(--display); letter-spacing: -0.02em; }
+
+  /* O3 · the name first: the wordmark on the white floor, the issue on a band of cloth. */
+  .o3 { background: var(--bg); color: var(--ink); }
+  .o3 .wm { position: absolute; left: 0; right: 0; top: calc(92 * var(--u)); text-align: center;
+    font: 800 calc(180 * var(--u))/1 var(--display); letter-spacing: -0.02em; }
+  .o3 .seam { position: absolute; left: calc(330 * var(--u)); right: calc(330 * var(--u)); top: calc(316 * var(--u));
+    border-top: max(1px, calc(3 * var(--u))) dashed var(--brand); }
+  .o3 .hl { left: 0; right: 0; top: calc(350 * var(--u)); text-align: center; font-size: calc(34 * var(--u)); line-height: 1.1; }
+  .o3 .band { position: absolute; left: 0; right: 0; bottom: 0; height: calc(108 * var(--u)); background: var(--stage);
+    display: flex; align-items: center; justify-content: center; gap: calc(20 * var(--u)); }
+  .o3 .band .no { font: 800 calc(40 * var(--u))/1 var(--display); letter-spacing: -0.03em; color: var(--brand); }
+  .o3 .band .no b { font: inherit; }
+  .o3 .band .copy { font: 500 calc(22 * var(--u))/1 var(--sans); color: var(--stage-ink2); }
+
+  /* ── share rows ───────────────────────────────────────────────────────── */
+  .controls { display: flex; flex-wrap: wrap; gap: 20px 40px; margin: 0 0 36px; }
+  .control p { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+  .seg { display: inline-flex; border: 1px solid var(--ink); border-radius: var(--r); overflow: hidden; }
+  .seg button { height: 40px; padding: 0 14px; border: 0; background: var(--bg); color: var(--ink); font: 600 13px/1 var(--sans);
+    cursor: pointer; }
+  .seg button + button { border-left: 1px solid var(--ink); }
+  .seg button:hover { background: var(--brand-soft); }
+  .seg button[aria-pressed="true"] { background: var(--sel); color: var(--sel-ink); }
+  .seg button:focus-visible { outline: 2px solid var(--focus); outline-offset: -4px; }
+  .control .hint { margin: 8px 0 0; font-size: 12.5px; color: var(--ink2); max-width: 46ch; }
+
+  .orow { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px 40px; padding: 36px 0; border-top: 1px solid var(--hair); }
+  .orow:first-of-type { border-top: 0; padding-top: 0; }
+  .orow .main .ogf { border-radius: 2px; box-shadow: 0 0 0 1px var(--hair); }
+  .orow .main h3 { margin-bottom: 14px; }
+  .orow .main .why { margin-top: 16px; }
+  .more { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 28px; }
+
+  /* A chat and a feed, drawn plainly — no app's own look. */
+  .chat { width: 320px; max-width: 100%; }
+  .chat .room { background: #eef0f3; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .chat .bubble { background: #d7e7ff; color: #16304f; border-radius: 16px 16px 4px 16px; padding: 8px 12px; font-size: 13.5px; line-height: 1.35; max-width: 88%; }
+  .card { width: 100%; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(23, 20, 16, .12); }
+  .card .meta { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; }
+  .card .meta b { font: 600 14.5px/1.3 var(--sans); color: #111; }
+  .card .meta .desc { font-size: 13px; line-height: 1.4; color: #5b5f66; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card .meta small { font-size: 12px; color: #8a8f96; }
+
+  .feed { width: 100%; }
+  .feed .post { background: #fff; border-radius: 10px; box-shadow: 0 0 0 1px #e3e5e8, 0 1px 3px rgba(23, 20, 16, .08); overflow: hidden; }
+  .feed .who { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  .feed .who i { width: 36px; height: 36px; border-radius: 50%; background: #d8dbe0; flex: none; }
+  .feed .who b { display: block; font: 600 13.5px/1.2 var(--sans); }
+  .feed .who small { display: block; font-size: 12px; color: #8a8f96; }
+  .feed .say { margin: 0; padding: 0 14px 12px; font-size: 14px; }
+  .feed .meta { padding: 10px 14px 12px; background: #f2f3f5; display: flex; flex-direction: column; gap: 2px; }
+  .feed .meta small { font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: #65676b; }
+  .feed .meta b { font: 600 15px/1.3 var(--sans); color: #050505; }
+  .feed .meta .desc { font-size: 13.5px; color: #65676b; line-height: 1.35; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+  .sqr { width: 360px; max-width: 100%; }
+  .sqr .line { display: flex; gap: 12px; align-items: center; background: #eef0f3; border-radius: 14px; padding: 12px; }
+  .sqr .sq { position: relative; width: 88px; height: 88px; flex: none; overflow: hidden; border-radius: 8px; }
+  .sqr .sq .ogf { position: absolute; top: 0; left: 50%; width: calc(88px * 1200 / 630); transform: translateX(-50%); }
+  .sqr .meta { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .sqr .meta b { font: 600 14px/1.3 var(--sans); }
+  .sqr .meta .desc { font-size: 12.5px; line-height: 1.35; color: #5b5f66; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .sqr .meta small { font-size: 12px; color: #8a8f96; }
+
+  .after p { max-width: 72ch; margin: 0 0 12px; }
+
+  /* Export mode: ?og=o1 renders one image at 1200×630 and nothing else;
+     ?icon=f1&size=180 renders one icon at that raster size. */
+  body.export { background: #fff; }
+  body.export .board { display: none; }
+  #export { display: none; }
+  body.export #export { display: block; }
+  body.export #export .ogf { width: 1200px; }
+
+  @media (max-width: 900px) {
+    :root { --gut: 16px; }
+    .board { padding-top: 36px; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    section { margin-top: 56px; }
+    .fgrid { display: block; }
+    .fcol { display: block; padding: 0; border-left: 0; margin-top: 28px; }
+    .fcol:first-child { margin-top: 0; }
+    .orow { grid-template-columns: minmax(0, 1fr); }
+    .more { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<main class="board">
+  <header>
+    <h1>Favicon và ảnh khi chia sẻ link</h1>
+    <p class="lead">Ba favicon và ba ảnh chia sẻ, đặt ở cỡ thật và ở đúng chỗ người khác sẽ thấy chúng: tab trình duyệt,
+      kết quả tìm kiếm, màn hình điện thoại, thẻ link trong tin nhắn và bài đăng. Không cái nào là logo — mark tròn bạn đang
+      làm sẽ thay chữ H khi xong. Chọn một F và một O.</p>
+  </header>
+
+  <!-- ── Favicon ─────────────────────────────────────────────────────── -->
+  <section aria-labelledby="fav-h">
+    <h2 id="fav-h">Favicon</h2>
+    <p class="sub">Vẽ trên lưới 16 điểm ảnh, nên nét chữ rơi đúng vào điểm ảnh ở cỡ thật. Hàng thứ ba có một bản 16 px trên
+      màn 1x phóng to sáu lần: cỡ mà phần lớn máy tính văn phòng đang hiển thị.</p>
+
+    <div class="fgrid">
+      <div class="fcol" data-d="f1">
+        <div>
+          <h3>F1 · Tem mật ong</h3>
+          <p class="why">Ô mật ong, H mực — màu của nút chính. Nổi nhất giữa một hàng tab, ở nền sáng lẫn nền tối.</p>
+        </div>
+        <figure><canvas class="ico" data-d="f1" data-css="128"></canvas><figcaption>128 px</figcaption></figure>
+        <div class="sizes">
+          <figure><canvas class="ico" data-d="f1" data-css="16"></canvas><figcaption>16</figcaption></figure>
+          <figure><canvas class="ico" data-d="f1" data-css="32"></canvas><figcaption>32</figcaption></figure>
+          <figure><canvas class="ico" data-d="f1" data-css="48"></canvas><figcaption>48</figcaption></figure>
+          <figure><canvas class="ico zoom" data-d="f1" data-raster="16" data-css="96"></canvas><figcaption>16 px màn 1x, ×6</figcaption></figure>
+        </div>
+        <div class="tabs-cell"></div>
+        <div class="serp-cell"></div>
+        <div class="phone-cell"></div>
+        <p class="risk"><b>Đổi lại:</b> ô mật ong kín là mảng mật ong lớn nhất HIVE dùng. Khi mark tới, nếu mark không đứng trên
+          nền mật ong thì favicon đổi màu theo.</p>
+      </div>
+
+      <div class="fcol" data-d="f2">
+        <div>
+          <h3>F2 · H chấm</h3>
+          <p class="why">Ô vải đen, H trắng, một chấm mật ong — dấu chấm của lockup HIVE.05. Mật ong chỉ một điểm, như đường
+            may trên bìa.</p>
+        </div>
+        <figure><canvas class="ico" data-d="f2" data-css="128"></canvas><figcaption>128 px</figcaption></figure>
+        <div class="sizes">
+          <figure><canvas class="ico" data-d="f2" data-css="16"></canvas><figcaption>16</figcaption></figure>
+          <figure><canvas class="ico" data-d="f2" data-css="32"></canvas><figcaption>32</figcaption></figure>
+          <figure><canvas class="ico" data-d="f2" data-css="48"></canvas><figcaption>48</figcaption></figure>
+          <figure><canvas class="ico zoom" data-d="f2" data-raster="16" data-css="96"></canvas><figcaption>16 px màn 1x, ×6</figcaption></figure>
+        </div>
+        <div class="tabs-cell"></div>
+        <div class="serp-cell"></div>
+        <div class="phone-cell"></div>
+        <p class="risk"><b>Đổi lại:</b> trên tab tối, ô đen tan vào nền, chỉ còn H và chấm. H hẹp hơn F1 một điểm ảnh vì phải
+          chừa chỗ cho chấm.</p>
+      </div>
+
+      <div class="fcol" data-d="f3">
+        <div>
+          <h3>F3 · Số bìa</h3>
+          <p class="why">Ô vải đen, số của Số đang mở bằng mật ong: tab là bìa thu nhỏ, và tự đổi khi Số mới mở.</p>
+        </div>
+        <figure><canvas class="ico" data-d="f3" data-css="128"></canvas><figcaption>128 px</figcaption></figure>
+        <div class="sizes">
+          <figure><canvas class="ico" data-d="f3" data-css="16"></canvas><figcaption>16</figcaption></figure>
+          <figure><canvas class="ico" data-d="f3" data-css="32"></canvas><figcaption>32</figcaption></figure>
+          <figure><canvas class="ico" data-d="f3" data-css="48"></canvas><figcaption>48</figcaption></figure>
+          <figure><canvas class="ico zoom" data-d="f3" data-raster="16" data-css="96"></canvas><figcaption>16 px màn 1x, ×6</figcaption></figure>
+        </div>
+        <div class="tabs-cell"></div>
+        <div class="serp-cell"></div>
+        <div class="phone-cell"></div>
+        <p class="risk"><b>Đổi lại:</b> hai chữ số ở 16 px nhoè; người chưa biết HIVE không đọc được "05" là gì; icon trên điện
+          thoại cũng đổi theo mỗi Số.</p>
+      </div>
+    </div>
+
+    <p class="pick"><b>Đề xuất: F1.</b> Đọc được ở 16 px trên cả hai nền, và mật ong là thứ người ta nhớ về HIVE trước cả chữ.
+      Khi mark tròn của bạn xong: mark thay H ở icon điện thoại và ảnh chia sẻ; ở 16 px thì thử mark trước — con ong mà nhoè
+      thì giữ ô chữ H cho tab.</p>
+  </section>
+
+  <!-- ── Share images ─────────────────────────────────────────────────── -->
+  <section aria-labelledby="og-h">
+    <h2 id="og-h">Ảnh khi chia sẻ link</h2>
+    <p class="sub">Ảnh 1200×630 hiện trong thẻ link khi dán địa chỉ vào Messenger, Zalo, Facebook, LinkedIn. Mỗi hàng là một
+      ảnh, kèm chính nó trong bài đăng, trong tin nhắn và khi ứng dụng cắt vuông. Hai nút dưới đây đổi mọi bản xem.</p>
+
+    <div class="controls">
+      <div class="control">
+        <p>Số trên ảnh</p>
+        <div class="seg" role="group" aria-label="Số trên ảnh">
+          <button type="button" data-no="05" aria-pressed="true">Số 05 · đang bán</button>
+          <button type="button" data-no="06" aria-pressed="false">Khi Số 06 mở</button>
+        </div>
+        <p class="hint">Ảnh sinh theo Số đang mở vào lúc có người mở link, nên không phải làm lại khi sang Số mới.</p>
+      </div>
+      <div class="control">
+        <p>Dòng mô tả dưới ảnh</p>
+        <div class="seg" role="group" aria-label="Dòng mô tả">
+          <button type="button" data-desc="shop" aria-pressed="true">A · Như cửa hàng</button>
+          <button type="button" data-desc="demo" aria-pressed="false">B · Ghi rõ bản demo</button>
+        </div>
+        <p class="hint" id="desc-hint"></p>
+      </div>
+    </div>
+
+    <article class="orow" data-og="o1">
+      <div class="main">
+        <h3>O1 · Nhãn dệt</h3>
+        <div class="ogf" data-og="o1"></div>
+        <p class="why">Bìa Số không ảnh: nhãn HIVE chạy dọc mép trái như nhãn dệt ở cổ áo, đường may mật ong, số và câu đề
+          bìa. Không dùng ảnh thay thế nên không hứa gì về sản phẩm; vải đen nổi trong feed sáng; cắt vuông vẫn còn trọn số.</p>
+        <p class="risk"><b>Đổi lại:</b> không có áo trong ảnh — người lướt feed chưa thấy sản phẩm trước khi bấm.</p>
+      </div>
+      <div class="feed-cell"></div>
+      <div class="more"></div>
+    </article>
+
+    <article class="orow" data-og="o2">
+      <div class="main">
+        <h3>O2 · Bìa có ảnh</h3>
+        <div class="ogf" data-og="o2"></div>
+        <p class="why">Đúng bìa trang chủ bản máy tính: nửa trái vải đen, nửa phải ảnh bìa của Số, đường may ở giữa. Giàu
+          nhất và giống trang thật nhất.</p>
+        <p class="risk"><b>Đổi lại:</b> ảnh bìa Số 05 là ảnh thay thế từ Unsplash, và chiếc áo in logo Champion — ảnh chia sẻ
+          sẽ trình logo của hãng khác như hàng của HIVE. Chỉ nên chọn khi có ảnh thật. Cắt vuông thì câu đề mất một nửa.</p>
+      </div>
+      <div class="feed-cell"></div>
+      <div class="more"></div>
+    </article>
+
+    <article class="orow" data-og="o3">
+      <div class="main">
+        <h3>O3 · Nhãn trắng</h3>
+        <div class="ogf" data-og="o3"></div>
+        <p class="why">Tên đi trước: wordmark HIVE lớn trên sàn trắng, dải vải đen dưới đáy mang số. Ai xem ảnh cũng nhớ tên.</p>
+        <p class="risk"><b>Đổi lại:</b> ảnh trắng tan vào nền trắng của feed; dải đen giữ mép dưới, nhưng ảnh vẫn nhạt hơn O1
+          và O2 giữa một dòng bài đăng.</p>
+      </div>
+      <div class="feed-cell"></div>
+      <div class="more"></div>
+    </article>
+
+    <p class="pick"><b>Đề xuất: O1.</b> Là bìa Số mà không cần ảnh thật, nổi trong feed, và vẫn đọc được khi bị cắt vuông. Khi
+      có ảnh sản phẩm thật, O2 thành lựa chọn đáng cân nhắc lại.</p>
+  </section>
+
+  <section class="after" aria-labelledby="after-h">
+    <h2 id="after-h">Sau khi chọn</h2>
+    <p>App sẽ có favicon ở cỡ 16, 32, 48, icon điện thoại 180 px, và ảnh chia sẻ 1200×630 dùng cho mọi trang, sinh theo Số
+      đang mở. Ảnh riêng cho từng trang sản phẩm để sau, không nằm trong vòng này. Chưa có gì trong app thay đổi.</p>
+    <p>Trả lời một dòng là đủ, ví dụ: <b>F1, O1, mô tả A</b>.</p>
+  </section>
+</main>
+
+<div id="export"></div>
+
+<!-- One share image of each kind, cloned into every frame that names it. -->
+<template id="tpl-o1">
+  <div class="og o1">
+    <div class="label"><b>HIVE</b></div>
+    <div class="issue"><span class="k">Số</span><span class="no" data-no></span></div>
+    <p class="hl">Mười mẫu. Cắt một lần.<br>Hết là hết.</p>
+    <p class="tag" style="margin:0">Streetwear unisex · bán theo số</p>
+  </div>
+</template>
+<template id="tpl-o2">
+  <div class="og o2">
+    <div class="issue"><span class="k">Số</span><span class="no" data-no></span></div>
+    <p class="hl">Mười mẫu.<br>Cắt một lần.<br>Hết là hết.</p>
+    <div class="wm">HIVE</div>
+    <div class="photo"><img src="../v2/img/hero-lg.webp" alt=""></div>
+  </div>
+</template>
+<template id="tpl-o3">
+  <div class="og o3">
+    <div class="wm">HIVE</div>
+    <div class="seam"></div>
+    <p class="hl">Mười mẫu. Cắt một lần. Hết là hết.</p>
+    <div class="band"><span class="no">SỐ&nbsp;<b data-no></b></span><span class="copy">Streetwear unisex · bán theo số</span></div>
+  </div>
+</template>
+
+<script>
+(() => {
+  const HONEY = "#eba400", CLOTH = "#171410", WHITE = "#ffffff";
+  const DESC = {
+    shop: "Streetwear unisex bán theo số. Mỗi số cắt một lần.",
+    demo: "Bản demo portfolio: cửa hàng streetwear bán theo số, dựng bằng Next.js và Supabase.",
+  };
+  const DOMAIN = "hive-neon-three.vercel.app";
+  const state = { no: "05", desc: "shop" };
+
+  /* Favicons on a 16-point grid: [x, y, w, h] per rectangle. Every other
+     size is an integer multiple of this grid, so edges stay on pixels. */
+  const GRID = {
+    f1: { tile: HONEY, ink: CLOTH, rects: [[3, 4, 3, 8], [10, 4, 3, 8], [6, 7, 4, 2]] },
+    f2: { tile: CLOTH, ink: WHITE, rects: [[2, 4, 3, 8], [8, 4, 3, 8], [5, 7, 3, 2]], dot: [12, 10, 2, 2] },
+  };
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    if (r <= 0) { ctx.rect(x, y, w, h); return; }
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  // Paint design `id` into a square raster of `px` pixels. `bleed` drops the
+  // tile's rounding: a phone masks its icons itself.
+  function paint(ctx, id, px, bleed) {
+    const k = px / 16;
+    ctx.clearRect(0, 0, px, px);
+    const tileColor = id === "f1" ? HONEY : CLOTH;
+    ctx.fillStyle = tileColor;
+    roundRect(ctx, 0, 0, px, px, bleed ? 0 : 3 * k);
+    ctx.fill();
+    if (id === "f3") {
+      const size = px * 0.47;
+      ctx.fillStyle = HONEY;
+      ctx.font = `800 ${size}px Unbounded`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "alphabetic";
+      if ("letterSpacing" in ctx) ctx.letterSpacing = `${(-0.05 * size).toFixed(2)}px`;
+      const m = ctx.measureText(state.no);
+      const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+      ctx.fillText(state.no, px / 2, (px + h) / 2 - m.actualBoundingBoxDescent);
+      return;
+    }
+    const g = GRID[id];
+    ctx.fillStyle = g.ink;
+    for (const [x, y, w, h] of g.rects) ctx.fillRect(Math.round(x * k), Math.round(y * k), Math.round(w * k), Math.round(h * k));
+    if (g.dot) {
+      const [x, y, w, h] = g.dot;
+      ctx.fillStyle = HONEY;
+      ctx.fillRect(Math.round(x * k), Math.round(y * k), Math.round(w * k), Math.round(h * k));
+    }
+  }
+
+  // A canvas shown at `css` pixels, drawn at the screen's own density unless
+  // a raster size is forced (the ×6 zoom shows the true 16-pixel raster).
+  function draw(canvas) {
+    const id = canvas.dataset.d;
+    const css = Number(canvas.dataset.css);
+    const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
+    const px = canvas.dataset.raster ? Number(canvas.dataset.raster) : css * dpr;
+    canvas.width = px;
+    canvas.height = px;
+    canvas.style.width = css + "px";
+    canvas.style.height = css + "px";
+    canvas.setAttribute("role", "img");
+    canvas.setAttribute("aria-label", `Favicon ${id.toUpperCase()}, ${css} px`);
+    paint(canvas.getContext("2d"), id, px, canvas.hasAttribute("data-bleed"));
+  }
+
+  const X_ICON = '<svg class="x" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+  const LOCK_ICON = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><rect x="2.5" y="5.5" width="7" height="5" rx="1" fill="none" stroke="currentColor"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor"/></svg>';
+
+  function browser(theme, id) {
+    return `<div class="browser ${theme}">
+      <div class="strip">
+        <div class="tab on"><canvas class="ico" data-d="${id}" data-css="16"></canvas><span class="t">HIVE</span>${X_ICON}</div>
+        <div class="tab"><span class="g"></span><span class="t">Hộp thư</span>${X_ICON}</div>
+        <div class="tab"><span class="g"></span><span class="t">Tài liệu</span>${X_ICON}</div>
+      </div>
+      <div class="omni">${LOCK_ICON}<span class="u">${DOMAIN}</span></div>
+    </div>`;
+  }
+
+  function fill() {
+    for (const col of document.querySelectorAll(".fcol")) {
+      const id = col.dataset.d;
+      col.querySelector(".tabs-cell").innerHTML =
+        browser("light", id) + browser("dark", id) + '<p class="cap">Tab trình duyệt, nền sáng và nền tối</p>';
+      col.querySelector(".serp-cell").innerHTML = `<div class="serp">
+          <div class="site"><span class="disc"><canvas class="ico" data-d="${id}" data-css="18"></canvas></span>
+            <div><b>HIVE</b><small>https://${DOMAIN}</small></div></div>
+          <span class="title">HIVE</span>
+          <p class="snip">${DESC.shop}</p>
+        </div><p class="cap">Kết quả tìm kiếm</p>`;
+      col.querySelector(".phone-cell").innerHTML = `<div class="phone">
+          <div class="app"><canvas class="ico" data-d="${id}" data-css="60" data-bleed></canvas><span>HIVE</span></div>
+          <div class="app"><i></i><span>Ảnh</span></div>
+          <div class="app"><i></i><span>Lịch</span></div>
+        </div><p class="cap">Màn hình điện thoại (icon 180 px, điện thoại tự bo góc)</p>`;
+    }
+
+    for (const row of document.querySelectorAll(".orow")) {
+      const og = row.dataset.og;
+      row.querySelector(".feed-cell").innerHTML = `<figure class="feed">
+          <div class="post">
+            <div class="who"><i></i><div><b>Bạn</b><small>Vừa xong</small></div></div>
+            <p class="say">${DOMAIN}</p>
+            <div class="ogf" data-og="${og}"></div>
+            <div class="meta"><small>${DOMAIN}</small><b>HIVE</b><span class="desc"></span></div>
+          </div>
+          <figcaption>Bài đăng: thẻ link rộng như Facebook, LinkedIn</figcaption>
+        </figure>`;
+      row.querySelector(".more").innerHTML = `<figure class="chat">
+          <div class="room">
+            <div class="bubble">${DOMAIN}</div>
+            <div class="card"><div class="ogf" data-og="${og}"></div>
+              <div class="meta"><b>HIVE</b><span class="desc"></span><small>${DOMAIN}</small></div></div>
+          </div>
+          <figcaption>Tin nhắn: thẻ link như Messenger, Zalo</figcaption>
+        </figure>
+        <figure class="sqr">
+          <div class="line"><div class="sq"><div class="ogf" data-og="${og}"></div></div>
+            <div class="meta"><b>HIVE</b><span class="desc"></span><small>${DOMAIN}</small></div></div>
+          <figcaption>Khi ứng dụng cắt vuông, ví dụ WhatsApp</figcaption>
+        </figure>`;
+    }
+
+    for (const frame of document.querySelectorAll(".ogf[data-og]")) {
+      frame.replaceChildren(document.getElementById("tpl-" + frame.dataset.og).content.cloneNode(true));
+    }
+  }
+
+  function render() {
+    for (const n of document.querySelectorAll("[data-no]:not(button)")) n.textContent = state.no;
+    for (const d of document.querySelectorAll(".desc")) d.textContent = DESC[state.desc];
+    const hint = document.getElementById("desc-hint");
+    if (hint) hint.textContent = "“" + DESC[state.desc] + "”";
+    for (const c of document.querySelectorAll("canvas.ico")) draw(c);
+  }
+
+  function wire() {
+    for (const b of document.querySelectorAll(".seg button")) {
+      b.addEventListener("click", () => {
+        const group = b.closest(".seg");
+        for (const s of group.querySelectorAll("button")) s.setAttribute("aria-pressed", String(s === b));
+        if (b.dataset.no) state.no = b.dataset.no;
+        if (b.dataset.desc) state.desc = b.dataset.desc;
+        render();
+      });
+    }
+  }
+
+  // Export mode: one image or one icon, at its shipping size.
+  function exportMode(params) {
+    document.body.classList.add("export");
+    const root = document.getElementById("export");
+    if (params.get("no")) state.no = params.get("no");
+    const og = params.get("og");
+    const icon = params.get("icon");
+    if (og) {
+      root.innerHTML = `<div class="ogf" data-og="${og}"></div>`;
+      root.firstElementChild.replaceChildren(document.getElementById("tpl-" + og).content.cloneNode(true));
+      for (const n of root.querySelectorAll("[data-no]")) n.textContent = state.no;
+    } else if (icon) {
+      const size = Number(params.get("size") || 32);
+      root.innerHTML = `<canvas class="ico" data-d="${icon}" data-css="${size}" data-raster="${size}"${params.has("bleed") ? " data-bleed" : ""}></canvas>`;
+      draw(root.firstElementChild);
+    }
+  }
+
+  const params = new URLSearchParams(location.search);
+  document.fonts.load('800 32px "Unbounded"').finally(() => {
+    if (params.has("og") || params.has("icon")) { exportMode(params); return; }
+    fill();
+    wire();
+    render();
+  });
+})();
+</script>
+</body>
+</html>
