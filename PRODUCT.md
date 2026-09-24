@@ -86,6 +86,8 @@ Hệ quả bắt buộc cho mọi công việc sau này:
 - Mọi con số trong khu quản trị là dữ liệu mô phỏng và phải hiển thị như vậy.
 - Ảnh trên mọi màn là **ảnh thay thế** từ Unsplash (19 ảnh, ID ghi trong `lib/photos.ts` và DESIGN.md §1) tới khi có ảnh
   thật của thương hiệu; không phải ảnh sản phẩm thật và không được trình bày như thật (ghi 23/09/2026).
+- Tám mẫu cố định dùng **hình phẳng**: 17 PNG ở `public/flats/`, vẽ bằng `scripts/flats.ts` từ `lib/flats.ts`, mỗi tệp có ghi
+  nguồn gốc. Đây là hình vẽ, không phải ảnh, và dùng tới khi có ảnh thật (ghi 25/09/2026).
 - Trang phải được thiết kế để **sống được mà không có ảnh chụp chuyên nghiệp**, đồng thời nhận được ảnh thật ngay khi có mà không phải dựng lại bố cục.
 
 ## Product Principles
