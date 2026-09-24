@@ -19,7 +19,9 @@
   .board { max-width: 1280px; margin: 0 auto; padding: 56px var(--gut) 96px; }
   h1 { font: 800 40px/1.05 var(--display); letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance; }
   h2 { font: 800 26px/1.15 var(--display); letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance; }
+  h3 { font: 800 15px/1.25 var(--display); letter-spacing: -0.01em; margin: 36px 0 12px; }
   .lead, .sub { max-width: 72ch; color: var(--ink2); margin: 0 0 28px; }
+  .sub b { color: var(--ink); font-weight: 600; }
   section { margin-top: 76px; padding-top: 28px; border-top: 1px solid var(--ink); }
   figure { margin: 0; min-width: 0; }
   figcaption { font-size: 13px; color: var(--ink2); margin-top: 8px; line-height: 1.45; }
@@ -28,16 +30,26 @@
   .shot { border-radius: 4px; box-shadow: 0 0 0 1px var(--hair); }
 
   .bars { display: grid; gap: 18px; }
-  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 36px; margin-top: 28px; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 36px; }
   .phones, .narrow { display: grid; grid-template-columns: repeat(2, minmax(0, 390px)); gap: 28px 36px; }
   .narrow { margin-top: 28px; }
+  .icons { display: grid; grid-template-columns: repeat(2, minmax(0, 416px)); gap: 20px 36px; }
 
-  /* The plate in each state: label, then A and B at their real size. */
+  /* Size options: one row each, the label beside the shot. */
+  .opts { display: grid; gap: 0; }
+  .opt { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 8px 28px; align-items: center; padding: 14px 0; border-top: 1px solid var(--hair); }
+  .opt:first-child { border-top: 0; padding-top: 0; }
+  .opt .k { font-size: 14px; color: var(--ink2); line-height: 1.45; }
+  .opt .k b { display: block; color: var(--ink); font-weight: 600; }
+  .opt .k .pick-tag { display: inline-block; margin-top: 4px; padding: 1px 7px; border-radius: 3px; background: var(--honey-soft); color: var(--ink); font-size: 12px; font-weight: 600; }
+  .opt .shots { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; min-width: 0; }
+
+  /* The plate in each state. */
   .states { border-collapse: collapse; }
   .states th, .states td { text-align: left; vertical-align: middle; padding: 10px 28px 10px 0; border-top: 1px solid var(--hair); }
-  .states thead th { font: 800 13px/1.3 var(--display); letter-spacing: -0.01em; border-top: 0; padding-top: 0; }
-  .states tbody th { font-weight: 400; font-size: 14px; color: var(--ink2); min-width: 190px; }
-  .states tbody th b { display: block; color: var(--ink); font-weight: 600; }
+  .states tbody tr:first-child th, .states tbody tr:first-child td { border-top: 0; }
+  .states th { font-weight: 400; font-size: 14px; color: var(--ink2); min-width: 190px; }
+  .states th b { display: block; color: var(--ink); font-weight: 600; }
   .states img { width: 129px; }
 
   .notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; padding: 0; margin: 0; list-style: none; }
@@ -49,11 +61,13 @@
 
   @media (max-width: 900px) {
     :root { --gut: 16px; }
+    .icons { grid-template-columns: minmax(0, 1fr); }
     h1 { font-size: 28px; }
     h2 { font-size: 22px; }
     .pair, .phones, .narrow, .notes { grid-template-columns: minmax(0, 1fr); }
+    .opt { grid-template-columns: minmax(0, 1fr); }
     .states th, .states td { padding-right: 12px; }
-    .states tbody th { min-width: 0; }
+    .states th { min-width: 0; }
     .states img { width: 100%; max-width: 129px; }
   }
 </style>
@@ -61,64 +75,94 @@
 <body>
 <main class="board">
   <h1>Thanh điều hướng mới</h1>
-  <p class="lead">Trái là logo (mark và chữ, không số). Giữa là tấm biển Số, rồi năm danh mục. Phải là tìm kiếm, đã lưu, tài khoản, giỏ.
-    Link "Số 05" cũ bỏ đi vì tấm biển đã làm đúng việc đó; đồng hồ đếm ngược cũng bỏ. Ảnh chụp từ trang thật đang chạy.</p>
+  <p class="lead">Biển vải đen (B) đã chọn, bốn icon bên phải lên 20 × 20. Còn một việc: cỡ logo. Ảnh chụp từ trang thật đang chạy; bộ ảnh
+    từ mục "Trang chủ" trở xuống dùng cỡ đề xuất.</p>
+
+  <section aria-labelledby="z-h">
+    <h2 id="z-h">Cỡ chữ HIVE</h2>
+    <p class="sub">Chữ HIVE giờ không gõ bằng font nữa mà là hình vector trong logo, nên nó không có font-size. Nó cao <b>16,6 px</b> trên
+      desktop (bằng Big Shoulders Stencil cỡ 20,8 px) và <b>15,6 px</b> trên điện thoại. Chữ HIVE cũ (Unbounded cỡ 16 px) chỉ cao 12 px,
+      nhưng rộng và đậm gấp đôi nên trông to hơn.</p>
+
+    <h3>Máy tính</h3>
+    <div class="opts">
+      <div class="opt"><div class="k"><b>Logo 32 px · hiện tại</b>chữ cao 16,6 px</div>
+        <div class="shots"><img class="shot" src="nav/size-s32-1280-left.png" width="685" height="65" alt="Logo cao 32 px trên thanh 1280 px"></div></div>
+      <div class="opt"><div class="k"><b>Logo 36 px</b>chữ cao 18,7 px</div>
+        <div class="shots"><img class="shot" src="nav/size-s36-1280-left.png" width="685" height="65" alt="Logo cao 36 px trên thanh 1280 px"></div></div>
+      <div class="opt"><div class="k"><b>Logo 40 px</b>chữ cao 20,8 px<br><span class="pick-tag">đề xuất</span></div>
+        <div class="shots"><img class="shot" src="nav/size-s40-1280-left.png" width="685" height="65" alt="Logo cao 40 px trên thanh 1280 px"></div></div>
+      <div class="opt"><div class="k"><b>Chỉ chữ to lên</b>chữ cao 20 px, mark giữ 32 px; chữ bằng 62% mark thay vì 52% như logo chuẩn</div>
+        <div class="shots"><img class="shot" src="nav/size-w20-1280-left.png" width="685" height="65" alt="Chữ 20 px trên mark 32 px, thanh 1280 px"></div></div>
+    </div>
+
+    <h3>Điện thoại</h3>
+    <p class="sub">Điện thoại ít chỗ hơn nhiều: ở màn 360 px, logo cao 34 px đã lấn vào lề phải của thanh. Vì vậy logo trên điện thoại dừng ở
+      32 px.</p>
+    <div class="opts">
+      <div class="opt"><div class="k"><b>Logo 30 px · hiện tại</b>chữ cao 15,6 px · màn 360 px còn thừa 7 px</div>
+        <div class="shots"><figure><img class="shot" src="nav/size-s32-390.png" width="390" height="57" alt="Logo 30 px trên thanh 390 px"><figcaption>màn 390 px</figcaption></figure><figure><img class="shot" src="nav/size-s32-360.png" width="360" height="57" alt="Logo 30 px trên thanh 360 px"><figcaption>màn 360 px</figcaption></figure></div></div>
+      <div class="opt"><div class="k"><b>Logo 32 px</b>chữ cao 16,6 px · màn 360 px còn thừa 3 px<br><span class="pick-tag">đề xuất</span></div>
+        <div class="shots"><figure><img class="shot" src="nav/size-s40-390.png" width="390" height="57" alt="Logo 32 px trên thanh 390 px"><figcaption>màn 390 px</figcaption></figure><figure><img class="shot" src="nav/size-s40-360.png" width="360" height="57" alt="Logo 32 px trên thanh 360 px"><figcaption>màn 360 px</figcaption></figure></div></div>
+      <div class="opt"><div class="k"><b>Chỉ chữ to lên</b>chữ cao 18,8 px, mark giữ 30 px · màn 360 px còn thừa 2 px</div>
+        <div class="shots"><figure><img class="shot" src="nav/size-w20-390.png" width="390" height="57" alt="Chữ to trên mark 30 px, thanh 390 px"><figcaption>màn 390 px</figcaption></figure><figure><img class="shot" src="nav/size-w20-360.png" width="360" height="57" alt="Chữ to trên mark 30 px, thanh 360 px"><figcaption>màn 360 px</figcaption></figure></div></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="i-h">
+    <h2 id="i-h">Icon 20 × 20</h2>
+    <p class="sub">Hộp icon chung của hệ là 18 px; riêng bốn nút trên thanh lên 20 px. Nút vẫn giữ nguyên kích thước bấm (44 px trên desktop,
+      40 × 44 px trên điện thoại). Bong bóng số dời ra ngoài 1 px để vẫn che đúng góc icon như cũ.</p>
+    <div class="icons">
+      <figure><img class="shot" src="nav/icons-18.png" width="416" height="128" alt="Bốn icon ở 18 px"><figcaption><b>Trước</b> · 18 px, phóng 2 lần</figcaption></figure>
+      <figure><img class="shot" src="nav/icons-20.png" width="416" height="128" alt="Bốn icon ở 20 px"><figcaption><b>Sau</b> · 20 px, phóng 2 lần</figcaption></figure>
+    </div>
+  </section>
 
   <section aria-labelledby="d-h">
-    <h2 id="d-h">Máy tính, 1280 px</h2>
-    <p class="sub">Hai màu biển. <b>A</b> đúng như option F: biển mật ong, viền và chữ đen. <b>B</b> là hàng thứ ba của F: biển vải đen,
-      viền và chữ mật ong, cùng chất với tem Số hiện nay và với bìa.</p>
+    <h2 id="d-h">Trang chủ, máy tính 1280 px</h2>
     <div class="bars">
-      <figure><img class="shot" src="nav/bar-1280-a.png" width="1280" height="65" alt="Thanh điều hướng với biển mật ong"><figcaption><b>A</b> · biển mật ong</figcaption></figure>
-      <figure><img class="shot" src="nav/bar-1280-b.png" width="1280" height="65" alt="Thanh điều hướng với biển vải đen"><figcaption><b>B</b> · biển vải đen</figcaption></figure>
-    </div>
-    <div class="pair">
-      <figure><img class="shot" src="nav/home-1280-a.jpg" width="1280" height="800" alt="Màn đầu trang chủ với biển mật ong"><figcaption><b>A</b> · biển thành mảng mật ong thứ hai trên màn, bên cạnh nút "Xem mười mẫu"</figcaption></figure>
-      <figure><img class="shot" src="nav/home-1280-b.jpg" width="1280" height="800" alt="Màn đầu trang chủ với biển vải đen"><figcaption><b>B</b> · biển cùng chất vải đen với bìa; "Xem mười mẫu" vẫn là mảng mật ong duy nhất</figcaption></figure>
+      <figure><img class="shot" src="nav/bar-1280.png" width="1280" height="65" alt="Thanh điều hướng mới ở 1280 px"><figcaption>Logo 40 px · biển vải đen · icon 20 px</figcaption></figure>
+      <figure><img class="shot" src="nav/home-1280.jpg" width="1280" height="800" alt="Màn đầu trang chủ với thanh điều hướng mới"><figcaption>Biển cùng chất vải đen với bìa; "Xem mười mẫu" vẫn là mảng mật ong duy nhất ngoài logo</figcaption></figure>
     </div>
   </section>
 
   <section aria-labelledby="s-h">
     <h2 id="s-h">Tấm biển ở từng trạng thái</h2>
-    <p class="sub">Biển không còn chấm màu và đồng hồ. Trạng thái nằm ở màu biển: xanh khi Số chưa mở, xám khi đã đóng. Khi làm thật, link
+    <p class="sub">Trạng thái nằm ở màu biển: chữ mật ong khi đang bán, biển xanh khi Số chưa mở, chữ xám khi đã đóng. Khi làm thật, link
       mang thêm tên trạng thái cho trình đọc màn hình, ví dụ "Số 06, sắp mở".</p>
     <table class="states">
-      <thead><tr><td></td><th scope="col">A</th><th scope="col">B</th></tr></thead>
       <tbody>
-        <tr><th scope="row"><b>Đang bán</b>trạng thái thường</th><td><img src="nav/plate-a-open.png" width="129" height="64" alt="Biển A, đang bán"></td><td><img src="nav/plate-b-open.png" width="129" height="64" alt="Biển B, đang bán"></td></tr>
-        <tr><th scope="row"><b>Sắp mở</b>chưa có Số nào đang bán</th><td><img src="nav/plate-a-soon.png" width="130" height="64" alt="Biển A, sắp mở"></td><td><img src="nav/plate-b-soon.png" width="130" height="64" alt="Biển B, sắp mở"></td></tr>
-        <tr><th scope="row"><b>Đã đóng</b>giữa hai Số</th><td><img src="nav/plate-a-shut.png" width="129" height="64" alt="Biển A, đã đóng"></td><td><img src="nav/plate-b-shut.png" width="129" height="64" alt="Biển B, đã đóng"></td></tr>
-        <tr><th scope="row"><b>Đang xem cả Số</b>gạch mật ong như danh mục đang chọn</th><td><img src="nav/plate-a-on.png" width="129" height="64" alt="Biển A khi đang xem cả Số"></td><td><img src="nav/plate-b-on.png" width="129" height="64" alt="Biển B khi đang xem cả Số"></td></tr>
-        <tr><th scope="row"><b>Rê chuột</b></th><td><img src="nav/plate-a-hover.png" width="129" height="64" alt="Biển A khi rê chuột"></td><td><img src="nav/plate-b-hover.png" width="129" height="64" alt="Biển B khi rê chuột"></td></tr>
-        <tr><th scope="row"><b>Tab tới</b>vòng focus của hệ</th><td><img src="nav/plate-a-focus.png" width="129" height="64" alt="Biển A khi được focus bằng bàn phím"></td><td><img src="nav/plate-b-focus.png" width="129" height="64" alt="Biển B khi được focus bằng bàn phím"></td></tr>
+        <tr><th scope="row"><b>Đang bán</b>trạng thái thường</th><td><img src="nav/plate-open.png" width="129" height="64" alt="Biển khi đang bán"></td></tr>
+        <tr><th scope="row"><b>Sắp mở</b>chưa có Số nào đang bán</th><td><img src="nav/plate-soon.png" width="130" height="64" alt="Biển khi sắp mở"></td></tr>
+        <tr><th scope="row"><b>Đã đóng</b>giữa hai Số</th><td><img src="nav/plate-shut.png" width="129" height="64" alt="Biển khi đã đóng"></td></tr>
+        <tr><th scope="row"><b>Đang xem cả Số</b>gạch mật ong như danh mục đang chọn</th><td><img src="nav/plate-on.png" width="129" height="64" alt="Biển khi đang xem cả Số"></td></tr>
+        <tr><th scope="row"><b>Rê chuột</b></th><td><img src="nav/plate-hover.png" width="129" height="64" alt="Biển khi rê chuột"></td></tr>
+        <tr><th scope="row"><b>Tab tới</b>vòng focus của hệ</th><td><img src="nav/plate-focus.png" width="129" height="64" alt="Biển khi được focus bằng bàn phím"></td></tr>
       </tbody>
     </table>
   </section>
 
   <section aria-labelledby="f-h">
     <h2 id="f-h">Đang chọn một danh mục</h2>
-    <p class="sub">Danh mục giữ nguyên cách báo đang chọn: chữ đậm và gạch mật ong. Hai màu biển giống nhau ở chỗ này.</p>
-    <figure><img class="shot" src="nav/bar-family-b-mid.png" width="440" height="65" alt="Phần giữa thanh điều hướng khi đang xem Áo thun"><figcaption><b>Áo thun</b> đang chọn · phần giữa thanh 1280 px, biển B</figcaption></figure>
+    <p class="sub">Danh mục giữ nguyên cách báo đang chọn: chữ đậm và gạch mật ong.</p>
+    <figure><img class="shot" src="nav/bar-family-mid.png" width="454" height="65" alt="Phần giữa thanh điều hướng khi đang xem Áo thun"><figcaption><b>Áo thun</b> đang chọn · phần giữa thanh 1280 px</figcaption></figure>
   </section>
 
   <section aria-labelledby="p-h">
     <h2 id="p-h">Điện thoại</h2>
-    <p class="sub">Bố cục giữ nguyên: logo · biển · bốn nút. Logo mới rộng 65 px, biển 82 px; không danh mục như trước.</p>
+    <p class="sub">Bố cục giữ nguyên: logo · biển · bốn nút; không có danh mục như trước.</p>
     <div class="phones">
-      <figure><img class="shot" src="nav/home-390-a.jpg" width="390" height="844" alt="Màn đầu điện thoại 390 px với biển A"><figcaption><b>A, 390 px</b> · còn thừa 47 px</figcaption></figure>
-      <figure><img class="shot" src="nav/home-390-b.jpg" width="390" height="844" alt="Màn đầu điện thoại 390 px với biển B"><figcaption><b>B, 390 px</b> · còn thừa 47 px</figcaption></figure>
-    </div>
-    <div class="narrow">
-      <figure><img class="shot" src="nav/bar-360-a.png" width="360" height="57" alt="Thanh 360 px với biển A"><figcaption><b>A, 360 px</b> · còn thừa 17 px</figcaption></figure>
-      <figure><img class="shot" src="nav/bar-360-b.png" width="360" height="57" alt="Thanh 360 px với biển B"><figcaption><b>B, 360 px</b> · còn thừa 17 px</figcaption></figure>
+      <figure><img class="shot" src="nav/home-390.jpg" width="390" height="844" alt="Màn đầu điện thoại 390 px với thanh điều hướng mới"><figcaption><b>390 px</b> · còn thừa 33 px</figcaption></figure>
+      <figure><img class="shot" src="nav/bar-360.png" width="360" height="57" alt="Thanh điều hướng 360 px"><figcaption><b>360 px</b> · còn thừa 3 px</figcaption></figure>
     </div>
   </section>
 
   <section aria-labelledby="w-h">
     <h2 id="w-h">Khổ màn khác</h2>
     <div class="bars">
-      <figure><img class="shot" src="nav/bar-900-b.png" width="900" height="65" alt="Thanh điều hướng ở 900 px"><figcaption><b>900 px</b>, khổ desktop hẹp nhất: cụm giữa còn cách bốn nút 33 px</figcaption></figure>
-      <figure><img class="shot" src="nav/bar-1440-b.png" width="1440" height="65" alt="Thanh điều hướng ở 1440 px"><figcaption><b>1440 px</b>: thanh dừng ở 1320 px như phần thân trang. Cụm giữa lệch tâm 6 px, vì lề phải của thanh hẹp hơn lề trái 12 px</figcaption></figure>
+      <figure><img class="shot" src="nav/bar-900.png" width="900" height="65" alt="Thanh điều hướng ở 900 px"><figcaption><b>900 px</b>, khổ desktop hẹp nhất: cụm giữa còn cách bốn nút 33 px</figcaption></figure>
+      <figure><img class="shot" src="nav/bar-1440.png" width="1440" height="65" alt="Thanh điều hướng ở 1440 px"><figcaption><b>1440 px</b>: thanh dừng ở 1320 px như phần thân trang. Cụm giữa lệch tâm 6 px, vì lề phải của thanh hẹp hơn lề trái 12 px</figcaption></figure>
     </div>
   </section>
 
@@ -128,13 +172,12 @@
       <li><b>Thứ tự trong thanh:</b> logo · biển · danh mục · bốn nút, cả trong mã, để phím Tab đi đúng thứ tự mắt nhìn.</li>
       <li><b>Biển là link</b> như tem cũ: Số đang bán mở danh sách mẫu, Số đã đóng mở trang lưu của Số. Biển nhận gạch "đang xem cả Số" mà link "Số 05" từng mang.</li>
       <li><b>Bỏ đồng hồ</b> khỏi thanh, kèm bộ đếm chạy mỗi giây. Đồng hồ lớn trên bìa trang chủ giữ nguyên.</li>
-      <li><b>Logo</b> vẽ bằng SVG ngay trong trang, lấy từ <code>prototype/name/logo/hive-lockup.svg</code>: cao 32 px trên desktop, 30 px trên điện thoại.</li>
-      <li><b>CSS</b> theo đúng bản đã chụp: <code>prototype/name/nav/proposal.css</code> (desktop dùng lưới bốn cột để cụm giữa nằm giữa thanh).</li>
+      <li><b>Logo</b> vẽ bằng SVG ngay trong trang, lấy từ <code>prototype/name/logo/hive-lockup.svg</code>, theo cỡ bạn chọn ở trên.</li>
+      <li><b>CSS</b> theo đúng bản đã chụp: <code>prototype/name/nav/proposal.css</code> (biển B, icon 20 px, desktop dùng lưới bốn cột để cụm giữa nằm giữa thanh).</li>
       <li><b>Ngoài phạm vi:</b> chân trang, thanh bên quản trị và phiếu giao hàng vẫn dùng chữ HIVE cũ; làm ở lượt sau nếu bạn muốn.</li>
     </ul>
-    <p class="pick"><b>Đề xuất: B.</b> Hình biển số của F giữ nguyên (viền trong, hai lỗ ốc, chữ đậm), và thanh vẫn giữ hai luật của hệ: tem Số
-      là vải đen như bìa, còn "Xem mười mẫu" là mảng mật ong duy nhất. Chọn A nếu bạn muốn đúng tấm biển vàng ngoài đường; khi đó
-      <code>DESIGN.md</code> ghi thêm một ngoại lệ cho luật Một Sợi Chỉ.</p>
+    <p class="pick"><b>Đề xuất: logo 40 px trên desktop, 32 px trên điện thoại.</b> Chữ HIVE trên desktop cao 20,8 px, to hơn bản hiện tại 25%,
+      và logo giữ đúng tỉ lệ chuẩn. Trên điện thoại, 32 px là cỡ lớn nhất còn vừa màn 360 px.</p>
   </section>
 </main>
 </body>

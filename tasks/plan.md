@@ -1665,3 +1665,9 @@ Bảng `prototype/name/nav.html` (hợp đồng hướng `.impeccable/surfaces/p
 → hai màu biển: **A** mật ong như F, **B** vải đen, viền và chữ mật ong. Đề xuất B. Khi duyệt: brief cho `ui-implementer`
 (`SiteNav.tsx` đổi thứ tự, bỏ link Số và đồng hồ cùng bộ đếm mỗi giây, biển nhận `activeDrop`, aria-label có trạng thái; component
 logo SVG nội tuyến; CSS theo `proposal.css`), rồi `DESIGN.md` ghi lại biển Số.
+**24/09, vòng 2 của mock thanh điều hướng.** Người dùng: "Đồng ý option B", chữ HIVE "hơi nhỏ", icon bên phải lên 20×20. Bảng
+`prototype/name/nav.html` viết lại cho B, bỏ A. `proposal.css`: biển B làm mặc định; `.nav3 .ib .ic` 20 px; bong bóng số dời ra 1 px
+(`top:4px; right:2px`). Cỡ logo để người dùng chọn. Desktop: 32 (hiện tại, chữ cao 16,6 px ≈ Big Shoulders cỡ 20,8), 36, 40 (chữ
+20,8 — đề xuất), hoặc chỉ phóng chữ (20 px trên mark 32; lệch tỉ lệ 52% → 62%). Điện thoại tối đa 32 px, vì ở màn 360 logo 34 đã lấn vào
+lề phải (đo mép phải nút giỏ). **Đính chính số đo vòng 1:** "thừa 47/17 px" ở 390/360 đã tính lẫn khoảng gap 10 px; số đúng là 37/7 px
+với logo 30, và 33/3 px với logo 32.
