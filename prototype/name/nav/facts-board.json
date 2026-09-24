@@ -1,0 +1,37 @@
+{
+ "360": {
+  "logoW": 70.9,
+  "logoH": 30,
+  "overflow": 0,
+  "roomRight": 1.5,
+  "bagRight": 352
+ },
+ "390": {
+  "logoW": 70.9,
+  "logoH": 30,
+  "overflow": 0,
+  "roomRight": 31.5,
+  "bagRight": 382
+ },
+ "900": {
+  "logoW": 75.7,
+  "logoH": 32,
+  "overflow": 0,
+  "roomRight": 33.1,
+  "bagRight": 872
+ },
+ "1280": {
+  "logoW": 75.7,
+  "logoH": 32,
+  "overflow": 0,
+  "roomRight": 223.1,
+  "bagRight": 1252
+ },
+ "1440": {
+  "logoW": 75.7,
+  "logoH": 32,
+  "overflow": 0,
+  "roomRight": 223.1,
+  "bagRight": 1332
+ }
+}

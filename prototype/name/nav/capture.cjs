@@ -10,6 +10,8 @@ const HERE = __dirname;
 const OUT = HERE;
 const CSS = fs.readFileSync(path.join(HERE, "proposal.css"), "utf8");
 const LOCKUP = fs.readFileSync(path.join(HERE, "../logo/hive-lockup.svg"), "utf8").replace(/<title>.*?<\/title>\n?/, "");
+const NAVLOCKUP = fs.readFileSync(path.join(HERE, "../logo/hive-lockup-nav.svg"), "utf8").replace(/<title>.*?<\/title>\n?/, "");
+let LINEAR = null; // the four Linear glyphs, read from a bar with nothing saved and nothing in the bag
 
 // Logo size options: desktop / phone height of the lockup, and a scale on the
 // wordmark alone (1 = the logo's own proportions: letters 0.52 of the mark).
@@ -26,6 +28,7 @@ const SIZE = process.env.SIZE || "w20";
 
 function lockup(k) {
   if (k === 1) return LOCKUP;
+  if (Math.abs(k - 0.625 / 0.52) < 1e-6) return NAVLOCKUP;
   const right = 740 + (1675.99 - 740) * k;
   return LOCKUP.replace(/viewBox="[^"]+"/, `viewBox="-500 -500 ${(right + 500).toFixed(2)} 1000"`)
     .replace(/(<path fill="#171410" d="M840[^"]+"\/>)/, `<g transform="translate(740 0) scale(${k.toFixed(4)}) translate(-740 0)">$1</g>`);
@@ -36,7 +39,7 @@ async function dress(page, { size = SIZE, state = "open", no = "05", icons20 = t
   let css = CSS + `\nhtml .s .nav3{--lk:${z.m}px}\n@media (min-width:900px){html .s .nav3{--lk:${z.d}px}}\n`;
   if (!icons20) css += "html .s .nav3 .ib .ic{width:18px;height:18px;font-size:18px}\n";
   await page.addStyleTag({ content: css });
-  await page.evaluate(({ svg, state, no }) => {
+  await page.evaluate(({ svg, state, no, LINEAR }) => {
     const nav = document.querySelector(".nav3 .in");
     nav.querySelector(".wm").innerHTML = svg;
     const tag = nav.querySelector(".itag");
@@ -52,7 +55,8 @@ async function dress(page, { size = SIZE, state = "open", no = "05", icons20 = t
     if (state !== "open") tag.classList.add(state);
     const text = [...tag.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
     if (text) text.textContent = "Số " + no;
-  }, { svg: lockup(page.viewportSize().width >= 900 ? z.kd : z.km), state, no });
+    if (LINEAR) document.querySelectorAll(".nav3 .ib").forEach((ib, i) => { ib.querySelector("svg").outerHTML = LINEAR[i]; });
+  }, { svg: lockup(page.viewportSize().width >= 900 ? z.kd : z.km), state, no, LINEAR });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(200);
 }
@@ -106,12 +110,19 @@ const measure = (page) => page.evaluate(() => {
         await ctx.close();
       }
     }
-    // Icons, 18 against 20, with something saved and something in the bag.
-    for (const icons20 of [false, true]) {
+  }
+  {
+    const { ctx, page } = await open(1280, 400, false, "/");
+    LINEAR = await page.evaluate(() => [...document.querySelectorAll(".nav3 .ib svg")].map((s) => s.outerHTML));
+    await ctx.close();
+  }
+  if (only === "all" || only === "icons") {
+    // Icons: the bar as it is today, and the proposal; something saved and something in the bag.
+    for (const after of [false, true]) {
       const { ctx, page } = await open(1280, 400, false, "/", true);
-      await dress(page, { size: "cur", icons20 });
+      if (after) await dress(page, { size: "cur" });
       const b = await page.locator(".nav3 .icons").boundingBox();
-      await page.screenshot({ path: path.join(OUT, "icons-" + (icons20 ? 20 : 18) + ".png"), clip: { x: b.x - 16, y: 0, width: b.width + 32, height: 64 } });
+      await page.screenshot({ path: path.join(OUT, "icons-" + (after ? "after" : "before") + ".png"), clip: { x: b.x - 16, y: 0, width: b.width + 32, height: 64 } });
       await ctx.close();
     }
   }

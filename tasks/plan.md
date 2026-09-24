@@ -1675,3 +1675,7 @@ với logo 30, và 33/3 px với logo 32.
 đổi sang chỉ phóng chữ. Mark giữ 32 px desktop / 30 px điện thoại; chữ desktop 16,6 (hiện tại, 52%) · 18 · 20 (62,5%, đề xuất) · 22 px.
 Điện thoại tối đa 18,8 px (62,5%; màn 360 còn thừa 1,5 px). Thanh điều hướng dùng tỉ lệ riêng; tệp logo chuẩn vẫn giữ 52%. Bộ ảnh
 tham chiếu chụp lại ở chữ 20 / 18,8.
+**24/09, mock thanh điều hướng CHỐT → lát 8.** Người dùng: "Tôi chọn 20 và 18.8 theo đề xuất". Thêm hai yêu cầu: "tất cả icon ở header
+đều là linear dù có badge hay không" và "đảo màu của badge từ nền đen chữ vàng sang nền vàng chữ đen". Mock cập nhật: `icons-before/after`,
+bộ ảnh tham chiếu, bảng ghi "đã chốt". Logo riêng cho thanh: `prototype/name/logo/hive-lockup-nav.svg` (chữ 62,5% mark, scale đã tính
+vào đường vẽ). Brief `tasks/briefs/v3-lat-8-nav.md` giao `ui-implementer`.

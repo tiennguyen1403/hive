@@ -33,8 +33,9 @@ html .s .nav3 .itag.on::before { content: ""; position: absolute; left: 3px; rig
 
 /* The four buttons: glyphs at 20 px (the system's icon box is 18). */
 html .s .nav3 .ib .ic { width: 20px; height: 20px; font-size: 20px; }
-/* The count bubble moves out 1px with the glyph, so it covers the same corner of it. */
-html .s .nav3 .ib b { top: 4px; right: 2px; }
+/* The count bubble: honey with ink digits (turned round from cloth + honey, 24/09), moved out 1px
+   with the bigger glyph so it covers the same corner of it. The glyphs stay Linear whatever the count. */
+html .s .nav3 .ib b { top: 4px; right: 2px; background: var(--brand); color: var(--ink); }
 
 @media (min-width: 900px) {
   html .s .nav3 { --lk: 32px; }
