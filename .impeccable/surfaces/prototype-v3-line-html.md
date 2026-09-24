@@ -35,9 +35,14 @@ Từ "bán liên tục" (câu thô của người dùng) đổi thành "Cố đ�
 
 ## Direction contract
 
-THESIS: mẫu bán liên tục không có tên, trang hay khối riêng trước mắt người mua. Nó đứng trong lưới như mọi mẫu. Danh sách sản phẩm là
-**tất cả mẫu đang bán**. Số là thứ được tách ra: có trang riêng `/so/N` hoặc là một bộ lọc. Mẫu thuộc Số mang dấu của Số: nhãn trên ảnh,
-đường dẫn, đồng hồ, số cắt. Tên "bán liên tục" chỉ có trong quản trị.
+THESIS: mẫu cố định không có tên loại, trang hay khối riêng trước mắt người mua, và không hiện số lượng. Nó đứng trong lưới như mọi
+mẫu. Danh sách sản phẩm là **tất cả mẫu đang bán**. Số là thứ được tách ra, với trang riêng `/so/N`. Mẫu thuộc Số mang dấu của Số:
+- biển Số trên ảnh, y như biển trên thanh điều hướng;
+- đường dẫn;
+- đồng hồ;
+- số cắt.
+
+Chữ "Cố định" chỉ có trong quản trị, và không kèm câu giải thích.
 
 OWN-WORLD: thế giới v3 "HIVE — nhãn dệt" như đã chốt ở `DESIGN.md`: sàn trắng, mực #171410, mật ong #EBA400 chỉ cho Số đang bán, nền
 ảnh `--plate` #f4efe6, badge `.flat` (mật ong nhạt, chữ thường, không chấm) cho một cái tên chứ không phải trạng thái.
