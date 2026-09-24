@@ -1803,3 +1803,31 @@ Kiểm lại:
 - 3200 trả 200 ở `/`, `/products`, `/products/khoi`, `/cart`;
 - `supabase gen types --local` ra đúng `lib/db/database.types.ts`;
 - `npm run test:db`: 6 tệp, 180 test qua.
+
+**25/09, hai yêu cầu mới lúc chờ lát 10: ảnh thật, và dòng bán liên tục.**
+
+1. "Giúp tôi soạn một prompt về concept của các sản phẩm hiện có. tôi sẽ dùng tool bên ngoài để generate ảnh thật cho sản phẩm."
+   Hỏi lại, người dùng chốt:
+   - ảnh thẻ chỉ có món đồ (ma-nơ-canh vô hình, nền giấy trơn, cùng đèn); bìa Số có người mẫu Việt, một nam một nữ;
+   - công cụ là ChatGPT.
+
+   Bộ prompt `tasks/anh-san-pham-prompt.md` (commit `8e726a6`) gồm: khối chung, 23 khối mẫu ở màu đầu, câu đổi màu, bìa Số 05 và
+   bảng 41 tên tệp. Ảnh gốc để trong `photos-raw/`, git bỏ qua thư mục này. **Không tải ảnh qua trang quản trị:** cron đặt lại dữ liệu
+   mẫu mỗi ngày xoá mọi ảnh tải lên (`purgeUploadedPhotos`). Khi đủ ảnh, một lát nhỏ đưa chúng vào seed: cắt 4:5, 1.200×1.500 WebP,
+   nhúng prompt làm nguồn gốc.
+2. "Tôi muốn sản phẩm không chỉ dừng lại ở từng đợt mà sẽ có nhiều sản phẩm bán xuyên suốt." Hỏi lại, người dùng chốt:
+   - **dòng riêng, mẫu mới**: không thuộc Số nào, hết thì may lại; mẫu trong Số vẫn cắt một lần;
+   - **đồ cơ bản trong 6 họ**, size S–XL.
+
+   Bảng duyệt `prototype/v3/line.html` (hợp đồng `.impeccable/surfaces/prototype-v3-line-html.md`). Khung là HTML thật của 3200 chụp
+   bằng `line/snap.cjs`; phần đề xuất vẽ đè bằng `line/line-mock.js`. Bảng gồm:
+   - tên dòng: Quanh năm (đề xuất), Cơ bản, Tổ;
+   - cách xếp danh sách: hai kệ riêng (đề xuất) hoặc một kệ hai nhóm;
+   - trang chủ lúc Số đang mở và lúc giữa hai số;
+   - trang mẫu lúc đủ size và lúc tạm hết M;
+   - quản trị: tab dòng mới, "Nhập thêm", ô "Bán trong";
+   - tám mẫu đề xuất: SÁP, MẬT, KÉN, CÁNH, NHỘNG, PHẤN, THỢ, ĐÀN;
+   - chữ đổi theo.
+
+   **Chờ người dùng chốt trên bảng.** Sau đó: lát dữ liệu (`backend-implementer`) cho mẫu không thuộc Số và nhập thêm không trần, lát
+   giao diện (`ui-implementer`), và thêm 17 ảnh của dòng mới vào bộ prompt.
