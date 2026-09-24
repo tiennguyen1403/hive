@@ -173,6 +173,15 @@
         ],
         "createdAt": "2026-09-23T01:51:03.291Z",
         "reason": "prototype/v2 is the archived mock of the previous round (Familjen Grotesk); DESIGN.md now documents v3 (Unbounded + Be Vietnam Pro); not a shipping surface"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          "prototype/name/logo-2.html"
+        ],
+        "createdAt": "2026-09-24T11:46:53.741Z",
+        "reason": "Agent: this board compares candidate wordmark faces for the user to choose; the fonts are the subject of the comparison, not the app's type system"
       }
     ]
   }
