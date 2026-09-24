@@ -1704,3 +1704,25 @@ khép mũi 0,14 s, mờ 0,24 s. Logo: lớp trắng 92% dưới thanh sau 0,12 s
 về thì khép vòng 0,15 s, mờ 0,18 s. Đề xuất Đường may. Soát hai vòng (1280 + 390; pha chuyển động chụp trên đồng hồ đóng băng
 `page.clock`): 0 tràn ngang, 0 lỗi console, detector sạch; một ngoại lệ khoanh riêng tệp này (`repeating-stripes-gradient`: đó là mũi
 may, không phải sọc trang trí).
+
+**24/09, finish review lát 8: `fix`.** Người soát (fresh, không kế thừa phiên) chấm khớp mock ở mọi phần tử, khớp chữ, chất liệu, nền; ba sửa
+có tính chất liệu:
+- (1) Biển đang bán và đã đóng chỉ khác màu chữ (mật ong và `#b9b0a0`, độ sáng tương đối 0,442 và 0,439). Mù màu hoặc liếc nhanh sẽ không
+  phân biệt được. `title` không tới tay người dùng cảm ứng. Luật "màu không bao giờ là kênh duy nhất" (DESIGN.md §2, PRODUCT.md) bị vỡ từ
+  khi bỏ đồng hồ.
+- (2) Biển sắp mở màu xanh `--info` phá luật vải đen: teaser `/#next` mà biển dẫn tới là vải đen.
+- (3) `DESIGN.md` chưa ghi lát 8. Cụ thể: dòng `.nav3`, bo 5 px, bong bóng không còn là vải đen, câu "Một Sợi Chỉ" ở khung 1280 nay có
+  hai bong bóng mật ong, icon 20 px. Ngoài ra token hoá 5 px và sửa chú thích cũ `buttons.css:114`.
+
+(1) và (2) đổi biển đã duyệt nên phải có mock nhỏ và người dùng chốt. (3): token và chú thích đi cùng lát 9; `DESIGN.md` để documenter viết
+một lượt sau lát 9, gồm cả thanh điều hướng lẫn lớp chờ. Ghi chú không bắt buộc: gạch dưới biển và gạch dưới họ đang lệch độ cao.
+
+**24/09, loading CHỐT → lát 9.** Người dùng: "Tôi chọn logo giữa màn hình và không giảm chuyển động". Hỏi lại, người dùng chốt:
+- máy bật "Giảm chuyển động" trong hệ điều hành thấy bản đứng yên (đúng DESIGN.md §6);
+- logo chỉ hiện khi đổi pathname. Lọc, sắp xếp, đổi họ trên trang danh mục thì không che.
+
+Brief `tasks/briefs/v3-lat-9-wait.md` giao `ui-implementer`. Các điểm chính:
+- component đặt ở `app/layout.tsx` để sống qua lúc đổi trang (`ShopFrame` remount theo từng trang), không hoạt động trên `/admin`;
+- bắt click `<a>` nội bộ, nút Lùi/Tới và hàm gọi từ `router.push`;
+- kết thúc khi commit, không được kẹt khi redirect về đúng URL đang đứng hay khi cú bấm bị huỷ;
+- thời gian lấy từ đối tượng `veil` của bảng.

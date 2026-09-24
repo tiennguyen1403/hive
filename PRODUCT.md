@@ -60,9 +60,11 @@ Chưa quyết định (không được bịa): điểm khác biệt cụ thể c
 
 ## Brand Commitments
 
-**Tên: HIVE** — chốt 24/09/2026 (QĐ-28 trong `tasks/plan.md`); repo `tiennguyen1403/hive`. Wordmark HIVE
-theo `prototype/name/index.html`; lockup dự kiến **[mark] HIVE.05**, số là ô dữ liệu. **Mark (logo) chưa
-có**: người dùng tự tạo bằng công cụ ngoài (QĐ-26); favicon và ảnh xem trước khi chia sẻ link chờ vòng mock.
+**Tên: HIVE** — chốt 24/09/2026 (QĐ-28 trong `tasks/plan.md`); repo `tiennguyen1403/hive`. **Logo chốt
+24/09/2026:** mark M2 (QĐ-29) + chữ W3 Stencil hẹp, Big Shoulders Stencil Display 700 (QĐ-30). Bộ tệp chuẩn ở
+`prototype/name/logo/`: lockup có và không có số; ".NN" ghép cho Số bất kỳ từ `hive-number.json`, số là ô dữ liệu.
+Thanh điều hướng của cửa hàng mang lockup không số, chữ cao 62,5% mark (`hive-lockup-nav.svg`, lát 8 v3). Chân trang,
+thanh bên quản trị và phiếu giao hàng vẫn là chữ HIVE; favicon và ảnh xem trước khi chia sẻ link chờ vòng mock.
 
 Hệ thiết kế (màu, chữ, giọng) đã chốt qua các đợt v2–v3; nguồn sự thật là `DESIGN.md`, không lặp lại ở đây.
 
