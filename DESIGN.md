@@ -91,6 +91,7 @@ rounded:
   sm: "3px"
   md: "4px"
   pill: "99px"
+  plate: "5px"
 spacing:
   s1: "4px"
   s2: "8px"
@@ -181,18 +182,36 @@ components:
   card-action-hover:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.brand}"
+  nav-logo:
+    height: "30px"
+  nav-logo-desktop:
+    height: "32px"
   nav-issue-tag:
     backgroundColor: "{colors.stage}"
     textColor: "{colors.brand}"
-    rounded: "{rounded.sm}"
-    padding: "0 10px"
+    rounded: "{rounded.plate}"
+    padding: "0 17px"
     height: "28px"
-    typography: "{typography.micro}"
-  count-bubble:
-    backgroundColor: "{colors.stage}"
+  nav-issue-tag-hover:
+    backgroundColor: "{colors.stage-hair}"
     textColor: "{colors.brand}"
+  nav-issue-tag-desktop:
+    padding: "0 19px"
+    height: "32px"
+  nav-icon-button:
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    width: "40px"
+    height: "44px"
+  nav-icon-button-desktop:
+    width: "44px"
+    height: "44px"
+  count-bubble:
+    backgroundColor: "{colors.brand}"
+    textColor: "{colors.ink}"
     rounded: "{rounded.pill}"
     height: "16px"
+    padding: "0 4px"
   cover:
     backgroundColor: "{colors.stage}"
     textColor: "{colors.stage-ink}"
@@ -209,14 +228,18 @@ components:
 
 Tài liệu này **mô tả cái đang chạy**, không mô tả ý định. Mọi token trong
 frontmatter và dưới đây tồn tại thật trong `app/globals.css`; mọi con số lấy từ
-`app/styles/*.css` (**3.740 dòng, mười sáu tệp** — đếm lại 2026-09-23 sau lát 6
-của đợt v3 đã quét sạch lớp v2; `table.css` là tệp thứ mười bảy và đã đi cùng
-route `/system`). Chỗ nào tài liệu và code lệch nhau thì **code đúng** — sửa tài
-liệu, đừng sửa code cho khớp tài liệu.
+`app/styles/*.css` (**4.003 dòng, mười sáu tệp** — đếm lại 2026-09-25 sau lát 10
+của đợt v3; lát 6 đã quét sạch lớp v2 và để lại 3.740; `table.css` là tệp thứ
+mười bảy và đã đi cùng route `/system`). Chỗ nào tài liệu và code lệch nhau thì
+**code đúng** — sửa tài liệu, đừng sửa code cho khớp tài liệu.
 
 Ghi lần đầu 2026-09-20 sau Phase 6 (đợt v2). **Viết lại 2026-09-23 sau đợt v3,
 hướng NHÃN (nhãn dệt)**: vải đen, chỉ mật ong, sàn trắng. Những quyết định của
 v2 còn sống được giữ nguyên và ghi rõ; những gì v3 thay thì ghi theo bản dựng.
+
+**Cập nhật 2026-09-25 sau lát 8–10 của v3**, đọc từ code trên `main`: thanh
+điều hướng biển số (§2, §4, §8), lớp chờ khi chuyển trang và thứ tự chồng lớp
+(§6, §8), tệp thương hiệu QĐ-31 (§1), các phép đo tương ứng (§10).
 
 ---
 
@@ -229,6 +252,9 @@ v2 còn sống được giữ nguyên và ghi rõ; những gì v3 thay thì ghi 
 | Mock đã duyệt (thước đo của bản dựng) | `prototype/v3/*.html` + `v3.css`, `v3-pages.css`, `v3.js`; bảng thành phần `prototype/v3/brand.html`, họ badge `badges.html` (họ B "vải đen"), từ vựng `voice.html` |
 | Từ vựng | `lib/lexicon.ts` — `LEX` ("Số"), `HOME_COVER`, `ABOUT_LEAD`, `issueLabel()` |
 | Đồng hồ | `lib/clock.ts` — `demoNow()` (QĐ-24) |
+| Logo | `prototype/name/logo/` — mark M2 (QĐ-29), chữ W3 (QĐ-30). Thanh điều hướng chép `hive-lockup-nav.svg` vào `components/shop/NavLogo.tsx`, lớp chờ chép `hive-mark.svg` vào `components/shop/WaitVeil.tsx`, ảnh chia sẻ đọc `lib/brand/logo.ts` do script sinh. Màu của logo viết thẳng, **không đọc token**: logo không theo theme |
+| Tên, mô tả, màu trình duyệt | `lib/site.ts` — `SITE_NAME`, `SITE_DESCRIPTION` (mô tả A), `THEME_COLOR`, `siteOrigin()` → `metadataBase` |
+| Nhịp lớp chờ | `lib/wait.ts` — `WAIT` (mọi thời lượng), `shouldVeil` (khi nào), `showingFrame` / `closingFrame` (từng frame) |
 
 **Tailwind chỉ là theme + preflight** (QĐ-23). `globals.css` nhập
 `tailwindcss/theme.css` và `tailwindcss/preflight.css`, **không** nhập utilities:
@@ -257,7 +283,8 @@ sâu hơn.
 
 ### Ảnh — nguồn gốc từng raster (FINISH: mọi raster giao đi mang nguồn gốc)
 
-Bản dựng **chưa có ảnh của thương hiệu**. Mọi ảnh sản phẩm, ảnh bìa và ảnh hé lộ là **ảnh thay thế**
+Bản dựng **chưa có ảnh sản phẩm của thương hiệu** (tệp nhận diện — favicon, biểu tượng, ảnh chia sẻ —
+thì có, xem mục con cuối). Mọi ảnh sản phẩm, ảnh bìa và ảnh hé lộ là **ảnh thay thế**
 lấy từ Unsplash qua `lib/photos.ts` (`photoUrl(key, width, quality)` → `images.unsplash.com/photo-<id>`,
 Unsplash License), không có plate trong repo và không ghi tên tác giả trên màn. Chúng đứng chỗ cho ảnh
 thật: khi có ảnh của cửa hàng, thay từng khoá dưới đây trong `PHOTO_IDS` (hoặc đổi `photoUrl` sang plate tự
@@ -292,6 +319,40 @@ chỉ chọn được ảnh đã có nguồn.
 ghi) dưới khoá `up/<32 hex>.webp|jpg`, phục vụ qua route của chính app `/photos/<khoá>` (cache một năm, bất biến) rồi `next/image` như
 mọi ảnh khác, nên trình duyệt vẫn không gọi Supabase. `photoUrl()` phân biệt hai loại khoá; `photo_key` của `product_colors` mang một
 trong hai. Ảnh tải lên là ảnh của cửa hàng, không mang nhãn mượn; "Đặt lại dữ liệu mẫu" xoá mọi ảnh tải lên.
+
+### Tệp thương hiệu — sinh bằng máy, không vẽ tay (lát 10, QĐ-31: F2, P2, O2, mô tả A)
+
+Không raster thương hiệu nào được sửa trong trình vẽ ảnh. Tất cả do **`scripts/brand-assets.ts`** sinh ra từ
+nguồn đã duyệt — logo trong `prototype/name/logo/` (`hive-mark.svg`, `hive-lockup.svg`, `hive-number.json`) và
+bảng `prototype/name/share.html` (lưới 16px `MASTER16.f2`, CSS câu đề `.o2 .hl`, font Unbounded 800 của bảng)
+— bằng Chrome qua Playwright, **đúng cách chế độ xuất của bảng vẽ**, nên tệp và `share.html?icon=…|touch=…`
+giữ cùng pixel. Chạy lại (`npx tsx scripts/brand-assets.ts`, cần Google Chrome) sau khi logo, lưới F2 hoặc
+`HOME_COVER.headline` đổi; `scripts/brand-assets.test.ts` và `lib/brand/share-image.test.ts` đỏ cho tới khi chạy.
+
+| Tệp | Là gì | Nguồn gốc |
+|---|---|---|
+| `app/favicon.ico` | ba khung PNG: **16px là F2** — lưới vẽ tay từng pixel, mực trên đĩa mật ong; **32 và 48px là mark M2** vẽ từ vector | mỗi khung mang chunk `impeccable:prompt` *trước khi* đóng gói (công cụ không ghi được vào .ico); chú giải đầu `brand-assets.ts` là bản ghi của chính tệp ICO |
+| `app/apple-icon.png` | 180×180, **P2**: vuông mật ong, con ong mực ở `scale(.9)`, không trong suốt | chunk `impeccable:prompt` |
+| `public/icons/hive-192.png`, `hive-512.png` | P2 như đã duyệt — manifest `purpose: "any"` | chunk `impeccable:prompt` |
+| `public/icons/hive-maskable-192.png`, `hive-maskable-512.png` | cùng hình, con ong ở **`scale(.879)`** — manifest `purpose: "maskable"`. Điện thoại chỉ hứa giữ vòng tròn 80% ô, nên không gì được vươn quá 40% cạnh tính từ tâm (400/1000 đơn vị); con ong vươn 454,74 ở scale 1 (góc ngoài chân chữ H), 400 / 454,74 = 0,8796, hạ xuống 0,879 → 399,7 | chunk `impeccable:prompt` |
+| `/opengraph-image`, `/twitter-image` | **O2**, 1200×630, vẽ **lúc có request** bằng `next/og` từ một SVG toàn nét viền (không đặt font, không tải gì): vải đen `CLOTH`; lockup `HIVE.NN` cao 170, cách đỉnh 140, chữ trắng, `.NN` mật ong; đường may đứt nét mật ong 3px từ x 480 đến 720 ở y 366 (27 mũi, 6 bật 3 tắt); câu đề bìa hai dòng trắng. `NN` là Số của bìa trang chủ (`featuredDrop`), đọc mỗi request nên ảnh theo Số mới không cần deploy; **không in giờ đóng, không số tồn** — ứng dụng giữ ảnh đã cào bao lâu tuỳ nó. `twitter-image.tsx` xuất lại đúng module OG | `app/opengraph-image.tsx`, `lib/brand/share-image.ts`, `lib/brand/lockup.ts`; nét logo trong `lib/brand/logo.ts` và nét câu đề trong `lib/brand/share-headline.ts`, cả hai do script sinh, không sửa tay |
+
+**Câu đề trên ảnh chia sẻ là nét viền, và không thể cũ.** Satori không đọc woff2, và Unbounded TrueType duy
+nhất có sẵn là font biến thiên mà Satori sẽ đặt ở 400; nên script để Chrome dàn dòng bằng CSS của bảng rồi lấy
+nét từng glyph từ chính tệp woff2 Chrome đã dùng. `share-headline.ts` mang sha-256 của câu nó vẽ;
+`lib/brand/share-image.ts` **ném lỗi ngay khi nạp** — build và mọi test nhập nó đều dừng — nếu
+`HOME_COVER.headline` không còn khớp. Ảnh chia sẻ không bao giờ in câu hôm qua.
+
+Màu trong mọi ảnh: `lib/brand/palette.ts` (`HONEY #eba400`, `INK`/`CLOTH #171410`, `WHITE`) — cùng giá trị
+token, viết thẳng vì ảnh không đọc được stylesheet.
+
+**Đầu trang** (`app/layout.tsx`): `metadataBase = siteOrigin(process.env)` — miền production
+(`VERCEL_PROJECT_PRODUCTION_URL`) trên Vercel, `http://localhost:$PORT` nơi khác; `og:image` phải tuyệt đối.
+Mô tả A "Streetwear unisex bán theo số. Mỗi số cắt một lần." cho cả `description` và thẻ OG (`vi_VN`,
+`website`), không trang nào tự khai `openGraph`; `twitter.card = summary_large_image`. `themeColor` và
+manifest `theme_color`/`background_color` là **`#ffffff` — sàn trắng**; manifest `display: "browser"` (mở
+như một tab, cửa hàng không tự cài thành app). **Cố ý không có favicon SVG hay `icon.*`**: trình duyệt sẽ
+ưu tiên nó hơn khung 16px vẽ tay.
 
 ---
 
@@ -332,18 +393,33 @@ nhất. Mọi cặp chữ/nền đã tính trước khi viết (`scratchpad/v3/c
 `--hot` chỉ 2,1:1 ở đó).
 
 **Quy tắc Vải Đen Không Phải Theme.** Vải đen chỉ được dùng cho *Số* và những
-gì thuộc về nó: bìa `.cover`, teaser Số kế tiếp `.cover.soon`, tem Số trên nav
-`.itag`, dải nhắc `.band.remind`, dải bước tiếp theo của đơn `.nextstep`, thanh
-bên quản trị `.side`, thanh hàng loạt `.bar.bulk`, badge trạng thái sống, dấu
-SOLD OUT, bong bóng đếm. Không sơn một mặt nào khác thành đen vì nó "cần sức
-nặng". Toast nền `--ink` là ngoại lệ có chủ ý (dải 12px sống 2,6 giây).
+gì thuộc về nó: bìa `.cover`, teaser Số kế tiếp `.cover.soon`, biển Số trên nav
+`.itag` (mảnh vải đen duy nhất trên thanh, và chỉ khi Số đang bán), dải nhắc
+`.band.remind`, dải bước tiếp theo của đơn `.nextstep`, thanh bên quản trị
+`.side`, thanh hàng loạt `.bar.bulk`, badge trạng thái sống, dấu SOLD OUT, ảnh
+chia sẻ O2. Không sơn một mặt nào khác thành đen vì nó "cần sức nặng". Toast
+nền `--ink` là ngoại lệ có chủ ý (dải 12px sống 2,6 giây). Bong bóng đếm trên
+nav **đã rời vải đen** ngày 24/09 (lát 8): nay là mật ong chữ mực.
 
 **Quy tắc Một Sợi Chỉ.** Mỗi màn chỉ có **một** mảng mật ong là hành động chính
 (`.btn` mặc định). Nút thứ hai là mực viền mực (`.btn.ink`), nút thứ ba là chữ
 gạch chân (`.btn.quiet`). Trên thẻ sản phẩm nút thêm giỏ là viền mực trên trắng,
 **đảo thành đen/mật ong khi hover** — mượn chất liệu của Số thay vì đặt một mảng
 vàng lên mọi ô lưới. Ở khung nhìn đầu tiên trên desktop 1280, nút "Xem mười mẫu"
-là mảng mật ong duy nhất (ảnh `.impeccable/review/desktop.png`).
+là mảng mật ong **hành động** duy nhất (ảnh `.impeccable/review/desktop.png`,
+chụp trước lát 8 — khi thanh chưa có logo).
+
+Quy tắc đếm **mảng mật ong mà người mua bấm để làm việc chính**, không đếm mọi
+pixel vàng. Thanh điều hướng từ lát 8 có ba chỗ mật ong, không chỗ nào là hành
+động chính, nên quy tắc giữ nguyên ý:
+- **Đĩa của logo** (30/32px) là màu của logo, không phải token và không phải
+  nút — nhận diện, không phải hành động; nó theo logo ở mọi nơi logo đứng.
+- **Chữ, đường chỉ và hai chốt trên biển Số** là chỉ may trên vải — chất liệu
+  của Số, cùng lối với số 96/168 trên bìa, không phải một mảng nền mật ong.
+- **Bong bóng đếm** là một con số 16px báo trạng thái, chỉ hiện khi > 0, chỉ ở
+  đã lưu và giỏ; một dấu, không phải một mảng.
+
+Thêm mật ong vào thanh ngoài ba chỗ ấy là phải xét lại quy tắc này.
 
 **Mật ong không mang nổi chữ trắng.** Đó là lý do `--brand-ink` là mực và lý do
 chữ liên kết phải xuống `--brand-text`.
@@ -359,8 +435,11 @@ phải báo động.
 
 **Màu không bao giờ là kênh duy nhất.** Mọi `.badge` mang một chấm *và* một chữ
 (`dot` mặc định bật trong `Badge.tsx`); mốc dòng thời gian `.tl3 .m` mang hình
-dạng *và* chữ; chấm trên tem Số đổi màu (mật ong / xanh `--info` / xám) nhưng chữ
-bên cạnh nói cùng điều đó.
+dạng *và* chữ. Biển Số trên nav **không mang màu trạng thái**: từ lát 10 nó chỉ
+hiện khi Số đang bán, nên chỉ có một trạng thái và một màu (chữ mật ong trên
+vải); tên đầy đủ "Số 05, đang bán" nằm ở `aria-label` và `title`
+(`plateLabel`). Biển xanh "sắp mở" và biển xám "đã đóng" đã bỏ — lúc ấy thanh
+không có biển, bìa và lịch chân trang nói Số kế tiếp.
 
 ---
 
@@ -395,8 +474,9 @@ mẫu), `.disp` (dòng prose cỡ display), `.num` (con số đọc như con s�
 
 Ngoài chín vai, những cỡ literal còn tồn tại trong CSS và **thuộc về thế giới**:
 32/40 đồng hồ bìa, 72/120 số Số kế tiếp (nhạt, `--stage-ink2`), 22 số KPI quản
-trị, 20 số KPI khác, 16 wordmark trên nav, 14 wordmark chung, 13 wordmark thanh
-bên. Cỡ 11,5 và 12,5 (`.lead`, `.err`, `.stockline`, `.row .t/.amt`, `details`,
+trị, 20 số KPI khác, 14 wordmark chung, 13 wordmark thanh bên. Thanh điều hướng
+cửa hàng **không còn wordmark bằng chữ** từ lát 8: nó vẽ logo SVG (§8), và chữ
+trên biển Số là Unbounded 800 theo token 11 / 12 (`--fs-xs` / `--fs-sm`). Cỡ 11,5 và 12,5 (`.lead`, `.err`, `.stockline`, `.row .t/.amt`, `details`,
 `.band`, `.rules div`) là tàn dư v2 còn được render — xem §10.
 
 **Sàn 11px cho chữ chức năng** (QĐ-22, giữ từ v2): không có cỡ dưới 11 ở bất cứ
@@ -421,7 +501,8 @@ Quy ước đã cài sẵn:
 | Thứ | Giá trị |
 |---|---|
 | Bo góc chuẩn | `--r` = **4px** (ghi đè `--radius-md` của Tailwind) — nút, ô nhập, chip, panel, ảnh thẻ, menu, sheet |
-| Bo góc nhỏ | `--r-sm` = **3px** — badge, tem Số, ảnh nhỏ, hộp đánh dấu, dấu SOLD OUT |
+| Bo góc nhỏ | `--r-sm` = **3px** — badge, ảnh nhỏ, hộp đánh dấu, dấu SOLD OUT |
+| Bo góc biển Số | `--r-plate` = **5px** — chỉ biển Số trên nav (`.nav3 .itag`), một bậc tròn hơn điều khiển; khai trong `:root`, không ở `@theme`, vì không gì khác mang hình này. Khác `--plate` (màu nền ảnh) |
 | Bo tròn hẳn | `99px` — chấm, bong bóng đếm, thanh tỉ lệ, đĩa màu, nút tròn, công tắc |
 | Chín bậc khoảng cách | `--s1..--s9` = 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96 — nhóm chặt s1–s3, mục s6–s8 (`.sec` cách `--s7` điện thoại, `--s8` desktop; chân trang cách `--s8`) |
 | Lề ngang | `--gut` **18px** điện thoại, `--gutd` **40px** từ 900px (`.wrap3`); khung tối đa `--max` **1320px**; trang `.s` dừng ở **1280px** và canh giữa |
@@ -432,7 +513,7 @@ Quy ước đã cài sẵn:
 | Khung trang | `.s.v3` = cột flex `min-height:100dvh`, `main{flex:1 0 auto}` — chân trang `.foot3` chạm đáy; quản trị `.s.adm3` là hàng flex |
 | Cột hẹp | `.narrow` 600px từ 900px — **cột chính là lề**, mọi thứ bên trong bỏ lề 40 |
 | Sheet | `.sheetbody` đáy màn, tối đa 86dvh, bo 4px hai góc trên, lề trong `--gut`; từ 900px là hộp **520px** giữa màn |
-| Nav | `.nav3` dính, **56px** điện thoại / **64px** desktop; nội dung cuộn tới phải chừa `scroll-margin-top:72px` (`.s.v3 a, .s.v3 [tabindex]`, `.sec.anchor`) |
+| Nav | `.nav3` dính, **56px** điện thoại / **64px** desktop; logo cao **30 / 32px**; từ 900px lưới bốn cột (ba khi không có biển), lề **40 trái / 28 phải** nên cụm giữa lệch phải 6px có chủ ý; nội dung cuộn tới phải chừa `scroll-margin-top:72px` (`.s.v3 a, .s.v3 [tabindex]`, `.sec.anchor`) |
 
 **Ảnh sản phẩm luôn là 4:5.** `.card3 .img` khai báo `aspect-ratio:4/5` *và*
 `display:block` — bỏ `display:block` thì trên thẻ `<a>` cả hai khai báo bị bỏ
@@ -536,6 +617,76 @@ scroll container; viền 1px mực, **không bóng**; cả `SortControl` và `Se
 nó), `.toast` (`components/shop/Toast.tsx`, `role="status"`). Modal v2 đã đi;
 khu quản trị dùng `AdminSheet` trên `.sheetwrap`.
 
+Lớp chờ `.veil` không portal, nhưng cũng đứng **ngoài `.s`** (dựng trong
+`app/layout.tsx` cạnh trang, không trong trang), nên ba luật trên áp cho nó:
+mọi selector bắt đầu bằng `.veil`, biến thể là class. Nó không vẽ chữ nên không
+khai kiểu chữ.
+
+### Lớp chờ khi chuyển trang — `.veil` (lát 9, sửa ở lát 10 phần C)
+
+Duyệt ở `prototype/v3/loading.html`, kiểu "Logo giữa màn hình" (24/09/2026).
+Một lớp duy nhất, `components/shop/WaitVeil.tsx`, dựng **một lần trong
+`app/layout.tsx`, sau mọi provider, ngoài ranh giới trang** — `ShopFrame` dựng
+lại theo từng trang, còn lớp chờ phải sống qua lúc đổi để chơi phần đóng trên
+trang mới. Thời lượng ở `WAIT` (`lib/wait.ts`).
+
+- **Khi nào.** Chỉ khi **pathname đổi** (`shouldVeil`). Lọc, sắp xếp, tab họ,
+  biển Số từ `/products?family=…`, tìm từ `/search`, tra đơn, hash — đều ở lại
+  trang và không có lớp chờ. Không khi nhấp chuột giữa, có phím bổ trợ,
+  `target` khác `_self`, `download`, hay khác origin. **Không bao giờ ở
+  `/admin`**, cả đi lẫn về; ở đó component không render và không nghe gì. Ba
+  cách bắt đầu, không cái nào sửa một `<Link>`: nhấp trái vào `<a href>` (một
+  listener capture trên document), Back/Forward (`popstate`), và
+  `startWait(href)` gọi ngay trước `router.push/replace`.
+- **120ms đầu không hiện gì** (`WAIT.delay`). Trang tới sớm hơn thì lớp chờ về
+  nghỉ mà không ai thấy.
+- **Các pha:** nghỉ → chờ (120ms, vô hình) → *hiện* → *đóng* → nghỉ.
+  *Hiện:* nền trắng 92% (`color-mix(in srgb, var(--bg) 92%, transparent)`) mờ
+  vào 160ms; mark M2 lớn từ .92 lên 1 trong 240ms; một cửa sổ 28% chạy quanh
+  vòng 30 mũi chỉ mật ong (r 42, nét 2, 6 bật 4 tắt — mũi chỉ đường may của bìa
+  khép thành vòng), một vòng mỗi **1.100ms**, tuyến tính, chiều kim đồng hồ từ
+  12 giờ; mũi chỉ đứng yên, chỉ cửa sổ quay. *Đóng* (trang đã tới): cung khép
+  thành vòng đủ trong **150ms**, tiếp tục từ góc đang quay, rồi nền trắng mờ đi
+  trong **180ms**. Ease-out bậc ba. Chốt an toàn: 10 giây sau lần bắt đầu cuối
+  thì nhấc, chỉ lỗi mới chạm tới.
+- **Hình.** Bắt đầu ngay dưới mép thanh điều hướng và **không bao giờ phủ
+  thanh**: `top` 57px điện thoại / 65px từ 900px (56 / 64 cộng nét 1px). SVG
+  **88px** (mark 56) điện thoại, **100px** (mark 64) từ 900px, giữa vùng. Màu
+  mark là màu logo viết thẳng; mũi chỉ `--brand`.
+- **Giảm chuyển động.** `prefers-reduced-motion` đọc lúc bắt đầu chờ: nền trắng
+  vẫn mờ vào, nhưng mark không lớn, cung không quay, **vòng đứng đủ**; khi tới
+  chỉ mờ ra 180ms.
+- **Con trỏ.** `.on` khi còn chút trắng (hiện ra). `.hold` **chỉ trong pha
+  hiện**: `pointer-events:auto` + `cursor:progress`, vì một cú bấm lên trang
+  cũ chỉ khởi thêm một lần chờ. Trang tới là `.hold` gỡ **trước frame đầu của
+  trang mới** (hai tín hiệu tới là layout effect, lát 10 phần C); phần đóng
+  chơi trên một trang đã nhận mọi cú bấm và hiện con trỏ của chính nó — phần
+  đóng là lời chào, không phải chờ.
+- **Tiếp cận.** `.veil` **luôn `aria-hidden="true"`** — vẽ một dấu, không nói
+  gì. Trong lúc hiện, `<main>` của trang mang `aria-busy="true"`; tiêu đề trang
+  mới do Next đọc. Tiêu điểm không bị dời, không bị bẫy.
+- **Vẽ ngoài React.** Server render lớp ở trạng thái nghỉ (trong suốt,
+  `visibility:hidden`, cho con trỏ đi qua); mỗi frame ghi thẳng style và thuộc
+  tính cung qua `requestAnimationFrame`, đo theo `performance.now()` — đồng hồ
+  đã đóng dấu cú bấm.
+
+### Thứ tự chồng lớp — mọi `z-index` trong `app/styles/`
+
+| z | Lớp | Định vị | Tệp |
+|---|---|---|---|
+| 2 | `.cover .issue` (masthead "SỐ" + số) | relative, cục bộ trong bìa — không phải lớp nổi | `home.css` |
+| 30 | `.suggest` gợi ý tìm | absolute, dưới ô tìm | `listing.css` |
+| 30 | `.buybar3` thanh mua | fixed, dính đáy | `product.css` |
+| 35 | `.veil` lớp chờ | fixed, từ mép dưới nav | `sheet.css` |
+| 40 | `.nav3` thanh điều hướng | sticky | `nav.css` |
+| 50 | `.sheetwrap` (scrim + sheet) | fixed, portal | `sheet.css` |
+| 55 | `.menu3` | fixed, portal | `sheet.css` |
+| 80 | `.toast` | fixed, portal | `sheet.css` |
+
+Không có `zIndex`/`z-index` inline nào trong `components/` hay `app/`. Lớp chờ
+che thanh mua và gợi ý tìm nhưng không che thanh; sheet, menu và toast luôn ở
+trên nó. Một lớp mới chọn một bậc trong thang này và ghi vào bảng.
+
 ---
 
 ## 7. Hai bề mặt
@@ -581,7 +732,7 @@ vùng chạm; `max-width:899.98px` cho vài bố cục điện thoại.
 | `.sec .rules .r` | bốn quy tắc: danh sách định nghĩa, không icon, không thẻ | `home.css` |
 | `.past` | dòng "Số 04 · đã đóng" | `home.css` |
 | `.band.remind` | dải nhắc: vải đen, chuông và liên kết mật ong, 44px | `nav.css` + `home.css` |
-| `.nav3` + `.wm` `.itag(.soon/.shut .cd)` `.links` `.icons .ib b` | nav dính: wordmark 16px cách `.14em`, tem Số vải đen 28/32px, 5 liên kết họ + đếm ngược trong tem từ 900px, 4 nút icon với bong bóng đếm đen/mật ong | `nav.css`, `desktop.css` |
+| `.nav3` + `.in` `.wm svg` `.itag(.on)` `.links a(.on)` `.icons .ib .ic b` | nav dính 56 / 64px trên bóng mềm, ba nhóm theo thứ tự đọc và Tab: của ai (logo), đang bán gì (biển Số, năm họ), bốn việc. **Logo** `NavLogo`: SVG lockup mark M2 + chữ W3 chép từ `prototype/name/logo/hive-lockup-nav.svg` (chữ 62,5% chiều cao mark — tỉ lệ riêng của thanh; tệp logo giữ 52%), màu logo viết thẳng, `aria-hidden`, liên kết tên "HIVE, trang chủ"; cao **30px** (rộng 70,9) điện thoại / **32px** (75,7) từ 900, trong hộp liên kết cao 44 không co. **Biển Số `.itag`**: **chỉ render khi Số đang bán** (`featuredDrop` → `OPEN`), không còn biển xanh/xám; vải `--stage`, chữ mật ong Unbounded 800 11px `.1em` hoa (12px từ 900), cao 28 đệm 17 (32 / 19 từ 900), bo `--r-plate` 5px, đường chỉ mật ong 1px lùi 2px vào trong (vẽ bằng `box-shadow` inset — một đường, không phải bóng), một chốt tròn mật ong mỗi đầu (radial-gradient, tâm cách mép 8,5 / 9,5px); in đúng `issueLabel` ("Số 05"), `aria-label`/`title` là `plateLabel` ("Số 05, đang bán"); dẫn tới `/products`; hover đổi vải sang `--stage-hair`; `.on` (đang xem cả Số, `aria-current="page"`) gạch 2px mật ong cách đáy 6px qua `::before`, vì `::after` là lớp phủ chạm ±9 (28 → 46). **Không đồng hồ trong thanh.** **Năm họ** (TEE · HOODIE · JACKET · SHIRT · PANTS, chữ từ `FAMILY_SHORT_LABELS`) chỉ từ 900px: 13px `--ink2`, gap 24, `.on` mực 600 gạch 2px mật ong, phủ ±9. **Bốn nút icon** tìm · đã lưu · tài khoản · giỏ: hộp 40×44 (44×44 từ 900), glyph Iconsax Linear **20px** (hệ là 18), luôn Linear dù có đếm hay đã đăng nhập; **bong bóng đếm** mật ong chữ mực, 16px, 11/700 số bảng, `top 4 right 2`, chỉ khi > 0, chỉ ở đã lưu và giỏ, điền sau khi provider `ready` (khung server không vẽ bong bóng). **Từ 900px** `.in` là lưới `minmax(0,1fr) auto auto minmax(0,1fr)` gap 24, lề 40 trái / 28 phải, tối đa `--max`; không có biển thì `.in:not(:has(> .itag))` còn **ba cột** để cụm họ vẫn giữa — lệch phải 6px **có chủ ý** vì hai lề 40/28. Điện thoại: logo, biển, bốn icon; không có họ | `nav.css`, `desktop.css`, `components/shop/SiteNav.tsx`, `NavLogo.tsx`, `lib/lexicon.ts` |
 | `.foot3` + `.in` `.cols` `.cal` `.colophon` | chân trang: kẻ 2px mực, 2 cột → 4 cột, lịch ra Số từ fixture, `NeedWrite` cho pháp nhân/kênh liên hệ | `base.css`, `desktop.css` |
 | `.wrap3` | lề trang 18 → 40 + `max-width:1320` | `base.css`, `desktop.css` |
 | `.ic` (+ `.sm` `.mk` `.duo`) | icon Iconsax Linear, hộp 18 / 15 / 12 (28 ở `.empty3`), stroke 1.5, **màu thừa kế**; `plus`/`minus`/`check` cắt viewBox quang học (`OPTICAL` trong `components/icon/Icon.tsx`: 4/16, 4/16, 6.5/11); `--il`/`--ir` cắt lề trong suốt khỏi hộp bố cục khi đứng cạnh chữ, **không** trong cột icon của menu | `nav.css`, `components/icon/` |
@@ -608,6 +759,7 @@ vùng chạm; `max-width:899.98px` cho vài bố cục điện thoại.
 | `.s.adm3` + `.side(.wm nav a .cnt .simbar)` `.main` `.top(h1 .sub .crumb .acts)` `.seg3` `.kpis3(.five) .kpi3` `.panel3 .bd` `.split3` `.fine3` `.chart3(.hi .zero .peak) .axis .daytable` `.queue3 .q(.sub .late .act)` `.rank3 .r(.two)` `.dt3(.bar(.bulk) .stabs .cb .rowmenu .foot .pages .none)` `.avatar` `.nextstep` `.fgrid` `.totalbar` `.addrblock` `.notes3 .ni` `.invgrid` `.delta` `.log3` `.ctag` `.slips .slip` + `@media print` | khu quản trị v3 | `admin.css` |
 | `.colorpick` (chip màu mang `.pos` thứ tự), `.cslots .cslot .shot(.blank .over .prog) .hd .ord(.flip) .file .acts .photopick .cutgrid`; sheet cắt `AdminSheet variant="crop"` 720px + `.cropwrap .cropper .frame(i[data-h]) .cropside(.err)`; `.field3 .inp[readonly]` nền `--plate` chữ `--ink2`; crumb `AdminTop` "Mẫu › X" | form Thêm/Sửa mẫu (lát 7, 24/09, QĐ-27): bảy chip màu theo thứ tự dải (màu đầu là ảnh đại diện), một hàng mỗi màu với ô ảnh 4:5 ở bốn trạng thái (chưa có · tệp đã chọn qua sheet cắt 4:5 khoá tỉ lệ · mượn tạm có nhãn · ảnh đã tải lên), nút lưu nói việc còn thiếu, tải ảnh có tiến trình; màn sửa không có chip (màu chốt lúc cắt); toán khung `lib/photo-crop.ts`, mã hoá `lib/photo-encode.ts` (≤ 1.200×1.500 WebP), luật form `lib/product-form.ts` | `admin.css`, `forms.css` |
 | `.sheetwrap` + `.scrim` `.sheetbody` `.grab` `.shead(.x)` `.sact`; `.menu3` + `.ticked` `.tally` `.mk`; `.toast(.show)` | ba lớp nổi portal ra `body` | `sheet.css` |
+| `.veil` (+ `.on` `.hold` `svg` `.stitches`) | lớp chờ chuyển trang: trắng 92% dưới mép nav, mark M2 giữa, cung mũi chỉ mật ong quay; `.hold` giữ con trỏ + `cursor:progress` chỉ khi đang chờ — xem §6 | `sheet.css`, `components/shop/WaitVeil.tsx`, `lib/wait.ts` |
 | `.sr-only` | utility duy nhất, tự định nghĩa | `base.css` |
 
 **Bẫy trùng tên đã gặp trong đợt v3** (mỗi cái tốn một buổi; tên mới được grep
@@ -684,6 +836,26 @@ tiết từng lát v2 nằm trong lịch sử của tệp này (bản 2026-09-21
 - **Lát 6** (dọn lớp v2: xoá `table.css`, `/system`, modal, nav2, foot2, hero2,
   card v2, chips, steps, tl, sum…; đo lại 7 cặp hoà chỉ định trong
   `globals.css`): **16 tệp / 3.740 dòng CSS**.
+
+**Lát 8–10** (24–25/09/2026): lát 8 thanh điều hướng biển số (`0ba36cb`,
+`56673be`); lát 9 lớp chờ (`5543910`); lát 10 — A tệp thương hiệu QĐ-31
+(`325dc51`), B biển chỉ khi Số đang bán (`c4f698b`), C lớp chờ nhả con trỏ khi
+trang tới (`c844bca`). Đo trên bản chạy `next start` cổng 3200, 25/09/2026:
+- **Thanh điều hướng:** ở 1280, 900, 390 và 360 trùng từng pixel với
+  `prototype/name/nav/bar-*.png`. Không có biển: lưới 432 / 300 / 432 ở 1280,
+  cụm họ lệch +6px so với tâm, không gì tràn ở 390 và 360.
+- **Lớp chờ:** giữ RSC 1,5 giây — cả **104** frame chờ nhận cú bấm giữa màn
+  dưới con trỏ progress; không frame nào trong **27** frame đóng sau khi trang
+  tới nhận cú bấm hay hiện con trỏ progress, và frame đầu trong số đó vẫn ở
+  opacity 1.
+- **Biểu tượng:** khung ICO 16, 32, 48, `apple-icon` 180 và `hive-192/512` trùng
+  từng pixel với chế độ xuất của bảng (`prototype/name/share.html?icon=…|touch=…`).
+  Biểu tượng maskable: pixel vẽ xa nhất tới **39,9%** cạnh ở 512px; ở 192px là
+  40,15%, nhưng đó chỉ là viền khử răng cưa.
+- **Ảnh chia sẻ:** khác `?og=o2&no=05` của bảng ở 8.742 / 756.000 px (PSNR
+  34,4 dB), toàn bộ ở mép glyph — app khử răng cưa bằng xám, Chrome trên bảng
+  dùng viền LCD; mảng phẳng giống hệt. `/twitter-image` trùng từng byte với
+  `/opengraph-image`.
 
 Cách đo không đổi: `tools/layout-sweep.js` quét route cửa hàng × 390/1280 và
 route quản trị × 1280 — console, tràn ngang, chữ < 11px, hộp inline sai, ảnh
