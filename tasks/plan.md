@@ -1831,3 +1831,30 @@ Kiểm lại:
 
    **Chờ người dùng chốt trên bảng.** Sau đó: lát dữ liệu (`backend-implementer`) cho mẫu không thuộc Số và nhập thêm không trần, lát
    giao diện (`ui-implementer`), và thêm 17 ảnh của dòng mới vào bộ prompt.
+
+**25/09, lát 10 ĐẠT — favicon, icon điện thoại, ảnh chia sẻ (QĐ-31); biển Số chỉ khi đang bán; lớp chờ nhả con trỏ.** Commit theo
+phần: B `c4f698b`, C `c844bca`, A `325dc51`. Phiên chính soát độc lập trên 3200:
+- **A.**
+  - Ba khung ICO (16 F2, 32 và 48 M2), `apple-icon` 180 và icon 192/512 trùng từng điểm ảnh với chế độ xuất của bảng (0 px lệch).
+  - Icon maskable ở tỉ lệ 0,879, trong vòng 80%: 39,9% cạnh ở 512 px; 40,15% ở 192 px chỉ là viền khử răng cưa.
+  - Ảnh chia sẻ lệch bảng đúng 8.742/756.000 px (34,4 dB), toàn ở viền chữ. App khử răng cưa xám, bảng khử kiểu LCD của Chrome;
+    vùng phẳng trùng. `/twitter-image` trùng từng byte `/opengraph-image`.
+  - `<head>`: `og:image` tuyệt đối, mô tả A, `summary_large_image`, không favicon SVG.
+  - Quét nguồn gốc: 5 raster, 0 thiếu. Typecheck sạch, 1.352 test qua.
+- **B.**
+  - Thanh 1280, 900, 390, 360 trùng 0 px với `prototype/name/nav/bar-*.png`.
+  - Bỏ biển khỏi DOM thì lưới còn 3 cột (432/300/432), các họ lệch +6 px (lề 40/28 chủ ý); điện thoại không tràn.
+- **C.** RSC giữ 1,5 s:
+  - 104 khung chờ đều nhận cú bấm, con trỏ progress;
+  - 27 khung đóng sau khi trang về không nhận cú bấm nào, không còn progress;
+  - khung đầu vẫn ở opacity 1.
+
+Agent tự quyết (giữ): câu đề trên ảnh chia sẻ là đường nét sinh từ `HOME_COVER.headline`. Đổi câu đề thì phải chạy
+`npx tsx scripts/brand-assets.ts`, nếu không build dừng kèm hướng dẫn. Script dựa vào đường dẫn fontkit nội bộ của Next 16.3.5 và
+Chrome của Playwright.
+
+Còn mở:
+- `proxy.ts` vẫn chạy trên `/opengraph-image`, `/twitter-image`, `/manifest.webmanifest`; tài liệu Next khuyên loại khỏi matcher.
+  Vô hại với crawler; gộp vào lát sau.
+- Sau lần deploy tới, xem `og:image` trỏ đúng domain production (`VERCEL_PROJECT_PRODUCTION_URL`).
+- DESIGN.md: documenter viết một lượt cho thanh điều hướng (lát 8, 10), lớp chờ (lát 9, 10) và tài sản thương hiệu.

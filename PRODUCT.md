@@ -63,8 +63,14 @@ Chưa quyết định (không được bịa): điểm khác biệt cụ thể c
 **Tên: HIVE** — chốt 24/09/2026 (QĐ-28 trong `tasks/plan.md`); repo `tiennguyen1403/hive`. **Logo chốt
 24/09/2026:** mark M2 (QĐ-29) + chữ W3 Stencil hẹp, Big Shoulders Stencil Display 700 (QĐ-30). Bộ tệp chuẩn ở
 `prototype/name/logo/`: lockup có và không có số; ".NN" ghép cho Số bất kỳ từ `hive-number.json`, số là ô dữ liệu.
-Thanh điều hướng của cửa hàng mang lockup không số, chữ cao 62,5% mark (`hive-lockup-nav.svg`, lát 8 v3). Chân trang,
-thanh bên quản trị và phiếu giao hàng vẫn là chữ HIVE; favicon và ảnh xem trước khi chia sẻ link chờ vòng mock.
+Thanh điều hướng của cửa hàng mang lockup không số, chữ cao 62,5% mark (`hive-lockup-nav.svg`, lát 8 v3). Từ lát 10 v3
+(QĐ-31) app có:
+- favicon F2 (16 px vẽ trên lưới; 32 và 48 px là mark);
+- icon điện thoại P2 và icon manifest;
+- ảnh chia sẻ O2: lockup `HIVE.NN` theo Số nổi bật, câu đề bìa;
+- mô tả A.
+
+Tất cả sinh bằng `scripts/brand-assets.ts`. Chân trang, thanh bên quản trị và phiếu giao hàng vẫn là chữ HIVE.
 
 Hệ thiết kế (màu, chữ, giọng) đã chốt qua các đợt v2–v3; nguồn sự thật là `DESIGN.md`, không lặp lại ở đây.
 
