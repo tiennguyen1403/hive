@@ -32,7 +32,7 @@ import { customerFacts, issueOf } from "@/lib/customer-tags";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "@/lib/datetime";
 import type { AdminEvent } from "@/lib/db/event-dto";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { LEX, issueNo, styleName } from "@/lib/lexicon";
 import { plainVnd, vnd } from "@/lib/money";
 import { addressEditReason, internalNotes } from "@/lib/order-notes";
 import { PAYMENT_LABEL, STATE_LABEL } from "@/lib/order-labels";
@@ -239,7 +239,7 @@ export function AdminOrderScreen({
                           width={36}
                           height={45}
                         />
-                        <b className="nm">{p?.name ?? "—"}</b>{" "}
+                        <b className="nm">{p ? styleName(p.name, p.dropNo) : "—"}</b>{" "}
                         <span className="sub" style={{ display: "inline" }}>
                           · {p?.kind ?? ""}
                         </span>

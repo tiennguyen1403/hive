@@ -46,6 +46,7 @@ import {
   termsOf,
   uniqueSlug,
 } from "./catalog-admin";
+import { styleName } from "./lexicon";
 
 const catalog = FIXTURE_CATALOG;
 const khoi = catalog.byId.get(productId("p-khoi"))!;
@@ -150,7 +151,9 @@ describe("checkAdjustment — the sheet's rules, restated for the server", () =>
 
   it("refuses a colour the style does not come in", () => {
     const moss = [{ color: "moss" as const, size: "M" as const, before: 0, after: 1 }];
-    expect(checkAdjustment(khoi, moss, "Khác", "", "")).toBe("KHÓI không có màu này.");
+    // Named as the back office shows it (slice 12): with its issue's code.
+    expect(checkAdjustment(khoi, moss, "Khác", "", "")).toBe(`${styleName("KHÓI", 5)} không có màu này.`);
+    expect(checkAdjustment(tee, moss, "Khác", "", "")).toBe("ÁO THUN TRƠN không có màu này.");
   });
 
   it("holds the shelf under the cut: a shelf cannot hold more than was cut", () => {
@@ -234,7 +237,7 @@ describe("readTeaser — a name, a kind and a borrowed photo", () => {
     expect(readTeaser(sheet, catalog)).toEqual({
       ok: true,
       value: {
-        slug: "thu-6",
+        slug: "s06-thu",
         name: "THỬ",
         garment: "Áo khoác dù",
         family: "JACKET",
@@ -242,6 +245,21 @@ describe("readTeaser — a name, a kind and a borrowed photo", () => {
         photoKey: "suong",
       },
     });
+  });
+
+  it("gives a teaser the address an issue's style gets, as the fixture's own (slice 12, F.1)", () => {
+    // `slugFor`, the one pattern: the issue's code, then the name's segment.
+    const soi = readTeaser({ ...sheet, name: "sỏi" }, catalog);
+    expect(soi.ok && soi.value.slug).toBe("s06-soi");
+    // SỎI is already announced for Số 06 under that address, so a second one
+    // is the same row — the database refuses it as taken.
+    expect(catalog.teasers.map((t) => t.slug)).toContain("s06-soi");
+    for (const t of catalog.teasers) {
+      const again = readTeaser({ ...sheet, name: t.name, dropNo: t.dropNo }, catalog);
+      expect(again.ok && again.value.slug).toBe(t.slug);
+    }
+    const bare = readTeaser({ ...sheet, name: "!!!" }, catalog);
+    expect(bare.ok && bare.value.slug).toBe("s06-mau");
   });
 
   it("refuses a kind the catalogue does not use, since its family would be a guess", () => {
@@ -354,11 +372,25 @@ describe("productPatch — only what changed", () => {
     });
   });
 
-  it("makes the address segment from the name when it is left empty", () => {
+  it("makes the address segment from the name and the issue when it is left empty (slice 12, F.2)", () => {
+    // `slugFor`, as a new style's: an issue's style carries its code…
     expect(productPatch(khoi, { ...formOf(khoi), name: "KHÓI ĐEN", slug: "" }, catalog)).toEqual({
       ok: true,
-      value: { name: "KHÓI ĐEN", slug: "khoi-den" },
+      value: { name: "KHÓI ĐEN", slug: "s05-khoi-den" },
     });
+    // …of the issue the form now names, when it moves,
+    expect(productPatch(khoi, { ...formOf(khoi), slug: "", dropNo: 6 }, catalog)).toEqual({
+      ok: true,
+      value: { slug: "s06-khoi", dropNo: 6 },
+    });
+    // an untouched name gives the address it already has,
+    expect(productPatch(khoi, { ...formOf(khoi), slug: "" }, catalog)).toEqual({ ok: true, value: {} });
+    // and a fixed style has no prefix.
+    expect(productPatch(tee, { ...formOf(tee), name: "ÁO THUN TRƠN MỚI", slug: " " }, catalog)).toEqual({
+      ok: true,
+      value: { name: "ÁO THUN TRƠN MỚI", slug: "ao-thun-tron-moi" },
+    });
+    expect(productPatch(tee, { ...formOf(tee), slug: "" }, catalog)).toEqual({ ok: true, value: {} });
   });
 
   it("refuses a segment another style has, or one with anything but a-z, 0-9 and dashes", () => {

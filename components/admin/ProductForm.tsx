@@ -22,6 +22,7 @@ import {
   uploadProductPhoto,
 } from "@/lib/actions/catalog-admin";
 import type { ActionState } from "@/lib/actions/state";
+import { FIXED_CHOICE } from "@/lib/admin-options";
 import {
   MAX_CUT_PER_CELL,
   MAX_MATERIAL,
@@ -30,11 +31,11 @@ import {
   MAX_SLUG,
   catalogFailureMessage,
   gridCells,
-  productSlug,
+  slugFor,
   uniqueSlug,
 } from "@/lib/catalog-admin";
 import { FITS, FIT_LABELS } from "@/lib/catalog-query";
-import { LEX, issueLabel } from "@/lib/lexicon";
+import { FIXED_WORD, LEX, stylePrefix } from "@/lib/lexicon";
 import { moneyInitial, moneyInput, parseVnd, plainVnd } from "@/lib/money";
 import { defaultCrop, sameCrop, type Crop } from "@/lib/photo-crop";
 import { PhotoEncodeError, encodeCrop } from "@/lib/photo-encode";
@@ -60,7 +61,11 @@ export interface ProductFormValues {
   fit: Fit | null;
   slug: string;
   priceVnd: number;
-  /** Null when no issue can take a new style (every one has closed). */
+  /**
+   * The issue. For a new style, null when no issue can take one (every one
+   * has closed) — "Cố định" is still there to pick; for a style being
+   * edited, null is a FIXED style (slice B5).
+   */
   dropNo: number | null;
   material: string;
   /** Band order — the order the shop's card draws the colour dots in. */
@@ -120,6 +125,15 @@ interface Upload {
  * (slice B3b), and "Lưu thay đổi" is always there: an unchanged form comes
  * back from the server as "Chưa có thay đổi nào để lưu."
  *
+ * TWO KINDS OF STYLE (v3 slice 12, the fixed-styles board, round 4, approved
+ * 25/09/2026). The issue menu of a new style ends with "Cố định", a style of
+ * no issue; an issue's style shows the issue's code as a fixed segment at the
+ * head of the name field ("S06 –", `stylePrefix`), following the issue
+ * picked. Picking "Cố định" drops the segment, and the grid is "Tồn kho" and
+ * the colours "Màu": a fixed style is never cut. A fixed style being edited
+ * shows "Cố định" in a read-only issue field — it can never join an issue.
+ * No sentence on the form explains either kind: the user's call.
+ *
  * SAVING, in the order the brief fixes: every picked file is cropped and
  * shrunk in this browser (`lib/photo-encode.ts`) and uploaded one at a time
  * (`uploadProductPhoto`), the bar counting "Đang tải ảnh lên… 1 / 2" and a
@@ -152,9 +166,13 @@ export function ProductForm({
   const [slug, setSlug] = useState(values.slug);
   const [price, setPrice] = useState(moneyInitial(values.priceVnd));
   const [dropNo, setDropNo] = useState(values.dropNo === null ? "" : String(values.dropNo));
-  // Editing a FIXED style (slice B5): it belongs to no issue and never will
+  // A FIXED style (slice B5): being made — "Cố định" picked in the issue menu
+  // (v3 slice 12) — or being edited. It belongs to no issue and never will
   // (`admin_update_product` refuses the crossing), and it has no cut.
-  const fixed = mode === "edit" && values.dropNo === null;
+  const fixed = mode === "edit" ? values.dropNo === null : dropNo === FIXED_CHOICE;
+  // The issue whose code heads the name field: the one picked, if any.
+  const issue = !fixed && dropNo !== "" ? Number(dropNo) : null;
+  const prefixId = useId();
   const [material, setMaterial] = useState(values.material);
   const [order, setOrder] = useState<ColorKey[]>(values.colors);
   const [cells, setCells] = useState<CellGrid>(values.stock as CellGrid);
@@ -215,9 +233,11 @@ export function ProductForm({
     mode === "new"
       ? newStyleBlocker({ name, kind, fit, dropNo, priceVnd, material, colors: order, cells, photos: kinds })
       : null;
-  // What an empty address box becomes — the action's own rule, so the
-  // placeholder is the address the style will really get.
-  const autoSlug = mode === "new" && name.trim() !== "" ? uniqueSlug(productSlug(name), catalog) : "";
+  // What an empty address box becomes — the action's own rule (`slugFor`:
+  // the issue's code in front for an issue's style), so the placeholder is
+  // the address the style will really get.
+  const autoSlug =
+    mode === "new" && name.trim() !== "" ? uniqueSlug(slugFor(name, issue), catalog) : "";
 
   // ─────────────────────────────────────────────────────────── the colours
   function toggleColor(color: ColorKey) {
@@ -417,7 +437,8 @@ export function ProductForm({
           slug: slug.trim(),
           priceVnd,
           material,
-          dropNo: Number(dropNo),
+          // "Cố định" is sent as null: a style of no issue (slice B5).
+          dropNo: fixed ? null : Number(dropNo),
           colors: order,
           photos: chosen,
           cells: Object.fromEntries(
@@ -482,9 +503,13 @@ export function ProductForm({
         return;
       }
       say(answer.message ?? "");
-      // A new style is a row of the products table now; an edited one is
-      // this page, already re-rendered by the action's own response.
-      if (mode === "new") startSaving(() => router.push("/admin/products"));
+      // A new style is a row of the products table now — on its own tab: Cố
+      // định, or its issue's; an edited one is this page, already re-rendered
+      // by the action's own response.
+      if (mode === "new") {
+        const tab = fixed ? "fixed=1" : `drop=${dropNo}`;
+        startSaving(() => router.push(`/admin/products?${tab}`));
+      }
     } finally {
       setUpload(null);
       setBusy(false);
@@ -541,17 +566,32 @@ export function ProductForm({
             <h2>Thông tin cơ bản</h2>
             <div className="bd">
               <Field3 label="Tên mẫu">
-                {({ id }) => (
-                  <input
-                    id={id}
-                    className="inp"
-                    placeholder="VD: KHÓI"
-                    maxLength={MAX_PRODUCT_NAME}
-                    style={{ textTransform: "uppercase" }}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                )}
+                {({ id }) => {
+                  const input = (
+                    <input
+                      id={id}
+                      className="inp"
+                      placeholder={fixed ? "VD: ÁO THUN TRƠN" : "VD: KHÓI"}
+                      maxLength={MAX_PRODUCT_NAME}
+                      style={{ textTransform: "uppercase" }}
+                      aria-describedby={issue === null ? undefined : prefixId}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  );
+                  // An issue's style: the issue's code heads the field, fixed,
+                  // on the plate — typed around, never typed.
+                  return issue === null ? (
+                    input
+                  ) : (
+                    <span className="pfxin">
+                      <span className="pfx" id={prefixId}>
+                        {stylePrefix(issue)}
+                      </span>
+                      {input}
+                    </span>
+                  );
+                }}
               </Field3>
               <div className="fgrid" style={{ marginTop: 14 }}>
                 <Field3 label="Loại">
@@ -576,16 +616,14 @@ export function ProductForm({
                     />
                   )}
                 </Field3>
-                {/* No issue to choose for a fixed style: it can never join one. */}
-                {!fixed && (
-                  <Field3
-                    label={LEX.t}
-                    help={
-                      mode === "new"
-                        ? `Tạo cho ${LEX.t} chưa mở thì lên kệ đúng giờ mở; ${LEX.t} đang mở thì lên kệ ngay.`
-                        : undefined
-                    }
-                  >
+                {/* A fixed style being edited can never join an issue: its
+                    issue field says so, read-only. */}
+                {mode === "edit" && fixed ? (
+                  <Field3 label={LEX.t}>
+                    {({ id }) => <input id={id} className="inp" readOnly value={FIXED_WORD} />}
+                  </Field3>
+                ) : (
+                  <Field3 label={LEX.t}>
                     {({ id }) => (
                       <Select
                         id={id}
@@ -663,7 +701,7 @@ export function ProductForm({
 
           <section className="panel3">
             <h2>
-              {mode === "new" ? "Số lượng sẽ cắt" : "Tồn kho"}
+              {mode === "new" && !fixed ? "Số lượng sẽ cắt" : "Tồn kho"}
               <span className="meta">
                 {mode === "new"
                   ? `tổng ${total} chiếc`
@@ -723,7 +761,7 @@ export function ProductForm({
                   và không vượt số đã cắt. Không phải cách để may thêm.
                 </p>
               )}
-              {fixed && (
+              {mode === "edit" && fixed && (
                 <p className="fine3">
                   Đổi số còn ở đây được ghi thành một lần điều chỉnh tồn kho: có lý do, vào nhật ký.
                 </p>
@@ -741,7 +779,7 @@ export function ProductForm({
               {mode === "new" ? (
                 <div className="field3">
                   <span className="lbl" id={chipLabel}>
-                    Màu sẽ cắt
+                    {fixed ? "Màu" : "Màu sẽ cắt"}
                   </span>
                   <div className="colorpick" role="group" aria-labelledby={chipLabel}>
                     {COLOR_KEYS.map((c) => {
@@ -763,15 +801,13 @@ export function ProductForm({
                     })}
                   </div>
                   <p className="help">
-                    Thứ tự chọn là thứ tự dải màu trên thẻ; màu đầu là ảnh đại diện. Chốt lúc cắt:
-                    sau đó không thêm màu.
+                    Thứ tự chọn là thứ tự dải màu trên thẻ; màu đầu là ảnh đại diện.
                   </p>
                 </div>
               ) : (
                 <p className="fine3" style={{ marginTop: 0 }}>
-                  {values.colors.map((c) => COLORS[c].label).join(" · ")}
-                  {values.dropNo === null ? "" : `, chốt lúc cắt ${issueLabel(values.dropNo)}`}. Không
-                  thêm màu sau khi cắt; thứ tự dải màu và ảnh thì đổi được.
+                  {values.colors.map((c) => COLORS[c].label).join(" · ")}. Thứ tự dải màu và ảnh
+                  thì đổi được.
                 </p>
               )}
               <div className="cslots">

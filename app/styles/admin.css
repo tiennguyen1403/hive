@@ -718,3 +718,49 @@ html:not([data-pointer]) .s .cropper .frame:focus-visible{ border:2px solid var(
 .s .cropside .lnk{ display:inline-flex; align-items:center; min-height:36px; position:relative;
   margin-top:6px; }
 .s .cropside .lnk::after{ content:""; position:absolute; inset:-5px 0; }
+
+/* -- the fixed styles (v3 slice 12) ----------------------------------------
+   `prototype/v3/line/line-mock.css`, the fixed-styles board (round 4,
+   approved 25/09/2026), declaration for declaration. Names greped first
+   across `app/styles/`, `prototype/v2/` and the v3 stylesheets: stockcell,
+   lownote, hotsize, lowdot, pfxin, pfx and onhand are new. Scoped to the
+   back office — the shop prints an issue's code as the name's own type, not
+   as a segment. */
+
+/* The ⋯ button whose menu is open keeps the hover's plate, so the row the
+   menu belongs to stays marked while the pointer is in the menu. */
+.s.adm3 .rowmenu[aria-expanded="true"]{ background:var(--plate); color:var(--ink); }
+
+/* A fixed style running low: which sizes, in red, under its stock. No bar —
+   a fixed style has no cut to measure against. */
+.s.adm3 td .stockcell{ display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+  min-width:120px; }
+.s.adm3 td .stockcell > span{ white-space:nowrap; }
+.s.adm3 td .stockcell .lownote{ color:var(--hot); font-size:var(--fs-xs); font-weight:600; }
+.s.adm3 td.hotsize{ color:var(--hot); font-weight:600; }
+
+/* The tab says it too, so a manager on another tab sees there is restocking
+   to do. The word is in its `aria-label` and `title`. */
+.s.adm3 .stabs .lowdot{ display:inline-block; width:7px; height:7px; margin-left:6px;
+  border-radius:99px; background:var(--hot); vertical-align:1px; }
+
+/* The name field of an issue's style: the issue's code is a fixed segment at
+   the head of the field, on the plate the system gives what cannot be typed
+   (`.field3 .inp[readonly]`), so it never reads as the placeholder beside it.
+   Two digits always, so its width is one number. */
+.s.adm3 .pfxin{ position:relative; display:block; }
+.s.adm3 .pfxin .pfx{ position:absolute; left:1px; top:1px; bottom:1px; display:flex;
+  align-items:center; padding:0 11px 0 12px; border-right:1px solid var(--hair);
+  border-radius:var(--r-sm) 0 0 var(--r-sm); background:var(--plate); color:var(--ink);
+  font-family:var(--font-sans); font-size:var(--fs-body); font-weight:600; letter-spacing:.02em;
+  line-height:1; white-space:nowrap; pointer-events:none; }
+.s.adm3 .pfxin .inp{ padding-left:76px; }
+
+/* "Nhập thêm": what is on the shelf above each cell's box — red at two or
+   fewer, the line the table flags. The sheet is portalled and carries `.s`. */
+.s .invgrid .onhand{ display:block; margin-bottom:4px; font-size:var(--fs-sm);
+  color:var(--ink2); }
+.s .invgrid .onhand.hot{ color:var(--hot); font-weight:600; }
+/* The restock sheet has no line under its title (nothing on it explains),
+   so the grid would sit on the title: it keeps the gap the line gave. */
+.sheetwrap .sheetbody > h3.title + .invgrid{ margin-top:var(--s3); }

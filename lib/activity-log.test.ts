@@ -5,6 +5,7 @@ import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { ORDERS } from "@/data/orders";
 import type { AdminOrder } from "./admin-orders";
 import type { AdminEvent } from "./db/event-dto";
+import { styleName } from "./lexicon";
 import {
   LOG_FILTERS,
   diffText,
@@ -306,7 +307,8 @@ describe("what the shop did to the catalogue", () => {
     expect(row.author).toBe("Cửa hàng");
     expect(row.action).toBe("Điều chỉnh tồn kho");
     expect(row.detail).toBe("lý do: hàng trả về");
-    expect(row.subject).toBe("BỤI · Đen · L");
+    // The style as the back office names it (v3 slice 12).
+    expect(row.subject).toBe(`${styleName("BỤI", 5)} · Đen · L`);
     expect(row.href).toBe(`/admin/products/${bui.id}`);
     expect(row.before).toBe("1");
     expect(row.after).toBe("2");
@@ -329,8 +331,51 @@ describe("what the shop did to the catalogue", () => {
         delta: 2,
       }),
     )[0]!;
-    expect(row.subject).toBe("BỤI · 2 ô");
+    expect(row.subject).toBe(`${styleName("BỤI", 5)} · 2 ô`);
     expect(row.tail).toBe("+2 chiếc");
+  });
+
+  // v3 slice 12: "Nhập thêm" is an adjustment with its own reason, read as
+  // what it is — the pieces brought back, counted.
+  it("reads a restock as what it is: the style, and the pieces added", () => {
+    const hoodie = FIXTURE_CATALOG.bySlug.get("hoodie-tron")!;
+    const many = rowsOf(
+      done({
+        kind: "INVENTORY_ADJUSTED",
+        productId: String(hoodie.id),
+        cells: [
+          { color: "grey", size: "M", before: 0, after: 6 },
+          { color: "cream", size: "M", before: 0, after: 5 },
+          { color: "grey", size: "XL", before: 2, after: 5 },
+        ],
+        reason: "Nhập thêm",
+        ref: "",
+        note: "về đủ size M",
+        delta: 14,
+      }),
+    )[0]!;
+    expect(many.kind).toBe("stock");
+    expect(many.action).toBe("Nhập thêm");
+    expect(many.detail).toBeUndefined();
+    expect(many.subject).toBe("HOODIE TRƠN · 3 ô");
+    expect(many.href).toBe(`/admin/products/${hoodie.id}`);
+    expect(many.tail).toBe('+14 chiếc · "về đủ size M"');
+    expect(diffText(many)).toBe('+14 chiếc · "về đủ size M"');
+
+    const one = rowsOf(
+      done({
+        kind: "INVENTORY_ADJUSTED",
+        productId: String(hoodie.id),
+        cells: [{ color: "grey", size: "M", before: 0, after: 6 }],
+        reason: "Nhập thêm",
+        ref: "",
+        note: "",
+        delta: 6,
+      }),
+    )[0]!;
+    expect(one.subject).toBe("HOODIE TRƠN · Xám · M");
+    expect(diffText(one)).toBe("0 → 6 · +6 chiếc");
+    expect(inFilter("stock", one)).toBe(true);
   });
 
   it("records a style edit as the field it changed, before and after", () => {
@@ -345,7 +390,7 @@ describe("what the shop did to the catalogue", () => {
     expect(row.kind).toBe("stock");
     expect(row.action).toBe("Sửa mẫu");
     expect(row.detail).toBe("giá");
-    expect(row.subject).toBe("KHÓI");
+    expect(row.subject).toBe(styleName("KHÓI", 5));
     expect(row.before).toBe("390.000₫");
     expect(row.after).toBe("420.000₫");
   });
@@ -385,11 +430,13 @@ describe("what the shop did to the catalogue", () => {
     expect(row.author).toBe("Cửa hàng");
     expect(row.action).toBe("Thêm mẫu");
     expect(row.detail).toBe("1 ảnh tải lên · 2 ảnh mượn");
-    // Not in the fixture's catalogue: the name it was created with.
-    expect(row.subject).toBe("SỎI");
+    // Not in the fixture's catalogue: the name it was created with, and its issue.
+    expect(row.subject).toBe(styleName("SỎI", 6));
     expect(row.href).toBe("/admin/products/p-soi");
     expect(row.tail).toBe("Số 06 · 3 màu · 36 chiếc");
-    expect(`${row.action} ${row.subject} · ${row.tail}`).toBe("Thêm mẫu SỎI · Số 06 · 3 màu · 36 chiếc");
+    expect(`${row.action} ${row.subject} · ${row.tail}`).toBe(
+      `Thêm mẫu ${styleName("SỎI", 6)} · Số 06 · 3 màu · 36 chiếc`,
+    );
     expect(inFilter("stock", row)).toBe(true);
   });
 
@@ -440,11 +487,11 @@ describe("what the shop did to the catalogue", () => {
     )[0]!;
     expect(row.kind).toBe("stock");
     expect(row.action).toBe("Thay ảnh Đen");
-    expect(row.subject).toBe("KHÓI");
+    expect(row.subject).toBe(styleName("KHÓI", 5));
     expect(row.href).toBe("/admin/products/p-khoi");
     expect(row.before).toBe("ảnh mượn");
     expect(row.after).toBe("ảnh thật");
-    expect(`${row.action} của ${row.subject}`).toBe("Thay ảnh Đen của KHÓI");
+    expect(`${row.action} của ${row.subject}`).toBe(`Thay ảnh Đen của ${styleName("KHÓI", 5)}`);
 
     const again = rowsOf(
       done({
@@ -469,10 +516,10 @@ describe("what the shop did to the catalogue", () => {
     )[0]!;
     expect(row.kind).toBe("stock");
     expect(row.action).toBe("Đổi thứ tự màu");
-    expect(row.subject).toBe("KHÓI");
+    expect(row.subject).toBe(styleName("KHÓI", 5));
     expect(row.before).toBe("Đen · Kem");
     expect(row.after).toBe("Kem · Đen");
-    expect(`${row.action} ${row.subject}: ${row.after}`).toBe("Đổi thứ tự màu KHÓI: Kem · Đen");
+    expect(`${row.action} ${row.subject}: ${row.after}`).toBe(`Đổi thứ tự màu ${styleName("KHÓI", 5)}: Kem · Đen`);
     expect(logHaystack(row)).toContain("kem · đen");
   });
 
@@ -562,7 +609,7 @@ describe("what the shop did to the catalogue", () => {
     )[0]!;
     expect(row.action).toBe("Thêm mẫu hé lộ");
     expect(row.subject).toBe("Số 06");
-    expect(row.tail).toBe("THỬ · Áo khoác dù");
+    expect(row.tail).toBe(`${styleName("THỬ", 6)} · Áo khoác dù`);
   });
 
   it("files a style edit under Tồn kho and every code move under Mã giảm giá", () => {

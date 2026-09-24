@@ -367,6 +367,8 @@ async (page) => {
     "/admin/drops/05",
     "/admin/promotions",
     "/admin/products",
+    // v3 slice 12: Cố định is the first tab; an issue is ?drop=N
+    "/admin/products?drop=5",
     "/admin/products/new",
     "/admin/products/p-khoi",
     "/admin/products/p-ao-thun-tron",
@@ -473,11 +475,22 @@ async (page) => {
     }],
     // slice B3b: the sheets and menus that now write to the database
 
+    // v3 slice 12: the default tab is Cố định; an issue's style is named with its code
     ["/admin/products#rowmenu", "admin-products-row-menu-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác KHÓI", exact: true }).click();
+      await page.getByRole("button", { name: "Thao tác HOODIE TRƠN", exact: true }).click();
     }],
-    ["/admin/products#adjust", "admin-products-adjust-sheet-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác KHÓI", exact: true }).click();
+    ["/admin/products#restock", "admin-products-restock-sheet-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác HOODIE TRƠN", exact: true }).click();
+      await page.waitForTimeout(250);
+      await page.getByRole("menuitem", { name: "Nhập thêm" }).click();
+      await page.waitForTimeout(350);
+      await page.getByRole("dialog").getByLabel(/^Nhập thêm Xám M,/).fill("4");
+    }],
+    ["/admin/products?drop=5#rowmenu", "admin-products-so05-row-menu-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác S05\u00a0\u2013 KHÓI", exact: true }).click();
+    }],
+    ["/admin/products?drop=5#adjust", "admin-products-adjust-sheet-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác S05\u00a0\u2013 KHÓI", exact: true }).click();
       await page.waitForTimeout(250);
       await page.getByRole("menuitem", { name: "Điều chỉnh tồn kho" }).click();
       await page.waitForTimeout(350);
@@ -516,6 +529,14 @@ async (page) => {
       await page.getByRole("button", { name: "Thao tác DOT05", exact: true }).click();
       await page.waitForTimeout(250);
       await page.getByRole("menuitem", { name: "Sửa", exact: true }).click();
+    }],
+    ["/admin/products/new#issue-menu", "admin-product-new-issue-menu-1280", async () => {
+      await page.locator(".field3", { has: page.locator(".lbl", { hasText: /^Số$/ }) }).locator("button.selbtn").click();
+    }],
+    ["/admin/products/new#fixed", "admin-product-new-fixed-1280", async () => {
+      await page.locator(".field3", { has: page.locator(".lbl", { hasText: /^Số$/ }) }).locator("button.selbtn").click();
+      await page.waitForTimeout(250);
+      await page.getByRole("menuitemradio", { name: "Cố định" }).click();
     }],
     ["/admin/products/p-khoi#kind", "admin-product-form-kind-menu-1280", async () => {
       await page.locator(".field3", { hasText: "Loại" }).first().locator("button.selbtn").click();

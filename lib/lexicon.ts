@@ -123,8 +123,28 @@ export function issueCode(no: number): string {
  * wrap there.
  */
 export function styleName(name: string, dropNo: number | null): string {
-  return dropNo === null ? name : `${issueCode(dropNo)} – ${name}`;
+  return dropNo === null ? name : `${stylePrefix(dropNo)} ${name}`;
 }
+
+/**
+ * `"S06 –"` — the part of `styleName` an issue gives, on its own: what the
+ * back office's name field shows as a fixed segment in front of the typed
+ * name (v3 slice 12, the fixed-styles board, round 4). The same no-break
+ * space and en dash as the shown name, so the segment and the name the shop
+ * prints can never drift apart.
+ */
+export function stylePrefix(no: number): string {
+  return `${issueCode(no)} –`;
+}
+
+/**
+ * "Cố định" — the back office's word for a style that belongs to no issue
+ * (fixed-styles board, rounds 3–4, approved 25/09/2026): the first tab of the
+ * styles table, the last choice of the issue menu, the read-only issue field
+ * of such a style. Only the back office says it; a shopper sees a style.
+ * Not in `LEX`, which is pinned to the shop's table in the v3 mock.
+ */
+export const FIXED_WORD = "Cố định";
 
 /** What each state is called after the issue's name on the nav bar's plate. */
 const PLATE_STATE: Record<DropState, string> = {

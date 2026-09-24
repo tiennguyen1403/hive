@@ -14,6 +14,7 @@ import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { CUSTOMERS } from "@/data/customers";
 import { ORDERS } from "@/data/orders";
 import type { AdminOrder } from "./admin-orders";
+import { styleName } from "./lexicon";
 import { promoCode, type Order, type OrderStatus, type Promotion } from "@/data/types";
 
 /** The smallest order the row builders read: a state, a time and a line. */
@@ -194,6 +195,22 @@ describe("queueRows", () => {
     expect(row.items).toBe(orderItemsLabel(FIXTURE_CATALOG, order));
     expect(row.totalVnd).toBeGreaterThan(0);
     expect(row.customer).not.toBe("—");
+  });
+
+  it("names each style in the box as the back office does: its issue's code, or none (v3 slice 12)", () => {
+    const first = ORDERS[0]!;
+    const khoi = FIXTURE_CATALOG.bySlug.get("s05-khoi")!;
+    const tee = FIXTURE_CATALOG.bySlug.get("ao-thun-tron")!;
+    const order: Order = {
+      ...first,
+      lines: [
+        { ...first.lines[0]!, productId: khoi.id, qty: 2 },
+        { ...first.lines[0]!, productId: tee.id, qty: 1 },
+      ],
+    };
+    expect(orderItemsLabel(FIXTURE_CATALOG, order)).toBe(
+      `${styleName("KHÓI", 5)} ×2, ÁO THUN TRƠN ×1`,
+    );
   });
 
   it("hands a COD order over from RECEIVED, and asks for a card order's money first (slice B3a)", () => {

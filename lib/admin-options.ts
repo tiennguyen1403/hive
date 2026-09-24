@@ -2,6 +2,7 @@ import type { Catalog } from "./catalog";
 import type { SelectOption } from "@/components/ui/Select";
 import { dropState } from "./drop";
 import { demoNow } from "./clock";
+import { FIXED_WORD } from "./lexicon";
 
 /**
  * The menus on the product form.
@@ -23,6 +24,13 @@ export function kindOptions(catalog: Catalog): SelectOption[] {
 const STATE_NOTE = { OPEN: "đang mở", UPCOMING: "sắp mở", CLOSED: "đã đóng" } as const;
 
 /**
+ * The issue menu's value for "Cố định" (v3 slice 12): a new style that
+ * belongs to no issue. Not a number, so nothing can read it as an issue; the
+ * form sends `dropNo: null` for it (`createProduct`, slice B5).
+ */
+export const FIXED_CHOICE = "fixed";
+
+/**
  * Newest drop first, each saying what it is doing right now — "Số 06 · sắp
  * mở", in the label itself (v3 slice 7, as the form's mock prints it), so the
  * closed button says it too and not only the open menu.
@@ -31,13 +39,17 @@ const STATE_NOTE = { OPEN: "đang mở", UPCOMING: "sắp mở", CLOSED: "đã �
  * has closed (`createProduct` refuses with `DROP_CLOSED`), so the new-style
  * form does not offer one. Editing keeps them all — a style already in a
  * closed issue has to be able to show which one.
+ *
+ * `withFixed` puts "Cố định" last (v3 slice 12), with no note: the new-style
+ * form's way to make a style of no issue. Editing never offers it — a style
+ * keeps its kind for good (`admin_update_product`, slice B5).
  */
 export function dropOptions(
   catalog: Catalog,
   now: Date = demoNow(),
-  { hideClosed = false }: { hideClosed?: boolean } = {},
+  { hideClosed = false, withFixed = false }: { hideClosed?: boolean; withFixed?: boolean } = {},
 ): SelectOption[] {
-  return [...catalog.drops]
+  const issues = [...catalog.drops]
     .sort((a, b) => b.no - a.no)
     .map((d) => ({ d, state: dropState(d, now) }))
     .filter(({ state }) => !hideClosed || state !== "CLOSED")
@@ -45,4 +57,5 @@ export function dropOptions(
       value: String(d.no),
       label: `Số ${String(d.no).padStart(2, "0")} · ${STATE_NOTE[state]}`,
     }));
+  return withFixed ? [...issues, { value: FIXED_CHOICE, label: FIXED_WORD }] : issues;
 }

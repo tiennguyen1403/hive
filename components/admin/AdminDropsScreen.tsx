@@ -31,7 +31,7 @@ import {
   soldOutSizes,
   soldUnits,
 } from "@/lib/inventory";
-import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
+import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { compactVnd, plainVnd, vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import { soldOutTimes } from "@/lib/sold-out-times";
@@ -467,7 +467,7 @@ function IssueDetail({
                 ? soldOut
                     .map(
                       (r) =>
-                        `${r.product.name}${r.soldOutAt ? ` · hết ${dayMonth(r.soldOutAt)}` : ""}`,
+                        `${styleName(r.product.name, r.product.dropNo)}${r.soldOutAt ? ` · hết ${dayMonth(r.soldOutAt)}` : ""}`,
                     )
                     .join(" · ")
                 : "chưa mẫu nào bán hết"}
@@ -476,7 +476,9 @@ function IssueDetail({
               <span className="k">Còn dưới {LOW_STOCK_AT + 1} chiếc</span>
               <b>{low.length} mẫu</b>
               {low.length > 0
-                ? low.map((a) => `${a.product.name} còn ${a.left}`).join(" · ")
+                ? low
+                    .map((a) => `${styleName(a.product.name, a.product.dropNo)} còn ${a.left}`)
+                    .join(" · ")
                 : "chưa mẫu nào xuống thấp"}
             </div>
           </div>
@@ -503,7 +505,7 @@ function IssueDetail({
                   return (
                     <tr key={p.id}>
                       <td>
-                        <b className="nm">{p.name}</b>
+                        <b className="nm">{styleName(p.name, p.dropNo)}</b>
                       </td>
                       <td>{p.kind}</td>
                       <td className="right">{plainVnd(p.priceVnd)}</td>
@@ -553,7 +555,7 @@ function IssueDetail({
                   <div className="t" key={t.slug}>
                     <Image src={photoUrl(t.photoKey, 120)} alt="" width={44} height={55} />
                     <div>
-                      <b>{t.name}</b>
+                      <b>{styleName(t.name, t.dropNo)}</b>
                       <div className="sub">{t.kind} · giá công bố khi mở</div>
                     </div>
                   </div>
@@ -596,7 +598,7 @@ function downloadIssueCsv(catalog: Catalog, no: number, products: readonly Produ
     for (const color of p.colors) {
       for (const size of SIZES) {
         rows.push([
-          p.name,
+          styleName(p.name, p.dropNo),
           p.kind,
           COLORS[color].label,
           size,

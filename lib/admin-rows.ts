@@ -5,6 +5,7 @@ import type { AdminOrder } from "./admin-orders";
 import { clockLabel, dayMonth, dateTimeLabel, rangeLabel } from "./datetime";
 import { dropState } from "./drop";
 import { dropRevenueVnd, dropSummary } from "./inventory";
+import { styleName } from "./lexicon";
 import { orderTotalVnd, orderUnits } from "./orders";
 import { vnd } from "./money";
 import { STANDARD_FEE_VND } from "./shipping";
@@ -40,10 +41,16 @@ export function orderCustomer(o: AdminOrder): string {
   return o.owner ? o.owner.name : `${o.shipTo.recipient} · ${GUEST_SUFFIX}`;
 }
 
-/** "MUỐI ×2, KHÓI ×1" — what is in the box, in the fewest characters. */
+/**
+ * "S05 – MUỐI ×2, ÁO THUN TRƠN ×1" — what is in the box, in the fewest
+ * characters, each style as the back office names it (v3 slice 12).
+ */
 export function orderItemsLabel(catalog: Catalog, o: Order): string {
   return o.lines
-    .map((l) => `${catalog.byId.get(l.productId)?.name ?? "?"} ×${l.qty}`)
+    .map((l) => {
+      const p = catalog.byId.get(l.productId);
+      return `${p ? styleName(p.name, p.dropNo) : "?"} ×${l.qty}`;
+    })
     .join(", ");
 }
 

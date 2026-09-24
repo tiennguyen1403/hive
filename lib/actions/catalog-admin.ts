@@ -47,7 +47,7 @@ import { getSupabase } from "@/lib/db/server";
 import { requireAdmin } from "@/lib/db/session";
 import { dropState } from "@/lib/drop";
 import { PRODUCT_EDIT_REASON, RESTOCK_REASON, cellDelta } from "@/lib/inventory-adjust";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { LEX, issueNo, styleName } from "@/lib/lexicon";
 import {
   MAX_UPLOAD_BYTES,
   isUploadedKey,
@@ -191,10 +191,12 @@ export async function adjustStock(
     p_note: remark,
     p_now: now(),
   });
-  if (failure) return failed("ADJUST_STOCK", failure, product.name);
+  // The style as the back office names it (v3 slice 12): "S05 – KHÓI".
+  const shown = styleName(product.name, product.dropNo);
+  if (failure) return failed("ADJUST_STOCK", failure, shown);
 
   catalogMoved();
-  return done(`Đã điều chỉnh tồn kho ${product.name} · ${signed(cellDelta(moved))} chiếc · đã lưu`);
+  return done(`Đã điều chỉnh tồn kho ${shown} · ${signed(cellDelta(moved))} chiếc · đã lưu`);
 }
 
 /**
@@ -205,10 +207,14 @@ export async function adjustStock(
  *
  * The database takes it only for a fixed style and only upward (`BAD_INPUT`
  * otherwise), and a shelf that moved in the meantime is `STALE`, as for any
- * adjustment; `checkAdjustment` says the same first. Nothing on screen calls
- * it yet: the back office's sheet for it is a later slice.
+ * adjustment; `checkAdjustment` says the same first.
+ *
+ * v3 slice 12 gave it its screen — `InventoryAdjustSheet` in its "restock"
+ * mode, from the ⋯ menu of every fixed style — and the optional note that
+ * sheet keeps, as the adjustment sheet does; it goes into the event with the
+ * rest (the database's own 500-character limit, `checkAdjustment`).
  */
-export async function restockProduct(id: unknown, cells: unknown): Promise<ActionState> {
+export async function restockProduct(id: unknown, cells: unknown, note?: unknown): Promise<ActionState> {
   await requireAdmin("/admin/products");
   const pace = await takeRates("admin");
   if (!pace.ok) return refused(pace.message);
@@ -220,7 +226,8 @@ export async function restockProduct(id: unknown, cells: unknown): Promise<Actio
 
   const moved = readRestockCells(cells);
   if (!moved) return failed("RESTOCK", "BAD_INPUT");
-  const blocked = checkAdjustment(product, moved, RESTOCK_REASON, "", "");
+  const remark = text(note);
+  const blocked = checkAdjustment(product, moved, RESTOCK_REASON, "", remark);
   if (blocked) return refused(blocked);
 
   const failure = await run("admin_adjust_stock", {
@@ -228,13 +235,14 @@ export async function restockProduct(id: unknown, cells: unknown): Promise<Actio
     p_cells: moved as unknown as Json,
     p_reason: RESTOCK_REASON,
     p_ref: "",
-    p_note: "",
+    p_note: remark,
     p_now: now(),
   });
-  if (failure) return failed("RESTOCK", failure, product.name);
+  const shown = styleName(product.name, product.dropNo);
+  if (failure) return failed("RESTOCK", failure, shown);
 
   catalogMoved();
-  return done(`Đã nhập thêm ${product.name} · ${signed(cellDelta(moved))} chiếc · đã lưu`);
+  return done(`Đã nhập thêm ${shown} · ${signed(cellDelta(moved))} chiếc · đã lưu`);
 }
 
 // ─────────────────────────────────────────────────────────────── the issues
@@ -353,10 +361,11 @@ export async function addTeaser(draft: unknown): Promise<ActionState> {
     p_photo_key: t.photoKey,
     p_now: now(),
   });
-  if (failure) return failed("ADD_TEASER", failure, failure === "NOT_FOUND" ? dropSubject(t.dropNo) : t.name);
+  const shown = styleName(t.name, t.dropNo);
+  if (failure) return failed("ADD_TEASER", failure, failure === "NOT_FOUND" ? dropSubject(t.dropNo) : shown);
 
   catalogMoved();
-  return done(`Đã thêm mẫu hé lộ ${t.name} · đã lưu`);
+  return done(`Đã thêm mẫu hé lộ ${shown} · đã lưu`);
 }
 
 // ──────────────────────────────────────────────────────────────── the codes
@@ -558,7 +567,9 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
   }
 
   const at = now();
-  const name = patch.name ?? product.name;
+  // The style as the back office names it, with its issue's code — the issue
+  // the patch moves it to, if it moves (v3 slice 12).
+  const name = styleName(patch.name ?? product.name, patch.dropNo ?? product.dropNo);
   // What went through, in the words the answer uses.
   const saved: string[] = [];
   const stop = (step: string, why: string): ActionState => {
@@ -573,7 +584,11 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
       p_now: at,
     });
     if (failure) {
-      return failed("UPDATE_PRODUCT", failure, failure === "NOT_ALLOWED" ? (patch.slug ?? product.slug) : product.name);
+      return failed(
+        "UPDATE_PRODUCT",
+        failure,
+        failure === "NOT_ALLOWED" ? (patch.slug ?? product.slug) : styleName(product.name, product.dropNo),
+      );
     }
     saved.push("thông tin");
   }
@@ -699,7 +714,7 @@ export async function createProduct(draft: unknown): Promise<ActionState & { id?
   const uploaded = input.colors.filter((c) => isUploadedKey(c.photoKey)).length;
   return {
     ...done(
-      `Đã tạo ${input.name} · ${input.colors.length} màu · ${cutTotal(input.cells)} chiếc` +
+      `Đã tạo ${styleName(input.name, input.dropNo)} · ${input.colors.length} màu · ${cutTotal(input.cells)} chiếc` +
         (uploaded > 0 ? ` · ${uploaded} ảnh tải lên` : "") +
         " · đã lưu",
     ),

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
+import { FIXED_CHOICE } from "./admin-options";
 import { catalogFailureMessage } from "./catalog-admin";
+import { styleName } from "./lexicon";
 import { PHOTO_KEYS } from "./photos";
 import {
   MAX_PICK_BYTES,
@@ -69,6 +71,14 @@ describe("newStyleBlocker", () => {
     expect(newStyleBlocker({ ...READY, photos: { black: "file", cream: "loan" } })).toBe(
       "Chọn ảnh cho Rêu",
     );
+  });
+
+  it("takes 'Cố định' for the issue, and asks for stock rather than a cut (v3 slice 12)", () => {
+    const fixed = { ...READY, dropNo: FIXED_CHOICE };
+    expect(newStyleBlocker(fixed)).toBeNull();
+    // A fixed style is never cut: its grid is "Tồn kho", so is the ask.
+    expect(newStyleBlocker({ ...fixed, cells: {}, photos: {} })).toBe("Điền tồn kho cho Đen");
+    expect(newStyleBlocker({ ...fixed, photos: { black: "file", cream: "loan" } })).toBe("Chọn ảnh cho Rêu");
   });
 
   it("holds the price to what the action takes", () => {
@@ -143,12 +153,17 @@ describe("loanPhotos", () => {
     expect(loans.map((l) => l.key)).toEqual(PHOTO_KEYS.filter((k) => k !== "hero"));
   });
 
-  it("names each after the style it is the photo of", () => {
+  it("names each after the style it is the photo of, as the back office names it (v3 slice 12)", () => {
     const name = (key: string) => loans.find((l) => l.key === key)?.name;
-    expect(name("khoi")).toBe("KHÓI");
-    expect(name("cat")).toBe("CÁT");
-    expect(name("reu")).toBe("RÊU");
-    expect(name("tro")).toBe("TRO");
+    const shown = (slug: string) => {
+      const p = FIXTURE_CATALOG.products.find((x) => x.slug === slug)!;
+      return styleName(p.name, p.dropNo);
+    };
+    expect(name("khoi")).toBe(shown("s05-khoi"));
+    expect(name("khoi")).toBe(styleName("KHÓI", 5));
+    expect(name("cat")).toBe(shown("s05-cat"));
+    expect(name("reu")).toBe(shown("s04-reu"));
+    expect(name("tro")).toBe(shown("s04-tro"));
     expect(loans.every((l) => l.name !== "")).toBe(true);
   });
 

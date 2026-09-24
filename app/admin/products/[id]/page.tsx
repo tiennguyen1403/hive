@@ -8,7 +8,7 @@ import { SIZES, productId } from "@/data/types";
 import { loadCatalog } from "@/lib/db/catalog";
 import { dropOptions, kindOptions } from "@/lib/admin-options";
 import { onHandOf } from "@/lib/inventory";
-import { issueLabel } from "@/lib/lexicon";
+import { issueLabel, styleName } from "@/lib/lexicon";
 import { demoNow } from "@/lib/clock";
 
 export const metadata = { title: "Sửa mẫu" };
@@ -47,6 +47,9 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
     for (const s of SIZES) stock[c]![s] = onHandOf(product, c, s);
   }
 
+  // The style as the back office names it (v3 slice 12): "S05 – KHÓI".
+  const shown = styleName(product.name, product.dropNo);
+
   const values = {
     name: product.name,
     kind: product.kind,
@@ -63,8 +66,8 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
   return (
     <>
       <AdminTop
-        crumb={{ label: "Mẫu", href: "/admin/products", here: product.name }}
-        title={product.name}
+        crumb={{ label: "Mẫu", href: "/admin/products", here: shown }}
+        title={shown}
         sub={
           // A fixed style (slice B5) was cut for no issue: only the grid's line is true of it.
           (product.dropNo !== null && product.cutUnits !== null

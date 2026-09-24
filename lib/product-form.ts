@@ -1,5 +1,6 @@
 import { COLORS } from "@/data/colors";
 import { SIZES, type ColorKey, type Fit, type Size } from "@/data/types";
+import { FIXED_CHOICE } from "./admin-options";
 import type { Catalog } from "./catalog";
 import {
   MAX_PRICE_VND,
@@ -7,7 +8,7 @@ import {
   borrowedPhotoKeys,
   catalogFailureMessage,
 } from "./catalog-admin";
-import { LEX } from "./lexicon";
+import { LEX, styleName } from "./lexicon";
 import { vnd } from "./money";
 import { PHOTO_KEYS, isUploadedKey } from "./photos";
 
@@ -82,7 +83,10 @@ export interface NewStyleState {
   name: string;
   kind: string;
   fit: Fit | null;
-  /** The issue's number as the menu holds it; empty when there is none to pick. */
+  /**
+   * The issue's number as the menu holds it; `FIXED_CHOICE` for "Cố định",
+   * a style of no issue (v3 slice 12); empty when nothing is picked.
+   */
   dropNo: string;
   priceVnd: number;
   material: string;
@@ -101,6 +105,9 @@ export interface NewStyleState {
  * because the action refuses a style without them too (`readNewProduct`),
  * and a button that lights up for a save the server will refuse says the
  * wrong thing.
+ *
+ * A fixed style (v3 slice 12) is never cut: its grid is headed "Tồn kho",
+ * and the button asks for stock, not for a cut.
  */
 export function newStyleBlocker(s: NewStyleState): string | null {
   if (s.name.trim() === "") return "Nhập tên mẫu";
@@ -113,7 +120,7 @@ export function newStyleBlocker(s: NewStyleState): string | null {
   if (s.material.trim() === "") return "Nhập chất liệu";
   if (s.colors.length === 0) return "Chọn màu";
   const empty = s.colors.find((c) => rowTotal(s.cells, c) === 0);
-  if (empty) return `Điền số cắt cho ${COLORS[empty].label}`;
+  if (empty) return `Điền ${s.dropNo === FIXED_CHOICE ? "tồn kho" : "số cắt"} cho ${COLORS[empty].label}`;
   const bare = s.colors.find((c) => (s.photos[c] ?? "none") === "none");
   if (bare) return `Chọn ảnh cho ${COLORS[bare].label}`;
   return null;
@@ -162,9 +169,10 @@ export interface LoanPhoto {
  * uploads — an upload is another style's real photo, not a stand-in — in the
  * order `lib/photos.ts` lists the frames.
  *
- * Each is named after the style it is the photo OF ("ảnh của mẫu CÁT"): the
- * first style whose first colour wears it, else the first style wearing it
- * at all, else the teaser that does. Read from the catalogue, never typed.
+ * Each is named after the style it is the photo OF ("ảnh của mẫu S05 – CÁT",
+ * the name the back office shows since v3 slice 12): the first style whose
+ * first colour wears it, else the first style wearing it at all, else the
+ * teaser that does. Read from the catalogue, never typed.
  *
  * Only a key `lib/photos.ts` has a frame for (slice B5): the fixed styles
  * carry `flat-…` keys whose drawings do not exist yet, and until they do
@@ -182,12 +190,11 @@ export function loanPhotos(catalog: Catalog): LoanPhoto[] {
 }
 
 function loanOwner(catalog: Catalog, key: string): string {
-  return (
-    catalog.products.find((p) => p.photoKeys[0] === key)?.name ??
-    catalog.products.find((p) => p.photoKeys.includes(key))?.name ??
-    catalog.teasers.find((t) => t.photoKey === key)?.name ??
-    ""
-  );
+  const owner =
+    catalog.products.find((p) => p.photoKeys[0] === key) ??
+    catalog.products.find((p) => p.photoKeys.includes(key)) ??
+    catalog.teasers.find((t) => t.photoKey === key);
+  return owner ? styleName(owner.name, owner.dropNo) : "";
 }
 
 /**

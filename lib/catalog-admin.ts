@@ -14,10 +14,10 @@ import type { Catalog } from "./catalog";
 import { toVnIso } from "./datetime";
 import { isFixed, onHandOf } from "./inventory";
 import { RESTOCK_REASON, isStockReason, type InventoryCell } from "./inventory-adjust";
-import { LEX, issueCode, issueLabel } from "./lexicon";
+import { LEX, issueCode, issueLabel, styleName } from "./lexicon";
 import { isUploadedKey } from "./photos";
 import { normalisePromoCode } from "./promotions";
-import { asciiSlug, teaserSlug } from "./teasers";
+import { asciiSlug } from "./teasers";
 
 /**
  * The back office's side of the CATALOGUE, since slice B3b moved every move
@@ -329,7 +329,7 @@ export function checkAdjustment(
   if (ref.length > MAX_REF) return `Tham chiếu tối đa ${MAX_REF} ký tự.`;
   if (note.length > MAX_NOTE) return `Ghi chú tối đa ${MAX_NOTE} ký tự.`;
   if (cells.some((c) => !product.colors.includes(c.color))) {
-    return `${product.name} không có màu này.`;
+    return `${styleName(product.name, product.dropNo)} không có màu này.`;
   }
   if (reason === RESTOCK_REASON && (!isFixed(product) || cells.some((c) => c.after <= c.before))) {
     return RESTOCK_BAD_MESSAGE;
@@ -503,6 +503,11 @@ export function familyOfKind(catalog: Catalog, kind: string): Family | undefined
  * catalogue uses and a borrowed photo — turned into the row to write. The
  * name is written in capitals like every style's; the family and the slug
  * are derived here, never taken from the browser.
+ *
+ * The slug is `slugFor(name, issue)` (v3 slice 12, the main session's
+ * answer F.1 to slice B5): `s06-soi`, the pattern every issue's style and
+ * every fixture teaser has, not a second one. The same teaser announced twice
+ * is the same address, which the database refuses as taken.
  */
 export function readTeaser(value: unknown, catalog: Catalog): Checked<TeaserRow> {
   if (!isRecord(value)) return no("Cần tên, loại và một ảnh.");
@@ -515,7 +520,7 @@ export function readTeaser(value: unknown, catalog: Catalog): Checked<TeaserRow>
   if (garment === "" || garment.length > MAX_KIND || !family) return no("Chọn loại.");
   const photoKey = text(value.photoKey);
   if (!borrowedPhotoKeys(catalog).includes(photoKey)) return no("Chọn một ảnh.");
-  return ok({ slug: teaserSlug(name, dropNo), name, garment, family, dropNo, photoKey });
+  return ok({ slug: slugFor(name, dropNo), name, garment, family, dropNo, photoKey });
 }
 
 // ───────────────────────────────────────────────────────────────── the codes
@@ -643,7 +648,9 @@ export function isSlug(value: string): boolean {
  * every field checked, then only the ones that CHANGED kept — the patch the
  * database writes and the event keeps. The name is written in capitals like
  * every style's; an empty address segment is made from the name, as the
- * field's own help line promises ("Tự sinh từ tên nếu để trống").
+ * field's own help line promises ("Tự sinh từ tên nếu để trống") — by
+ * `slugFor`, as a new style's is (v3 slice 12, answer F.2): the issue the form
+ * names in front of it, none for a fixed style.
  */
 export function productPatch(
   product: Product,
@@ -658,7 +665,21 @@ export function productPatch(
   const kind = text(value.kind);
   if (kind === "" || kind.length > MAX_KIND) return no("Chọn loại.");
 
-  const slug = text(value.slug) || asciiSlug(name);
+  // A style keeps its kind for good (slice B5): an issue's style may move to
+  // another issue, a fixed style stays fixed and its form sends no issue.
+  // `admin_update_product()` refuses the crossing either way (`BAD_INPUT`).
+  // Read before the address, which an emptied box makes from it.
+  let dropNo: number | null = null;
+  if (isFixed(product)) {
+    if (value.dropNo !== null && value.dropNo !== undefined) {
+      return no(catalogFailureMessage("UPDATE_PRODUCT", "BAD_INPUT"));
+    }
+  } else {
+    dropNo = readDropNo(value.dropNo);
+    if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no("Chọn một số.");
+  }
+
+  const slug = text(value.slug) || slugFor(name, dropNo);
   if (!isSlug(slug)) {
     return no("Mã trên địa chỉ chỉ gồm chữ thường không dấu, số và gạch ngang.");
   }
@@ -674,19 +695,6 @@ export function productPatch(
 
   const fit = value.fit === undefined ? product.fit : value.fit;
   if (fit !== "OVERSIZE" && fit !== "REGULAR") return no("Chọn form.");
-
-  // A style keeps its kind for good (slice B5): an issue's style may move to
-  // another issue, a fixed style stays fixed and its form sends no issue.
-  // `admin_update_product()` refuses the crossing either way (`BAD_INPUT`).
-  let dropNo: number | null = null;
-  if (isFixed(product)) {
-    if (value.dropNo !== null && value.dropNo !== undefined) {
-      return no(catalogFailureMessage("UPDATE_PRODUCT", "BAD_INPUT"));
-    }
-  } else {
-    dropNo = readDropNo(value.dropNo);
-    if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no("Chọn một số.");
-  }
 
   const patch: ProductPatch = {};
   if (name !== product.name) patch.name = name;

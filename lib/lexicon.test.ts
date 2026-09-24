@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { CATALOG } from "@/data/catalog";
 import {
+  FIXED_WORD,
   LEX,
   issueCode,
   issueLabel,
@@ -8,6 +9,7 @@ import {
   kindInSentence,
   plateLabel,
   styleName,
+  stylePrefix,
 } from "./lexicon";
 
 describe("the lexicon", () => {
@@ -65,6 +67,36 @@ describe("styleName", () => {
 
   it("leaves a fixed style's name exactly as it is", () => {
     expect(styleName("ÁO THUN TRƠN", null)).toBe("ÁO THUN TRƠN");
+  });
+});
+
+/**
+ * v3 slice 12: the back office's name field shows the issue's part of the
+ * name as a fixed segment in front of what is typed. It is the shown name's
+ * own head, character for character, so the two can never disagree.
+ */
+describe("stylePrefix", () => {
+  it("is the code and the dash, held together by a no-break space", () => {
+    expect([...stylePrefix(6)].map((c) => c.codePointAt(0)!.toString(16))).toEqual([
+      "53",
+      "30",
+      "36",
+      "a0",
+      "2013",
+    ]);
+  });
+
+  it("is exactly how the shown name begins, then one ordinary space", () => {
+    for (const no of [3, 5, 6, 12]) {
+      expect(styleName("KHÓI", no)).toBe(`${stylePrefix(no)} KHÓI`);
+    }
+  });
+});
+
+describe("FIXED_WORD", () => {
+  it("is the board's word for a style of no issue", () => {
+    // `FIXED` in prototype/v3/line/line-mock.js, round 4 (approved 25/09).
+    expect(FIXED_WORD).toBe("Cố định");
   });
 });
 

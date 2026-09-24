@@ -27,7 +27,7 @@ import { effectiveOrder } from "@/lib/customer-orders";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { closesInLabel, dropState, opensInLabel } from "@/lib/drop";
 import { LOW_STOCK_AT, dropSummary } from "@/lib/inventory";
-import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
+import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { compactVnd, plainVnd, vnd } from "@/lib/money";
 import { STATE_LABEL } from "@/lib/order-labels";
 import { orderTotalVnd } from "@/lib/orders";
@@ -291,7 +291,7 @@ export function DashboardScreen({
                   width={36}
                   height={45}
                 />
-                <b>{r.product.name}</b>
+                <b>{styleName(r.product.name, r.product.dropNo)}</b>
                 <div
                   className={
                     r.left === 0 ? "meter gone" : r.percent >= 85 ? "meter hot" : "meter"
@@ -376,7 +376,7 @@ export function DashboardScreen({
                       height={45}
                     />
                     <span>
-                      <b>{a.product.name}</b>
+                      <b>{styleName(a.product.name, a.product.dropNo)}</b>
                       <span className="sub">{a.note}</span>
                     </span>
                     <Badge tone={a.left === 0 ? "hot" : "warn"}>

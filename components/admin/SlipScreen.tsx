@@ -9,7 +9,7 @@ import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions
 import { isPaidFor, type AdminOrder } from "@/lib/admin-orders";
 import { issueOf } from "@/lib/customer-tags";
 import { clockLabel, dayMonth } from "@/lib/datetime";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { LEX, issueNo, styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd, orderUnits } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
@@ -139,7 +139,7 @@ export function SlipScreen({
                       return (
                         <tr key={`${l.productId}-${l.size}-${l.color}-${i}`}>
                           <td>
-                            <b>{p?.name ?? "—"}</b> · {p?.kind ?? ""}
+                            <b>{p ? styleName(p.name, p.dropNo) : "—"}</b> · {p?.kind ?? ""}
                           </td>
                           <td>
                             {COLORS[l.color].label} · {l.size}

@@ -3,8 +3,10 @@
  *
  * Moved here when the back office stopped simulating in the browser: a
  * teaser is a row of `public.teasers` now (`admin_add_teaser`), and its slug
- * is still decided here — by the Server Action, before the database checks
- * its shape (`^[a-z0-9-]+$`) and that it is new.
+ * is decided by the Server Action before the database checks its shape
+ * (`^[a-z0-9-]+$`) and that it is new. Since v3 slice 12 that slug is
+ * `slugFor` in `lib/catalog-admin.ts` — `s06-soi`, the pattern every issue's
+ * style has — and `teaserSlug` (`soi-6`), the second pattern, is gone.
  */
 
 /**
@@ -23,15 +25,4 @@ export function asciiSlug(text: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-}
-
-/**
- * A URL segment for a style announced for an issue.
- *
- * Derived from the name and the issue rather than random, so the same teaser
- * added twice is the same slug — which the database then refuses as taken —
- * instead of two rows of one style.
- */
-export function teaserSlug(name: string, no: number): string {
-  return `${asciiSlug(name) || "mau"}-${no}`;
 }

@@ -36,6 +36,13 @@ export interface Stab {
   value: string | null;
   label: React.ReactNode;
   count: number;
+  /**
+   * Where the tab leads, when it is not `param=value` — a row whose tabs set
+   * different keys (v3 slice 12: "Cố định" is `?fixed=1`, an issue `?drop=5`).
+   */
+  href?: string;
+  /** Drawn after the count — the Cố định tab's red dot (v3 slice 12). */
+  after?: React.ReactNode;
 }
 
 export function Stabs({
@@ -62,13 +69,14 @@ export function Stabs({
         return (
           <Link
             key={t.value ?? "all"}
-            href={hrefWith(path, query, { [param]: t.value, page: null })}
+            href={t.href ?? hrefWith(path, query, { [param]: t.value, page: null })}
             className={on ? "on" : undefined}
             aria-current={on ? "page" : undefined}
             scroll={false}
           >
             {t.label}
             <span className="cnt">{t.count}</span>
+            {t.after}
           </Link>
         );
       })}

@@ -15,7 +15,8 @@ import { effectiveStatus } from "./customer-orders";
 import { clockLabel, dateTimeLabel, dayMonth } from "./datetime";
 import type { AdminEvent, ProductFields } from "./db/event-dto";
 import { dropSummary } from "./inventory";
-import { LEX, issueLabel } from "./lexicon";
+import { RESTOCK_REASON } from "./inventory-adjust";
+import { LEX, issueLabel, styleName } from "./lexicon";
 import { vnd } from "./money";
 import { isUploadedKey } from "./photos";
 import { TRANSFER_HOLD_HOURS, orderTotalVnd } from "./orders";
@@ -71,7 +72,7 @@ export interface LogRow {
   action: string;
   /** The quiet line under it: "đánh dấu tay". */
   detail?: string;
-  /** "DH-2431 · Nguyễn Khả Vy" / "BỤI · Đen · L" / "Số 06". */
+  /** "DH-2431 · Nguyễn Khả Vy" / "S05 – BỤI · Đen · L" / "Số 06". */
   subject: string;
   /** Where the subject leads, when it leads anywhere. */
   href?: string;
@@ -122,7 +123,23 @@ function totalTail(book: Book, code: string): { tail?: string } {
   return order ? { tail: vnd(orderTotalVnd(order)) } : {};
 }
 
-/** "CÁT ×1" — what was in the box. */
+/**
+ * A style as the back office names it — "S05 – KHÓI", a fixed style's bare
+ * name (v3 slice 12) — read from the catalogue by id. A style the catalogue
+ * no longer has is named by what the event kept, else by its id.
+ */
+function styleOf(
+  catalog: Catalog,
+  id: string,
+  kept?: { name?: string; dropNo?: number | null },
+): string {
+  const p = catalog.byId.get(id as Product["id"]);
+  if (p) return styleName(p.name, p.dropNo);
+  if (kept?.name) return kept.dropNo === undefined ? kept.name : styleName(kept.name, kept.dropNo);
+  return id;
+}
+
+/** "S05 – CÁT ×1" — what was in the box. */
 function itemsTail(catalog: Catalog, book: Book, code: string): { tail?: string } {
   const order = book.get(code);
   return order ? { tail: orderItemsLabel(catalog, order) } : {};
@@ -365,9 +382,27 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
 
     // ── the catalogue (slice B3b) — the same sentences the simulation said
     case "INVENTORY_ADJUSTED": {
-      const product = catalog.byId.get(e.productId as Product["id"]);
       const one = e.cells.length === 1 ? e.cells[0] : undefined;
-      const name = product?.name ?? e.productId;
+      const name = styleOf(catalog, e.productId);
+      // v3 slice 12: pieces brought back onto a fixed style read as that —
+      // "Nhập thêm", the style, and how many went on the shelf.
+      if (e.reason === RESTOCK_REASON) {
+        return {
+          id,
+          at: e.at,
+          kind: "stock",
+          author,
+          action: RESTOCK_REASON,
+          subject: one
+            ? `${name} · ${COLORS[one.color].label} · ${one.size}`
+            : `${name} · ${e.cells.length} ô`,
+          href: `/admin/products/${e.productId}`,
+          ...(one ? { before: String(one.before), after: String(one.after) } : {}),
+          tail: [`+${e.delta} chiếc`, e.note.trim() ? `"${e.note.trim()}"` : ""]
+            .filter(Boolean)
+            .join(" · "),
+        };
+      }
       return {
         id,
         at: e.at,
@@ -394,7 +429,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
       const keys = (Object.keys(e.after) as Array<keyof ProductFields>).filter(
         (k) => k in PRODUCT_FIELD_LABEL,
       );
-      const name = catalog.byId.get(e.productId as Product["id"])?.name ?? e.after.name ?? e.productId;
+      const name = styleOf(catalog, e.productId, { name: e.after.name });
       const only = keys.length === 1 ? keys[0] : undefined;
       return {
         id,
@@ -424,7 +459,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
         author,
         action: "Thêm mẫu",
         ...(sources ? { detail: sources } : {}),
-        subject: catalog.byId.get(e.productId as Product["id"])?.name ?? e.name,
+        subject: styleOf(catalog, e.productId, { name: e.name, dropNo: e.dropNo }),
         href: `/admin/products/${e.productId}`,
         // A fixed style (slice B5) was created for no issue and cut nothing.
         tail:
@@ -440,7 +475,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
         kind: "stock",
         author,
         action: `Thay ảnh ${COLORS[e.color].label}`,
-        subject: catalog.byId.get(e.productId as Product["id"])?.name ?? e.productId,
+        subject: styleOf(catalog, e.productId),
         href: `/admin/products/${e.productId}`,
         before: photoWord(e.before),
         after: photoWord(e.after),
@@ -452,7 +487,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
         kind: "stock",
         author,
         action: "Đổi thứ tự màu",
-        subject: catalog.byId.get(e.productId as Product["id"])?.name ?? e.productId,
+        subject: styleOf(catalog, e.productId),
         href: `/admin/products/${e.productId}`,
         before: band(e.before),
         after: band(e.after),
@@ -558,7 +593,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
         action: "Thêm mẫu hé lộ",
         subject: issueLabel(e.no),
         href: `/admin/drops/${String(e.no).padStart(2, "0")}`,
-        tail: `${e.name} · ${e.garment}`,
+        tail: `${styleName(e.name, e.no)} · ${e.garment}`,
       };
   }
 }
