@@ -99,13 +99,46 @@ scaled = im.resize((sw, sh), Image.LANCZOS)
 ox = round(OUT_W / 2 - (gx0 + gx1) / 2 * s)
 oy = round(OUT_H * TOP_FRAC - gy0 * s)
 
-# 4. The canvas: the same plane, continued, with the backdrop's own grain.
-lo = Image.new("RGB", (OUT_W // 10, OUT_H // 10))
-lp = lo.load()
-for y in range(OUT_H // 10):
-    for x in range(OUT_W // 10):
-        lp[x, y] = plane_at((x * 10 + 5 - ox) / s, (y * 10 + 5 - oy) / s)
-canvas = lo.resize((OUT_W, OUT_H), Image.BICUBIC)
+# 4. The canvas: the photo's OWN border, continued outward, with the
+#    backdrop's grain. Until 25/09 this was the plane of step 1, continued —
+#    fitted to the top and the upper sides, it missed a paper sweep that
+#    lightens toward the floor, and NẮNG (white, cream, moss) showed a darker
+#    band where the photo ended. Each edge band is averaged across its depth
+#    and smoothed along its length, so the continuation starts at exactly the
+#    colour the photo ends on.
+x0, y0 = max(0, ox), max(0, oy)
+x1, y1 = min(OUT_W, ox + sw), min(OUT_H, oy + sh)
+vis = scaled.crop((x0 - ox, y0 - oy, x1 - ox, y1 - oy))
+vw, vh = vis.size
+band = 24
+def along(img, n):  # smooth a 1-pixel strip along its length
+    w, h = img.size
+    if w > 1:
+        return img.resize((max(1, w // n), 1), Image.BOX).resize((w, 1), Image.BILINEAR)
+    return img.resize((1, max(1, h // n)), Image.BOX).resize((1, h), Image.BILINEAR)
+top_b = along(vis.crop((0, 0, vw, band)).resize((vw, 1), Image.BOX), 16)
+bot_b = along(vis.crop((0, vh - band, vw, vh)).resize((vw, 1), Image.BOX), 16)
+lef_b = along(vis.crop((0, 0, band, vh)).resize((1, vh), Image.BOX), 16)
+rig_b = along(vis.crop((vw - band, 0, vw, vh)).resize((1, vh), Image.BOX), 16)
+canvas = Image.new("RGB", (OUT_W, OUT_H))
+def corner(a, b):
+    return tuple((p + q) // 2 for p, q in zip(a, b))
+if y0 > 0:
+    canvas.paste(top_b.resize((vw, y0)), (x0, 0))
+if y1 < OUT_H:
+    canvas.paste(bot_b.resize((vw, OUT_H - y1)), (x0, y1))
+if x0 > 0:
+    canvas.paste(lef_b.resize((x0, vh)), (0, y0))
+    canvas.paste(corner(top_b.getpixel((0, 0)), lef_b.getpixel((0, 0))), (0, 0, x0, y0))
+    canvas.paste(corner(bot_b.getpixel((0, 0)), lef_b.getpixel((0, vh - 1))), (0, y1, x0, OUT_H))
+if x1 < OUT_W:
+    canvas.paste(rig_b.resize((OUT_W - x1, vh)), (x1, y0))
+    canvas.paste(corner(top_b.getpixel((vw - 1, 0)), rig_b.getpixel((0, 0))), (x1, 0, OUT_W, y0))
+    canvas.paste(corner(bot_b.getpixel((vw - 1, 0)), rig_b.getpixel((0, vh - 1))), (x1, y1, OUT_W, OUT_H))
+# Under the photo, the photo itself: its feathered edge in step 5 then fades
+# into its own softened copy, never into an unfilled canvas.
+canvas.paste(vis, (x0, y0))
+canvas = canvas.filter(ImageFilter.GaussianBlur(6))
 if grain > 0.3:
     noise = Image.effect_noise((OUT_W, OUT_H), grain * 2.2).convert("RGB")
     canvas = ImageChops.add(canvas, noise, 1.0, -128)
