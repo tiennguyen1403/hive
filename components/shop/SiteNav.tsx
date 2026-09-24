@@ -27,7 +27,10 @@ export interface SiteNavProps {
   /**
    * Lights the issue plate: the listing with no family narrowing it. The
    * plate took this over from the "Số NN" link that headed the families
-   * until v3 slice 8.
+   * until v3 slice 8. It lights only while the issue is OPEN, because only
+   * then does the plate lead to `/products`, the page being viewed. Before
+   * the issue opens it leads to `/#next`, once shut to `/so/N`, and a link
+   * must not claim to be a page it does not lead to.
    */
   activeDrop?: boolean;
 }
@@ -78,6 +81,8 @@ export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
   // record at `/so/N` (v3 slice 4).
   const dropHref =
     state === "OPEN" ? "/products" : state === "CLOSED" ? `/so/${drop.no}` : "/#next";
+  // Lit only when its href is the page being viewed (see `activeDrop`).
+  const plateOn = activeDrop && state === "OPEN";
 
   return (
     <header className="nav3">
@@ -87,11 +92,11 @@ export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
         </Link>
 
         <Link
-          className={`itag${plateTone}${activeDrop ? " on" : ""}`}
+          className={`itag${plateTone}${plateOn ? " on" : ""}`}
           href={dropHref}
           aria-label={plateName}
           title={plateName}
-          aria-current={activeDrop ? "page" : undefined}
+          aria-current={plateOn ? "page" : undefined}
         >
           {label}
         </Link>
