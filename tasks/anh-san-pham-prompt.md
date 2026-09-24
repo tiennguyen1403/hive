@@ -5,11 +5,12 @@ Viết ngày 25/09/2026 cho ChatGPT (GPT Image). Người dùng đã chốt:
 - **Ảnh bìa Số:** có người mẫu Việt, một nam một nữ, mặc vài món của Số đó.
 - Công cụ tạo ảnh là **ChatGPT**.
 
-Mỗi màu của một mẫu có một ảnh. Web luôn hiện ảnh sản phẩm theo tỉ lệ **4:5**. Tổng cộng có 23 món:
+Mỗi màu của một mẫu có một ảnh. Web luôn hiện ảnh sản phẩm theo tỉ lệ **4:5**. Tổng cộng có 31 món:
 - 21 mẫu đang có trong dữ liệu, thuộc Số 03, 04 và 05, kể cả mẫu đã hết (vẫn hiện trên web với dấu SOLD OUT);
-- 2 mẫu hé lộ của Số 06.
+- 2 mẫu hé lộ của Số 06;
+- 8 mẫu cố định (thêm ngày 25/09, sau khi người dùng duyệt bảng `prototype/v3/line.html`).
 
-23 món này cần 40 ảnh, cộng 1 ảnh bìa là 41 ảnh.
+31 món này cần 57 ảnh, cộng 1 ảnh bìa là 58 ảnh.
 
 Prompt viết bằng tiếng Anh vì công cụ tạo ảnh hiểu tiếng Anh tốt nhất; phần giải thích viết tiếng Việt.
 
@@ -57,7 +58,8 @@ vẫn là cách chắc nhất.
 ## 3. Tên tệp và nơi lưu
 
 - **Tên:** `<mẫu>-<màu>.png`, với tên màu theo khoá trong code: `black` · `cream` · `grey` · `moss` · `brown` · `white` · `navy`.
-  Ví dụ `khoi-black.png`, `khoi-cream.png`. Ảnh bìa là `cover-05.png`. Bảng đủ 41 tệp ở mục 8.
+  Ví dụ `khoi-black.png`, `khoi-cream.png`. Mẫu cố định lấy tên không dấu của mẫu: `ao-thun-tron-white.png`. Ảnh bìa là
+  `cover-05.png`. Bảng đủ 58 tệp ở mục 8.
 - **Nơi lưu:** thư mục `photos-raw/` ở gốc repo. Git bỏ qua thư mục này, vì ảnh gốc nặng và chưa qua xử lý.
 - **Đừng tải ảnh qua trang quản trị.** Mỗi ngày cron đặt lại dữ liệu mẫu một lần, và lệnh này **xoá mọi ảnh tải lên** (`purgeUploadedPhotos`
   trong `app/api/reset/route.ts`). Khi đủ ảnh, báo phiên chính. Một lát nhỏ sẽ đưa ảnh vào dữ liệu mẫu:
@@ -372,6 +374,99 @@ Print: one large screen print centred on the chest, about 26 cm wide, in a singl
 Front view.
 ```
 
+### Mẫu cố định — bán mọi lúc (8 mẫu, 17 ảnh)
+
+Đồ cơ bản, không in, không thuộc Số nào. Vài mẫu gần giống một mẫu trong Số (ÁO THUN TRƠN với NẮNG, ÁO THUN TAY DÀI với LỬA,
+HOODIE TRƠN với BỤI). Khối prompt ghi rõ chỗ khác để ảnh không trùng nhau: cổ, bo tay, mũ, dây rút.
+
+**ÁO THUN TRƠN** · Áo thun · Cotton 220gsm · Regular · 400.000₫
+
+```text
+ÁO THUN TRƠN — regular-fit plain basic T-shirt. Colour: white (#F2F1ED), a clean soft white, not grey, not yellow.
+Midweight 220 gsm cotton jersey, smooth and even. Plain, no print.
+Regular cut: set-in shoulders on the natural shoulder line, straight body, hem at the top of the hip finished with a double-needle stitch, short sleeves ending mid-bicep with a double-needle hem, a slightly wider 2 cm ribbed crew neck.
+Front view.
+```
+
+Đổi màu: `black` → `ao-thun-tron-black.png` · `grey` → `ao-thun-tron-grey.png`
+
+**ÁO THUN TAY DÀI** · Áo thun tay dài · Cotton 220gsm · Regular · 450.000₫
+
+```text
+ÁO THUN TAY DÀI — regular-fit plain long-sleeve T-shirt. Colour: black (#1C1C1C), a soft true black.
+Midweight 220 gsm cotton jersey. Plain, no print.
+Regular cut: set-in shoulders, straight body to the top of the hip, long sleeves finished with a plain double-needle hem at the wrist — no ribbed cuffs — and a narrow 1.5 cm ribbed crew neck.
+Front view, sleeves hanging naturally at the sides.
+```
+
+Đổi màu: `white` → `ao-thun-tay-dai-white.png`
+
+**HOODIE TRƠN** · Áo hoodie · Nỉ bông 340gsm · Oversize · 750.000₫
+
+```text
+HOODIE TRƠN — oversized plain pullover hoodie. Colour: grey (#8C8C8C), a flat mid grey, not heathered.
+Midweight 340 gsm brushed-back cotton fleece, soft with a matte face. Plain, no print.
+Oversized cut: dropped shoulders, roomy body, single-layer hood lying down behind the neck with round drawcords finished in plain metal tips, kangaroo pocket, ribbed cuffs and hem band.
+Front view.
+```
+
+Đổi màu: `black` → `hoodie-tron-black.png` · `cream` → `hoodie-tron-cream.png`
+
+**ÁO KHOÁC DÙ** · Áo khoác dù · Dù 1 lớp · Oversize · 850.000₫
+
+```text
+ÁO KHOÁC DÙ — oversized coach jacket. Colour: black (#1C1C1C), a soft true black.
+Single-layer nylon with a soft sheen and a light, crisp drape. Plain.
+Oversized cut: dropped shoulders, boxy body ending at the upper hip, turn-down shirt collar, full front closure with five tonal snap buttons all fastened, two slanted hand pockets, elasticated cuffs, a drawcord hem.
+Front view.
+```
+
+Đổi màu: `navy` → `ao-khoac-du-navy.png`
+
+**GILE PHAO** · Áo gile phao · Dù chần bông · Regular · 750.000₫
+
+```text
+GILE PHAO — regular-fit padded puffer vest. Colour: black (#1C1C1C), a soft true black.
+Matte nylon shell with synthetic padding, stitched in horizontal channel quilting about 7 cm apart, full but not bulky.
+Regular cut: sleeveless with neatly bound armholes, stand collar, full front zip closed to the top, two zipped hand pockets, hem at the hip.
+Front view; the armholes are open and empty — no sleeves, no arms.
+```
+
+Chỉ có màu đen.
+
+**SƠ MI OXFORD** · Áo sơ mi oxford · Cotton oxford · Regular · 590.000₫
+
+```text
+SƠ MI OXFORD — regular-fit oxford shirt. Colour: white (#F2F1ED), a clean soft white, not grey, not yellow.
+Cotton oxford cloth: a soft basket weave with a visible, slightly textured surface and a matte finish.
+Regular cut: button-down collar with its points buttoned down, full button placket with small tonal buttons, buttoned up to the second button, one patch pocket on the left chest, long sleeves with one-button cuffs, a back box pleat, curved shirttail hem.
+Front view.
+```
+
+Đổi màu: `navy` → `so-mi-oxford-navy.png`
+
+**QUẦN KAKI** · Quần kaki · Kaki 280gsm · Regular · 650.000₫
+
+```text
+QUẦN KAKI — regular-fit chino trousers. Colour: cream (#E6DFD1), a warm sand off-white, not yellow.
+280 gsm cotton twill with a fine diagonal weave, smooth and sturdy.
+Regular straight leg: belt loops, button and zip fly, slanted front pockets, two welt back pockets, clean folded hem at full length. No cargo pockets.
+Shown from the front on an invisible lower-body mannequin, legs straight and slightly apart, the waistband slightly open.
+```
+
+Đổi màu: `black` → `quan-kaki-black.png`
+
+**QUẦN SHORT NỈ** · Quần short nỉ · Nỉ da cá 300gsm · Regular · 450.000₫
+
+```text
+QUẦN SHORT NỈ — sweat shorts. Colour: grey (#8C8C8C), a flat mid grey, not heathered.
+300 gsm cotton French terry (loopback), soft and matte. Plain.
+Regular fit: covered elastic waistband with a flat drawcord, side-seam pockets, straight legs ending just above the knee with a clean hem.
+Shown from the front on an invisible lower-body mannequin, the waistband slightly open.
+```
+
+Đổi màu: `black` → `quan-short-ni-black.png`
+
 ## 7. Ảnh bìa Số 05 (thay ảnh `hero`)
 
 Ảnh bìa là ảnh lớn cạnh số 05 trên trang chủ:
@@ -397,7 +492,7 @@ No readable text or signs anywhere in the picture.
 Hiện chỉ Số đang bán dùng ảnh bìa riêng. Số đã đóng lấy ảnh của mẫu đầu tiên trong Số làm bìa (`components/shop/ClosedIssue.tsx`),
 nên chưa cần ảnh bìa cho Số 03 và Số 04.
 
-## 8. Bảng 41 tệp
+## 8. Bảng 58 tệp
 
 | Số | Mẫu | Ảnh màu đầu | Ảnh đổi màu |
 |---|---|---|---|
@@ -424,11 +519,14 @@ nên chưa cần ảnh bìa cho Số 03 và Số 04.
 | 03 | VÔI | `voi-white.png` | `voi-grey.png` |
 | 06 | SỎI | `soi-grey.png` | — |
 | 06 | NGÓI | `ngoi-brown.png` | — |
+| Cố định | ÁO THUN TRƠN | `ao-thun-tron-white.png` | `ao-thun-tron-black.png`, `ao-thun-tron-grey.png` |
+| Cố định | ÁO THUN TAY DÀI | `ao-thun-tay-dai-black.png` | `ao-thun-tay-dai-white.png` |
+| Cố định | HOODIE TRƠN | `hoodie-tron-grey.png` | `hoodie-tron-black.png`, `hoodie-tron-cream.png` |
+| Cố định | ÁO KHOÁC DÙ | `ao-khoac-du-black.png` | `ao-khoac-du-navy.png` |
+| Cố định | GILE PHAO | `gile-phao-black.png` | — |
+| Cố định | SƠ MI OXFORD | `so-mi-oxford-white.png` | `so-mi-oxford-navy.png` |
+| Cố định | QUẦN KAKI | `quan-kaki-cream.png` | `quan-kaki-black.png` |
+| Cố định | QUẦN SHORT NỈ | `quan-short-ni-grey.png` | `quan-short-ni-black.png` |
 | 05 | Bìa | `cover-05.png` | — |
 
-Tổng: 23 ảnh màu đầu, 17 ảnh đổi màu và 1 ảnh bìa, tức 41 tệp.
-
-## 9. Dòng bán liên tục
-
-Dòng mới sẽ gồm đồ cơ bản trong 6 họ. Khi người dùng duyệt danh sách mẫu của dòng này trên bảng mock, các khối prompt của nó sẽ
-được thêm vào đây. Các khối mới dùng cùng KHỐI CHUNG, cùng ảnh chuẩn và cùng cách đặt tên.
+Tổng: 31 ảnh màu đầu, 26 ảnh đổi màu và 1 ảnh bìa, tức 58 tệp.
