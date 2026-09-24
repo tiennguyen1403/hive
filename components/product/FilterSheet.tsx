@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon/Icon";
+import { startWait } from "@/components/shop/WaitVeil";
 import { Sheet } from "@/components/ui/Sheet";
 import { COLORS } from "@/data/colors";
 import {
@@ -114,7 +115,10 @@ export function FilterSheet({ open, onClose, applied, path, pool }: FilterSheetP
   }
 
   function apply() {
-    router.push(listingHref(path, draft));
+    // Same page, the draft applied: the wait veil's rule leaves it uncovered.
+    const href = listingHref(path, draft);
+    startWait(href);
+    router.push(href);
     onClose();
   }
 

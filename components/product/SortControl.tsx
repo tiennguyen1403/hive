@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon/Icon";
+import { startWait } from "@/components/shop/WaitVeil";
 import { Menu3 } from "@/components/ui/Menu3";
 import { useAnchoredPanel, usePanelKeys } from "@/components/ui/useAnchoredPanel";
 import {
@@ -52,7 +53,10 @@ export function SortControl({ applied, path }: SortControlProps) {
   }));
 
   function pick(value: string) {
-    router.push(listingHref(path, { ...applied, sort: value as SortKey }));
+    // Same page, new order: the wait veil's rule leaves it uncovered.
+    const href = listingHref(path, { ...applied, sort: value as SortKey });
+    startWait(href);
+    router.push(href);
     panel.close();
     panel.anchorRef.current?.focus();
   }

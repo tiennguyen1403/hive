@@ -1767,3 +1767,29 @@ Brief `tasks/briefs/v3-lat-10-share.md` gộp thêm phần "biển Số chỉ kh
 
 **24/09, lát 9 bị dừng giữa chừng (Ctrl+C lỡ tay của người dùng).** Agent không nối lại được. Code của nó còn nguyên trong cây làm
 việc: 12 tệp sửa, `WaitVeil.tsx`, `lib/wait.ts` + test, bản build 23:34, bảy ảnh. Một agent mới đang đọc lại, kiểm và hoàn tất từ đó.
+
+**25/09, lát 9 ĐẠT — lớp chờ "logo giữa màn hình".** Agent thứ hai hoàn tất phần agent đầu làm dở. Nó sửa thêm một chỗ lớp kẹt 10 s
+(Lùi chậm rồi Tới ngay về trang đang hiện).
+
+Các tệp:
+- `WaitVeil.tsx` đặt trong `app/layout.tsx`, không làm gì ở `/admin`;
+- `lib/wait.ts` gồm `shouldVeil`, `WAIT` và các khung hình, cùng 26 test;
+- `.veil` trong `sheet.css`, tầng 35;
+- `startWait()` gọi trước bảy chỗ `router.push`;
+- token `--r-plate` và chú thích `buttons.css` (§4).
+
+Kết thúc lượt chờ khi một trong các điều sau xảy ra:
+- pathname đổi;
+- một cập nhật `startTransition` commit cùng lượt điều hướng của router, nên commit về đúng URL hay cú bấm bị huỷ đều không kẹt;
+- `popstate` về đúng trang;
+- quá lưới an toàn 10 s.
+
+Typecheck, 1.321 test, build, sweep (như lát 8) đều qua. Phiên chính soát độc lập trên 3200 với RSC giữ 1,5 s, ở 1280 và 390:
+- 0,7 s: lớp bật, `aria-busy`, cung quay;
+- trang về: tắt;
+- Lùi: không kẹt; chip lọc: không che;
+- giảm chuyển động: vòng khép, đứng yên;
+- hình khớp bảng.
+
+Còn mở: lớp vẫn chặn con trỏ khoảng 330 ms lúc đóng trên trang mới. Quyết: nhả con trỏ ngay khi trang về, vì phần đóng không được làm
+chậm trang mới; việc này gộp vào lát 10. DESIGN.md (lớp nằm ngoài `.s`, `.veil`/`.stitches`, thứ tự tầng, `--r-plate`) để documenter.

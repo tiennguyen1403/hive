@@ -111,10 +111,11 @@
    badges in both places.
 
    A LIVE state is the woven label itself: black cloth, honey thread. It is
-   the same material as the issue cover and the stamp in the nav, so the shop
-   has one badge rather than one per surface. Waiting and finished states are
-   unbleached cloth; alerts keep the red family; things on their way keep the
-   blue. See `components/ui/Badge.tsx` for which word gets which tone. */
+   the same material as the issue cover and the issue plate in the nav, so
+   the shop has one badge rather than one per surface. Waiting and finished
+   states are unbleached cloth; alerts keep the red family; things on their
+   way keep the blue. See `components/ui/Badge.tsx` for which word gets which
+   tone. */
 .s .badge{ display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px;
   border-radius:var(--r-sm); white-space:nowrap;
   font-size:var(--fs-xs); font-weight:700; letter-spacing:.08em; text-transform:uppercase;

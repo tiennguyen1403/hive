@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { startWait } from "@/components/shop/WaitVeil";
 import { Button } from "@/components/ui/Button";
 import { listingHref, type ListingQuery } from "@/lib/catalog-query";
 import { plainVnd } from "@/lib/money";
@@ -50,7 +51,10 @@ export function PriceFilterForm({ applied, path }: PriceFilterFormProps) {
     delete next.maxVnd;
     if (min) next.minVnd = Number(min.replace(/\D/g, ""));
     if (max) next.maxVnd = Number(max.replace(/\D/g, ""));
-    router.push(listingHref(path, next));
+    // Same page, new window: the wait veil's rule leaves it uncovered.
+    const href = listingHref(path, next);
+    startWait(href);
+    router.push(href);
   }
 
   return (

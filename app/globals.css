@@ -261,6 +261,11 @@
 
   --r: var(--radius-md);
   --r-sm: var(--radius-sm);
+  /* The corner of the issue plate in the nav bar (`.nav3 .itag`, v3 slice 8)
+     — the "Số 05" plate cut from the cover's cloth, not the `--plate` colour
+     above. A step rounder than a control. Not in `@theme`, because nothing
+     but the plate is shaped like it. */
+  --r-plate: 5px;
 
   /* ── Nine spacing steps, 4-based. Tight groups use s1–s3, sections s6–s8.
         Not colours, so they stay out of `@theme`: Tailwind would turn them

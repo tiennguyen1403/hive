@@ -11,6 +11,7 @@ import { Empty } from "@/components/shop/Empty";
 import { ShopFrame } from "@/components/shop/ShopFrame";
 import { Steps } from "@/components/shop/Steps";
 import { Toast } from "@/components/shop/Toast";
+import { startWait } from "@/components/shop/WaitVeil";
 import { useCart } from "@/components/cart/CartContext";
 import { PromoBox } from "@/components/cart/PromoBox";
 import { useAddressBook } from "@/components/account/AddressBookContext";
@@ -393,9 +394,14 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
       // between. After an `await` the transition has to be restated
       // (react.dev/reference/react/useTransition, "React doesn't treat my
       // state update after await as a Transition").
+      //
+      // Until here the button says the order is on its way; from here on it
+      // is the receipt that is, and the wait veil covers that part.
       startPlacing(() => {
+        const receipt = `/order-confirmed/${result.code}`;
         clear();
-        router.push(`/order-confirmed/${result.code}`);
+        startWait(receipt);
+        router.push(receipt);
       });
     });
   }

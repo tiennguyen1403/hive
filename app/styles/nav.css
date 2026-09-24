@@ -111,7 +111,7 @@
 .s .nav3 .itag{ --pl:var(--stage); --pi:var(--brand);
   display:inline-flex; align-items:center; justify-content:center; flex:none;
   position:relative; white-space:nowrap; height:28px; padding:0 17px; border:0;
-  border-radius:5px;
+  border-radius:var(--r-plate);
   background:
     radial-gradient(circle at 8.5px 50%, var(--pi) 0 1.6px, transparent 2.1px),
     radial-gradient(circle at calc(100% - 8.5px) 50%, var(--pi) 0 1.6px, transparent 2.1px),

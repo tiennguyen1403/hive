@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon/Icon";
+import { startWait } from "@/components/shop/WaitVeil";
 import type { Product } from "@/data/types";
 import { onHand } from "@/lib/inventory";
 import { LEX, issueNo } from "@/lib/lexicon";
@@ -75,15 +76,24 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
   const open =
     focused && !dismissed && trimmed.length >= SUGGEST_MIN && rows.length > 0;
 
+  // Every navigation below goes through `push`, which tells the wait veil
+  // first (`startWait`). Only a move to another page covers it — a style or
+  // a family from the list, "Huỷ" to the home page; a new search stays on
+  // `/search` and leaves it alone.
+  function push(href: string) {
+    startWait(href);
+    router.push(href);
+  }
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setDismissed(true);
-    router.push(searchHref(trimmed));
+    push(searchHref(trimmed));
   }
 
   function go(href: string) {
     setDismissed(true);
-    router.push(href);
+    push(href);
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
@@ -152,7 +162,7 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
               ref.current?.focus();
               // The results on the page came from the URL, so clearing the
               // box has to clear them too or the button only half works.
-              if (initial) router.push("/search");
+              if (initial) push("/search");
             }}
           >
             <Icon name="x" className="ic sm" />
@@ -249,8 +259,9 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
         type="button"
         className="cancel"
         onClick={() => {
+          // Back is a `popstate`, which the veil hears for itself.
           if (window.history.length > 1) router.back();
-          else router.push("/");
+          else push("/");
         }}
       >
         Huỷ

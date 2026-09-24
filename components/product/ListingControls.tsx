@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon/Icon";
+import { startWait } from "@/components/shop/WaitVeil";
 import { COLORS } from "@/data/colors";
 import type { ColorKey, Fit, Product, Size } from "@/data/types";
 import {
@@ -64,7 +65,10 @@ export function ListingControls({ applied, path, pool }: ListingControlsProps) {
   }, []);
 
   function go(next: ListingQuery) {
-    router.push(listingHref(path, next));
+    // Same page, another filter: the wait veil's rule leaves it uncovered.
+    const href = listingHref(path, next);
+    startWait(href);
+    router.push(href);
   }
 
   function toggleFit(fit: Fit) {

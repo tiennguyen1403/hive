@@ -5,6 +5,7 @@ import { AddressBookProvider } from "@/components/account/AddressBookContext";
 import { MeProvider } from "@/components/account/MeContext";
 import { WishlistProvider } from "@/components/account/WishlistContext";
 import { CatalogProvider } from "@/components/shop/CatalogContext";
+import { WaitVeil } from "@/components/shop/WaitVeil";
 import { catalogInput, loadCatalog } from "@/lib/db/catalog";
 import { loadMe } from "@/lib/db/profiles";
 import "./globals.css";
@@ -104,6 +105,12 @@ export default async function RootLayout({
             </AddressBookProvider>
           </MeProvider>
         </CatalogProvider>
+        {/* The wait veil (v3 slice 9): once, here, above the page boundary,
+            because it has to outlive the page it covers — `ShopFrame`
+            remounts with every page, and the veil plays its closing over the
+            NEW one. It needs none of the providers. On `/admin` it renders
+            nothing. */}
+        <WaitVeil />
       </body>
     </html>
   );

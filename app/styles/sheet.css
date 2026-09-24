@@ -281,3 +281,67 @@
    slice 6. `components/ui/Modal.tsx` went at slice 5, when `AdminSheet`
    took over every confirm and short form the admin opens; nothing rendered
    the old panel afterwards. */
+
+/* ── the wait veil, v3 slice 9 ───────────────────────────────────────────
+   While the next page is on its way: white over the page below the bar, the
+   HIVE mark in the middle, an arc of honey stitches going round it
+   (`components/shop/WaitVeil.tsx`, approved on `prototype/v3/loading.html`,
+   style "Logo giữa màn hình", 24/09/2026).
+
+   It lives here because it is a layer OUTSIDE `.s`, like the three above:
+   the root layout renders it beside the page rather than inside it, so it
+   survives the page changing under it. DESIGN.md §6 therefore applies —
+   every selector starts at `.veil`, and its one variant (`.on`) is a class.
+   It declares no type because it draws no text. A new class name only, so
+   it ties with nothing in the files that load after this one.
+
+   It starts at the bar's bottom edge and never covers the bar: 56px and the
+   1px rule on the phone, 64 and 1 from 900px (`.nav3` in nav.css and
+   desktop.css). In the stack it sits over the sticky buy bar and the search
+   suggestions (30) and under the bar (40), the sheet (50), the menu (55) and
+   the toast (80).
+
+   At rest it is transparent, hidden and lets the pointer through, which is
+   what the server renders. The component paints the opacity, the mark's
+   scale and the arc frame by frame, and puts `.on` on it while any white is
+   showing — the only time it takes the pointer. */
+.veil {
+  position: fixed;
+  top: 57px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.veil.on {
+  visibility: visible;
+  pointer-events: auto;
+  cursor: progress;
+}
+/* 88px on the phone (the mark 56), 100 from 900px (the mark 64). The mark
+   and the ring scale together from the middle. */
+.veil svg {
+  width: 88px;
+  height: 88px;
+  overflow: visible;
+}
+/* Not `.ring`: that is a Tailwind utility's name (`lib/classnames.test.ts`). */
+.veil .stitches {
+  fill: none;
+  stroke: var(--brand);
+}
+@media (min-width: 900px) {
+  .veil {
+    top: 65px;
+  }
+  .veil svg {
+    width: 100px;
+    height: 100px;
+  }
+}

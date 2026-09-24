@@ -10,6 +10,7 @@ import { Field3 } from "@/components/ui/Field3";
 import { CopyButton } from "@/components/shop/CopyButton";
 import { InvoiceSheet } from "@/components/shop/InvoiceSheet";
 import { ShopFrame } from "@/components/shop/ShopFrame";
+import { startWait } from "@/components/shop/WaitVeil";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { invoiceOf } from "@/lib/invoice";
 import {
@@ -87,7 +88,10 @@ export function TrackScreen({ code, phone, found }: TrackScreenProps) {
       // what was typed.
       phone: phoneDigits(typedPhone) || typedPhone.trim(),
     });
-    router.push(`/track?${q.toString()}`);
+    // Same page, another query: the wait veil's rule leaves it uncovered.
+    const href = `/track?${q.toString()}`;
+    startWait(href);
+    router.push(href);
   }
 
   return (
