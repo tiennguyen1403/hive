@@ -1754,3 +1754,16 @@ Bảng `prototype/name/share.html` viết lại (hợp đồng `.impeccable/surf
 
 Soát hai vòng ở 1280 và 390: 0 lỗi console, 0 tràn ngang. Detector sạch; khoanh bốn ngoại lệ riêng tệp này (màu và bo góc của giao
 diện ứng dụng khác mà bảng giả lập, cỡ chữ lead của bảng, đệm chật đọc nhầm).
+
+**QĐ-31 (24/09/2026) — Favicon F2, icon điện thoại P2, ảnh chia sẻ O2, mô tả A.** Người dùng: "tôi đồng ý với 3 đề xuất của bạn cho
+phần share F2, P2, O2, mô tả A." Nghĩa là:
+- favicon 16 px là M2 vẽ lại từng điểm ảnh, 32 và 48 px là M2;
+- icon điện thoại là ô mật ong tràn với con ong mực;
+- ảnh chia sẻ 1200×630 là lockup `HIVE.NN` trên vải đen, dưới đường may là câu đề bìa, số theo Số nổi bật;
+- `og:description` là câu mô tả đang có.
+
+Brief `tasks/briefs/v3-lat-10-share.md` gộp thêm phần "biển Số chỉ khi đang bán". Giao sau khi lát 9 xong, vì cùng sửa
+`app/layout.tsx`.
+
+**24/09, lát 9 bị dừng giữa chừng (Ctrl+C lỡ tay của người dùng).** Agent không nối lại được. Code của nó còn nguyên trong cây làm
+việc: 12 tệp sửa, `WaitVeil.tsx`, `lib/wait.ts` + test, bản build 23:34, bảy ảnh. Một agent mới đang đọc lại, kiểm và hoàn tất từ đó.
