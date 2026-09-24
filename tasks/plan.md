@@ -1671,3 +1671,7 @@ logo SVG nội tuyến; CSS theo `proposal.css`), rồi `DESIGN.md` ghi lại bi
 20,8 — đề xuất), hoặc chỉ phóng chữ (20 px trên mark 32; lệch tỉ lệ 52% → 62%). Điện thoại tối đa 32 px, vì ở màn 360 logo 34 đã lấn vào
 lề phải (đo mép phải nút giỏ). **Đính chính số đo vòng 1:** "thừa 47/17 px" ở 390/360 đã tính lẫn khoảng gap 10 px; số đúng là 37/7 px
 với logo 30, và 33/3 px với logo 32.
+**24/09, vòng 3 của mock thanh điều hướng.** Người dùng: "Ý tôi là chữ Hive wordmark cần to lên chứ không phải mark". Phần chọn cỡ
+đổi sang chỉ phóng chữ. Mark giữ 32 px desktop / 30 px điện thoại; chữ desktop 16,6 (hiện tại, 52%) · 18 · 20 (62,5%, đề xuất) · 22 px.
+Điện thoại tối đa 18,8 px (62,5%; màn 360 còn thừa 1,5 px). Thanh điều hướng dùng tỉ lệ riêng; tệp logo chuẩn vẫn giữ 52%. Bộ ảnh
+tham chiếu chụp lại ở chữ 20 / 18,8.

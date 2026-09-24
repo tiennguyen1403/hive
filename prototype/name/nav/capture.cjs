@@ -14,12 +14,15 @@ const LOCKUP = fs.readFileSync(path.join(HERE, "../logo/hive-lockup.svg"), "utf8
 // Logo size options: desktop / phone height of the lockup, and a scale on the
 // wordmark alone (1 = the logo's own proportions: letters 0.52 of the mark).
 const SIZES = {
-  s32: { d: 32, m: 30, k: 1 }, // as first shown
-  s36: { d: 36, m: 32, k: 1 },
-  s40: { d: 40, m: 32, k: 1 }, // the phone stops at 32: at 360 px a 34 px logo already eats the bar's right padding
-  w20: { d: 32, m: 30, k: 20 / (0.52 * 32) }, // letters 20 px on a 32 px mark
+  // The mark stays 32 px (desktop) / 30 px (phone); only the wordmark grows.
+  // k scales the letters: 1 = the logo's own 52% of the mark. The phone stops
+  // at k 1.2 (letters 18.75 px): any larger and the 360 px bar overflows.
+  cur: { d: 32, m: 30, kd: 1, km: 1 },
+  w18: { d: 32, m: 30, kd: 18 / (0.52 * 32), km: 18 / (0.52 * 32) },
+  w20: { d: 32, m: 30, kd: 20 / (0.52 * 32), km: 20 / (0.52 * 32) },
+  w22: { d: 32, m: 30, kd: 22 / (0.52 * 32), km: 20 / (0.52 * 32) },
 };
-const SIZE = process.env.SIZE || "s40";
+const SIZE = process.env.SIZE || "w20";
 
 function lockup(k) {
   if (k === 1) return LOCKUP;
@@ -49,7 +52,7 @@ async function dress(page, { size = SIZE, state = "open", no = "05", icons20 = t
     if (state !== "open") tag.classList.add(state);
     const text = [...tag.childNodes].find((n) => n.nodeType === 3 && n.textContent.trim());
     if (text) text.textContent = "Số " + no;
-  }, { svg: lockup(z.k), state, no });
+  }, { svg: lockup(page.viewportSize().width >= 900 ? z.kd : z.km), state, no });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(200);
 }
@@ -106,7 +109,7 @@ const measure = (page) => page.evaluate(() => {
     // Icons, 18 against 20, with something saved and something in the bag.
     for (const icons20 of [false, true]) {
       const { ctx, page } = await open(1280, 400, false, "/", true);
-      await dress(page, { size: "s32", icons20 });
+      await dress(page, { size: "cur", icons20 });
       const b = await page.locator(".nav3 .icons").boundingBox();
       await page.screenshot({ path: path.join(OUT, "icons-" + (icons20 ? 20 : 18) + ".png"), clip: { x: b.x - 16, y: 0, width: b.width + 32, height: 64 } });
       await ctx.close();
