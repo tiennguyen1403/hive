@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { CATALOG } from "@/data/catalog";
-import { LEX, issueLabel, issueNo, kindInSentence } from "./lexicon";
+import { LEX, issueLabel, issueNo, kindInSentence, plateLabel } from "./lexicon";
 
 describe("the lexicon", () => {
   it("matches the table in the approved mock", () => {
@@ -24,6 +24,25 @@ describe("the lexicon", () => {
     expect(issueLabel(5)).toBe("Số 05");
     expect(issueLabel(12)).toBe("Số 12");
     expect(issueNo(5)).toBe("05");
+  });
+});
+
+/**
+ * The plate in the nav bar prints only "Số 05"; which state the issue is in
+ * is carried by the plate's colour. Colour is never the only channel, so the
+ * words go into the link's `aria-label` and `title` — one string per state.
+ */
+describe("plateLabel", () => {
+  it("names an issue on sale", () => {
+    expect(plateLabel(5, "OPEN")).toBe("Số 05, đang bán");
+  });
+
+  it("names an issue that has not opened yet", () => {
+    expect(plateLabel(6, "UPCOMING")).toBe("Số 06, sắp mở");
+  });
+
+  it("names an issue that has shut", () => {
+    expect(plateLabel(5, "CLOSED")).toBe("Số 05, đã đóng");
   });
 });
 

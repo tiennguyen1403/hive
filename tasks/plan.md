@@ -1679,3 +1679,13 @@ tham chiếu chụp lại ở chữ 20 / 18,8.
 đều là linear dù có badge hay không" và "đảo màu của badge từ nền đen chữ vàng sang nền vàng chữ đen". Mock cập nhật: `icons-before/after`,
 bộ ảnh tham chiếu, bảng ghi "đã chốt". Logo riêng cho thanh: `prototype/name/logo/hive-lockup-nav.svg` (chữ 62,5% mark, scale đã tính
 vào đường vẽ). Brief `tasks/briefs/v3-lat-8-nav.md` giao `ui-implementer`.
+**24/09, lát 8 ĐẠT — thanh điều hướng mới trong app.** `ui-implementer` làm theo `tasks/briefs/v3-lat-8-nav.md`: `SiteNav.tsx`
+(logo · biển · 5 họ · 4 nút, cả trong DOM; bỏ link "Số NN", đồng hồ và bộ đếm mỗi giây; icon không còn `bulk`), `NavLogo.tsx` mới
+(SVG nội tuyến của `hive-lockup-nav.svg`), `plateLabel()` + 3 test, `nav.css`, `desktop.css`. Typecheck, 1.295 test, build, sweep
+(81 lượt, không phát hiện mới) đều qua. Phiên chính soát độc lập trên 3200: thanh ở 1280/900/390/360 trùng từng pixel ảnh mock
+(PSNR ∞); Tab: logo → biển → 5 họ → 4 nút; biển `aria-label` = `title` = "Số 05, đang bán"; bong bóng `rgb(235,164,0)` chữ
+`rgb(23,20,16)`; không icon `duo`. Nhận năm quyết định mức code của agent: `.itag.soon:hover` khai lại `--pl` (brief bị hoà độ đặc
+hiệu 0,4,0 làm biển xanh hoá xám khi rê chuột), `#fff` → `var(--stage-ink)`, tắt transition của biển dưới giảm chuyển động, chiều cao
+logo cố định 30/32 thay `--lk`, bỏ `font-size`/`letter-spacing` thừa ở `.wm`. Còn mở: biển giữ `on` + `aria-current` cả khi Số không
+đang bán (link khi đó trỏ `/#next` hoặc `/so/N`) → sửa thành chỉ khi `OPEN`; chú thích cũ `ShopFrame.tsx:17`; `DESIGN.md` (biển, bong
+bóng, icon 20, logo SVG, bo 5px) và `PRODUCT.md` ("Mark chưa có" đã cũ từ QĐ-30).

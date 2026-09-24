@@ -12,8 +12,9 @@
 /* Two bars have stood here and both are gone: `.s .nav` (Phase 3) and
    `.nav2` (v2). `SiteNav` has rendered `.nav3` (below) on every route since
    slice 0 of v3, and nothing references the old classes. `.s .wm` stays:
-   the wordmark is the one part every bar has kept, and the admin sidebar,
-   the footer's colophon and the delivery slip all wear it too. */
+   the admin sidebar, the footer's colophon and the delivery slip set the
+   wordmark in letters with it. The shop's own bar draws the logo in its
+   place since v3 slice 8 and keeps only the class (`.s .nav3 .wm` below). */
 .s .wm{ font-family:var(--font-display); font-weight:var(--fw-display); font-size:14px;
   letter-spacing:.14em; margin-right:auto; }
 /* Icons: Iconsax Linear. The paths already carry stroke=currentColor and
@@ -75,14 +76,17 @@
 .s .ic.mk{ width:12px; height:12px; font-size:12px; }
 
 /* ------------------------------------------------------------ nav bar, v3 */
-/* Sticky, 56px on the phone and 64px from 900px. What it has to say, in the
-   order it says it: whose shop this is, which issue is on sale and how long
-   is left, and the four things a shopper reaches for.
+/* Sticky, 56px on the phone and 64px from 900px. Three groups, in the order
+   they are read and tabbed through: whose shop this is (the logo), what is
+   on sale (the issue plate, then the five families from 900px), and the
+   four things a shopper reaches for. Rebuilt at v3 slice 8 from the mock
+   approved on 24/09/2026 (`prototype/name/nav.html`).
 
-   The ISSUE STAMP (`.itag`) is the one piece of black cloth in the bar —
+   The ISSUE PLATE (`.itag`) is the one piece of black cloth in the bar —
    the same material as the cover, so the nav and the cover read as one
-   object. On the phone it says only WHICH issue; the countdown joins it
-   from 900px, where there is room (`.cd`).
+   object. It prints only WHICH issue; the plate's colour carries its state,
+   and the link's `aria-label` and `title` say the state in words
+   (`plateLabel` in lib/lexicon.ts). The bar keeps no clock.
 
    The bar sits on a soft shadow rather than a rule: `0 1px 0` for the
    hairline and a wide, low-opacity drop underneath, so the page slides
@@ -92,23 +96,46 @@
   box-shadow:0 1px 0 rgba(23,20,16,.04), 0 10px 24px -14px rgba(23,20,16,.28); }
 .s .nav3 .in{ display:flex; align-items:center; gap:10px; height:56px;
   padding:0 8px 0 var(--gut); }
-.s .nav3 .wm{ font-size:16px; margin-right:0; display:inline-flex; align-items:center;
-  height:44px; }
-.s .nav3 .itag{ display:inline-flex; align-items:center; gap:8px; height:28px;
-  padding:0 10px; border-radius:var(--r-sm); font-size:var(--fs-xs); font-weight:600;
-  letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; position:relative;
-  background:var(--stage); color:var(--brand); border:1px solid var(--stage); }
-/* 28px of cloth, 44px of finger. */
-.s .nav3 .itag::after{ content:""; position:absolute; inset:-9px 0; }
-/* The dot is the second channel, and on cloth it has to stay visible: honey
-   while the issue is selling, blue before it opens, quiet grey once it has
-   shut. The word beside it says the same thing either way. */
-.s .nav3 .itag i{ width:6px; height:6px; border-radius:99px; background:currentColor;
+/* The logo is an SVG (`NavLogo`), not letters. The link keeps the bar's 44px
+   height for the finger and never shrinks: a 360px phone has 1.5px to spare.
+   30px tall here and 32 from 900px; the width follows the viewBox (70.9 /
+   75.7px). */
+.s .nav3 .wm{ display:inline-flex; align-items:center; height:44px; margin-right:0;
   flex:none; }
-.s .nav3 .itag.soon i{ background:var(--info); }
-.s .nav3 .itag.shut i{ background:var(--stage-ink2); }
-.s .nav3 .itag .cd{ display:none; font-weight:400; text-transform:none; letter-spacing:0;
-  color:var(--stage-ink2); font-variant-numeric:tabular-nums; }
+.s .nav3 .wm svg{ display:block; height:30px; width:auto; }
+/* The plate: option F of the name round (`prototype/name/hive-2.html`) cut
+   from the issue's cloth, colourway B. A 1px honey rule inset 2px from the
+   edge, a bolt at each end, the issue in Unbounded 800. `--pl` is the plate
+   and `--pi` everything drawn on it (rule, bolts, letters), so a state only
+   swaps the two. */
+.s .nav3 .itag{ --pl:var(--stage); --pi:var(--brand);
+  display:inline-flex; align-items:center; justify-content:center; flex:none;
+  position:relative; white-space:nowrap; height:28px; padding:0 17px; border:0;
+  border-radius:5px;
+  background:
+    radial-gradient(circle at 8.5px 50%, var(--pi) 0 1.6px, transparent 2.1px),
+    radial-gradient(circle at calc(100% - 8.5px) 50%, var(--pi) 0 1.6px, transparent 2.1px),
+    var(--pl);
+  box-shadow:inset 0 0 0 2px var(--pl), inset 0 0 0 3px var(--pi);
+  color:var(--pi); font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-xs); line-height:1; letter-spacing:.1em; text-transform:uppercase;
+  transition:background-color .12s ease; }
+/* 28px of plate, 46px of finger. */
+.s .nav3 .itag::after{ content:""; position:absolute; inset:-9px 0; }
+/* Before it opens the plate is blue, the system's "not yet"; once it has
+   shut, the letters go grey. */
+.s .nav3 .itag.soon{ --pl:var(--info); --pi:var(--stage-ink); }
+.s .nav3 .itag.shut{ --pi:var(--stage-ink2); }
+.s .nav3 .itag:hover{ --pl:var(--stage-hair); }
+/* A blue plate brightens instead of taking the cloth's hover. `--pl` is
+   restated because `.itag:hover` above ties with `.itag.soon` (0,4,0) and
+   comes later, which would turn a hovered blue plate dark grey. */
+.s .nav3 .itag.soon:hover{ --pl:var(--info); filter:brightness(1.08); }
+/* Browsing the whole issue: the same 2px honey rule the family links wear.
+   `::before`, because `::after` is the touch overlay. */
+.s .nav3 .itag.on::before{ content:""; position:absolute; left:3px; right:3px;
+  bottom:-6px; height:2px; background:var(--brand); }
+@media (prefers-reduced-motion:reduce){ .s .nav3 .itag{ transition:none; } }
 .s .nav3 .links{ display:none; }
 .s .nav3 .icons{ margin-left:auto; display:flex; align-items:center; flex:none; }
 /* 40 wide × 44 tall: the height is the floor; the width follows DESIGN.md §5's
@@ -118,10 +145,15 @@
   align-items:center; justify-content:center; color:var(--ink); border-radius:var(--r);
   flex:none; }
 .s .nav3 .ib:hover{ background:var(--plate); }
-/* The count bubble is the badge family B: black cloth, honey digits. It is
-   drawn only above zero — an empty bag says so by having no bubble. */
-.s .nav3 .ib b{ position:absolute; top:5px; right:3px; min-width:16px; height:16px;
-  padding:0 4px; border-radius:99px; background:var(--stage); color:var(--brand);
+/* The bar's four glyphs are drawn at 20px rather than the system's 18; the
+   button boxes stay 40×44 / 44×44. They stay Linear whatever the count. */
+.s .nav3 .ib .ic{ width:20px; height:20px; font-size:20px; }
+/* The count bubble: honey with ink digits, turned round from cloth and honey
+   on 24/09/2026, and set 1px further out than before so it covers the same
+   corner of the larger glyph. It is drawn only above zero — an empty bag
+   says so by having no bubble. */
+.s .nav3 .ib b{ position:absolute; top:4px; right:2px; min-width:16px; height:16px;
+  padding:0 4px; border-radius:99px; background:var(--brand); color:var(--ink);
   font-size:var(--fs-xs); line-height:16px; font-weight:700; text-align:center;
   font-family:var(--font-sans); font-variant-numeric:tabular-nums; }
 

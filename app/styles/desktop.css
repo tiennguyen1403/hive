@@ -50,17 +50,28 @@
    nothing rendered the old classes afterwards. */
 
 /* ── the nav bar, v3 ─────────────────────────────────────────────────────
-   From 900px the bar has room for the five family links, for the issue link
-   that heads them, and for the countdown inside the issue stamp. On the
-   phone the stamp says only WHICH issue: the cover carries the same number
-   with room to say what it counts. */
+   From 900px the bar has room for the five family links. It becomes a grid
+   of four columns: the logo in the first, the plate and the families in the
+   two middle ones, the icons in the last. The outer two share what is left
+   equally, so the plate and the families stand in the middle of the bar —
+   6px right of centre, because the bar's gutters are 40 and 28 on purpose.
+   At 900px the families still clear the icons by 33px (25px where a classic
+   scrollbar takes 15px of the width). */
 @media (min-width: 900px) {
   .s .nav3 .in {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto minmax(0, 1fr);
+    column-gap: 24px;
     height: 64px;
     padding: 0 28px 0 var(--gutd);
-    gap: 28px;
     max-width: var(--max);
     margin: 0 auto;
+  }
+  .s .nav3 .wm {
+    justify-self: start;
+  }
+  .s .nav3 .wm svg {
+    height: 32px;
   }
   .s .nav3 .ib {
     width: 44px;
@@ -100,18 +111,19 @@
     height: 2px;
     background: var(--brand);
   }
-  /* The stamp is pushed to the right of the links and pulls the icons with
-     it, so the bar reads: who · what you can browse · which issue · you. */
+  /* The plate grows to 32px and its letters to 12px; with the wider padding
+     the bolts sit 9.5px in from each end instead of 8.5, and a little larger. */
   .s .nav3 .itag {
-    order: 5;
-    margin-left: auto;
     height: 32px;
-    padding: 0 12px;
-  }
-  .s .nav3 .itag .cd {
-    display: inline;
+    padding: 0 19px;
+    font-size: var(--fs-sm);
+    background:
+      radial-gradient(circle at 9.5px 50%, var(--pi) 0 1.75px, transparent 2.25px),
+      radial-gradient(circle at calc(100% - 9.5px) 50%, var(--pi) 0 1.75px, transparent 2.25px),
+      var(--pl);
   }
   .s .nav3 .icons {
+    justify-self: end;
     margin-left: 0;
   }
 

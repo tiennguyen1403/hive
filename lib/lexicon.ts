@@ -1,3 +1,5 @@
+import type { DropState } from "@/data/types";
+
 /**
  * One word for one concept, in one place.
  *
@@ -89,6 +91,26 @@ export function issueLabel(no: number): string {
 /** `"05"` — just the padded number, for the places that set it in display type. */
 export function issueNo(no: number): string {
   return String(no).padStart(2, "0");
+}
+
+/** What each state is called after the issue's name on the nav bar's plate. */
+const PLATE_STATE: Record<DropState, string> = {
+  OPEN: "đang bán",
+  UPCOMING: "sắp mở",
+  CLOSED: "đã đóng",
+};
+
+/**
+ * `"Số 05, đang bán"` — the issue plate in the nav bar, named in full.
+ *
+ * The plate prints only `issueLabel()`. Which state the issue is in is carried
+ * by the plate's colour alone (honey letters on the cloth while it sells, a
+ * blue plate before it opens, grey letters once it has shut), and colour is
+ * never the only channel: this string is the link's `aria-label` for a screen
+ * reader and its `title` for a pointer.
+ */
+export function plateLabel(no: number, state: DropState): string {
+  return `${issueLabel(no)}, ${PLATE_STATE[state]}`;
 }
 
 /**
