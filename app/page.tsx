@@ -20,17 +20,19 @@ import { FAMILY_SHORT_LABELS, type Drop, type Product } from "@/data/types";
 import { teasersIn, type Catalog } from "@/lib/catalog";
 import { loadCatalog } from "@/lib/db/catalog";
 import { clockDayLabel, closedAtLabel, dayMonth } from "@/lib/datetime";
-import { dropCalendar, dropState, featuredDrop, previousDropNote } from "@/lib/drop";
+import { dropCalendar, dropState, featuredDrop, issueHref, previousDropNote } from "@/lib/drop";
 import {
   LOW_STOCK_AT,
   dropSummary,
-  familyGroupsIn,
+  familyGroupsOf,
   lowStockIn,
   onHand,
   productsInDrop,
+  productsOnSale,
+  showcaseOnSale,
   soldOutSizes,
 } from "@/lib/inventory";
-import { HOME_COVER, LEX, issueLabel, issueNo } from "@/lib/lexicon";
+import { HOME_COVER, LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { styleCountLabel, vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 
@@ -39,9 +41,11 @@ import { photoUrl } from "@/lib/photos";
  *
  * THE COVER answers four things before a thumb moves: which issue, is it
  * open, how long is left, and one way in. Everything under it is the table
- * of contents — the six styles, the families as rows, the four rules the
+ * of contents — the issue's six styles, six more on sale ("Đang bán", the
+ * fixed styles, v3 slice 11), the families as rows, the four rules the
  * shop runs on — and then the next issue, which is the cover again, quieter,
- * before it opens.
+ * before it opens. Between two issues the next one is the cover, and
+ * "Đang bán" comes straight under it.
  *
  * Which issue is shown comes from `?drop=`; what state it is drawn in comes
  * from the clock, via `featuredDrop`. Keeping those two apart is the point:
@@ -98,12 +102,12 @@ export default async function HomePage(props: PageProps<"/">) {
       )}
 
       <div className="wrap3">
-        {state === "OPEN" && (
-          <>
-            <IssueContents catalog={catalog} drop={drop} />
-            <FamilyIndex catalog={catalog} drop={drop} />
-          </>
-        )}
+        {/* What else is on sale comes after the issue's own six while one
+            sells, and straight under the cover between two issues — the
+            fixed styles sell either way (v3 slice 11). */}
+        {state === "OPEN" && <IssueContents catalog={catalog} drop={drop} />}
+        <OnSale catalog={catalog} />
+        <FamilyIndex catalog={catalog} />
         {state === "CLOSED" && <ClosedContents catalog={catalog} drop={drop} />}
         <FourRules anchor />
       </div>
@@ -144,7 +148,8 @@ function OpenCover({ catalog, drop }: { catalog: Catalog; drop: Drop }) {
         <p className="lead">{HOME_COVER.lead}</p>
 
         <div className="cta">
-          <ButtonLink href="/products">Xem {styleCountLabel(products.length)}</ButtonLink>
+          {/* The whole issue, on its own page (v3 slice 11). */}
+          <ButtonLink href={issueHref(drop.no)}>Xem {styleCountLabel(products.length)}</ButtonLink>
           {/* A plain anchor: the target is on the page already open, and the
               browser's own same-document navigation is what should handle
               it. */}
@@ -187,7 +192,7 @@ function LowRow({ product }: { product: Product }) {
 
   return (
     <Link className="tocrow" href={`/products/${product.slug}`}>
-      <span className="n">{product.name}</span>
+      <span className="n">{styleName(product.name, product.dropNo)}</span>
       <span className="d">
         <span className="low">còn {onHand(product)}</span>
         {gone.length > 0 && (
@@ -228,7 +233,7 @@ function IssueContents({ catalog, drop }: { catalog: Catalog; drop: Drop }) {
         <span className="meta">
           {summary.styles} mẫu · {summary.onHand} / {summary.cutUnits} còn
         </span>
-        <Link className="more" href="/products">
+        <Link className="more" href={issueHref(drop.no)}>
           Xem cả {summary.styles} mẫu
         </Link>
       </div>
@@ -242,24 +247,58 @@ function IssueContents({ catalog, drop }: { catalog: Catalog; drop: Drop }) {
 }
 
 /**
+ * "Đang bán" — six more styles on sale, and the way to all of them (v3
+ * slice 11).
+ *
+ * The same section while an issue sells and between two: the fixed styles
+ * sell at any hour, and the user asked for a list of styles on the home
+ * page in both states. The six are `showcaseOnSale`'s — none of the open
+ * issue's, which stand above under "Trong số này", none with an empty shelf,
+ * one per family first. The link counts everything `/products` lists.
+ */
+function OnSale({ catalog }: { catalog: Catalog }) {
+  const six = showcaseOnSale(catalog);
+  if (six.length === 0) return null;
+
+  return (
+    <section className="sec" aria-labelledby="h-sale">
+      <div className="hd">
+        <h2 id="h-sale">Đang bán</h2>
+        <Link className="more" href="/products">
+          Xem tất cả {productsOnSale(catalog).length} mẫu
+        </Link>
+      </div>
+      <div className="grid3">
+        {six.map((p) => (
+          <ProductCard key={p.id} product={p} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
  * "Theo loại" — the families as rows of an index, not as tiles.
  *
  * A row can carry what a tile cannot: how many styles, what tells them
  * apart, and what the cheapest one costs. All three are derived
- * (`familyGroupsIn`), so the line cannot claim a cut the issue does not
- * contain. The photo is the family's first style — no photography of a
- * CATEGORY exists, and standing one garment in for the group is the most
- * the fixtures can honestly supply.
+ * (`familyGroupsOf`), so the line cannot claim a style the shop does not
+ * sell. Since v3 slice 11 it counts everything on sale — the open issue's
+ * styles and the fixed ones, or the fixed ones alone between two issues —
+ * and "Đang bán" above carries the way to all of them. The photo is the
+ * family's first style on sale — no photography of a CATEGORY exists, and
+ * standing one garment in for the group is the most the fixtures can
+ * honestly supply.
  */
-function FamilyIndex({ catalog, drop }: { catalog: Catalog; drop: Drop }) {
-  const families = familyGroupsIn(catalog, drop.no);
+function FamilyIndex({ catalog }: { catalog: Catalog }) {
+  const families = familyGroupsOf(productsOnSale(catalog));
   if (families.length === 0) return null;
 
   return (
     <section className="sec" aria-labelledby="h-fam">
       <div className="hd">
         <h2 id="h-fam">Theo loại</h2>
-        <span className="meta">{LEX.inl}</span>
+        <span className="meta">đang bán</span>
       </div>
       <div className="index">
         {families.map((g) => (
@@ -333,7 +372,7 @@ function NextIssue({
               <Image src={photoUrl(t.photoKey, 520)} alt="" width={520} height={650} />
               <Badge tone="info">Chưa mở</Badge>
               <figcaption>
-                <b>{t.name}</b>
+                <b>{styleName(t.name, t.dropNo)}</b>
                 {t.kind} · giá công bố khi mở
               </figcaption>
             </figure>
@@ -401,12 +440,9 @@ function PastIssue({
             ? ` ${dayMonth(note.drop.closesAt)} · ${summary.soldUnits} / ${summary.cutUnits} đã bán`
             : ` · ${note.countdown}`}
         </span>
-        {/* A closed issue goes to its own record; one still selling, or
-            still to open, goes back to the shop floor it belongs to. */}
-        <Link
-          className="lnk"
-          href={note.state === "CLOSED" ? `/so/${note.drop.no}` : "/products"}
-        >
+        {/* The issue's own page, in whichever state it is: its record once
+            it has closed, its listing while it sells (v3 slice 11). */}
+        <Link className="lnk" href={issueHref(note.drop.no)}>
           {capitalise(note.linkText)}
         </Link>
       </p>

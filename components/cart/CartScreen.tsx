@@ -26,9 +26,9 @@ import {
   type ResolvedLine,
 } from "@/lib/cart";
 import { clockDayLabel, toVnIso } from "@/lib/datetime";
-import { closesInLabel } from "@/lib/drop";
+import { closesInLabel, dropState, getDrop, wayToShop } from "@/lib/drop";
 import { resolveLater, type ResolvedLaterLine } from "@/lib/later";
-import { LEX, issueLabel } from "@/lib/lexicon";
+import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { TRANSFER_HOLD_HOURS } from "@/lib/orders";
 import { appliedPromo } from "@/lib/promotions";
@@ -41,6 +41,10 @@ import {
 import { demoNow } from "@/lib/clock";
 
 interface CartScreenProps {
+  /**
+   * The issue the empty cart's sentence names: the one selling, else the
+   * last one that closed (see `app/cart/page.tsx`).
+   */
   dropNo: number;
   dropClosesAt: string;
   dropIsOpen: boolean;
@@ -84,6 +88,17 @@ export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps
   const [leadFrom, leadTo] = deliveryOption("STANDARD").leadDays;
   const later = resolveLater(catalog, list);
 
+  // The way back into the shop (v3 slice 11): the issue selling now, on its
+  // own page — "Về số 05" — or every style on sale when none is.
+  const way = wayToShop(catalog, now);
+  const wayLabel = (verb: string) =>
+    way.issueNo !== null ? `${verb} ${LEX.tl} ${issueNo(way.issueNo)}` : "Xem tất cả mẫu";
+
+  // Which issue the lines in the bag belong to, for the line under "Giỏ": a
+  // bag of fixed styles only is sold at any hour and names no issue.
+  const bagIssue = lines.find((l) => l.product.dropNo !== null)?.product.dropNo ?? null;
+  const bagDrop = bagIssue === null ? undefined : getDrop(catalog, bagIssue);
+
   /** Swap a blocked line to a size the same colourway still has. */
   function swap(line: ResolvedLine, size: Size) {
     remove(line.key);
@@ -103,7 +118,7 @@ export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps
     });
     remove(line.key);
     setToast(
-      `Đã chuyển ${line.product.name} sang Giữ lại sau · giữ size ${line.line.size}`,
+      `Đã chuyển ${styleName(line.product.name, line.product.dropNo)} sang Giữ lại sau · giữ size ${line.line.size}`,
     );
   }
 
@@ -112,7 +127,7 @@ export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps
     add({ ...item.line, qty: 1 });
     dropLater(item.key);
     setToast(
-      `Đã đưa ${item.product.name} size ${item.line.size} màu ${
+      `Đã đưa ${styleName(item.product.name, item.product.dropNo)} size ${item.line.size} màu ${
         COLORS[item.line.color].label
       } vào giỏ`,
     );
@@ -161,8 +176,8 @@ export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps
                 : `Chưa có món nào. ${issueLabel(dropNo)} đã đóng.`
             }
             action={
-              <ButtonLink icon="grid" href="/products">
-                Xem {LEX.tl} {String(dropNo).padStart(2, "0")}
+              <ButtonLink icon="grid" href={way.href}>
+                {wayLabel("Xem")}
               </ButtonLink>
             }
           />
@@ -181,8 +196,13 @@ export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps
         <div className="pghead">
           <h1>Giỏ</h1>
           <span className="meta">
-            {cartUnits(cart)} món · {issueLabel(dropNo)} ·{" "}
-            {dropIsOpen ? closesInLabel(dropClosesAt, now) : "đã đóng"}
+            {cartUnits(cart)} món
+            {bagIssue !== null &&
+              ` · ${issueLabel(bagIssue)} · ${
+                bagDrop && dropState(bagDrop, now) === "OPEN"
+                  ? closesInLabel(bagDrop.closesAt, now)
+                  : "đã đóng"
+              }`}
           </span>
         </div>
 
@@ -198,7 +218,7 @@ export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps
                   onQty={(q) => setQty(l.key, q)}
                   onRemove={() => {
                     remove(l.key);
-                    setToast(`Đã bỏ ${l.product.name} khỏi giỏ`);
+                    setToast(`Đã bỏ ${styleName(l.product.name, l.product.dropNo)} khỏi giỏ`);
                   }}
                   onSwap={(size) => swap(l, size)}
                   onKeep={() => keepForLater(l)}
@@ -208,8 +228,8 @@ export function CartScreen({ dropNo, dropClosesAt, dropIsOpen }: CartScreenProps
             </div>
 
             <p className="fine3">
-              <Link className="lnk tap" href="/products">
-                Về {LEX.tl} {String(dropNo).padStart(2, "0")}
+              <Link className="lnk tap" href={way.href}>
+                {wayLabel("Về")}
               </Link>
             </p>
 

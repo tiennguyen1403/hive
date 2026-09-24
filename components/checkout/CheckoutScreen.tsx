@@ -59,6 +59,7 @@ import {
   type CheckoutTotals,
 } from "@/lib/shipping";
 import { demoNow } from "@/lib/clock";
+import { wayToShop } from "@/lib/drop";
 
 /** `{ code, label }` only — the full region module never reaches the client. */
 export interface ProvinceOption {
@@ -420,6 +421,9 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
   }
 
   if (lines.length === 0 || blocked) {
+    // The issue selling now, on its own page; every style on sale when none
+    // is — "Xem số đang mở" would name nothing (v3 slice 11).
+    const way = wayToShop(catalog, now);
     return (
       <ShopFrame>
         <div className="wrap3">
@@ -433,8 +437,8 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
                 : "Giỏ đang trống, nên chưa có đơn nào để đặt."
             }
             action={
-              <ButtonLink icon="bag" href={blocked ? "/cart" : "/products"}>
-                {blocked ? "Về giỏ" : "Xem số đang mở"}
+              <ButtonLink icon="bag" href={blocked ? "/cart" : way.href}>
+                {blocked ? "Về giỏ" : way.issueNo !== null ? "Xem số đang mở" : "Xem tất cả mẫu"}
               </ButtonLink>
             }
           />

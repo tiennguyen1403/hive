@@ -11,7 +11,7 @@ import { Toast } from "@/components/shop/Toast";
 import { useDropLabel } from "@/components/shop/useDropLabel";
 import type { Drop, DropState, Order } from "@/data/types";
 import { dayMonth } from "@/lib/datetime";
-import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
+import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { stampLabel } from "@/lib/notifications";
 import { orderRows, type OrderRow } from "@/lib/order-rows";
@@ -188,7 +188,7 @@ export function AccountHome({
                   href={`/products/${item.product.slug}`}
                 >
                   <b>
-                    <span className="nm">{item.product.name}</span>
+                    <span className="nm">{styleName(item.product.name, item.product.dropNo)}</span>
                   </b>
                   <span className="sub">
                     {item.soldOut ? (

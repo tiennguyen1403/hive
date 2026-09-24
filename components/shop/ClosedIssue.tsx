@@ -6,7 +6,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import type { Drop } from "@/data/types";
 import type { Catalog } from "@/lib/catalog";
 import { closedAtLabel } from "@/lib/datetime";
-import { dropCalendar } from "@/lib/drop";
+import { dropCalendar, issueHref } from "@/lib/drop";
 import { dropSummary, productsInDrop } from "@/lib/inventory";
 import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import { styleCountLabel } from "@/lib/money";
@@ -117,7 +117,7 @@ export function ClosedCover({
               <ButtonLink href={forward.href}>{forward.label}</ButtonLink>
             ))}
           {previous && (
-            <Link className="btn quiet" href={`/so/${previous.no}`}>
+            <Link className="btn quiet" href={issueHref(previous.no)}>
               Về {LEX.tl} {issueNo(previous.no)}
             </Link>
           )}
@@ -142,7 +142,8 @@ function forwardIssue(
 ): { href: string; label: string } | undefined {
   const cal = dropCalendar(catalog);
   if (cal.open && cal.open.no !== drop.no) {
-    return { href: "/products", label: `Xem ${LEX.tl} ${issueNo(cal.open.no)} đang bán` };
+    // The issue's own page (v3 slice 11); `/products` mixes in the fixed styles.
+    return { href: issueHref(cal.open.no), label: `Xem ${LEX.tl} ${issueNo(cal.open.no)} đang bán` };
   }
   if (cal.upcoming) {
     return { href: "/#next", label: `${issueLabel(cal.upcoming.no)} sắp mở` };

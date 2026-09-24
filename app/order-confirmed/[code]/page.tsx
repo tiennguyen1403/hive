@@ -6,7 +6,7 @@ import { demoNow } from "@/lib/clock";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { loadCatalog } from "@/lib/db/catalog";
 import { findMyOrder, loadReceipt } from "@/lib/db/orders";
-import { featuredDrop } from "@/lib/drop";
+import { wayToShop } from "@/lib/drop";
 
 export const metadata: Metadata = {
   title: "Đã nhận đơn",
@@ -38,14 +38,13 @@ export default async function OrderReceiptPage(props: PageProps<"/order-confirme
   if (!found) notFound();
 
   const [catalog, mine] = await Promise.all([loadCatalog(), findMyOrder(code)]);
-  const { drop } = featuredDrop(catalog, undefined);
   const order = effectiveOrder(found, demoNow());
 
   return (
     <OrderConfirmed
       order={order}
       addressLine={formatAddressLine(order.shipTo)}
-      dropNo={drop.no}
+      way={wayToShop(catalog)}
       inAccount={mine !== null}
     />
   );

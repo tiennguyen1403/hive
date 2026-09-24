@@ -4,6 +4,7 @@ import type { DeliveryMethod, Order, OrderState, PaymentMethod, Size } from "@/d
 import { effectiveStatus, orderTimeline, type TimelineStep } from "./customer-orders";
 import { orderSubtotalVnd, orderTotalVnd, orderUnits } from "./orders";
 import { demoNow } from "./clock";
+import { styleName } from "./lexicon";
 
 /**
  * Looking an order up WITHOUT signing in — a code plus the phone number it
@@ -233,7 +234,9 @@ export function trackedOfOrder(
     lines: o.lines.map((l): TrackedLine => {
       const p = catalog.byId.get(l.productId);
       return {
-        name: p?.name ?? "—",
+        // "S05 – KHÓI" for an issue's style (v3 slice 11): the name the shop
+        // shows it under everywhere, on the receipt as on the card.
+        name: p ? styleName(p.name, p.dropNo) : "—",
         kind: p?.kind ?? "",
         colorLabel: COLORS[l.color].label,
         size: l.size,

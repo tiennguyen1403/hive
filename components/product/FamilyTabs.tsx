@@ -3,7 +3,10 @@ import { FAMILY_SHORT_LABELS, type Product } from "@/data/types";
 import { familyCounts, listingHref, type ListingQuery } from "@/lib/catalog-query";
 
 interface FamilyTabsProps {
-  /** Every style in the drop — what the counts are counted over. */
+  /**
+   * Every style listed — what the counts are counted over: all styles on
+   * sale on `/products`, one issue's on `/so/5` (v3 slice 11).
+   */
   pool: Product[];
   applied: ListingQuery;
   path: string;

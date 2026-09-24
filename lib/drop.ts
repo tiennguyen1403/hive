@@ -194,6 +194,33 @@ export function dropCalendar(catalog: Catalog, now: Date = demoNow()): DropCalen
   };
 }
 
+// ─────────────────────────────────────────────── where an issue lives (v3 slice 11)
+/**
+ * `/so/5` — an issue's own page, and the one address every "the whole issue"
+ * link leads to: the nav's plate, the cover's button, "Xem cả 10 mẫu", the
+ * product page's trail, the footer's calendar. While the issue sells it is
+ * the issue's listing; once it closes, its record; before it opens the page
+ * sends the shopper on to the teaser. `/products` is every style on sale,
+ * both kinds, and belongs to no issue.
+ */
+export function issueHref(no: number): string {
+  return `/so/${no}`;
+}
+
+/**
+ * Where a screen's way back into the shop goes: the issue selling now, to
+ * its own page — "Xem số 05", "Về số 05" — or, when no issue is selling,
+ * every style on sale, "Xem tất cả mẫu". `issueNo` is the open issue for the
+ * screens that name it, null when there is none.
+ */
+export function wayToShop(
+  catalog: Catalog,
+  now: Date = demoNow(),
+): { href: string; issueNo: number | null } {
+  const open = dropCalendar(catalog, now).open;
+  return open ? { href: issueHref(open.no), issueNo: open.no } : { href: "/products", issueNo: null };
+}
+
 /**
  * The right-hand side of the drop band, for whichever state it is in.
  *

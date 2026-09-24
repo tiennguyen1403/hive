@@ -2,7 +2,7 @@
 
 import { Tick } from "@/components/icon/Icon";
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
-import { onHandOf } from "@/lib/inventory";
+import { isFixed, onHandOf } from "@/lib/inventory";
 
 /** Under this many left, the count turns red. "còn 2" is a decision, "còn 3" is not. */
 const URGENT_AT = 3;
@@ -36,6 +36,10 @@ interface SizeTableProps {
  * `.gone` carries no button behaviour and no tick box. Scarcity is content
  * (PRODUCT.md), so it is visible BEFORE the tap rather than as an error after
  * it.
+ *
+ * A FIXED style (v3 slice 11) prints no figure: a size is there or it is
+ * "đã hết" — the user settled that a style brought back when it runs out
+ * shows no stock on its page or in its sheet.
  */
 export function SizeTable({
   product,
@@ -45,6 +49,7 @@ export function SizeTable({
   frozen = false,
   label,
 }: SizeTableProps) {
+  const fixed = isFixed(product);
   return (
     <table className="sizes" aria-label={label}>
       <tbody>
@@ -52,6 +57,7 @@ export function SizeTable({
           const left = onHandOf(product, color, z);
           const gone = left === 0;
           const on = z === value;
+          const count = fixed ? (gone ? "đã hết" : "") : gone ? "hết" : `còn ${left}`;
           return (
             <tr key={z}>
               <td>
@@ -68,8 +74,8 @@ export function SizeTable({
                       border and a white ground on this cell. */}
                   <b>{z}</b>
                   <span className="ld" aria-hidden="true" />
-                  <span className={left > 0 && left < URGENT_AT ? "left low" : "left"}>
-                    {gone ? "hết" : `còn ${left}`}
+                  <span className={!fixed && left > 0 && left < URGENT_AT ? "left low" : "left"}>
+                    {count}
                   </span>
                   {!gone && (
                     <span className="mk" aria-hidden="true">

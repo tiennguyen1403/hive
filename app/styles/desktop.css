@@ -122,8 +122,10 @@
     background: var(--brand);
   }
   /* The plate grows to 32px and its letters to 12px; with the wider padding
-     the bolts sit 9.5px in from each end instead of 8.5, and a little larger. */
-  .s .nav3 .itag {
+     the bolts sit 9.5px in from each end instead of 8.5, and a little larger.
+     The card's plate on a photo (v3 slice 11) is the same plate. */
+  .s .nav3 .itag,
+  .s .card3 .sotag {
     height: 32px;
     padding: 0 19px;
     font-size: var(--fs-sm);

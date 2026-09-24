@@ -57,7 +57,7 @@ export default function FaqPage() {
             <div className="a">
               Không may thêm trong cùng một {LEX.tl}. Một size chỉ có lại khi một đơn size
               đó bị huỷ hoặc trả trong {RETURN_WINDOW_DAYS} ngày. Mẫu có thể quay lại ở{" "}
-              {LEX.tl} sau, cũng có thể không.
+              {LEX.tl} sau, cũng có thể không. Mẫu không mang biển {LEX.t} thì sẽ có lại.
             </div>
           </details>
 

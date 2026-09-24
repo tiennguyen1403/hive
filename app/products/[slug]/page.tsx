@@ -4,15 +4,12 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { ProductView } from "@/components/product/ProductView";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ShopFrame } from "@/components/shop/ShopFrame";
-import type { Product } from "@/data/types";
+import { FAMILY_LABELS, type Product } from "@/data/types";
 import { legacySlugTarget, type Catalog } from "@/lib/catalog";
 import { loadCatalog } from "@/lib/db/catalog";
-import { dropBandLabel, dropState, getDrop } from "@/lib/drop";
-import { productsInDrop } from "@/lib/inventory";
-import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
-
-/** How many cards the related row holds: two phone rows, one desktop row. */
-const RELATED = 4;
+import { dropBandLabel, dropState, getDrop, issueHref } from "@/lib/drop";
+import { RELATED_ROW, productsInDrop, sameFamilyOnSale } from "@/lib/inventory";
+import { LEX, issueNo, styleName } from "@/lib/lexicon";
 
 /** "Cùng tầm giá" — half as much again, or half as much. */
 const NEAR_PRICE = 0.5;
@@ -41,11 +38,11 @@ export async function generateMetadata(
   const p = catalog.bySlug.get(slug);
   // An old address is redirected by the page below; its title is never shown.
   if (!p) return { title: "Không tìm thấy" };
-  // "KHÓI · Số 05": the style, then the issue it was cut for. A shopper who
-  // kept three tabs open is choosing between them by this line. A fixed style
-  // (slice B5) belongs to no issue: its name alone.
+  // "S05 – KHÓI": the style under the name the shop shows it by, its issue
+  // in front (v3 slice 11) — a shopper who kept three tabs open is choosing
+  // between them by this line. A fixed style's name alone.
   return {
-    title: p.dropNo === null ? p.name : `${p.name} · ${issueLabel(p.dropNo)}`,
+    title: styleName(p.name, p.dropNo),
     description: `${p.kind} · ${p.material}`,
   };
 }
@@ -70,12 +67,36 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
   // A fixed style (slice B5) belongs to no issue: no window, no clock, no
   // "Cùng số" row — the page draws the style and nothing about an issue.
+  // Its lower row is "Cùng loại" (v3 slice 11): the family on sale, both
+  // kinds, the nearest in price first (`sameFamilyOnSale`).
   const dropNo = product.dropNo;
   if (dropNo === null) {
+    const family = FAMILY_LABELS[product.family].toLocaleLowerCase("vi");
+    const same = sameFamilyOnSale(catalog, product);
     return (
       <ShopFrame activeFamily={product.family}>
         <div className="wrap3">
           <ProductView product={product} issue={null} />
+
+          {same.length > 0 && (
+            <section className="sec" aria-labelledby="h-rel">
+              <div className="hd">
+                <h2 id="h-rel">Cùng loại</h2>
+                <span className="meta">{family}, cùng tầm giá</span>
+                <Link className="more" href={`/products?family=${product.family}`}>
+                  Xem tất cả {family}
+                </Link>
+              </div>
+              <div className="grid3 four">
+                {same.map((p) => (
+                  /* Both kinds in one row, so each card says what it is where
+                     a listing card prints its size run, and an issue's style
+                     wears its plate. */
+                  <ProductCard key={p.id} product={p} kindCount plate />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </ShopFrame>
     );
@@ -106,7 +127,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
                 Cùng {LEX.tl} {no}
               </h2>
               <span className="meta">cùng loại, cùng tầm giá</span>
-              <Link className="more" href="/products">
+              {/* The whole issue, on its own page (v3 slice 11). */}
+              <Link className="more" href={issueHref(dropNo)}>
                 Xem cả {productsInDrop(catalog, dropNo).length} mẫu
               </Link>
             </div>
@@ -154,5 +176,5 @@ function relatedTo(catalog: Catalog, product: Product, dropNo: number): Product[
   const nearPrice = rest.filter((p) => p.family !== product.family && near(p));
   const others = rest.filter((p) => p.family !== product.family && !near(p));
 
-  return [...sameFamily, ...nearPrice, ...others].slice(0, RELATED);
+  return [...sameFamily, ...nearPrice, ...others].slice(0, RELATED_ROW);
 }

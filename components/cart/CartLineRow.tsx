@@ -8,7 +8,7 @@ import { useCatalog } from "@/components/shop/CatalogContext";
 import { COLORS } from "@/data/colors";
 import type { Size } from "@/data/types";
 import { swapSizesFor, type ResolvedLine } from "@/lib/cart";
-import { issueLabel } from "@/lib/lexicon";
+import { issueLabel, styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 
@@ -70,6 +70,8 @@ export function CartLineRow({
 
   const colour = COLORS[color];
   const where = `size ${size} màu ${colour.label}`;
+  // "S05 – KHÓI" for an issue's style (v3 slice 11), the bare name for a fixed one.
+  const name = styleName(product.name, product.dropNo);
   /** What the shelf says when somebody asks for one more than there is. */
   const capMessage =
     available === 1 ? `Chiếc cuối ${where}` : `Chỉ còn ${available} chiếc ${where}`;
@@ -109,7 +111,7 @@ export function CartLineRow({
       </span>
 
       <div className="n">
-        <Link href={`/products/${product.slug}`}>{product.name}</Link>
+        <Link href={`/products/${product.slug}`}>{name}</Link>
       </div>
       <div className="p">{vnd(line.lineTotalVnd)}</div>
 
@@ -146,7 +148,7 @@ export function CartLineRow({
         </div>
       ) : (
         <div className="ctl">
-          <div className="qty3" aria-label={`Số lượng ${product.name}`}>
+          <div className="qty3" aria-label={`Số lượng ${name}`}>
             <button
               type="button"
               aria-label="Bớt một"
@@ -162,7 +164,7 @@ export function CartLineRow({
                 type="text"
                 inputMode="numeric"
                 data-qty={line.key}
-                aria-label={`Số lượng ${product.name} size ${size}`}
+                aria-label={`Số lượng ${name} size ${size}`}
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 onBlur={(e) => commit(e.target.value)}

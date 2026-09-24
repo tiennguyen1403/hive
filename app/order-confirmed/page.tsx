@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { OrderConfirmedEmpty } from "@/components/checkout/OrderConfirmed";
 import { loadCatalog } from "@/lib/db/catalog";
-import { featuredDrop } from "@/lib/drop";
+import { wayToShop } from "@/lib/drop";
 
 export const metadata: Metadata = {
   title: "Đã nhận đơn",
@@ -20,6 +20,5 @@ export const metadata: Metadata = {
  */
 export default async function OrderConfirmedPage() {
   const catalog = await loadCatalog();
-  const { drop } = featuredDrop(catalog, undefined);
-  return <OrderConfirmedEmpty dropNo={drop.no} />;
+  return <OrderConfirmedEmpty way={wayToShop(catalog)} />;
 }

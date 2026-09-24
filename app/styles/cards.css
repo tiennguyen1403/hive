@@ -44,12 +44,19 @@
 .s .card3.sold .img img{ opacity:.5; filter:grayscale(.5); }
 
 /* The stamp: black cloth, honey thread, and a honey seam stitched 4px
-   inside the edge — the same construction as the label on the cover. */
-.s .card3 .stamp{ position:absolute; left:10px; top:10px; padding:6px 10px;
+   inside the edge — the same construction as the label on the cover.
+
+   At the plate's size since v3 slice 11, on every card: 28px tall (32 from
+   900px), the plate's letters (11 / 12px, `.1em`), so the two marks a photo
+   can carry read as one family — SOLD OUT top left, the issue's plate bottom
+   left. Its own cloth, border and seam are kept; the padding is the plate's
+   less the bolts it does not have. */
+.s .card3 .stamp{ position:absolute; left:10px; top:10px;
+  display:inline-flex; align-items:center; height:28px; padding:0 10px;
   background:var(--stage); color:var(--brand); border:1.5px solid var(--stage);
   border-radius:var(--r-sm);
-  font-family:var(--font-display); font-weight:var(--fw-display); font-size:var(--fs-sm);
-  letter-spacing:.12em; }
+  font-family:var(--font-display); font-weight:var(--fw-display); font-size:var(--fs-xs);
+  line-height:1; letter-spacing:.1em; }
 /* The seam was `outline:1px dashed` with `outline-offset:-4px` until v3
    slice 4. Same drawing, as a real box: 2.5px inside the padding box is
    4px inside the outer edge (the border is 1.5), and an inward outline
@@ -60,6 +67,16 @@
 .s .card3 .stamp::after{ content:""; position:absolute; inset:2.5px;
   border:1px dashed var(--brand); border-radius:1px; pointer-events:none; }
 
+/* The issue's plate on the photo of an issue's style (v3 slice 11), where
+   the card stands among styles of both kinds: `/products`, "Cùng loại",
+   the search results, the saved list (`ProductCard`'s `plate`). It is the
+   nav's own plate — the declarations are shared with `.nav3 .itag` in
+   nav.css and desktop.css — set bottom left, where the stamp (top left)
+   cannot meet it on a 171px card. The name under the photo already carries
+   the issue ("S05 – KHÓI"), so the plate is `aria-hidden` and lets a tap
+   through to the photo's link. */
+.s .card3 .sotag{ position:absolute; left:10px; bottom:10px; pointer-events:none; }
+
 /* Text block. One link covers the name, the price and the count, and its
    own overlay reaches into the gaps either side so the whole block is the
    target rather than the line of type inside it. */
@@ -69,6 +86,20 @@
 .s .card3 .toc{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; }
 .s .card3 .toc .n{ font-family:var(--font-display); font-weight:var(--fw-display);
   font-size:var(--fs-body); letter-spacing:-.01em; }
+/* A card too narrow for name, leader and price on one line — the phone's two
+   columns, 171px at 390 — gives the name a line of its own, and the leader
+   and the price take the line under it together (v3 slice 11). "S05 – KHÓI"
+   no longer squeezes the price onto a line by itself.
+
+   A container query, because the card is measured by the grid and never by
+   its contents: every grid a card stands in has `minmax(0, 1fr)` tracks
+   (`.grid3`, `.four`, `.single` — the listing, the home page, the related
+   rows, the search results, the saved list), and inline-size containment
+   only takes away the card's own say in a width it never had. */
+.s .card3{ container-type:inline-size; }
+@container (max-width:260px){
+  .s .card3 .toc .n{ flex-basis:100%; }
+}
 /* The leader takes the slack between name and price, and never less than
    12px — a two-dot leader reads as a typo, not as a rule. */
 .s .card3 .toc .ld{ flex:1; min-width:12px; border-bottom:1px dotted var(--line);
@@ -137,3 +168,10 @@
      reached 6px up and won the hit test. 18px was the smallest gap where
      both kept their full target — which is also why the old link ended up
      20px below its own card and only 16px above the next one. */
+
+/* ── 900px and up ──────────────────────────────────────────────────────────
+   The stamp keeps the plate's size as the plate grows (desktop.css): 32px,
+   12px letters, 12px either side. */
+@media (min-width:900px){
+  .s .card3 .stamp{ height:32px; padding:0 12px; font-size:var(--fs-sm); }
+}

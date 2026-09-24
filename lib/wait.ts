@@ -61,7 +61,8 @@ function samePage(a: string, b: string): boolean {
  * Whether a navigation from `from` to `to` covers the page.
  *
  * Only a change of PATHNAME does (§2.2 of the slice 9 brief): a filter, a
- * sort, a family tab, the plate from `/products?family=…`, a search from
+ * sort, a family tab, the plate from `/so/5?family=…` (its page since v3
+ * slice 11), a search from
  * `/search`, the order lookup, a hash — all stay on the page they started
  * on and leave it alone, as they always have. So does anything the browser
  * opens elsewhere or not at all (a modifier key, the middle button,

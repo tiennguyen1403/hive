@@ -13,6 +13,7 @@ import {
   refundNote,
   type OrderTabKey,
 } from "@/lib/customer-orders";
+import { wayToShop } from "@/lib/drop";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { trackedOfOrder } from "@/lib/lookup";
@@ -74,6 +75,7 @@ export function OrdersScreen({ orders, currentDropNo, tab, openCode }: OrdersScr
   }, [openCode]);
 
   const rows = orderRows(catalog, orders, now);
+  const way = wayToShop(catalog, now);
   const shown = rowsForTab(rows, current);
   const waiting = rows.filter((r) => r.state === "AWAITING_TRANSFER").length;
 
@@ -109,8 +111,10 @@ export function OrdersScreen({ orders, currentDropNo, tab, openCode }: OrdersScr
           title="Chưa có đơn nào"
           text="Đơn đặt khi đã đăng nhập hiện ở đây. Đơn đặt khi chưa đăng nhập tra cứu bằng mã đơn và số điện thoại."
           action={
-            <ButtonLink icon="grid" href="/products">
-              Xem {LEX.tl} {issueNo(currentDropNo)}
+            // The issue selling now, on its own page; every style on sale
+            // when none is (v3 slice 11).
+            <ButtonLink icon="grid" href={way.href}>
+              {way.issueNo !== null ? `Xem ${LEX.tl} ${issueNo(way.issueNo)}` : "Xem tất cả mẫu"}
             </ButtonLink>
           }
         />

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/data/colors";
+import { styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import type { ResolvedLaterLine } from "@/lib/later";
@@ -62,7 +63,7 @@ export function LaterList({ items, onAdd, onRemove }: LaterListProps) {
             </span>
 
             <div>
-              <b>{product.name}</b>
+              <b>{styleName(product.name, product.dropNo)}</b>
               <span className="sub">
                 {product.kind} · {colour.label} · size {size} ·{" "}
                 {vnd(product.priceVnd)} ·{" "}

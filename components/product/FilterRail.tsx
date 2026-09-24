@@ -28,6 +28,12 @@ interface FilterRailProps {
   pool: Product[];
   applied: ListingQuery;
   path: string;
+  /**
+   * The issue the pool is, on that issue's own page (`/so/5`); absent on
+   * `/products`, where the pool is every style on sale of both kinds and no
+   * sentence may call it "Số này" (v3 slice 11).
+   */
+  issueNo?: number | undefined;
 }
 
 /**
@@ -47,7 +53,7 @@ interface FilterRailProps {
  * Every count comes off the pool through `lib/catalog-query.ts`. A value
  * nothing in the issue matches is left out rather than drawn with a zero.
  */
-export function FilterRail({ pool, applied, path }: FilterRailProps) {
+export function FilterRail({ pool, applied, path, issueNo }: FilterRailProps) {
   const range = priceRangeOf(pool);
 
   return (
@@ -135,11 +141,13 @@ export function FilterRail({ pool, applied, path }: FilterRailProps) {
           })}
         </div>
         <PriceFilterForm applied={applied} path={path} />
-        {/* The real ends of the issue, so a window typed by hand starts from
-            what is actually on the shelf. */}
+        {/* The real ends of the pool, so a window typed by hand starts from
+            what is actually on the shelf — "Số này từ …" on an issue's page,
+            "Từ …" over every style on sale. */}
         {range && (
           <p className="foot">
-            {LEX.t} này từ {vnd(range.minVnd)} đến {vnd(range.maxVnd)}
+            {issueNo !== undefined ? `${LEX.t} này từ` : "Từ"} {vnd(range.minVnd)} đến{" "}
+            {vnd(range.maxVnd)}
           </p>
         )}
       </div>

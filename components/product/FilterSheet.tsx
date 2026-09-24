@@ -46,6 +46,11 @@ interface FilterSheetProps {
    * one, and an array of products crosses the boundary as it is.
    */
   pool: Product[];
+  /**
+   * The issue the pool is, on that issue's own page (`/so/5`); absent on
+   * `/products`, where the pool mixes both kinds of style (v3 slice 11).
+   */
+  issueNo?: number | undefined;
 }
 
 /**
@@ -64,7 +69,7 @@ interface FilterSheetProps {
  * Sorting is NOT in here. The list bar carries the order at both widths in
  * v3, and a second control saying the same thing is one too many.
  */
-export function FilterSheet({ open, onClose, applied, path, pool }: FilterSheetProps) {
+export function FilterSheet({ open, onClose, applied, path, pool, issueNo }: FilterSheetProps) {
   const router = useRouter();
   const [draft, setDraft] = useState<ListingQuery>(applied);
 
@@ -77,8 +82,6 @@ export function FilterSheet({ open, onClose, applied, path, pool }: FilterSheetP
 
   const n = runListingQuery(pool, draft).length;
   const range = priceRangeOf(pool);
-  // A pool of fixed styles (slice B5) has no issue to name.
-  const no = pool[0]?.dropNo ?? undefined;
 
   function toggle<T extends Family | Fit | Size | ColorKey>(
     key: "families" | "fits" | "sizes" | "colors",
@@ -131,7 +134,7 @@ export function FilterSheet({ open, onClose, applied, path, pool }: FilterSheetP
         <div>
           <h2>Lọc</h2>
           <div className="muted">
-            {no !== undefined ? `${issueLabel(no)} · ` : ""}
+            {issueNo !== undefined ? `${issueLabel(issueNo)} · ` : ""}
             {pool.length} mẫu
           </div>
         </div>
@@ -246,7 +249,8 @@ export function FilterSheet({ open, onClose, applied, path, pool }: FilterSheetP
         </div>
         {range && (
           <p className="foot">
-            {LEX.t} này từ {vnd(range.minVnd)} đến {vnd(range.maxVnd)}
+            {issueNo !== undefined ? `${LEX.t} này từ` : "Từ"} {vnd(range.minVnd)} đến{" "}
+            {vnd(range.maxVnd)}
           </p>
         )}
       </div>

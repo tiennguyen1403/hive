@@ -4,6 +4,7 @@ import { effectiveStatus, inTab, type OrderTabKey } from "./customer-orders";
 import { dayMonth } from "./datetime";
 import { orderTotalVnd, orderUnits } from "./orders";
 import { demoNow } from "./clock";
+import { styleName } from "./lexicon";
 
 /**
  * One line of "Đơn của tôi".
@@ -19,7 +20,7 @@ import { demoNow } from "./clock";
  * from a courier event nobody sent.
  */
 
-/** One style in an order, as a row prints it: "KHÓI ×1". */
+/** One style in an order, as a row prints it: "S05 – KHÓI ×1". */
 export interface OrderRowItem {
   /** Shown as-is. */
   name: string;
@@ -33,7 +34,7 @@ export interface OrderRow {
   state: OrderState;
   units: number;
   totalVnd: number;
-  /** "SƯƠNG, THAN" — the styles in the order, in order. Shown as-is. */
+  /** "S05 – SƯƠNG, S05 – THAN" — the styles in the order, in order. Shown as-is. */
   names: string;
   /** The same styles with their counts, for the row that has room for both. */
   items: OrderRowItem[];
@@ -80,6 +81,8 @@ const MAX_THUMBS = 2;
  */
 export function rowOfOrder(catalog: Catalog, o: Order, now: Date = demoNow()): OrderRow {
   const products = o.lines.map((l) => catalog.byId.get(l.productId));
+  // "S05 – KHÓI" for an issue's style (v3 slice 11), the bare name for a fixed one.
+  const names = products.map((p) => (p ? styleName(p.name, p.dropNo) : "—"));
   const status = effectiveStatus(o, now);
   // The first style in it that belongs to an issue: a fixed style (slice B5)
   // has none, and an order of fixed styles only has no issue to be dated by.
@@ -91,8 +94,8 @@ export function rowOfOrder(catalog: Catalog, o: Order, now: Date = demoNow()): O
     state: status.state,
     units: orderUnits(o),
     totalVnd: orderTotalVnd(o),
-    names: products.map((p) => p?.name ?? "—").join(", "),
-    items: o.lines.map((l, i) => ({ name: products[i]?.name ?? "—", qty: l.qty })),
+    names: names.join(", "),
+    items: o.lines.map((l, i) => ({ name: names[i]!, qty: l.qty })),
     ...(dropNo !== undefined ? { dropNo } : {}),
     photoKeys: o.lines.slice(0, MAX_THUMBS).map((l, i) => {
       const p = products[i];

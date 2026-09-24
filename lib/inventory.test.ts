@@ -2,8 +2,11 @@ import { describe, it, expect } from "vitest";
 import {
   FIXED_LOW_AT,
   LOW_STOCK_AT,
+  RELATED_ROW,
+  SHOWCASE,
   dropSummary,
   familyGroupsIn,
+  familyGroupsOf,
   familyKindsLabel,
   fixedLowCells,
   isFixed,
@@ -13,9 +16,12 @@ import {
   onHand,
   productsInDrop,
   productsOnSale,
+  sameFamilyOnSale,
+  showcaseOnSale,
   soldOutSizes,
   soldUnits,
 } from "./inventory";
+import type { Product } from "@/data/types";
 import { styleCountLabel } from "./money";
 import { buildCatalog } from "./catalog";
 import { teasersIn } from "@/data/catalog";
@@ -152,6 +158,14 @@ describe("familyKindsLabel · the second line of a family row", () => {
     // off, because the row is already titled Sơ mi.
     expect(familyKindsLabel([FIXTURE_CATALOG.bySlug.get("s05-gio")!])).toBe("sơ mi dệt");
     expect(familyKindsLabel([FIXTURE_CATALOG.bySlug.get("s05-muoi")!])).toBe("jogger");
+  });
+
+  it("calls a lone kind that is only the family's name the plain one (v3 slice 11)", () => {
+    // HOODIE TRƠN is "Áo hoodie": alone between two issues, its row reads
+    // "trơn" as it would beside a printed one — not "hoodie" under Hoodie.
+    expect(familyKindsLabel([FIXTURE_CATALOG.bySlug.get("hoodie-tron")!])).toBe("trơn");
+    expect(familyKindsLabel([FIXTURE_CATALOG.bySlug.get("ao-thun-tron")!])).toBe("cơ bản");
+    expect(familyKindsLabel([FIXTURE_CATALOG.bySlug.get("ao-khoac-du")!])).toBe("khoác dù");
   });
 
   it("reads as a list, with 'và' before the last", () => {
@@ -315,5 +329,142 @@ describe("isRunningLow · 'Sắp hết' by each kind's own rule", () => {
     expect(slugsOf(lowStockIn(FIXTURE_CATALOG, 5))).toEqual(["s05-bui", "s05-suong"]);
     // MUỐI has nothing left: gone, not low.
     expect(isRunningLow(FIXTURE_CATALOG.bySlug.get("s05-muoi")!)).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────── the shop's two rows (v3 slice 11)
+/** The same style with nothing left on its shelf, in a catalogue of its own kind. */
+function emptied(p: Product): Product {
+  return { ...p, stock: Object.fromEntries(p.colors.map((c) => [c, { S: 0, M: 0, L: 0, XL: 0 }])) };
+}
+
+function catalogWith(products: Product[]) {
+  return buildCatalog({
+    products,
+    drops: [...FIXTURE_CATALOG.drops],
+    teasers: [],
+    promotions: [],
+  });
+}
+
+describe("showcaseOnSale · the six under 'Đang bán' on the home page", () => {
+  it("is one style per family, in FAMILIES order, each the family's first", () => {
+    expect(SHOWCASE).toBe(6);
+    expect(slugsOf(showcaseOnSale(FIXTURE_CATALOG, IN_05))).toEqual([
+      "ao-thun-tron",
+      "hoodie-tron",
+      "ao-khoac-du",
+      "gile-phao",
+      "so-mi-oxford",
+      "quan-kaki",
+    ]);
+  });
+
+  it("never shows the open issue's styles — they stand under 'Trong số này' — and is the same between issues", () => {
+    expect(showcaseOnSale(FIXTURE_CATALOG, IN_05).every(isFixed)).toBe(true);
+    expect(slugsOf(showcaseOnSale(FIXTURE_CATALOG, BETWEEN))).toEqual(
+      slugsOf(showcaseOnSale(FIXTURE_CATALOG, IN_05)),
+    );
+  });
+
+  it("leaves out a style with an empty shelf and takes the family's next", () => {
+    const products = FIXTURE_CATALOG.products.map((p) => (p.slug === "ao-thun-tron" ? emptied(p) : p));
+    expect(slugsOf(showcaseOnSale(catalogWith(products), IN_05))).toEqual([
+      "ao-thun-tay-dai",
+      "hoodie-tron",
+      "ao-khoac-du",
+      "gile-phao",
+      "so-mi-oxford",
+      "quan-kaki",
+    ]);
+  });
+
+  it("fills up by position when a family has nothing to show", () => {
+    const products = FIXTURE_CATALOG.products.filter((p) => p.slug !== "gile-phao");
+    expect(slugsOf(showcaseOnSale(catalogWith(products), IN_05))).toEqual([
+      "ao-thun-tron",
+      "hoodie-tron",
+      "ao-khoac-du",
+      "so-mi-oxford",
+      "quan-kaki",
+      "ao-thun-tay-dai",
+    ]);
+  });
+});
+
+describe("sameFamilyOnSale · 'Cùng loại' under a fixed style", () => {
+  const style = (slug: string) => FIXTURE_CATALOG.bySlug.get(slug)!;
+
+  it("is the family on sale, both kinds, the nearest in price first", () => {
+    expect(RELATED_ROW).toBe(4);
+    // 400.000₫: KHÓI 390 (10k off), CÁT 420 (20k), then NẮNG and ÁO THUN TAY
+    // DÀI both 450 (50k), in catalogue order.
+    expect(slugsOf(sameFamilyOnSale(FIXTURE_CATALOG, style("ao-thun-tron"), IN_05))).toEqual([
+      "s05-khoi",
+      "s05-cat",
+      "s05-nang",
+      "ao-thun-tay-dai",
+    ]);
+    expect(slugsOf(sameFamilyOnSale(FIXTURE_CATALOG, style("quan-kaki"), IN_05))).toEqual([
+      "s05-muoi",
+      "quan-short-ni",
+      "s05-da",
+    ]);
+  });
+
+  it("never lists the style itself, and is empty when it is the only one of its family", () => {
+    for (const p of FIXED) {
+      expect(sameFamilyOnSale(FIXTURE_CATALOG, p, IN_05).some((x) => x.id === p.id)).toBe(false);
+    }
+    expect(sameFamilyOnSale(FIXTURE_CATALOG, style("gile-phao"), IN_05)).toEqual([]);
+  });
+
+  it("between two issues, is the fixed styles alone", () => {
+    expect(slugsOf(sameFamilyOnSale(FIXTURE_CATALOG, style("ao-thun-tron"), BETWEEN))).toEqual([
+      "ao-thun-tay-dai",
+    ]);
+    expect(sameFamilyOnSale(FIXTURE_CATALOG, style("hoodie-tron"), BETWEEN)).toEqual([]);
+  });
+
+  it("stops at four", () => {
+    expect(sameFamilyOnSale(FIXTURE_CATALOG, style("ao-thun-tay-dai"), IN_05)).toHaveLength(4);
+    expect(sameFamilyOnSale(FIXTURE_CATALOG, style("ao-thun-tay-dai"), IN_05, 2)).toHaveLength(2);
+  });
+});
+
+describe("familyGroupsOf · 'Theo loại' over everything on sale", () => {
+  it("counts the open issue and the fixed styles together, each row led by its first on sale", () => {
+    expect(
+      familyGroupsOf(productsOnSale(FIXTURE_CATALOG, IN_05)).map((g) => [
+        g.family,
+        g.styles,
+        g.lead.slug,
+        g.fromVnd,
+      ]),
+    ).toEqual([
+      ["TEE", 5, "s05-khoi", 390_000],
+      ["HOODIE", 3, "s05-bui", 750_000],
+      ["JACKET", 3, "s05-suong", 850_000],
+      ["VEST", 1, "gile-phao", 750_000],
+      ["SHIRT", 2, "s05-gio", 590_000],
+      ["PANTS", 4, "s05-muoi", 450_000],
+    ]);
+  });
+
+  it("between two issues, counts the fixed styles and draws their flats", () => {
+    const rows = familyGroupsOf(productsOnSale(FIXTURE_CATALOG, BETWEEN));
+    expect(rows.map((g) => [g.family, g.styles, g.lead.slug])).toEqual([
+      ["TEE", 2, "ao-thun-tron"],
+      ["HOODIE", 1, "hoodie-tron"],
+      ["JACKET", 1, "ao-khoac-du"],
+      ["VEST", 1, "gile-phao"],
+      ["SHIRT", 1, "so-mi-oxford"],
+      ["PANTS", 2, "quan-kaki"],
+    ]);
+    expect(rows.every((g) => g.lead.photoKeys[0]!.startsWith("flat-"))).toBe(true);
+  });
+
+  it("is what familyGroupsIn draws for one issue", () => {
+    expect(familyGroupsOf(productsInDrop(FIXTURE_CATALOG, 5))).toEqual(familyGroupsIn(FIXTURE_CATALOG, 5));
   });
 });

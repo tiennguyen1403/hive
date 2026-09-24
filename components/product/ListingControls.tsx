@@ -24,6 +24,8 @@ interface ListingControlsProps {
   applied: ListingQuery;
   path: string;
   pool: Product[];
+  /** The issue the pool is, on its own page; absent on `/products` (see `FilterSheet`). */
+  issueNo?: number | undefined;
 }
 
 /** The two sizes worth a one-tap chip. The rest live in the sheet. */
@@ -48,7 +50,7 @@ const QUICK_SIZES: Size[] = ["S", "M"];
  * the pool, and left out entirely when the issue has nothing behind it. A
  * chip that leads to an empty grid is worse than no chip.
  */
-export function ListingControls({ applied, path, pool }: ListingControlsProps) {
+export function ListingControls({ applied, path, pool, issueNo }: ListingControlsProps) {
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -166,6 +168,7 @@ export function ListingControls({ applied, path, pool }: ListingControlsProps) {
         applied={applied}
         path={path}
         pool={pool}
+        issueNo={issueNo}
       />
     </>
   );

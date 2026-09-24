@@ -7,7 +7,7 @@ import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Drop } from "@/data/types";
 import { teasersIn, type Catalog } from "@/lib/catalog";
 import { clockDayLabel, dayMonth } from "@/lib/datetime";
-import { closesInLabel, dropCalendar } from "@/lib/drop";
+import { closesInLabel, dropCalendar, issueHref } from "@/lib/drop";
 import { productsInDrop, soldUnits } from "@/lib/inventory";
 import { LEX, issueLabel } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
@@ -73,7 +73,8 @@ export function SiteFooter() {
             <ul className="cal">
               {cal.open && (
                 <li>
-                  <Link href="/products">
+                  {/* The issue's own page (v3 slice 11), as the nav's plate. */}
+                  <Link href={issueHref(cal.open.no)}>
                     <b>{issueLabel(cal.open.no)} · đang bán</b>
                     <span className="st on">{closesIn}</span>
                   </Link>
@@ -98,7 +99,7 @@ export function SiteFooter() {
                 <li>
                   {/* A closed issue has a page of its own since v3 slice 4 —
                       `/so/N`, where "xem lại" actually lands on the record. */}
-                  <Link href={`/so/${cal.closed.no}`}>
+                  <Link href={issueHref(cal.closed.no)}>
                     <b>{issueLabel(cal.closed.no)} · đã đóng</b>
                     {/* How much of the cut went, not how many styles there
                         were: on an issue that is over, that ratio is the one

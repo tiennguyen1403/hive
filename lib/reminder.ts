@@ -1,6 +1,6 @@
 import type { Drop } from "@/data/types";
 import { clockDayLabel } from "./datetime";
-import { dropState } from "./drop";
+import { dropState, issueHref } from "./drop";
 import { demoNow } from "./clock";
 
 /**
@@ -125,7 +125,8 @@ export function reminderNotice(
         state,
         text: `Số ${no} đã mở — bạn đã đặt nhắc`,
         linkText: `xem số ${no}`,
-        href: "/products",
+        // The issue's own page (v3 slice 11); `/products` is every style on sale.
+        href: issueHref(drop.no),
       };
     }
 

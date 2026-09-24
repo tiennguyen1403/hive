@@ -20,15 +20,16 @@ import {
 /**
  * What the search box offers while a term is being typed.
  *
- * It reads the issue that is open and nothing else — there is no server to
- * ask, no query log to rank by, and no index to build: ten styles fit in a
- * loop. Everything on screen is therefore a fact the catalog already holds,
- * which is also what keeps it honest (DESIGN.md §9 rule 1).
+ * It reads the pool it is handed and nothing else — every style on sale
+ * since v3 slice 11, the open issue's and the fixed ones — because there is
+ * no server to ask, no query log to rank by, and no index to build: eighteen
+ * styles fit in a loop. Everything on screen is therefore a fact the catalog
+ * already holds, which is also what keeps it honest (DESIGN.md §9 rule 1).
  *
  * Two groups and a way out:
  * · MẪU — styles whose name, kind, family or colourway carries the term.
  * · LOẠI — the family, the fit or the colour itself, as a filter to open.
- * · the last row is always "Tìm «kh» trong 10 mẫu", so the list never has to
+ * · the last row is always "Tìm «kh» trong 18 mẫu", so the list never has to
  *   be the answer: pressing Enter is still the way to the full result page.
  *
  * Matching is accent-insensitive through `fold`, because a shopper in a hurry

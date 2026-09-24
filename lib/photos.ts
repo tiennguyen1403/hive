@@ -19,9 +19,18 @@
  * here and handed to `next/image`, and the browser still never talks to
  * Supabase. The two kinds tell themselves apart by shape (`isUploadedKey`).
  *
+ * FLATS (v3 slice 11). The eight fixed styles have no photos yet; each of
+ * their colourways carries a `flat-<shape>-<colour>` key, and the shop serves
+ * the garment's flat drawing for it from its own `public/flats/` — seventeen
+ * PNG files drawn by `scripts/flats.ts` from `lib/flats.ts`. They are not in
+ * `PHOTO_IDS`: the back office's list of borrowed frames (`PHOTO_KEYS`) and
+ * the teaser sheet stay as they are until the back-office slice decides.
+ *
  * Pure and free of `server-only`: the storefront's client components build
  * their image URLs with it.
  */
+
+import { flatPath } from "./flats";
 
 const UNSPLASH = "https://images.unsplash.com/photo-{id}?auto=format&fit=crop&w={w}&q={q}";
 
@@ -58,9 +67,15 @@ const PHOTO_IDS: Record<string, string> = {
  * and shrunk by the browser that uploaded it. A borrowed key is an Unsplash
  * URL asking for that width and quality, as before; an unknown one falls back
  * to the hero frame.
+ *
+ * A flat's key is a file of this app, `/flats/tee-white.png`, optimised by
+ * `next/image` like an upload. Only the seventeen drawings that exist
+ * (`isFlatKey`); any other `flat-…` key is unknown and falls back too.
  */
 export function photoUrl(key: string, width: number, quality = 70): string {
   if (isUploadedKey(key)) return `/photos/${key}`;
+  const flat = flatPath(key);
+  if (flat) return flat;
   const id = PHOTO_IDS[key] ?? PHOTO_IDS.hero!;
   return UNSPLASH.replace("{id}", id)
     .replace("{w}", String(width))

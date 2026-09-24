@@ -78,10 +78,14 @@ export const HOME_COVER = {
  * only rules this build really enforces — the window, the single cut, the
  * shelf running out. Everything else about the brand is still unwritten, and
  * `/about` says so in a `.prep` block instead of filling it in.
+ *
+ * "mỗi mẫu TRONG SỐ" since v3 slice 11: a fixed style belongs to no issue and
+ * is brought back when a size runs out, so the single cut is the rule of an
+ * issue's styles, not of every style the shop sells.
  */
 export const ABOUT_LEAD =
   `HIVE bán streetwear unisex theo ${LEX.tl}: mỗi ${LEX.tl} mở đúng giờ, ` +
-  "mỗi mẫu cắt đúng một lần, hết là hết.";
+  `mỗi mẫu trong ${LEX.tl} cắt đúng một lần, hết là hết.`;
 
 /**
  * `"Số 05"` — the issue, named the way every screen names it.

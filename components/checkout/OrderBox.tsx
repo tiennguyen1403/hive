@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { Icon } from "@/components/icon/Icon";
 import { COLORS } from "@/data/colors";
 import type { ResolvedLine } from "@/lib/cart";
+import { styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import type { CheckoutTotals } from "@/lib/shipping";
@@ -72,7 +73,7 @@ export function OrderBox({ lines, units, totals, promoCode }: OrderBoxProps) {
               />
             </span>
             <span className="g">
-              <b>{l.product.name}</b>
+              <b>{styleName(l.product.name, l.product.dropNo)}</b>
               <span>
                 {COLORS[l.line.color].label} · {l.line.size} · ×{l.line.qty}
               </span>

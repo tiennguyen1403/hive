@@ -7,6 +7,7 @@ import { usePrefs } from "@/components/shop/prefs";
 import { ProductCard } from "@/components/product/ProductCard";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { useCatalog } from "@/components/shop/CatalogContext";
+import { wayToShop } from "@/lib/drop";
 import { resolveWishlist } from "@/lib/wishlist";
 import { useWishlist } from "./WishlistContext";
 import { demoNow } from "@/lib/clock";
@@ -28,7 +29,7 @@ import { demoNow } from "@/lib/clock";
  * button — with two things added here: when it was saved, and the remembered
  * size preselected in the sheet the button opens.
  */
-export function WishlistScreen({ currentDropNo }: { currentDropNo: number }) {
+export function WishlistScreen() {
   const catalog = useCatalog();
   const { list, ready, toggle } = useWishlist();
   const { prefs } = usePrefs();
@@ -37,6 +38,7 @@ export function WishlistScreen({ currentDropNo }: { currentDropNo: number }) {
   // same clock (whether its issue is still open decides the button).
   const now = useMemo(() => demoNow(), [list]);
   const saved = resolveWishlist(catalog, now, list);
+  const way = wayToShop(catalog, now);
 
   if (!ready) {
     return (
@@ -59,8 +61,10 @@ export function WishlistScreen({ currentDropNo }: { currentDropNo: number }) {
           title="Chưa lưu mẫu nào"
           text="Bấm “Lưu” ở trang sản phẩm. Danh sách nằm trong trình duyệt này, không cần tài khoản."
           action={
-            <ButtonLink icon="grid" href="/products">
-              Xem {LEX.tl} {issueNo(currentDropNo)}
+            // The issue selling now, on its own page; every style on sale
+            // when none is (v3 slice 11).
+            <ButtonLink icon="grid" href={way.href}>
+              {way.issueNo !== null ? `Xem ${LEX.tl} ${issueNo(way.issueNo)}` : "Xem tất cả mẫu"}
             </ButtonLink>
           }
         />
@@ -79,9 +83,12 @@ export function WishlistScreen({ currentDropNo }: { currentDropNo: number }) {
 
       <div className="grid3">
         {saved.items.map((item) => (
+          /* The saved list mixes both kinds of style, so an issue's style
+             wears its plate on the photo (v3 slice 11). */
           <ProductCard
             key={item.product.id}
             product={item.product}
+            plate
             closed={!item.buyable && !item.soldOut}
             onUnsave={() => toggle(item.product.id)}
             {...(item.savedAt ? { savedAt: item.savedAt } : {})}

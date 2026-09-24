@@ -20,8 +20,9 @@ import {
   type Size,
 } from "@/data/types";
 import { dayMonth } from "@/lib/datetime";
-import { isLowStock, isSoldOut, onHand, onHandByColor, onHandOf } from "@/lib/inventory";
-import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
+import { issueHref } from "@/lib/drop";
+import { isFixed, isLowStock, isSoldOut, onHand, onHandByColor, onHandOf } from "@/lib/inventory";
+import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { setSizePref } from "@/lib/prefs";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
@@ -70,6 +71,12 @@ interface ProductViewProps {
  * The rule the page is built around: a size that has run out is visible
  * BEFORE the button is pressed — a struck row saying "hết", not an error
  * after a tap (PRODUCT.md, "scarcity is content").
+ *
+ * A FIXED style (v3 slice 11) is the same ticket with no issue and no
+ * figure: no kick line, no stock block, colour buttons that name only the
+ * colour, size rows that say only which size is "đã hết". An issue's style
+ * wears its issue in front of its name — "S05 – KHÓI" — in the heading, the
+ * trail, the buy bar and every label that names it.
  */
 export function ProductView({ product, issue }: ProductViewProps) {
   const { add } = useCart();
@@ -90,8 +97,11 @@ export function ProductView({ product, issue }: ProductViewProps) {
   const sold = isSoldOut(product);
   const canBuy = !sold && !closed;
   const left = onHand(product);
-  const leftInColor = onHandByColor(product, color);
   const remembered = prefsReady && size !== null && prefs.size === size;
+  // A fixed style (v3 slice 11) prints no stock figure anywhere on the page.
+  const fixed = isFixed(product);
+  // "S05 – KHÓI" for an issue's style, the bare name for a fixed one.
+  const name = styleName(product.name, product.dropNo);
 
   // The footer links here as "Bảng số đo", and so does the size sheet on
   // every other screen. Landing at the top of a product page instead of on
@@ -135,7 +145,7 @@ export function ProductView({ product, issue }: ProductViewProps) {
   function addNow() {
     if (!size) return;
     add({ productId: product.id, size, color, qty: 1 });
-    setToast(`Đã thêm ${product.name} size ${size} vào giỏ`);
+    setToast(`Đã thêm ${name} size ${size} vào giỏ`);
   }
 
   function toggleRemember() {
@@ -153,8 +163,8 @@ export function ProductView({ product, issue }: ProductViewProps) {
     wish.toggle(product.id);
     setToast(
       saved
-        ? `Đã bỏ ${product.name} khỏi danh sách đã lưu`
-        : `Đã lưu ${product.name} · lưu trên thiết bị này`,
+        ? `Đã bỏ ${name} khỏi danh sách đã lưu`
+        : `Đã lưu ${name} · lưu trên thiết bị này`,
     );
   }
 
@@ -169,11 +179,12 @@ export function ProductView({ product, issue }: ProductViewProps) {
   return (
     <>
       <nav className="crumbs" aria-label="Đường dẫn">
-        {/* No issue to name for a fixed style (slice B5). */}
+        {/* No issue to name for a fixed style (slice B5). An issue's style
+            leads back to its issue's own page (v3 slice 11). */}
         {product.dropNo !== null && (
           <>
             {/* U+00A0 so "Số 05" is never broken across two lines. */}
-            <Link href="/products">{`${LEX.t} ${issueNo(product.dropNo)}`}</Link>
+            <Link href={issueHref(product.dropNo)}>{`${LEX.t} ${issueNo(product.dropNo)}`}</Link>
             <span className="sep" aria-hidden="true">
               /
             </span>
@@ -185,7 +196,7 @@ export function ProductView({ product, issue }: ProductViewProps) {
         <span className="sep" aria-hidden="true">
           /
         </span>
-        <b>{product.name}</b>
+        <b>{name}</b>
       </nav>
 
       <div className="pdp3">
@@ -193,7 +204,7 @@ export function ProductView({ product, issue }: ProductViewProps) {
           <div
             className="gal"
             ref={galRef}
-            aria-label={`Ảnh ${product.name}, ${product.photoKeys.length} tấm`}
+            aria-label={`Ảnh ${name}, ${product.photoKeys.length} tấm`}
             onScroll={(e) => {
               const el = e.currentTarget;
               if (el.clientWidth > 0) setShot(Math.round(el.scrollLeft / el.clientWidth));
@@ -203,7 +214,7 @@ export function ProductView({ product, issue }: ProductViewProps) {
               <figure key={key + i}>
                 <Image
                   src={photoUrl(key, 760, 72)}
-                  alt={`${product.name} — màu ${COLORS[product.colors[i] ?? color].label}`}
+                  alt={`${name} — màu ${COLORS[product.colors[i] ?? color].label}`}
                   width={760}
                   height={950}
                   priority={i === 0}
@@ -243,7 +254,7 @@ export function ProductView({ product, issue }: ProductViewProps) {
             </p>
           )}
 
-          <h1>{product.name}</h1>
+          <h1>{name}</h1>
           <p className="kind">
             {product.kind} · {product.material}
           </p>
@@ -251,24 +262,22 @@ export function ProductView({ product, issue }: ProductViewProps) {
 
           {/* What was cut and what is left. The bar reads the same fact a
               second way and carries the percentage as its label, so it is
-              not a graphic that says nothing to a reader who cannot see it. */}
-          <div className="stock">
-            {cut === null ? (
-              // A fixed style (slice B5) was never cut and is brought back
-              // when a size runs out: what is left is the one true figure.
-              <b>Còn {left}</b>
-            ) : sold ? (
-              <>
-                <b>0</b> / {cut} chiếc đã cắt{" "}
-                <span className="cd">· đã bán hết</span>
-              </>
-            ) : (
-              <>
-                <b>Còn {left}</b> / {cut} chiếc đã cắt{" "}
-                <span className="cd">· không may thêm</span>
-              </>
-            )}
-            {cut !== null && (
+              not a graphic that says nothing to a reader who cannot see it.
+              A fixed style was never cut and shows no figure (v3 slice 11):
+              no block at all. */}
+          {cut !== null && (
+            <div className="stock">
+              {sold ? (
+                <>
+                  <b>0</b> / {cut} chiếc đã cắt{" "}
+                  <span className="cd">· đã bán hết</span>
+                </>
+              ) : (
+                <>
+                  <b>Còn {left}</b> / {cut} chiếc đã cắt{" "}
+                  <span className="cd">· không may thêm</span>
+                </>
+              )}
               <div
                 className={meter}
                 role="img"
@@ -276,18 +285,13 @@ export function ProductView({ product, issue }: ProductViewProps) {
               >
                 <i style={{ width: sold ? "100%" : `${filled}%` }} />
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
+          {/* No label row above the colours (v3 slice 11): each button names
+              its colour, and an issue's style its count as well. */}
           {product.colors.length > 1 && (
             <div className="fld">
-              <div className="lbl">
-                <b>Màu</b>
-                <span>
-                  {COLORS[color].label} ·{" "}
-                  {leftInColor === 0 ? "đã hết" : `còn ${leftInColor}`}
-                </span>
-              </div>
               <div className="sw" role="group" aria-label="Màu">
                 {product.colors.map((c, i) => {
                   const n = onHandByColor(product, c);
@@ -297,13 +301,15 @@ export function ProductView({ product, issue }: ProductViewProps) {
                       type="button"
                       className={n === 0 ? "gone" : undefined}
                       aria-pressed={c === color}
-                      aria-label={`Màu ${COLORS[c].label}, ${n === 0 ? "đã hết" : `còn ${n}`}`}
+                      aria-label={
+                        fixed
+                          ? `Màu ${COLORS[c].label}`
+                          : `Màu ${COLORS[c].label}, ${n === 0 ? "đã hết" : `còn ${n}`}`
+                      }
                       onClick={() => pickColor(c, i)}
                     >
                       <i style={{ background: COLORS[c].hex }} aria-hidden="true" />
-                      <span>
-                        {COLORS[c].label} {n}
-                      </span>
+                      <span>{fixed ? COLORS[c].label : `${COLORS[c].label} ${n}`}</span>
                     </button>
                   );
                 })}
@@ -315,7 +321,11 @@ export function ProductView({ product, issue }: ProductViewProps) {
             <div className="lbl">
               <b>Size</b>
               <span>
-                {size ? `${size} · còn ${onHandOf(product, color, size)}` : "chưa chọn"}
+                {size
+                  ? fixed
+                    ? size
+                    : `${size} · còn ${onHandOf(product, color, size)}`
+                  : "chưa chọn"}
               </span>
               <button type="button" className="lnk" onClick={() => setGuideOpen(true)}>
                 Bảng số đo
@@ -327,7 +337,7 @@ export function ProductView({ product, issue }: ProductViewProps) {
               value={size}
               onPick={setSize}
               frozen={!canBuy}
-              label={`Chọn size ${product.name}`}
+              label={`Chọn size ${name}`}
             />
           </div>
 
@@ -422,7 +432,7 @@ export function ProductView({ product, issue }: ProductViewProps) {
       {canBuy && (
         <BuyBar
           watchId="buy-cta"
-          title={product.name}
+          title={name}
           detail={`${vnd(product.priceVnd)} · ${size ? `size ${size}` : "chưa chọn size"}`}
           icon={size ? "bag" : undefined}
           label={size ? `Thêm size ${size}` : "Chọn size"}

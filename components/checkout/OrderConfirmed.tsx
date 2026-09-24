@@ -12,6 +12,7 @@ import { Steps } from "@/components/shop/Steps";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Order, OrderState } from "@/data/types";
 import { clockLabel, dayMonth } from "@/lib/datetime";
+import type { wayToShop } from "@/lib/drop";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { trackHref, trackedOfOrder } from "@/lib/lookup";
 import { countWord, vnd } from "@/lib/money";
@@ -30,8 +31,12 @@ interface OrderConfirmedProps {
   order: Order;
   /** Built on the server: the commune list it needs never reaches the browser. */
   addressLine: string;
-  /** Which issue the "Về số NN" link goes back to. */
-  dropNo: number;
+  /**
+   * Where the way back into the shop goes (`wayToShop`, read on the server):
+   * the issue selling now — "Về số 05", its own page — or, when none is,
+   * every style on sale (v3 slice 11).
+   */
+  way: ShopWay;
   /**
    * The order belongs to the signed-in account, so "Đơn hàng" lists it. False
    * for a guest, and for an order this browser placed signed out and is now
@@ -68,7 +73,7 @@ interface OrderConfirmedProps {
  * prints the real link and a way to copy it, so the frame is a working thing
  * rather than a promise.
  */
-export function OrderConfirmed({ order, addressLine, dropNo, inAccount }: OrderConfirmedProps) {
+export function OrderConfirmed({ order, addressLine, way, inAccount }: OrderConfirmedProps) {
   const catalog = useCatalog();
   const codeRef = useRef<HTMLElement>(null);
   const amountRef = useRef<HTMLElement>(null);
@@ -264,8 +269,8 @@ export function OrderConfirmed({ order, addressLine, dropNo, inAccount }: OrderC
               <ButtonLink tone="ink wide" icon="search" href={trackHref(order.code)}>
                 Tra cứu đơn không cần đăng nhập
               </ButtonLink>
-              <ButtonLink tone="quiet" icon="grid" href="/products">
-                Về {LEX.tl} {issueNo(dropNo)}
+              <ButtonLink tone="quiet" icon="grid" href={way.href}>
+                {wayBack(way)}
               </ButtonLink>
             </div>
 
@@ -296,7 +301,7 @@ export function OrderConfirmed({ order, addressLine, dropNo, inAccount }: OrderC
  * kept on the device any more, so the page says where an order can be found
  * instead — the account's list, or the lookup by code and phone number.
  */
-export function OrderConfirmedEmpty({ dropNo }: { dropNo: number }) {
+export function OrderConfirmedEmpty({ way }: { way: ShopWay }) {
   return (
     <ShopFrame>
       <div className="wrap3">
@@ -306,8 +311,8 @@ export function OrderConfirmedEmpty({ dropNo }: { dropNo: number }) {
           title="Chưa có đơn nào vừa đặt"
           text="Mở lại trong Đơn hàng của tài khoản, hoặc tra cứu bằng mã đơn và số điện thoại."
           action={
-            <ButtonLink icon="grid" href="/products">
-              Về {LEX.tl} {issueNo(dropNo)}
+            <ButtonLink icon="grid" href={way.href}>
+              {wayBack(way)}
             </ButtonLink>
           }
         />
@@ -343,4 +348,12 @@ function headline(state: OrderState, order: Order): string {
         ? `Đơn đã huỷ — ${order.status.reason}.`
         : "Đơn đã huỷ.";
   }
+}
+
+/** Where the page's way back into the shop goes (v3 slice 11). */
+type ShopWay = ReturnType<typeof wayToShop>;
+
+/** "Về số 05" while an issue sells; "Xem tất cả mẫu" when none does. */
+function wayBack(way: ShopWay): string {
+  return way.issueNo !== null ? `Về ${LEX.tl} ${issueNo(way.issueNo)}` : "Xem tất cả mẫu";
 }

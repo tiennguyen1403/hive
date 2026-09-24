@@ -44,6 +44,30 @@ describe("photoUrl", () => {
   });
 });
 
+describe("photoUrl · the fixed styles' flats (v3 slice 11)", () => {
+  it("serves a flat from the app's own folder, whatever width is asked", () => {
+    expect(photoUrl("flat-tee-white", 520)).toBe("/flats/tee-white.png");
+    expect(photoUrl("flat-trousers-cream", 120, 60)).toBe("/flats/trousers-cream.png");
+    expect(photoUrl("flat-longsleeve-black", 760, 72)).toBe("/flats/longsleeve-black.png");
+  });
+
+  it("has a file for every flat the catalogue names", () => {
+    const flats = CATALOG.flatMap((p) => p.photoKeys).filter((k) => k.startsWith("flat-"));
+    expect(flats).toHaveLength(17);
+    for (const k of flats) expect(photoUrl(k, 520)).toBe(`/flats/${k.slice("flat-".length)}.png`);
+  });
+
+  it("lets a flat that was never drawn fall back like any unknown key", () => {
+    for (const key of ["flat-tee-moss", "flat-cape-black", "flat-tee", "flat-", "tee-white"]) {
+      expect(photoUrl(key, 120), key).toBe(photoUrl("hero", 120));
+    }
+  });
+
+  it("keeps the flats out of the borrowed frames the back office picks from", () => {
+    expect(PHOTO_KEYS.some((k) => k.startsWith("flat-"))).toBe(false);
+  });
+});
+
 describe("isUploadedKey", () => {
   it("knows an upload by its shape: up/, 32 hex digits, .webp or .jpg", () => {
     expect(isUploadedKey(`up/${HEX}.webp`)).toBe(true);

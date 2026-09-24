@@ -211,7 +211,8 @@ describe("trackedOfOrder — an order placed at checkout", () => {
   });
 
   it("reads its names and photos out of the catalogue", () => {
-    expect(t.lines[0]).toMatchObject({ name: "KHÓI", colorLabel: "Đen", size: "M", qty: 1 });
+    // The name the shop shows it under: the issue's code in front (v3 slice 11).
+    expect(t.lines[0]).toMatchObject({ name: "S05\u00a0– KHÓI", colorLabel: "Đen", size: "M", qty: 1 });
   });
 
   it("shows the order and the two steps still ahead", () => {

@@ -107,10 +107,17 @@
    from the issue's cloth, colourway B. A 1px honey rule inset 2px from the
    edge, a bolt at each end, the issue in Unbounded 800. `--pl` is the plate
    and `--pi` everything drawn on it (rule, bolts, letters); the hover swaps
-   only the plate. */
-.s .nav3 .itag{ --pl:var(--stage); --pi:var(--brand);
-  display:inline-flex; align-items:center; justify-content:center; flex:none;
-  position:relative; white-space:nowrap; height:28px; padding:0 17px; border:0;
+   only the plate.
+
+   ONE plate, two places (v3 slice 11): the card's plate on the photo of an
+   issue's style, `.card3 .sotag`, is this declaration set, and so is its
+   900px step in desktop.css. What is the bar's alone — a link that never
+   shrinks, carries a touch overlay and a hover — stays in the rule under
+   it; where the card's sits on its photo is in cards.css. */
+.s .nav3 .itag,
+.s .card3 .sotag{ --pl:var(--stage); --pi:var(--brand);
+  display:inline-flex; align-items:center; justify-content:center;
+  white-space:nowrap; height:28px; padding:0 17px;
   border-radius:var(--r-plate);
   background:
     radial-gradient(circle at 8.5px 50%, var(--pi) 0 1.6px, transparent 2.1px),
@@ -118,7 +125,8 @@
     var(--pl);
   box-shadow:inset 0 0 0 2px var(--pl), inset 0 0 0 3px var(--pi);
   color:var(--pi); font-family:var(--font-display); font-weight:var(--fw-display);
-  font-size:var(--fs-xs); line-height:1; letter-spacing:.1em; text-transform:uppercase;
+  font-size:var(--fs-xs); line-height:1; letter-spacing:.1em; text-transform:uppercase; }
+.s .nav3 .itag{ flex:none; position:relative; border:0;
   transition:background-color .12s ease; }
 /* 28px of plate, 46px of finger. */
 .s .nav3 .itag::after{ content:""; position:absolute; inset:-9px 0; }

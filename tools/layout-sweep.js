@@ -38,6 +38,7 @@ async (page) => {
     // slice 3 of v3: the public lookup page, with a fixture order so the result state renders
     "/track?code=DH-2425&phone=0908221447",
     "/so/4",
+    "/so/5",
     "/sign-in",
     "/sign-up",
     "/forgot-password",

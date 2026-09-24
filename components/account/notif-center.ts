@@ -9,6 +9,7 @@ import { teasersIn, type Catalog } from "@/lib/catalog";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { dropState } from "@/lib/drop";
 import { dropSummary } from "@/lib/inventory";
+import { styleName } from "@/lib/lexicon";
 import {
   NOTIF_READ_STORAGE_KEY,
   allIds,
@@ -118,7 +119,8 @@ export function useNotifCenter(catalog: Catalog, me: Me | null, orders: Order[])
       .map((d) => ({
         no: d.no,
         opensAt: d.opensAt,
-        teasers: teasersIn(catalog, d.no).map((t) => t.name),
+        // "S06 – SỎI": a teaser wears its issue as its name (v3 slice 11).
+        teasers: teasersIn(catalog, d.no).map((t) => styleName(t.name, t.dropNo)),
       }));
 
     const promos: NotifPromo[] = livePromotions(catalog, now).map((p) => ({

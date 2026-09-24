@@ -8,7 +8,7 @@ import { useWishlist } from "@/components/account/WishlistContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { NavLogo } from "@/components/shop/NavLogo";
 import { FAMILY_SHORT_LABELS, type Family } from "@/data/types";
-import { featuredDrop } from "@/lib/drop";
+import { featuredDrop, issueHref } from "@/lib/drop";
 import { issueLabel, plateLabel } from "@/lib/lexicon";
 
 /**
@@ -25,10 +25,11 @@ export interface SiteNavProps {
   /** Underlines one family link. The listing reads it out of `?family=`. */
   activeFamily?: Family | undefined;
   /**
-   * Lights the issue plate: the listing with no family narrowing it, which
-   * is where the plate leads. The plate took this over from the "Số NN"
-   * link that headed the families until v3 slice 8. With no issue on sale
-   * there is no plate to light, and the flag changes nothing.
+   * Lights the issue plate: the issue's own page (`/so/5`, v3 slice 11)
+   * with no family narrowing it, which is where the plate leads. The plate
+   * took this over from the "Số NN" link that headed the families until v3
+   * slice 8. With no issue on sale there is no plate to light, and the flag
+   * changes nothing.
    */
   activeDrop?: boolean;
 }
@@ -45,8 +46,11 @@ export interface SiteNavProps {
  *
  * THE ISSUE PLATE is the only black cloth in the bar, the same material as
  * the cover further down the page, so the chrome and the thing it announces
- * read as one object. It is the link to the issue on sale, `/products`, and
- * it prints only WHICH issue. It is there ONLY while an issue is on sale
+ * read as one object. It is the link to the issue on sale — its own page,
+ * `/so/5`, since v3 slice 11; `/products` is every style on sale — and it
+ * prints only WHICH issue. The same plate sits on the photos of that issue's
+ * styles wherever they stand among fixed ones (`ProductCard`'s `plate`; one
+ * declaration set in nav.css). It is there ONLY while an issue is on sale
  * (the user, 24/09/2026: show the plate only while an issue is active):
  * before the next issue opens and after the last one shuts, the bar is the
  * logo, the families (from 900px) and the four buttons, and the cover and
@@ -89,7 +93,7 @@ export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
         {onSale && (
           <Link
             className={activeDrop ? "itag on" : "itag"}
-            href="/products"
+            href={issueHref(drop.no)}
             aria-label={plateLabel(drop.no, state)}
             title={plateLabel(drop.no, state)}
             aria-current={activeDrop ? "page" : undefined}

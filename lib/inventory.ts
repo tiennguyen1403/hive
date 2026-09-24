@@ -176,6 +176,54 @@ export function productsOnSale(
   });
 }
 
+/** How many cards the home page's "Đang bán" holds: three rows on a phone, two on a monitor. */
+export const SHOWCASE = 6;
+
+/**
+ * The six under "Đang bán" on the home page (v3 slice 11).
+ *
+ * Styles on sale that belong to no issue — the open issue's own stand above,
+ * under "Trong số này" — and never one with an empty shelf, which is a card
+ * with nothing to add. One per family first, in `FAMILIES` order, each the
+ * family's first by position, so six cards show six kinds of garment; then
+ * the rest by position until there are six.
+ */
+export function showcaseOnSale(
+  catalog: Catalog,
+  now?: Date,
+  products: readonly Product[] = catalog.products,
+): Product[] {
+  const pool = productsOnSale(catalog, now, products).filter((p) => isFixed(p) && !isSoldOut(p));
+  const firsts = FAMILIES.flatMap((family) => {
+    const lead = pool.find((p) => p.family === family);
+    return lead ? [lead] : [];
+  });
+  const rest = pool.filter((p) => !firsts.includes(p));
+  return [...firsts, ...rest].slice(0, SHOWCASE);
+}
+
+/** How many cards a product page's lower row holds: two phone rows, one desktop row. */
+export const RELATED_ROW = 4;
+
+/**
+ * "Cùng loại", the row under a fixed style (v3 slice 11): the other styles
+ * on sale in its family, of either kind, the nearest in price first. Ties
+ * keep catalogue order (the sort is stable). Empty when the style is the
+ * only one of its family on sale — the page then draws no row.
+ */
+export function sameFamilyOnSale(
+  catalog: Catalog,
+  product: Product,
+  now?: Date,
+  limit: number = RELATED_ROW,
+): Product[] {
+  const gap = (p: Product) => Math.abs(p.priceVnd - product.priceVnd);
+  return productsOnSale(catalog, now)
+    .filter((p) => p.family === product.family && p.id !== product.id)
+    .sort((a, b) => gap(a) - gap(b))
+    .slice(0, limit);
+}
+
 export function dropSummary(
   catalog: Catalog,
   no: number,
@@ -234,7 +282,16 @@ export interface FamilyGroup {
 }
 
 export function familyGroupsIn(catalog: Catalog, no: number): FamilyGroup[] {
-  const ps = productsInDrop(catalog, no);
+  return familyGroupsOf(productsInDrop(catalog, no));
+}
+
+/**
+ * The same rows over any list of styles (v3 slice 11): the home page's
+ * "Theo loại" counts everything on sale — the open issue's styles and the
+ * fixed ones together, or the fixed ones alone between two issues — and each
+ * row's photo is the first of its family in that list.
+ */
+export function familyGroupsOf(ps: readonly Product[]): FamilyGroup[] {
   return FAMILIES.flatMap((family) => {
     const inFamily = ps.filter((p) => p.family === family);
     const lead = inFamily[0];
@@ -279,6 +336,9 @@ const PLAIN_KIND_FALLBACK = "trơn";
  * A family with ONE kind is the exception: stripping "Áo sơ mi" off "Áo sơ
  * mi dệt" leaves "dệt", which names nothing on its own. There the kind
  * itself is printed, minus the garment word that opens it — "sơ mi dệt".
+ * Unless nothing is left once the family name comes off: a lone "Áo hoodie"
+ * is still the plain one, "trơn", as it would be in a list of several (v3
+ * slice 11 — HOODIE TRƠN is the only hoodie on sale between two issues).
  */
 export function familyKindsLabel(products: Product[]): string {
   const first = products[0];
@@ -286,6 +346,9 @@ export function familyKindsLabel(products: Product[]): string {
 
   const kinds = [...new Set(products.map((p) => p.kind))];
   if (kinds.length === 1) {
+    if (stripPrefix(first.kind, FAMILY_LABELS[first.family]) === "") {
+      return PLAIN_KIND[first.family] ?? PLAIN_KIND_FALLBACK;
+    }
     const [garment] = FAMILY_LABELS[first.family].split(" ");
     return stripPrefix(first.kind, garment ?? "").toLowerCase();
   }

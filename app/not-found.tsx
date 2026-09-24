@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ButtonLink } from "@/components/ui/Button";
 import { ShopFrame } from "@/components/shop/ShopFrame";
 import { loadCatalog } from "@/lib/db/catalog";
-import { closesInLabel, dropCalendar } from "@/lib/drop";
+import { closesInLabel, dropCalendar, issueHref } from "@/lib/drop";
 import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 
 /**
@@ -36,7 +36,7 @@ export default async function NotFound() {
           </p>
           <div className="cta">
             {open && (
-              <ButtonLink href="/products">
+              <ButtonLink href={issueHref(open.no)}>
                 Xem {LEX.tl} {issueNo(open.no)}
               </ButtonLink>
             )}

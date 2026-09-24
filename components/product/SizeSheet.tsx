@@ -7,7 +7,8 @@ import { Icon } from "@/components/icon/Icon";
 import { Sheet } from "@/components/ui/Sheet";
 import { COLORS } from "@/data/colors";
 import type { ColorKey, Product, Size } from "@/data/types";
-import { onHandByColor, onHandOf } from "@/lib/inventory";
+import { isFixed, onHandByColor, onHandOf } from "@/lib/inventory";
+import { styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import { SizeTable } from "./SizeTable";
@@ -45,6 +46,9 @@ interface SizeSheetProps {
  * The card shows one photo and this sheet sells that photo; choosing a
  * different colourway is a decision with its own screen, and the "Bảng số đo"
  * link and the style name both lead to it.
+ *
+ * A FIXED style (v3 slice 11) shows no figure here either: no "còn N" beside
+ * the label, and the rows say only which sizes are "đã hết" (`SizeTable`).
  */
 export function SizeSheet({
   product,
@@ -61,9 +65,10 @@ export function SizeSheet({
 
   const left = onHandByColor(product, color);
   const photoIndex = Math.max(0, product.colors.indexOf(color));
+  const name = styleName(product.name, product.dropNo);
 
   return (
-    <Sheet open={open} onClose={onClose} label={`Chọn size — ${product.name}`}>
+    <Sheet open={open} onClose={onClose} label={`Chọn size — ${name}`}>
       <div className="grab" />
 
       <div className="shead">
@@ -74,7 +79,7 @@ export function SizeSheet({
           height={70}
         />
         <div>
-          <h2>{product.name}</h2>
+          <h2>{name}</h2>
           <div className="muted">
             {product.kind} · {COLORS[color].label}
           </div>
@@ -88,7 +93,7 @@ export function SizeSheet({
       <div className="fld">
         <div className="lbl">
           <b>Size</b>
-          <span>còn {left}</span>
+          {!isFixed(product) && <span>còn {left}</span>}
           {/* The guide lives on the product page, which is also where the
               colourways are. A link, so it opens the sheet that page opens
               on `#size` rather than promising a layer this one cannot draw. */}
@@ -101,7 +106,7 @@ export function SizeSheet({
           color={color}
           value={size}
           onPick={setSize}
-          label={`Chọn size ${product.name}`}
+          label={`Chọn size ${name}`}
         />
         {remembered && (
           <p className="fine3">

@@ -9,6 +9,7 @@ import { Toast } from "@/components/shop/Toast";
 import { COLORS } from "@/data/colors";
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
 import {
+  isFixed,
   isIssueStyle,
   isSoldOut,
   onHand,
@@ -18,7 +19,7 @@ import {
 } from "@/lib/inventory";
 import { LOW_STOCK_AT } from "@/lib/inventory";
 import { dayMonth } from "@/lib/datetime";
-import { kindInSentence } from "@/lib/lexicon";
+import { issueLabel, kindInSentence, styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import { SizeSheet } from "./SizeSheet";
@@ -39,9 +40,18 @@ interface ProductCardProps {
    * The issue this card belongs to has closed. Not the same as sold out: the
    * shelf may still hold units. What ended was the window, so the card says
    * that instead of claiming the style ran out — and offers no button,
-   * because there is nothing to press.
+   * because there is nothing to press. A fixed style has no issue to close
+   * and ignores it.
    */
   closed?: boolean;
+  /**
+   * Put the issue's plate on the photo of an issue's style (v3 slice 11) —
+   * only where the card stands among styles of both kinds: `/products`,
+   * "Cùng loại", the search results, the saved list. Where the whole row is
+   * one issue's (`/so/5`, "Trong số này", "Cùng số 05", a closed issue's
+   * page) the plate would say nothing, and it is not drawn.
+   */
+  plate?: boolean;
   /** Extra notification after the line has gone into the cart. */
   onAdd?: (choice: { product: Product; size: Size; color: ColorKey }) => void;
   /**
@@ -81,11 +91,19 @@ interface ProductCardProps {
  *
  * Size and colour are not on the card. They live in the sheet the button
  * opens.
+ *
+ * A FIXED style (v3 slice 11) is the same card with no figure on it: the
+ * user settled that a style which is brought back when it runs out shows no
+ * stock in the listing. Its count line is the four sizes, a size gone in
+ * every colour struck through. With nothing on the shelf it is "tạm hết":
+ * every size struck and the quiet "Xem chi tiết" button, but no SOLD OUT and
+ * no dimmed photo — it will be back.
  */
 export function ProductCard({
   product,
   kindCount = false,
   closed = false,
+  plate = false,
   onAdd,
   onUnsave,
   savedAt,
@@ -95,12 +113,16 @@ export function ProductCard({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const sold = isSoldOut(product);
-  const quiet = sold || closed;
+  const fixed = isFixed(product);
+  const empty = isSoldOut(product);
+  // SOLD OUT is the end of an issue's style; a fixed style's empty shelf is not.
+  const sold = empty && !fixed;
+  const quiet = empty || (closed && !fixed);
   const left = onHand(product);
   const gone = soldOutSizes(product);
   const here = SIZES.filter((z) => onHandBySize(product, z) > 0);
   const href = `/products/${product.slug}`;
+  const name = styleName(product.name, product.dropNo);
 
   return (
     <>
@@ -109,7 +131,7 @@ export function ProductCard({
           <Link className="img" href={href}>
             <Image
               src={photoUrl(product.photoKeys[0]!, 520)}
-              alt={`${product.name} — màu ${COLORS[product.colors[0]!].label}`}
+              alt={`${name} — màu ${COLORS[product.colors[0]!].label}`}
               width={520}
               height={650}
             />
@@ -118,19 +140,37 @@ export function ProductCard({
               a stamp on a photo: streetwear's own convention, settled
               22/09/2026. In a sentence the shop still says "đã hết". */}
           {sold && <span className="stamp">SOLD OUT</span>}
-          {onUnsave && <UnsaveButton product={product} onPress={onUnsave} />}
+          {/* The nav's plate, cut for the photo. The name under it already
+              says the issue, so a screen reader hears it once. */}
+          {plate && product.dropNo !== null && (
+            <span className="sotag" aria-hidden="true">
+              {issueLabel(product.dropNo)}
+            </span>
+          )}
+          {onUnsave && <UnsaveButton name={name} onPress={onUnsave} />}
         </div>
 
         <Link className="meta" href={href}>
           <span className="toc">
-            <span className="n">{product.name}</span>
+            <span className="n">{name}</span>
             <span className="ld" aria-hidden="true" />
             <span className="p">{vnd(product.priceVnd)}</span>
           </span>
           <span className="ct">
-            {/* A fixed style (slice B5) has no cut to count against, so it
-                keeps the "còn" line even when it has nothing left. */}
-            {quiet && isIssueStyle(product) ? (
+            {fixed ? (
+              /* No figure for a fixed style: the four sizes, a size gone in
+                 every colour struck. Its name says what it is, so the
+                 related row's "· loại" is not added either. */
+              <span>
+                {SIZES.map((z, i) => (
+                  <span key={z}>
+                    {i > 0 && " "}
+                    {gone.includes(z) ? <s>{z}</s> : z}
+                  </span>
+                ))}
+                {savedAt && ` · lưu ${dayMonth(savedAt)}`}
+              </span>
+            ) : quiet && isIssueStyle(product) ? (
               /* Once a style is over, how much of the cut went is the only
                  stock fact left worth printing — and it is the one that
                  makes an issue legible: 14 cut, 14 gone, nothing coming. */
@@ -204,7 +244,7 @@ export function ProductCard({
             // The sheet closes on the way out, so the confirmation cannot
             // live on the control that started it. It says what went in,
             // because by now the shopper is looking at the grid again.
-            setToast(`Đã thêm ${product.name} size ${size} vào giỏ`);
+            setToast(`Đã thêm ${name} size ${size} vào giỏ`);
             onAdd?.({ product, size, color });
           }}
         />
@@ -230,12 +270,12 @@ export function ProductCard({
  * there is no "off" state to report, so it is an action, and the label
  * names the action.
  */
-function UnsaveButton({ product, onPress }: { product: Product; onPress: () => void }) {
+function UnsaveButton({ name, onPress }: { name: string; onPress: () => void }) {
   return (
     <button
       type="button"
       className="unsave"
-      aria-label={`Bỏ ${product.name} khỏi danh sách đã lưu`}
+      aria-label={`Bỏ ${name} khỏi danh sách đã lưu`}
       onClick={onPress}
     >
       <Icon name="heart-slash" bulk className="ic sm" />

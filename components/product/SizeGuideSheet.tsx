@@ -4,6 +4,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { Icon } from "@/components/icon/Icon";
 import { heightLabel, sizeChart } from "@/data/size-chart";
 import type { Product, Size } from "@/data/types";
+import { styleName } from "@/lib/lexicon";
 
 interface SizeGuideSheetProps {
   product: Product;
@@ -32,7 +33,11 @@ export function SizeGuideSheet({ product, size, open, onClose }: SizeGuideSheetP
   const fitWord = product.fit === "OVERSIZE" ? "oversize" : "regular";
 
   return (
-    <Sheet open={open} onClose={onClose} label={`Bảng số đo — ${product.name}`}>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      label={`Bảng số đo — ${styleName(product.name, product.dropNo)}`}
+    >
       <div className="grab" />
 
       <div className="fhead">

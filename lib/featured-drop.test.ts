@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { dropBandLabel, dropCalendar, featuredDrop, previousDropNote } from "./drop";
+import {
+  dropBandLabel,
+  dropCalendar,
+  featuredDrop,
+  issueHref,
+  previousDropNote,
+  wayToShop,
+} from "./drop";
 import { DROPS } from "@/data/catalog";
 import { TEASERS } from "@/data/catalog";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
@@ -194,5 +201,23 @@ describe("dropBandLabel", () => {
     // "Attempted to call dropBandLabel() from the server". Nothing in this
     // module may reach for the DOM.
     expect(typeof dropBandLabel).toBe("function");
+  });
+});
+
+describe("issueHref · an issue's own page (v3 slice 11)", () => {
+  it("is /so/N, the number as it is", () => {
+    expect(issueHref(5)).toBe("/so/5");
+    expect(issueHref(12)).toBe("/so/12");
+  });
+});
+
+describe("wayToShop · a screen's way back into the shop (v3 slice 11)", () => {
+  it("goes to the issue selling now, and names it", () => {
+    expect(wayToShop(FIXTURE_CATALOG, DURING_5)).toEqual({ href: "/so/5", issueNo: 5 });
+  });
+
+  it("goes to every style on sale when no issue is selling", () => {
+    expect(wayToShop(FIXTURE_CATALOG, BETWEEN_5_AND_6)).toEqual({ href: "/products", issueNo: null });
+    expect(wayToShop(FIXTURE_CATALOG, AFTER_EVERYTHING)).toEqual({ href: "/products", issueNo: null });
   });
 });

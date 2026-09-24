@@ -69,7 +69,7 @@ describe("reminderNotice · the two-hour window", () => {
     const notice = reminderNotice(DROPS, list, at(DROP_6_OPENS));
     expect(notice?.state).toBe("OPEN");
     expect(notice?.text).toBe("Số 06 đã mở — bạn đã đặt nhắc");
-    expect(notice?.href).toBe("/products");
+    expect(notice?.href).toBe("/so/6");
   });
 
   it("stays up for the whole selling window, not just the first minute", () => {

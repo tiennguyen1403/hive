@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icon/Icon";
 import { startWait } from "@/components/shop/WaitVeil";
 import type { Product } from "@/data/types";
-import { onHand } from "@/lib/inventory";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { isFixed, onHand } from "@/lib/inventory";
+import { styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import { SUGGEST_MIN, suggestFor, type MatchRange } from "@/lib/suggest";
@@ -17,9 +17,9 @@ interface SearchBoxProps {
   /** What the URL carried in, shown back in the box. */
   initial?: string;
   /**
-   * The issue being searched. Passed as data rather than fetched: there is
-   * no server to ask, and ten styles fit in the payload the page already
-   * sends.
+   * What is searched: every style on sale, both kinds (v3 slice 11). Passed
+   * as data rather than fetched — eighteen styles fit in the payload the
+   * page already sends, and the browser never asks a server as it types.
    */
   pool: Product[];
 }
@@ -35,7 +35,8 @@ interface SearchBoxProps {
  * It still does not search as you type: the RESULTS come from the URL. What
  * opens under the box from two characters on is a list of places to go —
  * four styles, three filters, and the way to the full result page — every
- * one of them read out of the issue in the browser, with no request made.
+ * one of them read out of the styles on sale in the browser, with no request
+ * made.
  *
  * Keyboard: ↑ ↓ walk the rows, Enter opens the active one or submits the
  * term, Escape closes the list and leaves the term alone. The input is a
@@ -60,7 +61,6 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
   }, [initial]);
 
   const suggestions = useMemo(() => suggestFor(pool, term), [pool, term]);
-  const no = issueNo(pool[0]?.dropNo ?? 0);
   const trimmed = term.trim();
 
   /** Every row the arrow keys can reach, in the order they are drawn. */
@@ -191,10 +191,13 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
                 />
                 <span>
                   <b>
-                    <Marked text={s.product.name} range={s.range} />
+                    <StyleName product={s.product} range={s.range} />
                   </b>
+                  {/* No figure for a fixed style, as on its card (v3 slice 11). */}
                   <span className="d">
-                    {s.product.kind} · còn {onHand(s.product)}
+                    {isFixed(s.product)
+                      ? s.product.kind
+                      : `${s.product.kind} · còn ${onHand(s.product)}`}
                   </span>
                 </span>
                 <span className="p">{vnd(s.product.priceVnd)}</span>
@@ -202,9 +205,7 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
             ))}
 
             {suggestions.groups.length > 0 && (
-              <div className="lb">
-                {suggestions.fallback ? `Có trong ${LEX.tl} ${no}` : "Loại"}
-              </div>
+              <div className="lb">{suggestions.fallback ? "Đang bán" : "Loại"}</div>
             )}
             {suggestions.groups.map((g, i) => {
               const at = suggestions.styles.length + i;
@@ -224,16 +225,14 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
                     <b>
                       <Marked text={g.label} range={g.range} />
                     </b>
-                    <span className="d">
-                      {g.styles} mẫu trong {LEX.tl} {no}
-                    </span>
+                    <span className="d">{g.styles} mẫu</span>
                   </span>
                   <span className="p">từ {vnd(g.fromVnd)}</span>
                 </Link>
               );
             })}
 
-            <div className="lb">Tìm cả {LEX.tl}</div>
+            <div className="lb">Tìm tất cả</div>
             <Link
               id="sg-all"
               className="plain"
@@ -272,6 +271,18 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
 
 function searchHref(term: string): string {
   return term ? `/search?q=${encodeURIComponent(term)}` : "/search";
+}
+
+/**
+ * A style's name as the shop shows it — "S05 – KHÓI" (v3 slice 11) — with the
+ * match marked. The match was found in the bare name (`suggestFor` reads
+ * `name`), so its range moves along by whatever the issue's code put in
+ * front; a fixed style's name has nothing in front and the range stands.
+ */
+function StyleName({ product, range }: { product: Product; range: MatchRange | null }) {
+  const shown = styleName(product.name, product.dropNo);
+  const shift = shown.length - product.name.length;
+  return <Marked text={shown} range={range && ([range[0] + shift, range[1] + shift] as const)} />;
 }
 
 /**
