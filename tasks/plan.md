@@ -1522,3 +1522,31 @@ chỉ 4,12:1); icon ô trống về thang **28** (mock 22, sửa trong `admin.cs
 Ảnh ghép mock–app ở `.playwright-cli/shots/v3/lat7/mock-vs-app-*.png`. **Mở:** toast lỗi vẫn mang icon dấu tích; đặt lại khi đang ở
 trang mẫu vừa bị xoá → "Trang này không có." không toast; dòng "Đặt lại dữ liệu mẫu" xếp lẫn sự kiện cùng phút; nhánh JPEG dự phòng và
 ảnh có EXIF xoay chưa có tệp mẫu để kiểm; bìa Số với 3 teaser (từ B3b) chưa quyết.
+
+**Lát B4 ĐẠT (24/09/2026, `backend-implementer` trên Opus 5.5 cho phần code; phiên chính làm phần hạ tầng và duyệt độc lập).**
+Demo chạy công khai ở **https://hive-neon-three.vercel.app**. Hạ tầng: dự án Supabase `hive-demo` (`ap-southeast-1`, Postgres 17.6)
+do người dùng tạo và link CLI trên máy này; người dùng gõ `! npx supabase db push --linked --include-seed --yes` vì bộ lọc quyền
+của phiên chính chặn lệnh đó; phiên chính tạo 9 tài khoản mẫu bằng `ENV_FILE=.env.hosted.local npm run seed:users`
+(`scripts/env-local.ts` nay nhận `ENV_FILE`; giá trị hosted ở `.env.hosted.local`, git bỏ qua, Next không đọc), kiểm 21 mẫu · 38 màu ·
+152 ô kho · 4 Số · 6 mã · 24 đơn, bucket `product-photos` đúng cấu hình, đăng nhập quản lý và `is_admin` đúng vai, rồi chạy bản build
+lát 7 trên cổng 3201 trỏ hosted và đi trọn kịch bản lát 7 trước khi có Vercel. Code: `vercel.json` (`regions: ["sin1"]`; cron
+`/api/health` `0 3 * * *` và `/api/reset` `0 12 * * *`, giờ UTC — agent đổi từ 18:55 VN của brief vì docs nói Hobby "may invoke
+at any point within the specified hour", tức 18:55 có thể chạy 18:05 và lấy nhầm mốc hôm qua; 19:00–19:59 luôn sau 18:50);
+`GET /api/reset` (404 khi không có `CRON_SECRET`, 401 sai khoá, service client → `demo_anchor` → `reset_demo` →
+`purgeUploadedPhotos` → `revalidatePath`, trả `{ok, anchor, photosRemoved}`, `maxDuration 60`, `force-dynamic`);
+`lib/cron-auth.ts` (`timingSafeEqual`, 6 test) dùng chung với health; `.vercel/` vào `.gitignore`; README gốc tiếng Việt. Số: tsc
+sạch, **1.250** test (1.244 + 6) và 1.250 dưới `TZ=UTC`, 161 test DB, build sạch; walk local của phiên chính: reset 401/401/405,
+200 với `photosRemoved` 1 rồi 0, 404 khi không cấu hình khoá, nút "Đặt lại dữ liệu mẫu" y toast lát 7; agent so ba trang 3200 (giờ
+máy) và 3210 (`TZ=UTC`) trùng từng ký tự nên `lib/datetime.ts` giữ nguyên. Deploy: dự án Vercel `hive` nối GitHub `khoi-store`; hai
+lần đầu **BLOCKED** (API: `errorLink` → "Troubleshoot project collaboration") vì gói Hobby không nhận commit từ repo private khi
+không khớp tác giả commit với chủ tài khoản (email commit `tiennguyenant2000@gmail.com`, tài khoản Vercel chưa nối GitHub) — người
+dùng làm repo public và nối GitHub; `vercel redeploy` từ chối bản BLOCKED ("try again from a fresh commit") → push `896449e` build
+47 giây, READY/PROMOTED, `regions ["sin1"]`, hai cron đăng ký trong project. Kiểm production: trang 200, `x-vercel-id` `hkg1::sin1`;
+health và reset 401 không khoá, 200 đúng khoá; walk lát 7 trọn trên production (ảnh thật qua `/_next/image` → `/photos/up/…` webp,
+sửa KHÓI, đặt lại xoá 2 ảnh, bucket trống, 0 request ngoài origin, 0 lỗi console). Deployment Protection "Standard"
+(`all_except_custom_domains`): alias theo team `hive-tiennguyen1403s-projects.vercel.app` và host deployment chuyển hướng sang SSO
+của Vercel, chỉ `hive-neon-three.vercel.app` công khai — README và hồ sơ dùng tên này; **cron của Vercel vẫn vượt được lớp bảo vệ**
+(`vercel crons run /api/reset` sinh dòng `DEMO_RESET` mới lúc 04:17:40Z trên hosted) nên không đổi cấu hình. `TZ` là biến reserved
+trên Vercel, không đặt được: 5 biến môi trường là đủ. **Mở:** cron thật chỉ nhìn thấy sau 10:00 và 19:00 VN ngày 25/09 (Logs của dự
+án hoặc `vercel crons list`); Supabase Free ngủ sau 7 ngày không truy vấn, health hằng ngày lo việc đó; `.env.local` có thêm
+`VERCEL_OIDC_TOKEN` do `vercel link` (vô hại, git bỏ qua); B5 tuỳ chọn (Resend owner-only, realtime) chưa bắt đầu.

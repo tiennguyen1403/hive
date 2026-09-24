@@ -6,6 +6,11 @@ hằng ngày, xoá ảnh tải lên, kiểm sau khi lên — là của phiên ch
 
 Thứ tự: **A → báo tôi → tôi làm phần giữa → C → báo tôi → tôi kiểm.** B làm lúc nào cũng được.
 
+**XONG 24/09 11:25 — demo chạy ở https://hive-neon-three.vercel.app** (push `896449e` build 47 giây, vùng `sin1`, hai cron
+đăng ký; walk lát 7 đi trọn trên production; `vercel crons run /api/reset` chạy được dù Deployment Protection còn bật).
+Alias theo team `hive-tiennguyen1403s-projects.vercel.app` chuyển hướng sang SSO của Vercel — dùng tên ngắn ở trên. Chi tiết:
+`tasks/plan.md` mục "Lát B4 ĐẠT".
+
 **Trạng thái 24/09 11:30 — A đạt, C đã import nhưng deploy bị BLOCKED.** Nguyên nhân (API Vercel,
 `errorLink` → docs *Troubleshoot project collaboration*): gói Hobby **không nhận commit từ repo private** trừ khi
 Vercel nhận ra tác giả commit là chủ tài khoản; tài khoản Vercel chưa nối GitHub hoặc email commit
@@ -56,7 +61,7 @@ nên bản local vẫn chạy trên stack Docker như cũ.
 
 ## B · GitHub — 1 phút, lúc nào cũng được
 
-- [ ] Repo `tiennguyen1403/khoi-store` đang **Private**; QĐ-25 chốt công khai (portfolio).
+- [x] (public từ 11:10 24/09) Repo `tiennguyen1403/khoi-store` đang **Private**; QĐ-25 chốt công khai (portfolio).
       Settings → General → Danger Zone → *Change visibility* → Public. Hoặc trả lời "đổi công
       khai đi", tôi chạy `gh repo edit`. Đã soát toàn bộ lịch sử git ngày 24/09: không có khoá
       nào (`.env*` bị bỏ qua từ lúc `git init`); mật khẩu demo `xemthu-2026` công khai theo
@@ -74,7 +79,7 @@ nên bản local vẫn chạy trên stack Docker như cũ.
       `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `DEMO_PASSWORD`,
       `CRON_SECRET` (`TZ` Vercel không cho đặt, app đã tự đúng giờ VN dưới UTC). Kiểm đủ 5, không dòng nào còn chữ "dan-…-vao-day". Environment: để mặc
       định (tất cả). Bấm **Deploy**, đợi 2–3 phút.
-- [ ] **C4 Gửi tôi địa chỉ** `https://<tên>.vercel.app`.
+- [x] **C4 Gửi tôi địa chỉ** `https://<tên>.vercel.app`.
 - [x] **C5 (tuỳ chọn)** để tôi đọc được log deploy và log cron từ terminal:
 
       ```
