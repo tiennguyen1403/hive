@@ -1,7 +1,8 @@
 /* Fixed styles ("cố định"), drawn over the snapshots (line-mock.js).
-   Round 4 (25/09): the issue's plate sits at the bottom left of the photo and
-   SOLD OUT, top left, comes down to the plate's size; an issue's style
-   carries its code in front of its name. Only what the store does not have
+   Round 4 (25/09, approved): the issue's plate sits at the bottom left of
+   the photo and SOLD OUT, top left, comes down to the plate's size; an
+   issue's style carries its code in front of its name; the list tabs' mark
+   sits on the rule. Only what the store does not have
    yet is styled here; values are the store's tokens. */
 
 /* ── a photo that has not been taken yet: the garment's flat on the plate ─ */
@@ -20,6 +21,15 @@
 
 /* ── the list with nothing above its tabs ──────────────────────────────── */
 .s .lhead.bare{ padding-top:var(--s3); }
+
+/* ── the tabs' mark, on the rule rather than half under it ──────────────
+   The row scrolls sideways, and a scroll container clips at its padding
+   box: the rule was the border outside it, so the 2px honey mark at
+   `bottom:-1px` lost its lower pixel and showed as a 1px sliver stacked on
+   the 1px ink rule. The rule is now drawn inside the box, under the tabs,
+   and the mark covers it: under the tab that is on, the rule is honey. */
+.s .tabs3{ border-bottom:0; box-shadow:inset 0 -1px 0 var(--ink); }
+.s .tabs3 a.on::after{ bottom:0; }
 
 /* ── the issue's plate on a photo: the nav's `.itag`, declaration for
    declaration (nav.css + desktop.css) — cloth, a honey rule inset 2px, a
@@ -52,15 +62,10 @@
   .s .card3 .stamp{ height:32px; padding:0 12px; font-size:var(--fs-sm); }
 }
 
-/* ── an issue's code in front of a style's name: "S05 – KHÓI". Set as a
-   code, not as part of the name: the text face, 600, tabular, secondary ink
-   — Unbounded's zero is the letter O, and "S05" read "SO5"; ten names in a
-   row read as ten names. `data-pfx="ink"` is the board's other reading: the
-   code in the name's own type. ────────────────────────────────────────── */
-.s .pfx{ font-family:var(--font-sans); font-weight:600; font-size:.9em; letter-spacing:.02em;
-  font-variant-numeric:tabular-nums; color:var(--ink2); }
-.s .cover .pfx{ color:var(--stage-ink2); }
-html[data-pfx="ink"] .s .pfx{ font:inherit; letter-spacing:inherit; color:inherit; }
+/* ── an issue's code in front of a style's name: "S05 – KHÓI", in the
+   name's own type (the user's call, round 4). The span is kept so the cover
+   can tone it and the name field can hold it apart. ───────────────────── */
+.s .pfx{ font:inherit; letter-spacing:inherit; color:inherit; }
 
 /* A card too narrow for name, leader and price on one line gives the name
    its own: the leader and the price take the line under it, together. */
@@ -90,9 +95,8 @@ html[data-pfx="ink"] .s .pfx{ font:inherit; letter-spacing:inherit; color:inheri
 .s .pfxin{ position:relative; display:block; }
 .s .pfxin .pfx{ position:absolute; left:1px; top:1px; bottom:1px; display:flex; align-items:center;
   padding:0 11px 0 12px; border-right:1px solid var(--hair); border-radius:3px 0 0 3px;
-  background:var(--plate); color:var(--ink); font-size:var(--fs-body); font-weight:600; letter-spacing:.02em;
+  background:var(--plate); color:var(--ink); font-family:var(--font-sans); font-size:var(--fs-body); font-weight:600; letter-spacing:.02em;
   line-height:1; white-space:nowrap; pointer-events:none; }
-html[data-pfx="ink"] .s .pfxin .pfx{ font-family:var(--font-sans); font-size:var(--fs-body); font-weight:600; letter-spacing:.02em; }
 .s .pfxin .inp{ padding-left:76px; }
 
 /* ── what is new, when the board asks to see it ────────────────────────── */

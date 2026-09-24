@@ -3,7 +3,7 @@
    It restores the untouched page and re-draws on every change, so the board
    can flip an option without reloading the frame.
 
-   Round 4 (25/09/2026), the user's calls on round 3:
+   Round 4 (25/09/2026, approved), the user's calls on round 3:
    · the issue's plate moves to the bottom left of the photo; SOLD OUT stays
      top left, cut down to the plate's size;
    · while an issue is open the home page shows "Đang bán" too, as between
@@ -12,13 +12,13 @@
    · the back office's restock goes into the row's ⋯ menu;
    · the add-style form loses its explaining sentences;
    · a fixed style has a plain descriptive name; an issue's style carries its
-     issue as a prefix, "S05 – KHÓI".
+     issue as a prefix, "S05 – KHÓI", in the name's own type;
+   · (on approval) the list tabs' honey mark sits on the rule, not half under it.
 
    Options, from the query string and then from the board by postMessage:
      view  = all | issue       (products) every style, or the issue's own page
      pdp   = fixed | issue     (product) a fixed style's page, or KHÓI's
      sell  = menu | fixed      (admin-new) the field's menu open, or "Cố định" chosen
-     pfx   = soft | ink        the prefix in secondary ink, or in the name's own
      mark  = 1 | 0             outline what is new
      at    = a selector to scroll to on the first draw */
 (() => {
@@ -633,7 +633,6 @@
     view: q.get("view") || "all",
     pdp: q.get("pdp") || "fixed",
     sell: q.get("sell") || "menu",
-    pfx: q.get("pfx") || "soft",
     mark: q.get("mark") || "1",
   };
   const ORIGINAL = document.body.innerHTML;
@@ -644,7 +643,6 @@
     document.body.innerHTML = ORIGINAL;
     document.title = TITLE;
     document.documentElement.dataset.mark = OPTS.mark;
-    document.documentElement.dataset.pfx = OPTS.pfx;
     // Every photo loads at once: the frames are scrolled by hand, not by a
     // shopper, and a lazy photo in a scaled frame never learns it is on screen.
     $$("img[loading=lazy]").forEach((i) => i.setAttribute("loading", "eager"));
