@@ -46,7 +46,8 @@ Chưa có trong mock: **dựng bằng chính `InventoryAdjustSheet`** ở một 
 - không chọn lý do (lý do cố định `Nhập thêm`); ghi chú tuỳ chọn như chế độ cũ;
 - nút gửi nói việc: "Nhập thêm {n} chiếc"; khi n = 0 nút khoá với chữ "Nhập số cần thêm";
 - gọi `restockProduct` với các ô > 0 (kèm `before` đọc lúc mở); lỗi `STALE` → báo như chế độ cũ và nạp lại số; thành công →
-  toast "Đã nhập thêm {n} chiếc {tên}", bảng cập nhật, cờ sắp hết tự tắt khi không còn ô ≤ 2.
+  toast của action ("Đã nhập thêm {tên} · +N chiếc · đã lưu", cùng khuôn với toast điều chỉnh tồn kho — B5 đã viết, giữ), bảng
+  cập nhật, cờ sắp hết tự tắt khi không còn ô ≤ 2.
 
 ## C. Form thêm mẫu (`/admin/products/new`, `ProductForm`)
 
@@ -70,6 +71,37 @@ Mẫu theo Số: menu Số không có "Cố định"; ô tên có đoạn tiền
 Mọi chỗ in tên một mẫu trong `components/admin/` và `app/admin/` qua `styleName`: bảng mẫu, đơn hàng (danh sách, chi tiết, phiếu
 giao, hoá đơn), khách hàng, tổng quan (mẫu sắp hết, bán chạy), nhật ký, sheet điều chỉnh, crumb "Mẫu › …", toast, `aria-label`.
 Grep `\.name\b` và ghi từng chỗ. Dòng nhật ký của một lần nhập thêm đọc tự nhiên (lý do "Nhập thêm", số chiếc cộng thêm).
+
+## F. Bổ sung sau B5 (phiên chính, 25/09, sau commit `28ee1bc`)
+
+**B5 đã làm, đừng làm lại:**
+- `restockProduct(id, cells)` trong `lib/actions/catalog-admin.ts`:
+  - `cells` là `[{ color, size, before, add }]`, mỗi `add` nguyên 1–999 (`MAX_RESTOCK_PER_CELL`); `readRestockCells` đọc;
+  - lỗi dữ liệu trả `RESTOCK_BAD_MESSAGE`;
+  - chưa có client nào gọi. Theo tài liệu Next, action chưa dùng bị loại khỏi build, nên gắn vào sheet ở §B là lúc nó thành
+    endpoint.
+- `lib/inventory-adjust.ts`: `RESTOCK_REASON`. `STOCK_REASONS` có "Nhập thêm" nhưng menu lý do của sheet vẫn 4 mục; giữ nguyên, vì
+  "Nhập thêm" chỉ đi qua chế độ §B.
+- `InventoryAdjustSheet` đã bỏ trần và các câu về số cắt cho mẫu cố định. Hiện chưa mở được với mẫu cố định vì chưa có tab.
+- `ProductForm`, khi sửa mẫu cố định:
+  - ô Số đang **ẩn**, nên "Giá bán" đứng một mình một hàng; §D (ô "Cố định" chỉ đọc) lấp chỗ đó;
+  - nút lưu gửi `dropNo: null`;
+  - thẻ "Màu và ảnh" vẫn còn vế "Không thêm màu sau khi cắt;". Đây là cùng loại với vế ở §C.4: bỏ ở cả hai loại mẫu, giữ
+    "thứ tự dải màu và ảnh thì đổi được".
+- `ProductsTable`: CSV để trống Số, cắt, bán của mẫu cố định; dòng phụ hiện chỉ đếm mẫu theo Số, §A.3 thay.
+- Màn đơn, danh sách đơn, trang khách, phiếu giao không còn in "Số 00".
+- Dòng nhật ký `PRODUCT_ADDED` của mẫu cố định ghi "N màu".
+
+**Quyết định cho các câu agent B5 hỏi:**
+1. **Mẫu hé lộ tạo mới** (`teaserSlug`): mã theo cùng khuôn với mẫu theo Số, `s06-soi`, giống fixture `data/catalog.ts`; hiện
+   hàm ra `soi-6`. Dùng lại `slugFor`/`issueCode`, không viết khuôn thứ hai. Có test.
+2. **Sửa mẫu mà để trống ô mã** (`productPatch`): sinh bằng `slugFor(name, dropNo)`, không dùng `asciiSlug(name)`. Mẫu cố định
+   không có tiền tố. Có test.
+3. **Dòng nhật ký thêm mẫu cố định:** giữ "N màu", không thêm số tồn mở đầu, không migration mới.
+4. **Loại của mẫu cố định** ("Áo gile phao", "Quần kaki"…) trong menu "Loại" của form thêm mẫu và sheet hé lộ: giữ. Loại là từ
+   vựng chung; một Số cũng có thể có quần kaki.
+5. **Ảnh phẳng `flat-*`:** không vào danh sách ảnh mượn (`loanPhotos`). Lát 11 giữ chúng ngoài `PHOTO_IDS`, và lát ảnh sẽ thay
+   bằng ảnh thật.
 
 ## Không đụng
 

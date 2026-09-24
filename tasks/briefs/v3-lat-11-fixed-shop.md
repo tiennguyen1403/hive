@@ -110,6 +110,49 @@ bảng trong `backend-b5.md` §3.4). Lát này làm ra ảnh cho các khoá đó
 - FAQ "Hết size thì có về lại không?": giữ câu trả lời, thêm câu cuối "Mẫu không mang biển Số thì sẽ có lại."
 - Không thêm câu nào khác giải thích mẫu cố định, ở bất cứ đâu.
 
+## H. Bổ sung sau B5 (phiên chính, 25/09, sau commit `28ee1bc`)
+
+**B5 đã làm, đừng làm lại:**
+- `ProductView` nhận `issue: { drop, state, initialLabel } | null`. Nhánh mẫu cố định trong `app/products/[slug]/page.tsx` đã có
+  (không Số, không đồng hồ, không "Cùng số", title chỉ tên); lát này thêm "Cùng loại" (§C.3) vào nhánh đó.
+- `lib/inventory.ts`: `productsOnSale(catalog, now?, products?)`, `IssueStyle`/`isIssueStyle`, `productsInDrop` trả `IssueStyle[]`,
+  `isFixed`, `FIXED_LOW_AT`, `fixedLowCells`, `isRunningLow`. `lib/lexicon.ts`: `issueCode`, `styleName` (U+00A0 trước "–",
+  dấu cách thường sau).
+- `ProductCard` đã bỏ "X / Y đã bán" cho mẫu cố định; `FilterSheet` bỏ nhãn Số khi tập chỉ có mẫu cố định; giỏ và đã lưu coi
+  mẫu cố định luôn mua được.
+- Slug `s05-khoi`, slug cũ trả 308 (`legacySlugTarget`). `tools/layout-sweep.js` đã có `/products/s05-khoi` và
+  `/products/ao-thun-tron`.
+- 17 khoá `flat-*` đã nằm trong seed.
+
+**Giỏ (`components/cart/CartScreen.tsx`):**
+- Dòng meta dưới "Giỏ" là "{n} món". Chỉ khi giỏ có ít nhất một dòng mẫu theo Số mới thêm " · Số 05 · đóng sau …" (hoặc
+  " · đã đóng"). Giỏ toàn mẫu cố định chỉ ghi "{n} món".
+- Lối dưới danh sách ("Về số 05") và nút của giỏ trống ("Xem số 05"):
+  - khi có Số đang mở: giữ chữ, đổi đích sang `/so/N` (§A.3);
+  - khi không Số nào mở: "Xem tất cả mẫu", tới `/products`.
+- Câu của giỏ trống giữ nguyên.
+
+**Tìm kiếm (`app/search/page.tsx`, `components/product/SearchBox.tsx`):**
+- Tập tìm là `productsOnSale(catalog)`, tức cả hai loại; bỏ `featuredDrop` nếu không còn dùng.
+- Bỏ hẳn dòng khi chưa gõ ("Số 05 có N mẫu. Gõ tên mẫu, loại hoặc màu."): ô tìm đã có placeholder, chip bên dưới đã có số đếm.
+- Dòng kết quả: "N mẫu khớp “q”", bỏ "trong số 05".
+- Meta của "Có thể tìm": "đang bán".
+- Trong `SearchBox`:
+  - tiêu đề nhóm dự phòng: "Đang bán";
+  - dòng nhóm: "{n} mẫu", bỏ "trong số 05";
+  - bỏ biến `no`, vốn lấy `pool[0]?.dropNo ?? 0`.
+- Thẻ kết quả theo §B.1 và §B.5. Sửa chú giải đầu trang cho đúng (hiện ghi "over the open issue only").
+
+**Ảnh phẳng:** `photoUrl` nhận khoá `flat-*` bằng một nhánh riêng. **Không** thêm khoá phẳng vào `PHOTO_IDS`, để `PHOTO_KEYS`, danh
+sách ảnh mượn của quản trị (`loanPhotos`) và sheet hé lộ giữ nguyên; lát 12 sẽ quyết phần đó.
+
+**Soát chữ "Số" trên tập đã trộn hai loại:** grep `issueLabel(` và `LEX.tl` trong `app/` và `components/` (trừ
+`components/admin/`). Với mỗi chỗ:
+- giữ nếu câu nói về một Số cụ thể;
+- sửa theo tinh thần các mục trên nếu câu nói về một tập đã trộn hai loại, và không thêm câu mới.
+
+Ghi từng chỗ vào báo cáo.
+
 ## Không đụng
 
 Khu quản trị (lát 12), `DESIGN.md` (documenter viết sau lát 12), mock, Supabase hosted, dữ liệu và migration (B5 đã xong; thiếu

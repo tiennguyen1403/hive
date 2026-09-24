@@ -1994,3 +1994,29 @@ Phiên chính tự quyết khi viết brief (báo người dùng):
 - Mẫu cố định hết cả kệ: không SOLD OUT, không làm mờ.
 
 Prompt ảnh: thêm tám khối (17 ảnh, tổng 58 tệp) vào `tasks/anh-san-pham-prompt.md` (`471e4a1`).
+
+**25/09, B5 ĐẠT (`28ee1bc`).** `backend-implementer` làm, phiên chính duyệt độc lập:
+- `tsc` sạch; 1408/1408 test đơn vị;
+- `supabase db reset`, `seed:users` rồi 198/198 test DB (18 test mới ở `lib/db/fixed-styles.dbtest.ts`);
+- `/products/khoi` trả 308 sang `/products/s05-khoi`; slug lạ trả 404;
+- tám mẫu trong fixture trùng từng số với `LINE` của bảng;
+- migration thay sáu hàm, mỗi hàm giữ `security definer`/`invoker`, `search_path = ''` và grant; `reset_demo` không đổi.
+
+Phiên chính chép bản vá slug của agent vào `tools/layout-sweep.js` và `tools/backend-shots.js`.
+
+Phiên chính quyết bốn câu agent hỏi (ghi vào brief lát 12, mục F):
+- mẫu hé lộ tạo mới lấy mã `s06-soi`;
+- sửa mẫu mà để trống ô mã thì sinh bằng `slugFor`;
+- dòng nhật ký thêm mẫu cố định giữ "N màu";
+- loại của mẫu cố định vẫn có trong menu "Loại".
+
+Brief lát 11 thêm mục H, do các chỗ B5 báo lại:
+- giỏ: meta chỉ nói Số khi giỏ có mẫu theo Số; lối "Về số 05" về `/so/N`, giữa hai Số thành "Xem tất cả mẫu";
+- tìm kiếm trên mọi mẫu đang bán, bỏ "trong số 05" và dòng đếm lúc chưa gõ;
+- khoá ảnh phẳng không vào `PHOTO_IDS`.
+
+**Hosted, sau lát 12, người dùng làm:** migration phải lên hosted **và** `seed_*` trên hosted phải nạp lại từ `supabase/seed.sql`.
+Nếu thiếu bước nạp lại, cron `reset_demo` dựng lại từ mirror cũ: slug cũ và không có mẫu cố định. `seed.sql` mở đầu bằng
+`truncate`, nên chạy lại được. Trước lúc đó phiên chính kiểm `db push --include-seed` có chạy lại seed đã đổi hay không, đừng đoán.
+
+Lát 11 đã giao `ui-implementer` (25/09).
