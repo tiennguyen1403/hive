@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loading khi chuyển trang · HIVE</title>
+<link rel="icon" href="../name/logo/png/hive-mark-32.png">
+<link rel="stylesheet" href="../v2/fonts.css">
+<style>
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("fonts/unbounded-800-latin-b89d52.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("fonts/unbounded-800-vietnamese-0260aa.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+  :root {
+    --ink: #171410; --ink2: #6b6250; --hair: #ece7dd; --line: #9c937f; --bg: #ffffff; --plate: #f4efe6;
+    --honey: #eba400; --honey-soft: #fbf1da; --mark: #c28800; --gut: 40px;
+    --display: "Unbounded", system-ui, sans-serif; --sans: "Be Vietnam Pro", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--sans); }
+  ::selection { background: var(--honey-soft); }
+  :focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
+  .board { max-width: 1360px; margin: 0 auto; padding: 48px var(--gut) 96px; }
+  h1 { font: 800 40px/1.05 var(--display); letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance; }
+  h2 { font: 800 26px/1.15 var(--display); letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance; }
+  p { text-wrap: pretty; }
+  .lead, .sub { max-width: 72ch; color: var(--ink2); margin: 0 0 28px; }
+  .lead b, .sub b { color: var(--ink); font-weight: 600; }
+  section { margin-top: 76px; padding-top: 28px; border-top: 1px solid var(--ink); }
+  figure { margin: 0; min-width: 0; }
+  figcaption { font-size: 13px; color: var(--ink2); margin-top: 8px; line-height: 1.45; }
+  figcaption b { display: block; color: var(--ink); font-weight: 600; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  code { font: 500 12.5px/1 var(--sans); background: var(--plate); padding: 2px 5px; border-radius: 3px; color: var(--ink); white-space: nowrap; }
+
+  /* ── Controls: the system's segmented control (.seg3), chosen = black cloth, honey letters. */
+  .ctl { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px 24px; margin: 0 0 18px; }
+  .seg { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .seg legend { padding: 0; margin-bottom: 6px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); }
+  .seg .opts { display: flex; }
+  .seg label { position: relative; display: inline-flex; align-items: center; height: 36px; padding: 0 14px; margin-left: -1px;
+    border: 1px solid var(--line); background: var(--bg); font-size: 13px; white-space: nowrap; cursor: pointer; transition: background-color .12s ease; }
+  .seg label:first-child { margin-left: 0; border-radius: 4px 0 0 4px; }
+  .seg label:last-child { border-radius: 0 4px 4px 0; }
+  .seg label small { font-size: 12px; margin-left: 6px; color: var(--ink2); }
+  .seg input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+  .seg label:hover { background: var(--plate); }
+  .seg label:has(input:checked) { z-index: 1; background: var(--ink); border-color: var(--ink); color: var(--honey); font-weight: 600; }
+  .seg label:has(input:checked) small { color: #b9b0a0; font-weight: 400; }
+  .seg label:has(input:focus-visible) { z-index: 2; outline: 2px solid var(--mark); outline-offset: 2px; }
+  .chk { display: inline-flex; align-items: center; gap: 8px; height: 36px; font-size: 13px; cursor: pointer; }
+  .chk input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); cursor: pointer; }
+  .go { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border: 1px solid var(--ink); border-radius: 4px;
+    background: var(--bg); color: var(--ink); font: 600 13px/1 var(--sans); cursor: pointer; transition: background-color .12s ease; }
+  .go:hover { background: var(--plate); }
+  .go:active { transform: translateY(1px); }
+
+  /* What the chosen style does, the last run's time and the button sit on one line above the stage. */
+  .play { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "desc run" "stage stage" "hint hint"; gap: 12px 24px; }
+  .desc { grid-area: desc; align-self: center; max-width: 72ch; margin: 0; font-size: 14px; color: var(--ink2); }
+  .run { grid-area: run; display: flex; align-items: center; gap: 16px; }
+  .readout { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .hint { grid-area: hint; margin: -2px 0 0; font-size: 13px; color: var(--ink2); }
+
+  /* ── The stage: a shot of the real store, scaled to the column; its links are buttons. */
+  #stagewrap { grid-area: stage; min-width: 0; }
+  .stage { position: relative; overflow: hidden; border-radius: 4px; box-shadow: 0 0 0 1px var(--hair); background: var(--plate); }
+  .frame { position: absolute; left: 0; top: 0; overflow: hidden; transform-origin: 0 0; background: #fff; }
+  .frame > img { display: block; width: 100%; height: 100%; user-select: none; }
+  .hot { position: absolute; inset: 0; }
+  .hs { position: absolute; padding: 0; margin: 0; border: 0; border-radius: 4px; background: transparent; cursor: pointer; }
+  .stage:hover .hs { box-shadow: 0 0 0 1px rgba(23, 20, 16, .2); }
+  .stage .hs:hover, .hs.press { box-shadow: 0 0 0 2px rgba(23, 20, 16, .55); }
+  .hs:focus-visible { outline: 2px solid var(--mark); outline-offset: 2px; }
+  @media (hover: none) { .hs { box-shadow: 0 0 0 1px rgba(23, 20, 16, .2); } }
+
+  /* The seam: the store's own running stitch (the dashed honey edge of the issue cover), 2px, sewn
+     along the bottom edge of the sticky bar. --p is how far it has run, --dash the stitch length. */
+  .seam { position: absolute; left: 0; right: 0; height: 2px; opacity: 0; pointer-events: none; --p: 0; --dash: 6px; }
+  .seam::before { content: ""; position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, var(--honey) 0 var(--dash), transparent var(--dash) 10px);
+    clip-path: inset(0 calc(100% - var(--p) * 100%) 0 0); }
+
+  /* The veil: white over the page below the bar, the mark in the middle, a stitched arc going round it. */
+  .veil { position: absolute; left: 0; right: 0; bottom: 0; display: grid; place-items: center; background: rgba(255, 255, 255, .92);
+    opacity: 0; visibility: hidden; pointer-events: none; }
+  .veil.block { pointer-events: auto; cursor: progress; }
+  .loader { display: block; overflow: visible; }
+
+  /* ── Verdict and comparison */
+  .pick { margin: 0 0 28px; padding: 14px 16px; background: var(--honey-soft); border-radius: 4px; max-width: 80ch; }
+  .pick b { font-weight: 600; }
+  .scroll { overflow-x: auto; }
+  .cmp { border-collapse: collapse; min-width: 720px; font-size: 14px; }
+  .cmp th, .cmp td { text-align: left; vertical-align: top; padding: 10px 24px 10px 0; border-top: 1px solid var(--hair); }
+  .cmp thead th { border-top: 0; padding-top: 0; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); }
+  .cmp tbody th { font-weight: 600; min-width: 170px; }
+  .cmp td.good { color: var(--ink); }
+  .cmp td { color: var(--ink2); }
+
+  /* ── Anatomy: the bar's bottom edge at 3×, and the loader's three moments. */
+  .anat { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px 24px; }
+  .strip { position: relative; height: 54px; overflow: hidden; border-radius: 4px; box-shadow: 0 0 0 1px var(--hair);
+    background: linear-gradient(#fff 0 24px, var(--hair) 24px 27px, #fff 27px); }
+  .strip::after { content: ""; position: absolute; left: 0; right: 0; top: 24px; height: 6px;
+    background: repeating-linear-gradient(90deg, var(--honey) 0 18px, transparent 18px 30px);
+    clip-path: inset(0 calc(100% - var(--p) * 100%) 0 0); }
+  .strip.tight::after { background: var(--honey); opacity: .5; }
+  .loaders { display: grid; grid-template-columns: repeat(3, minmax(0, 220px)); gap: 20px 24px; }
+  .card { display: grid; place-items: center; height: 170px; border-radius: 4px; box-shadow: 0 0 0 1px var(--hair); background: #fff; }
+  .rm { max-width: 72ch; margin: 22px 0 0; font-size: 14px; color: var(--ink2); }
+  .rm b { color: var(--ink); font-weight: 600; }
+
+  .notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; padding: 0; margin: 0; list-style: none; }
+  .notes li { padding: 12px 0; border-top: 1px solid var(--hair); font-size: 14px; }
+  .notes b { font-weight: 600; }
+
+  @media (max-width: 900px) {
+    :root { --gut: 16px; }
+    .board { padding-top: 32px; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 24px; }
+    section { margin-top: 56px; }
+    .anat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .loaders { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card { height: 130px; }
+    .card svg { width: 76px; height: 76px; }
+    .notes { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 700px) {
+    .ctl { gap: 12px 16px; }
+    .seg .opts { flex-wrap: wrap; gap: 6px; }
+    .seg label, .seg label:first-child, .seg label:last-child { margin-left: 0; border-radius: 4px; padding: 0 12px; }
+    /* On the phone the stage comes straight after the button; the words follow it. */
+    .play { grid-template-columns: minmax(0, 1fr); grid-template-areas: "run" "stage" "desc" "hint"; }
+    .run { justify-content: space-between; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .seg label, .go { transition: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- Mark M2 (prototype/name/logo/hive-mark.svg), r 500 -->
+    <g id="m2"><circle r="500" fill="#eba400"/><path fill="#171410" d="M-169,381.17l-145.42,-52.65l0,-266.87c15.71,10.41 33.29,19.48 51.75,21.81c21.04,2.66 42.61,-1.95 62.92,-7.17c25.77,-6.63 51.06,-15.12 76.21,-23.84c-22.5,35.38 -45.46,77.68 -45.46,99.85l0,15l0,0zM-314.42,-328.52l145.42,-52.65l0,238.97c-33.74,-12.22 -67.47,-24.43 -101.21,-36.65c-12.68,-4.59 -25.35,-9.18 -38.03,-13.77c-2.07,-0.75 -4.12,-1.49 -6.18,-2.2zM169,-381.17l145.42,52.65l0,133.68c-2.06,0.73 -4.11,1.48 -6.18,2.23c-13.15,4.76 -26.29,9.52 -39.44,14.28c-33.27,12.05 -66.53,24.09 -99.8,36.14zM314.42,328.52l-145.42,52.65v-213.86l0,0v-15c0,-22.18 -22.98,-64.5 -45.48,-99.88c4.39,1.51 8.78,3 13.18,4.49c25.06,8.47 50.32,16.87 76.19,22.52c17.17,3.75 35.22,6.46 52.73,3.61c17.38,-2.83 33.92,-11.51 48.79,-21.38zM-264.74,40.11c-60.28,-21.83 -138.41,-120.12 -131.88,-164.06c7.88,-29.45 33.57,-43.84 61.39,-33.77l265.01,95.95c1.39,-18.59 5.79,-29.61 16.58,-35.96c-17.98,-11.93 -29.4,-29.75 -29.4,-49.67c0,-21.25 13,-40.11 33.1,-51.98c-0.82,-1.57 -1.59,-3.17 -2.45,-4.64c-3.94,-6.82 -8.46,-13.3 -13.62,-19.2c-5.86,-6.69 -12.54,-12.6 -19.93,-17.41c-4.24,-2.76 -10.01,-4.58 -13.53,-8.25c-4.31,-4.49 -4.9,-11.75 -1.37,-16.93c7.6,-11.14 20.31,-2.53 28.51,2.81c14.84,9.66 27.32,22.75 37.14,37.72c2.12,3.23 5.45,10.3 7.65,16.49c8.62,-2.37 17.88,-3.66 27.53,-3.66c8.99,0 17.66,1.12 25.77,3.19c1.88,-5.03 5.58,-10.02 8.2,-14.14c10.01,-15.76 22.89,-29.54 38.36,-39.6c7.17,-4.67 17.03,-12.04 25.36,-6.04c5.71,4.11 7.17,12.48 3.2,18.39c-2.58,3.84 -7.02,5.28 -10.81,7.47c-5.17,2.98 -10.05,6.48 -14.57,10.43c-7.85,6.85 -14.57,15 -20.2,23.87c-1.23,1.94 -3.56,5.55 -6.11,9.07c20.52,11.84 33.83,30.91 33.83,52.41c0,19.91 -11.42,37.73 -29.4,49.67c10.79,6.35 15.19,17.37 16.58,35.96l265.01,-95.95c27.82,-10.07 53.51,4.32 61.39,33.77c6.54,43.94 -71.6,142.23 -131.88,164.06c-26.15,9.47 -91.24,-14.55 -197.02,-51.73c-6.2,22.98 -23.68,27.88 -67.71,27.88c-44.03,0 -61.51,-4.9 -67.71,-27.88c-105.78,37.18 -170.87,61.2 -197.02,51.73zM-109.5,121.28c3.54,-23.98 13.05,-45.66 26.73,-63.02l165.53,0c13.68,17.36 23.19,39.04 26.73,63.02zM109.5,163.28c-3.54,23.98 -13.05,45.66 -26.73,63.02l-165.53,0c-13.68,-17.36 -23.19,-39.04 -26.73,-63.02zM-52.08,268.3h104.15l-52.08,87.42z"/></g>
+    <!-- The stitched ring: 30 stitches, 6 on 4 off, starting at twelve o'clock -->
+    <circle id="ring" r="42" fill="none" stroke="#eba400" stroke-width="2" pathLength="300" stroke-dasharray="6 4" transform="rotate(-90)"/>
+  </defs>
+</svg>
+
+<main class="board">
+  <h1>Khi bấm sang trang khác</h1>
+  <p class="lead">Đo trên site thật (24/09): bấm một liên kết thì <b>0,28–0,38 giây</b> sau (Wi-Fi), hoặc <b>0,41–0,47 giây</b> sau
+    (4G giả lập), trang kế tiếp mới hiện; trong lúc đó trang cũ đứng im, không có gì cho biết cú bấm đã được nhận.</p>
+
+  <div class="ctl">
+    <fieldset class="seg">
+      <legend>Kiểu</legend>
+      <div class="opts">
+        <label><input type="radio" name="style" value="none"><span>Hiện nay</span></label>
+        <label><input type="radio" name="style" value="seam" checked><span>Đường may</span></label>
+        <label><input type="radio" name="style" value="logo"><span>Logo giữa màn hình</span></label>
+        <label><input type="radio" name="style" value="both"><span>Cả hai</span></label>
+      </div>
+    </fieldset>
+    <fieldset class="seg">
+      <legend>Trang về sau</legend>
+      <div class="opts">
+        <label><input type="radio" name="speed" value="300" checked><span>0,3 giây<small>đo được</small></span></label>
+        <label><input type="radio" name="speed" value="1000"><span>1 giây</span></label>
+        <label><input type="radio" name="speed" value="3000"><span>3 giây<small>mạng yếu</small></span></label>
+      </div>
+    </fieldset>
+    <fieldset class="seg">
+      <legend>Màn</legend>
+      <div class="opts">
+        <label><input type="radio" name="device" value="1280"><span>Máy tính</span></label>
+        <label><input type="radio" name="device" value="390"><span>Điện thoại</span></label>
+      </div>
+    </fieldset>
+    <label class="chk"><input type="checkbox" id="reduced">Giảm chuyển động</label>
+  </div>
+
+  <div class="play">
+    <p class="desc" id="desc"></p>
+    <div class="run"><span class="readout" id="readout" aria-live="polite"></span><button type="button" class="go" id="go">Bấm thử</button></div>
+
+    <div id="stagewrap">
+      <div class="stage" id="stage">
+        <div class="frame" id="frame">
+          <img id="page" src="loading/home-1280.jpg" alt="Ảnh chụp trang chủ, máy tính 1280 px" width="1280" height="800">
+          <div class="hot" id="hot"></div>
+          <div class="veil" id="veil" aria-hidden="true">
+            <svg class="loader" id="loader" viewBox="-50 -50 100 100" width="100" height="100">
+              <mask id="arc-live" maskUnits="userSpaceOnUse" x="-50" y="-50" width="100" height="100">
+                <circle id="arc" r="42" fill="none" stroke="#fff" stroke-width="8" pathLength="100" stroke-dasharray="28 72" transform="rotate(-90)"/>
+              </mask>
+              <use href="#ring" mask="url(#arc-live)"/>
+              <g transform="scale(.064)"><use href="#m2"/></g>
+            </svg>
+          </div>
+          <div class="seam" id="seam" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">Bấm được ngay trên ảnh: logo, biển Số, “Xem mười mẫu”, “Áo thun”, mẫu KHÓI (rê chuột để thấy viền).</p>
+  </div>
+
+  <section aria-labelledby="pick-h">
+    <h2 id="pick-h">Nên chọn</h2>
+    <p class="pick"><b>Đề xuất: Đường may.</b> Ở tốc độ đo được (0,3–0,5 giây) nó đáp lại ngay lúc bấm mà không che gì; logo giữa màn
+      hình ở tốc độ này thành một lần chớp trắng mỗi cú bấm. Sợi chỉ cũng chính là mũi may đang viền bìa Số, nên hệ không thêm một hình
+      mới. Nếu vẫn muốn thấy logo, <b>Cả hai</b> giữ logo cho lúc mạng yếu (chờ quá 1 giây) và để đường may lo phần còn lại.</p>
+    <div class="scroll">
+      <table class="cmp">
+        <thead><tr><th scope="col"><span class="sr">Tiêu chí</span></th><th scope="col">Hiện nay</th><th scope="col">Đường may</th><th scope="col">Logo giữa màn hình</th><th scope="col">Cả hai</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Lúc bấm</th><td>không có gì</td><td class="good">chỉ chạy ngay</td><td>lớp trắng sau 0,12 giây</td><td class="good">chỉ chạy ngay</td></tr>
+          <tr><th scope="row">Ở 0,3 giây (đo được)</th><td>trang đứng im</td><td class="good">một đoạn chỉ rồi khép lại</td><td>màn chớp trắng mỗi lần bấm</td><td class="good">như Đường may</td></tr>
+          <tr><th scope="row">Ở 3 giây (mạng yếu)</th><td>tưởng bấm hỏng</td><td class="good">chỉ chạy chậm dần, vẫn thấy đang đi</td><td class="good">rõ nhất</td><td class="good">chỉ chạy, thêm logo từ giây thứ nhất</td></tr>
+          <tr><th scope="row">Trang cũ trong lúc chờ</th><td>đọc, bấm được</td><td class="good">đọc, bấm được</td><td>bị che</td><td>bị che nếu quá 1 giây</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="seam-h">
+    <h2 id="seam-h">Đường may</h2>
+    <p class="sub">Sợi chỉ mật ong dày 2 px, mũi may 6 px cách 4 px (cùng kiểu đứt nét viền bìa Số và dấu SOLD OUT), chạy dọc mép dưới
+      thanh điều hướng từ trái sang phải. Thanh dính trên đầu trang, nên cuộn tới đâu sợi chỉ cũng nằm trong tầm mắt. Hình dưới: mép
+      dưới thanh, phóng 3 lần.</p>
+    <div class="anat">
+      <figure><div class="strip" style="--p:.07"></div><figcaption><b>Bấm · 0 giây</b>vài mũi đầu hiện ngay</figcaption></figure>
+      <figure><div class="strip" style="--p:.6"></div><figcaption><b>Chờ</b>nhanh lúc đầu rồi chậm dần: 1/4 thanh sau 0,3 giây, 3/5 sau 1 giây; không chạm mép khi trang chưa về</figcaption></figure>
+      <figure><div class="strip" style="--p:1"></div><figcaption><b>Trang về</b>chạy nốt tới mép phải trong 0,2 giây</figcaption></figure>
+      <figure><div class="strip tight" style="--p:1"></div><figcaption><b>Khép mũi</b>khoảng hở khép thành một đường liền (0,14 giây) rồi mờ đi (0,24 giây)</figcaption></figure>
+    </div>
+    <p class="rm"><b>Giảm chuyển động</b> (cài đặt của máy): sợi chỉ hiện nguyên đường ngay khi bấm, đứng yên, tắt khi trang về. Bấm link
+      khác giữa chừng thì sợi chỉ chạy tiếp, không quay lại từ đầu.</p>
+  </section>
+
+  <section aria-labelledby="logo-h">
+    <h2 id="logo-h">Logo giữa màn hình</h2>
+    <p class="sub">Lớp trắng phủ phần trang dưới thanh điều hướng; giữa là mark HIVE 64 px (56 px trên điện thoại), quanh nó một cung
+      mũi may mật ong chạy vòng. Thanh điều hướng vẫn thấy và bấm được. Trang về nhanh hơn 0,12 giây thì không hiện gì.</p>
+    <div class="loaders">
+      <figure>
+        <div class="card"><svg viewBox="-50 -50 100 100" width="100" height="100" aria-hidden="true" style="opacity:.6;transform:scale(.92)">
+          <mask id="arc-a1" maskUnits="userSpaceOnUse" x="-50" y="-50" width="100" height="100"><circle r="42" fill="none" stroke="#fff" stroke-width="8" pathLength="100" stroke-dasharray="28 72" transform="rotate(-90)"/></mask>
+          <use href="#ring" mask="url(#arc-a1)"/><g transform="scale(.064)"><use href="#m2"/></g></svg></div>
+        <figcaption><b>Hiện</b>lớp trắng và mark hiện trong 0,16 giây</figcaption>
+      </figure>
+      <figure>
+        <div class="card"><svg viewBox="-50 -50 100 100" width="100" height="100" aria-hidden="true">
+          <mask id="arc-a2" maskUnits="userSpaceOnUse" x="-50" y="-50" width="100" height="100"><circle r="42" fill="none" stroke="#fff" stroke-width="8" pathLength="100" stroke-dasharray="28 72" transform="rotate(40)"/></mask>
+          <use href="#ring" mask="url(#arc-a2)"/><g transform="scale(.064)"><use href="#m2"/></g></svg></div>
+        <figcaption><b>Chờ</b>cung chỉ chạy một vòng mỗi 1,1 giây</figcaption>
+      </figure>
+      <figure>
+        <div class="card"><svg viewBox="-50 -50 100 100" width="100" height="100" aria-hidden="true">
+          <use href="#ring"/><g transform="scale(.064)"><use href="#m2"/></g></svg></div>
+        <figcaption><b>Trang về</b>cung khép thành vòng tròn (0,15 giây), lớp trắng mờ đi (0,18 giây)</figcaption>
+      </figure>
+    </div>
+    <p class="rm"><b>Cái giá:</b> ở 0,3 giây đo được, màn hình chớp trắng một lần mỗi cú bấm, và trong lúc chờ trang cũ bị che, không đọc
+      tiếp được. Mark là thêm một mảng mật ong giữa màn (luật Một Sợi Chỉ); chấp nhận được vì nó chỉ sống lúc chờ.
+      <b>Giảm chuyển động:</b> vòng chỉ đứng yên, chỉ có lớp trắng hiện rồi tắt.</p>
+  </section>
+
+  <section aria-labelledby="impl-h">
+    <h2 id="impl-h">Khi làm thật</h2>
+    <ul class="notes">
+      <li><b>Một component</b> client đặt một lần trong <code>ShopFrame</code>: mọi trang cửa hàng và tài khoản có nó, khu quản trị thì
+        không.</li>
+      <li><b>Bắt đầu</b> khi bấm bất kỳ liên kết nội bộ nào, không phải sửa từng <code>&lt;Link&gt;</code>; bỏ qua liên kết mở tab mới,
+        tải tệp, ra ngoài site, chỉ đổi <code>#</code>, hoặc trỏ đúng trang đang đứng. Bắt cả nút Lùi/Tới của trình duyệt.</li>
+      <li><b>Các chỗ đổi trang bằng code</b> (lọc, sắp xếp, tìm kiếm, đặt hàng xong, tra đơn) gọi thẳng hàm bắt đầu của component.</li>
+      <li><b>Xong</b> khi địa chỉ mới đã vào (<code>usePathname</code>, <code>useSearchParams</code>). Không thêm thư viện: tài liệu Next 16
+        gợi ý đúng kiểu thanh tiến trình cho route động không có <code>loading.tsx</code>.</li>
+      <li><b>Trình đọc màn hình:</b> sợi chỉ và lớp phủ <code>aria-hidden</code>; <code>&lt;main aria-busy&gt;</code> trong lúc chờ; Next
+        tự đọc tiêu đề trang mới khi tới.</li>
+      <li><b>Không đụng:</b> dữ liệu, các trang, <code>loading.tsx</code> (kiểu khung trang không chọn).</li>
+      <li><b>Không làm trang về nhanh hơn.</b> Máy chủ trả trang mất khoảng 0,17–0,21 giây khi kết nối đã mở; phần còn lại là trình duyệt
+        dựng trang. Muốn nhanh hơn thật phải tải trước (prefetch): việc riêng, có giá — máy chủ dựng trước cả những trang người mua không
+        mở, và số còn hàng có thể là số lúc tải trước.</li>
+      <li><b>Cách đo:</b> Chrome không giao diện, 1280 px, bấm liên kết trên site thật; bốn lượt (trang chủ → Áo thun, danh mục → KHÓI,
+        KHÓI → giỏ, trang chủ → giới thiệu); 4G giả lập là thêm 150 ms độ trễ, 9 Mbps.</li>
+    </ul>
+  </section>
+</main>
+
+<script src="loading/shots.js"></script>
+<script>
+(() => {
+  const SHOTS = window.LOADING_SHOTS;
+  const $ = (s) => document.querySelector(s);
+  const stageWrap = $("#stagewrap"), stage = $("#stage"), frame = $("#frame"), img = $("#page"), hot = $("#hot");
+  const seamEl = $("#seam"), veilEl = $("#veil"), loaderEl = $("#loader"), arcEl = $("#arc");
+  const readoutEl = $("#readout"), descEl = $("#desc");
+
+  const NAMES = { "/": "trang chủ", "/products": "danh mục", "/products?family=TEE": "danh mục Áo thun", "/products/khoi": "trang mẫu KHÓI" };
+  const NEXT = { "/": "/products", "/products": "/products/khoi", "/products?family=TEE": "/products/khoi", "/products/khoi": "/" };
+  const DESC = {
+    none: "Như site đang chạy: bấm xong trang đứng im tới khi trang mới về.",
+    seam: "Sợi chỉ mật ong chạy dọc mép dưới thanh điều hướng từ lúc bấm; trang về thì khép mũi rồi mờ đi. Trang cũ vẫn đọc và bấm được.",
+    logo: "Sau 0,12 giây, lớp trắng phủ phần trang dưới thanh điều hướng; giữa là mark HIVE với một cung chỉ chạy vòng.",
+    both: "Đường may ngay khi bấm; nếu trang chờ quá 1 giây thì thêm logo giữa màn hình.",
+  };
+  const osReduced = matchMedia("(prefers-reduced-motion: reduce)");
+  const S = { style: "seam", speed: 300, device: innerWidth >= 900 ? "1280" : "390", page: "/", reducedToggle: false };
+  const reduced = () => S.reducedToggle || osReduced.matches;
+  const ease = (x) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+  const secs = (ms) => (ms / 1000).toFixed(2).replace(".", ",") + " giây";
+
+  for (const d of Object.values(SHOTS)) for (const p of Object.values(d.pages)) new Image().src = p.img;
+
+  // The seam. Runs fast, then slows toward nine tenths and never reaches the edge on its own;
+  // the page arriving sends it to the edge, closes the gaps into one line, and fades it.
+  const seam = {
+    phase: "idle", t0: 0, tf: 0, p: 0, o: 0, from: 0, oFrom: 0,
+    set(p, dash, o) {
+      this.p = p; this.o = o;
+      seamEl.style.setProperty("--p", p.toFixed(4));
+      seamEl.style.setProperty("--dash", dash.toFixed(2) + "px");
+      seamEl.style.opacity = o.toFixed(3);
+    },
+    start(now) { if (this.phase === "run") return; this.phase = "run"; this.t0 = now; },
+    done(now) { if (this.phase !== "run") return; this.phase = "end"; this.tf = now; this.from = this.p; this.oFrom = this.o; },
+    reset() { this.phase = "idle"; this.set(0, 6, 0); },
+    tick(now) {
+      if (this.phase === "idle") return false;
+      if (reduced()) {
+        if (this.phase === "run") { this.set(1, 6, ease((now - this.t0) / 120)); return true; }
+        const t = now - this.tf;
+        if (t < 160) { this.set(1, 6, this.oFrom * (1 - ease(t / 160))); return true; }
+        this.reset(); return false;
+      }
+      if (this.phase === "run") { this.set(0.02 + 0.88 * (1 - Math.exp(-(now - this.t0) / 900)), 6, 1); return true; }
+      const t = now - this.tf;
+      if (t < 200) { this.set(this.from + (1 - this.from) * ease(t / 200), 6, 1); return true; }
+      if (t < 340) { this.set(1, 6 + 4 * ease((t - 200) / 140), 1); return true; }
+      if (t < 580) { this.set(1, 10, 1 - ease((t - 340) / 240)); return true; }
+      this.reset(); return false;
+    },
+  };
+
+  // The veil. Waits (0.12 s alone, 1 s with the seam), fades in with the mark, the arc goes round
+  // once every 1.1 s; the page arriving closes the arc into a ring and fades the veil.
+  const veil = {
+    phase: "idle", t0: 0, delay: 0, tin: 0, tf: 0, o: 0, oFrom: 0,
+    draw(o, s, angle, len) {
+      this.o = o;
+      veilEl.style.opacity = o.toFixed(3);
+      veilEl.style.visibility = o > 0 ? "visible" : "hidden";
+      veilEl.classList.toggle("block", o > 0);
+      loaderEl.style.transform = "scale(" + s.toFixed(4) + ")";
+      arcEl.setAttribute("transform", "rotate(" + (angle - 90).toFixed(2) + ")");
+      arcEl.setAttribute("stroke-dasharray", len.toFixed(2) + " " + (100 - len).toFixed(2));
+    },
+    start(now, delay) { if (this.phase === "wait" || this.phase === "on") return; this.phase = "wait"; this.t0 = now; this.delay = delay; },
+    done(now) {
+      if (this.phase === "wait") { this.phase = "idle"; return; }
+      if (this.phase !== "on") return;
+      this.phase = "end"; this.tf = now; this.oFrom = this.o;
+    },
+    reset() { this.phase = "idle"; this.draw(0, 1, 0, 28); },
+    angle(now) { return ((now - this.tin) / 1100) * 360; },
+    tick(now) {
+      if (this.phase === "idle") return false;
+      if (this.phase === "wait") { if (now - this.t0 < this.delay) return true; this.phase = "on"; this.tin = now; }
+      const r = reduced();
+      if (this.phase === "on") {
+        const t = now - this.tin;
+        this.draw(ease(t / 160), r ? 1 : 0.92 + 0.08 * ease(t / 240), r ? 0 : this.angle(now), r ? 100 : 28);
+        return true;
+      }
+      const t = now - this.tf;
+      if (r) { if (t < 180) { this.draw(this.oFrom * (1 - ease(t / 180)), 1, 0, 100); return true; } this.reset(); return false; }
+      if (t < 150) { this.draw(this.oFrom, 1, this.angle(now), 28 + 72 * ease(t / 150)); return true; }
+      if (t < 330) { this.draw(this.oFrom * (1 - ease((t - 150) / 180)), 1, this.angle(now), 100); return true; }
+      this.reset(); return false;
+    },
+  };
+
+  // Every phase is timed against performance.now(), the clock the click was stamped with; a frame's
+  // own timestamp can fall before the click that scheduled it.
+  let raf = 0;
+  const tick = () => { const now = performance.now(), a = seam.tick(now), b = veil.tick(now); raf = a || b ? requestAnimationFrame(tick) : 0; };
+  const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
+  const say = (s) => { readoutEl.textContent = s; };
+
+  // A click: the page stays until `speed` has passed since the LAST click, like the store does.
+  let nav = null;
+  function go(href) {
+    if (!nav && href === S.page) return;
+    const now = performance.now();
+    if (nav) clearTimeout(nav.timer);
+    nav = { target: href, t0: nav ? nav.t0 : now };
+    nav.timer = setTimeout(arrive, S.speed);
+    if (S.style === "seam" || S.style === "both") seam.start(now);
+    if (S.style === "logo") veil.start(now, 120);
+    if (S.style === "both") veil.start(now, 1000);
+    kick();
+    say("Đang chờ " + NAMES[href] + "…");
+  }
+  function arrive() {
+    const now = performance.now();
+    const n = nav; nav = null;
+    show(n.target);
+    seam.done(now); veil.done(now); kick();
+    const name = NAMES[n.target];
+    say(name.charAt(0).toUpperCase() + name.slice(1) + " hiện sau " + secs(now - n.t0) + ".");
+  }
+  function resetRun() {
+    if (nav) { clearTimeout(nav.timer); nav = null; }
+    seam.reset(); veil.reset(); say("");
+  }
+
+  function show(url) {
+    S.page = url;
+    const d = SHOTS[S.device], pg = d.pages[url];
+    img.src = pg.img;
+    img.width = d.width; img.height = d.height;
+    img.alt = "Ảnh chụp " + NAMES[url] + ", " + (S.device === "1280" ? "máy tính 1280 px" : "điện thoại 390 px");
+    hot.replaceChildren(...pg.links.map((l) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "hs"; b.dataset.href = l.href;
+      b.style.cssText = "left:" + l.x + "px;top:" + l.y + "px;width:" + l.w + "px;height:" + l.h + "px";
+      b.setAttribute("aria-label", "Bấm “" + (l.label || "ảnh mẫu") + "”, sang " + NAMES[l.href]);
+      b.addEventListener("click", () => go(l.href));
+      return b;
+    }));
+  }
+
+  function fit() {
+    const d = SHOTS[S.device];
+    const w = Math.min(d.width, stageWrap.clientWidth), k = w / d.width;
+    stage.style.width = w + "px";
+    stage.style.height = d.height * k + "px";
+    frame.style.width = d.width + "px";
+    frame.style.height = d.height + "px";
+    frame.style.transform = "scale(" + k + ")";
+    seamEl.style.top = d.navBottom - 1 + "px";
+    veilEl.style.top = d.navBottom + "px";
+    const size = S.device === "1280" ? 100 : 88;
+    loaderEl.setAttribute("width", size); loaderEl.setAttribute("height", size);
+  }
+
+  document.querySelectorAll("input[name=style]").forEach((i) => i.addEventListener("change", () => { S.style = i.value; resetRun(); descEl.textContent = DESC[S.style]; }));
+  document.querySelectorAll("input[name=speed]").forEach((i) => i.addEventListener("change", () => { S.speed = +i.value; resetRun(); }));
+  document.querySelectorAll("input[name=device]").forEach((i) => {
+    i.checked = i.value === S.device;
+    i.addEventListener("change", () => { S.device = i.value; resetRun(); show(S.page); fit(); });
+  });
+  $("#reduced").addEventListener("change", (e) => { S.reducedToggle = e.target.checked; resetRun(); });
+  $("#go").addEventListener("click", () => {
+    const target = NEXT[S.page];
+    const b = [...hot.children].find((x) => x.dataset.href === target);
+    if (b) { b.classList.add("press"); setTimeout(() => b.classList.remove("press"), 260); }
+    go(target);
+  });
+
+  descEl.textContent = DESC[S.style];
+  show(S.page);
+  fit();
+  new ResizeObserver(fit).observe(stageWrap);
+})();
+</script>
+</body>
+</html>

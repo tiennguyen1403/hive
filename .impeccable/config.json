@@ -191,6 +191,15 @@
         ],
         "createdAt": "2026-09-24T12:26:58.644Z",
         "reason": "Comparison board: the stencil face is the wordmark candidate the user asked to compare, not part of the app's type system"
+      },
+      {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "prototype/v3/loading.html"
+        ],
+        "createdAt": "2026-09-24T15:44:37.297Z",
+        "reason": "Not decorative stripes: the running stitch of the loading seam (the system's dashed honey seam); CSS dashed borders cannot set the 6/4 px stitch, so a repeating gradient draws it"
       }
     ]
   }

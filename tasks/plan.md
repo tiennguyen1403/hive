@@ -1689,3 +1689,18 @@ hiệu 0,4,0 làm biển xanh hoá xám khi rê chuột), `#fff` → `var(--stag
 logo cố định 30/32 thay `--lk`, bỏ `font-size`/`letter-spacing` thừa ở `.wm`. Còn mở: biển giữ `on` + `aria-current` cả khi Số không
 đang bán (link khi đó trỏ `/#next` hoặc `/so/N`) → sửa thành chỉ khi `OPEN`; chú thích cũ `ShopFrame.tsx:17`; `DESIGN.md` (biển, bong
 bóng, icon 20, logo SVG, bo 5px) và `PRODUCT.md` ("Mark chưa có" đã cũ từ QĐ-30).
+
+**24/09, mock loading khi chuyển trang (CHỜ DUYỆT).** Người dùng (`/impeccable`): trên site đã deploy, bấm sang trang khác thấy trễ;
+muốn một "global loading", chưa có ý tưởng UI. Trả lời hỏi lại: phạm vi **cửa hàng + tài khoản** (không quản trị); muốn thử **Đường
+may** và **Logo giữa màn hình** (không chọn khung trang `loading.tsx`). Đo trên site thật (Chrome headless 1280, bốn lượt bấm):
+0,28–0,38 s Wi-Fi, 0,41–0,47 s Fast 4G giả lập; URL và nội dung đổi cùng lúc, trước đó trang cũ đứng im; RSC 0,17–0,21 s khi kết nối
+đã mở; hàm chạy `sin1` (`x-vercel-id`), cùng vùng Supabase. Nguyên nhân theo tài liệu Next 16 (`04-linking-and-navigating.md`): route
+động không có `loading.tsx` thì không prefetch, bấm phải chờ máy chủ. Bảng `prototype/v3/loading.html` (hợp đồng
+`.impeccable/surfaces/prototype-v3-loading-html.md`): sân khấu là ảnh chụp thật 1280/390 (trang chủ, danh mục, Áo thun, KHÓI; chụp bằng
+`prototype/v3/loading/capture.cjs` → `shots.js`), chỗ bấm lấy từ liên kết thật trên trang; bốn kiểu (Hiện nay · Đường may · Logo giữa màn
+hình · Cả hai = đường may, thêm logo khi chờ quá 1 s), ba tốc độ (0,3 · 1 · 3 s), bản giảm chuyển động. Đường may: chỉ mật ong 2 px,
+mũi 6/4, dọc mép dưới `.nav3`, chạy từ lúc bấm (27% ở 0,3 s, 61% ở 1 s), không chạm mép khi trang chưa về; trang về thì chạy nốt 0,2 s,
+khép mũi 0,14 s, mờ 0,24 s. Logo: lớp trắng 92% dưới thanh sau 0,12 s, mark M2 64/56 px, cung chỉ 28% chạy một vòng mỗi 1,1 s; trang
+về thì khép vòng 0,15 s, mờ 0,18 s. Đề xuất Đường may. Soát hai vòng (1280 + 390; pha chuyển động chụp trên đồng hồ đóng băng
+`page.clock`): 0 tràn ngang, 0 lỗi console, detector sạch; một ngoại lệ khoanh riêng tệp này (`repeating-stripes-gradient`: đó là mũi
+may, không phải sọc trang trí).
