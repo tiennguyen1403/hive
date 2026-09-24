@@ -16,19 +16,33 @@ theo đợt và có sản phẩm bán liên tục". Trả lời hỏi lại:
 - nguồn: **dòng riêng, mẫu mới**, không thuộc Số nào, hết thì may lại; mẫu trong Số vẫn cắt một lần;
 - gồm: **đồ cơ bản trong 6 họ**, size S–XL.
 
+**Vòng 2 (25/09), người dùng xem vòng 1:**
+> "Tôi không thích có thêm một nav quanh năm và thêm một section quanh năm và mô tả nó, nhìn có vẻ hơi weird. chỉ cần thể hiện nó
+> như là các mẫu khác thôi. ngoài ra các dòng số nên là một filter trong product list hoặc một page riêng cho số đó"
+
+Vòng 1 (tên dòng, hai kệ, khối trang chủ, câu dưới bốn quy tắc) đã bỏ. Hợp đồng dưới đây là của vòng 2.
+
 ## Direction contract
 
-THESIS: dòng mới là một kệ đứng yên cạnh các Số — cùng giấy trắng, mực, đường kẻ của cửa hàng, nhưng không đồng hồ, không số cắt,
-không dấu SOLD OUT. Số là một cái bìa có ngày; dòng mới là cái kệ luôn ở đó, gọi tên bằng thời gian ("Quanh năm").
+THESIS: mẫu bán liên tục không có tên, trang hay khối riêng trước mắt người mua. Nó đứng trong lưới như mọi mẫu. Danh sách sản phẩm là
+**tất cả mẫu đang bán**. Số là thứ được tách ra: có trang riêng `/so/N` hoặc là một bộ lọc. Mẫu thuộc Số mang dấu của Số: nhãn trên ảnh,
+đường dẫn, đồng hồ, số cắt. Tên "bán liên tục" chỉ có trong quản trị.
 
 OWN-WORLD: thế giới v3 "HIVE — nhãn dệt" như đã chốt ở `DESIGN.md`: sàn trắng, mực #171410, mật ong #EBA400 chỉ cho Số đang bán, nền
 ảnh `--plate` #f4efe6, badge `.flat` (mật ong nhạt, chữ thường, không chấm) cho một cái tên chứ không phải trạng thái.
 
-STORY: đọc hai luật bán đặt cạnh nhau → chọn tên → thấy dòng mới trên trang chủ (Số đang mở và giữa hai số), danh sách (hai kệ hay một
-kệ hai nhóm), trang mẫu (đủ size, tạm hết), quản trị (tab, cột tồn kho, form) ở 1280 và 390 → xem tám mẫu đề xuất → đọc chữ đổi theo
-→ chốt và sao chép kết quả.
+STORY:
+1. Đọc hai loại mẫu đặt cạnh nhau.
+2. Chọn Số là trang riêng hay bộ lọc, và có nhãn Số trên ảnh hay không.
+3. Xem các khung ở 1280 và 390:
+   - danh sách "Tất cả mẫu" và Số 05;
+   - trang chủ lúc Số đang mở và lúc giữa hai số;
+   - trang mẫu bán liên tục;
+   - quản trị.
+4. Xem tám mẫu, đọc những câu phải sửa vì sẽ thành sai.
+5. Chốt và sao chép kết quả.
 
-FIRST VIEWPORT: tiêu đề một dòng, một câu nêu điều người dùng đã chốt, hàng chọn tên, rồi bảng so hai luật bán.
+FIRST VIEWPORT: tiêu đề một dòng, một câu nêu ý người dùng, hàng chọn (Số là · Nhãn Số trên ảnh), rồi bảng so hai loại mẫu.
 
 FORM: mở rộng các bề mặt đã có, nên theo new-work §3 "Extend an existing surface": không concept seed. Khung là ảnh chụp HTML thật của
 cửa hàng (`line/snap.cjs` từ :3200), phần đề xuất vẽ đè bằng `line/line-mock.js`, nên khung trông đúng như app.

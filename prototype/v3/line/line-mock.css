@@ -1,44 +1,32 @@
-/* The year-round line, drawn over the snapshots (line-mock.js). Only what the
-   store does not have yet is styled here; everything else is the store's own
-   sheet in app/. Values are the store's tokens, so a piece that ships can be
-   lifted into app/styles/ as it stands. */
-
-/* ── the bar: the line's link leads the families, a hairline after it ──── */
-.s .nav3 .links .ln{ font-weight:600; color:var(--ink); }
-.s .nav3 .links .lsep{ align-self:center; width:1px; height:16px; background:var(--line); flex:none; }
+/* Styles that sell all the time, drawn over the snapshots (line-mock.js).
+   Round 2 (25/09, the user): they are not a line of their own — no bar link,
+   no home section, no description. They sit in the list like every other
+   style, and an issue is a page of its own or a filter. Only what the store
+   does not have yet is styled here; values are the store's tokens. */
 
 /* ── a photo that has not been taken yet: the garment's flat on the plate ─ */
 .s .ph{ position:relative; display:block; background:var(--plate); }
 .s .ph svg.flat{ display:block; width:100%; height:auto; aspect-ratio:4/5; }
-.s .ph .tag{ position:absolute; left:8px; bottom:8px; padding:2px 6px; border-radius:var(--r-sm);
+.s .ph .tag{ position:absolute; right:8px; bottom:8px; padding:2px 6px; border-radius:var(--r-sm);
   background:rgba(255,255,255,.82); color:var(--ink2); font-size:11px; font-weight:500; line-height:16px; }
 .s .gal figure.ph{ margin:0; }
 .s td.nw .athumb{ display:inline-block; vertical-align:middle; width:36px; height:45px; margin-right:8px;
   border-radius:var(--r-sm); overflow:hidden; background:var(--plate); }
 .s td.nw .athumb svg{ display:block; width:100%; height:100%; }
+/* The family index draws a 48 × 60 photo per row. */
+.s .index .row .ithumb{ display:block; width:48px; height:60px; flex:none; border-radius:var(--r-sm);
+  overflow:hidden; background:var(--plate); }
+.s .index .row .ithumb svg{ display:block; width:100%; height:100%; }
 
-/* ── the other shelf, one step from the listing's title ──────────────────
-   An outline control on the title row: the family tabs under it keep the
-   underline, the filter chips keep their boxes, and this is the only thing
-   on the row that leaves the shelf. */
-.s .lhead .row1{ flex-wrap:wrap; }
-.s .shelf{ display:inline-flex; align-items:center; gap:8px; height:36px; margin-left:auto; padding:0 12px 0 14px;
-  border:1px solid var(--ink); border-radius:var(--r); background:var(--bg); color:var(--ink);
-  font-size:var(--fs-sm); font-weight:600; white-space:nowrap; text-decoration:none; }
-.s .shelf .cnt{ font-weight:400; color:var(--ink2); font-variant-numeric:tabular-nums; }
-.s .shelf svg{ width:14px; height:14px; flex:none; }
-.s .shelf:hover{ background:var(--plate); }
-.s .shelf .dot{ width:6px; height:6px; border-radius:99px; background:var(--brand); flex:none; }
-@media (max-width:899px){
-  .s .shelf{ margin-left:0; margin-top:10px; }
-}
-/* The line's own title has no number to set in honey. */
-.s .lhead .big.line{ letter-spacing:-.02em; }
-
-/* ── the one line under the four rules ─────────────────────────────────── */
-/* One sentence, the line's name leading it as its subject. */
-.s .rnote{ margin:var(--s4) 0 0; max-width:72ch; font-size:var(--fs-sm); line-height:1.6; color:var(--ink2); }
-.s .rnote .badge{ height:22px; margin-right:6px; vertical-align:1px; }
+/* ── the issue a style belongs to, on its photo ──────────────────────────
+   A small cut of the nav's plate: the issue's cloth, honey letters, the
+   plate's radius. Bottom left, so it never meets SOLD OUT at the top. A style
+   that belongs to no issue carries nothing. */
+.s .card3 .sotag{ position:absolute; left:10px; bottom:10px; display:inline-flex; align-items:center;
+  height:22px; padding:0 8px; border-radius:var(--r-plate, 5px);
+  background:var(--stage); color:var(--brand);
+  font-family:var(--font-display); font-weight:var(--fw-display); font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; pointer-events:none; }
 
 /* ── the back office: a menu shown open, a quiet action in a cell ──────── */
 .s .selwrap.open{ position:relative; }
@@ -50,4 +38,4 @@
 
 /* ── what is new, when the board asks to see it ────────────────────────── */
 html[data-mark="1"] [data-new]{ outline:2px dashed var(--brand); outline-offset:4px; border-radius:2px; }
-html[data-mark="1"] .nav3 [data-new]{ outline-offset:2px; }
+html[data-mark="1"] .card3 [data-new]{ outline-offset:2px; }

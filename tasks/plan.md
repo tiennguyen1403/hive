@@ -1858,3 +1858,22 @@ Còn mở:
   Vô hại với crawler; gộp vào lát sau.
 - Sau lần deploy tới, xem `og:image` trỏ đúng domain production (`VERCEL_PROJECT_PRODUCTION_URL`).
 - DESIGN.md: documenter viết một lượt cho thanh điều hướng (lát 8, 10), lớp chờ (lát 9, 10) và tài sản thương hiệu.
+
+**25/09, dòng bán liên tục vòng 2.** Người dùng xem vòng 1: "Tôi không thích có thêm một nav quanh năm và thêm một section quanh năm
+và mô tả nó, nhìn có vẻ hơi weird. chỉ cần thể hiện nó như là các mẫu khác thôi. ngoài ra các dòng số nên là một filter trong product
+list hoặc một page riêng cho số đó".
+
+Bảng `prototype/v3/line.html` vẽ lại theo ý đó, trên cùng các ảnh chụp HTML của 3200:
+- **Danh sách:** `/products` thành **tất cả mẫu đang bán** (18 mẫu, một lưới, tab và bộ lọc đếm cả hai loại).
+- **Số, hai cách:**
+  - trang riêng `/so/5` (đề xuất; giống `/so/4` đang có, trang danh sách Số đã duyệt giữ nguyên);
+  - bộ lọc "Số" đầu cột lọc.
+- **Nhãn "SỐ 05" trên ảnh** mẫu thuộc Số (đề xuất có), cắt từ biển Số.
+- **Trang chủ:** không thêm khối; "Theo loại" đếm mọi mẫu, có "Xem tất cả 18 mẫu", và là lối vào khi giữa hai số.
+- **Trang mẫu bán liên tục:** không có Số ở đường dẫn, không đồng hồ, "Còn 101 chiếc"; hàng dưới "Cùng loại".
+- **Quản trị:** chỉ ở đây mới gọi tên "Bán liên tục" (tab, lựa chọn "Không theo số" trong ô Số, "Nhập thêm").
+- **Chữ:** chỉ sửa câu sẽ thành sai:
+  - câu mở Giới thiệu thành "mỗi mẫu **trong số** cắt đúng một lần";
+  - FAQ "Hết size thì có về lại không?" thêm một câu cho mẫu không thuộc Số.
+
+**Chờ người dùng chốt.**
