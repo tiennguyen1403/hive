@@ -1,0 +1,46 @@
+/* ── Proposal: the bar with the plate ────────────────────────────────────
+   Left: the logo (mark M2 + wordmark W3, no number). Middle: the issue plate,
+   then the five families. Right: search, saved, account, bag. The plate is
+   option F of the name round (hive-2.html): a plate, a rule inset 2px, a bolt
+   at each end, the issue in Unbounded 800. No dot, no clock. */
+html .s .nav3 .wm { display: inline-flex; align-items: center; height: 44px; margin-right: 0; letter-spacing: 0; flex: none; }
+html .s .nav3 .wm svg { display: block; height: 30px; width: auto; }
+
+html .s .nav3 .itag {
+  --pl: var(--brand); --pi: var(--ink);
+  height: 28px; padding: 0 17px; gap: 0; border: 0; border-radius: 5px; flex: none;
+  background:
+    radial-gradient(circle at 8.5px 50%, var(--pi) 0 1.6px, transparent 2.1px),
+    radial-gradient(circle at calc(100% - 8.5px) 50%, var(--pi) 0 1.6px, transparent 2.1px),
+    var(--pl);
+  box-shadow: inset 0 0 0 2px var(--pl), inset 0 0 0 3px var(--pi);
+  color: var(--pi);
+  font-family: var(--font-display); font-weight: 800; font-size: 11px; line-height: 1;
+  letter-spacing: .1em; text-transform: uppercase;
+  transition: background-color .12s ease;
+}
+html .s .nav3 .itag i, html .s .nav3 .itag .cd { display: none; }
+/* Before it opens the plate is blue (the system's "not yet" colour); once shut, grey. */
+html .s .nav3 .itag.soon { --pl: var(--info); --pi: #fff; }
+html .s .nav3 .itag.shut { --pl: #e2dccf; --pi: var(--ink2); }
+/* Colourway B: the plate in the issue's own cloth (mock only: one is chosen). */
+html .s .nav3 .itag.cloth { --pl: var(--stage); --pi: var(--brand); }
+html .s .nav3 .itag.cloth.shut { --pl: var(--stage); --pi: var(--stage-ink2); }
+html .s .nav3 .itag.cloth.soon { --pl: var(--info); --pi: #fff; }
+html .s .nav3 .itag:hover { --pl: var(--gold-400); }
+html .s .nav3 .itag.cloth:hover { --pl: var(--stage-hair); }
+html .s .nav3 .itag.soon:hover, html .s .nav3 .itag.shut:hover { filter: brightness(.96); }
+/* Browsing the whole issue: the same 2px honey rule the family links wear. */
+html .s .nav3 .itag.on::before { content: ""; position: absolute; left: 3px; right: 3px; bottom: -6px; height: 2px; background: var(--brand); }
+
+@media (min-width: 900px) {
+  html .s .nav3 .in { display: grid; grid-template-columns: minmax(0, 1fr) auto auto minmax(0, 1fr); column-gap: 24px; }
+  html .s .nav3 .wm { justify-self: start; }
+  html .s .nav3 .wm svg { height: 32px; }
+  html .s .nav3 .itag { order: 0; margin-left: 0; height: 32px; padding: 0 19px; font-size: 12px;
+    background:
+      radial-gradient(circle at 9.5px 50%, var(--pi) 0 1.75px, transparent 2.25px),
+      radial-gradient(circle at calc(100% - 9.5px) 50%, var(--pi) 0 1.75px, transparent 2.25px),
+      var(--pl); }
+  html .s .nav3 .icons { justify-self: end; }
+}

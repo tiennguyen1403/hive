@@ -1653,3 +1653,15 @@ logo cuối (ghép thử .06/.12/.27 từ JSON). Lockup cũ chuyển sang `v2/lo
 ".05" ghép từ JSON trùng lockup (0 điểm lệch); lockup so chữ sống của bảng chỉ lệch ở mép chữ. **Chưa có gì trong app thay đổi.**
 Việc kế tiếp: vòng mock đưa logo vào app (thanh điều hướng, footer, sidebar quản trị, phiếu giao hàng, favicon, ảnh OG). Khi đó phải
 chốt: thanh điều hướng có mang ".05" không (nhãn SỐ 05 đã nằm ngay cạnh); favicon 16 px (M2 ở 16 px nhoè con ong).
+
+**Mock thanh điều hướng mới (24/09/2026, CHỜ DUYỆT).** Người dùng (`/impeccable`) muốn thanh desktop mới: trái là mark + wordmark
+(không số); giữa là danh mục, trong đó link "Số 05" thay bằng itag vì hai thứ cùng chức năng; itag mang style biển số (option F,
+`hive-2.html`); phải là tìm kiếm, đã lưu, tài khoản, giỏ. Người dùng trả lời hỏi lại: **bỏ đồng hồ** khỏi biển, **đổi cả điện thoại**.
+Bảng `prototype/name/nav.html` (hợp đồng hướng `.impeccable/surfaces/prototype-name-nav-html.md`), chụp từ app đang chạy với
+`prototype/name/nav/proposal.css` và ba thao tác DOM gắn lúc chụp (`nav/capture.cjs`); không sửa code app. Desktop là lưới 4 cột
+`1fr auto auto 1fr`, nên cụm biển + danh mục nằm giữa thanh. Số đo: vừa ở 900 (cụm giữa cách 4 icon 33 px), 1280, 1440; điện thoại
+390 thừa 47 px, 360 thừa 17 px; logo 70/65 px, biển 90×32 / 82×28. Biển: viền trong cách mép 2px, hai lỗ ốc, chữ Unbounded 800; xanh
+`--info` khi sắp mở, xám khi đã đóng; gạch mật ong khi đang xem cả Số. Xung đột với `DESIGN.md` ("Một Sợi Chỉ", "Vải đen dành cho Số")
+→ hai màu biển: **A** mật ong như F, **B** vải đen, viền và chữ mật ong. Đề xuất B. Khi duyệt: brief cho `ui-implementer`
+(`SiteNav.tsx` đổi thứ tự, bỏ link Số và đồng hồ cùng bộ đếm mỗi giây, biển nhận `activeDrop`, aria-label có trạng thái; component
+logo SVG nội tuyến; CSS theo `proposal.css`), rồi `DESIGN.md` ghi lại biển Số.

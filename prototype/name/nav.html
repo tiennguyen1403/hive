@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thanh điều hướng mới · HIVE</title>
+<link rel="stylesheet" href="../v2/fonts.css">
+<style>
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-b89d52.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-vietnamese-0260aa.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+  :root {
+    --ink: #171410; --ink2: #6b6250; --hair: #ece7dd; --bg: #ffffff; --plate: #f4efe6;
+    --honey: #eba400; --honey-soft: #fbf1da; --gut: 40px;
+    --display: "Unbounded", system-ui, sans-serif; --sans: "Be Vietnam Pro", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--sans); }
+  ::selection { background: var(--honey-soft); }
+  .board { max-width: 1280px; margin: 0 auto; padding: 56px var(--gut) 96px; }
+  h1 { font: 800 40px/1.05 var(--display); letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance; }
+  h2 { font: 800 26px/1.15 var(--display); letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance; }
+  .lead, .sub { max-width: 72ch; color: var(--ink2); margin: 0 0 28px; }
+  section { margin-top: 76px; padding-top: 28px; border-top: 1px solid var(--ink); }
+  figure { margin: 0; min-width: 0; }
+  figcaption { font-size: 13px; color: var(--ink2); margin-top: 8px; line-height: 1.45; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+  img { display: block; max-width: 100%; height: auto; }
+  .shot { border-radius: 4px; box-shadow: 0 0 0 1px var(--hair); }
+
+  .bars { display: grid; gap: 18px; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 36px; margin-top: 28px; }
+  .phones, .narrow { display: grid; grid-template-columns: repeat(2, minmax(0, 390px)); gap: 28px 36px; }
+  .narrow { margin-top: 28px; }
+
+  /* The plate in each state: label, then A and B at their real size. */
+  .states { border-collapse: collapse; }
+  .states th, .states td { text-align: left; vertical-align: middle; padding: 10px 28px 10px 0; border-top: 1px solid var(--hair); }
+  .states thead th { font: 800 13px/1.3 var(--display); letter-spacing: -0.01em; border-top: 0; padding-top: 0; }
+  .states tbody th { font-weight: 400; font-size: 14px; color: var(--ink2); min-width: 190px; }
+  .states tbody th b { display: block; color: var(--ink); font-weight: 600; }
+  .states img { width: 129px; }
+
+  .notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; padding: 0; margin: 0; list-style: none; }
+  .notes li { padding: 12px 0; border-top: 1px solid var(--hair); }
+  .notes b { font-weight: 600; }
+  code { font: 500 12.5px/1 var(--sans); background: var(--plate); padding: 2px 5px; border-radius: 3px; color: var(--ink); white-space: nowrap; }
+  .pick { margin: 28px 0 0; padding: 14px 16px; background: var(--honey-soft); border-radius: 4px; max-width: 76ch; }
+  .pick b { font-weight: 600; }
+
+  @media (max-width: 900px) {
+    :root { --gut: 16px; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    .pair, .phones, .narrow, .notes { grid-template-columns: minmax(0, 1fr); }
+    .states th, .states td { padding-right: 12px; }
+    .states tbody th { min-width: 0; }
+    .states img { width: 100%; max-width: 129px; }
+  }
+</style>
+</head>
+<body>
+<main class="board">
+  <h1>Thanh điều hướng mới</h1>
+  <p class="lead">Trái là logo (mark và chữ, không số). Giữa là tấm biển Số, rồi năm danh mục. Phải là tìm kiếm, đã lưu, tài khoản, giỏ.
+    Link "Số 05" cũ bỏ đi vì tấm biển đã làm đúng việc đó; đồng hồ đếm ngược cũng bỏ. Ảnh chụp từ trang thật đang chạy.</p>
+
+  <section aria-labelledby="d-h">
+    <h2 id="d-h">Máy tính, 1280 px</h2>
+    <p class="sub">Hai màu biển. <b>A</b> đúng như option F: biển mật ong, viền và chữ đen. <b>B</b> là hàng thứ ba của F: biển vải đen,
+      viền và chữ mật ong, cùng chất với tem Số hiện nay và với bìa.</p>
+    <div class="bars">
+      <figure><img class="shot" src="nav/bar-1280-a.png" width="1280" height="65" alt="Thanh điều hướng với biển mật ong"><figcaption><b>A</b> · biển mật ong</figcaption></figure>
+      <figure><img class="shot" src="nav/bar-1280-b.png" width="1280" height="65" alt="Thanh điều hướng với biển vải đen"><figcaption><b>B</b> · biển vải đen</figcaption></figure>
+    </div>
+    <div class="pair">
+      <figure><img class="shot" src="nav/home-1280-a.jpg" width="1280" height="800" alt="Màn đầu trang chủ với biển mật ong"><figcaption><b>A</b> · biển thành mảng mật ong thứ hai trên màn, bên cạnh nút "Xem mười mẫu"</figcaption></figure>
+      <figure><img class="shot" src="nav/home-1280-b.jpg" width="1280" height="800" alt="Màn đầu trang chủ với biển vải đen"><figcaption><b>B</b> · biển cùng chất vải đen với bìa; "Xem mười mẫu" vẫn là mảng mật ong duy nhất</figcaption></figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-h">
+    <h2 id="s-h">Tấm biển ở từng trạng thái</h2>
+    <p class="sub">Biển không còn chấm màu và đồng hồ. Trạng thái nằm ở màu biển: xanh khi Số chưa mở, xám khi đã đóng. Khi làm thật, link
+      mang thêm tên trạng thái cho trình đọc màn hình, ví dụ "Số 06, sắp mở".</p>
+    <table class="states">
+      <thead><tr><td></td><th scope="col">A</th><th scope="col">B</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><b>Đang bán</b>trạng thái thường</th><td><img src="nav/plate-a-open.png" width="129" height="64" alt="Biển A, đang bán"></td><td><img src="nav/plate-b-open.png" width="129" height="64" alt="Biển B, đang bán"></td></tr>
+        <tr><th scope="row"><b>Sắp mở</b>chưa có Số nào đang bán</th><td><img src="nav/plate-a-soon.png" width="130" height="64" alt="Biển A, sắp mở"></td><td><img src="nav/plate-b-soon.png" width="130" height="64" alt="Biển B, sắp mở"></td></tr>
+        <tr><th scope="row"><b>Đã đóng</b>giữa hai Số</th><td><img src="nav/plate-a-shut.png" width="129" height="64" alt="Biển A, đã đóng"></td><td><img src="nav/plate-b-shut.png" width="129" height="64" alt="Biển B, đã đóng"></td></tr>
+        <tr><th scope="row"><b>Đang xem cả Số</b>gạch mật ong như danh mục đang chọn</th><td><img src="nav/plate-a-on.png" width="129" height="64" alt="Biển A khi đang xem cả Số"></td><td><img src="nav/plate-b-on.png" width="129" height="64" alt="Biển B khi đang xem cả Số"></td></tr>
+        <tr><th scope="row"><b>Rê chuột</b></th><td><img src="nav/plate-a-hover.png" width="129" height="64" alt="Biển A khi rê chuột"></td><td><img src="nav/plate-b-hover.png" width="129" height="64" alt="Biển B khi rê chuột"></td></tr>
+        <tr><th scope="row"><b>Tab tới</b>vòng focus của hệ</th><td><img src="nav/plate-a-focus.png" width="129" height="64" alt="Biển A khi được focus bằng bàn phím"></td><td><img src="nav/plate-b-focus.png" width="129" height="64" alt="Biển B khi được focus bằng bàn phím"></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section aria-labelledby="f-h">
+    <h2 id="f-h">Đang chọn một danh mục</h2>
+    <p class="sub">Danh mục giữ nguyên cách báo đang chọn: chữ đậm và gạch mật ong. Hai màu biển giống nhau ở chỗ này.</p>
+    <figure><img class="shot" src="nav/bar-family-b-mid.png" width="440" height="65" alt="Phần giữa thanh điều hướng khi đang xem Áo thun"><figcaption><b>Áo thun</b> đang chọn · phần giữa thanh 1280 px, biển B</figcaption></figure>
+  </section>
+
+  <section aria-labelledby="p-h">
+    <h2 id="p-h">Điện thoại</h2>
+    <p class="sub">Bố cục giữ nguyên: logo · biển · bốn nút. Logo mới rộng 65 px, biển 82 px; không danh mục như trước.</p>
+    <div class="phones">
+      <figure><img class="shot" src="nav/home-390-a.jpg" width="390" height="844" alt="Màn đầu điện thoại 390 px với biển A"><figcaption><b>A, 390 px</b> · còn thừa 47 px</figcaption></figure>
+      <figure><img class="shot" src="nav/home-390-b.jpg" width="390" height="844" alt="Màn đầu điện thoại 390 px với biển B"><figcaption><b>B, 390 px</b> · còn thừa 47 px</figcaption></figure>
+    </div>
+    <div class="narrow">
+      <figure><img class="shot" src="nav/bar-360-a.png" width="360" height="57" alt="Thanh 360 px với biển A"><figcaption><b>A, 360 px</b> · còn thừa 17 px</figcaption></figure>
+      <figure><img class="shot" src="nav/bar-360-b.png" width="360" height="57" alt="Thanh 360 px với biển B"><figcaption><b>B, 360 px</b> · còn thừa 17 px</figcaption></figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="w-h">
+    <h2 id="w-h">Khổ màn khác</h2>
+    <div class="bars">
+      <figure><img class="shot" src="nav/bar-900-b.png" width="900" height="65" alt="Thanh điều hướng ở 900 px"><figcaption><b>900 px</b>, khổ desktop hẹp nhất: cụm giữa còn cách bốn nút 33 px</figcaption></figure>
+      <figure><img class="shot" src="nav/bar-1440-b.png" width="1440" height="65" alt="Thanh điều hướng ở 1440 px"><figcaption><b>1440 px</b>: thanh dừng ở 1320 px như phần thân trang. Cụm giữa lệch tâm 6 px, vì lề phải của thanh hẹp hơn lề trái 12 px</figcaption></figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="c-h">
+    <h2 id="c-h">Khi làm thật</h2>
+    <ul class="notes">
+      <li><b>Thứ tự trong thanh:</b> logo · biển · danh mục · bốn nút, cả trong mã, để phím Tab đi đúng thứ tự mắt nhìn.</li>
+      <li><b>Biển là link</b> như tem cũ: Số đang bán mở danh sách mẫu, Số đã đóng mở trang lưu của Số. Biển nhận gạch "đang xem cả Số" mà link "Số 05" từng mang.</li>
+      <li><b>Bỏ đồng hồ</b> khỏi thanh, kèm bộ đếm chạy mỗi giây. Đồng hồ lớn trên bìa trang chủ giữ nguyên.</li>
+      <li><b>Logo</b> vẽ bằng SVG ngay trong trang, lấy từ <code>prototype/name/logo/hive-lockup.svg</code>: cao 32 px trên desktop, 30 px trên điện thoại.</li>
+      <li><b>CSS</b> theo đúng bản đã chụp: <code>prototype/name/nav/proposal.css</code> (desktop dùng lưới bốn cột để cụm giữa nằm giữa thanh).</li>
+      <li><b>Ngoài phạm vi:</b> chân trang, thanh bên quản trị và phiếu giao hàng vẫn dùng chữ HIVE cũ; làm ở lượt sau nếu bạn muốn.</li>
+    </ul>
+    <p class="pick"><b>Đề xuất: B.</b> Hình biển số của F giữ nguyên (viền trong, hai lỗ ốc, chữ đậm), và thanh vẫn giữ hai luật của hệ: tem Số
+      là vải đen như bìa, còn "Xem mười mẫu" là mảng mật ong duy nhất. Chọn A nếu bạn muốn đúng tấm biển vàng ngoài đường; khi đó
+      <code>DESIGN.md</code> ghi thêm một ngoại lệ cho luật Một Sợi Chỉ.</p>
+  </section>
+</main>
+</body>
+</html>
