@@ -20,3 +20,26 @@ and `measure.py` reads the original board from the user's Downloads folder.
 
 The user chose **M2** (24/09/2026, QĐ-29). `../v2/mark-m2-chatgpt.png` is M2 at 820 px on a white
 1024 px square: the image to attach to the ChatGPT wordmark prompt in `../prompt-wordmark.md`.
+
+## The final logo (24/09/2026, QĐ-29 mark M2 + QĐ-30 wordmark W3)
+
+The canonical files in `../` are built by five scripts, run in this order from a
+folder that also holds `lib/` (above):
+
+- `instance.py` — cuts the weight-700 instance out of `../../fonts/BigShouldersStencilDisplay-VF.ttf`
+  into `bss-700.ttf` (needs fontTools: `python -m pip install fonttools`).
+- `final.cjs` — lays out "HIVE.05" by the round-3 rules (cap 0.52 of the mark, gap 0.24,
+  tracking 0.02 em, number at 0.8), checks every pen position against Chrome's own
+  layout of the board's text (max difference 0.013 units), resolves the variable
+  font's overlapping contours, and writes `final.json`.
+- `emit.cjs` — writes the mark variants, wordmark, lockups, `hive-digits.svg` and
+  `hive-number.json` (the dot and 0–9 in font units plus the rule that composes any
+  issue number).
+- `png.cjs` — the transparent PNGs in `../png/`.
+- `check.cjs` — pixel checks: the mark equals `v2/mark-m2.svg`, the knockout equals
+  the black variant, the composed ".05" equals the lockup's, and the lockups match
+  the live text of the round-3 board (differences only on letter edges, where Chrome
+  anti-aliases text in colour).
+
+`../review/` keeps the evidence of the first redraw (M0 against the ChatGPT board);
+`../v2/lockup-w0.svg` is the old ChatGPT-style lockup the round-2 board still shows.

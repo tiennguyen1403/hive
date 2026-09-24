@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Logo HIVE · bản vẽ lại</title>
+<title>Logo HIVE</title>
 <link rel="stylesheet" href="../v2/fonts.css">
 <style>
   @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-b89d52.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
@@ -16,67 +16,94 @@
   .board { max-width: 1240px; margin: 0 auto; padding: 56px var(--gut) 96px; }
   h1 { font: 800 40px/1.05 var(--display); letter-spacing: -0.02em; margin: 0 0 14px; }
   h2 { font: 800 24px/1.15 var(--display); letter-spacing: -0.02em; margin: 0 0 10px; }
+  h3 { font: 800 15px/1.25 var(--display); letter-spacing: -0.01em; margin: 36px 0 6px; }
   .lead, .sub { max-width: 70ch; color: var(--ink2); margin: 0 0 24px; }
+  h3 + .sub { margin-bottom: 16px; }
   section { margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--ink); }
-  figure { margin: 0; }
+  figure { margin: 0; min-width: 0; }
   figcaption { font-size: 12.5px; color: var(--ink2); margin-top: 8px; line-height: 1.4; }
   img, svg { display: block; max-width: 100%; }
-  .pair { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; align-items: start; }
-  .pair .frame { background: #f3f2ef; aspect-ratio: 1; display: grid; place-items: center; padding: 6%; }
-  .pair .frame img, .pair .frame svg { width: 100%; height: auto; }
-  .pair .frame.src img { image-rendering: auto; }
-  .pair .frame.diff { padding: 0; background: #fafafa; }
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink2); margin-top: 8px; }
-  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .on-light { background: #f3f2ef; } .on-white { background: #fff; box-shadow: inset 0 0 0 1px var(--hair); } .on-ink { background: var(--ink); } .on-honey { background: var(--honey); }
+
+  /* Lockups: the full width strip, then the issue numbers side by side. */
+  .lockups { display: grid; gap: 16px; }
+  .strip { padding: 32px 36px; border-radius: 4px; }
+  .strip img, .strip svg { width: min(100%, 720px); height: auto; }
+  .issues { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .issues .strip { padding: 22px 24px; }
+  .issues .strip svg { width: 100%; }
+  .plain { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .plain .strip img { width: min(100%, 460px); }
+
+  /* The mark. */
   .variants { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
   .variants .tile { aspect-ratio: 1; display: grid; place-items: center; padding: 18%; border-radius: 4px; }
   .variants .tile img { width: 100%; }
-  .on-light { background: #f3f2ef; } .on-white { background: #fff; box-shadow: inset 0 0 0 1px var(--hair); } .on-ink { background: var(--ink); } .on-honey { background: var(--honey); }
   .sizes { display: flex; align-items: flex-end; gap: 22px; flex-wrap: wrap; }
   .sizes figure { display: flex; flex-direction: column; align-items: flex-start; }
   .zoom { image-rendering: pixelated; }
-  .lockups { display: grid; gap: 16px; }
-  .lockups .strip { padding: 32px 36px; border-radius: 4px; }
-  .lockups .strip img, .lockups .strip svg { width: min(100%, 720px); height: auto; }
-  .notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 40px; padding: 0; margin: 0; list-style: none; }
+
+  /* The name and the digits. */
+  .words { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; }
+  .words .strip { display: grid; place-items: center; min-height: 170px; }
+  .words .strip img { width: auto; height: 96px; max-width: 100%; }
+  .words .strip img.digits { height: 64px; }
+
+  .notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; padding: 0; margin: 0; list-style: none; }
   .notes li { padding: 12px 0; border-top: 1px solid var(--hair); }
   .notes b { font-weight: 600; }
-  .files { font-size: 13.5px; color: var(--ink2); max-width: 80ch; }
+  .files { font-size: 13.5px; color: var(--ink2); max-width: 82ch; }
+  .files p { margin: 0 0 10px; }
+  .files code { white-space: nowrap; }
   code { font: 500 12.5px/1 var(--sans); background: var(--plate); padding: 2px 5px; border-radius: 3px; color: var(--ink); }
+
   @media (max-width: 900px) {
     :root { --gut: 16px; }
     h1 { font-size: 28px; }
-    .pair { grid-template-columns: minmax(0, 1fr); }
+    .strip { padding: 20px; }
+    .issues, .plain, .words { grid-template-columns: minmax(0, 1fr); }
     .variants { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .notes { grid-template-columns: minmax(0, 1fr); }
-    .lockups .strip { padding: 20px; }
+    .words .strip { min-height: 130px; }
+    .words .strip img { height: 72px; }
+    .words .strip img.digits { height: 48px; }
   }
 </style>
 </head>
 <body>
 <main class="board">
-  <h1>Logo HIVE, vẽ lại</h1>
-  <p class="lead">Dựng lại từ số đo trên ảnh ChatGPT, không vẽ bằng mắt: mỗi mép được đo theo từng hàng điểm ảnh, rồi dựng
-    bằng hình học đối xứng và xuất ra vector sạch. Hình chồng lên ảnh gốc trùng 95,6% phần mực — phần còn lại là viền một điểm
-    ảnh do ảnh gốc mờ.</p>
+  <h1>Logo HIVE</h1>
+  <p class="lead">Mark M2 và chữ W3 · Stencil hẹp, chốt ngày 24/09/2026. Mọi tệp đều là vector sạch; PNG xuất từ chính các tệp đó.
+    Chưa có gì trong app thay đổi.</p>
 
-  <section>
-    <h2>Gốc và bản vẽ lại</h2>
-    <div class="pair">
-      <figure><div class="frame src"><img src="logo/review/source-mark.png" alt="Mark trong ảnh ChatGPT"></div>
-        <figcaption>Ảnh ChatGPT, phóng to — mờ, hơi dẹt</figcaption></figure>
-      <figure><div class="frame"><img src="logo/hive-mark.svg" alt="Mark HIVE vẽ lại"></div>
-        <figcaption>Bản vẽ lại, vector — nét ở mọi cỡ</figcaption></figure>
-      <figure><div class="frame diff"><img src="logo/review/diff-mark.png" alt="Hai bản chồng lên nhau" class="zoom"></div>
-        <div class="legend"><span><i style="background:#282828"></i>trùng</span><span><i style="background:#e62828"></i>chỉ bản gốc</span><span><i style="background:#1e96e6"></i>chỉ bản vẽ lại</span></div>
-        <figcaption>Chồng ở cỡ gốc 235 px, sau khi nắn đĩa gốc về tròn</figcaption></figure>
+  <section aria-labelledby="l-h">
+    <h2 id="l-h">Lockup</h2>
+    <p class="sub">Mark đứng trước, rồi đến HIVE và số của Số đang mở. Số được ghép từ bộ số bên dưới, nên Số nào cũng có lockup của nó.</p>
+    <div class="lockups">
+      <div class="strip on-light"><img src="logo/hive-lockup-05.svg" alt="HIVE.05"></div>
+      <div class="strip on-ink"><img src="logo/hive-lockup-05-white.svg" alt="HIVE.05 trên nền đen"></div>
+    </div>
+
+    <h3>Số đổi theo từng đợt</h3>
+    <p class="sub">Ba lockup này không vẽ tay: trang ghép chúng ngay lúc mở, từ tệp <code>hive-number.json</code>, đúng luật của .05.</p>
+    <div class="issues">
+      <div class="strip on-light" data-no="06"></div>
+      <div class="strip on-light" data-no="12"></div>
+      <div class="strip on-light" data-no="27"></div>
+    </div>
+
+    <h3>Không có số</h3>
+    <p class="sub">Cho nơi không cần số của Số.</p>
+    <div class="plain">
+      <div class="strip on-light"><img src="logo/hive-lockup.svg" alt="HIVE"></div>
+      <div class="strip on-ink"><img src="logo/hive-lockup-white.svg" alt="HIVE trên nền đen"></div>
     </div>
   </section>
 
-  <section>
-    <h2>Bốn bản màu và một bản một màu</h2>
-    <p class="sub">Cùng một hình, chỉ đổi màu — như hàng thứ hai của bảng ChatGPT. Bản khoét là một đường duy nhất (đĩa trừ hình),
-      dùng cho con dấu, thêu, in một màu trên nền bất kỳ.</p>
+  <section aria-labelledby="m-h">
+    <h2 id="m-h">Mark</h2>
+    <p class="sub">Cùng một hình, chỉ đổi màu. Bản khoét là một đường duy nhất (đĩa trừ hình), dùng cho con dấu, thêu, in một màu
+      trên nền bất kỳ.</p>
     <div class="variants">
       <figure><div class="tile on-light"><img src="logo/hive-mark.svg" alt=""></div><figcaption>Mật ong · chính</figcaption></figure>
       <figure><div class="tile on-white"><img src="logo/hive-mark-black.svg" alt=""></div><figcaption>Đen trên trắng</figcaption></figure>
@@ -84,64 +111,95 @@
       <figure><div class="tile on-ink"><img src="logo/hive-mark-negative.svg" alt=""></div><figcaption>Âm bản</figcaption></figure>
       <figure><div class="tile on-honey"><img src="logo/hive-mark-knockout.svg" alt=""></div><figcaption>Khoét, một màu</figcaption></figure>
     </div>
-  </section>
-
-  <section>
-    <h2>Cỡ nhỏ</h2>
-    <p class="sub">Cỡ thật 16 · 32 · 48 · 64 · 180, rồi 16/32/48 phóng to từng điểm ảnh. Ở 32 px trở lên còn thấy rõ H và con ong;
-      ở 16 px con ong nhoè thành khối, chỉ còn đọc được khung chữ H trên đĩa mật ong.</p>
-    <div class="sizes">
+    <h3>Cỡ nhỏ</h3>
+    <p class="sub">Cỡ thật 16 · 32 · 48 · 64 · 180, rồi 16 và 32 phóng to từng điểm ảnh.</p>
+    <div class="sizes" id="sizes">
       <figure><img src="logo/png/hive-mark-16.png" width="16" height="16" alt=""><figcaption>16</figcaption></figure>
       <figure><img src="logo/png/hive-mark-32.png" width="32" height="32" alt=""><figcaption>32</figcaption></figure>
       <figure><img src="logo/png/hive-mark-48.png" width="48" height="48" alt=""><figcaption>48</figcaption></figure>
       <figure><img src="logo/png/hive-mark-64.png" width="64" height="64" alt=""><figcaption>64</figcaption></figure>
       <figure><img src="logo/png/hive-mark-180.png" width="120" height="120" alt=""><figcaption>180 (thu 120)</figcaption></figure>
-      <figure><img src="logo/review/small-sizes.png" width="504" alt="" class="zoom"><figcaption>16 · 32 · 48 px, phóng 12 / 6 / 4 lần</figcaption></figure>
     </div>
   </section>
 
-  <section>
-    <h2>Lockup HIVE.05</h2>
-    <p class="sub">Chữ HIVE dựng hình học theo số đo; ".05" đặt bằng Barlow Black — font mở (OFL) gần nhất với chữ số trong ảnh, để app
-      gõ được số của Số đang mở. Bên dưới là ảnh gốc để so.</p>
-    <div class="lockups">
-      <div class="strip on-light"><img src="logo/hive-lockup.svg" alt="HIVE.05"></div>
-      <div class="strip on-ink" id="lockup-dark"></div>
-      <div class="strip on-white"><img src="logo/review/source-lockup.png" alt="Lockup trong ảnh ChatGPT" style="width:min(100%,720px)"></div>
+  <section aria-labelledby="w-h">
+    <h2 id="w-h">Chữ và bộ số</h2>
+    <p class="sub">Big Shoulders Stencil Display, độ đậm 700 (giấy phép OFL), đã chuyển thành đường nét nên app không phải tải font.
+      Khe cắt ngang thanh chữ H như con ong cắt ngang chữ H trên mark.</p>
+    <div class="words">
+      <figure><div class="strip on-light"><img src="logo/hive-wordmark.svg" alt="HIVE"></div><figcaption>Chữ, đen</figcaption></figure>
+      <figure><div class="strip on-ink"><img src="logo/hive-wordmark-white.svg" alt="HIVE trên nền đen"></div><figcaption>Chữ, trắng trên đen</figcaption></figure>
+      <figure><div class="strip on-light"><img class="digits" src="logo/hive-digits.svg" alt="Dấu chấm và các chữ số từ 0 đến 9"></div><figcaption>Dấu chấm và 0–9, cỡ và khoảng chữ như trong lockup</figcaption></figure>
     </div>
   </section>
 
-  <section>
-    <h2>Đã sửa so với ảnh ChatGPT</h2>
+  <section aria-labelledby="r-h">
+    <h2 id="r-h">Luật dựng</h2>
     <ul class="notes">
-      <li><b>Đĩa tròn thật.</b> Ảnh gốc vẽ đĩa 235 × 227 điểm ảnh (dẹt 3,3%); mọi đĩa khác trên bảng đều tròn, nên cả hình được nắn về tròn.</li>
-      <li><b>Đối xứng tuyệt đối.</b> Ảnh gốc lệch trục 1–2 điểm ảnh; bản vẽ lại là một nửa lật sang nửa kia.</li>
-      <li><b>Góc vát thân H: 30°</b> cho cả đầu lẫn chân (ảnh gốc 28° và 32°).</li>
-      <li><b>Khe đều:</b> khe mật ong quanh cánh 40, sọc bụng 44 (trên thang đĩa bán kính 500).</li>
-      <li><b>Mép trong thân H ôm bụng</b> theo đường cong đo được, nhập êm vào thân thẳng — không còn bậc.</li>
-      <li><b>Chữ HIVE căn giữa đĩa</b> (ảnh gốc lệch lên 2,7%). Màu dùng đúng mã của app: mật ong <code>#EBA400</code>, đen <code>#171410</code>.</li>
+      <li><b>Chữ cao 52% đường kính mark</b>, dải chữ hoa căn giữa mark theo chiều dọc.</li>
+      <li><b>Mép mark tới chữ H: 24% đường kính mark</b>, tính tới gốc chữ.</li>
+      <li><b>Số cao 80% cỡ chữ HIVE</b>, cùng chân chữ, màu mật ong. Khoảng chữ bằng 2% cỡ chữ HIVE, và số dùng đúng khoảng đó.</li>
+      <li><b>Chữ vector khớp chữ trên bảng vòng 3:</b> vị trí từng ký tự lệch dưới 0,02 đơn vị so với cách Chrome dàn chữ.</li>
+      <li><b>Mark:</b> vẽ lại từ logo ChatGPT của bạn (trùng 95,6% phần mực với ảnh gốc), rồi tinh chỉnh thành M2: khe mật ong đều 42,
+        râu dày 26, mọi nhát cắt cùng một góc 19,9°.</li>
+      <li><b>Màu:</b> mật ong <code>#EBA400</code>, đen <code>#171410</code>, trắng. Trên nền tối, chữ HIVE đổi sang trắng, còn mark và số giữ nguyên.</li>
     </ul>
   </section>
 
-  <section>
-    <h2>Tệp</h2>
-    <p class="files">Vector ở <code>prototype/name/logo/</code>: <code>hive-mark.svg</code>, <code>hive-mark-black.svg</code>,
-      <code>hive-mark-negative.svg</code>, <code>hive-mark-knockout.svg</code>, <code>hive-wordmark.svg</code>, <code>hive-lockup.svg</code>.
-      PNG nền trong suốt ở <code>prototype/name/logo/png/</code>: mark 16 · 32 · 48 · 64 · 180 · 512 · 1024, các bản màu 512, lockup 1640,
-      wordmark 800. Chưa có gì trong app thay đổi.</p>
+  <section aria-labelledby="f-h">
+    <h2 id="f-h">Tệp</h2>
+    <div class="files">
+      <p>Vector ở <code>prototype/name/logo/</code>: <code>hive-mark.svg</code>, <code>hive-mark-black.svg</code>, <code>hive-mark-negative.svg</code>,
+        <code>hive-mark-knockout.svg</code>; <code>hive-wordmark.svg</code>, <code>hive-wordmark-white.svg</code>; <code>hive-lockup.svg</code>,
+        <code>hive-lockup-white.svg</code>; <code>hive-lockup-05.svg</code>, <code>hive-lockup-05-white.svg</code>; <code>hive-digits.svg</code>.</p>
+      <p>Bộ số cho app: <code>hive-number.json</code>, gồm đường nét của dấu chấm và 0–9 cùng luật ghép.</p>
+      <p>PNG nền trong suốt ở <code>prototype/name/logo/png/</code>: mark 16 · 32 · 48 · 64 · 180 · 512 · 1024, ba bản màu 512, chữ 800,
+        bốn lockup 1640.</p>
+    </div>
   </section>
 </main>
 <script>
-  // The honey-on-black lockup from the board: the same paths, recoloured.
-  fetch("logo/hive-lockup.svg").then((r) => r.text()).then((svg) => {
-    const host = document.getElementById("lockup-dark");
-    const HONEY = "#eba400", INK = "#171410";
-    // mark keeps honey disc + ink figure; the wordmark turns honey.
-    let i = 0;
-    host.innerHTML = svg.replace(/<path fill="#171410"/g, (m) => (i++ === 0 ? m : `<path fill="${HONEY}"`));
-    const s = host.querySelector("svg");
-    if (s) { s.style.width = "min(100%, 720px)"; s.style.height = "auto"; }
+(() => {
+  // Compose a lockup for any issue from the digit set, the way the builder composed .05.
+  Promise.all([fetch("logo/hive-number.json").then((r) => r.json()), fetch("logo/hive-lockup.svg").then((r) => r.text())])
+    .then(([num, base]) => {
+      const inner = base.replace(/^[\s\S]*?<\/title>/, "").replace(/<\/svg>\s*$/, "");
+      for (const el of document.querySelectorAll("[data-no]")) {
+        const chars = "." + el.dataset.no;
+        let x = num.start, right = x;
+        const parts = [];
+        for (let i = 0; i < chars.length; i++) {
+          const g = num.glyphs[chars[i]];
+          parts.push(`<path transform="translate(${x.toFixed(2)} ${num.baseline}) scale(${num.scale})" d="${g.d}"/>`);
+          right = x + g.adv * num.scale;
+          x += (g.adv + (num.kern[chars[i] + (chars[i + 1] || "")] || 0)) * num.scale + num.tracking;
+        }
+        el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-500 -500 ${(right + 500).toFixed(1)} 1000" role="img" aria-label="HIVE${chars}">${inner}<g fill="${num.color}">${parts.join("")}</g></svg>`;
+      }
+    }).catch(() => {});
+
+  // 16 and 32 px drawn at exactly that raster, then blown up.
+  const img = new Image();
+  img.src = "logo/hive-mark.svg";
+  img.decode().then(() => {
+    const box = document.getElementById("sizes");
+    for (const [s, z] of [[16, 6], [32, 3]]) {
+      const c = document.createElement("canvas");
+      c.width = s; c.height = s;
+      c.getContext("2d").drawImage(img, 0, 0, s, s);
+      c.className = "zoom";
+      c.style.width = c.style.height = s * z + "px";
+      c.setAttribute("role", "img");
+      c.setAttribute("aria-label", `Mark ở ${s} px, phóng ${z} lần`);
+      const f = document.createElement("figure");
+      f.append(c);
+      const cap = document.createElement("figcaption");
+      cap.textContent = `${s} px, phóng ×${z}`;
+      f.append(cap);
+      box.append(f);
+    }
   }).catch(() => {});
+})();
 </script>
 </body>
 </html>

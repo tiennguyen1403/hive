@@ -1640,3 +1640,16 @@ chê là 34%), W3 13,5%; HIVE.05 dài 7,1 lần chiều cao chữ ở U, 3,0 l�
 360 (nút giỏ bị đẩy ra); W3 thừa 27 px ở 390 và vừa khít ở 360. Nếu thanh điều hướng bỏ ".05" (nhãn SỐ 05 đã nằm ngay cạnh): U thừa
 16 px ở 390 và thiếu 6 px ở 360; W3 thừa 45 px và 15 px. Đề xuất W3. Đổi lại: số .05 của W3 khác hình số 05 trên bìa; ở cỡ thanh điều
 hướng, khe chữ E và V dưới 1 px. Chọn W3 thì không cần prompt ChatGPT: xuất chữ và số 0–9 từ font (OFL) thành vector, ghép với M2.
+
+**QĐ-30 (24/09/2026) — Wordmark HIVE là W3 · Stencil hẹp; bộ logo cuối đã dựng.** Người dùng: "Tôi chốt hướng W3". Chữ:
+Big Shoulders Stencil Display, độ đậm 700 (OFL). Tôi cắt bản 700 ra từ font biến thiên bằng fontTools, chuyển thành đường nét và gộp
+các nét chồng. Lockup theo luật vòng 3: chữ cao 0,52 đường kính mark, căn giữa mark; từ mép mark tới gốc chữ 0,24; khoảng chữ 0,02 em;
+".NN" cao 0,8, mật ong, cùng chân chữ. Vị trí từng ký tự lệch cách Chrome dàn chữ trên bảng tối đa 0,013 đơn vị. Bộ tệp chuẩn ở
+`prototype/name/logo/`: mark M2 (+ đen, âm bản, khoét); `hive-wordmark(-white)`; `hive-lockup(-white)` không số;
+`hive-lockup-05(-white)`; `hive-digits.svg`; `hive-number.json` (dấu chấm, 0–9, luật ghép cho Số bất kỳ; 2 cặp kern "24" và "74").
+PNG trong suốt ở `png/`: mark 16→1024, ba bản màu 512, chữ 800, bốn lockup 1640. Trang `prototype/name/logo.html` viết lại thành trang
+logo cuối (ghép thử .06/.12/.27 từ JSON). Lockup cũ chuyển sang `v2/lockup-w0.svg` để `logo-2.html` vẫn đúng. Bộ dựng ở
+`prototype/name/logo/src/` (`instance.py`, `final.cjs`, `emit.cjs`, `png.cjs`, `check.cjs`). Kiểm điểm ảnh: mark trùng M2 (0 điểm lệch);
+".05" ghép từ JSON trùng lockup (0 điểm lệch); lockup so chữ sống của bảng chỉ lệch ở mép chữ. **Chưa có gì trong app thay đổi.**
+Việc kế tiếp: vòng mock đưa logo vào app (thanh điều hướng, footer, sidebar quản trị, phiếu giao hàng, favicon, ảnh OG). Khi đó phải
+chốt: thanh điều hướng có mang ".05" không (nhãn SỐ 05 đã nằm ngay cạnh); favicon 16 px (M2 ở 16 px nhoè con ong).
