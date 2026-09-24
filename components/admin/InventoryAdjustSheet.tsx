@@ -95,9 +95,11 @@ export function InventoryAdjustSheet({
     if (!product) return;
     const wanted = Math.max(0, Number(raw.replace(/\D/g, "")) || 0);
     const others = total - cellValue(draft, color, size);
-    if (others + wanted > product.cutUnits) {
-      onBlocked(`Không vượt số đã cắt: ${product.cutUnits}`);
-      return setDraft((d) => withCell(d, color, size, product.cutUnits - others));
+    // A fixed style (slice B5) has no cut, so nothing caps its shelf.
+    const cut = product.cutUnits;
+    if (cut !== null && others + wanted > cut) {
+      onBlocked(`Không vượt số đã cắt: ${cut}`);
+      return setDraft((d) => withCell(d, color, size, cut - others));
     }
     setDraft((d) => withCell(d, color, size, wanted));
   }
@@ -109,11 +111,17 @@ export function InventoryAdjustSheet({
       wide
       title={`Điều chỉnh tồn kho · ${product.name}`}
       sub={
-        <>
-          Số đang là số còn trên kệ; đã bán là số đã cắt trừ số này. Chỉnh khi kiểm kê lệch, hàng
-          trả về, hoặc hư hỏng. Không phải cách để “may thêm”: tăng quá {product.cutUnits} chiếc đã
-          cắt thì bị chặn.
-        </>
+        product.cutUnits === null ? (
+          // A fixed style (slice B5): no cut, so neither "đã bán" nor the
+          // ceiling is true of it.
+          <>Số đang là số còn trên kệ. Chỉnh khi kiểm kê lệch, hàng trả về, hoặc hư hỏng.</>
+        ) : (
+          <>
+            Số đang là số còn trên kệ; đã bán là số đã cắt trừ số này. Chỉnh khi kiểm kê lệch, hàng
+            trả về, hoặc hư hỏng. Không phải cách để “may thêm”: tăng quá {product.cutUnits} chiếc đã
+            cắt thì bị chặn.
+          </>
+        )
       }
       footer={
         <>
@@ -246,7 +254,8 @@ export function InventoryAdjustSheet({
         )}
       </Field3>
       <p className="fine3">
-        Trên kệ sau khi lưu: <b>{total}</b> / {product.cutUnits} đã cắt
+        Trên kệ sau khi lưu: <b>{total}</b>
+        {product.cutUnits === null ? "" : ` / ${product.cutUnits} đã cắt`}
         {delta !== 0 ? ` (${delta > 0 ? "+" : ""}${delta})` : ""} · {changed.length} ô đổi.
       </p>
     </AdminSheet>

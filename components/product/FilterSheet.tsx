@@ -77,7 +77,8 @@ export function FilterSheet({ open, onClose, applied, path, pool }: FilterSheetP
 
   const n = runListingQuery(pool, draft).length;
   const range = priceRangeOf(pool);
-  const no = pool[0]?.dropNo;
+  // A pool of fixed styles (slice B5) has no issue to name.
+  const no = pool[0]?.dropNo ?? undefined;
 
   function toggle<T extends Family | Fit | Size | ColorKey>(
     key: "families" | "fits" | "sizes" | "colors",

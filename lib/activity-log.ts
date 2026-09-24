@@ -426,7 +426,11 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
         ...(sources ? { detail: sources } : {}),
         subject: catalog.byId.get(e.productId as Product["id"])?.name ?? e.name,
         href: `/admin/products/${e.productId}`,
-        tail: `${issueLabel(e.dropNo)} · ${e.colors.length} màu · ${e.cutUnits} chiếc`,
+        // A fixed style (slice B5) was created for no issue and cut nothing.
+        tail:
+          e.dropNo === null || e.cutUnits === null
+            ? `${e.colors.length} màu`
+            : `${issueLabel(e.dropNo)} · ${e.colors.length} màu · ${e.cutUnits} chiếc`,
       };
     }
     case "PRODUCT_PHOTO_SET":

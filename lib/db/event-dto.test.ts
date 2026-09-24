@@ -404,6 +404,19 @@ describe("toEvent — a style's own shape (slice B3c), named by product_id", () 
       ),
     ).toThrow("payload.cutUnits must be a whole number");
   });
+
+  it("PRODUCT_ADDED for a fixed style (slice B5): no issue and no cut, both null or neither", () => {
+    const fixed = { name: "ÁO MƯA", slug: "ao-mua", colors: ["black"], uploaded: 0, borrowed: 1 };
+    expect(
+      toEvent(cat({ kind: "PRODUCT_ADDED", product_id: "p-ao-mua", payload: { ...fixed, dropNo: null, cutUnits: null } })),
+    ).toMatchObject({ kind: "PRODUCT_ADDED", productId: "p-ao-mua", dropNo: null, cutUnits: null });
+    expect(() =>
+      toEvent(cat({ kind: "PRODUCT_ADDED", product_id: "p-ao-mua", payload: { ...fixed, dropNo: null, cutUnits: 12 } })),
+    ).toThrow("payload.cutUnits must be null exactly when dropNo is");
+    expect(() =>
+      toEvent(cat({ kind: "PRODUCT_ADDED", product_id: "p-ao-mua", payload: { ...fixed, dropNo: 6, cutUnits: null } })),
+    ).toThrow("payload.cutUnits must be null exactly when dropNo is");
+  });
 });
 
 describe("toEvents", () => {

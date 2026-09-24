@@ -319,8 +319,8 @@ export type Database = {
       }
       products: {
         Row: {
-          cut_units: number
-          drop_no: number
+          cut_units: number | null
+          drop_no: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
           id: string
@@ -333,8 +333,8 @@ export type Database = {
           sold_out_at: string | null
         }
         Insert: {
-          cut_units: number
-          drop_no: number
+          cut_units?: number | null
+          drop_no?: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
           id: string
@@ -347,8 +347,8 @@ export type Database = {
           sold_out_at?: string | null
         }
         Update: {
-          cut_units?: number
-          drop_no?: number
+          cut_units?: number | null
+          drop_no?: number | null
           family?: Database["public"]["Enums"]["product_family"]
           fit?: Database["public"]["Enums"]["product_fit"]
           id?: string
@@ -689,8 +689,8 @@ export type Database = {
       }
       seed_products: {
         Row: {
-          cut_units: number
-          drop_no: number
+          cut_units: number | null
+          drop_no: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
           id: string
@@ -703,8 +703,8 @@ export type Database = {
           sold_out_at: string | null
         }
         Insert: {
-          cut_units: number
-          drop_no: number
+          cut_units?: number | null
+          drop_no?: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
           id: string
@@ -717,8 +717,8 @@ export type Database = {
           sold_out_at?: string | null
         }
         Update: {
-          cut_units?: number
-          drop_no?: number
+          cut_units?: number | null
+          drop_no?: number | null
           family?: Database["public"]["Enums"]["product_family"]
           fit?: Database["public"]["Enums"]["product_fit"]
           id?: string

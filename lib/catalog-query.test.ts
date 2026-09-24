@@ -161,24 +161,24 @@ describe("runListingQuery · filters", () => {
     // BỤI has one L and one XL left. Filtering to S must not return it,
     // even though BỤI was cut in S.
     const got = runListingQuery(DROP5, parseListingQuery({ size: "S" }));
-    expect(got.map((p) => p.slug)).not.toContain("bui");
+    expect(got.map((p) => p.slug)).not.toContain("s05-bui");
   });
 
   it("treats several sizes as 'any of these', not 'all of these'", () => {
     const got = runListingQuery(DROP5, parseListingQuery({ size: "L,XL" }));
-    expect(got.map((p) => p.slug)).toContain("bui");
+    expect(got.map((p) => p.slug)).toContain("s05-bui");
   });
 
   it("keeps a style inside the price window, at both edges", () => {
     const got = runListingQuery(DROP5, parseListingQuery({ min: "390000", max: "890000" }));
-    expect(got.map((p) => p.slug)).toContain("khoi"); // 390.000 — the floor
-    expect(got.map((p) => p.slug)).toContain("bui"); // 890.000 — the ceiling
-    expect(got.map((p) => p.slug)).not.toContain("nguoi"); // 1.290.000
+    expect(got.map((p) => p.slug)).toContain("s05-khoi"); // 390.000 — the floor
+    expect(got.map((p) => p.slug)).toContain("s05-bui"); // 890.000 — the ceiling
+    expect(got.map((p) => p.slug)).not.toContain("s05-nguoi"); // 1.290.000
   });
 
   it("matches a search term against the name", () => {
     const got = runListingQuery(DROP5, parseListingQuery({ q: "bui" }));
-    expect(got.map((p) => p.slug)).toEqual(["bui"]);
+    expect(got.map((p) => p.slug)).toEqual(["s05-bui"]);
   });
 
   it("matches a search term against the kind, ignoring tone marks", () => {
@@ -229,8 +229,8 @@ describe("runListingQuery · sorting", () => {
     // with it would fill the top of the grid with things nobody can buy.
     const got = runListingQuery(DROP5, parseListingQuery({ sort: "low-stock" }));
     const slugs = got.map((p) => p.slug);
-    expect(slugs.indexOf("bui")).toBeLessThan(slugs.indexOf("khoi"));
-    expect(slugs.at(-1)).toBe("muoi"); // the sold-out one
+    expect(slugs.indexOf("s05-bui")).toBeLessThan(slugs.indexOf("s05-khoi"));
+    expect(slugs.at(-1)).toBe("s05-muoi"); // the sold-out one
   });
 
   it("keeps catalog order on newest, which is the order the drop was laid out in", () => {
@@ -387,6 +387,6 @@ describe("the tallies behind every tab and chip", () => {
 describe("catalog assumptions these tests rest on", () => {
   it("still has ten styles in the open drop and MUỐI sold out", () => {
     expect(DROP5).toHaveLength(10);
-    expect(CATALOG.find((p) => p.slug === "muoi")?.dropNo).toBe(5);
+    expect(CATALOG.find((p) => p.slug === "s05-muoi")?.dropNo).toBe(5);
   });
 });

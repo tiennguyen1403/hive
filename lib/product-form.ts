@@ -165,6 +165,10 @@ export interface LoanPhoto {
  * Each is named after the style it is the photo OF ("ảnh của mẫu CÁT"): the
  * first style whose first colour wears it, else the first style wearing it
  * at all, else the teaser that does. Read from the catalogue, never typed.
+ *
+ * Only a key `lib/photos.ts` has a frame for (slice B5): the fixed styles
+ * carry `flat-…` keys whose drawings do not exist yet, and until they do
+ * each would show the hero frame under another style's name.
  */
 export function loanPhotos(catalog: Catalog): LoanPhoto[] {
   const rank = (key: string) => {
@@ -172,7 +176,7 @@ export function loanPhotos(catalog: Catalog): LoanPhoto[] {
     return i < 0 ? PHOTO_KEYS.length : i;
   };
   return borrowedPhotoKeys(catalog)
-    .filter((key) => !isUploadedKey(key))
+    .filter((key) => !isUploadedKey(key) && PHOTO_KEYS.includes(key))
     .map((key) => ({ key, name: loanOwner(catalog, key) }))
     .sort((a, b) => rank(a.key) - rank(b.key));
 }

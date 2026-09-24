@@ -98,13 +98,17 @@ export function changedCells(product: Product, draft: StockDraft): InventoryCell
  *
  * Asked at the CELL, before the number changes, so the refusal lands on the
  * control that was pressed rather than on a save button three fields away.
+ *
+ * A fixed style (slice B5) was never cut, so nothing caps its shelf: pieces
+ * brought back ("Nhập thêm") are the model there, not a lie about a cut.
  */
 export function canRaise(product: Product, draft: StockDraft): boolean {
-  return draftTotal(product, draft) < product.cutUnits;
+  return product.cutUnits === null || draftTotal(product, draft) < product.cutUnits;
 }
 
-/** How many units past the cut the grid currently stands. 0 when it is fine. */
+/** How many units past the cut the grid currently stands. 0 when it is fine, and always for a fixed style. */
 export function overCutBy(product: Product, draft: StockDraft): number {
+  if (product.cutUnits === null) return 0;
   return Math.max(0, draftTotal(product, draft) - product.cutUnits);
 }
 
@@ -127,7 +131,19 @@ export type AdjustReason = (typeof ADJUST_REASONS)[number];
  */
 export const PRODUCT_EDIT_REASON = "Sửa mẫu";
 
-export const STOCK_REASONS: readonly string[] = [...ADJUST_REASONS, PRODUCT_EDIT_REASON];
+/**
+ * Pieces brought back onto a FIXED style's shelf (slice B5) — the one move
+ * an issue's style can never make. Only for a fixed style, and only upward:
+ * every cell it names goes up. `admin_adjust_stock()` refuses anything else
+ * with `BAD_INPUT`; `checkAdjustment` says the same before the button.
+ */
+export const RESTOCK_REASON = "Nhập thêm";
+
+export const STOCK_REASONS: readonly string[] = [
+  ...ADJUST_REASONS,
+  PRODUCT_EDIT_REASON,
+  RESTOCK_REASON,
+];
 
 export function isStockReason(value: string): boolean {
   return STOCK_REASONS.includes(value);

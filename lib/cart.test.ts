@@ -309,11 +309,11 @@ describe("parseCart", () => {
 
 describe("catalog assumptions these tests rest on", () => {
   it("still has the stock the cases above are written against", () => {
-    expect(FIXTURE_CATALOG.bySlug.get("khoi")?.stock.black?.M).toBe(4);
-    expect(FIXTURE_CATALOG.bySlug.get("bui")?.stock.black?.S).toBe(0);
-    expect(FIXTURE_CATALOG.bySlug.get("bui")?.stock.black?.L).toBe(1);
-    expect(FIXTURE_CATALOG.bySlug.get("nguoi")?.stock.black?.M).toBe(2);
-    expect(FIXTURE_CATALOG.bySlug.get("khoi")?.id).toBe(KHOI);
-    expect(FIXTURE_CATALOG.bySlug.get("bui")?.id).toBe(BUI);
+    expect(FIXTURE_CATALOG.bySlug.get("s05-khoi")?.stock.black?.M).toBe(4);
+    expect(FIXTURE_CATALOG.bySlug.get("s05-bui")?.stock.black?.S).toBe(0);
+    expect(FIXTURE_CATALOG.bySlug.get("s05-bui")?.stock.black?.L).toBe(1);
+    expect(FIXTURE_CATALOG.bySlug.get("s05-nguoi")?.stock.black?.M).toBe(2);
+    expect(FIXTURE_CATALOG.bySlug.get("s05-khoi")?.id).toBe(KHOI);
+    expect(FIXTURE_CATALOG.bySlug.get("s05-bui")?.id).toBe(BUI);
   });
 });

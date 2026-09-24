@@ -10,7 +10,7 @@ import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Catalog } from "@/lib/catalog";
 import { FAMILY_LABELS, type Family } from "@/data/types";
 import { LEX, issueNo } from "@/lib/lexicon";
-import { isUploadedKey, photoUrl } from "@/lib/photos";
+import { PHOTO_KEYS, isUploadedKey, photoUrl } from "@/lib/photos";
 
 /**
  * What the sheet sends: the issue, a name, a kind and a photo. The family and
@@ -45,11 +45,14 @@ function kindOptions(catalog: Catalog) {
  *
  * Slice B3c added real photos, uploaded from the style form. Those are
  * another style's photo, not a stand-in, so they are left out (v3 slice 7):
- * the set stays the borrowed frames and nothing else.
+ * the set stays the borrowed frames and nothing else. Slice B5's fixed styles
+ * carry `flat-…` keys whose drawings do not exist yet; until they do each
+ * would show the hero frame, so only a key `lib/photos.ts` has a frame for
+ * is offered.
  */
 function photoKeys(catalog: Catalog): string[] {
   return [...new Set(catalog.products.flatMap((p) => p.photoKeys))].filter(
-    (k) => !isUploadedKey(k),
+    (k) => !isUploadedKey(k) && PHOTO_KEYS.includes(k),
   );
 }
 

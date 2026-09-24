@@ -1,4 +1,4 @@
-import { bySlug } from "./catalog";
+import { byId } from "./catalog";
 import { customerById } from "./customers";
 import { promoByCode } from "./promotions";
 import { promoDiscountVnd } from "@/lib/orders";
@@ -12,6 +12,7 @@ import {
   type Size,
   customerId,
   orderCode,
+  productId,
   promoCode,
 } from "./types";
 
@@ -31,7 +32,13 @@ import {
 /** One flat rate across the country in the mock. */
 const SHIPPING_VND = 30_000;
 
-type LineSpec = [slug: string, size: Size, color: ColorKey, qty: number];
+/**
+ * A line as the list below writes it. The first element is a style's STEM,
+ * the part of its id after `p-` (`khoi` for `p-khoi`): since slice B5 an
+ * issue's style is published as `s05-khoi`, but its id never moved, and an
+ * order line points at the id.
+ */
+type LineSpec = [stem: string, size: Size, color: ColorKey, qty: number];
 
 function order(
   code: string,
@@ -42,9 +49,9 @@ function order(
   specs: LineSpec[],
   promo?: string,
 ): Order {
-  const lines: OrderLine[] = specs.map(([slug, size, color, qty]) => {
-    const p = bySlug.get(slug);
-    if (!p) throw new Error(`${code}: no product with slug "${slug}"`);
+  const lines: OrderLine[] = specs.map(([stem, size, color, qty]) => {
+    const p = byId.get(productId(`p-${stem}`));
+    if (!p) throw new Error(`${code}: no product with id "p-${stem}"`);
     if (!p.colors.includes(color)) {
       throw new Error(`${code}: ${p.name} does not come in ${color}`);
     }

@@ -117,6 +117,7 @@ export function AdminOrderScreen({
 
   const owner = order.owner && isShopper(order.owner) ? order.owner : null;
   const state = STATE_LABEL[order.status.state];
+  const issue = issueOf(catalog, order);
   const subtotal = orderSubtotalVnd(order);
   const total = orderTotalVnd(order);
   const province = findProvince(order.shipTo.provinceCode);
@@ -148,7 +149,9 @@ export function AdminOrderScreen({
           <span>
             Đặt {clockLabel(order.placedAt)} · {dayMonth(order.placedAt)}
             {owner ? ` · ${owner.name} · ${formatPhone(order.shipTo.phone)}` : ""} ·{" "}
-            {PAYMENT_LABEL[order.payment]} · {LEX.t} {issueNo(issueOf(catalog, order) ?? 0)}
+            {PAYMENT_LABEL[order.payment]}
+            {/* An order of fixed styles only (slice B5) belongs to no issue. */}
+            {issue !== undefined ? ` · ${LEX.t} ${issueNo(issue)}` : ""}
           </span>
         }
       >

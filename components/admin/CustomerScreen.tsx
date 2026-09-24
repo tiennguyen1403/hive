@@ -136,7 +136,8 @@ export function CustomerScreen({
                       <td className="nw">
                         {dayMonth(o.placedAt)} · {clockLabel(o.placedAt)}
                       </td>
-                      <td>{issueNo(issueOf(catalog, o) ?? 0)}</td>
+                      {/* Empty for an order of fixed styles only (slice B5). */}
+                      <td>{issueCell(issueOf(catalog, o))}</td>
                       <td className="right">{plainVnd(orderTotalVnd(o))}</td>
                       <td>
                         <Badge tone={s.tone}>{s.text}</Badge>
@@ -212,6 +213,11 @@ export function CustomerScreen({
 }
 
 /** Why this person carries this label, in the numbers it was read from. */
+/** An order's issue, two digits — or nothing for an order of fixed styles only (slice B5). */
+function issueCell(no: number | undefined): string {
+  return no === undefined ? "" : issueNo(no);
+}
+
 function reasonFor(key: string, facts: ReturnType<typeof customerFacts>): string {
   if (key === "loyal") {
     return `mua ở ${facts.streak} ${LEX.tl} liên tiếp (${issuesLabel(facts.issues)})`;

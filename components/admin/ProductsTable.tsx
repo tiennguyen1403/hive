@@ -19,6 +19,7 @@ import { hrefWith, type Query } from "@/lib/admin-url";
 import { dropState } from "@/lib/drop";
 import {
   LOW_STOCK_AT,
+  isIssueStyle,
   isSoldOut,
   onHand,
   productsInDrop,
@@ -113,11 +114,13 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
       p.name,
       p.kind,
       p.fit === "OVERSIZE" ? "oversize" : "regular",
-      issueNo(p.dropNo),
+      // A fixed style (slice B5) has no issue, no cut and so no "đã bán":
+      // those cells are left empty rather than filled with a guess.
+      p.dropNo === null ? "" : issueNo(p.dropNo),
       p.priceVnd,
       p.colors.map((c) => COLORS[c].label).join(" · "),
-      p.cutUnits,
-      soldUnits(p),
+      p.cutUnits ?? "",
+      isIssueStyle(p) ? soldUnits(p) : "",
       onHand(p),
       soldOutSizes(p).join(" · ") || "—",
     ]),
@@ -127,7 +130,7 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
     <>
       <AdminTop
         title="Mẫu"
-        sub={`${products.length} mẫu qua ${drops.filter((d) => productsInDrop(catalog, d.no, products).length > 0).length} ${LEX.tl} · ${selling} đang bán · tồn kho theo size và màu`}
+        sub={`${products.filter(isIssueStyle).length} mẫu qua ${drops.filter((d) => productsInDrop(catalog, d.no, products).length > 0).length} ${LEX.tl} · ${selling} đang bán · tồn kho theo size và màu`}
       >
         <ExportCsvButton label="Tải CSV" filename="mau.csv" rows={csvRows} />
         <ButtonLink tone="sm" icon="plus" href="/admin/products/new">

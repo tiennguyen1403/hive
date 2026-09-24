@@ -290,7 +290,7 @@ const TERMS = {
 
 describe("what the shop did to the catalogue", () => {
   it("names the style, the colour and the size of a one-cell adjustment", () => {
-    const bui = FIXTURE_CATALOG.bySlug.get("bui")!;
+    const bui = FIXTURE_CATALOG.bySlug.get("s05-bui")!;
     const row = rowsOf(
       done({
         kind: "INVENTORY_ADJUSTED",
@@ -314,7 +314,7 @@ describe("what the shop did to the catalogue", () => {
   });
 
   it("counts the cells when an adjustment moved more than one", () => {
-    const bui = FIXTURE_CATALOG.bySlug.get("bui")!;
+    const bui = FIXTURE_CATALOG.bySlug.get("s05-bui")!;
     const row = rowsOf(
       done({
         kind: "INVENTORY_ADJUSTED",
@@ -391,6 +391,24 @@ describe("what the shop did to the catalogue", () => {
     expect(row.tail).toBe("Số 06 · 3 màu · 36 chiếc");
     expect(`${row.action} ${row.subject} · ${row.tail}`).toBe("Thêm mẫu SỎI · Số 06 · 3 màu · 36 chiếc");
     expect(inFilter("stock", row)).toBe(true);
+  });
+
+  it("records a new fixed style with its colours only: it has no issue and no cut (slice B5)", () => {
+    const row = rowsOf(
+      done({
+        kind: "PRODUCT_ADDED",
+        productId: "p-ao-mua",
+        name: "ÁO MƯA",
+        slug: "ao-mua",
+        dropNo: null,
+        colors: ["black", "navy"],
+        cutUnits: null,
+        uploaded: 0,
+        borrowed: 2,
+      }),
+    )[0]!;
+    expect(row.tail).toBe("2 màu");
+    expect(`${row.action} ${row.subject} · ${row.tail}`).toBe("Thêm mẫu ÁO MƯA · 2 màu");
   });
 
   it("says only the photo sources a new style has", () => {

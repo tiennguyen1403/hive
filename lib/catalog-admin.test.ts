@@ -6,7 +6,9 @@ import {
   CATALOG_ERROR_CODES,
   DROP_LENGTH_DAYS,
   MAX_PROMO_CODE,
+  MAX_RESTOCK_PER_CELL,
   NO_CHANGE_MESSAGE,
+  RESTOCK_BAD_MESSAGE,
   SLUG_TAKEN_MESSAGE,
   STALE_STOCK_MESSAGE,
   borrowedPhotoKeys,
@@ -34,10 +36,12 @@ import {
   readNewProduct,
   readPhotoMap,
   readPromoDraft,
+  readRestockCells,
   readTeaser,
   readWindow,
   sameOrder,
   sameTerms,
+  slugFor,
   slugTaken,
   termsOf,
   uniqueSlug,
@@ -45,6 +49,8 @@ import {
 
 const catalog = FIXTURE_CATALOG;
 const khoi = catalog.byId.get(productId("p-khoi"))!;
+/** A fixed style (slice B5): no issue, no cut. */
+const tee = catalog.byId.get(productId("p-ao-thun-tron"))!;
 const dot05 = catalog.promoByCode.get("DOT05" as never)!;
 
 /** The product form, as it posts a style it has not touched. */
@@ -148,8 +154,29 @@ describe("checkAdjustment — the sheet's rules, restated for the server", () =>
   });
 
   it("holds the shelf under the cut: a shelf cannot hold more than was cut", () => {
-    const over = [{ color: "black" as const, size: "S" as const, before: 3, after: 3 + khoi.cutUnits }];
+    const over = [{ color: "black" as const, size: "S" as const, before: 3, after: 3 + khoi.cutUnits! }];
     expect(checkAdjustment(khoi, over, "Hàng trả về", "", "")).toBe(`Không vượt ${khoi.cutUnits} đã cắt`);
+  });
+
+  it("puts no ceiling on a fixed style, which was never cut (slice B5)", () => {
+    const up = [{ color: "black" as const, size: "S" as const, before: 8, after: 500 }];
+    expect(checkAdjustment(tee, up, "Hàng trả về", "", "")).toBeNull();
+    expect(checkAdjustment(tee, up, "Kiểm kê lệch", "", "")).toBeNull();
+  });
+
+  it("takes 'Nhập thêm' for a fixed style only, and only with every cell going up", () => {
+    const up = [
+      { color: "black" as const, size: "M" as const, before: 12, after: 20 },
+      { color: "grey" as const, size: "XL" as const, before: 4, after: 5 },
+    ];
+    expect(checkAdjustment(tee, up, "Nhập thêm", "", "")).toBeNull();
+    // One cell that does not go up spoils the restock.
+    expect(checkAdjustment(tee, [...up, { color: "white", size: "S", before: 10, after: 9 }], "Nhập thêm", "", "")).toBe(
+      RESTOCK_BAD_MESSAGE,
+    );
+    // An issue's style is never restocked.
+    const khoiUp = [{ color: "black" as const, size: "XL" as const, before: 1, after: 2 }];
+    expect(checkAdjustment(khoi, khoiUp, "Nhập thêm", "", "")).toBe(RESTOCK_BAD_MESSAGE);
   });
 
   it("keeps the reference and the note to the database's lengths", () => {
@@ -335,9 +362,9 @@ describe("productPatch — only what changed", () => {
   });
 
   it("refuses a segment another style has, or one with anything but a-z, 0-9 and dashes", () => {
-    expect(productPatch(khoi, { ...formOf(khoi), slug: "bui" }, catalog)).toEqual({
+    expect(productPatch(khoi, { ...formOf(khoi), slug: "s05-bui" }, catalog)).toEqual({
       ok: false,
-      error: 'Mã trên địa chỉ "bui" đã dùng cho mẫu khác.',
+      error: 'Mã trên địa chỉ "s05-bui" đã dùng cho mẫu khác.',
     });
     expect(productPatch(khoi, { ...formOf(khoi), slug: "Khói" }, catalog).ok).toBe(false);
     expect(isSlug("khoi-2")).toBe(true);
@@ -347,6 +374,21 @@ describe("productPatch — only what changed", () => {
   it("refuses a price of nothing and an issue that does not exist", () => {
     expect(productPatch(khoi, { ...formOf(khoi), priceVnd: 0 }, catalog).ok).toBe(false);
     expect(productPatch(khoi, { ...formOf(khoi), dropNo: 9 }, catalog).ok).toBe(false);
+  });
+
+  it("keeps a fixed style fixed and an issue's style in an issue (slice B5)", () => {
+    // The form sends no issue for a fixed style; an untouched one is no change.
+    expect(productPatch(tee, formOf(tee), catalog)).toEqual({ ok: true, value: {} });
+    expect(productPatch(tee, { ...formOf(tee), priceVnd: 420_000 }, catalog)).toEqual({
+      ok: true,
+      value: { priceVnd: 420_000 },
+    });
+    // Into an issue, or out of one: refused either way.
+    expect(productPatch(tee, { ...formOf(tee), dropNo: 5 }, catalog)).toEqual({
+      ok: false,
+      error: "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.",
+    });
+    expect(productPatch(khoi, { ...formOf(khoi), dropNo: null }, catalog).ok).toBe(false);
   });
 
   it("never carries the cut, whatever the form sends", () => {
@@ -427,6 +469,72 @@ describe("the window a new issue is offered", () => {
     expect(overlappingDrop(catalog.drops, { opensAt: "2026-10-01T20:00:00+07:00", closesAt: "2026-10-15T20:00:00+07:00" })?.no).toBe(6);
     expect(overlappingDrop(catalog.drops, { opensAt: six.closesAt, closesAt: "2026-10-30T20:00:00+07:00" })).toBeUndefined();
     expect(overlappingDrop(catalog.drops, { opensAt: "2026-09-12T20:00:00+07:00", closesAt: "2026-10-30T20:00:00+07:00" })?.no).toBe(5);
+  });
+});
+
+describe("slugFor · what an empty address box becomes (slice B5)", () => {
+  it("puts an issue's code in front of the name's segment", () => {
+    expect(slugFor("SỎI", 6)).toBe("s06-soi");
+    expect(slugFor("ĐÁ CUỘI", 12)).toBe("s12-da-cuoi");
+  });
+
+  it("gives a fixed style the name's segment alone", () => {
+    expect(slugFor("ÁO THUN TRƠN", null)).toBe("ao-thun-tron");
+    expect(slugFor("QUẦN SHORT NỈ", null)).toBe("quan-short-ni");
+  });
+
+  it("stays empty for an empty name, so the box's placeholder can follow the name", () => {
+    expect(slugFor("  ", 6)).toBe("");
+    expect(slugFor("", null)).toBe("");
+  });
+
+  it("is always a segment a new style may take, prefix included", () => {
+    const long = "MỘT CÁI TÊN RẤT DÀI ĐỂ THỬ XEM ĐỊA CHỈ CÓ BỊ CẮT KHÔNG";
+    expect(slugFor(long, 6).length).toBeLessThanOrEqual(40);
+    expect(slugFor(long, 6).startsWith("s06-")).toBe(true);
+    for (const [name, no] of [["SỎI", 6], ["Ô", 6], ["!!!", 6], [long, 6], [long, null]] as const) {
+      expect(isNewSlug(slugFor(name, no)), `${name} / ${no}`).toBe(true);
+    }
+    expect(slugFor("!!!", 6)).toBe("s06-mau");
+  });
+
+  it("is what the fixture's own addresses are, style for style", () => {
+    for (const p of catalog.products) expect(slugFor(p.name, p.dropNo)).toBe(p.slug);
+  });
+});
+
+describe("readRestockCells · 'Nhập thêm', as its sheet sends it (slice B5)", () => {
+  const cell = { color: "black", size: "M", before: 12, add: 8 };
+
+  it("turns before and add into the cells an adjustment sends", () => {
+    expect(readRestockCells([cell, { color: "grey", size: "XL", before: 4, add: 1 }])).toEqual([
+      { color: "black", size: "M", before: 12, after: 20 },
+      { color: "grey", size: "XL", before: 4, after: 5 },
+    ]);
+  });
+
+  it("wants 1–999 added to a cell, as a whole number", () => {
+    expect(MAX_RESTOCK_PER_CELL).toBe(999);
+    expect(readRestockCells([{ ...cell, add: 999 }])).not.toBeNull();
+    for (const add of [0, -1, 1000, 1.5, "8", null]) {
+      expect(readRestockCells([{ ...cell, add }]), String(add)).toBeNull();
+    }
+  });
+
+  it("refuses nothing, junk, a cell twice, an unknown colour or size, and a bad before", () => {
+    expect(readRestockCells([])).toBeNull();
+    expect(readRestockCells(cell)).toBeNull();
+    expect(readRestockCells([cell, { ...cell, add: 1 }])).toBeNull();
+    expect(readRestockCells([{ ...cell, color: "pink" }])).toBeNull();
+    expect(readRestockCells([{ ...cell, size: "XXL" }])).toBeNull();
+    expect(readRestockCells([{ ...cell, before: -1 }])).toBeNull();
+    expect(readRestockCells([{ ...cell, before: "12" }])).toBeNull();
+  });
+
+  it("says why a restock was refused", () => {
+    expect(catalogFailureMessage("RESTOCK", "BAD_INPUT")).toBe(RESTOCK_BAD_MESSAGE);
+    expect(catalogFailureMessage("RESTOCK", "STALE")).toBe(STALE_STOCK_MESSAGE);
+    expect(catalogFailureMessage("RESTOCK", "NOT_FOUND", "ÁO THUN TRƠN")).toBe("Không tìm thấy mẫu ÁO THUN TRƠN.");
   });
 });
 
@@ -544,7 +652,7 @@ describe("readNewProduct — the new-style form, as the database takes it", () =
         kind: "Áo khoác dù",
         family: "JACKET",
         fit: "OVERSIZE",
-        slug: "soi",
+        slug: "s06-soi",
         priceVnd: 420_000,
         material: "Dù hai lớp",
         dropNo: 6,
@@ -564,10 +672,26 @@ describe("readNewProduct — the new-style form, as the database takes it", () =
   });
 
   it("makes the segment unique when the name's is taken, and keeps a typed one that is free", () => {
-    const khoi2 = readNewProduct(draft({ name: "KHÓI" }), catalog);
-    expect(khoi2.ok && khoi2.value.slug).toBe("khoi-2");
+    const khoi2 = readNewProduct(draft({ name: "KHÓI", dropNo: 5 }), catalog);
+    expect(khoi2.ok && khoi2.value.slug).toBe("s05-khoi-2");
+    // A name of issue 05 can come back in issue 06: a new address, no suffix.
+    const khoi6 = readNewProduct(draft({ name: "KHÓI" }), catalog);
+    expect(khoi6.ok && khoi6.value.slug).toBe("s06-khoi");
     const typed = readNewProduct(draft({ slug: "soi-du" }), catalog);
     expect(typed.ok && typed.value.slug).toBe("soi-du");
+  });
+
+  it("takes a fixed style: dropNo null, the bare name's segment (slice B5)", () => {
+    const read = readNewProduct(draft({ name: "áo khoác dù", kind: "Áo khoác dù", dropNo: null }), catalog);
+    expect(read.ok && read.value.dropNo).toBeNull();
+    // ÁO KHOÁC DÙ is a fixed style already: its segment gets a -2.
+    expect(read.ok && read.value.slug).toBe("ao-khoac-du-2");
+    const other = readNewProduct(draft({ name: "áo mưa", dropNo: null }), catalog);
+    expect(other.ok && other.value.slug).toBe("ao-mua");
+    expect(other.ok && cutTotal(other.value.cells)).toBe(36);
+    // Left out is not "fixed": the form has to say so.
+    const { dropNo: _left, ...noIssue } = draft();
+    expect(readNewProduct(noIssue, catalog)).toEqual({ ok: false, error: "Chọn một số." });
   });
 
   it("refuses a typed segment another style has, or one that is not a segment", () => {

@@ -98,6 +98,30 @@ export function issueNo(no: number): string {
   return String(no).padStart(2, "0");
 }
 
+/**
+ * `"S05"` — an issue as a CODE, the prefix a style of that issue wears in
+ * front of its name (slice B5, approved on the fixed-styles board, round 4).
+ * Its lower case is also the prefix of the style's address: `s05-khoi`.
+ */
+export function issueCode(no: number): string {
+  return `S${issueNo(no)}`;
+}
+
+/**
+ * The name a style is shown under: `"S05 – KHÓI"` for a style of issue 05,
+ * the bare name for a fixed style (`dropNo` null). A teaser goes through the
+ * same function with its own issue.
+ *
+ * Made when it is shown, never stored: the `name` column stays "KHÓI", so a
+ * style that moves to another issue is renamed by nothing. Between the code
+ * and the dash is a NO-BREAK space (U+00A0), so "S05 –" never splits across
+ * two lines; after the en dash (U+2013) an ordinary space, so a long name may
+ * wrap there.
+ */
+export function styleName(name: string, dropNo: number | null): string {
+  return dropNo === null ? name : `${issueCode(dropNo)} – ${name}`;
+}
+
 /** What each state is called after the issue's name on the nav bar's plate. */
 const PLATE_STATE: Record<DropState, string> = {
   OPEN: "đang bán",

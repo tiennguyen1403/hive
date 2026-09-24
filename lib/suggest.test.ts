@@ -40,7 +40,7 @@ describe("suggestFor", () => {
 
   it("offers the style whose name starts with the term, marked", () => {
     const s = suggestFor(pool, "kh");
-    expect(s.styles[0]!.product.slug).toBe("khoi");
+    expect(s.styles[0]!.product.slug).toBe("s05-khoi");
     expect(s.styles[0]!.range).toEqual([0, 2]);
     expect(s.fallback).toBe(false);
   });
@@ -61,7 +61,7 @@ describe("suggestFor", () => {
     const s = suggestFor(pool, "xanh than");
     expect(s.styles.length).toBeGreaterThan(0);
     expect(s.styles.every((x) => x.range === null)).toBe(true);
-    expect(s.styles.map((x) => x.product.slug)).toContain("than");
+    expect(s.styles.map((x) => x.product.slug)).toContain("s05-than");
   });
 
   it("never offers more than it has room for", () => {

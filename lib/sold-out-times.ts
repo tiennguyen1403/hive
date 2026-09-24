@@ -1,5 +1,5 @@
 import type { Order, Product } from "@/data/types";
-import { isSoldOut, soldUnits } from "./inventory";
+import { isSoldOut, soldUnits, type IssueStyle } from "./inventory";
 
 /**
  * "Hết lúc nào" — when each style of a closed issue ran out, read off the
@@ -47,7 +47,9 @@ export interface SoldOutRow {
 }
 
 export function soldOutTimes(
-  products: Product[],
+  // An issue's styles only (`productsInDrop`): a fixed style has no cut to
+  // run out of, and never runs out for good (slice B5).
+  products: readonly IssueStyle[],
   orders: Order[],
   closesAt: string,
 ): SoldOutRow[] {

@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { CATALOG, bySlug } from "@/data/catalog";
 import { SIZES, type Product } from "@/data/types";
-import { onHand, onHandOf } from "./inventory";
+import { isFixed, isIssueStyle, onHand, onHandOf, type IssueStyle } from "./inventory";
 import {
   ADJUST_REASONS,
+  RESTOCK_REASON,
   STOCK_REASONS,
   canRaise,
   cellDelta,
@@ -18,14 +19,17 @@ import {
   withCell,
 } from "./inventory-adjust";
 
-const bui = bySlug.get("bui")!;
+const bui = bySlug.get("s05-bui")!;
 
 /** A style with room left on the shelf, whatever the fixtures do later. */
-function withRoom(): Product {
-  const p = CATALOG.find((x) => onHand(x) > 0 && onHand(x) < x.cutUnits);
+function withRoom(): IssueStyle {
+  const p = CATALOG.filter(isIssueStyle).find((x) => onHand(x) > 0 && onHand(x) < x.cutUnits);
   if (!p) throw new Error("no style with room on the shelf");
   return p;
 }
+
+/** A fixed style (slice B5): no issue, no cut. */
+const fixed: Product = CATALOG.find(isFixed)!;
 
 describe("draftOf", () => {
   it("starts as exactly what the catalogue holds", () => {
@@ -108,6 +112,17 @@ describe("the cut is the ceiling", () => {
   });
 });
 
+describe("a fixed style has no ceiling (slice B5)", () => {
+  it("was never cut, so a raise is always allowed", () => {
+    expect(fixed.cutUnits).toBeNull();
+    const color = fixed.colors[0]!;
+    const draft = withCell(draftOf(fixed), color, "S", onHandOf(fixed, color, "S") + 500);
+    expect(canRaise(fixed, draft)).toBe(true);
+    expect(overCutBy(fixed, draft)).toBe(0);
+    expect(saveBlocker(fixed, draft, "Hàng trả về")).toBeNull();
+  });
+});
+
 describe("saveBlocker names the job that is left", () => {
   it("asks for a change first", () => {
     expect(saveBlocker(bui, draftOf(bui), "Hàng trả về")).toBe("Chưa có thay đổi");
@@ -131,9 +146,12 @@ describe("saveBlocker names the job that is left", () => {
     expect(ADJUST_REASONS).toEqual(["Hàng trả về", "Kiểm kê lệch", "Hư hỏng", "Khác"]);
   });
 
-  it("accepts one more on the server: the product form's own save (slice B3b)", () => {
+  it("accepts two more on the server: the product form's own save (slice B3b) and a restock (B5)", () => {
     // `admin_adjust_stock()` restates this list; the sheet's menu keeps four.
-    expect(STOCK_REASONS).toEqual([...ADJUST_REASONS, "Sửa mẫu"]);
+    expect(STOCK_REASONS).toEqual([...ADJUST_REASONS, "Sửa mẫu", "Nhập thêm"]);
+    expect(RESTOCK_REASON).toBe("Nhập thêm");
+    expect(ADJUST_REASONS).not.toContain(RESTOCK_REASON as never);
+    expect(isStockReason("Nhập thêm")).toBe(true);
     expect(isStockReason("Sửa mẫu")).toBe(true);
     expect(isStockReason("Hàng trả về")).toBe(true);
     expect(isStockReason("May thêm")).toBe(false);

@@ -28,7 +28,9 @@ async (page) => {
   const ROUTES = [
     "/",
     "/products",
-    "/products/khoi",
+    "/products/s05-khoi",
+    // slice B5: a fixed style's page
+    "/products/ao-thun-tron",
     "/search?q=khoi",
     "/cart",
     "/checkout",
@@ -366,6 +368,7 @@ async (page) => {
     "/admin/products",
     "/admin/products/new",
     "/admin/products/p-khoi",
+    "/admin/products/p-ao-thun-tron",
     "/admin/customers",
     "/admin/customers/c-minhanh",
     "/admin/slips?codes=DH-2429",

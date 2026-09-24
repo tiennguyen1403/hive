@@ -22,6 +22,7 @@ import { canCancel, nextMove, type AdminOrder } from "@/lib/admin-orders";
 import { orderCustomer, orderItemsLabel, orderNote } from "@/lib/admin-rows";
 import { hrefWith, pageOf, paginate, perPageOf, type Query } from "@/lib/admin-url";
 import { effectiveOrder } from "@/lib/customer-orders";
+import { issueOf } from "@/lib/customer-tags";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { plainVnd } from "@/lib/money";
@@ -126,7 +127,11 @@ export function AdminOrdersScreen({
   const text = (query.q ?? "").trim().toLocaleLowerCase("vi");
 
   const issues = useMemo(
-    () => [...new Set(book.map((o) => issueOfOrder(catalog, o)))].sort((a, b) => b - a),
+    () =>
+      [...new Set(book.map((o) => issueOfOrder(catalog, o)))]
+        // An order of fixed styles only (slice B5) belongs to no issue.
+        .filter((n): n is number => n !== undefined)
+        .sort((a, b) => b - a),
     [catalog, book],
   );
 
@@ -443,10 +448,13 @@ export function AdminOrdersScreen({
   );
 }
 
-/** Which issue an order belongs to — the issue its first line was cut for. */
-function issueOfOrder(catalog: Catalog, o: Order): number {
-  const first = o.lines[0];
-  return (first && catalog.byId.get(first.productId)?.dropNo) ?? 0;
+/**
+ * Which issue an order belongs to — the issue its first line was cut for, or
+ * since slice B5 the first line that was cut for one (`issueOf`); none for an
+ * order of fixed styles only.
+ */
+function issueOfOrder(catalog: Catalog, o: Order): number | undefined {
+  return issueOf(catalog, o);
 }
 
 /**

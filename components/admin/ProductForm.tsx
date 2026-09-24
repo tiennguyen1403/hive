@@ -152,6 +152,9 @@ export function ProductForm({
   const [slug, setSlug] = useState(values.slug);
   const [price, setPrice] = useState(moneyInitial(values.priceVnd));
   const [dropNo, setDropNo] = useState(values.dropNo === null ? "" : String(values.dropNo));
+  // Editing a FIXED style (slice B5): it belongs to no issue and never will
+  // (`admin_update_product` refuses the crossing), and it has no cut.
+  const fixed = mode === "edit" && values.dropNo === null;
   const [material, setMaterial] = useState(values.material);
   const [order, setOrder] = useState<ColorKey[]>(values.colors);
   const [cells, setCells] = useState<CellGrid>(values.stock as CellGrid);
@@ -436,7 +439,8 @@ export function ProductForm({
         priceVnd,
         material,
         fit,
-        dropNo: Number(dropNo),
+        // A fixed style (slice B5) stays fixed: it sends no issue.
+        dropNo: fixed ? null : Number(dropNo),
         cells: gridCells(order, values.stock, cells as Record<string, Record<string, number>>),
         colors: order,
         photos: changed,
@@ -511,7 +515,8 @@ export function ProductForm({
     </>
   ) : (
     <>
-      Giá: <b>{shownPrice}</b> · còn <b>{total}</b> / {cutUnits ?? total} chiếc
+      Giá: <b>{shownPrice}</b> · còn <b>{total}</b>
+      {fixed ? " chiếc" : ` / ${cutUnits ?? total} chiếc`}
       {tally.loans.length > 0 && (
         <>
           {" · "}
@@ -571,24 +576,27 @@ export function ProductForm({
                     />
                   )}
                 </Field3>
-                <Field3
-                  label={LEX.t}
-                  help={
-                    mode === "new"
-                      ? `Tạo cho ${LEX.t} chưa mở thì lên kệ đúng giờ mở; ${LEX.t} đang mở thì lên kệ ngay.`
-                      : undefined
-                  }
-                >
-                  {({ id }) => (
-                    <Select
-                      id={id}
-                      options={dropOptions}
-                      value={dropNo || null}
-                      onChange={setDropNo}
-                      placeholder={`Chọn ${LEX.tl}`}
-                    />
-                  )}
-                </Field3>
+                {/* No issue to choose for a fixed style: it can never join one. */}
+                {!fixed && (
+                  <Field3
+                    label={LEX.t}
+                    help={
+                      mode === "new"
+                        ? `Tạo cho ${LEX.t} chưa mở thì lên kệ đúng giờ mở; ${LEX.t} đang mở thì lên kệ ngay.`
+                        : undefined
+                    }
+                  >
+                    {({ id }) => (
+                      <Select
+                        id={id}
+                        options={dropOptions}
+                        value={dropNo || null}
+                        onChange={setDropNo}
+                        placeholder={`Chọn ${LEX.tl}`}
+                      />
+                    )}
+                  </Field3>
+                )}
                 {/* The box shows `390.000` like every other amount in the
                     app, the form keeps the integer, and `parseVnd` accepts
                     whatever shape a paste arrives in. A new style starts
@@ -657,7 +665,11 @@ export function ProductForm({
             <h2>
               {mode === "new" ? "Số lượng sẽ cắt" : "Tồn kho"}
               <span className="meta">
-                {mode === "new" ? `tổng ${total} chiếc` : `đã cắt ${cutUnits ?? total} · còn ${total}`}
+                {mode === "new"
+                  ? `tổng ${total} chiếc`
+                  : fixed
+                    ? `còn ${total}`
+                    : `đã cắt ${cutUnits ?? total} · còn ${total}`}
               </span>
             </h2>
             <div className="bd">
@@ -703,10 +715,17 @@ export function ProductForm({
                   </tbody>
                 </table>
               )}
-              {mode === "edit" && (
+              {/* A fixed style has no cut to stay under, and its sizes ARE
+                  brought back: the ceiling half is true of an issue's style only. */}
+              {mode === "edit" && !fixed && (
                 <p className="fine3">
                   Đổi số còn ở đây được ghi thành một lần điều chỉnh tồn kho: có lý do, vào nhật ký,
                   và không vượt số đã cắt. Không phải cách để may thêm.
+                </p>
+              )}
+              {fixed && (
+                <p className="fine3">
+                  Đổi số còn ở đây được ghi thành một lần điều chỉnh tồn kho: có lý do, vào nhật ký.
                 </p>
               )}
             </div>
@@ -750,9 +769,9 @@ export function ProductForm({
                 </div>
               ) : (
                 <p className="fine3" style={{ marginTop: 0 }}>
-                  {values.colors.map((c) => COLORS[c].label).join(" · ")}, chốt lúc cắt{" "}
-                  {values.dropNo === null ? LEX.tl : issueLabel(values.dropNo)}. Không thêm màu sau
-                  khi cắt; thứ tự dải màu và ảnh thì đổi được.
+                  {values.colors.map((c) => COLORS[c].label).join(" · ")}
+                  {values.dropNo === null ? "" : `, chốt lúc cắt ${issueLabel(values.dropNo)}`}. Không
+                  thêm màu sau khi cắt; thứ tự dải màu và ảnh thì đổi được.
                 </p>
               )}
               <div className="cslots">

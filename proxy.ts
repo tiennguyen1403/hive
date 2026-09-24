@@ -93,8 +93,16 @@ export const config = {
    * which would put an auth round trip in front of every CSS file. `/api/wards`
    * is excluded for the same reason: it is the commune list the address forms
    * page in, it carries no session, and it is requested once per province.
+   *
+   * Since slice B5 the metadata routes are left out too — the share images,
+   * the manifest and the icons (`opengraph-image`, `twitter-image`,
+   * `manifest.webmanifest`, `icon`, `apple-icon`, `favicon.ico`): a crawler or
+   * a browser fetches them with no session to refresh, and the Next guide's
+   * own negative matcher leaves its metadata files out the same way
+   * (`03-api-reference/03-file-conventions/proxy.md`, "Negative matching").
+   * `lib/proxy-matcher.test.ts` pins which paths still pass through.
    */
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/wards|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/wards|opengraph-image|twitter-image|manifest.webmanifest|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

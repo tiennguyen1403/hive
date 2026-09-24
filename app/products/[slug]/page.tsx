@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ProductView } from "@/components/product/ProductView";
 import { ProductCard } from "@/components/product/ProductCard";
 import { ShopFrame } from "@/components/shop/ShopFrame";
 import type { Product } from "@/data/types";
-import type { Catalog } from "@/lib/catalog";
+import { legacySlugTarget, type Catalog } from "@/lib/catalog";
 import { loadCatalog } from "@/lib/db/catalog";
 import { dropBandLabel, dropState, getDrop } from "@/lib/drop";
 import { productsInDrop } from "@/lib/inventory";
@@ -24,6 +24,14 @@ const NEAR_PRICE = 0.5;
 // count is the one number on this page that must not be stale, so the page is
 // rendered per request (`lib/db/catalog.ts` calls `connection()`), and an
 // unknown slug still gets `notFound()` rather than an empty shell.
+//
+// SLICE B5: an issue's style is published as `s05-khoi` (a name can come back
+// in a later issue), so the address a style had before — `/products/khoi` —
+// answers with a PERMANENT redirect to the new one when exactly one style can
+// be meant (`legacySlugTarget`). `permanentRedirect` rather than `redirect`:
+// "In other contexts, `permanentRedirect` uses a 308 (Permanent Redirect)"
+// (`node_modules/next/dist/docs/01-app/02-guides/redirecting.md`), and a moved
+// address is permanent. It throws, so nothing after it runs.
 
 export async function generateMetadata(
   props: PageProps<"/products/[slug]">,
@@ -31,11 +39,13 @@ export async function generateMetadata(
   const { slug } = await props.params;
   const catalog = await loadCatalog();
   const p = catalog.bySlug.get(slug);
+  // An old address is redirected by the page below; its title is never shown.
   if (!p) return { title: "Không tìm thấy" };
   // "KHÓI · Số 05": the style, then the issue it was cut for. A shopper who
-  // kept three tabs open is choosing between them by this line.
+  // kept three tabs open is choosing between them by this line. A fixed style
+  // (slice B5) belongs to no issue: its name alone.
   return {
-    title: `${p.name} · ${issueLabel(p.dropNo)}`,
+    title: p.dropNo === null ? p.name : `${p.name} · ${issueLabel(p.dropNo)}`,
     description: `${p.kind} · ${p.material}`,
   };
 }
@@ -52,26 +62,41 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
   const { slug } = await props.params;
   const catalog = await loadCatalog();
   const product = catalog.bySlug.get(slug);
-  if (!product) notFound();
+  if (!product) {
+    const moved = legacySlugTarget(catalog, slug);
+    if (moved) permanentRedirect(`/products/${moved.slug}`);
+    notFound();
+  }
+
+  // A fixed style (slice B5) belongs to no issue: no window, no clock, no
+  // "Cùng số" row — the page draws the style and nothing about an issue.
+  const dropNo = product.dropNo;
+  if (dropNo === null) {
+    return (
+      <ShopFrame activeFamily={product.family}>
+        <div className="wrap3">
+          <ProductView product={product} issue={null} />
+        </div>
+      </ShopFrame>
+    );
+  }
 
   // Every style in the fixtures belongs to an issue the fixtures also list,
   // so this cannot fail today; the page still refuses to invent a window for
   // a style whose issue record is missing rather than drawing a dead clock.
-  const drop = getDrop(catalog, product.dropNo);
+  const drop = getDrop(catalog, dropNo);
   if (!drop) notFound();
 
   const state = dropState(drop);
-  const no = issueNo(product.dropNo);
-  const related = relatedTo(catalog, product);
+  const no = issueNo(dropNo);
+  const related = relatedTo(catalog, product, dropNo);
 
   return (
     <ShopFrame activeFamily={product.family}>
       <div className="wrap3">
         <ProductView
           product={product}
-          drop={drop}
-          state={state}
-          initialLabel={dropBandLabel(drop, state)}
+          issue={{ drop, state, initialLabel: dropBandLabel(drop, state) }}
         />
 
         {related.length > 0 && (
@@ -82,7 +107,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
               </h2>
               <span className="meta">cùng loại, cùng tầm giá</span>
               <Link className="more" href="/products">
-                Xem cả {productsInDrop(catalog, product.dropNo).length} mẫu
+                Xem cả {productsInDrop(catalog, dropNo).length} mẫu
               </Link>
             </div>
             <div className="grid3 four">
@@ -119,8 +144,8 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
  * load. Catalog order inside each pass, so it does not reshuffle between two
  * renders of the same issue.
  */
-function relatedTo(catalog: Catalog, product: Product): Product[] {
-  const rest = productsInDrop(catalog, product.dropNo).filter((p) => p.id !== product.id);
+function relatedTo(catalog: Catalog, product: Product, dropNo: number): Product[] {
+  const rest = productsInDrop(catalog, dropNo).filter((p) => p.id !== product.id);
   const near = (p: Product) =>
     p.priceVnd >= product.priceVnd * (1 - NEAR_PRICE) &&
     p.priceVnd <= product.priceVnd * (1 + NEAR_PRICE);

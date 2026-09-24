@@ -5,6 +5,7 @@ import {
   type Teaser,
   productId,
 } from "./types";
+import { issueCode } from "@/lib/lexicon";
 
 /**
  * Simulated data. There is no real merchandise behind any of this — PRODUCT.md
@@ -44,8 +45,8 @@ export const DROPS: Drop[] = [
  * everywhere else — see `lib/photos.ts`.
  */
 export const TEASERS: Teaser[] = [
-  { slug: "soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong" },
-  { slug: "ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi" },
+  { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong" },
+  { slug: "s06-ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi" },
 ];
 
 export function teasersIn(dropNo: number): Teaser[] {
@@ -63,6 +64,10 @@ export function teasersIn(dropNo: number): Teaser[] {
  *
  * Per-size totals still add up to exactly what the prototype showed, so the
  * "còn N · S M L XL" line is unchanged for anyone not looking at colour.
+ *
+ * A row's `slug` is the style's STEM: the address it was first published
+ * under, and what its id is made of. `CATALOG` below turns it into the
+ * address the shop uses now — see there.
  */
 const styles: Array<Omit<Product, "id">> = [
   // ── Drop 05 — open ───────────────────────────────────────────────────
@@ -424,15 +429,169 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["suong", "vo"],
   },
+
+  // ── Fixed styles (slice B5) — no issue, no cut ──────────────────────────
+  // Basics that belong to no issue: on sale at any hour, and a size that
+  // runs out is brought back ("Nhập thêm"), so `dropNo` and `cutUnits` are
+  // null and the stock is simply what is on the shelf. The eight, their
+  // numbers and their order are the approved board's (`LINE` in
+  // `prototype/v3/line/line-mock.js`, round 4, 25/09/2026), stock S·M·L·XL
+  // per colour. The photos are flat drawings (`flat-<shape>-<colour>`), only
+  // named here: until their files exist `photoUrl` falls back to the hero
+  // frame, as it does for any key it does not know.
+  {
+    slug: "ao-thun-tron",
+    name: "ÁO THUN TRƠN",
+    kind: "Áo thun",
+    family: "TEE",
+    material: "Cotton 220gsm",
+    fit: "REGULAR",
+    priceVnd: 400_000,
+    colors: ["white", "black", "grey"],
+    cutUnits: null,
+    dropNo: null,
+    stock: {
+      white: { S: 10, M: 14, L: 11, XL: 6 },
+      black: { S: 8, M: 12, L: 9, XL: 5 },
+      grey: { S: 6, M: 9, L: 7, XL: 4 },
+    },
+    photoKeys: ["flat-tee-white", "flat-tee-black", "flat-tee-grey"],
+  },
+  {
+    slug: "ao-thun-tay-dai",
+    name: "ÁO THUN TAY DÀI",
+    kind: "Áo thun tay dài",
+    family: "TEE",
+    material: "Cotton 220gsm",
+    fit: "REGULAR",
+    priceVnd: 450_000,
+    colors: ["black", "white"],
+    cutUnits: null,
+    dropNo: null,
+    stock: {
+      black: { S: 5, M: 8, L: 6, XL: 3 },
+      white: { S: 6, M: 7, L: 5, XL: 3 },
+    },
+    photoKeys: ["flat-longsleeve-black", "flat-longsleeve-white"],
+  },
+  {
+    slug: "hoodie-tron",
+    name: "HOODIE TRƠN",
+    kind: "Áo hoodie",
+    family: "HOODIE",
+    material: "Nỉ bông 340gsm",
+    fit: "OVERSIZE",
+    priceVnd: 750_000,
+    colors: ["grey", "black", "cream"],
+    cutUnits: null,
+    dropNo: null,
+    stock: {
+      grey: { S: 5, M: 0, L: 4, XL: 2 },
+      black: { S: 4, M: 0, L: 6, XL: 3 },
+      cream: { S: 3, M: 0, L: 2, XL: 2 },
+    },
+    photoKeys: ["flat-hoodie-grey", "flat-hoodie-black", "flat-hoodie-cream"],
+  },
+  {
+    slug: "ao-khoac-du",
+    name: "ÁO KHOÁC DÙ",
+    kind: "Áo khoác dù",
+    family: "JACKET",
+    material: "Dù 1 lớp",
+    fit: "OVERSIZE",
+    priceVnd: 850_000,
+    colors: ["black", "navy"],
+    cutUnits: null,
+    dropNo: null,
+    stock: {
+      black: { S: 3, M: 5, L: 4, XL: 3 },
+      navy: { S: 3, M: 4, L: 3, XL: 3 },
+    },
+    photoKeys: ["flat-jacket-black", "flat-jacket-navy"],
+  },
+  {
+    slug: "gile-phao",
+    name: "GILE PHAO",
+    kind: "Áo gile phao",
+    family: "VEST",
+    material: "Dù chần bông",
+    fit: "REGULAR",
+    priceVnd: 750_000,
+    colors: ["black"],
+    cutUnits: null,
+    dropNo: null,
+    stock: { black: { S: 3, M: 5, L: 5, XL: 2 } },
+    photoKeys: ["flat-vest-black"],
+  },
+  {
+    slug: "so-mi-oxford",
+    name: "SƠ MI OXFORD",
+    kind: "Áo sơ mi oxford",
+    family: "SHIRT",
+    material: "Cotton oxford",
+    fit: "REGULAR",
+    priceVnd: 590_000,
+    colors: ["white", "navy"],
+    cutUnits: null,
+    dropNo: null,
+    stock: {
+      white: { S: 4, M: 7, L: 6, XL: 3 },
+      navy: { S: 3, M: 5, L: 4, XL: 3 },
+    },
+    photoKeys: ["flat-shirt-white", "flat-shirt-navy"],
+  },
+  {
+    slug: "quan-kaki",
+    name: "QUẦN KAKI",
+    kind: "Quần kaki",
+    family: "PANTS",
+    material: "Kaki 280gsm",
+    fit: "REGULAR",
+    priceVnd: 650_000,
+    colors: ["cream", "black"],
+    cutUnits: null,
+    dropNo: null,
+    stock: {
+      cream: { S: 3, M: 5, L: 4, XL: 3 },
+      black: { S: 4, M: 7, L: 6, XL: 3 },
+    },
+    photoKeys: ["flat-trousers-cream", "flat-trousers-black"],
+  },
+  {
+    slug: "quan-short-ni",
+    name: "QUẦN SHORT NỈ",
+    kind: "Quần short nỉ",
+    family: "PANTS",
+    material: "Nỉ da cá 300gsm",
+    fit: "REGULAR",
+    priceVnd: 450_000,
+    colors: ["grey", "black"],
+    cutUnits: null,
+    dropNo: null,
+    stock: {
+      grey: { S: 5, M: 6, L: 5, XL: 0 },
+      black: { S: 6, M: 9, L: 7, XL: 0 },
+    },
+    photoKeys: ["flat-shorts-grey", "flat-shorts-black"],
+  },
 ];
 
 /**
  * The id is prefixed rather than equal to the slug, so a call site that mixes
  * the two is visible in a log instead of silently working.
+ *
+ * SLICE B5 (25/09/2026): an issue's style is published with its issue in
+ * front — `s05-khoi` — because a name can come back in a later issue and two
+ * KHÓIs need two addresses. The id is still made from the STEM a row writes
+ * (`p-khoi`), so every order line, every event and every test that names a
+ * style by id reads exactly as before; only the address moved, and the shop
+ * answers the old one with a permanent redirect (`legacySlugTarget`). A fixed
+ * style's address is its stem as it is.
  */
 export const CATALOG: Product[] = styles.map((s) => ({
   ...s,
   id: productId(`p-${s.slug}`),
+  slug: s.dropNo === null ? s.slug : `${issueCode(s.dropNo).toLowerCase()}-${s.slug}`,
 }));
 
 export const byId = new Map(CATALOG.map((p) => [p.id, p]));

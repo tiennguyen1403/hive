@@ -8,7 +8,14 @@ import { useCart } from "@/components/cart/CartContext";
 import { Toast } from "@/components/shop/Toast";
 import { COLORS } from "@/data/colors";
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
-import { isSoldOut, onHand, onHandBySize, soldOutSizes, soldUnits } from "@/lib/inventory";
+import {
+  isIssueStyle,
+  isSoldOut,
+  onHand,
+  onHandBySize,
+  soldOutSizes,
+  soldUnits,
+} from "@/lib/inventory";
 import { LOW_STOCK_AT } from "@/lib/inventory";
 import { dayMonth } from "@/lib/datetime";
 import { kindInSentence } from "@/lib/lexicon";
@@ -121,7 +128,9 @@ export function ProductCard({
             <span className="p">{vnd(product.priceVnd)}</span>
           </span>
           <span className="ct">
-            {quiet ? (
+            {/* A fixed style (slice B5) has no cut to count against, so it
+                keeps the "còn" line even when it has nothing left. */}
+            {quiet && isIssueStyle(product) ? (
               /* Once a style is over, how much of the cut went is the only
                  stock fact left worth printing — and it is the one that
                  makes an issue legible: 14 cut, 14 gone, nothing coming. */

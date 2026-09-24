@@ -6,6 +6,7 @@ import type {
   Promotion,
   Teaser,
 } from "@/data/types";
+import { issueCode } from "./lexicon";
 
 /**
  * The catalogue as a VALUE.
@@ -56,12 +57,15 @@ export interface Catalog {
  * `currentDropNo` is DERIVED rather than carried: it is the highest issue
  * number that actually has a style in it. A stored constant is a constant
  * somebody forgets to bump, which on a model where the issue is the whole
- * product is the worst kind of stale.
+ * product is the worst kind of stale. A fixed style (slice B5) has no issue
+ * and does not count.
  */
 export function buildCatalog(input: CatalogInput): Catalog {
   const products = input.products;
   let currentDropNo = 0;
-  for (const p of products) if (p.dropNo > currentDropNo) currentDropNo = p.dropNo;
+  for (const p of products) {
+    if (p.dropNo !== null && p.dropNo > currentDropNo) currentDropNo = p.dropNo;
+  }
 
   return {
     products,
@@ -79,4 +83,25 @@ export function buildCatalog(input: CatalogInput): Catalog {
 /** The styles announced for an issue that has not opened yet. */
 export function teasersIn(catalog: Catalog, dropNo: number): Teaser[] {
   return catalog.teasers.filter((t) => t.dropNo === dropNo);
+}
+
+/**
+ * The style an address from before slice B5 meant, when it can only be one.
+ *
+ * Until 25/09/2026 an issue's style was published at `/products/khoi`; since
+ * then its address carries its issue, `/products/s05-khoi`, because a name can
+ * come back in a later issue. A link saved before the change still arrives
+ * with the bare segment. It is answered with the style whose address is that
+ * segment behind ITS OWN issue's code — and only when exactly one style
+ * answers: two issues with a KHÓI each would make the old address ambiguous,
+ * and guessing between them is worse than a 404.
+ *
+ * Never for a segment some style is published under today — the page looks
+ * that up first — and never a fixed style, whose address has no prefix.
+ */
+export function legacySlugTarget(catalog: Catalog, slug: string): Product | undefined {
+  const hits = catalog.products.filter(
+    (p) => p.dropNo !== null && p.slug === `${issueCode(p.dropNo).toLowerCase()}-${slug}`,
+  );
+  return hits.length === 1 ? hits[0] : undefined;
 }

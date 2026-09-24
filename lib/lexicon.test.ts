@@ -1,6 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { CATALOG } from "@/data/catalog";
-import { LEX, issueLabel, issueNo, kindInSentence, plateLabel } from "./lexicon";
+import {
+  LEX,
+  issueCode,
+  issueLabel,
+  issueNo,
+  kindInSentence,
+  plateLabel,
+  styleName,
+} from "./lexicon";
 
 describe("the lexicon", () => {
   it("matches the table in the approved mock", () => {
@@ -24,6 +32,39 @@ describe("the lexicon", () => {
     expect(issueLabel(5)).toBe("Số 05");
     expect(issueLabel(12)).toBe("Số 12");
     expect(issueNo(5)).toBe("05");
+  });
+});
+
+/**
+ * Slice B5: an issue's style wears its issue as a code in front of its name
+ * ("S05 – KHÓI"); a fixed style belongs to no issue and wears its name alone.
+ * Made at display time — the stored name is never touched.
+ */
+describe("issueCode", () => {
+  it("is S and the two-digit number", () => {
+    expect(issueCode(5)).toBe("S05");
+    expect(issueCode(12)).toBe("S12");
+  });
+});
+
+describe("styleName", () => {
+  it("puts the issue's code in front of the name", () => {
+    expect(styleName("KHÓI", 5)).toBe("S05 – KHÓI");
+    expect(styleName("SỎI", 6)).toBe("S06 – SỎI");
+    expect(styleName("GIÓ", 12)).toBe("S12 – GIÓ");
+  });
+
+  it("keeps the code and the dash together, and lets the name wrap after it", () => {
+    const shown = styleName("KHÓI", 5);
+    // U+00A0 between the code and the en dash, U+0020 after the dash.
+    const prefix = [...shown.slice(0, 6)].map((c) => c.codePointAt(0)!.toString(16));
+    expect(prefix).toEqual(["53", "30", "35", "a0", "2013", "20"]);
+    expect(shown.slice(6)).toBe("KHÓI");
+    expect(shown).not.toContain("-");
+  });
+
+  it("leaves a fixed style's name exactly as it is", () => {
+    expect(styleName("ÁO THUN TRƠN", null)).toBe("ÁO THUN TRƠN");
   });
 });
 

@@ -71,6 +71,14 @@ function integer(source: Record<string, unknown>, key: string, path: string): nu
   return value;
 }
 
+/**
+ * `null` is a value here, a missing key is not: a fixed style (slice B5) has
+ * `dropNo: null` and `cutUnits: null` written out by `catalog_snapshot()`.
+ */
+function nullableInteger(source: Record<string, unknown>, key: string, path: string): number | null {
+  return source[key] === null ? null : integer(source, key, path);
+}
+
 /** `null` and a missing key mean the same thing: the shop has no number here. */
 function optionalInteger(
   source: Record<string, unknown>,
@@ -164,6 +172,14 @@ function readProduct(value: unknown, path: string): Product {
     fail(`${path}.photoKeys`, `must hold one key per colour (${colors.length})`);
   }
 
+  // A fixed style (slice B5) belongs to no issue and was never cut: both
+  // null, or neither — the pair `public.products` checks.
+  const dropNo = nullableInteger(source, "dropNo", path);
+  const cutUnits = nullableInteger(source, "cutUnits", path);
+  if ((dropNo === null) !== (cutUnits === null)) {
+    fail(`${path}.cutUnits`, "must be null exactly when dropNo is");
+  }
+
   const product: Product = {
     id: productId(text(source, "id", path)),
     slug: text(source, "slug", path),
@@ -174,8 +190,8 @@ function readProduct(value: unknown, path: string): Product {
     fit: member<Fit>(["OVERSIZE", "REGULAR"], source, "fit", path),
     priceVnd: integer(source, "priceVnd", path),
     colors,
-    cutUnits: integer(source, "cutUnits", path),
-    dropNo: integer(source, "dropNo", path),
+    cutUnits,
+    dropNo,
     stock: readStock(source.stock ?? fail(`${path}.stock`, "is missing"), colors, `${path}.stock`),
     photoKeys,
   };

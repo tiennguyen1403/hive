@@ -66,10 +66,18 @@ export interface CustomerFacts {
   tag: CustomerTag | null;
 }
 
-/** Which issue an order belongs to — the issue its first line was cut for. */
+/**
+ * Which issue an order belongs to — the issue its first line was cut for.
+ * Since slice B5 a line can be a fixed style, which belongs to no issue, so
+ * it is the first line that WAS cut for one; an order of fixed styles only
+ * belongs to none.
+ */
 export function issueOf(catalog: Catalog, order: Order): number | undefined {
-  const first = order.lines[0];
-  return first ? catalog.byId.get(first.productId)?.dropNo : undefined;
+  for (const line of order.lines) {
+    const no = catalog.byId.get(line.productId)?.dropNo;
+    if (no !== undefined && no !== null) return no;
+  }
+  return undefined;
 }
 
 /** `[3,4,5]` → 3; `[3,5]` → 1. The longest unbroken run. */

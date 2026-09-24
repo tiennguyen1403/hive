@@ -145,9 +145,9 @@ describe("soldOutTimes", () => {
     // of these came from the orders.
     expect(rows.every((r) => r.source === "book")).toBe(true);
     // The stamps the approved mock prints (`prototype/v3/so.html`).
-    const song = rows.find((r) => r.product.slug === "song")!;
+    const song = rows.find((r) => r.product.slug === "s04-song")!;
     expect(song.soldOutAt).toBe("2026-06-06T14:20:00+07:00");
-    const vo = rows.find((r) => r.product.slug === "vo")!;
+    const vo = rows.find((r) => r.product.slug === "s04-vo")!;
     expect(vo.soldOutAt).toBe(DROP_4.closesAt);
     expect(vo.atClose).toBe(true);
     expect(rows.filter((r) => r.atClose)).toHaveLength(1);

@@ -90,8 +90,9 @@ export function resolveWishlist(
       unknown.push(entry.id);
       continue;
     }
-    const drop = getDrop(catalog, product.dropNo);
-    const open = drop ? dropState(drop, now) === "OPEN" : false;
+    // A fixed style (slice B5) belongs to no issue and is on sale at any hour.
+    const drop = product.dropNo === null ? undefined : getDrop(catalog, product.dropNo);
+    const open = product.dropNo === null || (drop ? dropState(drop, now) === "OPEN" : false);
     const left = onHand(product);
     const soldOut = isSoldOut(product);
     items.push({

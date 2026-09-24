@@ -58,7 +58,7 @@ export function ListingControls({ applied, path, pool }: ListingControlsProps) {
   const band = priceBandCounts(pool)[0];
 
   // `/products#filter` opens the sheet on arrival — the same promise
-  // `/products/khoi#size` makes about the size guide. A link that names a
+  // `/products/s05-khoi#size` makes about the size guide. A link that names a
   // layer has to land on that layer, not at the top of the page under it.
   useEffect(() => {
     if (window.location.hash === "#filter") setSheetOpen(true);

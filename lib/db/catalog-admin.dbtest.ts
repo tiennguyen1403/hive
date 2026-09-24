@@ -670,7 +670,7 @@ describe("admin_add_teaser", () => {
   });
 
   it("refuses a slug that is taken, one that is not a slug, a photo nobody borrows, and a missing issue", async () => {
-    expect((await manager.rpc("admin_add_teaser", teaser({ p_slug: "soi" }))).error?.message).toBe("NOT_ALLOWED");
+    expect((await manager.rpc("admin_add_teaser", teaser({ p_slug: "s06-soi" }))).error?.message).toBe("NOT_ALLOWED");
     expect((await manager.rpc("admin_add_teaser", teaser({ p_slug: "Thử 6" }))).error?.message).toBe("BAD_INPUT");
     expect((await manager.rpc("admin_add_teaser", teaser({ p_photo_key: "khong-co" }))).error?.message).toBe(
       "BAD_INPUT",
@@ -878,12 +878,12 @@ describe("admin_update_product", () => {
     expect(error).toBeNull();
     const catalog = await snapshot();
     expect(catalog.bySlug.get("khoi-den")?.id).toBe("p-khoi");
-    expect(catalog.bySlug.has("khoi")).toBe(false);
+    expect(catalog.bySlug.has("s05-khoi")).toBe(false);
     const after = await service.from("order_lines").select("order_code", { count: "exact", head: true }).eq("product_id", "p-khoi");
     expect(after.count).toBe(lines.count);
     expect(after.count).toBeGreaterThan(0);
     expect((await lastEvent()).payload).toEqual({
-      before: { name: "KHÓI", slug: "khoi" },
+      before: { name: "KHÓI", slug: "s05-khoi" },
       after: { name: "KHÓI ĐEN", slug: "khoi-den" },
     });
   });
@@ -913,14 +913,14 @@ describe("admin_update_product", () => {
     expect((await patch({ fit: "SKINNY" })).error?.message).toBe("BAD_INPUT");
     expect((await patch({})).error?.message).toBe("BAD_INPUT");
     expect((await patch({ priceVnd: 390000 })).error?.message).toBe("BAD_INPUT");
-    expect((await patch({ slug: "bui" })).error?.message).toBe("NOT_ALLOWED");
+    expect((await patch({ slug: "s05-bui" })).error?.message).toBe("NOT_ALLOWED");
     const none = await manager.rpc("admin_update_product", {
       p_id: "p-khong-co",
       p_patch: { priceVnd: 1 } as unknown as Json,
       p_now: now(),
     });
     expect(none.error?.message).toBe("NOT_FOUND");
-    expect(await productRow("p-khoi")).toMatchObject({ cut_units: 35, price_vnd: 390000, slug: "khoi" });
+    expect(await productRow("p-khoi")).toMatchObject({ cut_units: 35, price_vnd: 390000, slug: "s05-khoi" });
   });
 });
 
@@ -1290,12 +1290,12 @@ describe("admin_reorder_colors", () => {
   });
 
   it("turns a three-colour band round in one go", async () => {
-    const nang = (await snapshot()).bySlug.get("nang")!;
+    const nang = (await snapshot()).bySlug.get("s05-nang")!;
     expect(nang.colors).toHaveLength(3);
     const turned = [nang.colors[2]!, nang.colors[0]!, nang.colors[1]!];
     const { error } = await manager.rpc("admin_reorder_colors", { p_id: nang.id, p_colors: turned, p_now: now() });
     expect(error).toBeNull();
-    const after = (await snapshot()).bySlug.get("nang")!;
+    const after = (await snapshot()).bySlug.get("s05-nang")!;
     expect(after.colors).toEqual(turned);
     expect(after.photoKeys).toEqual([nang.photoKeys[2], nang.photoKeys[0], nang.photoKeys[1]]);
     const positions = await service.from("product_colors").select("position").eq("product_id", nang.id).order("position");

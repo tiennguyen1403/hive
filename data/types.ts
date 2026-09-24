@@ -127,12 +127,22 @@ export interface Product {
   fit: Fit;
   priceVnd: number;
   colors: ColorKey[];
-  /** How many units were cut for this drop. Never restocked — that is the model. */
-  cutUnits: number;
-  dropNo: number;
+  /**
+   * How many units were cut for this issue. For an issue's style it is never
+   * restocked — that is the model.
+   *
+   * Null for a FIXED style (slice B5): a basic that belongs to no issue, sells
+   * at any hour and has sizes brought back when they run out ("Nhập thêm"),
+   * so there is no cut to count against. `dropNo` and `cutUnits` are null
+   * together or not at all; the database checks the pair.
+   */
+  cutUnits: number | null;
+  /** The issue the style was cut for; null for a fixed style. */
+  dropNo: number | null;
   /**
    * When the last unit went — the shop's own record, for a style that is
-   * over.
+   * over. Never set on a fixed style: its shelf running out is "tạm hết",
+   * not the end of it.
    *
    * NOT derivable from `ORDERS`: that file is an explicit recent SAMPLE, so
    * for most styles it accounts for a handful of the units cut and the hour

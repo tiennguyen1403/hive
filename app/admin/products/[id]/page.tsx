@@ -65,7 +65,12 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
       <AdminTop
         crumb={{ label: "Mẫu", href: "/admin/products", here: product.name }}
         title={product.name}
-        sub={`${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc. Lưới dưới là số còn lại theo từng màu và size.`}
+        sub={
+          // A fixed style (slice B5) was cut for no issue: only the grid's line is true of it.
+          (product.dropNo !== null && product.cutUnits !== null
+            ? `${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc. `
+            : "") + "Lưới dưới là số còn lại theo từng màu và size."
+        }
       >
         <ButtonLink tone="ink sm" icon="eye" href={`/products/${product.slug}`}>
           Xem trên cửa hàng
@@ -77,7 +82,7 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
         productId={product.id}
         kindOptions={kindOptions(catalog)}
         dropOptions={dropOptions(catalog, now)}
-        cutUnits={product.cutUnits}
+        cutUnits={product.cutUnits ?? undefined}
         values={values}
       />
     </>

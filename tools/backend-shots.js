@@ -70,13 +70,13 @@ async (page) => {
   for (const [name, route, width] of [
     ["home-390", "/", 390],
     ["products-390", "/products", 390],
-    ["products-khoi-390", "/products/khoi", 390],
+    ["products-khoi-390", "/products/s05-khoi", 390],
     ["search-390", "/search?q=áo", 390],
     ["cart-390", "/cart", 390],
     ["account-390", "/account", 390],
     ["home-1280", "/", 1280],
     ["products-1280", "/products", 1280],
-    ["products-khoi-1280", "/products/khoi", 1280],
+    ["products-khoi-1280", "/products/s05-khoi", 1280],
     ["search-1280", "/search?q=áo", 1280],
     ["cart-1280", "/cart", 1280],
     ["account-1280", "/account", 1280],
@@ -92,7 +92,7 @@ async (page) => {
     }),
   );
   results.push(
-    await shot("products-khoi-390-size", "/products/khoi#size", 390, {
+    await shot("products-khoi-390-size", "/products/s05-khoi#size", 390, {
       fullPage: false,
       viaAbout: true,
     }),

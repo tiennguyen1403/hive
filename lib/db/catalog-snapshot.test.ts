@@ -132,6 +132,25 @@ describe("a well-formed snapshot", () => {
     });
   });
 
+  it("reads a fixed style (slice B5): no issue and no cut, both null", () => {
+    const doc = snapshot();
+    // Written as `catalog_snapshot()` writes a fixed style: both keys, null.
+    const fixed = {
+      ...doc.products[0]!,
+      id: "p-ao-thun-tron",
+      slug: "ao-thun-tron",
+      name: "ÁO THUN TRƠN",
+      cutUnits: null,
+      dropNo: null,
+      soldOutAt: null,
+    };
+    doc.products.push(fixed as unknown as (typeof doc.products)[number]);
+    const tee = parseCatalogSnapshot(doc).products[2]!;
+    expect(tee.dropNo).toBeNull();
+    expect(tee.cutUnits).toBeNull();
+    expect("soldOutAt" in tee).toBe(false);
+  });
+
   it("leaves soldOutAt absent rather than null when a style has not run out", () => {
     expect("soldOutAt" in input.products[0]!).toBe(false);
     expect(input.products[1]!.soldOutAt).toBe("2026-03-11T13:05:00+07:00");
@@ -309,6 +328,30 @@ describe("a snapshot that is wrong", () => {
         }),
       ),
     ).toThrow("promotions[1].paused must be a boolean");
+  });
+
+  it("refuses an issue without a cut, or a cut without an issue", () => {
+    expect(() =>
+      parseCatalogSnapshot(
+        broken((doc) => {
+          (doc.products[0] as { cutUnits: unknown }).cutUnits = null;
+        }),
+      ),
+    ).toThrow("products[0].cutUnits must be null exactly when dropNo is");
+    expect(() =>
+      parseCatalogSnapshot(
+        broken((doc) => {
+          (doc.products[0] as { dropNo: unknown }).dropNo = null;
+        }),
+      ),
+    ).toThrow("products[0].cutUnits must be null exactly when dropNo is");
+    expect(() =>
+      parseCatalogSnapshot(
+        broken((doc) => {
+          delete (doc.products[0] as { dropNo?: unknown }).dropNo;
+        }),
+      ),
+    ).toThrow("products[0].dropNo must be an integer");
   });
 
   it("refuses a PERCENT promotion with no percent", () => {

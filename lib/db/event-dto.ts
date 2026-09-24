@@ -139,10 +139,11 @@ export type CatalogEvent =
       /** As it was created — the style may have been renamed since. */
       name: string;
       slug: string;
-      dropNo: number;
+      /** Null, with `cutUnits`, for a fixed style (slice B5): no issue, no cut. */
+      dropNo: number | null;
       /** Band order. */
       colors: ColorKey[];
-      cutUnits: number;
+      cutUnits: number | null;
       /** How many of its photos were uploads, and how many borrowed frames. */
       uploaded: number;
       borrowed: number;
@@ -442,19 +443,27 @@ export function toEvent(row: EventRow): AdminEvent {
         before: productFields(payload.before, `${at}.before`),
         after: productFields(payload.after, `${at}.after`),
       };
-    case "PRODUCT_ADDED":
+    case "PRODUCT_ADDED": {
+      // A fixed style (slice B5) is created with no issue and no cut: both
+      // null, or neither — the pair the `products` table itself checks.
+      const dropNo = wholeOrNull(payload, "dropNo", at);
+      const cutUnits = wholeOrNull(payload, "cutUnits", at);
+      if ((dropNo === null) !== (cutUnits === null)) {
+        fail(`${at}.cutUnits`, "must be null exactly when dropNo is");
+      }
       return {
         ...base,
         kind: row.kind,
         productId: column(row.product_id, `${path}.product_id`, "must name the style"),
         name: text(payload, "name", at),
         slug: text(payload, "slug", at),
-        dropNo: whole(payload, "dropNo", at),
+        dropNo,
         colors: colorList(payload.colors, `${at}.colors`),
-        cutUnits: whole(payload, "cutUnits", at),
+        cutUnits,
         uploaded: whole(payload, "uploaded", at),
         borrowed: whole(payload, "borrowed", at),
       };
+    }
     case "PRODUCT_PHOTO_SET":
       return {
         ...base,

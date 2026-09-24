@@ -51,13 +51,14 @@ describe("supabase/seed.sql", () => {
 describe("the generator itself", () => {
   const sql = render();
 
-  it("writes one row per fixture entry — 21 · 38 · 152 · 4 · 2 · 6 · 8 · 9 · 24 · 33", () => {
+  // Slice B5 added the eight fixed styles: 8 styles, 17 colours, 68 cells.
+  it("writes one row per fixture entry — 29 · 55 · 220 · 4 · 2 · 6 · 8 · 9 · 24 · 33", () => {
     const rowsOf = (table: string) => rowsIn(sql, table).length;
 
     expect(rowsOf("seed_drops")).toBe(4);
-    expect(rowsOf("seed_products")).toBe(21);
-    expect(rowsOf("seed_product_colors")).toBe(38);
-    expect(rowsOf("seed_stock_cells")).toBe(152);
+    expect(rowsOf("seed_products")).toBe(29);
+    expect(rowsOf("seed_product_colors")).toBe(55);
+    expect(rowsOf("seed_stock_cells")).toBe(220);
     expect(rowsOf("seed_teasers")).toBe(2);
     expect(rowsOf("seed_promotions")).toBe(6);
     expect(rowsOf("seed_customers")).toBe(8);

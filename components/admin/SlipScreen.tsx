@@ -167,7 +167,9 @@ export function SlipScreen({
                 )}
 
                 <p className="foot">
-                  Mã vận đơn: {tracking ?? "chờ bàn giao"} · {LEX.t} {issueNo(issueOf(catalog, o) ?? 0)} ·
+                  Mã vận đơn: {tracking ?? "chờ bàn giao"}
+                  {/* An order of fixed styles only (slice B5) belongs to no issue. */}
+                  {issueOf(catalog, o) !== undefined ? ` · ${LEX.t} ${issueNo(issueOf(catalog, o)!)}` : ""} ·
                   in {clockLabel(nowIso)} · {dayMonth(nowIso)}
                 </p>
               </section>

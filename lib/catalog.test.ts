@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildCatalog, teasersIn } from "./catalog";
+import { buildCatalog, legacySlugTarget, teasersIn } from "./catalog";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { CATALOG, DROPS, TEASERS } from "@/data/catalog";
 import { PROMOTIONS } from "@/data/promotions";
@@ -26,7 +26,7 @@ describe("buildCatalog · the indexes", () => {
   });
 
   it("finds the open drop's first style both ways", () => {
-    const khoi = FIXTURE_CATALOG.bySlug.get("khoi");
+    const khoi = FIXTURE_CATALOG.bySlug.get("s05-khoi");
     expect(khoi?.name).toBe("KHÓI");
     expect(FIXTURE_CATALOG.byId.get(productId("p-khoi"))).toBe(khoi);
   });
@@ -86,7 +86,18 @@ describe("currentDropNo · derived, not stored", () => {
     // "highest drop" and "highest issue with stock in it" are not the same
     // number — this is the one the shop means by "current".
     expect(Math.max(...DROPS.map((d) => d.no))).toBe(6);
-    expect(Math.max(...CATALOG.map((p) => p.dropNo))).toBe(5);
+    expect(Math.max(...CATALOG.flatMap((p) => (p.dropNo === null ? [] : [p.dropNo])))).toBe(5);
+  });
+
+  it("does not count a fixed style, which belongs to no issue (slice B5)", () => {
+    const fixedOnly = buildCatalog({
+      products: CATALOG.filter((p) => p.dropNo === null),
+      drops: DROPS,
+      teasers: [],
+      promotions: [],
+    });
+    expect(fixedOnly.products).toHaveLength(8);
+    expect(fixedOnly.currentDropNo).toBe(0);
   });
 
   it("is 0 for an empty catalogue rather than -Infinity", () => {
@@ -100,10 +111,59 @@ describe("teasersIn", () => {
   it("lists the styles announced for the issue that has not opened", () => {
     const t = teasersIn(FIXTURE_CATALOG, 6);
     expect(t).toHaveLength(2);
-    expect(t.map((x) => x.slug)).toEqual(["soi", "ngoi"]);
+    expect(t.map((x) => x.slug)).toEqual(["s06-soi", "s06-ngoi"]);
   });
 
   it("has nothing to tease for an issue already on sale", () => {
     expect(teasersIn(FIXTURE_CATALOG, 5)).toEqual([]);
+  });
+});
+
+/**
+ * Slice B5 moved every issue's style to an address that carries its issue
+ * (`/products/s05-khoi`). A link saved before the move still arrives as
+ * `/products/khoi`; the product page answers it with a permanent redirect to
+ * whatever this names, and a 404 when it names nothing.
+ */
+describe("legacySlugTarget · the address a style had before slice B5", () => {
+  it("finds the style behind its own issue's code", () => {
+    expect(legacySlugTarget(FIXTURE_CATALOG, "khoi")?.slug).toBe("s05-khoi");
+    expect(legacySlugTarget(FIXTURE_CATALOG, "reu")?.slug).toBe("s04-reu");
+    expect(legacySlugTarget(FIXTURE_CATALOG, "voi")?.slug).toBe("s03-voi");
+  });
+
+  it("names nothing for a segment no style was ever published under", () => {
+    expect(legacySlugTarget(FIXTURE_CATALOG, "khong-co")).toBeUndefined();
+    expect(legacySlugTarget(FIXTURE_CATALOG, "")).toBeUndefined();
+  });
+
+  it("never points a fixed style's own address anywhere — it has no prefix to lose", () => {
+    expect(legacySlugTarget(FIXTURE_CATALOG, "ao-thun-tron")).toBeUndefined();
+    expect(FIXTURE_CATALOG.bySlug.get("ao-thun-tron")?.id).toBe(productId("p-ao-thun-tron"));
+  });
+
+  it("does not guess when two issues each have a style of that name", () => {
+    const khoi = FIXTURE_CATALOG.bySlug.get("s05-khoi")!;
+    const again = { ...khoi, id: productId("p-khoi-2"), slug: "s06-khoi", dropNo: 6 };
+    const two = buildCatalog({
+      products: [...CATALOG, again],
+      drops: DROPS,
+      teasers: [],
+      promotions: [],
+    });
+    expect(legacySlugTarget(two, "khoi")).toBeUndefined();
+  });
+
+  it("only reads a code that matches the style's own issue", () => {
+    const khoi = FIXTURE_CATALOG.bySlug.get("s05-khoi")!;
+    // A style of issue 05 whose segment happens to say s06 is not what
+    // `/products/khoi` meant.
+    const odd = buildCatalog({
+      products: [{ ...khoi, slug: "s06-khoi" }],
+      drops: DROPS,
+      teasers: [],
+      promotions: [],
+    });
+    expect(legacySlugTarget(odd, "khoi")).toBeUndefined();
   });
 });

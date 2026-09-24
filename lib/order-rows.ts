@@ -38,12 +38,14 @@ export interface OrderRow {
   /** The same styles with their counts, for the row that has room for both. */
   items: OrderRowItem[];
   /**
-   * Which issue the order bought from, read off the first style in it.
+   * Which issue the order bought from, read off the first style in it that
+   * belongs to one (a fixed style, slice B5, belongs to none).
    *
    * It decides how the row dates itself: an order from the issue selling now
    * is stamped with its hour ("18:50 · 20/09"), because that is how recent
    * it is; an older one is stamped with its issue ("12/06 · Số 04"), because
-   * that is what places it. Absent when the style has left the catalog.
+   * that is what places it. Absent when no style in it has an issue, or the
+   * style has left the catalog — the row is then dated by its hour.
    */
   dropNo?: number;
   /** At most two, for the stacked thumbnails. */
@@ -79,6 +81,9 @@ const MAX_THUMBS = 2;
 export function rowOfOrder(catalog: Catalog, o: Order, now: Date = demoNow()): OrderRow {
   const products = o.lines.map((l) => catalog.byId.get(l.productId));
   const status = effectiveStatus(o, now);
+  // The first style in it that belongs to an issue: a fixed style (slice B5)
+  // has none, and an order of fixed styles only has no issue to be dated by.
+  const dropNo = products.find((p) => p !== undefined && p.dropNo !== null)?.dropNo ?? undefined;
 
   return {
     code: o.code,
@@ -88,7 +93,7 @@ export function rowOfOrder(catalog: Catalog, o: Order, now: Date = demoNow()): O
     totalVnd: orderTotalVnd(o),
     names: products.map((p) => p?.name ?? "—").join(", "),
     items: o.lines.map((l, i) => ({ name: products[i]?.name ?? "—", qty: l.qty })),
-    ...(products[0]?.dropNo !== undefined ? { dropNo: products[0].dropNo } : {}),
+    ...(dropNo !== undefined ? { dropNo } : {}),
     photoKeys: o.lines.slice(0, MAX_THUMBS).map((l, i) => {
       const p = products[i];
       return p?.photoKeys[p.colors.indexOf(l.color)] ?? p?.photoKeys[0] ?? "hero";

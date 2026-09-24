@@ -12,9 +12,9 @@ import {
 } from "@/data/types";
 import type { Catalog } from "./catalog";
 import { toVnIso } from "./datetime";
-import { onHandOf } from "./inventory";
-import { isStockReason, type InventoryCell } from "./inventory-adjust";
-import { LEX, issueLabel } from "./lexicon";
+import { isFixed, onHandOf } from "./inventory";
+import { RESTOCK_REASON, isStockReason, type InventoryCell } from "./inventory-adjust";
+import { LEX, issueCode, issueLabel } from "./lexicon";
 import { isUploadedKey } from "./photos";
 import { normalisePromoCode } from "./promotions";
 import { asciiSlug, teaserSlug } from "./teasers";
@@ -99,6 +99,7 @@ export function colorLabelOf(key: string): string {
 /** Every move the back office makes on the catalogue. */
 export type CatalogMove =
   | "ADJUST_STOCK"
+  | "RESTOCK"
   | "ADD_DROP"
   | "SCHEDULE_DROP"
   | "CLOSE_DROP"
@@ -165,6 +166,7 @@ export function catalogFailureMessage(
     case "NOT_FOUND":
       switch (move) {
         case "ADJUST_STOCK":
+        case "RESTOCK":
         case "UPDATE_PRODUCT":
         case "REORDER_COLORS":
           return subject ? `Không tìm thấy mẫu ${subject}.` : "Không tìm thấy mẫu này.";
@@ -207,6 +209,8 @@ export function catalogFailureMessage(
       switch (move) {
         case "ADJUST_STOCK":
           return "Tồn kho gửi lên chưa hợp lệ — mỗi ô từ 0 trở lên, tổng không vượt số đã cắt, và cần một lý do.";
+        case "RESTOCK":
+          return RESTOCK_BAD_MESSAGE;
         case "ADD_DROP":
         case "SCHEDULE_DROP":
           return "Ngày đóng phải sau ngày mở.";
@@ -309,6 +313,10 @@ function shelfAfter(product: Product, cells: readonly InventoryCell[]): number {
  * Whether this adjustment of this style may be sent, or the sentence saying
  * why not: a colour the style comes in, a reason from the list, a reference
  * and a note that fit, and a shelf that stays within the cut.
+ *
+ * Slice B5: a fixed style has no cut, so nothing caps its shelf; and
+ * "Nhập thêm" is for a fixed style only, every cell going up — the rules
+ * `admin_adjust_stock()` applies, said before the button is pressed.
  */
 export function checkAdjustment(
   product: Product,
@@ -323,10 +331,44 @@ export function checkAdjustment(
   if (cells.some((c) => !product.colors.includes(c.color))) {
     return `${product.name} không có màu này.`;
   }
-  if (shelfAfter(product, cells) > product.cutUnits) {
+  if (reason === RESTOCK_REASON && (!isFixed(product) || cells.some((c) => c.after <= c.before))) {
+    return RESTOCK_BAD_MESSAGE;
+  }
+  if (product.cutUnits !== null && shelfAfter(product, cells) > product.cutUnits) {
     return `Không vượt ${product.cutUnits} đã cắt`;
   }
   return null;
+}
+
+// ─────────────────────────────────────────────── bringing sizes back (B5)
+/** Most pieces one restock may add to one colour and size. */
+export const MAX_RESTOCK_PER_CELL = 999;
+
+/** A restock refused: not a fixed style, or a cell that does not go up by 1–999. */
+export const RESTOCK_BAD_MESSAGE =
+  "Nhập thêm chỉ cho mẫu cố định, mỗi ô thêm từ 1 đến 999 chiếc.";
+
+/**
+ * "Nhập thêm", as the sheet sends it — `{ color, size, before, add }` per
+ * cell: a known colour and size, once each, `before` the number the sheet was
+ * showing and `add` a whole 1–999 — turned into the cells an adjustment
+ * sends, `after = before + add`. Null when it is not that.
+ */
+export function readRestockCells(value: unknown): InventoryCell[] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_CELLS) return null;
+  const cells: InventoryCell[] = [];
+  for (const v of value) {
+    if (!isRecord(v)) return null;
+    const { color, size, before, add } = v;
+    if (typeof color !== "string" || !(COLOR_KEYS as readonly string[]).includes(color)) return null;
+    if (typeof size !== "string" || !(SIZES as readonly string[]).includes(size)) return null;
+    if (!isCount(before) || before > MAX_PIECES) return null;
+    if (!isCount(add) || add < 1 || add > MAX_RESTOCK_PER_CELL) return null;
+    if (before + add > MAX_PIECES) return null;
+    if (cells.some((c) => c.color === color && c.size === size)) return null;
+    cells.push({ color: color as ColorKey, size: size as Size, before, after: before + add });
+  }
+  return cells;
 }
 
 /**
@@ -633,8 +675,18 @@ export function productPatch(
   const fit = value.fit === undefined ? product.fit : value.fit;
   if (fit !== "OVERSIZE" && fit !== "REGULAR") return no("Chọn form.");
 
-  const dropNo = readDropNo(value.dropNo);
-  if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no("Chọn một số.");
+  // A style keeps its kind for good (slice B5): an issue's style may move to
+  // another issue, a fixed style stays fixed and its form sends no issue.
+  // `admin_update_product()` refuses the crossing either way (`BAD_INPUT`).
+  let dropNo: number | null = null;
+  if (isFixed(product)) {
+    if (value.dropNo !== null && value.dropNo !== undefined) {
+      return no(catalogFailureMessage("UPDATE_PRODUCT", "BAD_INPUT"));
+    }
+  } else {
+    dropNo = readDropNo(value.dropNo);
+    if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no("Chọn một số.");
+  }
 
   const patch: ProductPatch = {};
   if (name !== product.name) patch.name = name;
@@ -643,7 +695,7 @@ export function productPatch(
   if (priceVnd !== product.priceVnd) patch.priceVnd = priceVnd;
   if (material !== product.material) patch.material = material;
   if (fit !== product.fit) patch.fit = fit;
-  if (dropNo !== product.dropNo) patch.dropNo = dropNo;
+  if (dropNo !== null && dropNo !== product.dropNo) patch.dropNo = dropNo;
   return ok(patch);
 }
 
@@ -682,11 +734,27 @@ export function isNewSlug(value: string): boolean {
  * none), so the segment is always one the database takes. Empty only for an
  * empty name, so the form's placeholder can follow the name as it is typed.
  */
-export function productSlug(name: string): string {
+export function productSlug(name: string, max = MAX_NEW_SLUG): string {
   if (name.trim() === "") return "";
-  const base = asciiSlug(name).slice(0, MAX_NEW_SLUG).replace(/-+$/, "");
+  const base = asciiSlug(name).slice(0, max).replace(/-+$/, "");
   if (base.length >= 2) return base;
   return base ? `mau-${base}` : "mau";
+}
+
+/**
+ * The address segment "Tạo mẫu" makes when its box is left empty (slice B5):
+ * a style of issue 06 is `s06-` and its name's segment — "SỎI" → `s06-soi` —
+ * because a name can come back in a later issue and the address has to tell
+ * the two apart; a fixed style (`dropNo` null) is its name's segment alone.
+ * The name's part is cut so the whole stays within 40 characters. Empty for
+ * an empty name, like `productSlug`. `uniqueSlug` then adds `-2`, `-3` when
+ * it is taken, as before.
+ */
+export function slugFor(name: string, dropNo: number | null): string {
+  if (dropNo === null) return productSlug(name);
+  const prefix = `${issueCode(dropNo).toLowerCase()}-`;
+  const base = productSlug(name, MAX_NEW_SLUG - prefix.length);
+  return base === "" ? "" : `${prefix}${base}`;
 }
 
 /**
@@ -786,9 +854,11 @@ export interface NewProductInput {
   slug: string;
   priceVnd: number;
   material: string;
-  dropNo: number;
+  /** The issue it is cut for, or null for a fixed style (slice B5). */
+  dropNo: number | null;
   /** Band order; one photo each, a borrowed key or an upload's. */
   colors: Array<{ color: ColorKey; photoKey: string }>;
+  /** The pieces to cut — for a fixed style, the pieces it opens with. */
   cells: CutGrid;
 }
 
@@ -805,6 +875,10 @@ export interface NewProductInput {
  * grid is rebuilt from the colours chosen, four sizes each, so a colour the
  * form dropped cannot leave numbers behind. Whether the issue is still open
  * depends on the clock, so the action asks that (`DROP_CLOSED`).
+ *
+ * Slice B5: `dropNo: null` — sent as null, not left out — is a FIXED style,
+ * one that belongs to no issue; its grid is the stock it opens with, and its
+ * empty address box becomes the bare name's segment (`slugFor`).
  */
 export function readNewProduct(value: unknown, catalog: Catalog): Checked<NewProductInput> {
   const bad = no<NewProductInput>(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT"));
@@ -821,8 +895,11 @@ export function readNewProduct(value: unknown, catalog: Catalog): Checked<NewPro
   const fit = value.fit;
   if (fit !== "OVERSIZE" && fit !== "REGULAR") return no("Chọn form.");
 
-  const dropNo = readDropNo(value.dropNo);
-  if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no(`Chọn một ${LEX.tl}.`);
+  let dropNo: number | null = null;
+  if (value.dropNo !== null) {
+    dropNo = readDropNo(value.dropNo);
+    if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no(`Chọn một ${LEX.tl}.`);
+  }
 
   const priceVnd = value.priceVnd;
   if (!isCount(priceVnd) || priceVnd < MIN_PRICE_VND || priceVnd > MAX_PRICE_VND) {
@@ -876,7 +953,7 @@ export function readNewProduct(value: unknown, catalog: Catalog): Checked<NewPro
   const typed = text(value.slug);
   let slug: string;
   if (typed === "") {
-    slug = uniqueSlug(productSlug(name), catalog);
+    slug = uniqueSlug(slugFor(name, dropNo), catalog);
   } else {
     if (!isNewSlug(typed)) {
       return no("Mã trên địa chỉ gồm 2–40 chữ thường không dấu, số và gạch ngang.");

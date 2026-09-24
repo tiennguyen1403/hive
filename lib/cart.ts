@@ -143,8 +143,13 @@ export function resolveCart(catalog: Catalog, now: Date, cart: Cart): ResolvedCa
       continue;
     }
     const available = onHandOf(product, line.color, line.size);
-    const drop = getDrop(catalog, product.dropNo);
-    const dropOpen = drop ? dropState(drop, now) === "OPEN" : false;
+    // A fixed style (slice B5) belongs to no issue, so no window can shut on
+    // it; an issue's style can be bought only while its issue is open.
+    const drop = product.dropNo === null ? undefined : getDrop(catalog, product.dropNo);
+    const shut: LineIssue | null =
+      product.dropNo !== null && !(drop && dropState(drop, now) === "OPEN")
+        ? { kind: "DROP_CLOSED", dropNo: product.dropNo }
+        : null;
 
     lines.push({
       key: lineKey(line),
@@ -158,11 +163,7 @@ export function resolveCart(catalog: Catalog, now: Date, cart: Cart): ResolvedCa
       issue:
         available === 0
           ? { kind: "SOLD_OUT" }
-          : !dropOpen
-            ? { kind: "DROP_CLOSED", dropNo: product.dropNo }
-            : available < line.qty
-              ? { kind: "SHORT", available }
-              : null,
+          : (shut ?? (available < line.qty ? { kind: "SHORT", available } : null)),
     });
   }
 

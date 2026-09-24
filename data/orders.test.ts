@@ -5,7 +5,7 @@ import { ORDERS } from "./orders";
 import { PROMOTIONS } from "./promotions";
 import { PROVINCES, findWard } from "./regions";
 import { SIZES } from "./types";
-import { soldUnits } from "@/lib/inventory";
+import { isFixed, isIssueStyle, soldUnits } from "@/lib/inventory";
 import {
   orderSubtotalVnd,
   orderTotalVnd,
@@ -109,11 +109,15 @@ describe("orders stay inside what was actually sold", () => {
         shipped.set(l.productId, (shipped.get(l.productId) ?? 0) + l.qty);
       }
     }
-    for (const p of CATALOG) {
+    // An issue's style: a fixed one (slice B5) has no cut, so no "ever sold"
+    // is arithmetic over its shelf — and the sample holds none of them.
+    for (const p of CATALOG.filter(isIssueStyle)) {
       const n = shipped.get(p.id) ?? 0;
       expect(n, `${p.name}: sample has ${n}, only ${soldUnits(p)} ever sold`)
         .toBeLessThanOrEqual(soldUnits(p));
     }
+    const fixed = new Set(CATALOG.filter(isFixed).map((p) => p.id));
+    expect([...shipped.keys()].filter((id) => fixed.has(id as never))).toEqual([]);
   });
 });
 

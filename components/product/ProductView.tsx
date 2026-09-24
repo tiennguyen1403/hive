@@ -40,11 +40,17 @@ import { SizeTable } from "./SizeTable";
 
 interface ProductViewProps {
   product: Product;
-  /** The issue this style belongs to, for the clock in the kick line. */
-  drop: Drop;
-  state: DropState;
-  /** The clock as the server rendered it — the first client render matches. */
-  initialLabel: string;
+  /**
+   * The issue this style belongs to, for the clock in the kick line. Null for
+   * a FIXED style (slice B5): it belongs to no issue and is on sale at any
+   * hour, so the page prints no issue, no clock and no cut.
+   */
+  issue: {
+    drop: Drop;
+    state: DropState;
+    /** The clock as the server rendered it — the first client render matches. */
+    initialLabel: string;
+  } | null;
 }
 
 /**
@@ -65,7 +71,7 @@ interface ProductViewProps {
  * BEFORE the button is pressed — a struck row saying "hết", not an error
  * after a tap (PRODUCT.md, "scarcity is content").
  */
-export function ProductView({ product, drop, state, initialLabel }: ProductViewProps) {
+export function ProductView({ product, issue }: ProductViewProps) {
   const { add } = useCart();
   const wish = useWishlist();
   const { prefs, ready: prefsReady } = usePrefs();
@@ -80,12 +86,11 @@ export function ProductView({ product, drop, state, initialLabel }: ProductViewP
   const preselected = useRef(false);
 
   const saved = wish.has(product.id);
-  const closed = state !== "OPEN";
+  const closed = issue !== null && issue.state !== "OPEN";
   const sold = isSoldOut(product);
   const canBuy = !sold && !closed;
   const left = onHand(product);
   const leftInColor = onHandByColor(product, color);
-  const no = issueNo(product.dropNo);
   const remembered = prefsReady && size !== null && prefs.size === size;
 
   // The footer links here as "Bảng số đo", and so does the size sheet on
@@ -105,8 +110,9 @@ export function ProductView({ product, drop, state, initialLabel }: ProductViewP
     if (want && canBuy && onHandOf(product, color, want) > 0) setSize(want);
   }, [prefsReady, prefs.size, product, color, canBuy]);
 
-  /** How much of the cut is still on the shelf, as a bar. */
-  const filled = Math.max(0, Math.min(100, Math.round((left / product.cutUnits) * 100)));
+  /** How much of the cut is still on the shelf, as a bar. A fixed style has no cut. */
+  const cut = product.cutUnits;
+  const filled = cut === null ? 0 : Math.max(0, Math.min(100, Math.round((left / cut) * 100)));
   const meter = ["meter", sold ? "gone" : isLowStock(product) ? "hot" : ""]
     .filter(Boolean)
     .join(" ");
@@ -163,11 +169,16 @@ export function ProductView({ product, drop, state, initialLabel }: ProductViewP
   return (
     <>
       <nav className="crumbs" aria-label="Đường dẫn">
-        {/* U+00A0 so "Số 05" is never broken across two lines. */}
-        <Link href="/products">{`${LEX.t} ${no}`}</Link>
-        <span className="sep" aria-hidden="true">
-          /
-        </span>
+        {/* No issue to name for a fixed style (slice B5). */}
+        {product.dropNo !== null && (
+          <>
+            {/* U+00A0 so "Số 05" is never broken across two lines. */}
+            <Link href="/products">{`${LEX.t} ${issueNo(product.dropNo)}`}</Link>
+            <span className="sep" aria-hidden="true">
+              /
+            </span>
+          </>
+        )}
         <Link href={`/products?family=${product.family}`}>
           {FAMILY_SHORT_LABELS[product.family]}
         </Link>
@@ -215,19 +226,22 @@ export function ProductView({ product, drop, state, initialLabel }: ProductViewP
         </div>
 
         <div className="ticket">
-          <p className="kick">
-            {state === "OPEN" && <Badge tone="ok">Đang bán</Badge>}
-            {state === "UPCOMING" && <Badge tone="info">Sắp mở</Badge>}
-            {state === "CLOSED" && <Badge tone="shut">Đã đóng</Badge>}
-            <span>
-              {issueLabel(product.dropNo)} ·{" "}
-              {state === "CLOSED" ? (
-                `đã đóng ${dayMonth(drop.closesAt)}`
-              ) : (
-                <DropClock drop={drop} state={state} initialLabel={initialLabel} />
-              )}
-            </span>
-          </p>
+          {/* The issue's line and its clock — none for a fixed style (slice B5). */}
+          {issue !== null && product.dropNo !== null && (
+            <p className="kick">
+              {issue.state === "OPEN" && <Badge tone="ok">Đang bán</Badge>}
+              {issue.state === "UPCOMING" && <Badge tone="info">Sắp mở</Badge>}
+              {issue.state === "CLOSED" && <Badge tone="shut">Đã đóng</Badge>}
+              <span>
+                {issueLabel(product.dropNo)} ·{" "}
+                {issue.state === "CLOSED" ? (
+                  `đã đóng ${dayMonth(issue.drop.closesAt)}`
+                ) : (
+                  <DropClock drop={issue.drop} state={issue.state} initialLabel={issue.initialLabel} />
+                )}
+              </span>
+            </p>
+          )}
 
           <h1>{product.name}</h1>
           <p className="kind">
@@ -239,24 +253,30 @@ export function ProductView({ product, drop, state, initialLabel }: ProductViewP
               second way and carries the percentage as its label, so it is
               not a graphic that says nothing to a reader who cannot see it. */}
           <div className="stock">
-            {sold ? (
+            {cut === null ? (
+              // A fixed style (slice B5) was never cut and is brought back
+              // when a size runs out: what is left is the one true figure.
+              <b>Còn {left}</b>
+            ) : sold ? (
               <>
-                <b>0</b> / {product.cutUnits} chiếc đã cắt{" "}
+                <b>0</b> / {cut} chiếc đã cắt{" "}
                 <span className="cd">· đã bán hết</span>
               </>
             ) : (
               <>
-                <b>Còn {left}</b> / {product.cutUnits} chiếc đã cắt{" "}
+                <b>Còn {left}</b> / {cut} chiếc đã cắt{" "}
                 <span className="cd">· không may thêm</span>
               </>
             )}
-            <div
-              className={meter}
-              role="img"
-              aria-label={sold ? "Đã bán hết" : `Còn ${filled}%`}
-            >
-              <i style={{ width: sold ? "100%" : `${filled}%` }} />
-            </div>
+            {cut !== null && (
+              <div
+                className={meter}
+                role="img"
+                aria-label={sold ? "Đã bán hết" : `Còn ${filled}%`}
+              >
+                <i style={{ width: sold ? "100%" : `${filled}%` }} />
+              </div>
+            )}
           </div>
 
           {product.colors.length > 1 && (
@@ -341,7 +361,7 @@ export function ProductView({ product, drop, state, initialLabel }: ProductViewP
             >
               {canBuy && size && <Icon name="bag" className="ic sm" />}
               {!canBuy
-                ? sold
+                ? sold || product.dropNo === null
                   ? "Đã bán hết"
                   : `${issueLabel(product.dropNo)} đã đóng`
                 : size

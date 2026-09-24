@@ -23,6 +23,7 @@ import {
   readNewProduct,
   readPhotoMap,
   readPromoDraft,
+  readRestockCells,
   readTeaser,
   readWindow,
   sameOrder,
@@ -45,7 +46,7 @@ import { takeRates } from "@/lib/db/rate-limit";
 import { getSupabase } from "@/lib/db/server";
 import { requireAdmin } from "@/lib/db/session";
 import { dropState } from "@/lib/drop";
-import { PRODUCT_EDIT_REASON, cellDelta } from "@/lib/inventory-adjust";
+import { PRODUCT_EDIT_REASON, RESTOCK_REASON, cellDelta } from "@/lib/inventory-adjust";
 import { LEX, issueNo } from "@/lib/lexicon";
 import {
   MAX_UPLOAD_BYTES,
@@ -194,6 +195,46 @@ export async function adjustStock(
 
   catalogMoved();
   return done(`Đã điều chỉnh tồn kho ${product.name} · ${signed(cellDelta(moved))} chiếc · đã lưu`);
+}
+
+/**
+ * "Nhập thêm" (slice B5): sizes brought back onto a FIXED style's shelf —
+ * `[{ color, size, before, add }]`, `before` the number the sheet was
+ * showing and `add` a whole 1–999 — saved as ONE `admin_adjust_stock()` with
+ * the reason "Nhập thêm" and `after = before + add`.
+ *
+ * The database takes it only for a fixed style and only upward (`BAD_INPUT`
+ * otherwise), and a shelf that moved in the meantime is `STALE`, as for any
+ * adjustment; `checkAdjustment` says the same first. Nothing on screen calls
+ * it yet: the back office's sheet for it is a later slice.
+ */
+export async function restockProduct(id: unknown, cells: unknown): Promise<ActionState> {
+  await requireAdmin("/admin/products");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
+  if (typeof id !== "string") return failed("RESTOCK", "NOT_FOUND");
+
+  const catalog = await loadCatalog();
+  const product = catalog.byId.get(productId(id));
+  if (!product) return failed("RESTOCK", "NOT_FOUND");
+
+  const moved = readRestockCells(cells);
+  if (!moved) return failed("RESTOCK", "BAD_INPUT");
+  const blocked = checkAdjustment(product, moved, RESTOCK_REASON, "", "");
+  if (blocked) return refused(blocked);
+
+  const failure = await run("admin_adjust_stock", {
+    p_product_id: product.id,
+    p_cells: moved as unknown as Json,
+    p_reason: RESTOCK_REASON,
+    p_ref: "",
+    p_note: "",
+    p_now: now(),
+  });
+  if (failure) return failed("RESTOCK", failure, product.name);
+
+  catalogMoved();
+  return done(`Đã nhập thêm ${product.name} · ${signed(cellDelta(moved))} chiếc · đã lưu`);
 }
 
 // ─────────────────────────────────────────────────────────────── the issues
@@ -632,10 +673,14 @@ export async function createProduct(draft: unknown): Promise<ActionState & { id?
   const input = read.value;
 
   const at = now();
-  const drop = catalog.dropByNo.get(input.dropNo);
-  if (!drop) return failed("ADD_PRODUCT", "NOT_FOUND", dropSubject(input.dropNo));
-  if (dropState(drop, new Date(at)) === "CLOSED") {
-    return failed("ADD_PRODUCT", "DROP_CLOSED", dropSubject(input.dropNo));
+  // A fixed style (slice B5) belongs to no issue: no window to ask about.
+  const issue = input.dropNo;
+  if (issue !== null) {
+    const drop = catalog.dropByNo.get(issue);
+    if (!drop) return failed("ADD_PRODUCT", "NOT_FOUND", dropSubject(issue));
+    if (dropState(drop, new Date(at)) === "CLOSED") {
+      return failed("ADD_PRODUCT", "DROP_CLOSED", dropSubject(issue));
+    }
   }
 
   const result = await call<string>("admin_add_product", {
@@ -644,8 +689,8 @@ export async function createProduct(draft: unknown): Promise<ActionState & { id?
   });
   if (!result.ok) {
     const subject =
-      result.failure === "NOT_FOUND" || result.failure === "DROP_CLOSED"
-        ? dropSubject(input.dropNo)
+      (result.failure === "NOT_FOUND" || result.failure === "DROP_CLOSED") && issue !== null
+        ? dropSubject(issue)
         : colorLabelOf(result.detail);
     return failed("ADD_PRODUCT", result.failure, subject);
   }
