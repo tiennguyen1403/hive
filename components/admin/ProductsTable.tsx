@@ -24,7 +24,7 @@ import {
   stylesLine,
 } from "@/lib/admin-products";
 import { hrefWith, type Query } from "@/lib/admin-url";
-import { STALE_STOCK_MESSAGE } from "@/lib/catalog-admin";
+import { RESTOCK_STALE_MESSAGE } from "@/lib/catalog-admin";
 import { styleNameHas } from "@/lib/catalog-query";
 import { dropState } from "@/lib/drop";
 import {
@@ -325,7 +325,7 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
               say(result.message ?? result.errors.form ?? "", result.ok ? "ok" : "error");
               // A shelf that moved elsewhere: the sheet stays open and reads
               // the numbers again, so the next press adds to what is there.
-              if (!result.ok && result.errors.form === STALE_STOCK_MESSAGE) router.refresh();
+              if (!result.ok && result.errors.form === RESTOCK_STALE_MESSAGE) router.refresh();
             });
           });
         }}

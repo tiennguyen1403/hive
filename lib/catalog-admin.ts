@@ -119,6 +119,15 @@ export type CatalogMove =
 export const STALE_STOCK_MESSAGE = "Tồn kho đã đổi ở nơi khác — tải lại rồi sửa tiếp";
 
 /**
+ * The same refusal said by the "Nhập thêm" sheet (v3 slice 12 fix): that
+ * sheet reads the shelf again by itself and keeps the pieces typed, so
+ * "tải lại rồi sửa tiếp" would ask for what already happened — what is left
+ * is to look at the new numbers and send again. The adjustment sheet keeps
+ * `STALE_STOCK_MESSAGE`.
+ */
+export const RESTOCK_STALE_MESSAGE = "Tồn kho vừa đổi ở nơi khác — kiểm lại số rồi gửi";
+
+/**
  * The sentence for a move that did not go through, naming what to do next.
  * `subject` is what the move was about, as the screen names it: a style's
  * name, "Số 07", a code.
@@ -148,7 +157,7 @@ export function catalogFailureMessage(
       }
       return "Chưa lưu được. Thử lại sau ít phút.";
     case "STALE":
-      return STALE_STOCK_MESSAGE;
+      return move === "RESTOCK" ? RESTOCK_STALE_MESSAGE : STALE_STOCK_MESSAGE;
     case "UPLOAD_BAD":
       return subject
         ? `Không tải được ảnh ${subject}: tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB`

@@ -9,6 +9,7 @@ import {
   MAX_RESTOCK_PER_CELL,
   NO_CHANGE_MESSAGE,
   RESTOCK_BAD_MESSAGE,
+  RESTOCK_STALE_MESSAGE,
   SLUG_TAKEN_MESSAGE,
   STALE_STOCK_MESSAGE,
   borrowedPhotoKeys,
@@ -565,8 +566,18 @@ describe("readRestockCells · 'Nhập thêm', as its sheet sends it (slice B5)",
 
   it("says why a restock was refused", () => {
     expect(catalogFailureMessage("RESTOCK", "BAD_INPUT")).toBe(RESTOCK_BAD_MESSAGE);
-    expect(catalogFailureMessage("RESTOCK", "STALE")).toBe(STALE_STOCK_MESSAGE);
     expect(catalogFailureMessage("RESTOCK", "NOT_FOUND", "ÁO THUN TRƠN")).toBe("Không tìm thấy mẫu ÁO THUN TRƠN.");
+  });
+
+  it("says a shelf that moved under the restock sheet in the sheet's own terms (slice 12 fix)", () => {
+    // The restock sheet reads the shelf again and keeps what was typed, so
+    // "tải lại rồi sửa tiếp" would ask for what already happened.
+    expect(catalogFailureMessage("RESTOCK", "STALE")).toBe(RESTOCK_STALE_MESSAGE);
+    expect(catalogFailureMessage("RESTOCK", "STALE", "HOODIE TRƠN")).toBe(RESTOCK_STALE_MESSAGE);
+    expect(RESTOCK_STALE_MESSAGE).toBe("Tồn kho vừa đổi ở nơi khác — kiểm lại số rồi gửi");
+    // The adjustment sheet keeps its own sentence.
+    expect(catalogFailureMessage("ADJUST_STOCK", "STALE")).toBe(STALE_STOCK_MESSAGE);
+    expect(RESTOCK_STALE_MESSAGE).not.toBe(STALE_STOCK_MESSAGE);
   });
 });
 

@@ -284,6 +284,9 @@ function AdjustSheet({ product, pending = false, onClose, onSave, onBlocked }: A
  * to ADD, 0 to 999, starting at 0. No reason to choose: the reason is the
  * mode ("Nhập thêm", `admin_adjust_stock()`, slice B5). The note is optional,
  * as in the adjustment. The confirm counts the pieces: "Nhập thêm 14 chiếc".
+ * No total line under the note, unlike the adjustment: the confirm and the
+ * "Cộng" column already say what is added, and the user wants no count said
+ * twice (slice 12 fix).
  *
  * The shelf numbers are the catalogue's, read when the sheet opens: the
  * table hands this sheet its style from the catalogue by id, so when a save
@@ -310,7 +313,6 @@ function RestockSheet({ product, pending = false, onClose, onRestock }: RestockP
   const cells = restockCells(product, draft);
   const total = restockTotal(product, draft);
   const button = restockButton(total);
-  const shelf = onHand(product);
 
   const set = (color: ColorKey, size: Size, value: number) =>
     setDraft((d) => withAdd(d, color, size, value));
@@ -393,10 +395,6 @@ function RestockSheet({ product, pending = false, onClose, onRestock }: RestockP
       </table>
 
       <NoteField value={note} onChange={setNote} placeholder="VD: về lại size M" />
-      <p className="fine3">
-        Trên kệ sau khi lưu: <b>{shelf + total}</b>
-        {total > 0 ? ` (+${total})` : ""} · {cells.length} ô đổi.
-      </p>
     </AdminSheet>
   );
 }
