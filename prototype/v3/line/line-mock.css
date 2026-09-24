@@ -1,8 +1,8 @@
 /* Fixed styles ("cố định"), drawn over the snapshots (line-mock.js).
-   Round 3 (25/09): a fixed style looks like every other style and shows no
-   stock figure; an issue has its own page; a style in an issue wears the
-   issue's plate on its photo. Only what the store does not have yet is styled
-   here; values are the store's tokens. */
+   Round 4 (25/09): the issue's plate sits at the bottom left of the photo and
+   SOLD OUT, top left, comes down to the plate's size; an issue's style
+   carries its code in front of its name. Only what the store does not have
+   yet is styled here; values are the store's tokens. */
 
 /* ── a photo that has not been taken yet: the garment's flat on the plate ─ */
 .s .ph{ position:relative; display:block; background:var(--plate); }
@@ -23,10 +23,9 @@
 
 /* ── the issue's plate on a photo: the nav's `.itag`, declaration for
    declaration (nav.css + desktop.css) — cloth, a honey rule inset 2px, a
-   bolt at each end, Unbounded 800. Top left. When the style has sold out,
-   SOLD OUT stands under it. ─────────────────────────────────────────────── */
+   bolt at each end, Unbounded 800. Bottom left: the top left is SOLD OUT's. */
 .s .card3 .sotag{ --pl:var(--stage); --pi:var(--brand);
-  position:absolute; left:10px; top:10px; z-index:1;
+  position:absolute; left:10px; bottom:10px; z-index:1;
   display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;
   height:28px; padding:0 17px; border-radius:var(--r-plate, 5px);
   background:
@@ -37,33 +36,66 @@
   color:var(--pi); font-family:var(--font-display); font-weight:var(--fw-display);
   font-size:var(--fs-xs); line-height:1; letter-spacing:.1em; text-transform:uppercase;
   pointer-events:none; }
-.s .card3 .imgbox:has(.sotag) .stamp{ top:44px; }
+
+/* ── SOLD OUT at the plate's size: the same height and type as the plate,
+   its own cloth, border and stitched seam kept (cards.css). The padding is
+   the plate's less the bolts it does not have. ─────────────────────────── */
+.s .card3 .stamp{ display:inline-flex; align-items:center; height:28px; padding:0 10px;
+  font-size:var(--fs-xs); line-height:1; letter-spacing:.1em; }
+
 @media (min-width:900px){
   .s .card3 .sotag{ height:32px; padding:0 19px; font-size:var(--fs-sm);
     background:
       radial-gradient(circle at 9.5px 50%, var(--pi) 0 1.75px, transparent 2.25px),
       radial-gradient(circle at calc(100% - 9.5px) 50%, var(--pi) 0 1.75px, transparent 2.25px),
       var(--pl); }
-  .s .card3 .imgbox:has(.sotag) .stamp{ top:48px; }
+  .s .card3 .stamp{ height:32px; padding:0 12px; font-size:var(--fs-sm); }
 }
+
+/* ── an issue's code in front of a style's name: "S05 – KHÓI". Set as a
+   code, not as part of the name: the text face, 600, tabular, secondary ink
+   — Unbounded's zero is the letter O, and "S05" read "SO5"; ten names in a
+   row read as ten names. `data-pfx="ink"` is the board's other reading: the
+   code in the name's own type. ────────────────────────────────────────── */
+.s .pfx{ font-family:var(--font-sans); font-weight:600; font-size:.9em; letter-spacing:.02em;
+  font-variant-numeric:tabular-nums; color:var(--ink2); }
+.s .cover .pfx{ color:var(--stage-ink2); }
+html[data-pfx="ink"] .s .pfx{ font:inherit; letter-spacing:inherit; color:inherit; }
+
+/* A card too narrow for name, leader and price on one line gives the name
+   its own: the leader and the price take the line under it, together. */
+.s .card3{ container-type:inline-size; }
+@container (max-width:260px){ .s .card3 .toc .n{ flex-basis:100%; } }
 
 /* ── the back office ───────────────────────────────────────────────────── */
 .s .selwrap.open{ position:relative; }
 .s .selwrap.open .menu3{ position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:5; }
 .s .menu3 .mk{ display:inline-flex; width:12px; flex:none; }
 .s .menu3 .mk svg{ width:12px; height:9px; }
-/* A fixed style running low: which sizes, in red, and the button to restock. */
+/* The row menu, open: the store portals it to <body> at a fixed position; a
+   snapshot scrolls, so here it is placed on the page. */
+.menu3.pinned{ position:absolute; }
+.s.adm3 .rowmenu[aria-expanded="true"]{ background:var(--plate); color:var(--ink); }
+/* A fixed style running low: which sizes, in red, under its stock. */
 .s.adm3 td .stockcell{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; min-width:120px; }
 .s.adm3 td .stockcell > span{ white-space:nowrap; }
 .s.adm3 td .stockcell .lownote{ color:var(--hot); font-size:var(--fs-xs); font-weight:600; }
-/* The restock button sits with the row's menu, so every button in the table stands in one column. */
-.s.adm3 td .rowacts{ display:flex; align-items:center; justify-content:flex-end; gap:8px; }
-.s.adm3 td .rowacts .restock{ height:30px; padding:0 12px; white-space:nowrap; }
 .s.adm3 td.hotsize{ color:var(--hot); font-weight:600; }
 /* The tab says it too, so a manager on another tab sees there is restocking to do. */
 .s .stabs .lowdot{ display:inline-block; width:7px; height:7px; margin-left:6px; border-radius:99px;
   background:var(--hot); vertical-align:1px; }
+/* The name field of an issue's style: the issue's code is a fixed segment at
+   the head of the field, on the plate the system gives what cannot be typed
+   (`.inp[readonly]`), so it never reads as the placeholder beside it. */
+.s .pfxin{ position:relative; display:block; }
+.s .pfxin .pfx{ position:absolute; left:1px; top:1px; bottom:1px; display:flex; align-items:center;
+  padding:0 11px 0 12px; border-right:1px solid var(--hair); border-radius:3px 0 0 3px;
+  background:var(--plate); color:var(--ink); font-size:var(--fs-body); font-weight:600; letter-spacing:.02em;
+  line-height:1; white-space:nowrap; pointer-events:none; }
+html[data-pfx="ink"] .s .pfxin .pfx{ font-family:var(--font-sans); font-size:var(--fs-body); font-weight:600; letter-spacing:.02em; }
+.s .pfxin .inp{ padding-left:76px; }
 
 /* ── what is new, when the board asks to see it ────────────────────────── */
 html[data-mark="1"] [data-new]{ outline:2px dashed var(--brand); outline-offset:4px; border-radius:2px; }
 html[data-mark="1"] .card3 [data-new]{ outline-offset:2px; }
+html[data-mark="1"] .menu3 [data-new]{ outline-offset:-3px; }

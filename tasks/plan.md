@@ -1910,3 +1910,39 @@ Bảng `prototype/v3/line.html` vẽ lại:
 
 Chữ còn sửa đúng hai câu sẽ sai: câu mở Giới thiệu, và FAQ "Mẫu không mang biển Số thì sẽ có lại". **Chờ người dùng chọn cách đặt
 tên.**
+
+**25/09, mẫu cố định vòng 4** (`/impeccable`). Người dùng chốt trên vòng 3:
+- **Biển Số trên ảnh:** xuống góc **trái dưới**; SOLD OUT ở góc trái trên, **nhỏ bằng biển Số**.
+- **Trang chủ lúc Số đang mở:** cũng có danh sách mẫu đang bán, như lúc giữa hai số.
+- **Trang mẫu:** bỏ hai chữ phía trên các nút màu ("Màu" và "Đen · còn 10").
+- **Quản trị, danh sách mẫu:** "Nhập thêm" vào menu thao tác (⋯) của hàng.
+- **Quản trị, Thêm mẫu:** bỏ câu "Số lượng điền ở đây là số sẽ cắt. Một số cắt một lần và không may thêm, nên con số này là toàn
+  bộ số hàng sẽ tồn tại."
+- **Tên mẫu cố định:** tên mô tả bình thường.
+- **Tên mẫu theo Số:** thêm tiền tố, ví dụ "S05 - KHÓI".
+
+Bảng `prototype/v3/line.html` vẽ lại:
+- **Biển và SOLD OUT:**
+  - SOLD OUT giữ vải, viền và đường chỉ đứt của nó;
+  - cao 28 / 32 px, chữ 11 / 12 px, bằng biển;
+  - lệnh đổi cỡ áp cho mọi thẻ.
+- **Tám tên:** ÁO THUN TRƠN, ÁO THUN TAY DÀI, HOODIE TRƠN, ÁO KHOÁC DÙ, GILE PHAO, SƠ MI OXFORD, QUẦN KAKI, QUẦN SHORT NỈ.
+  Đường dẫn là `ao-thun-tron`…
+- **Tiền tố:**
+  - "S05 – KHÓI", gạch ngang có cách hai bên, không ngắt dòng giữa "S05" và gạch;
+  - đi theo tên ở mọi chỗ: thẻ, bìa, hé lộ, trang mẫu, đường dẫn, thanh mua;
+  - đề xuất đặt mã bằng font chữ thường 600, mực phụ, vì số 0 của Unbounded là chữ O ("S05" đọc thành "SO5");
+  - bảng có lựa chọn "Như tên" để so.
+- **Thẻ hẹp** (< 260 px, tức điện thoại): tên đứng một dòng; dòng chấm và giá xuống dòng dưới cùng nhau.
+- **Trang chủ lúc Số đang mở:** "Đang bán" (sáu mẫu cố định, "Xem tất cả 18 mẫu") nằm sau "Trong số này". "Theo loại" bỏ lối
+  xem tất cả để không lặp.
+- **Trang mẫu:** bỏ cả dòng nhãn màu ở mọi trang mẫu. Bảng có thêm khung KHÓI để xem tiền tố trên tiêu đề.
+- **Quản trị:**
+  - menu ⋯ của mẫu cố định: Nhập thêm (đầu), Sửa mẫu, Điều chỉnh tồn kho, Xem ở cửa hàng;
+  - khung mở sẵn menu của mẫu sắp hết đầu tiên;
+  - form: ô tên có "S06 –" gắn cố định trên nền `--plate` khi chọn một Số.
+- **Tự bỏ thêm, cùng kiểu câu người dùng bỏ** (ghi trong bảng "Chữ đổi theo" để người dùng thấy):
+  - câu dưới ô Số "Tạo cho Số chưa mở thì lên kệ đúng giờ mở…";
+  - vế "Chốt lúc cắt: sau đó không thêm màu." ở ô Màu.
+
+**Chờ người dùng duyệt.**

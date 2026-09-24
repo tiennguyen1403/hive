@@ -3,21 +3,22 @@
    It restores the untouched page and re-draws on every change, so the board
    can flip an option without reloading the frame.
 
-   Round 3 (25/09/2026), the user's calls on round 2:
-   · an issue has its own page (/so/5); `/products` is every style on sale,
-     with no title and no count above the tabs;
-   · a style in an issue wears the issue's plate — the nav's own plate —
-     at the top left of its photo;
-   · a fixed style shows no stock figures to a shopper, and nothing anywhere
-     explains what a fixed style is; the back office calls it "Cố định",
-     puts that tab first and flags the ones running low;
-   · between two issues the home page shows some styles, not just families;
-   · new names for the eight.
+   Round 4 (25/09/2026), the user's calls on round 3:
+   · the issue's plate moves to the bottom left of the photo; SOLD OUT stays
+     top left, cut down to the plate's size;
+   · while an issue is open the home page shows "Đang bán" too, as between
+     issues;
+   · the product page loses the label row above the colour buttons;
+   · the back office's restock goes into the row's ⋯ menu;
+   · the add-style form loses its explaining sentences;
+   · a fixed style has a plain descriptive name; an issue's style carries its
+     issue as a prefix, "S05 – KHÓI".
 
    Options, from the query string and then from the board by postMessage:
      view  = all | issue       (products) every style, or the issue's own page
-     ten   = nghe | vatlieu | mota   which naming scheme the eight carry
+     pdp   = fixed | issue     (product) a fixed style's page, or KHÓI's
      sell  = menu | fixed      (admin-new) the field's menu open, or "Cố định" chosen
+     pfx   = soft | ink        the prefix in secondary ink, or in the name's own
      mark  = 1 | 0             outline what is new
      at    = a selector to scroll to on the first draw */
 (() => {
@@ -33,42 +34,50 @@
   const FAMS = ["TEE", "HOODIE", "JACKET", "VEST", "SHIRT", "PANTS"];
   const FAM = { TEE: "Áo thun", HOODIE: "Hoodie", JACKET: "Khoác", VEST: "Gile", SHIRT: "Sơ mi", PANTS: "Quần" };
   const ISSUE = { no: 5, label: "Số 05", styles: 10 };
+  const NEXT = { no: 6 };
   /** The back office's word for a style that belongs to no issue. */
   const FIXED = "Cố định";
   /** A fixed style is running low when any colour has two or fewer of any size. */
   const LOW_AT = 2;
 
-  // Three ways to name the eight. The issues are named from weather and earth,
-  // things that come and go.
-  const SCHEMES = {
-    nghe: { t: "Đồ nghề may", names: { sap: "KIM", mat: "SUỐT", ken: "KÉO", canh: "THƯỚC", nhong: "GHIM", phan: "CÚC", tho: "PHẤN", dan: "KHUY" } },
-    vatlieu: { t: "Vật liệu bền", names: { sap: "GỖ", mat: "TRE", ken: "ĐỒNG", canh: "THÉP", nhong: "KẼM", phan: "SỨ", tho: "GẠCH", dan: "SẮT" } },
-    mota: { t: "Tên mô tả", names: { sap: "THUN TRƠN", mat: "THUN TAY DÀI", ken: "HOODIE TRƠN", canh: "KHOÁC DÙ", nhong: "GILE PHAO", phan: "SƠ MI OXFORD", tho: "QUẦN KAKI", dan: "SHORT NỈ" } },
-  };
+  /** An issue's style is named after its issue: "S05", then the name. */
+  const code = (no) => "S" + String(no).padStart(2, "0");
+  const fullName = (no, n) => `${code(no)} – ${n}`;
 
-  // The eight proposed styles: plain basics in the six families, S–XL. Stock
-  // is per colour, S M L XL; the first colour is the card's photo. Three run
-  // low (two of them have a size gone), so the back office has something to
-  // flag.
+  // The eight: plain basics in the six families, S–XL, each called what it
+  // is. Stock is per colour, S M L XL; the first colour is the card's photo.
+  // Three run low (two of them have a size gone), so the back office has
+  // something to flag.
   const LINE = [
-    { slug: "sap", kind: "Áo thun", fam: "TEE", mat: "Cotton 220gsm", fit: "REGULAR", p: 400000,
+    { slug: "ao-thun-tron", name: "ÁO THUN TRƠN", kind: "Áo thun", fam: "TEE", mat: "Cotton 220gsm", fit: "REGULAR", p: 400000,
       c: ["white", "black", "grey"], shape: "tee", st: { white: [10, 14, 11, 6], black: [8, 12, 9, 5], grey: [6, 9, 7, 4] } },
-    { slug: "mat", kind: "Áo thun tay dài", fam: "TEE", mat: "Cotton 220gsm", fit: "REGULAR", p: 450000,
+    { slug: "ao-thun-tay-dai", name: "ÁO THUN TAY DÀI", kind: "Áo thun tay dài", fam: "TEE", mat: "Cotton 220gsm", fit: "REGULAR", p: 450000,
       c: ["black", "white"], shape: "longsleeve", st: { black: [5, 8, 6, 3], white: [6, 7, 5, 3] } },
-    { slug: "ken", kind: "Áo hoodie", fam: "HOODIE", mat: "Nỉ bông 340gsm", fit: "OVERSIZE", p: 750000,
+    { slug: "hoodie-tron", name: "HOODIE TRƠN", kind: "Áo hoodie", fam: "HOODIE", mat: "Nỉ bông 340gsm", fit: "OVERSIZE", p: 750000,
       c: ["grey", "black", "cream"], shape: "hoodie", st: { grey: [5, 0, 4, 2], black: [4, 0, 6, 3], cream: [3, 0, 2, 2] } },
-    { slug: "canh", kind: "Áo khoác dù", fam: "JACKET", mat: "Dù 1 lớp", fit: "OVERSIZE", p: 850000,
+    { slug: "ao-khoac-du", name: "ÁO KHOÁC DÙ", kind: "Áo khoác dù", fam: "JACKET", mat: "Dù 1 lớp", fit: "OVERSIZE", p: 850000,
       c: ["black", "navy"], shape: "jacket", st: { black: [3, 5, 4, 3], navy: [3, 4, 3, 3] } },
-    { slug: "nhong", kind: "Áo gile phao", fam: "VEST", mat: "Dù chần bông", fit: "REGULAR", p: 750000,
+    { slug: "gile-phao", name: "GILE PHAO", kind: "Áo gile phao", fam: "VEST", mat: "Dù chần bông", fit: "REGULAR", p: 750000,
       c: ["black"], shape: "vest", st: { black: [3, 5, 5, 2] } },
-    { slug: "phan", kind: "Áo sơ mi oxford", fam: "SHIRT", mat: "Cotton oxford", fit: "REGULAR", p: 590000,
+    { slug: "so-mi-oxford", name: "SƠ MI OXFORD", kind: "Áo sơ mi oxford", fam: "SHIRT", mat: "Cotton oxford", fit: "REGULAR", p: 590000,
       c: ["white", "navy"], shape: "shirt", st: { white: [4, 7, 6, 3], navy: [3, 5, 4, 3] } },
-    { slug: "tho", kind: "Quần kaki", fam: "PANTS", mat: "Kaki 280gsm", fit: "REGULAR", p: 650000,
+    { slug: "quan-kaki", name: "QUẦN KAKI", kind: "Quần kaki", fam: "PANTS", mat: "Kaki 280gsm", fit: "REGULAR", p: 650000,
       c: ["cream", "black"], shape: "trousers", st: { cream: [3, 5, 4, 3], black: [4, 7, 6, 3] } },
-    { slug: "dan", kind: "Quần short nỉ", fam: "PANTS", mat: "Nỉ da cá 300gsm", fit: "REGULAR", p: 450000,
+    { slug: "quan-short-ni", name: "QUẦN SHORT NỈ", kind: "Quần short nỉ", fam: "PANTS", mat: "Nỉ da cá 300gsm", fit: "REGULAR", p: 450000,
       c: ["grey", "black"], shape: "shorts", st: { grey: [5, 6, 5, 0], black: [6, 9, 7, 0] } },
   ];
   const bySlug = Object.fromEntries(LINE.map((s) => [s.slug, s]));
+  /** The six the home page shows under "Đang bán". */
+  const HOME_SIX = ["ao-thun-tron", "hoodie-tron", "ao-khoac-du", "so-mi-oxford", "quan-kaki", "ao-thun-tay-dai"];
+
+  // Issue styles the board shows by name, as the store has them.
+  const ISSUE_SAMPLES = [
+    { no: 5, name: "KHÓI", kind: "Áo thun oversize" },
+    { no: 5, name: "SƯƠNG", kind: "Áo khoác dù" },
+    { no: 5, name: "MUỐI", kind: "Quần jogger" },
+    { no: 6, name: "SỎI", kind: "Áo khoác dù" },
+    { no: 6, name: "NGÓI", kind: "Áo hoodie in" },
+  ];
 
   // "Theo loại" once it counts everything on sale: the issue's ten and the
   // eight. `img` reuses the row photo the snapshot already has; `flat` draws.
@@ -76,18 +85,18 @@
     { fam: "TEE", n: 5, d: "oversize, cơ bản, tay lỡ và tay dài", from: 390000, img: "TEE" },
     { fam: "HOODIE", n: 3, d: "trơn và in", from: 750000, img: "HOODIE" },
     { fam: "JACKET", n: 3, d: "dù và bomber", from: 850000, img: "JACKET" },
-    { fam: "VEST", n: 1, d: "gile phao", from: 750000, flat: "nhong" },
+    { fam: "VEST", n: 1, d: "gile phao", from: 750000, flat: "gile-phao" },
     { fam: "SHIRT", n: 2, d: "sơ mi dệt và oxford", from: 590000, img: "SHIRT" },
     { fam: "PANTS", n: 4, d: "jogger, cargo, kaki và short", from: 450000, img: "PANTS" },
   ];
   // Between two issues only the eight are on sale.
   const INDEX_GAP = [
-    { fam: "TEE", n: 2, d: "cơ bản và tay dài", from: 400000, flat: "sap" },
-    { fam: "HOODIE", n: 1, d: "trơn", from: 750000, flat: "ken" },
-    { fam: "JACKET", n: 1, d: "dù", from: 850000, flat: "canh" },
-    { fam: "VEST", n: 1, d: "gile phao", from: 750000, flat: "nhong" },
-    { fam: "SHIRT", n: 1, d: "oxford", from: 590000, flat: "phan" },
-    { fam: "PANTS", n: 2, d: "kaki và short", from: 450000, flat: "tho" },
+    { fam: "TEE", n: 2, d: "cơ bản và tay dài", from: 400000, flat: "ao-thun-tron" },
+    { fam: "HOODIE", n: 1, d: "trơn", from: 750000, flat: "hoodie-tron" },
+    { fam: "JACKET", n: 1, d: "dù", from: 850000, flat: "ao-khoac-du" },
+    { fam: "VEST", n: 1, d: "gile phao", from: 750000, flat: "gile-phao" },
+    { fam: "SHIRT", n: 1, d: "oxford", from: 590000, flat: "so-mi-oxford" },
+    { fam: "PANTS", n: 2, d: "kaki và short", from: 450000, flat: "quan-kaki" },
   ];
 
   // ── garment flats: a stand-in drawing on the plate until the photo exists.
@@ -169,11 +178,14 @@
   const outSizes = (s) => SIZES.filter((z, i) => s.c.every((c) => s.st[c][i] === 0));
   const lowCells = (s) => s.c.flatMap((c) => SIZES.map((z, i) => ({ c, z, n: s.st[c][i] }))).filter((x) => x.n <= LOW_AT);
   const isLow = (s) => lowCells(s).length > 0;
-  const lower = (k) => k.charAt(0).toLocaleLowerCase("vi") + k.slice(1);
   const nw = (el) => (el && el.setAttribute("data-new", ""), el);
 
+  /** The prefix, as the store would print it: the code and the dash never
+      part (a no-break space), the name follows. */
+  const pfxHtml = (no) => `<span class="pfx">${code(no)} –</span> `;
+
   // The board (line.html) loads this file for the data and the flats only.
-  window.LINE_DATA = { COLORS, SIZES, FAM, LINE, ISSUE, SCHEMES, flat, vnd, onHand, outSizes, isLow };
+  window.LINE_DATA = { COLORS, SIZES, FAM, LINE, ISSUE, ISSUE_SAMPLES, code, fullName, pfxHtml, flat, vnd, onHand, outSizes, isLow };
   const snap = document.documentElement.dataset.snap;
   if (!snap) return;
 
@@ -181,31 +193,46 @@
     '<svg class="ic ic sm" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="--il:0.1354;--ir:0.1354"><path d="M7.5 7.67V6.7c0-2.25 1.81-4.46 4.06-4.67a4.5 4.5 0 0 1 4.94 4.48v1.38M9 22h6c4.02 0 4.74-1.61 4.95-3.57l.75-6C20.97 9.99 20.27 8 16 8H8c-4.27 0-4.97 1.99-4.7 4.43l.75 6C4.26 20.39 4.98 22 9 22Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15.495 12h.01M8.495 12h.008" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
   const TICK =
     '<svg viewBox="7.75 9.17 8.5 5.66" fill="none" aria-hidden="true"><path d="m7.75 12 2.83 2.83 5.67-5.66" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+  // The row menu's glyphs, as the store's <Icon> renders them (components/icon/paths.ts).
+  const ICON = {
+    box: '<svg class="ic" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="--il:0.0996;--ir:0.0992"><path d="M3.17 7.44 12 12.55l8.77-5.08M12 21.61v-9.07" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9.93 2.48 4.59 5.45c-1.21.67-2.2 2.35-2.2 3.73v5.65c0 1.38.99 3.06 2.2 3.73l5.34 2.97c1.14.63 3.01.63 4.15 0l5.34-2.97c1.21-.67 2.2-2.35 2.2-3.73V9.18c0-1.38-.99-3.06-2.2-3.73l-5.34-2.97c-1.15-.64-3.01-.64-4.15 0Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 13.24V9.58L7.51 4.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>',
+    edit: '<svg class="ic" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="--il:0.1250;--ir:0.1250"><path d="m13.26 3.6-8.21 8.69c-.31.33-.61.98-.67 1.43l-.37 3.24c-.13 1.17.71 1.97 1.87 1.77l3.22-.55c.45-.08 1.08-.41 1.39-.75l8.21-8.69c1.42-1.5 2.06-3.21-.15-5.3-2.2-2.07-3.87-1.34-5.29.16Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path><path d="M11.89 5.05a6.126 6.126 0 0 0 5.45 5.15M3 22h18" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path></svg>',
+    swap: '<svg class="ic" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="--il:0.1458;--ir:0.1458"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M20.5 14.99l-5.01 5.02M3.5 14.99h17M3.5 9.01l5.01-5.02M20.5 9.01h-17"></path></svg>',
+    eye: '<svg class="ic" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="--il:0.0925;--ir:0.0921"><path d="M15.58 12c0 1.98-1.6 3.58-3.58 3.58S8.42 13.98 8.42 12s1.6-3.58 3.58-3.58 3.58 1.6 3.58 3.58Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 20.27c3.53 0 6.82-2.08 9.11-5.68.9-1.41.9-3.78 0-5.19-2.29-3.6-5.58-5.68-9.11-5.68-3.53 0-6.82 2.08-9.11 5.68-.9 1.41-.9 3.78 0 5.19 2.29 3.6 5.58 5.68 9.11 5.68Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>',
+  };
 
-  const name = (s) => SCHEMES[OPTS.ten]?.names[s.slug] || SCHEMES.nghe.names[s.slug];
+  /** Put the issue's code in front of a name the snapshot printed bare. */
+  function prefix(el, no) {
+    if (!el || $(".pfx", el)) return;
+    el.innerHTML = pfxHtml(no) + el.textContent.trim();
+  }
+  const prefixAll = (sel, no, root = document) => $$(sel, root).forEach((el) => prefix(el, no));
 
   // ── a card for a fixed style: the store's own `.card3`, with no stock
   // figure — only the sizes, a gone one struck through.
-  function card(s, { kind = false } = {}) {
+  function card(s) {
     const out = outSizes(s);
     const sizes = SIZES.map((z) => (out.includes(z) ? `<s>${z}</s>` : z)).join(" ");
-    const ct = kind ? `<span>${lower(s.kind)}</span>` : `<span>${sizes}</span>`;
     return h(
       `<div class="card3" data-fixed><div class="imgbox"><a class="img ph" href="/products/${s.slug}">${flat(s.shape, s.c[0])}<span class="tag">chờ ảnh</span></a></div>` +
-        `<a class="meta" href="/products/${s.slug}"><span class="toc"><span class="n">${name(s)}</span><span class="ld" aria-hidden="true"></span><span class="p">${vnd(s.p)}</span></span>` +
-        `<span class="ct">${ct}</span></a>` +
+        `<a class="meta" href="/products/${s.slug}"><span class="toc"><span class="n">${s.name}</span><span class="ld" aria-hidden="true"></span><span class="p">${vnd(s.p)}</span></span>` +
+        `<span class="ct"><span>${sizes}</span></span></a>` +
         `<div class="act"><button type="button" class="addbtn3">${BAG}Thêm vào giỏ</button></div></div>`,
     );
   }
 
-  // A style in an issue wears the issue's plate, top left of its photo — the
-  // nav's own plate. Not on the issue's page, where every style is the issue's.
+  // A style in an issue wears the issue's plate at the bottom left of its
+  // photo — the nav's own plate — wherever it stands among other styles. Not
+  // where every style is the issue's: its page, "Trong số này", "Cùng số".
   function plateIssueCards(root = document) {
     for (const c of $$(".card3:not([data-fixed])", root)) {
       const box = $(".imgbox", c);
-      if (box && !$(".sotag", box)) box.prepend(nw(h(`<span class="sotag">${ISSUE.label}</span>`)));
+      if (box && !$(".sotag", box)) box.append(nw(h(`<span class="sotag">${ISSUE.label}</span>`)));
     }
   }
+
+  // SOLD OUT keeps the top left, at the plate's size, on every card.
+  const markStamps = () => $$(".card3 .stamp").forEach(nw);
 
   // The countdown is drawn in the browser; a snapshot has only its "00".
   function clock(el, digits) {
@@ -214,6 +241,19 @@
       b.classList.remove("wait");
       b.textContent = digits[i];
     });
+  }
+
+  // ── "Đang bán": six styles on sale that no section above already shows,
+  // and the way to all of them. The same section open or between issues.
+  function onSaleSection(total) {
+    const sec = nw(
+      h(
+        `<section class="sec" aria-labelledby="h-sale"><div class="hd"><h2 id="h-sale">Đang bán</h2>` +
+          `<a class="more" href="/products">Xem tất cả ${total} mẫu</a></div><div class="grid3"></div></section>`,
+      ),
+    );
+    $(".grid3", sec).append(...HOME_SIX.map((k) => card(bySlug[k])));
+    return sec;
   }
 
   // ── "Theo loại", counting everything on sale
@@ -231,10 +271,18 @@
       .join("");
   }
 
+  // An issue is open: its cover, its ten, then what else is on sale, then
+  // every family.
   function home() {
     const clocks = $$(".cover .clock");
     clock(clocks[0], ["04", "19", "10"]);
     clock(clocks[1], ["11", "19", "10"]);
+    prefixAll(".cover.open .tocrow .n", ISSUE.no);
+    prefixAll(".cover.soon figcaption b", NEXT.no);
+    const inIssue = $("#h-in")?.closest("section");
+    prefixAll(".card3 .toc .n", ISSUE.no, inIssue);
+    inIssue?.after(onSaleSection(ISSUE.styles + LINE.length));
+
     const index = $(".index");
     if (!index) return;
     const photos = {};
@@ -243,34 +291,23 @@
       photos[fam] = $("img", row)?.outerHTML || "";
     }
     index.innerHTML = indexRows(INDEX_ALL, photos);
-    const sec = nw(index.closest("section"));
-    $(".hd .meta", sec).textContent = "đang bán";
-    $(".hd", sec).append(h(`<a class="more" href="/products">Xem tất cả 18 mẫu</a>`));
+    $(".hd .meta", index.closest("section")).textContent = "đang bán";
   }
 
   // Between two issues: Số 05 has closed, Số 06 has not opened. The snapshot
   // is the store's own page for Số 06 while Số 05 still sells, so the parts
-  // that say Số 05 is open are put right here. What is on sale is shown as
-  // styles, the way "Trong số này" shows an issue's, then by family.
+  // that say Số 05 is open are put right here.
   function homeGap() {
     $(".nav3 .itag")?.remove(); // the plate shows only while an issue sells (slice 10)
     clock($(".cover .clock"), ["05", "19", "10"]);
-    const onSale = nw(
-      h(
-        `<section class="sec" aria-labelledby="h-sale"><div class="hd"><h2 id="h-sale">Đang bán</h2>` +
-          `<a class="more" href="/products">Xem tất cả ${LINE.length} mẫu</a></div>` +
-          `<div class="grid3"></div></section>`,
-      ),
-    );
-    $(".grid3", onSale).append(...["sap", "ken", "canh", "phan", "tho", "mat"].map((k) => card(bySlug[k])));
+    prefixAll(".cover.soon figcaption b", NEXT.no);
     const byFamily = nw(
       h(
         `<section class="sec" aria-labelledby="h-fam"><div class="hd"><h2 id="h-fam">Theo loại</h2>` +
           `<span class="meta">đang bán</span></div><div class="index">${indexRows(INDEX_GAP, {})}</div></section>`,
       ),
     );
-    const wrap = $("main .wrap3");
-    wrap?.prepend(onSale, byFamily);
+    $("main .wrap3")?.prepend(onSaleSection(LINE.length), byFamily);
     const past = $("p.past");
     if (past) past.innerHTML = '<span>Số 05 · đã đóng 29/09 · 172 / 181 đã bán</span><a class="lnk" href="/so/5">Xem lại</a>';
     const cal = $$(".foot3 .cal li");
@@ -347,7 +384,10 @@
   }
 
   function products() {
-    // The issue's own page, /so/5, is today's list word for word.
+    const grid = $(".listing3 .grid3");
+    prefixAll(".card3 .toc .n", ISSUE.no, grid);
+    markStamps();
+    // The issue's own page, /so/5: today's list, its names now carrying the code.
     if (OPTS.view === "issue") return;
 
     const plate = $(".nav3 .itag");
@@ -358,7 +398,7 @@
     // keeps its heading for a screen reader.
     const row1 = $(".lhead .row1");
     row1?.replaceWith(h('<h1 class="sr-only">Tất cả mẫu</h1>'));
-    nw($(".lhead"))?.classList.add("bare");
+    $(".lhead")?.classList.add("bare");
 
     const f = facets(LINE);
     const nav3 = $(".tabs3");
@@ -372,19 +412,42 @@
     railAll(f);
     quickAll(f);
 
-    const grid = $(".listing3 .grid3");
     plateIssueCards(grid);
-    grid.append(...LINE.map((s) => nw(card(s))));
+    grid.append(...LINE.map((s) => card(s)));
     const bar = $(".listbar > span");
     if (bar) bar.textContent = `Hiện ${ISSUE.styles + LINE.length} / ${ISSUE.styles + LINE.length} mẫu`;
   }
 
+  // ── a style's page. Either kind: no label row above the colour buttons —
+  // each button already names its colour (and, in an issue, its count).
+  function product() {
+    const [colorFld] = $$(".ticket .fld");
+    $(".lbl", colorFld)?.remove();
+    nw($(".sw", colorFld));
+    if (OPTS.pdp === "issue") productIssue();
+    else productFixed(colorFld);
+  }
+
+  // KHÓI, an issue's style: the page as it is, the name carrying its code.
+  function productIssue() {
+    const n = "KHÓI";
+    document.title = `${fullName(ISSUE.no, n)} · HIVE`;
+    prefix($(".crumbs b"), ISSUE.no);
+    prefix(nw($(".ticket h1")), ISSUE.no);
+    prefix($(".buybar3 .who b"), ISSUE.no);
+    $(".gal")?.setAttribute("aria-label", `Ảnh ${fullName(ISSUE.no, n)}, 2 tấm`);
+    $(".sizes")?.setAttribute("aria-label", `Chọn size ${fullName(ISSUE.no, n)}`);
+    // "Cùng số 05" is all the issue's, so its cards carry no plate.
+    prefixAll(".card3 .toc .n", ISSUE.no, $("#h-rel")?.closest("section"));
+    markStamps();
+  }
+
   // A fixed style on its own page: no issue in the breadcrumb, no clock, and
   // no stock figure anywhere — the colours and sizes say only what can be had.
-  function product() {
-    const s = bySlug.sap;
+  function productFixed(colorFld) {
+    const s = bySlug["ao-thun-tron"];
     const first = s.c[0];
-    const n = name(s);
+    const n = s.name;
     document.title = `${n} · HIVE`;
 
     const crumbs = $(".crumbs");
@@ -392,7 +455,6 @@
     firstLink?.nextElementSibling?.remove(); // its "/"
     firstLink?.remove();
     $("b", crumbs).textContent = n;
-    nw(crumbs);
 
     const gal = $(".gal");
     gal.setAttribute("aria-label", `Ảnh ${n}, ${s.c.length} tấm`);
@@ -407,19 +469,17 @@
     $(".ticket .kick")?.remove();
     $(".ticket h1").textContent = n;
     $(".ticket .kind").textContent = `${s.kind} · ${s.mat}`;
-    nw($(".ticket .price")).textContent = vnd(s.p);
+    $(".ticket .price").textContent = vnd(s.p);
     $(".ticket .stock")?.remove();
 
-    const [colorFld, sizeFld] = $$(".ticket .fld");
-    nw($(".lbl span", colorFld)).textContent = COLORS[first][0];
     $(".sw", colorFld).innerHTML = s.c
       .map((c) => (
         `<button type="button" aria-pressed="${c === first}" aria-label="Màu ${COLORS[c][0]}">` +
         `<i style="background:${COLORS[c][1]}" aria-hidden="true"></i><span>${COLORS[c][0]}</span></button>`
       ))
       .join("");
+    const sizeFld = $$(".ticket .fld")[1];
     const mk = $(".sizes .mk", sizeFld)?.outerHTML || "";
-    nw($(".sizes", sizeFld));
     $(".sizes tbody", sizeFld).innerHTML = SIZES.map((z, i) => {
       const gone = s.st[first][i] === 0;
       return gone
@@ -435,7 +495,7 @@
     // "Cùng loại": the tees on sale, whichever kind of style they are.
     const rel = $("#h-rel")?.closest("section");
     if (rel) {
-      nw($("#h-rel", rel)).textContent = "Cùng loại";
+      $("#h-rel", rel).textContent = "Cùng loại";
       $(".hd .meta", rel).textContent = "áo thun, cùng tầm giá";
       const more = $(".more", rel);
       more.textContent = "Xem tất cả áo thun";
@@ -448,40 +508,40 @@
       $(".ct", khoi).innerHTML = "<span>còn 17</span><span>· áo thun oversize</span>";
       const img = $("img", khoi);
       img.setAttribute("src", "../../v2/img/khoi.webp");
-      img.setAttribute("alt", "KHÓI — màu Đen");
+      img.setAttribute("alt", `${fullName(ISSUE.no, "KHÓI")}, màu Đen`);
       $$("a", khoi).forEach((a) => a.setAttribute("href", "/products/khoi"));
-      $(".grid3", rel).replaceChildren(khoi, byName["NẮNG"], byName["CÁT"], card(bySlug.mat, { kind: true }));
+      $(".grid3", rel).replaceChildren(khoi, byName["NẮNG"], byName["CÁT"], card(bySlug["ao-thun-tay-dai"]));
+      prefixAll(".card3:not([data-fixed]) .toc .n", ISSUE.no, rel);
       plateIssueCards(rel);
     }
     const who = $(".buybar3 .who");
     if (who) who.innerHTML = `<b>${n}</b><span>${vnd(s.p)} · chưa chọn size</span>`;
   }
 
-  // The back office: "Cố định" is the first tab and the one open. A style
-  // running low says so three times over — the status, the sizes in red and
-  // a restock button — and those rows come first.
+  // ── the back office: "Cố định" is the first tab and the one open. A style
+  // running low says so in its status and in red under its stock, and those
+  // rows come first. Restocking is in the row's ⋯ menu, shown open on the
+  // first of them.
   function adminProducts() {
-    nw($(".top .sub")).textContent = "29 mẫu · 18 đang bán · tồn kho theo size và màu";
+    $(".top .sub").textContent = "29 mẫu · 18 đang bán · tồn kho theo size và màu";
     const stabs = $(".stabs");
     const first = $("a", stabs);
     first.classList.remove("on");
     first.removeAttribute("aria-current");
     const lowCount = LINE.filter(isLow).length;
-    const tab = nw(
+    stabs.prepend(
       h(
         `<a class="on" aria-current="page" href="/admin/products?fixed=1">${FIXED}<span class="cnt">${LINE.length}</span>` +
           `<i class="lowdot" title="${lowCount} mẫu sắp hết" aria-label="${lowCount} mẫu sắp hết"></i></a>`,
       ),
     );
-    stabs.prepend(tab);
 
     const chips = $$(".bar.tools a.chip3");
-    if (chips[0]) nw(chips[0]).innerHTML = `Sắp hết<span class="cnt">${lowCount}</span>`;
+    if (chips[0]) chips[0].innerHTML = `Sắp hết<span class="cnt">${lowCount}</span>`;
     if (chips[1]) chips[1].innerHTML = 'Hết<span class="cnt">0</span>';
-    const menu = $("tbody .rowmenu")?.outerHTML || "";
+    const menuBtn = $("tbody .rowmenu")?.outerHTML || "";
     const ordered = [...LINE.filter(isLow), ...LINE.filter((s) => !isLow(s))];
     $("tbody").innerHTML = ordered.map((s) => {
-      const n = name(s);
       const out = outSizes(s);
       const low = isLow(s);
       const thin = lowCells(s).filter((x) => x.n > 0);
@@ -491,44 +551,75 @@
             .join(" · ")}</span>`
         : "";
       return (
-        `<tr${low ? ' class="low" data-new' : ""}><td class="nw"><span class="athumb">${flat(s.shape, s.c[0])}</span><b class="nm">${n}</b></td>` +
+        `<tr><td class="nw"><span class="athumb">${flat(s.shape, s.c[0])}</span><b class="nm">${s.name}</b></td>` +
         `<td>${s.kind} · ${s.fit === "OVERSIZE" ? "oversize" : "regular"}</td><td class="right">${vnd(s.p).replace("₫", "")}</td>` +
         `<td>${s.c.map((c) => COLORS[c][0]).join(" · ")}</td>` +
         `<td><div class="stockcell"><span>còn ${onHand(s)}</span>${note}</div></td>` +
         `<td${out.length ? ' class="hotsize"' : ""}>${out.length ? out.join(" · ") : "—"}</td>` +
         `<td>${low ? '<span class="badge hot"><i></i>Sắp hết</span>' : '<span class="badge ok"><i></i>Đang bán</span>'}</td>` +
-        `<td><div class="rowacts">${low ? '<button type="button" class="btn ink sm restock">Nhập thêm</button>' : ""}${menu.replace(/KHÓI/g, n)}</div></td></tr>`
+        `<td>${menuBtn.replace(/KHÓI/g, s.name)}</td></tr>`
       );
     }).join("");
     $(".dt3 > .foot")?.remove();
+
+    // The first low row's menu, open. The store portals it to <body>.
+    const s = ordered[0];
+    const btn = $("tbody .rowmenu");
+    btn.setAttribute("aria-expanded", "true");
+    const menu = h(
+      `<div class="menu3 pinned" role="menu" aria-label="Thao tác ${s.name}">` +
+        `<button type="button" role="menuitem" data-new>${ICON.box}Nhập thêm</button>` +
+        `<a role="menuitem" href="/admin/products/${s.slug}">${ICON.edit}Sửa mẫu</a>` +
+        `<button type="button" role="menuitem">${ICON.swap}Điều chỉnh tồn kho</button>` +
+        `<a role="menuitem" href="/products/${s.slug}" target="_blank" rel="noreferrer">${ICON.eye}Xem ở cửa hàng</a>` +
+        `</div>`,
+    );
+    document.body.append(menu);
+    const place = () => {
+      const r = btn.getBoundingClientRect();
+      menu.style.top = `${r.bottom + window.scrollY + 4}px`;
+      menu.style.left = `${r.right + window.scrollX - menu.offsetWidth}px`;
+    };
+    place();
+    document.fonts?.ready.then(place);
   }
 
+  // ── adding a style: no sentence explains what an issue or a fixed style
+  // is. An issue's style shows its code in front of the name field, from the
+  // issue chosen; a fixed style has none.
   function adminNew() {
-    const field = $$(".field3").find((f) => $(".lbl", f)?.textContent.trim() === "Số");
+    $(".top .sub")?.remove();
+    const fieldOf = (label) => $$(".field3").find((f) => $(".lbl", f)?.textContent.trim() === label);
+    const field = fieldOf("Số");
     if (!field) return;
-    const wrap = $(".selwrap", field);
+    $(".help", field)?.remove();
+    const colorHelp = $$(".panel3 .help").find((x) => x.textContent.includes("Chốt lúc cắt"));
+    if (colorHelp) colorHelp.textContent = colorHelp.textContent.replace(/\s*Chốt lúc cắt:[^.]*\./, "").trim();
+    const nameInput = $("input", fieldOf("Tên mẫu"));
+
     if (OPTS.sell === "fixed") {
       nw($(".selbtn .t", field)).textContent = FIXED;
-      $(".help", field)?.remove();
-      $(".top .sub")?.remove();
+      nameInput.setAttribute("placeholder", "VD: ÁO THUN TRƠN");
       const cut = $$(".panel3 h2").find((x) => x.textContent.startsWith("Số lượng sẽ cắt"));
-      if (cut) {
-        cut.firstChild.textContent = "Tồn kho";
-        nw(cut);
-      }
+      if (cut) nw(cut).firstChild.textContent = "Tồn kho";
       const colorLbl = $$(".lbl").find((x) => x.textContent.trim() === "Màu sẽ cắt");
       if (colorLbl) nw(colorLbl).textContent = "Màu";
-      const colorHelp = $$(".panel3 p, .panel3 .fine3, .panel3 .help").find((x) => x.textContent.includes("Chốt lúc cắt"));
-      if (colorHelp) nw(colorHelp).textContent = colorHelp.textContent.replace(/\s*Chốt lúc cắt:[^.]*\./, "").trim();
       return;
     }
+
+    const box = nw(h(`<span class="pfxin"><span class="pfx" id="name-pfx">${code(NEXT.no)} –</span></span>`));
+    nameInput.replaceWith(box);
+    box.append(nameInput);
+    nameInput.setAttribute("aria-describedby", "name-pfx");
+
+    const wrap = $(".selwrap", field);
     wrap.classList.add("open");
     wrap.append(
       h(
         `<div class="menu3" role="menu" aria-label="Số">` +
           `<button type="button" role="menuitemradio" aria-checked="false"><span class="mk"></span><span>Số 05 · đang bán</span></button>` +
           `<button type="button" role="menuitemradio" aria-checked="true" class="ticked"><span class="mk">${TICK}</span><span>Số 06 · sắp mở</span></button>` +
-          `<button type="button" role="menuitemradio" aria-checked="false" data-active data-new><span class="mk"></span><span>${FIXED}</span></button>` +
+          `<button type="button" role="menuitemradio" aria-checked="false" data-active><span class="mk"></span><span>${FIXED}</span></button>` +
           `</div>`,
       ),
     );
@@ -540,8 +631,9 @@
   const q = new URLSearchParams(location.search);
   const OPTS = {
     view: q.get("view") || "all",
-    ten: q.get("ten") || "nghe",
+    pdp: q.get("pdp") || "fixed",
     sell: q.get("sell") || "menu",
+    pfx: q.get("pfx") || "soft",
     mark: q.get("mark") || "1",
   };
   const ORIGINAL = document.body.innerHTML;
@@ -552,6 +644,7 @@
     document.body.innerHTML = ORIGINAL;
     document.title = TITLE;
     document.documentElement.dataset.mark = OPTS.mark;
+    document.documentElement.dataset.pfx = OPTS.pfx;
     // Every photo loads at once: the frames are scrolled by hand, not by a
     // shopper, and a lazy photo in a scaled frame never learns it is on screen.
     $$("img[loading=lazy]").forEach((i) => i.setAttribute("loading", "eager"));

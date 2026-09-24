@@ -33,16 +33,28 @@ Vòng 1 (tên dòng, hai kệ, khối trang chủ, câu dưới bốn quy tắc)
 
 Từ "bán liên tục" (câu thô của người dùng) đổi thành "Cố định". Tên tám mẫu còn chờ chọn trên bảng.
 
+**Vòng 4 (25/09).** Người dùng chốt:
+- biển Số xuống góc trái dưới ảnh;
+- SOLD OUT ở góc trái trên, nhỏ bằng biển;
+- trang chủ lúc Số đang mở cũng có "Đang bán";
+- trang mẫu bỏ hai chữ trên các nút màu;
+- "Nhập thêm" vào menu ⋯;
+- form Thêm mẫu bỏ câu giải thích số cắt;
+- mẫu cố định mang tên mô tả bình thường;
+- mẫu theo Số có tiền tố, ví dụ "S05 - KHÓI".
+
 ## Direction contract
 
 THESIS: mẫu cố định không có tên loại, trang hay khối riêng trước mắt người mua, và không hiện số lượng. Nó đứng trong lưới như mọi
-mẫu. Danh sách sản phẩm là **tất cả mẫu đang bán**. Số là thứ được tách ra, với trang riêng `/so/N`. Mẫu thuộc Số mang dấu của Số:
-- biển Số trên ảnh, y như biển trên thanh điều hướng;
+mẫu, với một cái tên gọi đúng món đồ. Danh sách sản phẩm là **tất cả mẫu đang bán**. Số là thứ được tách ra, với trang riêng
+`/so/N`. Mẫu thuộc Số mang dấu của Số:
+- mã Số trước tên, "S05 – KHÓI", ở mọi chỗ có tên;
+- biển Số ở góc trái dưới ảnh, y như biển trên thanh điều hướng (góc trái trên là của SOLD OUT, cùng cỡ);
 - đường dẫn;
 - đồng hồ;
 - số cắt.
 
-Chữ "Cố định" chỉ có trong quản trị, và không kèm câu giải thích.
+Chữ "Cố định" chỉ có trong quản trị, và không kèm câu giải thích. Không dòng chữ nào trên màn chỉ để giải thích.
 
 OWN-WORLD: thế giới v3 "HIVE — nhãn dệt" như đã chốt ở `DESIGN.md`: sàn trắng, mực #171410, mật ong #EBA400 chỉ cho Số đang bán, nền
 ảnh `--plate` #f4efe6, badge `.flat` (mật ong nhạt, chữ thường, không chấm) cho một cái tên chứ không phải trạng thái.
