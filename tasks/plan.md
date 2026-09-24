@@ -1877,3 +1877,36 @@ Bảng `prototype/v3/line.html` vẽ lại theo ý đó, trên cùng các ảnh 
   - FAQ "Hết size thì có về lại không?" thêm một câu cho mẫu không thuộc Số.
 
 **Chờ người dùng chốt.**
+
+**25/09, mẫu cố định vòng 3** (`/impeccable`). Người dùng chốt trên vòng 2:
+- **Số có trang riêng.**
+- **Biển Số trên ảnh:** góc trái trên, style y như biển trên thanh điều hướng.
+- **`/products`:** bỏ tiêu đề "Tất cả mẫu" và "18 mẫu đang bán", vì tab "Tất cả" đã nói điều đó.
+- **Trang chủ giữa hai số:** hiện vài mẫu, không chỉ các loại.
+- **Mẫu cố định:** không hiện số lượng ở danh sách và trang mẫu.
+- **Tên gọi:** "bán liên tục" đổi thành **"cố định"** ("có chỉ là yêu cầu thô của tôi…").
+- **Quản trị:**
+  - tab "Cố định" đứng đầu;
+  - bỏ dòng chú thích cuối bảng;
+  - mẫu sắp hết phải hiện rõ để nhập thêm;
+  - lựa chọn "Cố định" không kèm chữ;
+  - không mô tả mẫu cố định là gì.
+- **Tên tám mẫu:** không ưng tên tổ ong, cần đề xuất cách khác.
+
+Bảng `prototype/v3/line.html` vẽ lại:
+- **Biển trên ảnh:** chép đúng CSS `.itag`; SOLD OUT đứng dưới biển.
+- **`/products`:** giữ `h1` ẩn cho trình đọc màn hình.
+- **Thẻ cố định:** chỉ còn size, size hết gạch ngang.
+- **Trang mẫu cố định:** không số ở màu và size; size hết ghi "đã hết".
+- **Trang chủ giữa hai số:** "Đang bán" sáu mẫu, rồi "Theo loại".
+- **Quản trị:**
+  - mẫu sắp hết (một size còn ≤ 2) lên đầu, có badge "Sắp hết", size đỏ và nút "Nhập thêm";
+  - tab có chấm đỏ;
+  - form chọn "Cố định" thì bỏ hết câu mô tả.
+- **Ba cách đặt tên:**
+  - Đồ nghề may (đề xuất): KIM, SUỐT, KÉO, THƯỚC, GHIM, CÚC, PHẤN, KHUY;
+  - Vật liệu bền: GỖ, TRE, ĐỒNG, THÉP, KẼM, SỨ, GẠCH, SẮT;
+  - Tên mô tả.
+
+Chữ còn sửa đúng hai câu sẽ sai: câu mở Giới thiệu, và FAQ "Mẫu không mang biển Số thì sẽ có lại". **Chờ người dùng chọn cách đặt
+tên.**

@@ -1,20 +1,23 @@
-/* Styles that sell all the time, drawn over static snapshots of the running
-   store (snap.cjs). The snapshot is the store as it is; this file is the
-   proposal. It restores the untouched page and re-draws on every change, so
-   the board can flip an option without reloading the frame.
+/* Fixed styles ("cố định"), drawn over static snapshots of the running store
+   (snap.cjs). The snapshot is the store as it is; this file is the proposal.
+   It restores the untouched page and re-draws on every change, so the board
+   can flip an option without reloading the frame.
 
-   Round 2 (25/09/2026). The user, on round 1: no bar link, no home section
-   and no description for these styles — "chỉ cần thể hiện nó như là các mẫu
-   khác thôi" — and an issue should be "một filter trong product list hoặc
-   một page riêng cho số đó". So `/products` becomes every style on sale, and
-   an issue is either its own page or a filter in that list.
+   Round 3 (25/09/2026), the user's calls on round 2:
+   · an issue has its own page (/so/5); `/products` is every style on sale,
+     with no title and no count above the tabs;
+   · a style in an issue wears the issue's plate — the nav's own plate —
+     at the top left of its photo;
+   · a fixed style shows no stock figures to a shopper, and nothing anywhere
+     explains what a fixed style is; the back office calls it "Cố định",
+     puts that tab first and flags the ones running low;
+   · between two issues the home page shows some styles, not just families;
+   · new names for the eight.
 
    Options, from the query string and then from the board by postMessage:
-     so    = page | filter     an issue as its own page (/so/5) or as a filter in /products
-     view  = all | issue       (products) every style, or the issue's own view
-     tag   = 1 | 0             a small "Số 05" plate on the photo of a style that belongs to an issue
-     sell  = menu | line       (admin-new) the field's menu open, or "no issue" chosen
-     tab   = line | so         (admin-products) which tab is open
+     view  = all | issue       (products) every style, or the issue's own page
+     ten   = nghe | vatlieu | mota   which naming scheme the eight carry
+     sell  = menu | fixed      (admin-new) the field's menu open, or "Cố định" chosen
      mark  = 1 | 0             outline what is new
      at    = a selector to scroll to on the first draw */
 (() => {
@@ -30,30 +33,39 @@
   const FAMS = ["TEE", "HOODIE", "JACKET", "VEST", "SHIRT", "PANTS"];
   const FAM = { TEE: "Áo thun", HOODIE: "Hoodie", JACKET: "Khoác", VEST: "Gile", SHIRT: "Sơ mi", PANTS: "Quần" };
   const ISSUE = { no: 5, label: "Số 05", styles: 10 };
-  /** What the back office calls a style that belongs to no issue. */
-  const NO_ISSUE = "Không theo số";
-  const ALWAYS = "Bán liên tục";
+  /** The back office's word for a style that belongs to no issue. */
+  const FIXED = "Cố định";
+  /** A fixed style is running low when any colour has two or fewer of any size. */
+  const LOW_AT = 2;
 
-  // The eight proposed styles: plain basics in the six families, S–XL, named
-  // from the hive (the issues are named from weather and earth). Stock is per
-  // colour, S M L XL; the first colour is the card's photo. KÉN has run out
-  // of M in every colour and ĐÀN of XL, so the board shows those states too.
+  // Three ways to name the eight. The issues are named from weather and earth,
+  // things that come and go.
+  const SCHEMES = {
+    nghe: { t: "Đồ nghề may", names: { sap: "KIM", mat: "SUỐT", ken: "KÉO", canh: "THƯỚC", nhong: "GHIM", phan: "CÚC", tho: "PHẤN", dan: "KHUY" } },
+    vatlieu: { t: "Vật liệu bền", names: { sap: "GỖ", mat: "TRE", ken: "ĐỒNG", canh: "THÉP", nhong: "KẼM", phan: "SỨ", tho: "GẠCH", dan: "SẮT" } },
+    mota: { t: "Tên mô tả", names: { sap: "THUN TRƠN", mat: "THUN TAY DÀI", ken: "HOODIE TRƠN", canh: "KHOÁC DÙ", nhong: "GILE PHAO", phan: "SƠ MI OXFORD", tho: "QUẦN KAKI", dan: "SHORT NỈ" } },
+  };
+
+  // The eight proposed styles: plain basics in the six families, S–XL. Stock
+  // is per colour, S M L XL; the first colour is the card's photo. Three run
+  // low (two of them have a size gone), so the back office has something to
+  // flag.
   const LINE = [
-    { slug: "sap", n: "SÁP", kind: "Áo thun", fam: "TEE", mat: "Cotton 220gsm", fit: "REGULAR", p: 400000,
+    { slug: "sap", kind: "Áo thun", fam: "TEE", mat: "Cotton 220gsm", fit: "REGULAR", p: 400000,
       c: ["white", "black", "grey"], shape: "tee", st: { white: [10, 14, 11, 6], black: [8, 12, 9, 5], grey: [6, 9, 7, 4] } },
-    { slug: "mat", n: "MẬT", kind: "Áo thun tay dài", fam: "TEE", mat: "Cotton 220gsm", fit: "REGULAR", p: 450000,
+    { slug: "mat", kind: "Áo thun tay dài", fam: "TEE", mat: "Cotton 220gsm", fit: "REGULAR", p: 450000,
       c: ["black", "white"], shape: "longsleeve", st: { black: [5, 8, 6, 3], white: [6, 7, 5, 3] } },
-    { slug: "ken", n: "KÉN", kind: "Áo hoodie", fam: "HOODIE", mat: "Nỉ bông 340gsm", fit: "OVERSIZE", p: 750000,
+    { slug: "ken", kind: "Áo hoodie", fam: "HOODIE", mat: "Nỉ bông 340gsm", fit: "OVERSIZE", p: 750000,
       c: ["grey", "black", "cream"], shape: "hoodie", st: { grey: [5, 0, 4, 2], black: [4, 0, 6, 3], cream: [3, 0, 2, 2] } },
-    { slug: "canh", n: "CÁNH", kind: "Áo khoác dù", fam: "JACKET", mat: "Dù 1 lớp", fit: "OVERSIZE", p: 850000,
-      c: ["black", "navy"], shape: "jacket", st: { black: [3, 5, 4, 2], navy: [2, 4, 3, 2] } },
-    { slug: "nhong", n: "NHỘNG", kind: "Áo gile phao", fam: "VEST", mat: "Dù chần bông", fit: "REGULAR", p: 750000,
+    { slug: "canh", kind: "Áo khoác dù", fam: "JACKET", mat: "Dù 1 lớp", fit: "OVERSIZE", p: 850000,
+      c: ["black", "navy"], shape: "jacket", st: { black: [3, 5, 4, 3], navy: [3, 4, 3, 3] } },
+    { slug: "nhong", kind: "Áo gile phao", fam: "VEST", mat: "Dù chần bông", fit: "REGULAR", p: 750000,
       c: ["black"], shape: "vest", st: { black: [3, 5, 5, 2] } },
-    { slug: "phan", n: "PHẤN", kind: "Áo sơ mi oxford", fam: "SHIRT", mat: "Cotton oxford", fit: "REGULAR", p: 590000,
-      c: ["white", "navy"], shape: "shirt", st: { white: [4, 7, 6, 3], navy: [3, 5, 4, 2] } },
-    { slug: "tho", n: "THỢ", kind: "Quần kaki", fam: "PANTS", mat: "Kaki 280gsm", fit: "REGULAR", p: 650000,
-      c: ["cream", "black"], shape: "trousers", st: { cream: [3, 5, 4, 2], black: [4, 7, 6, 3] } },
-    { slug: "dan", n: "ĐÀN", kind: "Quần short nỉ", fam: "PANTS", mat: "Nỉ da cá 300gsm", fit: "REGULAR", p: 450000,
+    { slug: "phan", kind: "Áo sơ mi oxford", fam: "SHIRT", mat: "Cotton oxford", fit: "REGULAR", p: 590000,
+      c: ["white", "navy"], shape: "shirt", st: { white: [4, 7, 6, 3], navy: [3, 5, 4, 3] } },
+    { slug: "tho", kind: "Quần kaki", fam: "PANTS", mat: "Kaki 280gsm", fit: "REGULAR", p: 650000,
+      c: ["cream", "black"], shape: "trousers", st: { cream: [3, 5, 4, 3], black: [4, 7, 6, 3] } },
+    { slug: "dan", kind: "Quần short nỉ", fam: "PANTS", mat: "Nỉ da cá 300gsm", fit: "REGULAR", p: 450000,
       c: ["grey", "black"], shape: "shorts", st: { grey: [5, 6, 5, 0], black: [6, 9, 7, 0] } },
   ];
   const bySlug = Object.fromEntries(LINE.map((s) => [s.slug, s]));
@@ -155,11 +167,13 @@
   const sum = (a) => a.reduce((x, y) => x + y, 0);
   const onHand = (s) => sum(Object.values(s.st).map(sum));
   const outSizes = (s) => SIZES.filter((z, i) => s.c.every((c) => s.st[c][i] === 0));
+  const lowCells = (s) => s.c.flatMap((c) => SIZES.map((z, i) => ({ c, z, n: s.st[c][i] }))).filter((x) => x.n <= LOW_AT);
+  const isLow = (s) => lowCells(s).length > 0;
   const lower = (k) => k.charAt(0).toLocaleLowerCase("vi") + k.slice(1);
   const nw = (el) => (el && el.setAttribute("data-new", ""), el);
 
   // The board (line.html) loads this file for the data and the flats only.
-  window.LINE_DATA = { COLORS, SIZES, FAM, LINE, ISSUE, flat, vnd, onHand, outSizes };
+  window.LINE_DATA = { COLORS, SIZES, FAM, LINE, ISSUE, SCHEMES, flat, vnd, onHand, outSizes, isLow };
   const snap = document.documentElement.dataset.snap;
   if (!snap) return;
 
@@ -168,32 +182,28 @@
   const TICK =
     '<svg viewBox="7.75 9.17 8.5 5.66" fill="none" aria-hidden="true"><path d="m7.75 12 2.83 2.83 5.67-5.66" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
 
-  // ── a card for a style that sells all the time: the store's own `.card3`,
-  // and the same count line every other card prints.
+  const name = (s) => SCHEMES[OPTS.ten]?.names[s.slug] || SCHEMES.nghe.names[s.slug];
+
+  // ── a card for a fixed style: the store's own `.card3`, with no stock
+  // figure — only the sizes, a gone one struck through.
   function card(s, { kind = false } = {}) {
     const out = outSizes(s);
-    const here = SIZES.filter((z) => !out.includes(z));
-    const left = onHand(s);
-    const count = `<span${left <= 3 ? ' class="low"' : ""}>còn ${left}</span>`;
-    const rest = kind
-      ? `<span>· ${lower(s.kind)}</span>`
-      : out.length
-        ? `<span>· hết ${out.map((z) => `<s>${z}</s>`).join(" ")}</span>`
-        : `<span>· ${here.join(" ")}</span>`;
+    const sizes = SIZES.map((z) => (out.includes(z) ? `<s>${z}</s>` : z)).join(" ");
+    const ct = kind ? `<span>${lower(s.kind)}</span>` : `<span>${sizes}</span>`;
     return h(
-      `<div class="card3" data-always><div class="imgbox"><a class="img ph" href="/products/${s.slug}">${flat(s.shape, s.c[0])}<span class="tag">chờ ảnh</span></a></div>` +
-        `<a class="meta" href="/products/${s.slug}"><span class="toc"><span class="n">${s.n}</span><span class="ld" aria-hidden="true"></span><span class="p">${vnd(s.p)}</span></span>` +
-        `<span class="ct">${count}${rest}</span></a>` +
+      `<div class="card3" data-fixed><div class="imgbox"><a class="img ph" href="/products/${s.slug}">${flat(s.shape, s.c[0])}<span class="tag">chờ ảnh</span></a></div>` +
+        `<a class="meta" href="/products/${s.slug}"><span class="toc"><span class="n">${name(s)}</span><span class="ld" aria-hidden="true"></span><span class="p">${vnd(s.p)}</span></span>` +
+        `<span class="ct">${ct}</span></a>` +
         `<div class="act"><button type="button" class="addbtn3">${BAG}Thêm vào giỏ</button></div></div>`,
     );
   }
 
-  // A style in an issue carries the issue's plate on its photo (when asked).
-  function tagIssueCards(root = document) {
-    if (OPTS.tag !== "1") return;
-    for (const c of $$(".card3:not([data-always])", root)) {
+  // A style in an issue wears the issue's plate, top left of its photo — the
+  // nav's own plate. Not on the issue's page, where every style is the issue's.
+  function plateIssueCards(root = document) {
+    for (const c of $$(".card3:not([data-fixed])", root)) {
       const box = $(".imgbox", c);
-      if (box && !$(".sotag", box)) box.append(nw(h(`<span class="sotag">${ISSUE.label}</span>`)));
+      if (box && !$(".sotag", box)) box.prepend(nw(h(`<span class="sotag">${ISSUE.label}</span>`)));
     }
   }
 
@@ -240,19 +250,27 @@
 
   // Between two issues: Số 05 has closed, Số 06 has not opened. The snapshot
   // is the store's own page for Số 06 while Số 05 still sells, so the parts
-  // that say Số 05 is open are put right here.
+  // that say Số 05 is open are put right here. What is on sale is shown as
+  // styles, the way "Trong số này" shows an issue's, then by family.
   function homeGap() {
     $(".nav3 .itag")?.remove(); // the plate shows only while an issue sells (slice 10)
     clock($(".cover .clock"), ["05", "19", "10"]);
-    $("main .wrap3")?.prepend(
-      nw(
-        h(
-          `<section class="sec" aria-labelledby="h-fam"><div class="hd"><h2 id="h-fam">Theo loại</h2>` +
-            `<span class="meta">đang bán</span><a class="more" href="/products">Xem tất cả 8 mẫu</a></div>` +
-            `<div class="index">${indexRows(INDEX_GAP, {})}</div></section>`,
-        ),
+    const onSale = nw(
+      h(
+        `<section class="sec" aria-labelledby="h-sale"><div class="hd"><h2 id="h-sale">Đang bán</h2>` +
+          `<a class="more" href="/products">Xem tất cả ${LINE.length} mẫu</a></div>` +
+          `<div class="grid3"></div></section>`,
       ),
     );
+    $(".grid3", onSale).append(...["sap", "ken", "canh", "phan", "tho", "mat"].map((k) => card(bySlug[k])));
+    const byFamily = nw(
+      h(
+        `<section class="sec" aria-labelledby="h-fam"><div class="hd"><h2 id="h-fam">Theo loại</h2>` +
+          `<span class="meta">đang bán</span></div><div class="index">${indexRows(INDEX_GAP, {})}</div></section>`,
+      ),
+    );
+    const wrap = $("main .wrap3");
+    wrap?.prepend(onSale, byFamily);
     const past = $("p.past");
     if (past) past.innerHTML = '<span>Số 05 · đã đóng 29/09 · 172 / 181 đã bán</span><a class="lnk" href="/so/5">Xem lại</a>';
     const cal = $$(".foot3 .cal li");
@@ -283,8 +301,8 @@
     if (q.has("min")) return "price=hi";
     return null;
   }
-  const chip = (href, label, n, dot, on) =>
-    `<a class="chip3${on ? " on" : ""}" href="${href}">${dot ? `<i class="dot" style="background:${dot}" aria-hidden="true"></i>` : ""}${label}<span class="cnt">${n}</span></a>`;
+  const chip = (href, label, n, dot) =>
+    `<a class="chip3" href="${href}">${dot ? `<i class="dot" style="background:${dot}" aria-hidden="true"></i>` : ""}${label}<span class="cnt">${n}</span></a>`;
 
   // The rail with the eight's counts added to the issue's.
   function railAll(f) {
@@ -328,35 +346,19 @@
       b("Dưới 500k", n("price=lo", "Dưới 500k"));
   }
 
-  // The issue as a filter: a group at the head of the rail, a chip after "Lọc".
-  function issueFilter(on) {
-    const rail = $(".rail3");
-    if (rail) {
-      rail.prepend(
-        nw(h(`<div class="grp"><h4>Số</h4><div class="opts">${chip(`/products?so=${ISSUE.no}`, ISSUE.label, ISSUE.styles, null, on)}</div></div>`)),
-      );
-    }
-    const box = $(".chips3");
-    const first = box && $("button.chip3", box);
-    first?.after(
-      nw(h(`<button type="button" class="chip3${on ? " on" : ""}" aria-pressed="${on}">${ISSUE.label}<span class="cnt">${ISSUE.styles}</span></button>`)),
-    );
-  }
-
   function products() {
-    if (OPTS.view === "issue") {
-      // As its own page (/so/5) the issue is today's list, word for word.
-      // As a filter it is the same view, reached from the rail.
-      if (OPTS.so === "filter") issueFilter(true);
-      return;
-    }
+    // The issue's own page, /so/5, is today's list word for word.
+    if (OPTS.view === "issue") return;
+
     const plate = $(".nav3 .itag");
     plate?.classList.remove("on");
     plate?.removeAttribute("aria-current");
     document.title = "Tất cả mẫu · HIVE";
-    const big = nw($(".lhead h1.big"));
-    big.textContent = "Tất cả mẫu";
-    nw($(".lhead .row1 .meta")).textContent = `${ISSUE.styles + LINE.length} mẫu đang bán`;
+    // No title and no count above the tabs: "Tất cả 18" says both. The page
+    // keeps its heading for a screen reader.
+    const row1 = $(".lhead .row1");
+    row1?.replaceWith(h('<h1 class="sr-only">Tất cả mẫu</h1>'));
+    nw($(".lhead"))?.classList.add("bare");
 
     const f = facets(LINE);
     const nav3 = $(".tabs3");
@@ -367,34 +369,33 @@
       FAMS.filter((x) => (had["family=" + x] || 0) + (f["family=" + x] || 0))
         .map((x) => `<a class="" href="/products?family=${x}">${FAM[x]}<span class="cnt">${(had["family=" + x] || 0) + (f["family=" + x] || 0)}</span></a>`)
         .join("");
-    nw(nav3);
     railAll(f);
     quickAll(f);
-    if (OPTS.so === "filter") issueFilter(false);
 
     const grid = $(".listing3 .grid3");
-    tagIssueCards(grid);
+    plateIssueCards(grid);
     grid.append(...LINE.map((s) => nw(card(s))));
     const bar = $(".listbar > span");
     if (bar) bar.textContent = `Hiện ${ISSUE.styles + LINE.length} / ${ISSUE.styles + LINE.length} mẫu`;
   }
 
-  // A style that sells all the time, on its own page: no issue in the
-  // breadcrumb, no clock, no "chiếc đã cắt".
+  // A fixed style on its own page: no issue in the breadcrumb, no clock, and
+  // no stock figure anywhere — the colours and sizes say only what can be had.
   function product() {
     const s = bySlug.sap;
     const first = s.c[0];
-    document.title = `${s.n} · HIVE`;
+    const n = name(s);
+    document.title = `${n} · HIVE`;
 
     const crumbs = $(".crumbs");
     const firstLink = $("a", crumbs);
     firstLink?.nextElementSibling?.remove(); // its "/"
     firstLink?.remove();
-    $("b", crumbs).textContent = s.n;
+    $("b", crumbs).textContent = n;
     nw(crumbs);
 
     const gal = $(".gal");
-    gal.setAttribute("aria-label", `Ảnh ${s.n}, ${s.c.length} tấm`);
+    gal.setAttribute("aria-label", `Ảnh ${n}, ${s.c.length} tấm`);
     gal.innerHTML = s.c.map((c) => `<figure class="ph">${flat(s.shape, c)}<span class="tag">chờ ảnh</span></figure>`).join("");
     const galbar = $(".galbar");
     if (galbar) {
@@ -404,31 +405,28 @@
     }
 
     $(".ticket .kick")?.remove();
-    $(".ticket h1").textContent = s.n;
+    $(".ticket h1").textContent = n;
     $(".ticket .kind").textContent = `${s.kind} · ${s.mat}`;
-    $(".ticket .price").textContent = vnd(s.p);
-    nw($(".ticket .stock")).innerHTML = `<b>Còn ${onHand(s)}</b> chiếc`;
+    nw($(".ticket .price")).textContent = vnd(s.p);
+    $(".ticket .stock")?.remove();
 
     const [colorFld, sizeFld] = $$(".ticket .fld");
-    $(".lbl span", colorFld).textContent = `${COLORS[first][0]} · còn ${sum(s.st[first])}`;
+    nw($(".lbl span", colorFld)).textContent = COLORS[first][0];
     $(".sw", colorFld).innerHTML = s.c
-      .map((c) => {
-        const n = sum(s.st[c]);
-        return (
-          `<button type="button" aria-pressed="${c === first}" aria-label="Màu ${COLORS[c][0]}, còn ${n}">` +
-          `<i style="background:${COLORS[c][1]}" aria-hidden="true"></i><span>${COLORS[c][0]} ${n}</span></button>`
-        );
-      })
+      .map((c) => (
+        `<button type="button" aria-pressed="${c === first}" aria-label="Màu ${COLORS[c][0]}">` +
+        `<i style="background:${COLORS[c][1]}" aria-hidden="true"></i><span>${COLORS[c][0]}</span></button>`
+      ))
       .join("");
     const mk = $(".sizes .mk", sizeFld)?.outerHTML || "";
+    nw($(".sizes", sizeFld));
     $(".sizes tbody", sizeFld).innerHTML = SIZES.map((z, i) => {
-      const n = s.st[first][i];
-      return (
-        `<tr><td><button type="button" aria-pressed="false"><b>${z}</b><span class="ld" aria-hidden="true"></span>` +
-        `<span class="left${n <= 2 ? " low" : ""}">còn ${n}</span>${mk}</button></td></tr>`
-      );
+      const gone = s.st[first][i] === 0;
+      return gone
+        ? `<tr><td><button type="button" class="gone" disabled aria-pressed="false"><b>${z}</b><span class="ld" aria-hidden="true"></span><span class="left">đã hết</span>${mk}</button></td></tr>`
+        : `<tr><td><button type="button" aria-pressed="false"><b>${z}</b><span class="ld" aria-hidden="true"></span><span class="left"></span>${mk}</button></td></tr>`;
     }).join("");
-    $(".sizes", sizeFld).setAttribute("aria-label", `Chọn size ${s.n}`);
+    $(".sizes", sizeFld).setAttribute("aria-label", `Chọn size ${n}`);
 
     const rows = $$(".info3 .r");
     $("dd", rows[0]).textContent = s.mat;
@@ -453,74 +451,84 @@
       img.setAttribute("alt", "KHÓI — màu Đen");
       $$("a", khoi).forEach((a) => a.setAttribute("href", "/products/khoi"));
       $(".grid3", rel).replaceChildren(khoi, byName["NẮNG"], byName["CÁT"], card(bySlug.mat, { kind: true }));
-      tagIssueCards(rel);
+      plateIssueCards(rel);
     }
     const who = $(".buybar3 .who");
-    if (who) who.innerHTML = `<b>${s.n}</b><span>${vnd(s.p)} · chưa chọn size</span>`;
+    if (who) who.innerHTML = `<b>${n}</b><span>${vnd(s.p)} · chưa chọn size</span>`;
   }
 
+  // The back office: "Cố định" is the first tab and the one open. A style
+  // running low says so three times over — the status, the sizes in red and
+  // a restock button — and those rows come first.
   function adminProducts() {
-    nw($(".top .sub")).textContent =
-      `29 mẫu · 3 số và ${LINE.length} mẫu ${ALWAYS.toLocaleLowerCase("vi")} · 18 đang bán · tồn kho theo size và màu`;
+    nw($(".top .sub")).textContent = "29 mẫu · 18 đang bán · tồn kho theo size và màu";
     const stabs = $(".stabs");
     const first = $("a", stabs);
-    const tab = nw(h(`<a href="/admin/products?always=1">${ALWAYS}<span class="cnt">${LINE.length}</span></a>`));
-    first.after(tab);
-    if (OPTS.tab !== "line") return;
-
     first.classList.remove("on");
     first.removeAttribute("aria-current");
-    tab.classList.add("on");
-    tab.setAttribute("aria-current", "page");
+    const lowCount = LINE.filter(isLow).length;
+    const tab = nw(
+      h(
+        `<a class="on" aria-current="page" href="/admin/products?fixed=1">${FIXED}<span class="cnt">${LINE.length}</span>` +
+          `<i class="lowdot" title="${lowCount} mẫu sắp hết" aria-label="${lowCount} mẫu sắp hết"></i></a>`,
+      ),
+    );
+    stabs.prepend(tab);
+
     const chips = $$(".bar.tools a.chip3");
-    if (chips[0]) chips[0].innerHTML = 'Sắp hết<span class="cnt">0</span>';
+    if (chips[0]) nw(chips[0]).innerHTML = `Sắp hết<span class="cnt">${lowCount}</span>`;
     if (chips[1]) chips[1].innerHTML = 'Hết<span class="cnt">0</span>';
     const menu = $("tbody .rowmenu")?.outerHTML || "";
-    $("tbody").innerHTML = LINE.map((s) => {
+    const ordered = [...LINE.filter(isLow), ...LINE.filter((s) => !isLow(s))];
+    $("tbody").innerHTML = ordered.map((s) => {
+      const n = name(s);
       const out = outSizes(s);
+      const low = isLow(s);
+      const thin = lowCells(s).filter((x) => x.n > 0);
+      const note = low
+        ? `<span class="lownote">${SIZES.filter((z) => out.includes(z) || thin.some((x) => x.z === z))
+            .map((z) => (out.includes(z) ? `${z} hết` : `${z} còn ${Math.min(...thin.filter((x) => x.z === z).map((x) => x.n))}`))
+            .join(" · ")}</span>`
+        : "";
       return (
-        `<tr><td class="nw"><span class="athumb">${flat(s.shape, s.c[0])}</span><b class="nm">${s.n}</b></td>` +
+        `<tr${low ? ' class="low" data-new' : ""}><td class="nw"><span class="athumb">${flat(s.shape, s.c[0])}</span><b class="nm">${n}</b></td>` +
         `<td>${s.kind} · ${s.fit === "OVERSIZE" ? "oversize" : "regular"}</td><td class="right">${vnd(s.p).replace("₫", "")}</td>` +
         `<td>${s.c.map((c) => COLORS[c][0]).join(" · ")}</td>` +
-        `<td><div class="cellmeter" data-new><span>còn ${onHand(s)}</span><a class="add" href="#">Nhập thêm</a></div></td>` +
-        `<td>${out.length ? out.join(" · ") : "—"}</td><td><span class="badge ok"><i></i>Đang bán</span></td><td>${menu.replace(/KHÓI/g, s.n)}</td></tr>`
+        `<td><div class="stockcell"><span>còn ${onHand(s)}</span>${note}</div></td>` +
+        `<td${out.length ? ' class="hotsize"' : ""}>${out.length ? out.join(" · ") : "—"}</td>` +
+        `<td>${low ? '<span class="badge hot"><i></i>Sắp hết</span>' : '<span class="badge ok"><i></i>Đang bán</span>'}</td>` +
+        `<td><div class="rowacts">${low ? '<button type="button" class="btn ink sm restock">Nhập thêm</button>' : ""}${menu.replace(/KHÓI/g, n)}</div></td></tr>`
       );
     }).join("");
-    const foot = nw($(".dt3 > .foot"));
-    if (foot) {
-      foot.innerHTML =
-        `<span>${LINE.length} mẫu · ${sum(LINE.map(onHand))} trên kệ · mẫu ${ALWAYS.toLocaleLowerCase("vi")} không có số cắt: ` +
-        "hết size nào nhập thêm size đó</span>";
-    }
+    $(".dt3 > .foot")?.remove();
   }
 
   function adminNew() {
     const field = $$(".field3").find((f) => $(".lbl", f)?.textContent.trim() === "Số");
     if (!field) return;
     const wrap = $(".selwrap", field);
-    const help = $(".help", field);
-    if (OPTS.sell === "line") {
-      nw($(".selbtn .t", field)).textContent = `${NO_ISSUE} · ${ALWAYS.toLocaleLowerCase("vi")}`;
-      nw(help).textContent = "Lên kệ ngay khi lưu, không có giờ đóng. Hết size thì nhập thêm ở trang sửa mẫu.";
-      nw($(".top .sub")).textContent =
-        "Mẫu không theo số không có số cắt: tồn kho điền ở đây là hàng lên kệ lúc đầu, hết thì nhập thêm. " +
-        "Mẫu thuộc một Số vẫn cắt một lần.";
+    if (OPTS.sell === "fixed") {
+      nw($(".selbtn .t", field)).textContent = FIXED;
+      $(".help", field)?.remove();
+      $(".top .sub")?.remove();
       const cut = $$(".panel3 h2").find((x) => x.textContent.startsWith("Số lượng sẽ cắt"));
       if (cut) {
-        cut.firstChild.textContent = "Tồn kho ban đầu";
+        cut.firstChild.textContent = "Tồn kho";
         nw(cut);
       }
       const colorLbl = $$(".lbl").find((x) => x.textContent.trim() === "Màu sẽ cắt");
-      if (colorLbl) nw(colorLbl).textContent = "Màu bán";
+      if (colorLbl) nw(colorLbl).textContent = "Màu";
+      const colorHelp = $$(".panel3 p, .panel3 .fine3, .panel3 .help").find((x) => x.textContent.includes("Chốt lúc cắt"));
+      if (colorHelp) nw(colorHelp).textContent = colorHelp.textContent.replace(/\s*Chốt lúc cắt:[^.]*\./, "").trim();
       return;
     }
     wrap.classList.add("open");
     wrap.append(
       h(
         `<div class="menu3" role="menu" aria-label="Số">` +
-          `<button type="button" role="menuitemradio" aria-checked="false"><span class="mk"></span><span>Số 05 · đang bán</span><em class="tally">lên kệ ngay</em></button>` +
-          `<button type="button" role="menuitemradio" aria-checked="true" class="ticked"><span class="mk">${TICK}</span><span>Số 06 · sắp mở</span><em class="tally">lên kệ 20:00 06/10</em></button>` +
-          `<button type="button" role="menuitemradio" aria-checked="false" data-active data-new><span class="mk"></span><span>${NO_ISSUE}</span><em class="tally">${ALWAYS.toLocaleLowerCase("vi")}</em></button>` +
+          `<button type="button" role="menuitemradio" aria-checked="false"><span class="mk"></span><span>Số 05 · đang bán</span></button>` +
+          `<button type="button" role="menuitemradio" aria-checked="true" class="ticked"><span class="mk">${TICK}</span><span>Số 06 · sắp mở</span></button>` +
+          `<button type="button" role="menuitemradio" aria-checked="false" data-active data-new><span class="mk"></span><span>${FIXED}</span></button>` +
           `</div>`,
       ),
     );
@@ -531,11 +539,9 @@
   // ── options, first draw, re-draws
   const q = new URLSearchParams(location.search);
   const OPTS = {
-    so: q.get("so") || "page",
     view: q.get("view") || "all",
-    tag: q.get("tag") || "1",
+    ten: q.get("ten") || "nghe",
     sell: q.get("sell") || "menu",
-    tab: q.get("tab") || "line",
     mark: q.get("mark") || "1",
   };
   const ORIGINAL = document.body.innerHTML;

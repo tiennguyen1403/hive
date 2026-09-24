@@ -22,6 +22,17 @@ theo đợt và có sản phẩm bán liên tục". Trả lời hỏi lại:
 
 Vòng 1 (tên dòng, hai kệ, khối trang chủ, câu dưới bốn quy tắc) đã bỏ. Hợp đồng dưới đây là của vòng 2.
 
+**Vòng 3 (25/09).** Người dùng chốt:
+- Số có trang riêng;
+- biển Số của thanh điều hướng đặt ở góc trái trên ảnh;
+- `/products` không có tiêu đề hay số đếm;
+- mẫu cố định không hiện số lượng;
+- không câu nào mô tả mẫu cố định, cho khách lẫn admin;
+- trang quản trị: tab "Cố định" đứng đầu và gắn cờ mẫu sắp hết;
+- trang chủ giữa hai số hiện vài mẫu.
+
+Từ "bán liên tục" (câu thô của người dùng) đổi thành "Cố định". Tên tám mẫu còn chờ chọn trên bảng.
+
 ## Direction contract
 
 THESIS: mẫu bán liên tục không có tên, trang hay khối riêng trước mắt người mua. Nó đứng trong lưới như mọi mẫu. Danh sách sản phẩm là

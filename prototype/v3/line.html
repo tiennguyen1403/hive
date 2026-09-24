@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mẫu bán liên tục · HIVE</title>
+<title>Mẫu cố định · HIVE</title>
 <link rel="icon" href="../name/logo/png/hive-mark-32.png">
 <link rel="stylesheet" href="../v2/fonts.css">
 <style>
@@ -31,7 +31,7 @@
   code { font: 500 12.5px/1 var(--sans); background: var(--plate); padding: 2px 5px; border-radius: 3px; color: var(--ink); white-space: nowrap; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-  /* ── The two choices that change every frame stay in reach. */
+  /* ── The naming choice changes every frame, so it stays in reach. */
   .bar { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px;
     margin: 0 calc(var(--gut) * -1); padding: 10px var(--gut) 12px; background: rgba(255, 255, 255, .96);
     border-bottom: 1px solid var(--hair); }
@@ -65,8 +65,11 @@
   .cmp td.new { color: var(--ink); }
   .cmp .r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .cmp s { text-decoration-thickness: 1px; }
-  .tagdemo { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 5px; background: var(--ink);
-    color: var(--honey); font: 800 10px/1 var(--display); letter-spacing: .08em; vertical-align: 1px; }
+  /* The nav's plate, small, for the table. */
+  .plate { display: inline-flex; align-items: center; height: 22px; padding: 0 12px; border-radius: 5px; vertical-align: 1px;
+    background: radial-gradient(circle at 6px 50%, var(--honey) 0 1.3px, transparent 1.8px), radial-gradient(circle at calc(100% - 6px) 50%, var(--honey) 0 1.3px, transparent 1.8px), var(--ink);
+    box-shadow: inset 0 0 0 2px var(--ink), inset 0 0 0 3px var(--honey);
+    color: var(--honey); font: 800 10px/1 var(--display); letter-spacing: .1em; text-transform: uppercase; }
 
   /* ── The frames: the running store, shot and scaled to the column. */
   .pair { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
@@ -81,12 +84,16 @@
   .pick { margin: 0 0 22px; padding: 12px 16px; background: var(--honey-soft); border-radius: 4px; max-width: 80ch; font-size: 14px; }
   .pick b { font-weight: 600; }
 
-  /* ── The eight styles. */
+  /* ── Names: the chosen scheme's column is the one in ink. */
+  .names td { font: 800 15px/1.2 var(--display); letter-spacing: .01em; color: #b9b0a0; }
+  .names td.st { font: 400 14px/1.3 var(--sans); color: var(--ink); letter-spacing: 0; }
+  .names td.on, .names th.on { color: var(--ink); }
+  .names thead th.on { color: var(--ink); }
+  .names th small { display: block; margin-top: 4px; font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink2); max-width: 30ch; line-height: 1.45; }
   .fl { display: inline-block; width: 40px; height: 50px; margin-right: 12px; vertical-align: middle; border-radius: 3px; background: var(--plate); overflow: hidden; }
   .fl svg { display: block; width: 100%; height: 100%; }
-  #s-styles .cmp td { vertical-align: middle; }
-  .cmp td.st { white-space: nowrap; color: var(--ink); }
-  .cmp td.st b { font: 800 15px/1 var(--display); letter-spacing: -0.01em; vertical-align: middle; }
+  .names td, #s-styles .cmp td { vertical-align: middle; }
+  .cmp td.nm { white-space: nowrap; color: var(--ink); font: 800 15px/1 var(--display); letter-spacing: -0.01em; }
   .dot { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 99px; box-shadow: inset 0 0 0 1px rgba(23, 20, 16, .25); vertical-align: -1px; }
   .note { max-width: 80ch; margin: 18px 0 0; font-size: 14px; color: var(--ink2); }
 
@@ -138,78 +145,86 @@
 </head>
 <body>
 <main class="board">
-  <h1>Mẫu bán liên tục</h1>
-  <p class="lead">Vòng 2, theo ý bạn ngày 25/09: không thêm link, khối hay câu mô tả riêng. <b>Mẫu bán liên tục hiện như mọi mẫu
-    khác.</b> Danh sách sản phẩm thành <b>tất cả mẫu đang bán</b>, còn <b>Số là một trang riêng hoặc một bộ lọc</b>. Khung dưới là
-    chính các trang đang chạy, phần đổi vẽ đè lên; ô ghi “chờ ảnh” là hình vẽ tạm cho tới khi có ảnh thật.</p>
+  <h1>Mẫu cố định</h1>
+  <p class="lead">Vòng 3, theo các ý bạn chốt ngày 25/09:
+    <b>mỗi Số một trang riêng</b>;
+    <b>biển Số của thanh điều hướng đặt ở góc trái trên ảnh</b>;
+    danh sách không có tiêu đề;
+    mẫu cố định không hiện số lượng;
+    không câu nào giải thích mẫu cố định;
+    tab <b>Cố định</b> đứng đầu trang quản trị.
+    Mục mới cần chọn: <b>cách đặt tên tám mẫu</b>, ở thanh bên dưới.</p>
 
   <div class="bar">
-    <fieldset class="seg" id="c-so">
-      <legend>Số là</legend>
+    <fieldset class="seg" id="c-ten">
+      <legend>Cách đặt tên</legend>
       <div class="opts">
-        <label><input type="radio" name="so" value="page" checked>Trang riêng<small>đề xuất</small></label>
-        <label><input type="radio" name="so" value="filter">Bộ lọc</label>
-      </div>
-    </fieldset>
-    <fieldset class="seg" id="c-tag">
-      <legend>Nhãn Số trên ảnh</legend>
-      <div class="opts">
-        <label><input type="radio" name="tag" value="1" checked>Có<small>đề xuất</small></label>
-        <label><input type="radio" name="tag" value="0">Không</label>
+        <label><input type="radio" name="ten" value="nghe" checked>Đồ nghề may<small>đề xuất</small></label>
+        <label><input type="radio" name="ten" value="vatlieu">Vật liệu bền</label>
+        <label><input type="radio" name="ten" value="mota">Tên mô tả</label>
       </div>
     </fieldset>
     <label class="chk"><input type="checkbox" id="c-mark" checked>Tô viền chỗ đổi</label>
     <nav class="jump" aria-label="Đi tới">
-      <a href="#s-list">Danh sách</a><a href="#s-home">Trang chủ</a><a href="#s-pdp">Trang mẫu</a><a href="#s-admin">Quản trị</a>
-      <a href="#s-styles">Tám mẫu</a><a href="#s-decide">Chốt</a>
+      <a href="#s-names">Tên</a><a href="#s-list">Danh sách</a><a href="#s-home">Trang chủ</a><a href="#s-pdp">Trang mẫu</a>
+      <a href="#s-admin">Quản trị</a><a href="#s-decide">Chốt</a>
     </nav>
   </div>
 
   <section id="s-rules">
     <h2>Hai loại mẫu, một lưới</h2>
-    <p class="sub">Người mua không thấy tên loại mẫu nào; chỉ thấy mẫu thuộc Số mang những gì của Số. Tên “bán liên tục” chỉ có
-      trong trang quản trị.</p>
     <div class="scroll">
       <table class="cmp">
-        <thead><tr><th></th><th>Mẫu trong Số, ví dụ KHÓI</th><th>Mẫu bán liên tục, ví dụ SÁP</th></tr></thead>
+        <thead><tr><th></th><th>Mẫu trong Số, ví dụ KHÓI</th><th>Mẫu cố định, ví dụ <span data-nm="sap">KIM</span></th></tr></thead>
         <tbody>
-          <tr><th>Trong danh sách</th><td>Cùng lưới; nhãn <span class="tagdemo">SỐ 05</span> trên ảnh nếu bạn chọn</td><td class="new">Cùng lưới, không nhãn</td></tr>
-          <tr><th>Thẻ</th><td>còn 17 · S M L XL; hết size: còn 2 · hết <s>S</s> <s>M</s>; hết sạch: SOLD OUT</td><td class="new">Y như vậy</td></tr>
-          <tr><th>Trang mẫu</th><td>Đang bán · Số 05 · đóng sau…; Còn 17 / 35 chiếc đã cắt, kèm vạch</td><td class="new">Không có dòng Số; “Còn 101 chiếc”</td></tr>
-          <tr><th>Đường dẫn</th><td>Số 05 / Áo thun / KHÓI</td><td class="new">Áo thun / SÁP</td></tr>
-          <tr><th>Mua được tới khi</th><td>Số đóng</td><td class="new">Còn hàng là mua được</td></tr>
-          <tr><th>Quản trị</th><td>Số cắt là trần</td><td class="new">Nhập thêm, không có trần</td></tr>
+          <tr><th>Trong danh sách</th><td>Cùng lưới; <span class="plate">Số 05</span> ở góc trái trên ảnh, đúng biển trên thanh điều hướng. Mẫu đã hết thì SOLD OUT đứng ngay dưới biển</td><td class="new">Cùng lưới, không biển</td></tr>
+          <tr><th>Thẻ</th><td>còn 17 · S M L XL; hết size: còn 2 · hết <s>S</s> <s>M</s></td><td class="new">Không số lượng: S <s>M</s> L XL, size hết bị gạch</td></tr>
+          <tr><th>Trang mẫu</th><td>Đang bán · Số 05 · đóng sau…; Còn 17 / 35 chiếc đã cắt, kèm vạch; số còn ở từng màu, từng size</td><td class="new">Không dòng Số, không số lượng; size hết ghi “đã hết”</td></tr>
+          <tr><th>Đường dẫn</th><td>Số 05 / Áo thun / KHÓI</td><td class="new">Áo thun / <span data-nm="sap">KIM</span></td></tr>
+          <tr><th>Mua được tới khi</th><td>Số đóng</td><td class="new">Còn size là mua được</td></tr>
+          <tr><th>Quản trị</th><td>Số cắt là trần</td><td class="new">Tab Cố định đứng đầu; mẫu sắp hết có nhãn, size đỏ và nút Nhập thêm</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
+  <section id="s-names">
+    <h2>Cách đặt tên tám mẫu</h2>
+    <p class="sub">Các Số mang tên thời tiết và đất trời — khói, sương, mưa — những thứ đến rồi đi. Ba cách dưới đều đặt được cạnh
+      chúng mà không trùng tên nào đã có. Chọn ở thanh trên cùng: mọi khung đổi theo.</p>
+    <div class="scroll">
+      <table class="cmp names">
+        <thead><tr>
+          <th>Mẫu</th>
+          <th data-scheme="nghe">Đồ nghề may<small>Đồ nghề trên bàn thợ may, thứ lúc nào cũng ở đó. Cùng mạch với đường may và sợi chỉ của cửa hàng; một chữ, như tên các Số.</small></th>
+          <th data-scheme="vatlieu">Vật liệu bền<small>Nặng và bền, đối lại với khói, sương của các Số. Một chữ; có chữ đọc lên hơi lạnh (THÉP, KẼM).</small></th>
+          <th data-scheme="mota">Tên mô tả<small>Gọi đúng món đồ, không cần đoán. Dài, hay xuống dòng trên thẻ điện thoại, và mất giọng riêng.</small></th>
+        </tr></thead>
+        <tbody id="names"></tbody>
+      </table>
+    </div>
+  </section>
+
   <section id="s-list">
-    <h2>Danh sách và Số</h2>
+    <h2>Danh sách và trang Số</h2>
     <div class="ctl">
       <fieldset class="seg" id="c-list">
         <legend>Đang xem</legend>
         <div class="opts">
           <label><input type="radio" name="list" value="all" checked>Tất cả mẫu</label>
-          <label><input type="radio" name="list" value="issue">Số 05</label>
+          <label><input type="radio" name="list" value="issue">Trang Số 05</label>
         </div>
       </fieldset>
     </div>
     <div class="say">
-      <p><b>Tất cả mẫu</b> (<code>/products</code>). Mười tám mẫu đang bán, cùng một lưới: mười mẫu của Số 05 trước, tám mẫu bán liên tục
-        sau. Tab loại và bộ lọc đếm cả hai. Các họ trên thanh điều hướng dẫn về đây.</p>
-      <p><b>Số là trang riêng</b> (<code>/so/5</code>). Đúng trang danh sách Số 05 đã duyệt: tiêu đề Số, đếm ngược, tab, bộ lọc. Như Số 04
-        đang có <code>/so/4</code>. Biển Số, nút “Xem mười mẫu” trên bìa và cột “Lịch ra số” dẫn về đó.</p>
-      <p><b>Số là bộ lọc.</b> Trong “Tất cả mẫu”, nhóm lọc “Số” đứng đầu cột lọc; trên điện thoại là nút “Số 05” ngay sau “Lọc”. Bật
-        lên thì còn mười mẫu và tiêu đề thành “Số 05”. Biển Số dẫn tới danh sách đã lọc sẵn.</p>
-      <p><b>Nhãn Số trên ảnh.</b> Một biển nhỏ cắt từ biển Số trên thanh điều hướng, ở góc dưới ảnh. Trong lưới trộn, đó là cách duy nhất
-        để biết mẫu nào hết là hết; trên trang Số thì không cần nên không vẽ.</p>
+      <p><b>Tất cả mẫu</b> (<code>/products</code>). Không tiêu đề, không số đếm: tab “Tất cả 18” mở đầu trang. Mười mẫu Số 05 mang
+        biển Số, tám mẫu cố định theo sau, thẻ không số lượng.</p>
+      <p><b>Trang Số 05</b> (<code>/so/5</code>). Đúng trang danh sách Số đã duyệt, không đổi gì, như Số 04 đang có <code>/so/4</code>.
+        Biển Số, nút “Xem mười mẫu” và cột “Lịch ra số” dẫn về đây. Mọi mẫu ở đây là của Số nên không vẽ biển trên ảnh.</p>
     </div>
-    <p class="pick"><b>Đề xuất trang riêng:</b> mỗi Số một địa chỉ như Số 04 đang có, trang Số đã duyệt giữ nguyên, và “Tất cả mẫu”
-      chỉ làm một việc. Hai cách trông gần như nhau; khác ở chỗ Số có địa chỉ riêng hay là một nút lọc.</p>
     <div class="pair">
       <figure class="dev"><div class="scr" data-w="1280" data-h="860"><iframe data-frame="list" title="Danh sách, máy tính 1280"></iframe></div>
-        <figcaption><span id="cap-list">Máy tính 1280 · cuộn trong khung</span><a class="open" target="_blank" rel="noopener">Mở cỡ thật</a></figcaption></figure>
+        <figcaption><span id="cap-list">Máy tính 1280 · /products</span><a class="open" target="_blank" rel="noopener">Mở cỡ thật</a></figcaption></figure>
       <figure class="dev phone"><div class="scr" data-w="390" data-h="844"><iframe data-frame="list" title="Danh sách, điện thoại 390"></iframe></div>
         <figcaption><span>Điện thoại 390</span><a class="open" target="_blank" rel="noopener">Mở cỡ thật</a></figcaption></figure>
     </div>
@@ -221,16 +236,16 @@
       <fieldset class="seg" id="c-home">
         <legend>Lúc</legend>
         <div class="opts">
-          <label><input type="radio" name="home" value="open" checked>Số đang mở</label>
-          <label><input type="radio" name="home" value="gap">Giữa hai số</label>
+          <label><input type="radio" name="home" value="open">Số đang mở</label>
+          <label><input type="radio" name="home" value="gap" checked>Giữa hai số</label>
         </div>
       </fieldset>
     </div>
     <div class="say">
-      <p><b>Không thêm khối nào.</b> Bìa, “Trong số này” và “Bốn quy tắc” vẫn nói về Số. “Theo loại” đếm mọi mẫu đang bán (thêm hàng
-        Gile) và có lối “Xem tất cả 18 mẫu”.</p>
-      <p><b>Giữa hai số.</b> Số 05 đã đóng, Số 06 chưa mở: “Theo loại” lên ngay dưới bìa Số 06 và dẫn tới tám mẫu bán liên tục, nên cửa
-        hàng vẫn có thứ để mua. Biển Số ẩn, đúng như lát 10.</p>
+      <p><b>Giữa hai số.</b> Ngay dưới bìa Số 06 là “Đang bán”: sáu mẫu, cùng lưới với “Trong số này”, và lối “Xem tất cả 8 mẫu”. Rồi
+        mới tới “Theo loại”.</p>
+      <p><b>Số đang mở.</b> Không thêm gì: bìa, “Trong số này” và “Bốn quy tắc” vẫn nói về Số. “Theo loại” đếm mọi mẫu đang bán và có
+        lối “Xem tất cả 18 mẫu”.</p>
     </div>
     <div class="pair">
       <figure class="dev"><div class="scr" data-w="1280" data-h="860"><iframe data-frame="home" title="Trang chủ, máy tính 1280"></iframe></div>
@@ -241,11 +256,10 @@
   </section>
 
   <section id="s-pdp">
-    <h2>Trang mẫu bán liên tục</h2>
+    <h2>Trang mẫu cố định</h2>
     <div class="say">
-      <p><b>Như trang mẫu của Số, bỏ những gì thuộc về Số.</b> Đường dẫn không có “Số 05”, không có dòng “Đang bán · Số 05 · đóng
-        sau…”, và “Còn 101 chiếc” thay cho “Còn 17 / 35 chiếc đã cắt” cùng vạch.</p>
-      <p><b>Hàng dưới là “Cùng loại”</b> thay cho “Cùng số 05”: các áo thun đang bán, dù thuộc Số hay không.</p>
+      <p><b>Không số lượng.</b> Bỏ dòng số còn; màu chỉ ghi tên màu, hàng size bỏ con số, size nào hết thì gạch và ghi “đã hết”.</p>
+      <p><b>Không dấu Số.</b> Đường dẫn không có “Số 05”, không dòng đồng hồ. Hàng dưới là “Cùng loại”, trộn mẫu trong Số và mẫu cố định.</p>
     </div>
     <div class="pair">
       <figure class="dev"><div class="scr" data-w="1280" data-h="860"><iframe data-frame="pdp" title="Trang mẫu, máy tính 1280"></iframe></div>
@@ -263,15 +277,16 @@
         <div class="opts">
           <label><input type="radio" name="adm" value="list" checked>Danh sách mẫu</label>
           <label><input type="radio" name="adm" value="new-menu">Thêm mẫu · ô Số</label>
-          <label><input type="radio" name="adm" value="new-line">Thêm mẫu · không theo số</label>
+          <label><input type="radio" name="adm" value="new-fixed">Thêm mẫu · đã chọn Cố định</label>
         </div>
       </fieldset>
     </div>
     <div class="say">
-      <p><b>Chỉ quản trị gọi tên loại mẫu này.</b> Tab “Bán liên tục” đứng cạnh Số đang bán; cột tồn kho bỏ vạch và số cắt, thêm “Nhập
-        thêm”.</p>
-      <p><b>Thêm mẫu.</b> Ô “Số” có thêm lựa chọn “Không theo số”. Chọn nó thì “Số lượng sẽ cắt” thành “Tồn kho ban đầu”, câu đầu trang
-        đổi theo. Nhập thêm dùng lại lưới “Điều chỉnh tồn kho” đang có, chỉ bỏ trần.</p>
+      <p><b>Danh sách mẫu.</b> Tab “Cố định” đứng đầu, có chấm đỏ khi có mẫu sắp hết, để thấy được cả từ tab khác. Mẫu sắp hết (một
+        size còn từ 2 chiếc trở xuống) lên đầu bảng, mang nhãn “Sắp hết”, ghi đỏ size nào hết hay còn ít, và có nút “Nhập thêm”. Bỏ dòng
+        chú thích cuối bảng.</p>
+      <p><b>Thêm mẫu.</b> Ô Số có thêm lựa chọn “Cố định”, không kèm chữ nào. Chọn nó thì câu đầu trang và câu dưới ô biến mất; “Số lượng
+        sẽ cắt” thành “Tồn kho”, “Màu sẽ cắt” thành “Màu”.</p>
     </div>
     <div class="pair one">
       <figure class="dev"><div class="scr" data-w="1280" data-h="800"><iframe data-frame="admin" title="Quản trị, máy tính 1280"></iframe></div>
@@ -280,28 +295,28 @@
   </section>
 
   <section id="s-styles">
-    <h2>Tám mẫu đề xuất</h2>
-    <p class="sub">Đồ cơ bản, đủ sáu họ. Màu đầu là ảnh đại diện trên thẻ. Số trên kệ là dữ liệu mô phỏng.</p>
+    <h2>Tám mẫu</h2>
+    <p class="sub">Đồ cơ bản, đủ sáu họ. Màu đầu là ảnh đại diện trên thẻ. Số trên kệ là dữ liệu mô phỏng, chỉ quản trị thấy.</p>
     <div class="scroll">
       <table class="cmp">
         <thead><tr><th>Mẫu</th><th>Loại</th><th>Chất liệu</th><th>Form</th><th>Màu</th><th class="r">Giá</th><th class="r">Trên kệ</th></tr></thead>
         <tbody id="styles"></tbody>
       </table>
     </div>
-    <p class="note">Tên lấy từ tổ ong để tách khỏi tên các Số (đất trời). Giá 400–850 nghìn, trong khung 400.000–1.500.000₫ của
-      PRODUCT.md; màu nằm trong bảy màu vải đang có. Khi bạn duyệt, bộ prompt ảnh thêm tám mẫu này: 17 ảnh.</p>
+    <p class="note">Giá 400–850 nghìn, trong khung 400.000–1.500.000₫ của PRODUCT.md; màu nằm trong bảy màu vải đang có. Khi bạn chốt
+      tên, bộ prompt ảnh thêm tám mẫu này: 17 ảnh.</p>
   </section>
 
   <section id="s-copy">
     <h2>Chữ đổi theo</h2>
-    <p class="sub">Không câu nào giới thiệu loại mẫu mới. Chỉ sửa những câu sẽ thành sai khi có mẫu được may lại.</p>
+    <p class="sub">Không câu nào giới thiệu mẫu cố định. Chỉ sửa hai câu sẽ thành sai khi có mẫu được may lại.</p>
     <div class="scroll">
       <table class="cmp">
         <thead><tr><th>Chỗ</th><th>Hiện nay</th><th>Đề xuất</th></tr></thead>
         <tbody>
-          <tr><th>Câu mở trang Giới thiệu</th><td>“HIVE bán streetwear unisex theo số: mỗi số mở đúng giờ, mỗi mẫu cắt đúng một lần, hết là hết.”</td><td class="new">“…mỗi <b>mẫu trong số</b> cắt đúng một lần, hết là hết.” Câu cũ sai với mẫu bán liên tục.</td></tr>
-          <tr><th>FAQ “Hết size thì có về lại không?”</th><td>“Không may thêm trong cùng một số. Một size chỉ có lại khi…”</td><td class="new">Giữ câu đó, thêm: “<span id="faq-new">Mẫu không có nhãn Số thì hết size sẽ may lại, chưa hẹn ngày.</span>”</td></tr>
-          <tr><th>Tiêu đề trang danh sách</th><td>“Số 05”</td><td class="new">“Tất cả mẫu”; “Số 05” sang trang Số (hoặc hiện khi bật bộ lọc)</td></tr>
+          <tr><th>Câu mở trang Giới thiệu</th><td>“HIVE bán streetwear unisex theo số: mỗi số mở đúng giờ, mỗi mẫu cắt đúng một lần, hết là hết.”</td><td class="new">“…mỗi <b>mẫu trong số</b> cắt đúng một lần, hết là hết.”</td></tr>
+          <tr><th>FAQ “Hết size thì có về lại không?”</th><td>“Không may thêm trong cùng một số. Một size chỉ có lại khi…”</td><td class="new">Giữ câu đó, thêm: “Mẫu không mang biển Số thì sẽ có lại.”</td></tr>
+          <tr><th>Tiêu đề trang danh sách</th><td>“Số 05”, “10 mẫu · 73 / 181 còn…”</td><td class="new">Bỏ ở <code>/products</code>; giữ nguyên ở <code>/so/5</code></td></tr>
           <tr><th>Trang chủ, “Theo loại”</th><td>“trong số này”</td><td class="new">“đang bán”, thêm “Xem tất cả 18 mẫu”</td></tr>
           <tr><th>Bốn quy tắc, chân trang, câu đề bìa, mô tả chia sẻ A</th><td>Đều nói về Số</td><td>Giữ nguyên: vẫn đúng</td></tr>
         </tbody>
@@ -312,8 +327,7 @@
   <section id="s-decide">
     <h2>Cần bạn chốt</h2>
     <ul class="decide">
-      <li><span class="q">Số là</span><span class="live">Đang chọn: <b id="so-now">Trang riêng</b> (đổi ở thanh trên cùng)</span></li>
-      <li><span class="q">Nhãn Số trên ảnh</span><span class="live">Đang chọn: <b id="tag-now">Có</b> (đổi ở thanh trên cùng)</span></li>
+      <li><span class="q">Cách đặt tên</span><span class="live">Đang chọn: <b id="ten-now">Đồ nghề may</b> (đổi ở thanh trên cùng)</span></li>
       <li><span class="q">Tám mẫu</span>
         <fieldset class="seg"><legend class="sr">Tám mẫu</legend><div class="opts">
           <label><input type="radio" name="d-styles" value="Giữ như bảng" checked>Giữ như bảng</label>
@@ -322,7 +336,7 @@
         <fieldset class="seg"><legend class="sr">Chữ đổi theo</legend><div class="opts">
           <label><input type="radio" name="d-copy" value="Đồng ý" checked>Đồng ý</label>
           <label><input type="radio" name="d-copy" value="Sửa, xem ghi chú">Sửa, ghi ở dưới</label></div></fieldset></li>
-      <li><span class="q">Ghi chú</span><textarea id="d-note" aria-label="Ghi chú" placeholder="Ví dụ: đổi giá SÁP, bỏ NHỘNG, thêm màu Kem cho PHẤN…"></textarea></li>
+      <li><span class="q">Ghi chú</span><textarea id="d-note" aria-label="Ghi chú" placeholder="Ví dụ: đổi một tên, đổi giá, bỏ một mẫu…"></textarea></li>
       <li><span class="q"></span><span><button type="button" class="go" id="copy">Sao chép kết quả</button><span class="done" id="copied" role="status"></span></span></li>
     </ul>
     <pre class="out" id="out"></pre>
@@ -331,11 +345,12 @@
   <section id="s-build">
     <h2>Khi làm thật</h2>
     <ul class="notes">
-      <li><b>Lát dữ liệu</b> (backend): mẫu không thuộc Số nào; trần tồn kho chỉ áp cho mẫu thuộc Số; nhập thêm cho mẫu bán liên tục;
-        seed tám mẫu; đặt lại dữ liệu mẫu giữ chúng.</li>
-      <li><b>Lát giao diện</b>: <code>/products</code> thành tất cả mẫu; Số thành <code>/so/5</code> hoặc bộ lọc; nhãn Số trên thẻ;
-        trang mẫu không Số; “Theo loại” đếm mọi mẫu; biển Số và các lối vào Số trỏ đúng chỗ; quản trị: tab, ô Số, nhập thêm.</li>
-      <li><b>Ảnh</b>: thêm tám khối vào <code>tasks/anh-san-pham-prompt.md</code>, cùng khối chung và ảnh chuẩn.</li>
+      <li><b>Lát dữ liệu</b> (backend): mẫu không thuộc Số nào; trần tồn kho chỉ áp cho mẫu thuộc Số; nhập thêm cho mẫu cố định; seed
+        tám mẫu; đặt lại dữ liệu mẫu giữ chúng.</li>
+      <li><b>Lát giao diện</b>: <code>/products</code> là tất cả mẫu, không tiêu đề; trang <code>/so/N</code> cho mọi Số; biển Số trên ảnh
+        (một class dùng chung với biển trên thanh); thẻ và trang mẫu cố định không số lượng; “Đang bán” trên trang chủ giữa hai số; quản
+        trị: tab Cố định, cờ sắp hết, nút Nhập thêm, lựa chọn Cố định.</li>
+      <li><b>Ảnh</b>: tám khối vào <code>tasks/anh-san-pham-prompt.md</code> với tên bạn chốt, cùng khối chung và ảnh chuẩn.</li>
       <li><b>Chưa làm vòng này</b>: báo khi có lại (không có email), ngày may lại, giá riêng theo màu.</li>
     </ul>
   </section>
@@ -346,17 +361,18 @@
 (() => {
   "use strict";
   const D = window.LINE_DATA;
-  const state = { so: "page", tag: "1", mark: "1", list: "all", home: "open", adm: "list" };
+  const state = { ten: "nghe", mark: "1", list: "all", home: "gap", adm: "list" };
   const frames = [...document.querySelectorAll("iframe[data-frame]")];
+  const nameOf = (s, scheme = state.ten) => D.SCHEMES[scheme].names[s.slug];
 
   // What each frame shows for the current choices: which snapshot, which options.
   function spec(kind) {
-    const base = { so: state.so, tag: state.tag };
+    const base = { ten: state.ten };
     if (kind === "list") return { page: "products", opts: { ...base, view: state.list } };
-    if (kind === "home") return { page: state.home === "gap" ? "home-gap" : "home", opts: base, at: "#h-fam" };
+    if (kind === "home") return { page: state.home === "gap" ? "home-gap" : "home", opts: base, at: state.home === "gap" ? "#h-sale" : "#h-fam" };
     if (kind === "pdp") return { page: "product", opts: base };
-    if (state.adm === "list") return { page: "admin-products", opts: { tab: "line" } };
-    return { page: "admin-new", opts: { sell: state.adm === "new-line" ? "line" : "menu" } };
+    if (state.adm === "list") return { page: "admin-products", opts: base };
+    return { page: "admin-new", opts: { ...base, sell: state.adm === "new-fixed" ? "fixed" : "menu" } };
   }
   function href(sp) {
     const q = new URLSearchParams({ mark: state.mark, ...sp.opts });
@@ -375,15 +391,16 @@
       else fr.contentWindow?.postMessage({ kind: "line-opts", opts: { mark: state.mark, ...sp.opts } }, "*");
       fr.closest("figure").querySelector("a.open").setAttribute("href", url);
     }
-    const issueView = state.list === "issue";
-    document.getElementById("cap-list").textContent = issueView
-      ? state.so === "page" ? "Máy tính 1280 · /so/5" : "Máy tính 1280 · /products?so=5"
-      : "Máy tính 1280 · /products";
-    document.getElementById("so-now").textContent = state.so === "page" ? "Trang riêng" : "Bộ lọc";
-    document.getElementById("tag-now").textContent = state.tag === "1" ? "Có" : "Không";
-    document.getElementById("faq-new").textContent = state.tag === "1"
-      ? "Mẫu không có nhãn Số thì hết size sẽ may lại, chưa hẹn ngày."
-      : "Mẫu không thuộc số nào thì hết size sẽ may lại, chưa hẹn ngày.";
+    document.getElementById("cap-list").textContent =
+      state.list === "issue" ? "Máy tính 1280 · /so/5" : "Máy tính 1280 · /products";
+    document.getElementById("ten-now").textContent = D.SCHEMES[state.ten].t;
+    document.querySelectorAll("[data-nm]").forEach((el) => {
+      const s = D.LINE.find((x) => x.slug === el.dataset.nm);
+      if (s) el.textContent = nameOf(s);
+    });
+    document.querySelectorAll(".names [data-scheme]").forEach((th) => th.classList.toggle("on", th.dataset.scheme === state.ten));
+    document.querySelectorAll(".names td[data-scheme]").forEach((td) => td.classList.toggle("on", td.dataset.scheme === state.ten));
+    styles();
     result();
   }
 
@@ -401,16 +418,24 @@
     }
   }
 
-  // The eight styles, from the same data the frames draw.
-  document.getElementById("styles").innerHTML = D.LINE.map((s) => {
-    const out = D.outSizes(s);
-    return (
-      `<tr><td class="st"><span class="fl">${D.flat(s.shape, s.c[0])}</span><b>${s.n}</b></td>` +
-      `<td>${s.kind}</td><td>${s.mat}</td><td>${s.fit === "OVERSIZE" ? "Oversize" : "Regular"}</td>` +
-      `<td>${s.c.map((c) => `<span class="dot" style="background:${D.COLORS[c][1]}"></span>${D.COLORS[c][0]}`).join(", ")}</td>` +
-      `<td class="r">${D.vnd(s.p)}</td><td class="r">${D.onHand(s)}${out.length ? ` · hết ${out.join(" ")}` : ""}</td></tr>`
-    );
-  }).join("");
+  // The three schemes side by side, from the same data the frames draw.
+  document.getElementById("names").innerHTML = D.LINE.map((s) => (
+    `<tr><td class="st"><span class="fl">${D.flat(s.shape, s.c[0])}</span>${s.kind}</td>` +
+    Object.keys(D.SCHEMES).map((k) => `<td data-scheme="${k}">${nameOf(s, k)}</td>`).join("") +
+    `</tr>`
+  )).join("");
+
+  function styles() {
+    document.getElementById("styles").innerHTML = D.LINE.map((s) => {
+      const out = D.outSizes(s);
+      return (
+        `<tr><td class="nm"><span class="fl">${D.flat(s.shape, s.c[0])}</span>${nameOf(s)}</td>` +
+        `<td>${s.kind}</td><td>${s.mat}</td><td>${s.fit === "OVERSIZE" ? "Oversize" : "Regular"}</td>` +
+        `<td>${s.c.map((c) => `<span class="dot" style="background:${D.COLORS[c][1]}"></span>${D.COLORS[c][0]}`).join(", ")}</td>` +
+        `<td class="r">${D.vnd(s.p)}</td><td class="r">${D.onHand(s)}${out.length ? ` · hết ${out.join(" ")}` : D.isLow(s) ? " · sắp hết" : ""}</td></tr>`
+      );
+    }).join("");
+  }
 
   function picked(name) {
     return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
@@ -418,9 +443,8 @@
   function result() {
     const note = document.getElementById("d-note").value.trim();
     const lines = [
-      "Mẫu bán liên tục, vòng 2 — bảng prototype/v3/line.html",
-      `· Số là: ${state.so === "page" ? "Trang riêng (/so/5)" : "Bộ lọc trong danh sách"}`,
-      `· Nhãn Số trên ảnh: ${state.tag === "1" ? "Có" : "Không"}`,
+      "Mẫu cố định, vòng 3 — bảng prototype/v3/line.html",
+      `· Cách đặt tên: ${D.SCHEMES[state.ten].t} (${D.LINE.map((s) => nameOf(s)).join(", ")})`,
       `· Tám mẫu: ${picked("d-styles")}`,
       `· Chữ đổi theo: ${picked("d-copy")}`,
     ];

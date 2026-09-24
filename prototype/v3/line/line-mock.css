@@ -1,8 +1,8 @@
-/* Styles that sell all the time, drawn over the snapshots (line-mock.js).
-   Round 2 (25/09, the user): they are not a line of their own — no bar link,
-   no home section, no description. They sit in the list like every other
-   style, and an issue is a page of its own or a filter. Only what the store
-   does not have yet is styled here; values are the store's tokens. */
+/* Fixed styles ("cố định"), drawn over the snapshots (line-mock.js).
+   Round 3 (25/09): a fixed style looks like every other style and shows no
+   stock figure; an issue has its own page; a style in an issue wears the
+   issue's plate on its photo. Only what the store does not have yet is styled
+   here; values are the store's tokens. */
 
 /* ── a photo that has not been taken yet: the garment's flat on the plate ─ */
 .s .ph{ position:relative; display:block; background:var(--plate); }
@@ -18,23 +18,51 @@
   overflow:hidden; background:var(--plate); }
 .s .index .row .ithumb svg{ display:block; width:100%; height:100%; }
 
-/* ── the issue a style belongs to, on its photo ──────────────────────────
-   A small cut of the nav's plate: the issue's cloth, honey letters, the
-   plate's radius. Bottom left, so it never meets SOLD OUT at the top. A style
-   that belongs to no issue carries nothing. */
-.s .card3 .sotag{ position:absolute; left:10px; bottom:10px; display:inline-flex; align-items:center;
-  height:22px; padding:0 8px; border-radius:var(--r-plate, 5px);
-  background:var(--stage); color:var(--brand);
-  font-family:var(--font-display); font-weight:var(--fw-display); font-size:11px; letter-spacing:.08em;
-  text-transform:uppercase; pointer-events:none; }
+/* ── the list with nothing above its tabs ──────────────────────────────── */
+.s .lhead.bare{ padding-top:var(--s3); }
 
-/* ── the back office: a menu shown open, a quiet action in a cell ──────── */
+/* ── the issue's plate on a photo: the nav's `.itag`, declaration for
+   declaration (nav.css + desktop.css) — cloth, a honey rule inset 2px, a
+   bolt at each end, Unbounded 800. Top left. When the style has sold out,
+   SOLD OUT stands under it. ─────────────────────────────────────────────── */
+.s .card3 .sotag{ --pl:var(--stage); --pi:var(--brand);
+  position:absolute; left:10px; top:10px; z-index:1;
+  display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;
+  height:28px; padding:0 17px; border-radius:var(--r-plate, 5px);
+  background:
+    radial-gradient(circle at 8.5px 50%, var(--pi) 0 1.6px, transparent 2.1px),
+    radial-gradient(circle at calc(100% - 8.5px) 50%, var(--pi) 0 1.6px, transparent 2.1px),
+    var(--pl);
+  box-shadow:inset 0 0 0 2px var(--pl), inset 0 0 0 3px var(--pi);
+  color:var(--pi); font-family:var(--font-display); font-weight:var(--fw-display);
+  font-size:var(--fs-xs); line-height:1; letter-spacing:.1em; text-transform:uppercase;
+  pointer-events:none; }
+.s .card3 .imgbox:has(.sotag) .stamp{ top:44px; }
+@media (min-width:900px){
+  .s .card3 .sotag{ height:32px; padding:0 19px; font-size:var(--fs-sm);
+    background:
+      radial-gradient(circle at 9.5px 50%, var(--pi) 0 1.75px, transparent 2.25px),
+      radial-gradient(circle at calc(100% - 9.5px) 50%, var(--pi) 0 1.75px, transparent 2.25px),
+      var(--pl); }
+  .s .card3 .imgbox:has(.sotag) .stamp{ top:48px; }
+}
+
+/* ── the back office ───────────────────────────────────────────────────── */
 .s .selwrap.open{ position:relative; }
 .s .selwrap.open .menu3{ position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:5; }
 .s .menu3 .mk{ display:inline-flex; width:12px; flex:none; }
 .s .menu3 .mk svg{ width:12px; height:9px; }
-.s .cellmeter .add{ margin-left:10px; font-size:var(--fs-xs); font-weight:600; color:var(--brand-text);
-  text-decoration:underline; text-underline-offset:3px; white-space:nowrap; }
+/* A fixed style running low: which sizes, in red, and the button to restock. */
+.s.adm3 td .stockcell{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; min-width:120px; }
+.s.adm3 td .stockcell > span{ white-space:nowrap; }
+.s.adm3 td .stockcell .lownote{ color:var(--hot); font-size:var(--fs-xs); font-weight:600; }
+/* The restock button sits with the row's menu, so every button in the table stands in one column. */
+.s.adm3 td .rowacts{ display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+.s.adm3 td .rowacts .restock{ height:30px; padding:0 12px; white-space:nowrap; }
+.s.adm3 td.hotsize{ color:var(--hot); font-weight:600; }
+/* The tab says it too, so a manager on another tab sees there is restocking to do. */
+.s .stabs .lowdot{ display:inline-block; width:7px; height:7px; margin-left:6px; border-radius:99px;
+  background:var(--hot); vertical-align:1px; }
 
 /* ── what is new, when the board asks to see it ────────────────────────── */
 html[data-mark="1"] [data-new]{ outline:2px dashed var(--brand); outline-offset:4px; border-radius:2px; }
