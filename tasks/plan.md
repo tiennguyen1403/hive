@@ -1726,3 +1726,16 @@ Brief `tasks/briefs/v3-lat-9-wait.md` giao `ui-implementer`. Các điểm chính
 - bắt click `<a>` nội bộ, nút Lùi/Tới và hàm gọi từ `router.push`;
 - kết thúc khi commit, không được kẹt khi redirect về đúng URL đang đứng hay khi cú bấm bị huỷ;
 - thời gian lấy từ đối tượng `veil` của bảng.
+
+**24/09, biển Số chỉ hiện khi có Số đang bán.** Người dùng, trả lời hai sửa (1) (2) của finish review lát 8: "Thanh điều hướng chỉ hiện
+bảng khi đang có số đang active thôi". Khi Số nổi bật `UPCOMING` hoặc `CLOSED`, thanh không có biển:
+- desktop chỉ còn logo · 5 họ (canh giữa) · 4 nút;
+- điện thoại chỉ còn logo · 4 nút.
+
+Hệ quả:
+- Biển chỉ còn một trạng thái nên hai sửa (1) (2) hết đối tượng.
+- Trong `SiteNav` bỏ các nhánh `soon`/`shut` và href `/#next`, `/so/N`.
+- CSS bỏ `.itag.soon`/`.shut`.
+- Lưới desktop phải tự canh giữa khi thiếu biển: bốn cột với một cột rỗng sẽ đẩy cụm họ lệch 12 px.
+
+Làm sau khi lát 9 về, vì hai việc cùng sửa `nav.css` và cùng dựng lại máy chủ 3200.
