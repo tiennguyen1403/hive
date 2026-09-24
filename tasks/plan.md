@@ -2060,3 +2060,43 @@ Documenter sau lát 12 cần ghi thêm vào DESIGN.md:
 - 17 ảnh phẳng và `scripts/flats.ts`.
 
 PRODUCT.md, mục "Evidence on Hand", cần nói tới ảnh phẳng.
+
+**25/09, lát 11: ba việc sửa thêm ĐẠT (`3c04d6f`).**
+- Tìm theo mã: "s05", "S05 – KHÓI" và "s05-khoi" cùng chuẩn hoá về một chuỗi.
+- Câu cuối trang Đã lưu thành "Mẫu đã hết vẫn nằm trong danh sách.".
+- Mẫu cố định bỏ "còn N" ở giỏ, "Giữ lại sau" và trang tài khoản; các dòng đỏ chặn đặt hàng giữ số.
+- 1448/1448 test.
+
+**25/09, lát 12 ĐẠT (`bd44b0c`).** `ui-implementer` làm, phiên chính duyệt độc lập:
+- `tsc` sạch; 1475/1475 test đơn vị;
+- ba cặp mock–bản dựng: bảng Cố định với menu ⋯ mở, menu Số, form Cố định;
+- sheet Nhập thêm lúc mở, đã điền và sau khi gửi; form sửa mẫu cố định.
+
+Lệch mock, đều chấp nhận:
+- menu ⋯ lệch phải 29px vì cách đặt menu dùng chung;
+- menu Số giữ thứ tự và chữ như trước.
+
+Phiên chính trả lời câu agent hỏi:
+- giữ "L còn 0";
+- chip "Sắp hết" và chấm đỏ vẫn đếm cả mẫu hết cả kệ;
+- không cần ô Tham chiếu.
+
+Đã giao agent hai chỉnh ở sheet Nhập thêm:
+- toast `STALE` thành "Tồn kho vừa đổi ở nơi khác — kiểm lại số rồi gửi";
+- bỏ dòng "Trên kệ sau khi lưu: … (+N) · M ô đổi", vì trùng với nút.
+
+**Thứ tự đưa lên online, sau khi các lát xong và người dùng quyết push.** Origin đang ở `9867442`; máy đi trước 45 commit, gồm
+lát 8–12 và B5.
+1. Push code trước; Vercel tự deploy từ GitHub. Code mới chạy được trên DB cũ: parser nhận cả cặp null lẫn không null, và slug
+   cũ vẫn tra được.
+2. Chờ bản deploy READY rồi mới đụng DB. Nếu đẩy DB trước, code cũ đọc mẫu cố định (`dropNo` null) sẽ ném lỗi và làm sập
+   catalogue.
+3. Người dùng gõ `! npx supabase db push --linked --include-seed --dry-run`, kiểm có migration `20260925090000` và dòng nạp
+   `supabase/seed.sql`, rồi chạy lại không có `--dry-run`. CLI ghi hash seed ở `supabase_migrations.seed_files` (thấy trên máy),
+   nhưng chưa thấy tài liệu nói có nạp lại seed đã đổi hay không. `--dry-run` sẽ trả lời.
+4. Phiên chính kiểm production:
+   - `/products` có 18 mẫu;
+   - `/products/khoi` trả 308;
+   - trang quản trị có tab Cố định;
+   - `og:image` trỏ đúng domain (còn treo từ lát 10).
+   Nếu seed nạp lại xoá liên kết tài khoản mẫu thì chạy `ENV_FILE=.env.hosted.local npm run seed:users` như B4.
