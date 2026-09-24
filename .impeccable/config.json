@@ -200,6 +200,42 @@
         ],
         "createdAt": "2026-09-24T15:44:37.297Z",
         "reason": "Not decorative stripes: the running stitch of the loading seam (the system's dashed honey seam); CSS dashed borders cannot set the 6/4 px stitch, so a repeating gradient draws it"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "prototype/name/share.html"
+        ],
+        "createdAt": "2026-09-24T16:36:31.798Z",
+        "reason": "Comparison board: these colours imitate other apps' chrome (Chrome tabs, Google results, Facebook/Messenger cards, phone wallpapers) so the assets are judged in place; not HIVE colours"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "*",
+        "files": [
+          "prototype/name/share.html"
+        ],
+        "createdAt": "2026-09-24T16:36:31.953Z",
+        "reason": "Comparison board: radii of the imitated third-party chrome (tabs, cards, chat bubbles, phone home screens)"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "*",
+        "files": [
+          "prototype/name/share.html"
+        ],
+        "createdAt": "2026-09-24T16:36:32.106Z",
+        "reason": "Review board chrome shared with the other name/logo boards (16px lead), not a storefront surface"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "prototype/name/share.html"
+        ],
+        "createdAt": "2026-09-24T16:36:32.256Z",
+        "reason": "False positive: hairline column dividers of the comparison grid and a joined segmented control whose buttons fill its height"
       }
     ]
   }

@@ -1739,3 +1739,18 @@ Hệ quả:
 - Lưới desktop phải tự canh giữa khi thiếu biển: bốn cột với một cột rỗng sẽ đẩy cụm họ lệch 12 px.
 
 Làm sau khi lát 9 về, vì hai việc cùng sửa `nav.css` và cùng dựng lại máy chủ 3200.
+
+**24/09, mock favicon và ảnh chia sẻ, vòng 2 (CHỜ DUYỆT).** Người dùng (`/impeccable`): "thiết kế lại phần share.html vì chúng ta đã
+chốt logo". Hỏi lại, người dùng chốt: ảnh chia sẻ **không dùng ảnh sản phẩm**; phạm vi **chung cho cả site**, ảnh riêng từng mẫu để sau.
+Bảng `prototype/name/share.html` viết lại (hợp đồng `.impeccable/surfaces/prototype-name-share-html.md`). Đường nét lấy thẳng từ
+`prototype/name/logo/`: `share/build.cjs` sinh ra `share/logo-data.js`.
+- **F** (favicon): từ 32 px cả ba là M2; chỉ ảnh 16 px khác nhau vì M2 ở 16 px nhoè con ong. F1 là M2 thu nhỏ; F2 là M2 vẽ lại
+  từng điểm ảnh (đầu, cánh, hai vạch bụng, ngòi); F3 chỉ còn chữ H. Đề xuất F2.
+- **P** (icon điện thoại 180 px): P1 vải đen, P2 mật ong tràn (trên Android cắt tròn thì chính là M2), P3 sàn trắng. Đề xuất P2.
+- **O** (ảnh chia sẻ 1200×630): O1 bìa Số không ảnh; O2 lockup `HIVE.NN` ghép từ bộ số; O3 nhãn vải đen khâu viền trên nền mật ong.
+  Đề xuất O2. Ảnh chỉ ghi Số và câu đề bìa, vì Facebook và Zalo giữ bản đã quét; không ghi giờ đóng hay số còn.
+- Mỗi phương án xem được trong tab trình duyệt (màn 100% và 200%), kết quả Google, màn hình iPhone và Android, thẻ link bài đăng, tin
+  nhắn và bản cắt vuông, với giao diện sáng và tối, Số 05 và 06. Chế độ xuất `?icon=`, `?touch=`, `?og=` cho ra đúng cỡ tệp.
+
+Soát hai vòng ở 1280 và 390: 0 lỗi console, 0 tràn ngang. Detector sạch; khoanh bốn ngoại lệ riêng tệp này (màu và bo góc của giao
+diện ứng dụng khác mà bảng giả lập, cỡ chữ lead của bảng, đệm chật đọc nhầm).
