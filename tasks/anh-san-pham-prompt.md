@@ -34,8 +34,10 @@ Prompt viết bằng tiếng Anh vì công cụ tạo ảnh hiểu tiếng Anh t
      ```text
      The attached photo is the style reference: match its backdrop colour, light, shadow, camera height and garment scale exactly. Do not copy the garment itself.
      ```
-4. **Không dùng được tỉ lệ 4:5?** ChatGPT thường trả ảnh dọc 2:3. Vẫn được, vì KHỐI CHUNG đã yêu cầu món đồ nằm gọn trong vùng 4:5
-   ở giữa ảnh; khi đưa vào web, ảnh sẽ được cắt đúng vùng đó.
+4. **Khổ ảnh không đúng 4:5 cũng được.** ChatGPT hay đổi khổ, nhất là lúc đổi màu: ảnh `khoi-cream.png` ra 1198×1313 trong khi
+   `khoi-black.png` là 1122×1402. Khi đưa vào web, mọi ảnh được đặt lại cùng một khung 1.200×1.500: áo rộng 84% khung, cổ áo cùng
+   độ cao, nền của chính ảnh được nối thêm. Bước này đã thử trên hai ảnh KHÓI ngày 25/09 và không lộ vết nối. Điều duy nhất nó
+   không cứu được là **món đồ chạm hoặc bị cắt ở mép ảnh**.
 5. **Tải ảnh gốc** (PNG, đủ độ phân giải), đặt tên theo mục 3.
 
 Tuỳ chọn: có thể tạo một Project trong ChatGPT và dán KHỐI CHUNG vào phần Instructions. Dù vậy, dán KHỐI CHUNG kèm từng tin nhắn
@@ -45,7 +47,7 @@ vẫn là cách chắc nhất.
 
 - [ ] Không có chữ, số, logo, nhãn mác, thẻ treo hay hình mờ ở bất cứ đâu, kể cả trên nền.
 - [ ] Không có người, tay, ma-nơ-canh lộ ra, móc treo hay đạo cụ.
-- [ ] Món đồ nằm gọn trong vùng 4:5 ở giữa, không bị cắt mép.
+- [ ] Món đồ không chạm và không bị cắt ở mép nào: bốn phía đều còn thấy nền. Khổ ảnh to nhỏ hay lệch 4:5 không sao.
 - [ ] Màu vải gần với mã màu. Chú ý nhất:
   - màu **trắng** và **kem** dễ ngả xám hoặc ngả vàng;
   - màu **xám** dễ bị làm thành xám lốm đốm.
@@ -59,7 +61,7 @@ vẫn là cách chắc nhất.
 - **Nơi lưu:** thư mục `photos-raw/` ở gốc repo. Git bỏ qua thư mục này, vì ảnh gốc nặng và chưa qua xử lý.
 - **Đừng tải ảnh qua trang quản trị.** Mỗi ngày cron đặt lại dữ liệu mẫu một lần, và lệnh này **xoá mọi ảnh tải lên** (`purgeUploadedPhotos`
   trong `app/api/reset/route.ts`). Khi đủ ảnh, báo phiên chính. Một lát nhỏ sẽ đưa ảnh vào dữ liệu mẫu:
-  - cắt 4:5, thu về 1.200×1.500, lưu WebP;
+  - đặt lại cùng một khung 1.200×1.500 (mục 1, bước 4), lưu WebP;
   - thay các khoá Unsplash trong `lib/photos.ts`;
   - nhúng đúng prompt của từng ảnh vào tệp làm nguồn gốc (FINISH).
 
