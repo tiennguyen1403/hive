@@ -103,11 +103,12 @@ const PLATE_STATE: Record<DropState, string> = {
 /**
  * `"Số 05, đang bán"` — the issue plate in the nav bar, named in full.
  *
- * The plate prints only `issueLabel()`. Which state the issue is in is carried
- * by the plate's colour alone (honey letters on the cloth while it sells, a
- * blue plate before it opens, grey letters once it has shut), and colour is
- * never the only channel: this string is the link's `aria-label` for a screen
- * reader and its `title` for a pointer.
+ * The plate prints only `issueLabel()`, and since v3 slice 10 the bar draws
+ * it only while the issue sells, so there this reads "…, đang bán": the
+ * link's `aria-label` for a screen reader and its `title` for a pointer say
+ * in words what the honey letters on the cloth say by colour. The other two
+ * states keep their words, so the function answers for any issue it is
+ * handed.
  */
 export function plateLabel(no: number, state: DropState): string {
   return `${issueLabel(no)}, ${PLATE_STATE[state]}`;

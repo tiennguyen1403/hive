@@ -25,12 +25,10 @@ export interface SiteNavProps {
   /** Underlines one family link. The listing reads it out of `?family=`. */
   activeFamily?: Family | undefined;
   /**
-   * Lights the issue plate: the listing with no family narrowing it. The
-   * plate took this over from the "Số NN" link that headed the families
-   * until v3 slice 8. It lights only while the issue is OPEN, because only
-   * then does the plate lead to `/products`, the page being viewed. Before
-   * the issue opens it leads to `/#next`, once shut to `/so/N`, and a link
-   * must not claim to be a page it does not lead to.
+   * Lights the issue plate: the listing with no family narrowing it, which
+   * is where the plate leads. The plate took this over from the "Số NN"
+   * link that headed the families until v3 slice 8. With no issue on sale
+   * there is no plate to light, and the flag changes nothing.
    */
   activeDrop?: boolean;
 }
@@ -47,12 +45,16 @@ export interface SiteNavProps {
  *
  * THE ISSUE PLATE is the only black cloth in the bar, the same material as
  * the cover further down the page, so the chrome and the thing it announces
- * read as one object. It is the link to the issue and it prints only WHICH
- * issue. Its state is its colour (honey letters while the issue sells, a
- * blue plate before it opens, grey letters once it has shut), and colour is
- * never the only channel: `plateLabel()` puts the state into words for a
- * screen reader and for the tooltip. The bar keeps no clock; the cover, the
- * listing's head line and the footer's calendar say how long is left.
+ * read as one object. It is the link to the issue on sale, `/products`, and
+ * it prints only WHICH issue. It is there ONLY while an issue is on sale
+ * (the user, 24/09/2026: show the plate only while an issue is active):
+ * before the next issue opens and after the last one shuts, the bar is the
+ * logo, the families (from 900px) and the four buttons, and the cover and
+ * the footer's calendar say what comes next. So the plate has one state and
+ * one colour, honey letters on the cloth; `plateLabel()` still names it in
+ * full ("Số 05, đang bán") for a screen reader and for the tooltip. The bar
+ * keeps no clock; the cover, the listing's head line and the footer's
+ * calendar say how long is left.
  *
  * `activeFamily` and `activeDrop` are passed in by the page rather than read
  * from the URL here. `useSearchParams` in a component that sits on every
@@ -69,20 +71,13 @@ export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
   const me = useMe();
   const catalog = useCatalog();
 
+  // The same pick as the home page's cover: the issue selling now, else the
+  // next one, else the last. Only the first gets a plate.
   const { drop, state } = featuredDrop(catalog, undefined);
-  const label = issueLabel(drop.no);
-  const plateName = plateLabel(drop.no, state);
+  const onSale = state === "OPEN";
 
   const wish = wishReady ? list.length : 0;
   const cart = cartReady ? units : 0;
-  const plateTone = state === "OPEN" ? "" : state === "UPCOMING" ? " soon" : " shut";
-  // An open issue is somewhere to shop; one that has not opened is the
-  // teaser at the foot of the home page; one that has shut has its own
-  // record at `/so/N` (v3 slice 4).
-  const dropHref =
-    state === "OPEN" ? "/products" : state === "CLOSED" ? `/so/${drop.no}` : "/#next";
-  // Lit only when its href is the page being viewed (see `activeDrop`).
-  const plateOn = activeDrop && state === "OPEN";
 
   return (
     <header className="nav3">
@@ -91,15 +86,17 @@ export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
           <NavLogo />
         </Link>
 
-        <Link
-          className={`itag${plateTone}${plateOn ? " on" : ""}`}
-          href={dropHref}
-          aria-label={plateName}
-          title={plateName}
-          aria-current={plateOn ? "page" : undefined}
-        >
-          {label}
-        </Link>
+        {onSale && (
+          <Link
+            className={activeDrop ? "itag on" : "itag"}
+            href="/products"
+            aria-label={plateLabel(drop.no, state)}
+            title={plateLabel(drop.no, state)}
+            aria-current={activeDrop ? "page" : undefined}
+          >
+            {issueLabel(drop.no)}
+          </Link>
+        )}
 
         <nav className="links" aria-label="Danh mục">
           {NAV_FAMILIES.map((f) => (

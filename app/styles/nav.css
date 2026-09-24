@@ -84,9 +84,9 @@
 
    The ISSUE PLATE (`.itag`) is the one piece of black cloth in the bar —
    the same material as the cover, so the nav and the cover read as one
-   object. It prints only WHICH issue; the plate's colour carries its state,
-   and the link's `aria-label` and `title` say the state in words
-   (`plateLabel` in lib/lexicon.ts). The bar keeps no clock.
+   object. It is there only while an issue is on sale (v3 slice 10) and
+   prints only WHICH issue; the link's `aria-label` and `title` name it in
+   full (`plateLabel` in lib/lexicon.ts). The bar keeps no clock.
 
    The bar sits on a soft shadow rather than a rule: `0 1px 0` for the
    hairline and a wide, low-opacity drop underneath, so the page slides
@@ -106,8 +106,8 @@
 /* The plate: option F of the name round (`prototype/name/hive-2.html`) cut
    from the issue's cloth, colourway B. A 1px honey rule inset 2px from the
    edge, a bolt at each end, the issue in Unbounded 800. `--pl` is the plate
-   and `--pi` everything drawn on it (rule, bolts, letters), so a state only
-   swaps the two. */
+   and `--pi` everything drawn on it (rule, bolts, letters); the hover swaps
+   only the plate. */
 .s .nav3 .itag{ --pl:var(--stage); --pi:var(--brand);
   display:inline-flex; align-items:center; justify-content:center; flex:none;
   position:relative; white-space:nowrap; height:28px; padding:0 17px; border:0;
@@ -122,15 +122,9 @@
   transition:background-color .12s ease; }
 /* 28px of plate, 46px of finger. */
 .s .nav3 .itag::after{ content:""; position:absolute; inset:-9px 0; }
-/* Before it opens the plate is blue, the system's "not yet"; once it has
-   shut, the letters go grey. */
-.s .nav3 .itag.soon{ --pl:var(--info); --pi:var(--stage-ink); }
-.s .nav3 .itag.shut{ --pi:var(--stage-ink2); }
+/* The blue "not yet" plate and the grey "shut" one went at v3 slice 10:
+   the bar draws no plate unless the issue is on sale. */
 .s .nav3 .itag:hover{ --pl:var(--stage-hair); }
-/* A blue plate brightens instead of taking the cloth's hover. `--pl` is
-   restated because `.itag:hover` above ties with `.itag.soon` (0,4,0) and
-   comes later, which would turn a hovered blue plate dark grey. */
-.s .nav3 .itag.soon:hover{ --pl:var(--info); filter:brightness(1.08); }
 /* Browsing the whole issue: the same 2px honey rule the family links wear.
    `::before`, because `::after` is the touch overlay. */
 .s .nav3 .itag.on::before{ content:""; position:absolute; left:3px; right:3px;

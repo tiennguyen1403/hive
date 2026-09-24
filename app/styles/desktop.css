@@ -56,7 +56,14 @@
    equally, so the plate and the families stand in the middle of the bar —
    6px right of centre, because the bar's gutters are 40 and 28 on purpose.
    At 900px the families still clear the icons by 33px (25px where a classic
-   scrollbar takes 15px of the width). */
+   scrollbar takes 15px of the width).
+
+   With no issue on sale there is no plate (v3 slice 10), and the grid drops
+   to three columns. Four with one left empty would not do: the three
+   children would fill the first three tracks and the icons would stop short
+   of the right edge; and even with every child placed by hand, the empty
+   track still keeps a gap on each side and pushes the families 12px off
+   the middle. */
 @media (min-width: 900px) {
   .s .nav3 .in {
     display: grid;
@@ -66,6 +73,9 @@
     padding: 0 28px 0 var(--gutd);
     max-width: var(--max);
     margin: 0 auto;
+  }
+  .s .nav3 .in:not(:has(> .itag)) {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   }
   .s .nav3 .wm {
     justify-self: start;

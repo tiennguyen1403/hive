@@ -16,8 +16,8 @@ interface ShopFrameProps {
   activeFamily?: Family | undefined;
   /**
    * Lights the issue plate in the bar: the listing with no family narrowing
-   * it. The plate lights only while the issue is open, when it leads to the
-   * page being viewed (see `SiteNavProps`).
+   * it, which is where the plate leads. The bar has a plate only while an
+   * issue is on sale (see `SiteNavProps`).
    */
   activeDrop?: boolean;
 }
