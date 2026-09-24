@@ -132,7 +132,7 @@ Front view.
 ```text
 BỤI — oversized pullover hoodie. Colour: black (#1C1C1C), a soft true black.
 Heavyweight 380 gsm brushed-back cotton fleece, thick and soft, with a dry matte face. Plain, no print.
-Oversized cut: dropped shoulders, roomy body, double-layer hood lying down behind the neck, two flat drawcords in the same colour, kangaroo pocket, wide ribbed cuffs and hem band.
+Oversized cut: dropped shoulders, roomy body, double-layer hood standing up around the neck with its opening facing forward, two flat drawcords in the same colour with small metal tips, kangaroo pocket, wide ribbed cuffs and hem band.
 Front view.
 ```
 
@@ -142,7 +142,7 @@ Front view.
 
 ```text
 NGUỘI — oversized printed pullover hoodie. Colour: black (#1C1C1C), a soft true black.
-Heavyweight 380 gsm brushed-back cotton fleece. Oversized cut: dropped shoulders, roomy body, double-layer hood lying down behind the neck, flat drawcords, kangaroo pocket, wide ribbed cuffs and hem band.
+Heavyweight 380 gsm brushed-back cotton fleece. Oversized cut: dropped shoulders, roomy body, double-layer hood standing up around the neck with its opening facing forward, flat drawcords with small metal tips, kangaroo pocket, wide ribbed cuffs and hem band.
 Print: one large screen print centred on the chest, about 26 cm wide, in a single honey-yellow ink (#EBA400): concentric rings that break up into scattered dots toward the outside, like ripples cooling off. Matte ink with a soft hand. The print contains no letters, numbers or symbols.
 Front view.
 ```
@@ -244,7 +244,7 @@ Chỉ có màu rêu.
 ```text
 TRO — oversized zip-up hoodie. Colour: grey (#8C8C8C), a flat mid grey, not heathered.
 Heavyweight 400 gsm brushed-back cotton fleece, thick and structured.
-Oversized cut: dropped shoulders, full-length front zip with a tonal metal zipper, zipped fully closed, double-layer hood lying down behind the neck, flat drawcords, two split front pockets, wide ribbed cuffs and hem band.
+Oversized cut: dropped shoulders, full-length front zip with a tonal metal zipper, zipped fully closed, double-layer hood standing up around the neck with its opening facing forward, flat drawcords with small metal tips, two split front pockets, wide ribbed cuffs and hem band.
 Front view.
 ```
 
@@ -369,7 +369,7 @@ Front view.
 
 ```text
 NGÓI — oversized printed pullover hoodie. Colour: brown (#5C4536), a dark earthy brown.
-Heavyweight 380 gsm brushed-back cotton fleece. Oversized cut: dropped shoulders, roomy body, double-layer hood lying down behind the neck, flat drawcords, kangaroo pocket, wide ribbed cuffs and hem band.
+Heavyweight 380 gsm brushed-back cotton fleece. Oversized cut: dropped shoulders, roomy body, double-layer hood standing up around the neck with its opening facing forward, flat drawcords with small metal tips, kangaroo pocket, wide ribbed cuffs and hem band.
 Print: one large screen print centred on the chest, about 26 cm wide, in a single cream ink (#E6DFD1): rows of overlapping scalloped roof tiles. Matte ink with a soft hand. The print contains no letters, numbers or symbols.
 Front view.
 ```
@@ -377,7 +377,8 @@ Front view.
 ### Mẫu cố định — bán mọi lúc (8 mẫu, 17 ảnh)
 
 Đồ cơ bản, không in, không thuộc Số nào. Vài mẫu gần giống một mẫu trong Số (ÁO THUN TRƠN với NẮNG, ÁO THUN TAY DÀI với LỬA,
-HOODIE TRƠN với BỤI). Khối prompt ghi rõ chỗ khác để ảnh không trùng nhau: cổ, bo tay, mũ, dây rút.
+HOODIE TRƠN với BỤI). Khối prompt ghi rõ chỗ khác để ảnh không trùng nhau: cổ, bo tay, mũ, dây rút. HOODIE TRƠN **không có dây
+rút**, vì ảnh BỤI (25/09) đã có dây rút đầu kim loại.
 
 **ÁO THUN TRƠN** · Áo thun · Cotton 220gsm · Regular · 400.000₫
 
@@ -406,7 +407,7 @@ Front view, sleeves hanging naturally at the sides.
 ```text
 HOODIE TRƠN — oversized plain pullover hoodie. Colour: grey (#8C8C8C), a flat mid grey, not heathered.
 Midweight 340 gsm brushed-back cotton fleece, soft with a matte face. Plain, no print.
-Oversized cut: dropped shoulders, roomy body, single-layer hood lying down behind the neck with round drawcords finished in plain metal tips, kangaroo pocket, ribbed cuffs and hem band.
+Oversized cut: dropped shoulders, roomy body, single-layer hood standing up around the neck with its opening facing forward, NO drawcords and no eyelets — a clean hood opening, kangaroo pocket, ribbed cuffs and hem band.
 Front view.
 ```
 
