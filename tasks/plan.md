@@ -1630,3 +1630,13 @@ một chi tiết riêng lặp đều trên mọi chữ; bốn hướng (cùng g�
 `v2/mark-m2-chatgpt.png`. **Khi nhận ảnh:** vẽ lại thành vector (HIVE, dấu chấm, số 0–9 vì Số đổi theo đợt), ghép lockup với M2,
 thay bộ tệp chuẩn ở `prototype/name/logo/` (hiện vẫn là M0 + wordmark cũ), sửa câu "trùng 95,6%" ở `logo.html` cho khớp. Sau đó mới
 làm favicon và ảnh OG; favicon F1–F3 ở `share.html` phần lớn đã lỗi thời vì nay đã có mark.
+
+**Vòng 3 — Unbounded hay Stencil hẹp (24/09/2026, CHỜ CHỌN).** Người dùng hỏi dùng Unbounded của bìa cho wordmark có ổn không
+"vì nó hơi to", và nghiêng về W3 · Stencil hẹp. Bảng `prototype/name/logo-3.html` (hợp đồng hướng
+`.impeccable/surfaces/prototype-name-logo-3-html.md`). Ảnh ngữ cảnh chụp từ app đang chạy (`next start`, cổng 3200): lúc chụp chỉ thay
+`.wm` trên thanh điều hướng, không sửa code app. Ảnh ở `prototype/name/logo/compare/`. **U** = Unbounded 800, cỡ 16 px và khoảng chữ
+.14em như chữ HIVE hiện nay; **W3** = Big Shoulders Stencil 700, chữ cao 0,52 mark. Số đo: nét U dày 31% chiều cao chữ (bản ChatGPT bị
+chê là 34%), W3 13,5%; HIVE.05 dài 7,1 lần chiều cao chữ ở U, 3,0 lần ở W3. Trên điện thoại, lockup đủ số: U thiếu 3 px ở 390 và 33 px ở
+360 (nút giỏ bị đẩy ra); W3 thừa 27 px ở 390 và vừa khít ở 360. Nếu thanh điều hướng bỏ ".05" (nhãn SỐ 05 đã nằm ngay cạnh): U thừa
+16 px ở 390 và thiếu 6 px ở 360; W3 thừa 45 px và 15 px. Đề xuất W3. Đổi lại: số .05 của W3 khác hình số 05 trên bìa; ở cỡ thanh điều
+hướng, khe chữ E và V dưới 1 px. Chọn W3 thì không cần prompt ChatGPT: xuất chữ và số 0–9 từ font (OFL) thành vector, ghép với M2.

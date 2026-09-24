@@ -182,6 +182,15 @@
         ],
         "createdAt": "2026-09-24T11:46:53.741Z",
         "reason": "Agent: this board compares candidate wordmark faces for the user to choose; the fonts are the subject of the comparison, not the app's type system"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "big shoulders stencil",
+        "files": [
+          "prototype/name/logo-3.html"
+        ],
+        "createdAt": "2026-09-24T12:26:58.644Z",
+        "reason": "Comparison board: the stencil face is the wordmark candidate the user asked to compare, not part of the app's type system"
       }
     ]
   }

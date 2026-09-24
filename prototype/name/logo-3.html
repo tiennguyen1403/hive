@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wordmark HIVE · Unbounded hay Stencil</title>
+<link rel="stylesheet" href="../v2/fonts.css">
+<style>
+  /* The app's own Unbounded 800 files (the cover's number and headings), and the stencil candidate (OFL, beside the file). */
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-latin-b89d52.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+  @font-face { font-family: "Unbounded"; font-weight: 800; font-display: block; src: url("../v3/fonts/unbounded-800-vietnamese-0260aa.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+  @font-face { font-family: "Big Shoulders Stencil"; src: url("fonts/BigShouldersStencilDisplay-VF.ttf") format("truetype"); font-weight: 100 900; font-display: block; }
+
+  :root {
+    --ink: #171410; --ink2: #6b6250; --hair: #ece7dd; --bg: #ffffff; --plate: #f3f2ef; --stage: #171410;
+    --honey: #eba400; --honey-soft: #fbf1da; --gut: 40px;
+    --display: "Unbounded", system-ui, sans-serif; --sans: "Be Vietnam Pro", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--sans); }
+  ::selection { background: var(--honey-soft); }
+  .board { max-width: 1280px; margin: 0 auto; padding: 56px var(--gut) 96px; }
+  h1 { font: 800 40px/1.05 var(--display); letter-spacing: -0.02em; margin: 0 0 14px; text-wrap: balance; }
+  h2 { font: 800 26px/1.15 var(--display); letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance; }
+  h3 { font: 800 16px/1.25 var(--display); letter-spacing: -0.01em; margin: 0 0 6px; }
+  .lead, .sub { max-width: 72ch; color: var(--ink2); margin: 0 0 28px; }
+  section { margin-top: 76px; padding-top: 28px; border-top: 1px solid var(--ink); }
+  figure { margin: 0; min-width: 0; }
+  figcaption { font-size: 13px; color: var(--ink2); margin-top: 8px; line-height: 1.45; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+  img { display: block; max-width: 100%; height: auto; }
+  .why { margin: 0 0 16px; max-width: 60ch; }
+
+  /* Two columns: U on the left, W3 on the right, in every row. */
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 36px; }
+  .pair > * { min-width: 0; }
+  .opt { display: grid; gap: 16px; align-content: start; }
+  .opt + .opt { border-left: 1px solid var(--hair); padding-left: 36px; margin-left: -1px; }
+  .facts { margin: 0; padding-left: 18px; font-size: 14px; }
+  .facts li + li { margin-top: 4px; }
+
+  .strip { border-radius: 4px; padding: 36px 32px; display: flex; align-items: center; min-height: 190px; overflow: hidden; }
+  .strip.light { background: var(--plate); }
+  .strip.dark { background: var(--stage); min-height: 150px; }
+
+  /* A lockup: the mark, then the name; --D is the mark's size, the gap 0.24 of it (as in the bar shots). */
+  .lockup { --D: 120px; display: flex; align-items: center; gap: calc(var(--D) * 0.24); min-width: 0; }
+  .lockup.big { --D: 120px; } .lockup.mid { --D: 72px; }
+  .lockup > img { width: var(--D); height: var(--D); flex: none; }
+  .wm { display: block; white-space: nowrap; line-height: 1; text-box: trim-both cap alphabetic; color: var(--ink); }
+  .dark .wm { color: #ffffff; }
+  .wm .n { color: var(--honey); font-size: 0.8em; }
+  /* U: the bar's HIVE as it is today — Unbounded 800, tracking .14em. W3: the round-2 stencil. */
+  .wm.u { font-family: var(--display); font-weight: 800; letter-spacing: 0.14em; }
+  .wm.u .n { letter-spacing: 0.02em; }
+  .wm.w3 { font-family: "Big Shoulders Stencil", var(--sans); font-weight: 700; letter-spacing: 0.02em; }
+
+  /* Photographs of the running shop, taken at 2× and shown at their CSS size. */
+  .shot { border-radius: 4px; box-shadow: 0 0 0 1px var(--hair); }
+  .bars { display: grid; gap: 18px; }
+  .phones { display: grid; grid-template-columns: repeat(2, minmax(0, 390px)); gap: 28px 36px; }
+  .narrow { display: grid; grid-template-columns: repeat(2, minmax(0, 390px)); gap: 20px 36px; margin-top: 28px; }
+  .over { color: #a3311f; font-weight: 600; }
+
+  /* The summary: one row per measured difference. */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; vertical-align: top; padding: 11px 16px 11px 0; border-top: 1px solid var(--hair); }
+  thead th { font: 800 13px/1.3 var(--display); letter-spacing: -0.01em; border-top: 0; padding-top: 0; }
+  tbody th { font-weight: 400; color: var(--ink2); width: 34%; }
+  .pick { margin: 28px 0 0; padding: 14px 16px; background: var(--honey-soft); border-radius: 4px; max-width: 76ch; }
+  .pick b { font-weight: 600; }
+
+  @media (max-width: 900px) {
+    :root { --gut: 16px; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    .pair, .phones, .narrow { grid-template-columns: minmax(0, 1fr); }
+    .opt + .opt { border-left: 0; padding-left: 0; margin-left: 0; border-top: 1px solid var(--hair); padding-top: 28px; }
+    .strip { padding: 24px 18px; min-height: 0; }
+    .lockup.big { --D: 64px; } .lockup.mid { --D: 52px; }
+    tbody th { width: 38%; }
+  }
+</style>
+</head>
+<body>
+<main class="board">
+  <h1>Wordmark: Unbounded hay Stencil hẹp</h1>
+  <p class="lead">Cùng mark M2, hai cách viết chữ HIVE. Ảnh ngữ cảnh chụp từ trang chủ thật đang chạy, chỉ thay chữ trên thanh điều
+    hướng. Mọi con số trên bảng đều là số đo.</p>
+
+  <section aria-labelledby="l-h">
+    <h2 id="l-h">Hai lockup</h2>
+    <p class="sub">Cùng mark, cùng khoảng cách từ mark tới chữ, số .05 cao 80% chữ. Chữ U cao 40% mark như chữ HIVE trên thanh điều hướng
+      hiện nay; chữ W3 cao 52% mark như ở vòng 2, vì chữ hẹp cần cao hơn mới đứng ngang được.</p>
+    <div class="pair">
+      <article class="opt" data-w="u">
+        <div><h3>U · Unbounded 800, như bìa</h3>
+          <p class="why">Đúng tệp font app dùng cho số bìa và tiêu đề, với cỡ và khoảng chữ của chữ HIVE đang có trên thanh điều hướng.
+            Số .05 trên logo có đúng hình số 05 trên bìa.</p></div>
+        <div class="strip light"></div>
+        <div class="strip dark"></div>
+        <ul class="facts">
+          <li>Nét dày bằng 31% chiều cao chữ. Bản ChatGPT bạn chê "quá đậm, nặng" là 34%.</li>
+          <li>HIVE.05 dài bằng 7,1 lần chiều cao chữ.</li>
+        </ul>
+      </article>
+      <article class="opt" data-w="w3">
+        <div><h3>W3 · Stencil hẹp</h3>
+          <p class="why">Big Shoulders Stencil, độ đậm 700: chữ hẹp, đứng cao, có khe như sơn qua khuôn. Thanh ngang chữ H bị khe cắt
+            đứt, giống chữ H trên mark, nơi con ong thế chỗ thanh ngang.</p></div>
+        <div class="strip light"></div>
+        <div class="strip dark"></div>
+        <ul class="facts">
+          <li>Nét dày bằng 13,5% chiều cao chữ, chưa tới một nửa U.</li>
+          <li>HIVE.05 dài bằng 3,0 lần chiều cao chữ.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="d-h">
+    <h2 id="d-h">Trang chủ trên máy tính, 1280 px</h2>
+    <p class="sub">Máy tính còn nhiều chỗ nên cả hai đều vừa. Khác nhau ở chỗ chữ nói cùng giọng với bìa hay đứng riêng.</p>
+    <div class="bars">
+      <figure><img class="shot" src="logo/compare/bar-1280-u.png" width="1280" height="65" alt="Thanh điều hướng với lockup U"><figcaption><b>U</b> · lockup dài 125 px, chữ cao 12 px</figcaption></figure>
+      <figure><img class="shot" src="logo/compare/bar-1280-w3.png" width="1280" height="65" alt="Thanh điều hướng với lockup W3"><figcaption><b>W3</b> · lockup dài 91 px, chữ cao 16,6 px</figcaption></figure>
+    </div>
+    <div class="pair" style="margin-top:28px">
+      <figure><img class="shot" src="logo/compare/home-1280-u.jpg" width="1280" height="800" alt="Màn đầu trang chủ với lockup U"><figcaption><b>U</b> · số .05 trên thanh điều hướng cùng hình với số 05 trên bìa</figcaption></figure>
+      <figure><img class="shot" src="logo/compare/home-1280-w3.jpg" width="1280" height="800" alt="Màn đầu trang chủ với lockup W3"><figcaption><b>W3</b> · logo đứng riêng một giọng: hẹp, cạnh bìa rộng và đậm</figcaption></figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="p-h">
+    <h2 id="p-h">Trên điện thoại</h2>
+    <p class="sub">Thanh điều hướng điện thoại cao 56 px, chứa logo, nhãn Số và bốn nút. Đây là chỗ "hơi to" thành vấn đề thật.</p>
+    <div class="phones">
+      <figure><img class="shot" src="logo/compare/home-390-u.jpg" width="390" height="844" alt="Màn đầu trang chủ trên điện thoại 390 px với lockup U"><figcaption><b>U, 390 px</b> · <span class="over">thiếu 3 px</span>: nút giỏ bị đẩy chạm mép phải</figcaption></figure>
+      <figure><img class="shot" src="logo/compare/home-390-w3.jpg" width="390" height="844" alt="Màn đầu trang chủ trên điện thoại 390 px với lockup W3"><figcaption><b>W3, 390 px</b> · thừa 27 px</figcaption></figure>
+    </div>
+    <div class="narrow">
+      <figure><img class="shot" src="logo/compare/bar-360-u.png" width="360" height="57" alt="Thanh điều hướng 360 px với lockup U"><figcaption><b>U, 360 px</b> · <span class="over">thiếu 33 px</span>: nút giỏ bị cắt mất</figcaption></figure>
+      <figure><img class="shot" src="logo/compare/bar-360-w3.png" width="360" height="57" alt="Thanh điều hướng 360 px với lockup W3"><figcaption><b>W3, 360 px</b> · vừa khít, thừa 0 px</figcaption></figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="n-h">
+    <h2 id="n-h">Nếu thanh điều hướng bỏ ".05"</h2>
+    <p class="sub">Ngay cạnh logo đã có nhãn SỐ 05, và bìa có số 05 cỡ lớn. Vì vậy trên thanh điều hướng, logo có thể chỉ gồm mark và
+      chữ HIVE. Lockup đủ HIVE.05 để dành cho những nơi không có số nào khác: ảnh chia sẻ, bao bì, nhãn.</p>
+    <div class="narrow" style="margin-top:0">
+      <figure><img class="shot" src="logo/compare/bar-390-u-nonum.png" width="390" height="57" alt="Thanh điều hướng 390 px, U không có số"><figcaption><b>U, 390 px</b> · thừa 16 px</figcaption></figure>
+      <figure><img class="shot" src="logo/compare/bar-390-w3-nonum.png" width="390" height="57" alt="Thanh điều hướng 390 px, W3 không có số"><figcaption><b>W3, 390 px</b> · thừa 45 px</figcaption></figure>
+      <figure><img class="shot" src="logo/compare/bar-360-u-nonum.png" width="360" height="57" alt="Thanh điều hướng 360 px, U không có số"><figcaption><b>U, 360 px</b> · <span class="over">thiếu 6 px</span></figcaption></figure>
+      <figure><img class="shot" src="logo/compare/bar-360-w3-nonum.png" width="360" height="57" alt="Thanh điều hướng 360 px, W3 không có số"><figcaption><b>W3, 360 px</b> · thừa 15 px</figcaption></figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-h">
+    <h2 id="s-h">Tóm lại</h2>
+    <table>
+      <thead><tr><td></td><th scope="col">U · Unbounded</th><th scope="col">W3 · Stencil</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Nét dày / chiều cao chữ</th><td>31% (bản ChatGPT cũ: 34%)</td><td>13,5%</td></tr>
+        <tr><th scope="row">HIVE.05 dài / chiều cao chữ</th><td>7,1 lần</td><td>3,0 lần</td></tr>
+        <tr><th scope="row">Điện thoại 390, đủ .05</th><td class="over">thiếu 3 px</td><td>thừa 27 px</td></tr>
+        <tr><th scope="row">Điện thoại 360, đủ .05</th><td class="over">thiếu 33 px</td><td>vừa khít</td></tr>
+        <tr><th scope="row">Số trên logo và số trên bìa</th><td>cùng một hình</td><td>hai hình khác nhau</td></tr>
+        <tr><th scope="row">Ở cỡ thanh điều hướng</th><td>đậm, rõ</td><td>khe chữ H còn thấy; khe chữ E và V nhỏ hơn 1 px, gần như liền</td></tr>
+      </tbody>
+    </table>
+    <p class="pick"><b>Đề xuất: W3.</b> Nó sửa đúng hai điểm bạn chê ở bản cũ: nét nhẹ chưa tới một nửa U, và có nét riêng thay vì
+      trông như font đậm phổ thông. Nó cũng gọn nhất trên điện thoại. U chỉ hơn ở một điểm: số .05 trên logo khớp số trên bìa. Đổi lại,
+      U đậm gần bằng bản cũ, đẩy nút giỏ chạm mép ở 390 px và cắt mất nó ở 360 px.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const MARK = "logo/v2/mark-m2.svg";
+  // Cap height as a share of the mark: U as the bar has it today (16px on a 30px mark), W3 as on the round-2 board.
+  const RATIO = { u: 0.4, w3: 0.52 };
+
+  for (const opt of document.querySelectorAll(".opt")) {
+    const w = opt.dataset.w;
+    const [light, dark] = opt.querySelectorAll(".strip");
+    const lockup = (size) => `<div class="lockup ${size}"><img src="${MARK}" alt=""><span class="wm ${w}" data-ratio="${RATIO[w]}">HIVE<span class="n">.05</span></span></div>`;
+    light.innerHTML = lockup("big");
+    dark.innerHTML = lockup("mid");
+  }
+
+  // The text box is trimmed to the cap height, so its measured height is the cap height.
+  function fit() {
+    for (const el of document.querySelectorAll(".wm[data-ratio]")) {
+      const mark = el.parentElement.querySelector("img");
+      const target = parseFloat(el.dataset.ratio) * (mark ? mark.getBoundingClientRect().height : 0);
+      el.style.fontSize = "100px";
+      const h = el.getBoundingClientRect().height;
+      if (h > 0) el.style.fontSize = (100 * target / h).toFixed(2) + "px";
+    }
+  }
+
+  document.fonts.ready.then(() => Promise.all([
+    document.fonts.load('800 40px "Unbounded"'),
+    document.fonts.load('700 40px "Big Shoulders Stencil"'),
+  ])).finally(fit);
+  let t = 0;
+  addEventListener("resize", () => { clearTimeout(t); t = setTimeout(fit, 120); });
+})();
+</script>
+</body>
+</html>
