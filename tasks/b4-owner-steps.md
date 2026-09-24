@@ -6,6 +6,13 @@ hằng ngày, xoá ảnh tải lên, kiểm sau khi lên — là của phiên ch
 
 Thứ tự: **A → báo tôi → tôi làm phần giữa → C → báo tôi → tôi kiểm.** B làm lúc nào cũng được.
 
+**Trạng thái 24/09 11:30 — A đạt, C đã import nhưng deploy bị BLOCKED.** Nguyên nhân (API Vercel,
+`errorLink` → docs *Troubleshoot project collaboration*): gói Hobby **không nhận commit từ repo private** trừ khi
+Vercel nhận ra tác giả commit là chủ tài khoản; tài khoản Vercel chưa nối GitHub hoặc email commit
+(`tiennguyenant2000@gmail.com`) chưa khớp. Sửa: (1) làm bước B — repo public thì Vercel bỏ kiểm này
+("Collaboration is free for public repositories"); và/hoặc (2) Vercel → Account Settings → Authentication →
+Login Connections → Connect GitHub. Sau đó push mới hoặc Redeploy.
+
 **Trạng thái 24/09 10:30 — A đạt.** DB hosted đã có schema, seed và 9 tài khoản mẫu; bản hiện tại chạy đúng
 trên DB hosted (đi trọn kịch bản lát 7 từ máy này). **C làm được ngay**, không cần đợi code B4: lần deploy
 đầu đã chạy được, cron sẽ xuất hiện ở lần deploy sau khi B4 lên.
@@ -57,18 +64,18 @@ nên bản local vẫn chạy trên stack Docker như cũ.
 
 ## C · Vercel — khoảng 10 phút, làm được ngay
 
-- [ ] **C1 Tài khoản.** vercel.com → Sign up with GitHub → gói Hobby (miễn phí, không thẻ).
-- [ ] **C2 Nhập repo.** Add New… → Project → Import Git Repository → cài Vercel GitHub App,
+- [x] **C1 Tài khoản.** vercel.com → Sign up with GitHub → gói Hobby (miễn phí, không thẻ).
+- [x] **C2 Nhập repo.** Add New… → Project → Import Git Repository → cài Vercel GitHub App,
       cho quyền repo `khoi-store` → Import.
-- [ ] **C3 Màn cấu hình.** Project Name: `hive-demo` (địa chỉ sẽ là `hive-demo.vercel.app`,
+- [x] **C3 Màn cấu hình.** Project Name: `hive-demo` (địa chỉ sẽ là `hive-demo.vercel.app`,
       Vercel đổi nếu trùng). Framework Preset: Next.js (tự nhận). Root Directory và Build
       Settings: để nguyên. **Environment Variables:** mở `.env.hosted.local`, sao chép toàn bộ
-      nội dung, dán vào ô *Key* đầu tiên — Vercel tự tách thành 6 biến:
+      nội dung, dán vào ô *Key* đầu tiên — Vercel tự tách thành 5 biến:
       `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `DEMO_PASSWORD`,
-      `CRON_SECRET`, `TZ`. Kiểm đủ 6, không dòng nào còn chữ "dan-…-vao-day". Environment: để mặc
+      `CRON_SECRET` (`TZ` Vercel không cho đặt, app đã tự đúng giờ VN dưới UTC). Kiểm đủ 5, không dòng nào còn chữ "dan-…-vao-day". Environment: để mặc
       định (tất cả). Bấm **Deploy**, đợi 2–3 phút.
 - [ ] **C4 Gửi tôi địa chỉ** `https://<tên>.vercel.app`.
-- [ ] **C5 (tuỳ chọn)** để tôi đọc được log deploy và log cron từ terminal:
+- [x] **C5 (tuỳ chọn)** để tôi đọc được log deploy và log cron từ terminal:
 
       ```
       npx vercel login

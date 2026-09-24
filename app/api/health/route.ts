@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { demoNow } from "@/lib/clock";
+import { cronAuthorized } from "@/lib/cron-auth";
 import { toVnIso } from "@/lib/datetime";
 import { getSupabase } from "@/lib/db/server";
 
@@ -20,18 +21,15 @@ import { getSupabase } from "@/lib/db/server";
 export async function GET(request: NextRequest) {
   // Vercel sends the project's `CRON_SECRET` as an `Authorization` header when
   // it invokes a cron job, and the endpoint compares the two
-  // (https://vercel.com/docs/cron-jobs/manage-cron-jobs, "Securing cron jobs").
+  // (https://vercel.com/docs/cron-jobs/manage-cron-jobs, "Securing cron jobs");
+  // `cronAuthorized` does the comparison for this route and `/api/reset`.
   // Vercel's own sample also rejects when the variable is unset; here an unset
   // secret means "no cron is configured", which is the case on a developer
-  // machine, so the route stays callable. The moment the variable exists —
-  // which is the moment the route is reachable from the internet — the header
-  // is required.
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authorization = request.headers.get("authorization");
-    if (authorization !== `Bearer ${cronSecret}`) {
-      return new Response("Unauthorized", { status: 401 });
-    }
+  // machine, so the route stays callable ("no-secret" goes on). The moment the
+  // variable exists — which is the moment the route is reachable from the
+  // internet — the header is required.
+  if (cronAuthorized(request.headers.get("authorization"), process.env.CRON_SECRET) === "unauthorized") {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const supabase = await getSupabase();

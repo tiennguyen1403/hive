@@ -4,7 +4,8 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
 /**
- * The service role, for the product-photo bucket and NOTHING ELSE.
+ * The service role, for the product-photo bucket and the daily reset, and
+ * NOTHING ELSE.
  *
  * Slice B3c needs one thing the publishable key cannot do: write objects into
  * the `product-photos` bucket. That bucket has row level security on
@@ -18,6 +19,13 @@ import type { Database } from "./database.types";
  * visitor's own session, where row level security and the `admin_*`
  * functions decide. A service client that also read tables would be a way
  * around both.
+ *
+ * One caller has no session to use: the daily cron of slice B4. `/api/reset`
+ * — behind `CRON_SECRET`, answering 404 when it is unset — calls
+ * `demo_anchor()` and `reset_demo()` with this client — both are granted to
+ * `service_role` — and `reset_demo()` then logs the reset as the system
+ * rather than as a manager. Still no table is read or written with it
+ * directly.
  *
  * `import "server-only"` makes the key's reach enforceable: a Client
  * Component importing this module fails the build. The key is read from the
