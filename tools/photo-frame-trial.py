@@ -97,6 +97,25 @@ mp = mask.load()
 cols = [x for x in range(small_w) if sum(1 for y in range(small_h) if mp[x, y]) >= 3]
 rows = [y for y in range(small_h) if sum(1 for x in range(small_w) if mp[x, y]) >= 3]
 gx0, gx1, gy0, gy1 = cols[0] * 4, cols[-1] * 4 + 4, rows[0] * 4, rows[-1] * 4 + 4
+seen_right = gx1
+
+# The right edge is also mirrored, and the wider of the two is kept. The key
+# light comes from the front left, so the right side is where the garment's
+# own shade and its cast shadow both fall: CÁT cream's shaded sleeve matched
+# the paper and the mask stopped 42px short, while a lower threshold took in
+# the cast shadow of every dark garment instead (MUỐI grew 72px). The lit
+# left edge is reliable, and a top is symmetric about its collar or hood,
+# which the light reaches on both sides. Trousers are not (MUỐI's right leg
+# stands further out), so the mirror only ever widens: a shaded side is never
+# cut short, and a cast shadow costs at most a couple of per cent of scale.
+top = [y for y in rows if y <= rows[0] + max(2, (rows[-1] - rows[0]) // 12)]
+mids = []
+for y in top:
+    xs = [x for x in range(small_w) if mp[x, y]]
+    if xs:
+        mids.append((xs[0] + xs[-1] + 1) / 2)
+axis = sorted(mids)[len(mids) // 2] * 4
+gx1 = max(seen_right, round(2 * axis - gx0))
 
 # 3. Scale so the garment is WIDTH_FRAC of the canvas wide, or HEIGHT_FRAC tall
 #    if that binds first; centred, its top at TOP_FRAC.
@@ -160,4 +179,4 @@ ImageDraw.Draw(alpha).rectangle((feather, feather, sw - feather, sh - feather), 
 alpha = alpha.filter(ImageFilter.GaussianBlur(feather / 2))
 canvas.paste(scaled, (ox, oy), alpha)
 canvas.save(out_path, "WEBP", quality=86, method=6)
-print(f"{src_path}: garment x {gx0}-{gx1} y {gy0}-{gy1}; {bound}-bound, scale {s:.3f}; photo at ({ox},{oy}) {sw}x{sh}; grain {grain:.2f}")
+print(f"{src_path}: garment x {gx0}-{gx1} (seen to {seen_right}) y {gy0}-{gy1}; {bound}-bound, scale {s:.3f}; photo at ({ox},{oy}) {sw}x{sh}; grain {grain:.2f}")
