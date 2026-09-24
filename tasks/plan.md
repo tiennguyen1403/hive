@@ -2020,3 +2020,43 @@ Nếu thiếu bước nạp lại, cron `reset_demo` dựng lại từ mirror c�
 `truncate`, nên chạy lại được. Trước lúc đó phiên chính kiểm `db push --include-seed` có chạy lại seed đã đổi hay không, đừng đoán.
 
 Lát 11 đã giao `ui-implementer` (25/09).
+
+**25/09, lát 11 ĐẠT (`8558b82`).** `ui-implementer` làm, phiên chính duyệt độc lập:
+- `tsc` sạch; 1437/1437 test đơn vị;
+- 24 cặp ảnh mock–bản dựng ở `.playwright-cli/shots/v3/lat11/side/`;
+- các cảnh ngoài bảng: giỏ và thanh toán trộn hai loại, sheet size mẫu cố định, gợi ý tìm kiếm, mẫu cố định hết cả kệ, giữa hai Số,
+  giỏ trống giữa hai Số, trang Đã lưu;
+- 17 ảnh phẳng, có chunk nguồn gốc;
+- biển trên thanh trùng từng điểm ảnh trước và sau, theo agent đo.
+
+Lệch mock, đều chấp nhận:
+- "Đang bán" có GILE PHAO (luật mỗi họ một mẫu);
+- "Cùng loại" xếp gần giá nhất trước;
+- dòng thứ hai của "Theo loại" suy ra từ loại;
+- chip màu xếp theo số mẫu.
+
+Phiên chính chấp nhận chín quyết định agent tự đưa ra, gồm:
+- lối về của mọi trạng thái rỗng theo luật của giỏ;
+- câu giỏ trống nêu Số đang mở, nếu không có thì Số vừa đóng;
+- "Tìm tất cả";
+- không `activeFamily` ở `/so/N`.
+
+Trả lời câu agent hỏi:
+- giữ dòng "Theo loại" suy ra;
+- giữ "Đã bán hết" ở trang mẫu cố định hết cả kệ.
+
+Giao tiếp cho agent ba việc nhỏ:
+- tìm theo mã Số ("s05");
+- câu cuối trang Đã lưu thành "Mẫu đã hết vẫn nằm trong danh sách.";
+- mẫu cố định bỏ "còn N" ở giỏ, "Giữ lại sau" và mục đã lưu của trang tài khoản, nhưng giữ các dòng đỏ chặn đặt hàng.
+
+Documenter sau lát 12 cần ghi thêm vào DESIGN.md:
+- biển `.card3 .sotag`;
+- SOLD OUT 28/32;
+- thẻ hẹp bằng container query;
+- `.tabs3` vẽ bằng bóng lõm;
+- `.lhead.bare`;
+- `/products` và `/so/N`;
+- 17 ảnh phẳng và `scripts/flats.ts`.
+
+PRODUCT.md, mục "Evidence on Hand", cần nói tới ảnh phẳng.
