@@ -90,8 +90,11 @@ enabled = false
 # The maximum length in bytes of HTTP request headers. (default: 4096)
 # max_header_length = 4096
 
+# OFF since 25/09/2026, the user's call: Studio and the pg_meta it starts held ~340 MB of the ~880 MB the
+# local stack used, and nothing in the app reads them. Browse data on the hosted dashboard, or set this back
+# to true for a session. `supabase gen types --local` (`npm run db:types`) does not need it.
 [studio]
-enabled = true
+enabled = false
 # Port to use for Supabase Studio.
 port = 54323
 # External URL of the API server that frontend connects to.

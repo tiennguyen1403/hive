@@ -1793,3 +1793,13 @@ Typecheck, 1.321 test, build, sweep (như lát 8) đều qua. Phiên chính soá
 
 Còn mở: lớp vẫn chặn con trỏ khoảng 330 ms lúc đóng trên trang mới. Quyết: nhả con trỏ ngay khi trang về, vì phần đóng không được làm
 chậm trang mới; việc này gộp vào lát 10. DESIGN.md (lớp nằm ngoài `.s`, `.veil`/`.stitches`, thứ tự tầng, `--r-plate`) để documenter.
+
+**25/09, Supabase cục bộ bỏ Studio.** Người dùng hỏi có giảm được Docker không, vì dữ liệu đã lên Supabase hosted. Trả lời:
+- Không bỏ hẳn được: bản cục bộ là chỗ agent chạy xem thử 3200, `test:db` và thử migration mà không đụng demo công khai.
+- Nhưng Studio và pg_meta (khoảng 340 MB trên khoảng 880 MB) app không dùng.
+
+Người dùng: "đồng ý". `[studio] enabled = false` trong `supabase/config.toml`. Stack còn 6 container, khoảng 410 MB lúc vừa khởi động.
+Kiểm lại:
+- 3200 trả 200 ở `/`, `/products`, `/products/khoi`, `/cart`;
+- `supabase gen types --local` ra đúng `lib/db/database.types.ts`;
+- `npm run test:db`: 6 tệp, 180 test qua.

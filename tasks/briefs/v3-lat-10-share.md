@@ -93,6 +93,15 @@ Phiên chính viết ngày 24/09/2026. Agent `ui-implementer` thực thi. Phiên
    - Chụp thanh ở 1280 và 390 khi không có biển, đo lệch tâm.
    - Trạng thái thường phải **trùng từng điểm ảnh** với `prototype/name/nav/bar-1280.png`, `bar-900.png`, `bar-390.png`, `bar-360.png`.
 
+## Phần C — nhân tiện, từ lát 9
+
+Lớp chờ (`components/shop/WaitVeil.tsx`) hiện vẫn chặn con trỏ khoảng 330 ms lúc đóng trên trang mới. Phiên chính quyết: **nhả con
+trỏ ngay khi trang về**, vì phần đóng không được làm chậm trang mới. Cụ thể:
+- ở pha `end`, lớp không còn nhận con trỏ, trong khi vẫn vẽ phần đóng;
+- `cursor: progress` cũng thôi ngay lúc đó.
+
+Sửa chú thích tương ứng. Kiểm bằng `elementFromPoint` ngay sau khi trang về: điểm giữa trang phải trúng trang, không trúng `.veil`.
+
 ## Không đụng
 
 `DESIGN.md` (phiên chính cho documenter viết một lượt sau lát 9 và 10), mock, Supabase hosted, lớp chờ của lát 9 (trừ khi test cần).
