@@ -303,8 +303,9 @@
 
    At rest it is transparent, hidden and lets the pointer through, which is
    what the server renders. The component paints the opacity, the mark's
-   scale and the arc frame by frame, and puts `.on` on it while any white is
-   showing — the only time it takes the pointer. */
+   scale and the arc frame by frame, puts `.on` on it while any white is
+   showing, and `.hold` only while the page it waits for is still on its
+   way — the only time it takes the pointer. */
 .veil {
   position: fixed;
   top: 57px;
@@ -321,6 +322,14 @@
 }
 .veil.on {
   visibility: visible;
+}
+/* While the page is on its way the veil holds the pointer, and says so with
+   the progress cursor: a click on the page underneath would only start
+   another wait. Once the page has arrived it lets go at once, while the
+   closing still plays over the new page (v3 slice 10): the closing is a
+   farewell, not a wait. A hidden element takes no pointer, so `.hold`
+   counts only together with `.on`. */
+.veil.hold {
   pointer-events: auto;
   cursor: progress;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { startTransition, useEffect, useRef, useState, type RefObject } from "react";
+import { startTransition, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import {
   WAIT,
   closingFrame,
@@ -87,6 +87,12 @@ export function startWait(href: string): void {
  * stamped with — a frame's own timestamp can fall before the click that
  * scheduled it (the board met that bug).
  *
+ * The veil holds the pointer, with the progress cursor, only while the page
+ * is on its way (`.hold`). The moment the page arrives it lets go, and the
+ * closing — the arc going round to a ring, the white fading — plays over a
+ * page that already answers every click and shows its own cursor (v3 slice
+ * 10: the closing must not slow the new page down).
+ *
  * `aria-hidden` always: the veil draws a mark, not a message. While it shows,
  * the page's `<main>` carries `aria-busy="true"`; the new page's title is
  * announced by Next when it lands. Focus is neither moved nor trapped.
@@ -109,11 +115,17 @@ export function WaitVeil() {
   // already moved on and the page has not.
   const shown = useRef(pathname);
 
-  useEffect(() => {
+  // The two signals that the page has arrived. Layout effects, not passive
+  // ones (v3 slice 10): they run inside the commit that puts the new page in
+  // the DOM, so the veil lets go of the pointer before that page's first
+  // frame is painted. As passive effects they ran after it: measured on 3200
+  // with the page held 1.5 s, the new page's first frame still sent a click
+  // at its centre to the veil, under the progress cursor.
+  useLayoutEffect(() => {
     if (settled !== 0 && settled === asked.current) veil.done(performance.now());
   }, [settled, veil]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (shown.current === pathname) return;
     shown.current = pathname;
     veil.done(performance.now());
@@ -243,7 +255,9 @@ function parse(href: string, base: string): URL | null {
  *
  * idle → wait (the first 120 ms: nothing shows) → on (the white and the
  * turning arc) → end (the arc closes, the white fades) → idle. A page that
- * arrives during `wait` goes straight back to idle, unseen.
+ * arrives during `wait` goes straight back to idle, unseen. Only `on` holds
+ * the pointer: `.hold` goes on with it and comes off the instant `done`
+ * turns it into `end`, before the next frame is painted.
  */
 function createVeil(
   veilRef: RefObject<HTMLDivElement | null>,
@@ -274,12 +288,17 @@ function createVeil(
     arc.setAttribute("stroke-dasharray", `${f.arc.toFixed(2)} ${(100 - f.arc).toFixed(2)}`);
   }
 
+  /** Takes the pointer (and shows the progress cursor), or lets it go. */
+  function hold(on: boolean) {
+    veilRef.current?.classList.toggle("hold", on);
+  }
+
   /** Back to exactly what the server rendered. */
   function clear() {
     opacity = 0;
     const el = veilRef.current;
     el?.style.removeProperty("opacity");
-    el?.classList.remove("on");
+    el?.classList.remove("on", "hold");
     markRef.current?.style.removeProperty("transform");
     arcRef.current?.setAttribute("transform", "rotate(-90)");
     arcRef.current?.setAttribute("stroke-dasharray", `${WAIT.arc} ${100 - WAIT.arc}`);
@@ -314,6 +333,7 @@ function createVeil(
     phase = "on";
     shownAt = performance.now();
     markBusy(true);
+    hold(true);
     raf = requestAnimationFrame(frame);
   }
 
@@ -345,6 +365,9 @@ function createVeil(
     arrivedAt = now;
     from = opacity;
     markBusy(false);
+    // The page is here: the pointer and the cursor are its own again, while
+    // the closing below still paints.
+    hold(false);
     if (!raf) raf = requestAnimationFrame(frame);
   }
 
