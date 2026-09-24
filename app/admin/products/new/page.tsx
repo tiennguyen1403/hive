@@ -10,23 +10,23 @@ import { demoNow } from "@/lib/clock";
 export const metadata = { title: "Thêm mẫu" };
 
 /**
- * A blank style.
+ * A blank style — created since v3 slice 7 (`createProduct`, slice B3c).
  *
  * The kind and issue menus are DERIVED from the catalogue and the issue
  * list, not typed out here — a hard-coded list of kinds would drift the
- * first time somebody adds a style the menu has never heard of.
+ * first time somebody adds a style the menu has never heard of. The issue
+ * menu leaves out the ones that have closed, which take no new style, and
+ * starts on the newest one left.
  *
- * It cannot be saved yet (slice B3b): a new style needs its colours and a
- * photo for each, and the approved form has no control for either. The page
- * stays — the products table links here — and the form's button says
- * "Tạo mẫu mới · đang chuẩn bị" with the reason beneath it.
+ * Kind and fit start unchosen and the price starts empty: nobody has decided
+ * them yet, and the save button says which is still missing.
  */
 export default async function AdminNewProductPage() {
   await requireAdmin("/admin/products/new");
   await connection();
   const now = demoNow();
   const catalog = await loadCatalog();
-  const drops = dropOptions(catalog, now);
+  const drops = dropOptions(catalog, now, { hideClosed: true });
 
   return (
     <>
@@ -42,9 +42,10 @@ export default async function AdminNewProductPage() {
         values={{
           name: "",
           kind: "",
+          fit: null,
           slug: "",
           priceVnd: 0,
-          dropNo: Math.max(...drops.map((o) => Number(o.value))),
+          dropNo: drops.length > 0 ? Math.max(...drops.map((o) => Number(o.value))) : null,
           material: "",
           colors: [],
           stock: {},

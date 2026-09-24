@@ -1,30 +1,73 @@
 "use client";
 
-import Image from "next/image";
-import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useAdminToast } from "@/components/admin/AdminToast";
+import { CropSheet, type CropTarget } from "@/components/admin/CropSheet";
+import {
+  ProductPhotoSlot,
+  type FilePhoto,
+  type SlotPhoto,
+} from "@/components/admin/ProductPhotoSlot";
+import { useCatalog } from "@/components/shop/CatalogContext";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
-import { Icon } from "@/components/icon/Icon";
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { COLORS } from "@/data/colors";
-import { SIZES, type ColorKey, type Size } from "@/data/types";
-import { updateProduct } from "@/lib/actions/catalog-admin";
-import { gridCells } from "@/lib/catalog-admin";
-import { LEX } from "@/lib/lexicon";
+import { COLOR_KEYS, SIZES, type ColorKey, type Fit, type Size } from "@/data/types";
+import {
+  createProduct,
+  removeUploadedPhoto,
+  updateProduct,
+  uploadProductPhoto,
+} from "@/lib/actions/catalog-admin";
+import type { ActionState } from "@/lib/actions/state";
+import {
+  MAX_CUT_PER_CELL,
+  MAX_MATERIAL,
+  MAX_NEW_SLUG,
+  MAX_PRODUCT_NAME,
+  MAX_SLUG,
+  catalogFailureMessage,
+  gridCells,
+  productSlug,
+  uniqueSlug,
+} from "@/lib/catalog-admin";
+import { FITS, FIT_LABELS } from "@/lib/catalog-query";
+import { LEX, issueLabel } from "@/lib/lexicon";
 import { moneyInitial, moneyInput, parseVnd, plainVnd } from "@/lib/money";
-import { photoUrl } from "@/lib/photos";
+import { defaultCrop, sameCrop, type Crop } from "@/lib/photo-crop";
+import { PhotoEncodeError, encodeCrop } from "@/lib/photo-encode";
+import { UPLOAD_TYPES, isUploadedKey } from "@/lib/photos";
+import {
+  droppedColorMessage,
+  gridTotal,
+  loanPhotos,
+  newStyleBlocker,
+  panelMeta,
+  photoTally,
+  pickProblem,
+  rowTotal,
+  staleUploads,
+  type CellGrid,
+  type PhotoKind,
+} from "@/lib/product-form";
 
 export interface ProductFormValues {
   name: string;
   kind: string;
+  /** Null for a new style: nobody has chosen one yet. */
+  fit: Fit | null;
   slug: string;
   priceVnd: number;
-  dropNo: number;
+  /** Null when no issue can take a new style (every one has closed). */
+  dropNo: number | null;
   material: string;
+  /** Band order — the order the shop's card draws the colour dots in. */
   colors: ColorKey[];
-  /** `stock[color][size]`. Empty for a new style. */
+  /** `stock[color][size]`: pieces on the shelf. Empty for a new style. */
   stock: Record<string, Record<string, number>>;
+  /** One photo per colour, in `colors` order — borrowed keys or uploads. */
   photoKeys: string[];
 }
 
@@ -43,27 +86,52 @@ interface ProductFormProps {
   cutUnits?: number;
 }
 
+const FIT_OPTIONS = FITS.map((f) => ({ value: f, label: FIT_LABELS[f] }));
+
+const NONE: SlotPhoto = { kind: "none" };
+
+type Keys = Partial<Record<ColorKey, string>>;
+type Photos = Partial<Record<ColorKey, SlotPhoto>>;
+
+/** An upload in flight: which colour, its place in the queue, and which are through. */
+interface Upload {
+  color: ColorKey;
+  index: number;
+  total: number;
+  done: ColorKey[];
+}
+
 /**
- * Add or edit a style — the v2 form, wearing the v3 frame.
+ * Add or edit a style — v3 slice 7 (`prototype/v3/admin-product-new.html`,
+ * `admin-product-edit.html`, rounds 7 and 7b, approved 24/09; QĐ-27).
  *
- * The stock grid is COLOUR × SIZE, where the approved mock had size alone.
- * The data model was widened in Phase 1 — every row in `data/catalog.ts`
- * spells out units per size AND per colour — and a grid that cannot express
- * "hết XL màu đen" would be unable to edit what the shop actually stores.
+ * NEW: the colours are chosen here, as seven chips, and the order they are
+ * picked in IS the band order on the shop's card (a chosen chip carries its
+ * place; the first colour is the cover photo). Each colour gets a row in the
+ * cut grid and a row in "Màu và ảnh" with one 4:5 photo — a file picked or
+ * dropped on this device and cropped in the sheet, or a borrowed stand-in,
+ * which stays labelled "mượn tạm" (PRODUCT.md). The save button says what is
+ * still missing until nothing is (`newStyleBlocker`), then "Tạo mẫu · 36
+ * chiếc".
  *
- * EDITING SAVES (slice B3b). "Lưu thay đổi" is `updateProduct`: the fields
- * that changed go to `admin_update_product()` — never the cut, which an issue
- * sets once — and if the grid moved, the cells go to `admin_adjust_stock()`
- * with the reason "Sửa mẫu" and the numbers this page was rendered with, so
- * a shelf somebody changed in the meantime is refused rather than
- * overwritten. Typing in the grid recomputes the totals live, because that
- * arithmetic is the reason the screen exists.
+ * EDIT: the colours were fixed when the cloth was cut (QĐ-27), so there are
+ * no chips and no ✕ — only the band order (↑ ↓) and the photos change. The
+ * grid is the shelf, saved as an adjustment with the reason "Sửa mẫu"
+ * (slice B3b), and "Lưu thay đổi" is always there: an unchanged form comes
+ * back from the server as "Chưa có thay đổi nào để lưu."
  *
- * A NEW STYLE CANNOT BE SAVED YET, and the button says so. Creating one
- * needs its colours and a photo for each colour, and the approved form has
- * no control for either — adding one is a design decision, not wiring. The
- * page stays (the products table links to it) with the button disabled and
- * the reason under it (DESIGN.md §9 rule 3).
+ * SAVING, in the order the brief fixes: every picked file is cropped and
+ * shrunk in this browser (`lib/photo-encode.ts`) and uploaded one at a time
+ * (`uploadProductPhoto`), the bar counting "Đang tải ảnh lên… 1 / 2" and a
+ * honey line running under the photo in flight. The key each upload gets is
+ * kept on its row, so a save the server refuses — a taken address, say —
+ * sends the same keys again instead of the files. Then `createProduct` (and
+ * the products table) or `updateProduct` (and this page, re-rendered with
+ * what the database now holds: the edit page keys this form on its values).
+ * Every answer is said in the toast in the server's own words.
+ *
+ * While a save is in flight the form is `inert`: what is being sent cannot
+ * change under it.
  */
 export function ProductForm({
   mode,
@@ -74,55 +142,394 @@ export function ProductForm({
   cutUnits,
 }: ProductFormProps) {
   const say = useAdminToast();
+  const router = useRouter();
+  const catalog = useCatalog();
+  const chipLabel = useId();
+
   const [name, setName] = useState(values.name);
   const [kind, setKind] = useState(values.kind);
+  const [fit, setFit] = useState<Fit | null>(values.fit);
   const [slug, setSlug] = useState(values.slug);
   const [price, setPrice] = useState(moneyInitial(values.priceVnd));
-  const [dropNo, setDropNo] = useState(String(values.dropNo));
+  const [dropNo, setDropNo] = useState(values.dropNo === null ? "" : String(values.dropNo));
   const [material, setMaterial] = useState(values.material);
-  const [stock, setStock] = useState(values.stock);
-  const [saving, startSaving] = useTransition();
+  const [order, setOrder] = useState<ColorKey[]>(values.colors);
+  const [cells, setCells] = useState<CellGrid>(values.stock as CellGrid);
+  const [photos, setPhotos] = useState<Photos>(() => storedPhotos(values));
+  const [picking, setPicking] = useState<ColorKey | null>(null);
+  const [cropping, setCropping] = useState<CropTarget | null>(null);
+  const [upload, setUpload] = useState<Upload | null>(null);
+  // Two flags, because a save has two halves. The uploads run as plain async
+  // work, so every step of "Đang tải ảnh lên… 1 / 2" renders the moment it
+  // happens — set inside a transition, the first one would be held back
+  // until the whole save had finished. The action that writes the style, and
+  // the move to the products table, run as transitions (`02-guides/
+  // server-actions.md`: invoke from an event handler wrapped in
+  // `startTransition`), so the page they re-render arrives as one update.
+  const [busy, setBusy] = useState(false);
+  const [pending, startSaving] = useTransition();
+  const saving = busy || pending;
 
-  const colors = values.colors;
+  const rootRef = useRef<HTMLDivElement>(null);
+  // Focus to restore after the next commit: the same arrow after a move, the
+  // row's "Khung cắt" after a crop (the control that opened it is gone).
+  const focusNext = useRef<(() => void) | null>(null);
+  useLayoutEffect(() => {
+    const f = focusNext.current;
+    focusNext.current = null;
+    f?.();
+  });
+
+  // Object URLs are the browser's memory, not React's: give every one back
+  // when the form goes away.
+  const photosRef = useRef(photos);
+  const croppingRef = useRef(cropping);
+  useEffect(() => {
+    photosRef.current = photos;
+    croppingRef.current = cropping;
+  }, [photos, cropping]);
+  useEffect(
+    () => () => {
+      for (const p of Object.values(photosRef.current)) {
+        if (p?.kind === "file") URL.revokeObjectURL(p.src);
+      }
+      // A file still in the crop sheet, never applied.
+      if (croppingRef.current?.fresh) URL.revokeObjectURL(croppingRef.current.src);
+    },
+    [],
+  );
+
+  const loans = useMemo(() => loanPhotos(catalog), [catalog]);
+  const kinds = useMemo(() => {
+    const out: Partial<Record<ColorKey, PhotoKind>> = {};
+    for (const c of order) out[c] = (photos[c] ?? NONE).kind;
+    return out;
+  }, [order, photos]);
+  const tally = photoTally(order, kinds);
+  const total = gridTotal(cells, order);
+  const priceVnd = price === "" ? 0 : Number(price);
+  const blocker =
+    mode === "new"
+      ? newStyleBlocker({ name, kind, fit, dropNo, priceVnd, material, colors: order, cells, photos: kinds })
+      : null;
+  // What an empty address box becomes — the action's own rule, so the
+  // placeholder is the address the style will really get.
+  const autoSlug = mode === "new" && name.trim() !== "" ? uniqueSlug(productSlug(name), catalog) : "";
+
+  // ─────────────────────────────────────────────────────────── the colours
+  function toggleColor(color: ColorKey) {
+    if (order.includes(color)) unpick(color);
+    else setOrder([...order, color]);
+  }
+
+  /** A colour dropped (chip or ✕): its typed pieces and its photo go with it. */
+  function unpick(color: ColorKey) {
+    const message = droppedColorMessage(color, rowTotal(cells, color));
+    if (message) say(message);
+    setOrder(order.filter((c) => c !== color));
+    const nextCells = { ...cells };
+    delete nextCells[color];
+    setCells(nextCells);
+    discard(photos[color]);
+    const nextPhotos = { ...photos };
+    delete nextPhotos[color];
+    setPhotos(nextPhotos);
+    if (picking === color) setPicking(null);
+  }
+
+  function move(color: ColorKey, dir: -1 | 1) {
+    const i = order.indexOf(color);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= order.length) return;
+    const next = [...order];
+    next.splice(i, 1);
+    next.splice(j, 0, color);
+    setOrder(next);
+    // Keep the keyboard where it was: the same arrow of the same colour, or
+    // the other one once this one has reached the end of the band.
+    focusNext.current = () => {
+      const root = rootRef.current;
+      const same = root?.querySelector<HTMLButtonElement>(`[data-move="${color}"][data-dir="${dir}"]`);
+      const other = root?.querySelector<HTMLButtonElement>(`[data-move="${color}"][data-dir="${-dir}"]`);
+      (same && !same.disabled ? same : other)?.focus();
+    };
+  }
+
+  function setCell(color: ColorKey, size: Size, raw: string) {
+    const n = Math.max(0, Math.min(MAX_CUT_PER_CELL, Number(raw.replace(/\D/g, "")) || 0));
+    setCells((prev) => ({ ...prev, [color]: { ...(prev[color] ?? {}), [size]: n } }));
+  }
+
+  // ──────────────────────────────────────────────────────────── the photos
+  /** Let go of a photo that is being replaced: its object URL, and its upload if it had one. */
+  function discard(photo: SlotPhoto | undefined) {
+    if (photo?.kind !== "file") return;
+    URL.revokeObjectURL(photo.src);
+    if (photo.key) forget(photo.key);
+  }
 
   /**
-   * Both saves in one Server Action. The page re-renders with what the
-   * database now holds in the same response; the answer — or which half did
-   * not go through, and why — is said in the toast. After an `await` the
-   * transition has to be restated (react.dev/reference/react/useTransition).
+   * An upload nothing will attach any more (brief B3c §2.9: garbage the form
+   * tidies when it knows). Best effort — "Đặt lại dữ liệu mẫu" clears the rest.
    */
-  function save() {
-    if (mode !== "edit" || !productId || saving) return;
-    const cells = gridCells(colors, values.stock, stock);
-    startSaving(async () => {
-      const result = await updateProduct(productId, {
-        name,
-        kind,
-        slug,
-        priceVnd: price === "" ? 0 : Number(price),
-        material,
-        dropNo: Number(dropNo),
-        cells,
-      });
-      startSaving(() => say(result.message ?? result.errors.form ?? ""));
+  function forget(key: string) {
+    removeUploadedPhoto(key).catch(() => undefined);
+  }
+
+  /** A file picked or dropped: checked, measured, then straight into the crop sheet. */
+  async function pickFile(color: ColorKey, file: File | undefined) {
+    if (!file) return;
+    const problem = pickProblem(file);
+    if (problem) return say(problem);
+    const src = URL.createObjectURL(file);
+    const size = await naturalSize(src);
+    if (!size) {
+      URL.revokeObjectURL(src);
+      return say("Không đọc được ảnh này · chọn tệp khác");
+    }
+    setPicking(null);
+    setCropping({
+      color,
+      file,
+      name: file.name,
+      bytes: file.size,
+      src,
+      nw: size.w,
+      nh: size.h,
+      crop: defaultCrop(size.w, size.h),
+      fresh: true,
     });
   }
 
-  /** What the grid currently adds up to — recomputed as it is typed in. */
-  const onHandTotal = useMemo(() => {
-    let n = 0;
-    for (const c of colors) for (const s of SIZES) n += stock[c]?.[s] ?? 0;
-    return n;
-  }, [stock, colors]);
-
-  function setCell(color: ColorKey, size: Size, raw: string) {
-    const n = Math.max(0, Math.min(999, Number(raw.replace(/\D/g, "")) || 0));
-    setStock((prev) => ({ ...prev, [color]: { ...(prev[color] ?? {}), [size]: n } }));
+  function openCrop(color: ColorKey) {
+    const p = photos[color];
+    if (p?.kind !== "file") return;
+    setCropping({ color, file: p.file, name: p.name, bytes: p.bytes, src: p.src, nw: p.nw, nh: p.nh, crop: p.crop, fresh: false });
   }
 
-  return (
+  function applyCrop(crop: Crop) {
+    const t = cropping;
+    if (!t) return;
+    const old = photos[t.color];
+    const same = old?.kind === "file" && old.src === t.src ? old : null;
+    // An upload of this file and this very region still stands; any other is stale.
+    const key = same?.key && sameCrop(same.crop, crop) ? same.key : undefined;
+    if (!same) discard(old);
+    else if (same.key && !key) forget(same.key);
+    setPhotos({
+      ...photos,
+      [t.color]: { kind: "file", file: t.file, name: t.name, bytes: t.bytes, src: t.src, nw: t.nw, nh: t.nh, crop, key },
+    });
+    setCropping(null);
+    focusNext.current = () =>
+      rootRef.current?.querySelector<HTMLElement>(`[data-crop="${t.color}"]`)?.focus();
+  }
+
+  /** "Huỷ", Escape or the scrim: the row keeps what it had; a file just picked is dropped. */
+  function cancelCrop() {
+    if (cropping?.fresh) URL.revokeObjectURL(cropping.src);
+    setCropping(null);
+  }
+
+  function pickLoan(color: ColorKey, key: string) {
+    discard(photos[color]);
+    setPhotos({ ...photos, [color]: { kind: "loan", key } });
+    setPicking(null);
+  }
+
+  // ──────────────────────────────────────────────────────────────── saving
+  /**
+   * Upload every picked file that has no key yet — and those in `again`,
+   * whose key the server no longer knows — one at a time, in band order.
+   * Answers colour → key for every file, or null after saying why one failed.
+   */
+  async function uploadAll(snapshot: Photos, again: readonly ColorKey[]): Promise<Keys | null> {
+    const keys: Keys = {};
+    const todo: ColorKey[] = [];
+    for (const c of order) {
+      const p = snapshot[c];
+      if (p?.kind !== "file") continue;
+      if (p.key && !again.includes(c)) keys[c] = p.key;
+      else todo.push(c);
+    }
+    const done: ColorKey[] = [];
+    for (const [i, c] of todo.entries()) {
+      const p = snapshot[c] as FilePhoto;
+      setUpload({ color: c, index: i + 1, total: todo.length, done: [...done] });
+      const key = await uploadOne(c, p);
+      if (!key) {
+        setUpload(null);
+        return null;
+      }
+      keys[c] = key;
+      done.push(c);
+      setPhotos((prev) => withKey(prev, c, p.src, key));
+    }
+    if (todo.length > 0) setUpload({ color: todo.at(-1)!, index: todo.length, total: todo.length, done });
+    return keys;
+  }
+
+  async function uploadOne(color: ColorKey, photo: FilePhoto): Promise<string | null> {
+    const label = COLORS[color].label;
+    try {
+      const { blob, type } = await encodeCrop(photo.file, photo.crop);
+      const form = new FormData();
+      form.set("file", blob, `${color}.${UPLOAD_TYPES[type]}`);
+      form.set("color", color);
+      const answer = await uploadProductPhoto(form);
+      if (answer.ok && answer.key) return answer.key;
+      say(answer.errors.form ?? catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", label));
+    } catch (e) {
+      // A refusal of the encoder has its own words; anything else — the
+      // request never answered, a body over the limit — is "không tải được".
+      say(
+        e instanceof PhotoEncodeError
+          ? `Không tải được ảnh ${label}: ${lowerFirst(e.message)}`
+          : catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", label),
+      );
+    }
+    return null;
+  }
+
+  /** Colour → photo key for the save: the upload's key for a file, the key itself otherwise. */
+  function photoKeysFor(snapshot: Photos, keys: Keys): Keys {
+    const out: Keys = {};
+    for (const c of order) {
+      const p = snapshot[c];
+      if (!p || p.kind === "none") continue;
+      out[c] = p.kind === "file" ? keys[c] : p.key;
+    }
+    return out;
+  }
+
+  async function send(snapshot: Photos, keys: Keys): Promise<ActionState> {
+    const chosen = photoKeysFor(snapshot, keys);
+    try {
+      if (mode === "new") {
+        return await createProduct({
+          name,
+          kind,
+          fit,
+          slug: slug.trim(),
+          priceVnd,
+          material,
+          dropNo: Number(dropNo),
+          colors: order,
+          photos: chosen,
+          cells: Object.fromEntries(
+            order.map((c) => [c, Object.fromEntries(SIZES.map((s) => [s, cells[c]?.[s] ?? 0]))]),
+          ),
+        });
+      }
+      // Only the colours whose photo changed; the rest keep what they have.
+      const changed: Keys = {};
+      for (const c of order) {
+        const before = values.photoKeys[values.colors.indexOf(c)];
+        const after = chosen[c];
+        if (after && after !== before) changed[c] = after;
+      }
+      return await updateProduct(productId, {
+        name,
+        kind,
+        slug,
+        priceVnd,
+        material,
+        fit,
+        dropNo: Number(dropNo),
+        cells: gridCells(order, values.stock, cells as Record<string, Record<string, number>>),
+        colors: order,
+        photos: changed,
+      });
+    } catch {
+      return { errors: { form: catalogFailureMessage("ADD_PRODUCT", "UNAVAILABLE") } };
+    }
+  }
+
+  /** `send`, as a transition: resolves with the answer once the page it re-renders is in. */
+  function sendInTransition(snapshot: Photos, keys: Keys): Promise<ActionState> {
+    return new Promise((resolve) => {
+      startSaving(async () => {
+        resolve(await send(snapshot, keys));
+      });
+    });
+  }
+
+  async function save() {
+    if (saving || blocker !== null) return;
+    const snapshot = photos;
+    setBusy(true);
+    try {
+      let keys = await uploadAll(snapshot, []);
+      if (!keys) return;
+      let answer = await sendInTransition(snapshot, keys);
+      // "Đặt lại dữ liệu mẫu" empties the bucket, uploads this form still
+      // holds included: send those files again, once.
+      const stale = staleUploads(answer.errors.form, order).filter(
+        (c) => snapshot[c]?.kind === "file",
+      );
+      if (!answer.ok && stale.length > 0) {
+        keys = await uploadAll(snapshot, stale);
+        if (!keys) return;
+        answer = await sendInTransition(snapshot, keys);
+      }
+      if (!answer.ok) {
+        say(answer.errors.form ?? catalogFailureMessage("ADD_PRODUCT", "UNAVAILABLE"));
+        return;
+      }
+      say(answer.message ?? "");
+      // A new style is a row of the products table now; an edited one is
+      // this page, already re-rendered by the action's own response.
+      if (mode === "new") startSaving(() => router.push("/admin/products"));
+    } finally {
+      setUpload(null);
+      setBusy(false);
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────── render
+  const uploading = upload !== null && upload.done.length < upload.total;
+  const shownPrice = priceVnd > 0 ? `${plainVnd(priceVnd)}₫` : "chưa nhập";
+  const bar = uploading ? (
     <>
-      <div className="split3" style={{ marginTop: 0 }}>
+      Đang tải ảnh lên… <b>{upload.index}</b> / {upload.total}
+    </>
+  ) : mode === "new" ? (
+    <>
+      Giá đang nhập: <b>{shownPrice}</b> · <b>{order.length}</b> màu · lưới <b>{total}</b> chiếc
+      {tally.missing.length > 0 ? (
+        <>
+          {" · "}
+          <b>{tally.missing.length}</b> ảnh chưa có
+        </>
+      ) : tally.loans.length > 0 ? (
+        <>
+          {" · "}
+          <b>{tally.loans.length}</b> ảnh mượn tạm
+        </>
+      ) : null}
+    </>
+  ) : (
+    <>
+      Giá: <b>{shownPrice}</b> · còn <b>{total}</b> / {cutUnits ?? total} chiếc
+      {tally.loans.length > 0 && (
+        <>
+          {" · "}
+          <b>{tally.loans.length}</b> ảnh mượn tạm
+        </>
+      )}
+    </>
+  );
+
+  const saveLabel = saving
+    ? "Đang lưu…"
+    : (blocker ?? (mode === "new" ? `Tạo mẫu · ${total} chiếc` : "Lưu thay đổi"));
+
+  const progressOf = (c: ColorKey): "run" | "done" | null =>
+    upload?.done.includes(c) ? "done" : upload?.color === c ? "run" : null;
+
+  return (
+    <div ref={rootRef}>
+      <div className="split3" style={{ marginTop: 0 }} inert={saving}>
         <div>
           <section className="panel3">
             <h2>Thông tin cơ bản</h2>
@@ -133,6 +540,7 @@ export function ProductForm({
                     id={id}
                     className="inp"
                     placeholder="VD: KHÓI"
+                    maxLength={MAX_PRODUCT_NAME}
                     style={{ textTransform: "uppercase" }}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -145,32 +553,38 @@ export function ProductForm({
                     <Select
                       id={id}
                       options={kindOptions}
-                      value={kind}
+                      value={kind || null}
                       onChange={setKind}
                       placeholder="Chọn loại"
                     />
                   )}
                 </Field3>
-                <Field3 label={LEX.t}>
+                <Field3 label="Form">
+                  {({ id }) => (
+                    <Select
+                      id={id}
+                      options={FIT_OPTIONS}
+                      value={fit}
+                      onChange={setFit}
+                      placeholder="Chọn form"
+                    />
+                  )}
+                </Field3>
+                <Field3
+                  label={LEX.t}
+                  help={
+                    mode === "new"
+                      ? `Tạo cho ${LEX.t} chưa mở thì lên kệ đúng giờ mở; ${LEX.t} đang mở thì lên kệ ngay.`
+                      : undefined
+                  }
+                >
                   {({ id }) => (
                     <Select
                       id={id}
                       options={dropOptions}
-                      value={dropNo}
+                      value={dropNo || null}
                       onChange={setDropNo}
                       placeholder={`Chọn ${LEX.tl}`}
-                    />
-                  )}
-                </Field3>
-                <Field3 label="Mã trên địa chỉ" help="Tự sinh từ tên nếu để trống.">
-                  {({ id, describedBy }) => (
-                    <input
-                      id={id}
-                      className="inp"
-                      aria-describedby={describedBy}
-                      placeholder="khoi"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
                     />
                   )}
                 </Field3>
@@ -192,12 +606,43 @@ export function ProductForm({
                   )}
                 </Field3>
               </div>
+              <Field3
+                label={
+                  mode === "new" ? (
+                    <>
+                      Mã trên địa chỉ <span className="opt">· không bắt buộc</span>
+                    </>
+                  ) : (
+                    "Mã trên địa chỉ"
+                  )
+                }
+                help={
+                  mode === "new"
+                    ? autoSlug
+                      ? `Tự sinh từ tên nếu để trống: /products/${autoSlug}.`
+                      : "Tự sinh từ tên nếu để trống."
+                    : `Đổi mã thì đường dẫn cũ /products/${values.slug} không còn mở được.`
+                }
+              >
+                {({ id, describedBy }) => (
+                  <input
+                    id={id}
+                    className="inp"
+                    aria-describedby={describedBy}
+                    placeholder={autoSlug || undefined}
+                    maxLength={mode === "new" ? MAX_NEW_SLUG : MAX_SLUG}
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                  />
+                )}
+              </Field3>
               <Field3 label="Chất liệu & form">
                 {({ id }) => (
                   <textarea
                     id={id}
                     className="inp area"
                     rows={4}
+                    maxLength={MAX_MATERIAL}
                     placeholder="Chất liệu, form dáng, cách bảo quản"
                     value={material}
                     onChange={(e) => setMaterial(e.target.value)}
@@ -207,22 +652,20 @@ export function ProductForm({
             </div>
           </section>
 
-          <section className="panel3" style={{ marginTop: 16 }}>
+          <section className="panel3">
             <h2>
               {mode === "new" ? "Số lượng sẽ cắt" : "Tồn kho"}
               <span className="meta">
-                {mode === "new"
-                  ? `tổng ${onHandTotal} chiếc`
-                  : `đã cắt ${cutUnits ?? onHandTotal} · còn ${onHandTotal}`}
+                {mode === "new" ? `tổng ${total} chiếc` : `đã cắt ${cutUnits ?? total} · còn ${total}`}
               </span>
             </h2>
             <div className="bd">
-              {colors.length === 0 ? (
+              {order.length === 0 ? (
                 <p className="fine3" style={{ marginTop: 0 }}>
-                  Chọn màu trước thì lưới size mới có cột để điền.
+                  Chọn màu trước thì lưới size mới có hàng để điền.
                 </p>
               ) : (
-                <table className="invgrid">
+                <table className="invgrid cutgrid">
                   <thead>
                     <tr>
                       <th>Màu</th>
@@ -233,43 +676,36 @@ export function ProductForm({
                     </tr>
                   </thead>
                   <tbody>
-                    {colors.map((c) => {
-                      const rowTotal = SIZES.reduce((n, s) => n + (stock[c]?.[s] ?? 0), 0);
-                      return (
-                        <tr key={c}>
-                          <td>
-                            <i
-                              className="swatch"
-                              style={{ background: COLORS[c].hex }}
-                              aria-hidden="true"
-                            />
-                            {COLORS[c].label}
+                    {order.map((c) => (
+                      <tr key={c}>
+                        <td>
+                          <i className="swatch" style={{ background: COLORS[c].hex }} aria-hidden="true" />
+                          {COLORS[c].label}
+                        </td>
+                        {SIZES.map((s) => (
+                          <td key={s}>
+                            <span className="cell">
+                              <input
+                                inputMode="numeric"
+                                aria-label={`${COLORS[c].label} ${s}`}
+                                value={cells[c]?.[s] ?? 0}
+                                onChange={(e) => setCell(c, s, e.target.value)}
+                              />
+                            </span>
                           </td>
-                          {SIZES.map((s) => (
-                            <td key={s}>
-                              <span className="cell">
-                                <input
-                                  inputMode="numeric"
-                                  aria-label={`${COLORS[c].label} ${s}`}
-                                  value={stock[c]?.[s] ?? 0}
-                                  onChange={(e) => setCell(c, s, e.target.value)}
-                                />
-                              </span>
-                            </td>
-                          ))}
-                          <td>
-                            <b>{rowTotal}</b>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                        ))}
+                        <td>
+                          <b>{rowTotal(cells, c)}</b>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               )}
               {mode === "edit" && (
                 <p className="fine3">
-                  Lưu ở đây ghi thẳng số trên kệ, lý do “Sửa mẫu”, vào nhật ký. Tổng không vượt
-                  số đã cắt.
+                  Đổi số còn ở đây được ghi thành một lần điều chỉnh tồn kho: có lý do, vào nhật ký,
+                  và không vượt số đã cắt. Không phải cách để may thêm.
                 </p>
               )}
             </div>
@@ -279,85 +715,122 @@ export function ProductForm({
         <div>
           <section className="panel3">
             <h2>
-              Ảnh<span className="meta">{values.photoKeys.length} bộ</span>
+              Màu và ảnh<span className="meta">{panelMeta(order, tally)}</span>
             </h2>
             <div className="bd">
-              {values.photoKeys.length > 0 && (
-                <div className="teasers" style={{ marginBottom: 12 }}>
-                  {values.photoKeys.map((k) => (
-                    <div className="t" key={k}>
-                      <Image src={photoUrl(k, 120)} alt="" width={44} height={55} />
-                    </div>
-                  ))}
+              {mode === "new" ? (
+                <div className="field3">
+                  <span className="lbl" id={chipLabel}>
+                    Màu sẽ cắt
+                  </span>
+                  <div className="colorpick" role="group" aria-labelledby={chipLabel}>
+                    {COLOR_KEYS.map((c) => {
+                      const place = order.indexOf(c);
+                      const on = place >= 0;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          className={on ? "chip3 on" : "chip3"}
+                          aria-pressed={on}
+                          onClick={() => toggleColor(c)}
+                        >
+                          <i className="dot" style={{ background: COLORS[c].hex }} aria-hidden="true" />
+                          {COLORS[c].label}
+                          {on && <span className="pos">{place + 1}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="help">
+                    Thứ tự chọn là thứ tự dải màu trên thẻ; màu đầu là ảnh đại diện. Chốt lúc cắt:
+                    sau đó không thêm màu.
+                  </p>
                 </div>
-              )}
-              <div className="prep">
-                <b>Kéo thả hoặc chọn tệp · ảnh tỉ lệ 4:5.</b> Chưa có ảnh sản phẩm thật, nên ảnh
-                đang thấy là ảnh mượn tạm: một bộ cho mỗi màu.
-              </div>
-            </div>
-          </section>
-
-          <section className="panel3" style={{ marginTop: 16 }}>
-            <h2>
-              Màu<span className="meta">{colors.length} màu</span>
-            </h2>
-            <div className="bd">
-              {colors.length === 0 ? (
-                <p className="fine3" style={{ marginTop: 0 }}>
-                  Chưa chọn màu nào.
-                </p>
               ) : (
-                <div className="teasers">
-                  {colors.map((c) => (
-                    <span className="t" key={c}>
-                      <i
-                        className="swatch"
-                        style={{ background: COLORS[c].hex }}
-                        aria-hidden="true"
-                      />
-                      {COLORS[c].label}
-                    </span>
-                  ))}
-                </div>
+                <p className="fine3" style={{ marginTop: 0 }}>
+                  {values.colors.map((c) => COLORS[c].label).join(" · ")}, chốt lúc cắt{" "}
+                  {values.dropNo === null ? LEX.tl : issueLabel(values.dropNo)}. Không thêm màu sau
+                  khi cắt; thứ tự dải màu và ảnh thì đổi được.
+                </p>
               )}
+              <div className="cslots">
+                {order.map((c, i) => (
+                  <ProductPhotoSlot
+                    key={c}
+                    color={c}
+                    index={i}
+                    count={order.length}
+                    mode={mode}
+                    photo={photos[c] ?? NONE}
+                    loans={loans}
+                    picking={picking === c}
+                    progress={progressOf(c)}
+                    onMove={(dir) => move(c, dir)}
+                    onUnpick={() => unpick(c)}
+                    onFile={(file) => void pickFile(c, file)}
+                    onCrop={() => openCrop(c)}
+                    onTogglePick={() => setPicking(picking === c ? null : c)}
+                    onPickLoan={(key) => pickLoan(c, key)}
+                  />
+                ))}
+              </div>
             </div>
           </section>
         </div>
       </div>
 
       <div className="formbar3">
-        <span>
-          Giá đang nhập: <b>{price === "" ? "chưa nhập" : `${plainVnd(Number(price))}₫`}</b> · lưới
-          đang có <b>{onHandTotal}</b> chiếc
-        </span>
+        <span>{bar}</span>
         <ButtonLink tone="ink sm" icon="back" href="/admin/products">
           Huỷ
         </ButtonLink>
-        {mode === "new" ? (
-          /* Disabled, so no icon — the way "Gửi lại xác nhận · đang chuẩn
-             bị" is drawn on the order screen. */
-          <Button tone="sm" disabled>
-            Tạo mẫu mới · đang chuẩn bị
-          </Button>
-        ) : (
-          <Button
-            tone="sm"
-            {...(saving ? {} : { icon: "check" as const })}
-            disabled={saving}
-            onClick={save}
-          >
-            {saving ? "Đang lưu…" : "Lưu thay đổi"}
-          </Button>
-        )}
+        <Button
+          tone="sm"
+          {...(saving || blocker !== null ? {} : { icon: "check" as const })}
+          disabled={saving || blocker !== null}
+          onClick={() => void save()}
+        >
+          {saveLabel}
+        </Button>
       </div>
 
-      {mode === "new" && (
-        <p className="note3">
-          <Icon name="info" className="ic sm" />
-          <span>Tạo mẫu cần chọn màu và ảnh cho từng màu; ô đó chưa có trong thiết kế.</span>
-        </p>
-      )}
-    </>
+      <CropSheet target={cropping} onApply={applyCrop} onCancel={cancelCrop} />
+    </div>
   );
+}
+
+/** The photos a style already has, one per colour: borrowed, or uploaded (B3c). */
+function storedPhotos(values: ProductFormValues): Photos {
+  const out: Photos = {};
+  values.colors.forEach((c, i) => {
+    const key = values.photoKeys[i];
+    if (key) out[c] = isUploadedKey(key) ? { kind: "saved", key } : { kind: "loan", key };
+  });
+  return out;
+}
+
+/** The row's file photo with its upload key — only if the row still shows that file. */
+function withKey(prev: Photos, color: ColorKey, src: string, key: string): Photos {
+  const p = prev[color];
+  return p?.kind === "file" && p.src === src ? { ...prev, [color]: { ...p, key } } : prev;
+}
+
+/** A picked file's pixel size, read the way the crop sheet will draw it; null when it is not an image. */
+async function naturalSize(src: string): Promise<{ w: number; h: number } | null> {
+  const img = new window.Image();
+  img.src = src;
+  try {
+    await img.decode();
+  } catch {
+    return null;
+  }
+  return img.naturalWidth > 0 && img.naturalHeight > 0
+    ? { w: img.naturalWidth, h: img.naturalHeight }
+    : null;
+}
+
+/** "Ảnh quá nặng sau khi thu" → "ảnh quá nặng…", after a colon. */
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLocaleLowerCase("vi") + text.slice(1);
 }

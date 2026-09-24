@@ -22,13 +22,27 @@ export function kindOptions(catalog: Catalog): SelectOption[] {
 
 const STATE_NOTE = { OPEN: "đang mở", UPCOMING: "sắp mở", CLOSED: "đã đóng" } as const;
 
-/** Newest drop first, each saying what it is doing right now. */
-export function dropOptions(catalog: Catalog, now: Date = demoNow()): SelectOption[] {
+/**
+ * Newest drop first, each saying what it is doing right now — "Số 06 · sắp
+ * mở", in the label itself (v3 slice 7, as the form's mock prints it), so the
+ * closed button says it too and not only the open menu.
+ *
+ * `hideClosed` leaves the closed ones out: a new style cannot join an issue that
+ * has closed (`createProduct` refuses with `DROP_CLOSED`), so the new-style
+ * form does not offer one. Editing keeps them all — a style already in a
+ * closed issue has to be able to show which one.
+ */
+export function dropOptions(
+  catalog: Catalog,
+  now: Date = demoNow(),
+  { hideClosed = false }: { hideClosed?: boolean } = {},
+): SelectOption[] {
   return [...catalog.drops]
     .sort((a, b) => b.no - a.no)
-    .map((d) => ({
+    .map((d) => ({ d, state: dropState(d, now) }))
+    .filter(({ state }) => !hideClosed || state !== "CLOSED")
+    .map(({ d, state }) => ({
       value: String(d.no),
-      label: `Số ${String(d.no).padStart(2, "0")}`,
-      note: STATE_NOTE[dropState(d, now)],
+      label: `Số ${String(d.no).padStart(2, "0")} · ${STATE_NOTE[state]}`,
     }));
 }

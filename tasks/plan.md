@@ -1502,3 +1502,23 @@ khách 404, quản lý thấy ở tab Số 06; sheet "Tạo số" đề xuất 2
 info) cho mẫu của Số chưa mở thay vì "Đã đóng" (đã kiểm bằng mẫu GẠCH ở Số 06); DESIGN.md §1 ghi ảnh tải lên; brief lát 7 thêm mục 1c.
 **Mở:** dashboard "Còn trong Số 06" khi quản lý có mẫu ở Số chưa mở; ảnh đã tải mà bỏ dở nằm lại bucket tới lần đặt lại (chấp nhận);
 picker teaser vẫn liệt kê ảnh thật của mẫu (lát 7 lọc `!isUploadedKey`); nhánh thiếu `SUPABASE_SECRET_KEY` chỉ kiểm bằng đọc mã.
+
+**Lát 7 · v3 ĐẠT (24/09/2026, `ui-implementer` trên Opus 5.5, phiên chính duyệt độc lập).** Form Thêm/Sửa mẫu theo mock vòng 7 và 7b
+(QĐ-27): bảy chip màu theo thứ tự dải, một hàng mỗi màu với ô ảnh 4:5 ở bốn trạng thái (chưa có · tệp đã chọn · mượn tạm có nhãn ·
+ảnh đã tải lên), sheet "Chọn vùng cắt" (`CropSheet` trên `AdminSheet` variant `crop` 720px: kéo dời, kéo góc khoá tỉ lệ, phím mũi tên và
+`+`/`−`, xem trước 96×120, số đo, cảnh báo < 800px, "Toàn ảnh"; Huỷ/Esc/scrim giữ ảnh cũ), nút lưu nói việc còn thiếu (tên → loại → form
+→ Số → giá → chất liệu → màu → số cắt → ảnh), tải từng ảnh với vạch tiến trình rồi `createProduct`/`updateProduct`; màn sửa không có
+chip, chỉ ↑ ↓ và ảnh; ô Form; placeholder mã = `uniqueSlug(productSlug(name))`; menu Số màn mới ẩn Số đã đóng; picker mượn tạm (form và
+sheet teaser) lọc ảnh thật; ô Mã chỉ đọc có kiểu riêng (`forms.css`); crumb "Mẫu › X" trong `AdminTop`. Tệp mới: `lib/photo-crop.ts`
+(+25 test), `lib/photo-encode.ts` (createImageBitmap from-image, WebP 0,82 → JPEG 0,85 → 0,7, trần 1,5 MB), `lib/product-form.ts`
+(+17 test), `components/admin/ProductPhotoSlot.tsx`, `CropSheet.tsx`. **Kiểm:** typecheck sạch; `npm test` **58 tệp / 1.244 test**;
+`npm run test:db` 5 / 161; build 45 route; phiên chính tự đi trên app: nút lần lượt "Nhập tên mẫu" → "Chọn màu" → "Chọn ảnh cho Đen" →
+"Tạo mẫu · 36 chiếc"; sheet cắt kéo khung, kéo góc, phím → 938×1.173, mở lại đúng khung, Huỷ giữ; SỎI tạo cho Số 05 với 1 ảnh thật + 2 mượn
+→ khách thấy thẻ SỎI với ảnh qua `/_next/image?url=%2Fphotos%2Fup%2F…`; sửa KHÓI đưa Kem lên đầu + ảnh thật cho Kem → PDP ảnh đầu là
+`/photos/up/…`, nhật ký hai dòng; đặt lại → bucket 0; 0 request ngoài 3200, 0 console. Sweep **81 lượt** (thêm sheet cắt, `photopick`
+màn mới và màn sửa vào `tools/layout-sweep.js`, ảnh mẫu `tools/fixtures/soi-den.png`) 0/0/0/0, tồn dư 48 + 2. **Quyết của phiên chính
+cho năm câu agent hỏi:** giữ trạng thái "Ảnh đã tải lên"; giữ các kiểm thêm ở nút lưu; crumb `--ink2` gạch chân (mật ong trên `--plate`
+chỉ 4,12:1); icon ô trống về thang **28** (mock 22, sửa trong `admin.css`); vạch tiến trình chạy qua lại vì action không báo byte.
+Ảnh ghép mock–app ở `.playwright-cli/shots/v3/lat7/mock-vs-app-*.png`. **Mở:** toast lỗi vẫn mang icon dấu tích; đặt lại khi đang ở
+trang mẫu vừa bị xoá → "Trang này không có." không toast; dòng "Đặt lại dữ liệu mẫu" xếp lẫn sự kiện cùng phút; nhánh JPEG dự phòng và
+ảnh có EXIF xoay chưa có tệp mẫu để kiểm; bìa Số với 3 teaser (từ B3b) chưa quyết.

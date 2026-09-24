@@ -140,6 +140,13 @@
   align-items:center; flex-wrap:wrap; }
 .s.adm3 .top .sub a, .s.adm3 .top .crumb a{ color:var(--ink2); }
 .s.adm3 .top .crumb{ font-size:var(--fs-sm); color:var(--ink2); margin-bottom:4px; }
+/* The way back reads "Mẫu › KHÓI" (v3 slice 7, the style form's mock): an
+   underlined link, then the separator, then where we are. The mock draws the
+   link in `--brand-text`, but the crumb stands on the back office's `--plate`,
+   where that pair is 4,12:1 — under AA for 12px. `--ink2` there is 5,26:1,
+   so the link keeps the secondary ink and takes the mock's underline. */
+.s.adm3 .top .crumb a{ text-decoration:underline; text-underline-offset:3px; }
+.s.adm3 .top .crumb i{ font-style:normal; margin:0 6px; }
 /* The way back is a 15px line of text. Measured with `elementFromPoint` on
    `/admin/slips` it answered 40; the overlay reaches into the margin above
    and the heading below, neither of which is a control. */
@@ -583,3 +590,131 @@
 .s.adm3 .teasers .t .swatch{ display:inline-block; width:10px; height:10px;
   border-radius:99px; margin-right:6px; vertical-align:middle;
   border:1px solid var(--hair); }
+
+/* -- the style form: colours and photos (v3 slice 7) ----------------------
+   `prototype/v3/v3-pages.css`, blocks "round 7" and "round 7b" (approved
+   24/09, QĐ-27). Every name greped first against `app/styles/` and the
+   Tailwind list in `lib/classnames.test.ts`: colorpick, cslots, cslot, shot,
+   blank, over, prog, ord, flip, file, pos, cutgrid, cropwrap, cropper,
+   frame and cropside are new; `.hd` and `.acts` exist only under other
+   parents; `.photopick` is the teaser sheet's picker, reused. The mock's
+   `.tag3` is `.badge`, `.btn3.sec` is `.btn.ink`, `--focus` is `--mark`. */
+
+/* The seven fabric colours as toggle chips. The order they are picked in is
+   the band order on the shop's card, so a chosen chip carries its place. */
+.s .colorpick{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.s .colorpick .chip3{ padding:0 12px 0 10px; cursor:pointer; }
+.s .colorpick .chip3 .dot{ width:14px; height:14px; }
+.s .colorpick .chip3.on .dot{ border-color:rgba(255,255,255,.45); }
+.s .colorpick .chip3 .pos{ font-size:var(--fs-xs); font-variant-numeric:tabular-nums;
+  opacity:.85; }
+
+/* One row per chosen colour: its 4:5 photo, the caption, the moves. */
+.s .cslots{ margin-top:6px; }
+.s .fine3 + .cslots{ margin-top:12px; }
+.s .cslot{ display:grid; grid-template-columns:96px minmax(0,1fr); gap:14px; padding:14px 0;
+  border-top:1px solid var(--hair); }
+.s .cslot:first-child{ border-top:0; }
+.s .cslot .shot{ position:relative; display:block; width:96px; aspect-ratio:4/5;
+  border-radius:var(--r); overflow:hidden; background-color:var(--plate);
+  background-repeat:no-repeat; }
+.s .cslot .shot img{ display:block; width:100%; height:100%; object-fit:cover; }
+.s .cslot .shot.blank{ border:1px dashed var(--line); display:grid; place-items:center;
+  color:var(--ink2); }
+/* 22, the mock's: bigger than a row icon, smaller than an empty page's 28. */
+.s .cslot .shot.blank .ic{ width:28px; height:28px; font-size:28px; }
+.s .cslot .shot.over{ border:1px dashed var(--brand-text); background-color:var(--brand-soft); }
+/* The upload line under the photo in flight. The upload reports no bytes,
+   so while it runs the thread travels rather than pretending to fill; it
+   stays full once that photo is through. */
+.s .cslot .shot .prog{ position:absolute; left:0; right:0; bottom:0; height:3px;
+  background:rgba(23,20,16,.25); overflow:hidden; }
+.s .cslot .shot .prog i{ display:block; height:100%; width:100%; background:var(--brand); }
+.s .cslot .shot .prog[data-state="run"] i{ width:40%;
+  animation:photoprog .9s ease-in-out infinite alternate; }
+@keyframes photoprog{ from{ transform:translateX(-100%); } to{ transform:translateX(250%); } }
+@media (prefers-reduced-motion:reduce){
+  .s .cslot .shot .prog[data-state="run"] i{ width:100%; animation:none; }
+}
+/* The arrows never push past the panel: a long colour name wraps them onto
+   their own line instead. */
+.s .cslot .hd{ display:flex; align-items:center; gap:8px; row-gap:4px; flex-wrap:wrap;
+  min-height:36px; }
+.s .cslot .hd b{ font-family:var(--font-display); font-weight:var(--fw-display);
+  letter-spacing:var(--ls-display); }
+.s .cslot .hd .swatch{ display:inline-block; width:10px; height:10px; border-radius:99px;
+  border:1px solid var(--hair); flex:none; }
+/* 36px boxes with a 4px overlay, 8px apart: the overlays meet in the gap and
+   never cross it (DESIGN.md §5, trap 2). A disabled arrow stays visible. */
+.s .cslot .ord{ margin-left:auto; display:inline-flex; gap:8px; }
+.s .cslot .ord button{ width:36px; height:36px; display:inline-flex; align-items:center;
+  justify-content:center; border-radius:var(--r); color:var(--ink2); cursor:pointer;
+  position:relative; }
+.s .cslot .ord button::after{ content:""; position:absolute; inset:-4px; }
+.s .cslot .ord button:hover{ background:var(--plate); color:var(--ink); }
+.s .cslot .ord button:disabled{ color:var(--ink2); opacity:.35; cursor:not-allowed;
+  background:none; }
+.s .cslot .ord .flip{ transform:rotate(180deg); }
+.s .cslot .file{ font-size:var(--fs-sm); color:var(--ink2); margin-top:2px; line-height:1.5;
+  font-variant-numeric:tabular-nums; }
+.s .cslot .file b{ color:var(--ink); font-weight:600; }
+.s .cslot .file .badge{ margin-right:4px; }
+/* `.s .cslot .acts .lnk` ties `.s.adm3 .panel3 .lnk` (0,4,0) and wins by
+   coming later: a link here is 36 tall with a 5px overlay, 46 in all. */
+.s .cslot .acts{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+.s .cslot .acts .lnk{ min-width:44px; min-height:36px; display:inline-flex; align-items:center;
+  justify-content:center; position:relative; }
+.s .cslot .acts .lnk::after{ content:""; position:absolute; inset:-5px 0; }
+.s .cslot .acts label.btn, .s .cslot .acts label.lnk{ cursor:pointer; }
+/* The file picker is a label around a hidden input, so the input's own ring
+   would be drawn on a 1px box: the label carries it, and only while the
+   keyboard is driving (the data-pointer switch in app/layout.tsx). */
+html:not([data-pointer]) .s .cslot .acts label:focus-within{ outline:2px solid var(--mark);
+  outline-offset:2px; }
+.s .cslot .photopick{ margin-top:10px; }
+
+/* The cut grid on the form: 44px boxes like every other input on the page,
+   no steppers (the adjustment sheet keeps those). */
+.s .cutgrid .cell{ height:46px; }
+.s .cutgrid .cell input{ width:44px; height:44px; border-left:0; border-right:0; }
+
+/* -- the crop sheet (v3 slice 7, round 7b) --------------------------------
+   The picked photo with a 4:5 frame over it. The panel is portalled to the
+   body and carries `.s` itself, so these rules reach it without `.adm3`.
+   Everything outside the frame is dimmed by one big shadow the stage clips;
+   the frame is a honey thread with four 14px handles. */
+@media (min-width:900px){
+  .sheetwrap .sheetbody.wide.crop{ width:720px; }
+}
+.s .cropwrap{ display:grid; grid-template-columns:minmax(0,1fr) 150px; gap:16px;
+  margin-top:14px; align-items:start; }
+.s .cropper{ position:relative; overflow:hidden; background:var(--plate);
+  border-radius:var(--r); user-select:none; touch-action:none; display:flex;
+  justify-content:center; }
+/* Auto width and height undo the size next/image writes as attributes, so
+   the photo keeps its own ratio inside both caps. */
+.s .cropper img{ display:block; width:auto; height:auto; max-width:100%; max-height:440px; }
+.s .cropper .frame{ position:absolute; box-sizing:border-box; border:1px solid var(--brand);
+  border-radius:0; box-shadow:0 0 0 9999px rgba(23,20,16,.55); cursor:move; outline:none;
+  touch-action:none; }
+/* The stage clips an outline, so the keyboard's ring is the frame's own edge
+   thickened in the focus colour, and only while the keyboard is driving. */
+html:not([data-pointer]) .s .cropper .frame:focus-visible{ border:2px solid var(--mark); }
+.s .cropper .frame i{ position:absolute; width:14px; height:14px; background:var(--bg);
+  border:1px solid var(--ink); border-radius:99px; }
+.s .cropper .frame i[data-h="nw"]{ left:-7px; top:-7px; cursor:nwse-resize; }
+.s .cropper .frame i[data-h="se"]{ right:-7px; bottom:-7px; cursor:nwse-resize; }
+.s .cropper .frame i[data-h="ne"]{ right:-7px; top:-7px; cursor:nesw-resize; }
+.s .cropper .frame i[data-h="sw"]{ left:-7px; bottom:-7px; cursor:nesw-resize; }
+.s .cropside .shot{ position:relative; display:block; width:96px; aspect-ratio:4/5;
+  border-radius:var(--r); background-color:var(--plate); background-repeat:no-repeat; }
+.s .cropside .file{ font-size:var(--fs-sm); color:var(--ink2); margin-top:10px;
+  line-height:1.5; font-variant-numeric:tabular-nums; }
+.s .cropside .file b{ color:var(--ink); font-weight:600; }
+/* Restates the size: `.s .err` (forms.css) is the v2 11.5px line. */
+.s .cropside .err{ color:var(--hot); display:flex; gap:6px; align-items:flex-start;
+  margin-top:6px; font-size:var(--fs-sm); }
+.s .cropside .err .ic{ flex:none; margin-top:2px; }
+.s .cropside .lnk{ display:inline-flex; align-items:center; min-height:36px; position:relative;
+  margin-top:6px; }
+.s .cropside .lnk::after{ content:""; position:absolute; inset:-5px 0; }

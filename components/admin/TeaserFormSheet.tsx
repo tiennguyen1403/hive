@@ -10,7 +10,7 @@ import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Catalog } from "@/lib/catalog";
 import { FAMILY_LABELS, type Family } from "@/data/types";
 import { LEX, issueNo } from "@/lib/lexicon";
-import { photoUrl } from "@/lib/photos";
+import { isUploadedKey, photoUrl } from "@/lib/photos";
 
 /**
  * What the sheet sends: the issue, a name, a kind and a photo. The family and
@@ -42,9 +42,15 @@ function kindOptions(catalog: Catalog) {
  * upload box would be a control with nowhere to put a file. Choosing from
  * the borrowed set is the honest version of the same decision, and the sheet
  * says which set it is.
+ *
+ * Slice B3c added real photos, uploaded from the style form. Those are
+ * another style's photo, not a stand-in, so they are left out (v3 slice 7):
+ * the set stays the borrowed frames and nothing else.
  */
 function photoKeys(catalog: Catalog): string[] {
-  return [...new Set(catalog.products.flatMap((p) => p.photoKeys))];
+  return [...new Set(catalog.products.flatMap((p) => p.photoKeys))].filter(
+    (k) => !isUploadedKey(k),
+  );
 }
 
 /**

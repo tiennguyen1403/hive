@@ -18,6 +18,7 @@ export function AdminSheet({
   title,
   sub,
   wide = false,
+  variant,
   footer,
   children,
 }: {
@@ -28,6 +29,8 @@ export function AdminSheet({
   /** What this will do, in the shop's own words. */
   sub?: React.ReactNode;
   wide?: boolean;
+  /** A panel variant class — `crop` for the crop sheet. */
+  variant?: string;
   footer: React.ReactNode;
   children?: React.ReactNode;
 }) {
@@ -36,6 +39,7 @@ export function AdminSheet({
       open={open}
       onClose={onClose}
       wide={wide}
+      variant={variant}
       label={typeof title === "string" ? title : "Hộp thoại"}
     >
       <div className="grab" />

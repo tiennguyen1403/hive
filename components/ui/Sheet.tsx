@@ -15,6 +15,11 @@ interface SheetProps {
    * edge to edge either way.
    */
   wide?: boolean;
+  /**
+   * A variant of the panel, as a class (DESIGN.md §6: a variant is a class,
+   * never a position) — `crop` is the style form's 720px crop sheet.
+   */
+  variant?: string;
   children: React.ReactNode;
 }
 
@@ -35,7 +40,7 @@ interface SheetProps {
  * and a fixed element inside a transformed ancestor is positioned against
  * that ancestor, not the viewport.
  */
-export function Sheet({ open, onClose, label, wide = false, children }: SheetProps) {
+export function Sheet({ open, onClose, label, wide = false, variant, children }: SheetProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
 
@@ -90,7 +95,7 @@ export function Sheet({ open, onClose, label, wide = false, children }: SheetPro
       <div className="scrim" onClick={onClose} />
       <div
         ref={panelRef}
-        className={wide ? "s sheetbody wide" : "s sheetbody"}
+        className={["s sheetbody", wide && "wide", variant].filter(Boolean).join(" ")}
         role="dialog"
         aria-modal="true"
         aria-label={label}

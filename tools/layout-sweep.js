@@ -516,6 +516,19 @@ async (page) => {
     ["/admin/products/p-khoi#kind", "admin-product-form-kind-menu-1280", async () => {
       await page.locator(".field3", { hasText: "Loại" }).first().locator("button.selbtn").click();
     }],
+    // v3 slice 7: the crop sheet after a picked file, and the borrowed-photo grid open
+    ["/admin/products/new#crop", "admin-product-new-crop-sheet-1280", async () => {
+      await page.locator(".colorpick .chip3", { hasText: /^Đen/ }).click();
+      await page.locator(".cslot").first().locator('input[type="file"]').setInputFiles("tools/fixtures/soi-den.png");
+      await page.locator(".sheetwrap .frame").waitFor({ state: "visible", timeout: 8000 });
+    }],
+    ["/admin/products/new#photopick", "admin-product-new-photopick-1280", async () => {
+      await page.locator(".colorpick .chip3", { hasText: /^Đen/ }).click();
+      await page.locator(".cslot").first().getByRole("button", { name: "Mượn tạm" }).click();
+    }],
+    ["/admin/products/p-khoi#photopick", "admin-product-edit-photopick-1280", async () => {
+      await page.locator(".cslot").first().getByRole("button", { name: "Đổi ảnh mượn" }).click();
+    }],
   ];
   for (const [route, name, open] of ADMIN_OVERLAYS) await visit(route, 1280, name, open);
 

@@ -40,6 +40,12 @@
 .s .radio{ width:17px; height:17px; border:1px solid var(--line); border-radius:99px; flex:none;
   margin-top:1px; }
 .s .radio.on{ border:5px solid var(--fill); }
+/* A box showing a value nobody may change here, like the code of a discount
+   being edited (a renamed code would be a different code), reads as plate
+   and not as a field waiting for input (v3 slice 7, from the B3b report).
+   At 0,4,0 no other rule sets a ground or an ink on `.field3 .inp`, so
+   nothing ties with it. */
+.s .field3 .inp[readonly]{ background:var(--plate); color:var(--ink2); }
 
 /* The v2 size row (`.szrow` / `.sz`) stood here until v3 slice 6. Picking a
    size is `.szgrid3` / `.szc` (product.css) since slice 2 of v3, and the

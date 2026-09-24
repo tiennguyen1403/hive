@@ -25,6 +25,10 @@ interface AdminTopProps {
  *
  * Family B's neutral tone — unbleached cloth, dark ink — because the badge is
  * a caveat and not a state; the live states keep the black cloth.
+ *
+ * The way back reads "Mẫu › KHÓI" (v3 slice 7, the style form's mock): the
+ * separator is punctuation, hidden from assistive tech, which reads the link
+ * and the page's own heading.
  */
 export function AdminTop({ crumb, title, badge, sub, children }: AdminTopProps) {
   return (
@@ -32,7 +36,9 @@ export function AdminTop({ crumb, title, badge, sub, children }: AdminTopProps) 
       <div>
         {crumb && (
           <div className="crumb">
-            <Link href={crumb.href}>{crumb.label}</Link> / {crumb.here}
+            <Link href={crumb.href}>{crumb.label}</Link>
+            <i aria-hidden="true">›</i>
+            {crumb.here}
           </div>
         )}
         <h1>

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { requireAdmin } from "@/lib/db/session";
 import { AdminTop } from "@/components/admin/AdminTop";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { ButtonLink } from "@/components/ui/Button";
 import { SIZES, productId } from "@/data/types";
 import { loadCatalog } from "@/lib/db/catalog";
 import { dropOptions, kindOptions } from "@/lib/admin-options";
@@ -25,7 +26,11 @@ export const metadata = { title: "Sửa mẫu" };
  * segment moves the shop's page (`/products/<slug>`), not this one. The form
  * is keyed on the values it was rendered with, so the response that answers
  * a save — which re-renders this page — starts it again from what the
- * database now holds.
+ * database now holds, photos and band order included (v3 slice 7).
+ *
+ * "Xem trên cửa hàng" opens the style's page as the shop draws it. A style of
+ * an issue that has not opened is hidden from shoppers (slice B3c) but not
+ * from the manager, so the link works for the one person who sees it here.
  */
 export default async function AdminEditProductPage(props: PageProps<"/admin/products/[id]">) {
   const { id } = await props.params;
@@ -45,6 +50,7 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
   const values = {
     name: product.name,
     kind: product.kind,
+    fit: product.fit,
     slug: product.slug,
     priceVnd: product.priceVnd,
     dropNo: product.dropNo,
@@ -60,7 +66,11 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
         crumb={{ label: "Mẫu", href: "/admin/products", here: product.name }}
         title={product.name}
         sub={`${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc. Lưới dưới là số còn lại theo từng màu và size.`}
-      />
+      >
+        <ButtonLink tone="ink sm" icon="eye" href={`/products/${product.slug}`}>
+          Xem trên cửa hàng
+        </ButtonLink>
+      </AdminTop>
       <ProductForm
         key={JSON.stringify(values)}
         mode="edit"
