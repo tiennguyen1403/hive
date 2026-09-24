@@ -56,6 +56,11 @@ export const LEX = {
  * figure on the page typed rather than counted, and it is typed because it
  * is a sentence, not a count — if the issue ever carries a different number
  * the line has to be rewritten by a person, not patched by a formatter.
+ *
+ * The share image (v3 slice 10) prints `headline` too, as outlines drawn from
+ * it by `scripts/brand-assets.ts`: after changing it, run that script once.
+ * Until then the build and the tests refuse the old outlines
+ * (`lib/brand/share-image.ts`).
  */
 export const HOME_COVER = {
   headline: "Mười mẫu. Cắt một lần. Hết là hết.",

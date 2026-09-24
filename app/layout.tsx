@@ -8,6 +8,7 @@ import { CatalogProvider } from "@/components/shop/CatalogContext";
 import { WaitVeil } from "@/components/shop/WaitVeil";
 import { catalogInput, loadCatalog } from "@/lib/db/catalog";
 import { loadMe } from "@/lib/db/profiles";
+import { SITE_DESCRIPTION, SITE_NAME, THEME_COLOR, siteOrigin } from "@/lib/site";
 import "./globals.css";
 
 // Self-hosted by next/font — no runtime call to fonts.googleapis.com.
@@ -36,16 +37,33 @@ const unbounded = Unbounded({
   display: "swap",
 });
 
+// The head every page inherits (v3 slice 10, QĐ-31). The pictures are files
+// beside this one, and Next writes their tags itself: `favicon.ico`,
+// `apple-icon.png`, `manifest.ts`, and the share image `opengraph-image.tsx`
+// with its twin `twitter-image.tsx`. There is deliberately no SVG favicon or
+// `icon.*`: a browser would prefer it to the 16 px frame drawn by hand.
+//
+// The link card says the same on every page: the shop's name and description
+// A. No page sets `openGraph` of its own, so this one reaches them all.
 export const metadata: Metadata = {
-  title: { default: "HIVE", template: "%s · HIVE" },
-  description: "Streetwear unisex bán theo số. Mỗi số cắt một lần.",
+  metadataBase: siteOrigin(process.env),
+  title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    locale: "vi_VN",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#ffffff",
+  themeColor: THEME_COLOR,
 };
 
 // Record pointer-vs-keyboard BEFORE the first paint, otherwise the focus ring
