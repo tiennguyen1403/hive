@@ -24,3 +24,7 @@ supabase/.temp/
 
 # the Vercel CLI's project link and pulled settings (slice B4)
 .vercel/
+
+# generated product photos straight out of the image tool, before they are
+# cropped, shrunk and given their provenance (tasks/anh-san-pham-prompt.md)
+/photos-raw/
