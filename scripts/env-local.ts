@@ -18,12 +18,19 @@ import { resolve } from "node:path";
  * The file is git-ignored and its values never leave the machine: they are not
  * printed, not logged, and not written into anything committed.
  */
+/**
+ * Which file: `.env.local` unless `ENV_FILE` names another. B4 seeds the hosted
+ * project with `ENV_FILE=.env.hosted.local npm run seed:users`; Next never loads
+ * a file by that name, so the local stack keeps its own values.
+ */
+export const ENV_FILE = process.env.ENV_FILE ?? ".env.local";
+
 export function readEnvLocal(wanted: readonly string[]): Record<string, string> {
   const env: Record<string, string> = {};
 
   let text: string;
   try {
-    text = readFileSync(resolve(process.cwd(), ".env.local"), "utf8");
+    text = readFileSync(resolve(process.cwd(), ENV_FILE), "utf8");
   } catch {
     return env; // no file: the caller reports which variables are missing
   }
@@ -55,7 +62,7 @@ export function requireEnvLocal<K extends string>(wanted: readonly K[]): Record<
   const missing = wanted.filter((name) => !found[name]);
   if (missing.length > 0) {
     throw new Error(
-      `Missing ${missing.join(", ")} in .env.local. Copy .env.example and fill it from ` +
+      `Missing ${missing.join(", ")} in ${ENV_FILE}. Copy .env.example and fill it from ` +
         "`npx supabase status -o env`.",
     );
   }
