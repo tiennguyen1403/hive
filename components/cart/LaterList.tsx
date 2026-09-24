@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { COLORS } from "@/data/colors";
+import { isFixed } from "@/lib/inventory";
 import { styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
@@ -64,13 +65,17 @@ export function LaterList({ items, onAdd, onRemove }: LaterListProps) {
 
             <div>
               <b>{styleName(product.name, product.dropNo)}</b>
+              {/* A fixed style (v3 slice 11) gives no count, as nowhere else
+                  in the shop does: only a size that has gone is said. */}
               <span className="sub">
-                {product.kind} · {colour.label} · size {size} ·{" "}
-                {vnd(product.priceVnd)} ·{" "}
+                {product.kind} · {colour.label} · size {size} · {vnd(product.priceVnd)}
                 {gone ? (
-                  <span className="gone">hết size {size}</span>
-                ) : (
-                  `còn ${available}`
+                  <>
+                    {" · "}
+                    <span className="gone">hết size {size}</span>
+                  </>
+                ) : isFixed(product) ? null : (
+                  ` · còn ${available}`
                 )}
               </span>
             </div>

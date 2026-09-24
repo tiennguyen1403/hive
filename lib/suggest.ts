@@ -13,9 +13,11 @@ import {
   EMPTY_QUERY,
   FITS,
   FIT_LABELS,
-  fold,
+  foldName,
+  isNameSeparator,
   listingHref,
 } from "./catalog-query";
+import { styleName } from "./lexicon";
 
 /**
  * What the search box offers while a term is being typed.
@@ -33,7 +35,9 @@ import {
  *   be the answer: pressing Enter is still the way to the full result page.
  *
  * Matching is accent-insensitive through `fold`, because a shopper in a hurry
- * types "khoac" and means "khoác".
+ * types "khoac" and means "khoác" — and blind to how words are spaced or
+ * dashed apart (`foldName`), because a style of an issue is shown as "S05 –
+ * KHÓI" and is typed "s05 khoi" (v3 slice 11).
  */
 
 /** Below this many characters the list is noise, so it does not open. */
@@ -46,7 +50,16 @@ export type MatchRange = readonly [start: number, end: number];
 
 export interface StyleSuggestion {
   product: Product;
-  /** Null when the term matched the kind or the colour rather than the name. */
+  /**
+   * The name as the shop shows it — "S05 – KHÓI" for a style of an issue,
+   * the bare name for a fixed one (`styleName`, v3 slice 11). The term is
+   * matched against this, so "s05" finds every style of Số 05.
+   */
+  name: string;
+  /**
+   * Where the term sits in `name`. Null when the term matched the kind or
+   * the colour rather than the name.
+   */
   range: MatchRange | null;
 }
 
@@ -83,15 +96,26 @@ export interface Suggestions {
  * `KH` of some flattened copy that is never on screen. Folding the whole
  * string at once and reusing the index would work today and break the first
  * time a character folds to two, or to none.
+ *
+ * Spaces and dashes are folded the way `foldName` folds the term: a run of
+ * them is one space. "S05 – KHÓI" carries a no-break space and an en dash
+ * that nobody types, and "s05 khoi" still marks all of it (v3 slice 11).
  */
 export function matchRange(text: string, term: string): MatchRange | null {
-  const needle = fold(term);
+  const needle = foldName(term);
   if (!needle) return null;
 
   let folded = "";
   const at: number[] = [];
   for (let i = 0; i < text.length; i++) {
-    const piece = foldPiece(text[i]!);
+    const c = text[i]!;
+    let piece: string;
+    if (isNameSeparator(c)) {
+      if (folded === "" || folded.endsWith(" ")) continue;
+      piece = " ";
+    } else {
+      piece = foldPiece(c);
+    }
     for (let k = 0; k < piece.length; k++) at.push(i);
     folded += piece;
   }
@@ -135,7 +159,8 @@ export function suggestFor(pool: Product[], rawTerm: string): Suggestions {
 
   const styles: StyleSuggestion[] = [];
   for (const p of pool) {
-    const inName = matchRange(p.name, term);
+    const name = styleName(p.name, p.dropNo);
+    const inName = matchRange(name, term);
     const matched =
       inName !== null ||
       hits(
@@ -145,7 +170,7 @@ export function suggestFor(pool: Product[], rawTerm: string): Suggestions {
         FAMILY_SHORT_LABELS[p.family],
         ...colorLabelsOf(p),
       );
-    if (matched) styles.push({ product: p, range: inName });
+    if (matched) styles.push({ product: p, name, range: inName });
     if (styles.length === MAX_STYLES) break;
   }
 

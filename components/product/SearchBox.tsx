@@ -8,7 +8,6 @@ import { Icon } from "@/components/icon/Icon";
 import { startWait } from "@/components/shop/WaitVeil";
 import type { Product } from "@/data/types";
 import { isFixed, onHand } from "@/lib/inventory";
-import { styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import { SUGGEST_MIN, suggestFor, type MatchRange } from "@/lib/suggest";
@@ -191,7 +190,9 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
                 />
                 <span>
                   <b>
-                    <StyleName product={s.product} range={s.range} />
+                    {/* The name as shown — "S05 – KHÓI" — and the match found
+                        in it, so "s05" marks the code (`suggestFor`). */}
+                    <Marked text={s.name} range={s.range} />
                   </b>
                   {/* No figure for a fixed style, as on its card (v3 slice 11). */}
                   <span className="d">
@@ -271,18 +272,6 @@ export function SearchBox({ initial = "", pool }: SearchBoxProps) {
 
 function searchHref(term: string): string {
   return term ? `/search?q=${encodeURIComponent(term)}` : "/search";
-}
-
-/**
- * A style's name as the shop shows it — "S05 – KHÓI" (v3 slice 11) — with the
- * match marked. The match was found in the bare name (`suggestFor` reads
- * `name`), so its range moves along by whatever the issue's code put in
- * front; a fixed style's name has nothing in front and the range stands.
- */
-function StyleName({ product, range }: { product: Product; range: MatchRange | null }) {
-  const shown = styleName(product.name, product.dropNo);
-  const shift = shown.length - product.name.length;
-  return <Marked text={shown} range={range && ([range[0] + shift, range[1] + shift] as const)} />;
 }
 
 /**

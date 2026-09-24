@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
-import { productsInDrop } from "./inventory";
+import { productsInDrop, productsOnSale } from "./inventory";
 import { MAX_GROUPS, MAX_STYLES, matchRange, suggestFor } from "./suggest";
 
 const pool = productsInDrop(FIXTURE_CATALOG, FIXTURE_CATALOG.currentDropNo);
@@ -38,10 +38,13 @@ describe("suggestFor", () => {
     expect(s.fallback).toBe(false);
   });
 
-  it("offers the style whose name starts with the term, marked", () => {
+  it("offers the style whose name carries the term, marked in the name as shown", () => {
+    // The name on screen is "S05 – KHÓI" (v3 slice 11), so the mark sits
+    // after the issue's code: characters 6 to 8.
     const s = suggestFor(pool, "kh");
     expect(s.styles[0]!.product.slug).toBe("s05-khoi");
-    expect(s.styles[0]!.range).toEqual([0, 2]);
+    expect(s.styles[0]!.name).toBe("S05\u00a0– KHÓI");
+    expect(s.styles[0]!.range).toEqual([6, 8]);
     expect(s.fallback).toBe(false);
   });
 
@@ -87,5 +90,53 @@ describe("suggestFor", () => {
     for (const x of suggestFor(pool, "áo").styles) {
       expect(slugs.has(x.product.slug)).toBe(true);
     }
+  });
+});
+
+// ───────────────────────────────────── the issue's code in the name (v3 slice 11)
+describe("matchRange · spaces and dashes", () => {
+  const KHOI = "S05\u00a0– KHÓI";
+
+  it("reads a run of spaces and dashes as one space, as a shopper types it", () => {
+    expect(matchRange(KHOI, "s05 khoi")).toEqual([0, KHOI.length]);
+    expect(matchRange(KHOI, "S05 – KHÓI")).toEqual([0, KHOI.length]);
+    expect(matchRange(KHOI, "s05-khoi")).toEqual([0, KHOI.length]);
+    expect(matchRange(KHOI, KHOI)).toEqual([0, KHOI.length]);
+  });
+
+  it("marks the code alone, or the name alone, where each sits", () => {
+    expect(matchRange(KHOI, "s05")).toEqual([0, 3]);
+    expect(matchRange(KHOI, "khoi")).toEqual([6, 10]);
+  });
+
+  it("still wants the words apart, and a dash alone is no term", () => {
+    expect(matchRange(KHOI, "s05khoi")).toBeNull();
+    expect(matchRange(KHOI, "–")).toBeNull();
+  });
+});
+
+describe("suggestFor · by the issue's code", () => {
+  const onSale = productsOnSale(FIXTURE_CATALOG, new Date("2026-09-20T18:50:00+07:00"));
+
+  it("offers the issue's styles for its code, the code marked", () => {
+    const s = suggestFor(onSale, "s05");
+    expect(s.styles).toHaveLength(MAX_STYLES);
+    expect(s.styles.every((x) => x.product.dropNo === 5)).toBe(true);
+    expect(s.styles.every((x) => x.name.startsWith("S05") && x.range?.join() === "0,3")).toBe(true);
+  });
+
+  it("finds one style by its code and name, however they are typed or pasted", () => {
+    for (const term of ["S05 KHÓI", "s05 khoi", "S05 – KHÓI", "S05\u00a0– KHÓI"]) {
+      const s = suggestFor(onSale, term);
+      expect(s.styles.map((x) => x.product.slug), term).toEqual(["s05-khoi"]);
+      expect(s.styles[0]!.range, term).toEqual([0, s.styles[0]!.name.length]);
+    }
+  });
+
+  it("leaves a fixed style as it was: its name has no code in front", () => {
+    const s = suggestFor(onSale, "ao thun tron");
+    expect(s.styles.map((x) => [x.product.slug, x.name, x.range])).toEqual([
+      ["ao-thun-tron", "ÁO THUN TRƠN", [0, 12]],
+    ]);
   });
 });

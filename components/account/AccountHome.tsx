@@ -11,6 +11,7 @@ import { Toast } from "@/components/shop/Toast";
 import { useDropLabel } from "@/components/shop/useDropLabel";
 import type { Drop, DropState, Order } from "@/data/types";
 import { dayMonth } from "@/lib/datetime";
+import { isFixed } from "@/lib/inventory";
 import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { stampLabel } from "@/lib/notifications";
@@ -181,39 +182,44 @@ export function AccountHome({
               </Link>
             </h3>
             <div className="rows3">
-              {saved.items.slice(0, 2).map((item) => (
-                <Link
-                  className="row"
-                  key={item.product.id}
-                  href={`/products/${item.product.slug}`}
-                >
-                  <b>
-                    <span className="nm">{styleName(item.product.name, item.product.dropNo)}</span>
-                  </b>
-                  <span className="sub">
-                    {item.soldOut ? (
-                      <span style={{ color: "var(--hot)" }}>đã hết</span>
-                    ) : (
-                      <span style={item.low ? { color: "var(--hot)" } : undefined}>
-                        còn {item.onHand}
-                      </span>
-                    )}
-                    {" · "}
-                    {vnd(item.product.priceVnd)}
-                    {item.savedAt ? ` · lưu ${dayMonth(item.savedAt)}` : ""}
+              {saved.items.slice(0, 2).map((item) => {
+                // A fixed style (v3 slice 11) gives no count, as nowhere else
+                // in the shop does: only an empty shelf is said, "đã hết".
+                const stock = item.soldOut ? (
+                  <span style={{ color: "var(--hot)" }}>đã hết</span>
+                ) : isFixed(item.product) ? null : (
+                  <span style={item.low ? { color: "var(--hot)" } : undefined}>
+                    còn {item.onHand}
                   </span>
-                  <span className="right">
-                    <span className="thumbs3">
-                      <Image
-                        src={photoUrl(item.product.photoKeys[0]!, 120, 60)}
-                        alt=""
-                        width={120}
-                        height={150}
-                      />
+                );
+                return (
+                  <Link
+                    className="row"
+                    key={item.product.id}
+                    href={`/products/${item.product.slug}`}
+                  >
+                    <b>
+                      <span className="nm">{styleName(item.product.name, item.product.dropNo)}</span>
+                    </b>
+                    <span className="sub">
+                      {stock}
+                      {stock && " · "}
+                      {vnd(item.product.priceVnd)}
+                      {item.savedAt ? ` · lưu ${dayMonth(item.savedAt)}` : ""}
                     </span>
-                  </span>
-                </Link>
-              ))}
+                    <span className="right">
+                      <span className="thumbs3">
+                        <Image
+                          src={photoUrl(item.product.photoKeys[0]!, 120, 60)}
+                          alt=""
+                          width={120}
+                          height={150}
+                        />
+                      </span>
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}

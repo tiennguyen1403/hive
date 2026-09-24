@@ -8,6 +8,7 @@ import {
   familyCounts,
   fitCounts,
   fold,
+  foldName,
   isBandApplied,
   isFiltered,
   parseListingQuery,
@@ -16,8 +17,10 @@ import {
   queryToSearchParams,
   runListingQuery,
   sizeCounts,
+  styleNameHas,
 } from "./catalog-query";
-import { productsInDrop } from "./inventory";
+import { productsInDrop, productsOnSale } from "./inventory";
+import { styleName } from "./lexicon";
 import { CATALOG } from "@/data/catalog";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { FAMILY_LABELS } from "@/data/types";
@@ -388,5 +391,44 @@ describe("catalog assumptions these tests rest on", () => {
   it("still has ten styles in the open drop and MUỐI sold out", () => {
     expect(DROP5).toHaveLength(10);
     expect(CATALOG.find((p) => p.slug === "s05-muoi")?.dropNo).toBe(5);
+  });
+});
+
+// ───────────────────────────────────── the issue's code in the name (v3 slice 11)
+describe("foldName · a name as it is typed", () => {
+  it("folds like fold, and reads a run of spaces and dashes as one space", () => {
+    // The shown name carries a no-break space and an en dash nobody types.
+    expect(foldName(styleName("KHÓI", 5))).toBe("s05 khoi");
+    expect(foldName("S05 - KHÓI")).toBe("s05 khoi");
+    expect(foldName("  s05   khoi ")).toBe("s05 khoi");
+    expect(foldName("s05-khoi")).toBe("s05 khoi");
+    expect(foldName("–")).toBe("");
+  });
+});
+
+describe("runListingQuery · by the issue's code", () => {
+  const ON_SALE = productsOnSale(FIXTURE_CATALOG, new Date("2026-09-20T18:50:00+07:00"));
+  const slugs = (q: string) => runListingQuery(ON_SALE, parseListingQuery({ q })).map((p) => p.slug);
+
+  it("finds every style of the issue by its code alone", () => {
+    expect(slugs("s05")).toEqual(DROP5.map((p) => p.slug));
+    expect(slugs("S05")).toEqual(DROP5.map((p) => p.slug));
+  });
+
+  it("finds one style by its code and name, however they are typed or pasted", () => {
+    for (const q of ["S05 KHÓI", "s05 khoi", "S05 – KHÓI", "s05-khoi", styleName("KHÓI", 5)]) {
+      expect(slugs(q), q).toEqual(["s05-khoi"]);
+    }
+  });
+
+  it("still finds by the bare name, and a fixed style by its own name only", () => {
+    expect(slugs("khoi")).toEqual(["s05-khoi"]);
+    expect(slugs("ao thun tron")).toEqual(["ao-thun-tron"]);
+    expect(styleNameHas(FIXTURE_CATALOG.bySlug.get("ao-thun-tron")!, "s05")).toBe(false);
+  });
+
+  it("finds nothing for a code that is not on sale, nor for a dash alone", () => {
+    expect(slugs("s04")).toEqual([]);
+    expect(slugs("–")).toEqual([]);
   });
 });

@@ -20,10 +20,12 @@ import { demoNow } from "@/lib/clock";
  * `WishlistContext`) — so signed in it wears the account frame, and signed
  * out it is the plain column it has always been.
  *
- * A style that has sold out STAYS on the list, stamped SOLD OUT. The note at
- * the bottom says why, and says what the cart's "Giữ lại sau" is instead: a
- * different list, with a size on it, that goes back into the basket in one
- * press.
+ * A style that has run out STAYS on the list: an issue's style stamped SOLD
+ * OUT, a fixed one with every size struck until they are brought back (it is
+ * "tạm hết", and wears no stamp — v3 slice 11). The note at the bottom says
+ * that it stays, without claiming a stamp every card does not carry, and
+ * says what the cart's "Giữ lại sau" is instead: a different list, with a
+ * size on it, that goes back into the basket in one press.
  *
  * The card is the shop's own card — same photo, same contents line, same
  * button — with two things added here: when it was saved, and the remembered
@@ -98,9 +100,8 @@ export function WishlistScreen() {
       </div>
 
       <p className="fine3" style={{ marginTop: 20 }}>
-        Mẫu đã hết vẫn nằm trong danh sách với dấu SOLD OUT, để dõi {LEX.tl} sau. Mẫu
-        trong “Giữ lại sau” của giỏ là một danh sách khác: có size, đưa lại vào giỏ
-        được ngay.
+        Mẫu đã hết vẫn nằm trong danh sách. Mẫu trong “Giữ lại sau” của giỏ là một
+        danh sách khác: có size, đưa lại vào giỏ được ngay.
       </p>
     </>
   );

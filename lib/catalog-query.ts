@@ -11,6 +11,7 @@ import {
   type Size,
 } from "@/data/types";
 import { isSoldOut, onHand, onHandBySize } from "./inventory";
+import { styleName } from "./lexicon";
 import { vnd } from "./money";
 
 /**
@@ -125,6 +126,41 @@ export function fold(s: string): string {
     .trim();
 }
 
+/**
+ * What a name can be typed apart with: a space of any kind — `\s` takes in
+ * the no-break one `styleName` sets before the dash — and a dash of any
+ * length (U+2010–U+2015, and the keyboard's own).
+ */
+const SEPARATOR = /[\s‐-―-]/u;
+const SEPARATORS = /[\s‐-―-]+/gu;
+
+/** One character of that kind — for `matchRange`, which folds one at a time. */
+export function isNameSeparator(c: string): boolean {
+  return SEPARATOR.test(c);
+}
+
+/**
+ * `fold` for a style's name, and for a term held against one (v3 slice 11).
+ *
+ * An issue's style is shown as "S05 – KHÓI": a no-break space, an en dash, a
+ * space. Nobody types that. A shopper types "s05 khoi", "S05 - KHÓI", or
+ * pastes the name as it stands on the card; each run of spaces and dashes
+ * comes out as one space, so all of them read "s05 khoi".
+ */
+export function foldName(s: string): string {
+  return fold(s).replace(SEPARATORS, " ").trim();
+}
+
+/**
+ * Whether the name the shop shows a style under carries the term: "s05",
+ * "S05 KHÓI" and "S05 – KHÓI" all find KHÓI of Số 05 (v3 slice 11). A fixed
+ * style's shown name is its name, so for it this asks nothing new.
+ */
+export function styleNameHas(p: Product, term: string): boolean {
+  const needle = foldName(term);
+  return needle !== "" && foldName(styleName(p.name, p.dropNo)).includes(needle);
+}
+
 // ──────────────────────────────────────────────────────────────── the URL
 export type RawSearchParams = Record<string, string | string[] | undefined>;
 
@@ -234,7 +270,9 @@ function matchesQuery(p: Product, q: ListingQuery): boolean {
   if (q.q) {
     const needle = fold(q.q);
     const hay = fold(`${p.name} ${p.kind} ${p.material}`);
-    if (!hay.includes(needle)) return false;
+    // Or the name as it is shown, its issue's code in front: "s05" finds
+    // every style of Số 05 (v3 slice 11).
+    if (!hay.includes(needle) && !styleNameHas(p, q.q)) return false;
   }
 
   return true;

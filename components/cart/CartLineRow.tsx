@@ -8,6 +8,7 @@ import { useCatalog } from "@/components/shop/CatalogContext";
 import { COLORS } from "@/data/colors";
 import type { Size } from "@/data/types";
 import { swapSizesFor, type ResolvedLine } from "@/lib/cart";
+import { isFixed } from "@/lib/inventory";
 import { issueLabel, styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
@@ -191,9 +192,15 @@ export function CartLineRow({
         </div>
       )}
 
-      {/* One line, always: what is left in this exact size and colour, or
-          what went wrong with it. */}
-      <div className={stockTone(line)}>{stockLine(line)}</div>
+      {/* One line: what is left in this exact size and colour, or what went
+          wrong with it. A fixed style (v3 slice 11) gives no count, as
+          nowhere else in the shop does, so its line is there only when
+          something blocks the order — gone, or fewer than asked — and says
+          it in the same red words and figures, because they are what the
+          shopper fixes the cart by. */}
+      {(line.issue || !isFixed(product)) && (
+        <div className={stockTone(line)}>{stockLine(line)}</div>
+      )}
     </div>
   );
 }
