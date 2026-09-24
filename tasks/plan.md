@@ -1596,3 +1596,8 @@ chung 30 lượt đăng nhập + đăng ký / 5 phút; bịt hẳn cần `Sb-For
 dùng); cron dò tiêu 9 lượt của ngân sách đó mỗi ngày; `removeAddress`/`makeDefault`/`rememberAddress` từ chối trong im lặng; token quản trị
 trừ trước khi kiểm đầu vào (450 MB là trần trên); trang đổi mật khẩu có thể báo trước cho tài khoản mẫu (việc UI, cần mock); stack local nay
 chạy đúng phiên bản của hosted (storage v1.77.5, gotrue v2.197.0) vì `supabase link` ghi `supabase/.temp`.
+**Production (push `d1bbe18`, Vercel xanh):** kiểm bằng Playwright API qua Node (cấu hình `playwright cli` chỉ cho loopback): tiêu đề
+"HIVE", không còn BRAND; tài khoản thử đổi mật khẩu → câu từ chối; đăng nhập sai từ máy phiên chính bị chặn ở lượt 10 (lượt "Đăng nhập thử"
+trước đó đã tiêu một token) — bằng chứng `take_rate` chạy trên hosted; `GET /api/reset` với `CRON_SECRET` → `passwordsChecked: 9,
+passwordsRestored: 0`; người đang đăng nhập vẫn giữ phiên sau đó; 0 request ra host ngoài. Lỗi console duy nhất: `/favicon.ico` 404 — app
+chưa có favicon (có từ trước, chờ vòng mock nhận diện).
