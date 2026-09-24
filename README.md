@@ -3,7 +3,7 @@
 Cửa hàng streetwear bán theo Số (drop), dựng làm **demo cho portfolio**. Không có khách thật, không có tiền
 thật: đơn đặt ở đây không được giao, không ai thu tiền.
 
-Demo: (đang đặt)
+Demo: https://hive-tiennguyen1403s-projects.vercel.app
 
 ## Dựng bằng gì
 
