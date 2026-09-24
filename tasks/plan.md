@@ -1946,3 +1946,51 @@ Bảng `prototype/v3/line.html` vẽ lại:
   - vế "Chốt lúc cắt: sau đó không thêm màu." ở ô Màu.
 
 **Chờ người dùng duyệt.**
+
+**25/09, mẫu cố định vòng 4 — ĐÃ DUYỆT.** Người dùng dán kết quả của bảng:
+- tên tám mẫu cố định: giữ như đề xuất;
+- tiền tố mẫu theo Số: **như tên** ("S05 – KHÓI" cùng kiểu chữ, cùng màu);
+- tám mẫu: giữ như bảng;
+- chữ đổi theo: đồng ý, gồm cả hai câu phiên chính tự bỏ thêm trên form Thêm mẫu.
+
+Ghi chú thêm: "ở trang product list phần tab UI: dấu gạch dưới của active đang đè lên đường line bên dưới nên khá khó nhìn".
+Nguyên nhân đo được:
+- hàng tab `.tabs3` là vùng cuộn, nên cắt ở mép hộp đệm;
+- vạch 2px đặt `bottom:-1px` mất pixel dưới, còn 1px mật ong dính trên đường kẻ đen 1px.
+
+Sửa trên bảng (`4b9f4b3`): đường kẻ vẽ bằng bóng lõm bên trong, vạch `bottom:0` phủ lên nó. Tab quản trị `.stabs` không cuộn nên
+không lỗi.
+
+Người dùng hỏi "Tám mẫu — Giữ như bảng" nghĩa là gì. Nhãn đó hỏi loại, chất liệu, form, màu, giá của tám mẫu trong bảng "Tám
+mẫu", nhưng không tự nói ra.
+
+Làm thật, ba lát nối nhau:
+- **B5 dữ liệu** (`tasks/briefs/backend-b5.md`, `backend-implementer`, đang chạy):
+  - `drop_no`/`cut_units` null nghĩa là mẫu cố định;
+  - bán mọi lúc, không bao giờ `sold_out_at`;
+  - lý do `Nhập thêm` (chỉ mẫu cố định, chỉ tăng);
+  - không đổi loại sau khi tạo;
+  - tám mẫu trong fixture;
+  - slug mẫu theo Số thành `s05-khoi`, id giữ nguyên, slug cũ chuyển hướng 308;
+  - luật thuần `styleName`/`issueCode`/`productsOnSale`/`fixedLowCells`/`slugFor`;
+  - matcher `proxy.ts`.
+- **Lát 11 cửa hàng** (`tasks/briefs/v3-lat-11-fixed-shop.md`):
+  - `/products` tất cả mẫu; `/so/N` cho Số đang mở; lối "xem cả Số" về `/so/N`;
+  - biển trên ảnh dùng chung khai báo với biển trên thanh; SOLD OUT cỡ biển;
+  - tiền tố mọi chỗ; thẻ hẹp; "Đang bán" hai lúc;
+  - trang mẫu cố định, "Cùng loại"; vạch tab; chữ Giới thiệu/FAQ;
+  - ảnh tạm hình phẳng `public/flats/`.
+- **Lát 12 quản trị** (`tasks/briefs/v3-lat-12-fixed-admin.md`):
+  - tab Cố định đầu và là tab mặc định; cờ sắp hết;
+  - "Nhập thêm" đầu menu ⋯, dựng bằng `InventoryAdjustSheet` chế độ mới;
+  - form: "Cố định", đoạn tiền tố trong ô tên, bỏ ba câu; form sửa;
+  - tiền tố mọi màn quản trị.
+
+Phiên chính tự quyết khi viết brief (báo người dùng):
+- **Ảnh tạm của mẫu cố định là hình phẳng** như trên bảng. Mượn ảnh Unsplash sẽ lặp ảnh và lệch món.
+- Không dựng nhãn "chờ ảnh" của bảng.
+- Sáu mẫu dưới "Đang bán": mỗi họ một mẫu. Vì vậy GILE PHAO thay ÁO THUN TAY DÀI của mock.
+- Tab Cố định là tab mặc định vì đứng đầu.
+- Mẫu cố định hết cả kệ: không SOLD OUT, không làm mờ.
+
+Prompt ảnh: thêm tám khối (17 ảnh, tổng 58 tệp) vào `tasks/anh-san-pham-prompt.md` (`471e4a1`).
