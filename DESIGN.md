@@ -220,16 +220,28 @@ components:
     backgroundColor: "{colors.stage}"
     textColor: "{colors.brand}"
     rounded: "{rounded.sm}"
-    padding: "6px 10px"
-    typography: "{typography.small}"
+    padding: "0 10px"
+    height: "28px"
+  sold-out-stamp-desktop:
+    padding: "0 12px"
+    height: "32px"
+  card-issue-tag:
+    backgroundColor: "{colors.stage}"
+    textColor: "{colors.brand}"
+    rounded: "{rounded.plate}"
+    padding: "0 17px"
+    height: "28px"
+  card-issue-tag-desktop:
+    padding: "0 19px"
+    height: "32px"
 ---
 
 # DESIGN.md — hệ thiết kế, đọc ra từ code đã dựng
 
 Tài liệu này **mô tả cái đang chạy**, không mô tả ý định. Mọi token trong
 frontmatter và dưới đây tồn tại thật trong `app/globals.css`; mọi con số lấy từ
-`app/styles/*.css` (**4.003 dòng, mười sáu tệp** — đếm lại 2026-09-25 sau lát 10
-của đợt v3; lát 6 đã quét sạch lớp v2 và để lại 3.740; `table.css` là tệp thứ
+`app/styles/*.css` (**4.108 dòng, mười sáu tệp** — đếm lại 2026-09-25 sau lát 12,
+đợt mẫu cố định; sau lát 10 của v3 là 4.003; lát 6 đã quét sạch lớp v2 và để lại 3.740; `table.css` là tệp thứ
 mười bảy và đã đi cùng route `/system`). Chỗ nào tài liệu và code lệch nhau thì
 **code đúng** — sửa tài liệu, đừng sửa code cho khớp tài liệu.
 
@@ -241,6 +253,12 @@ v2 còn sống được giữ nguyên và ghi rõ; những gì v3 thay thì ghi 
 điều hướng biển số (§2, §4, §8), lớp chờ khi chuyển trang và thứ tự chồng lớp
 (§6, §8), tệp thương hiệu QĐ-31 (§1), các phép đo tương ứng (§10).
 
+**Cập nhật 2026-09-25 sau đợt mẫu cố định** — B5 dữ liệu (`28ee1bc`), lát 11
+cửa hàng (`8558b82`, `3c04d6f`), lát 12 quản trị (`bd44b0c`, `50c3aeb`): hình
+phẳng của mẫu cố định (§1), biển Số trên ảnh thẻ (§2, §4, §8), dấu SOLD OUT cùng
+cỡ biển và thẻ hẹp (§4, §8), tên có tiền tố Số (§3), hai trang danh sách, thẻ mẫu
+cố định và trang chủ (§8), lớp chờ (§6), tab Cố định trong quản trị (§7, §8).
+
 ---
 
 ## 1. Nguồn của sự thật
@@ -250,7 +268,8 @@ v2 còn sống được giữ nguyên và ghi rõ; những gì v3 thay thì ghi 
 | Token màu, bo góc, font, chín bậc khoảng cách, chín vai chữ | `app/globals.css` — khối `@theme` (màu, bo góc, font) rồi bí danh ngắn và các bậc `--s*` / `--fs-*` trong `:root` |
 | CSS thành phần | `app/styles/*.css`, nạp theo thứ tự đã ghi trong `globals.css` |
 | Mock đã duyệt (thước đo của bản dựng) | `prototype/v3/*.html` + `v3.css`, `v3-pages.css`, `v3.js`; bảng thành phần `prototype/v3/brand.html`, họ badge `badges.html` (họ B "vải đen"), từ vựng `voice.html` |
-| Từ vựng | `lib/lexicon.ts` — `LEX` ("Số"), `HOME_COVER`, `ABOUT_LEAD`, `issueLabel()` |
+| Từ vựng | `lib/lexicon.ts` — `LEX` ("Số"), `HOME_COVER`, `ABOUT_LEAD`, `issueLabel()`; tên có tiền tố `issueCode()` · `stylePrefix()` · `styleName()` (§3); `FIXED_WORD` "Cố định", chữ chỉ khu quản trị nói |
+| Địa chỉ của Số | `lib/drop.ts` — `issueHref(no)` → `/so/N`, `wayToShop()` (§8) |
 | Đồng hồ | `lib/clock.ts` — `demoNow()` (QĐ-24) |
 | Logo | `prototype/name/logo/` — mark M2 (QĐ-29), chữ W3 (QĐ-30). Thanh điều hướng chép `hive-lockup-nav.svg` vào `components/shop/NavLogo.tsx`, lớp chờ chép `hive-mark.svg` vào `components/shop/WaitVeil.tsx`, ảnh chia sẻ đọc `lib/brand/logo.ts` do script sinh. Màu của logo viết thẳng, **không đọc token**: logo không theo theme |
 | Tên, mô tả, màu trình duyệt | `lib/site.ts` — `SITE_NAME`, `SITE_DESCRIPTION` (mô tả A), `THEME_COLOR`, `siteOrigin()` → `metadataBase` |
@@ -313,12 +332,41 @@ chứa) là mọi màn đổi theo, bố cục không đổi. Ảnh tra cứu Un
 | `lua` | `1561151593-7059b6b4ff57` | mẫu LỬA |
 
 19 khoá, 1 bìa + 18 mẫu (Số 03–06). `PHOTO_KEYS` xuất từ cùng bảng để form quản trị và sheet hé lộ
-chỉ chọn được ảnh đã có nguồn.
+chỉ chọn được ảnh đã có nguồn. Mẫu cố định không dùng bảng này — xem "Hình phẳng" dưới.
 
 **Từ B3c (24/09/2026) có ảnh thật do quản trị tải lên:** nằm ở bucket `product-photos` (Supabase Storage, công khai đọc, chỉ máy chủ
 ghi) dưới khoá `up/<32 hex>.webp|jpg`, phục vụ qua route của chính app `/photos/<khoá>` (cache một năm, bất biến) rồi `next/image` như
 mọi ảnh khác, nên trình duyệt vẫn không gọi Supabase. `photoUrl()` phân biệt hai loại khoá; `photo_key` của `product_colors` mang một
 trong hai. Ảnh tải lên là ảnh của cửa hàng, không mang nhãn mượn; "Đặt lại dữ liệu mẫu" xoá mọi ảnh tải lên.
+
+### Hình phẳng của mẫu cố định — sinh bằng máy (lát 11)
+
+Tám mẫu cố định (B5) chưa có ảnh. Mỗi phối màu mang khoá `flat-<dáng>-<màu>` (`flatKey`), và cửa hàng
+phục vụ hình phẳng của món đồ từ chính `public/flats/`: **17 tệp PNG 1040×1300** — 4:5, trên mức 760px
+mà khung lớn nhất của trang sản phẩm xin — nền `--plate` `#f4efe6` (`PLATE` trong `lib/flats.ts`), không chữ.
+
+| Dáng | Màu có tệp |
+|---|---|
+| `tee` | white · black · grey |
+| `longsleeve` | black · white |
+| `hoodie` | grey · black · cream |
+| `jacket` | black · navy |
+| `vest` | black |
+| `shirt` | white · navy |
+| `trousers` | cream · black |
+| `shorts` | grey · black |
+
+Vẽ bằng **`scripts/flats.ts`** từ `lib/flats.ts` (đường viền `FLATS` và `flatSvg`, chép từ bảng đã duyệt
+`prototype/v3/line/line-mock.js` vòng 4, `lib/flats.test.ts` giữ khớp từng ký tự; màu từ `data/colors.ts`),
+bằng Chrome qua Playwright như `brand-assets.ts`: khung 200×250 của bảng phóng lên 1040×1300, mỗi tệp một
+trang mới. **Mỗi tệp mang chunk `impeccable:prompt`** ghi script, `lib/flats.ts` và bảng. Chạy lại
+(`npx tsx scripts/flats.ts`, cần Google Chrome) khi `lib/flats.ts` hay phối màu của mẫu cố định đổi;
+`lib/flats.test.ts` đỏ cho tới khi tệp khớp khoá.
+
+Khoá `flat-*` **đi nhánh riêng trong `photoUrl`**, sau ảnh tải lên và trước Unsplash: `flatPath(key)` trả
+`/flats/<dáng>-<màu>.png`, `next/image` tối ưu như ảnh tải lên. Chỉ 17 khoá có tệp (`isFlatKey`); khoá
+`flat-…` khác rơi về `hero` như mọi khoá lạ. Chúng **không nằm trong `PHOTO_IDS`**, nên `PHOTO_KEYS` của form
+quản trị và sheet hé lộ không đổi. Ngày có ảnh thật, khoá đổi và không gì khác đổi.
 
 ### Tệp thương hiệu — sinh bằng máy, không vẽ tay (lát 10, QĐ-31: F2, P2, O2, mô tả A)
 
@@ -394,7 +442,8 @@ nhất. Mọi cặp chữ/nền đã tính trước khi viết (`scratchpad/v3/c
 
 **Quy tắc Vải Đen Không Phải Theme.** Vải đen chỉ được dùng cho *Số* và những
 gì thuộc về nó: bìa `.cover`, teaser Số kế tiếp `.cover.soon`, biển Số trên nav
-`.itag` (mảnh vải đen duy nhất trên thanh, và chỉ khi Số đang bán), dải nhắc
+`.itag` (mảnh vải đen duy nhất trên thanh, và chỉ khi Số đang bán), cùng biển ấy
+trên ảnh mẫu thuộc Số `.card3 .sotag` (chỉ ở lưới trộn hai loại mẫu, §8), dải nhắc
 `.band.remind`, dải bước tiếp theo của đơn `.nextstep`, thanh bên quản trị
 `.side`, thanh hàng loạt `.bar.bulk`, badge trạng thái sống, dấu SOLD OUT, ảnh
 chia sẻ O2. Không sơn một mặt nào khác thành đen vì nó "cần sức nặng". Toast
@@ -493,6 +542,16 @@ Quy ước đã cài sẵn:
   hai chữ số luôn: "Số 05"). URL, tên biến (`Drop`, `dropNo`) và khoá localStorage
   giữ tiếng Anh. **SOLD OUT** là từ tiếng Anh duy nhất trên màn khách — dấu trên
   ảnh mẫu đã hết; trong câu vẫn nói "đã hết". Giọng trung tính, không xưng hô.
+- **Tên mẫu thuộc Số mang mã Số** (B5): `styleName(name, dropNo)` → "S05 – KHÓI";
+  mẫu cố định (`dropNo` null) in tên trần. `issueCode(5)` = "S05",
+  `stylePrefix(5)` = "S05 –". Giữa mã và gạch là **khoảng trắng không ngắt
+  U+00A0** để "S05 –" không tách dòng; gạch là en dash U+2013; sau gạch là
+  khoảng trắng thường, tên dài được ngắt ở đó. Tên ghép lúc hiển thị, không
+  lưu — cột `name` vẫn là "KHÓI". Mã **in như chính tên**, cùng mặt chữ, không
+  tách thành một khúc riêng (chỉ ô tên trong form quản trị tách nó ra, §8).
+  Địa chỉ mang mã chữ thường: `/products/s05-khoi`; địa chỉ cũ `/products/khoi`
+  trả **308** về địa chỉ mới khi đúng một mẫu khớp (`legacySlugTarget`,
+  `permanentRedirect`); địa chỉ mẫu cố định không có tiền tố.
 
 ---
 
@@ -502,7 +561,7 @@ Quy ước đã cài sẵn:
 |---|---|
 | Bo góc chuẩn | `--r` = **4px** (ghi đè `--radius-md` của Tailwind) — nút, ô nhập, chip, panel, ảnh thẻ, menu, sheet |
 | Bo góc nhỏ | `--r-sm` = **3px** — badge, ảnh nhỏ, hộp đánh dấu, dấu SOLD OUT |
-| Bo góc biển Số | `--r-plate` = **5px** — chỉ biển Số trên nav (`.nav3 .itag`), một bậc tròn hơn điều khiển; khai trong `:root`, không ở `@theme`, vì không gì khác mang hình này. Khác `--plate` (màu nền ảnh) |
+| Bo góc biển Số | `--r-plate` = **5px** — chỉ biển Số: trên nav (`.nav3 .itag`) và trên ảnh thẻ (`.card3 .sotag`), một khối khai báo; một bậc tròn hơn điều khiển; khai trong `:root`, không ở `@theme`, vì không gì khác mang hình này. Khác `--plate` (màu nền ảnh) |
 | Bo tròn hẳn | `99px` — chấm, bong bóng đếm, thanh tỉ lệ, đĩa màu, nút tròn, công tắc |
 | Chín bậc khoảng cách | `--s1..--s9` = 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 · 96 — nhóm chặt s1–s3, mục s6–s8 (`.sec` cách `--s7` điện thoại, `--s8` desktop; chân trang cách `--s8`) |
 | Lề ngang | `--gut` **18px** điện thoại, `--gutd` **40px** từ 900px (`.wrap3`); khung tối đa `--max` **1320px**; trang `.s` dừng ở **1280px** và canh giữa |
@@ -520,6 +579,26 @@ Quy ước đã cài sẵn:
 qua âm thầm. Ảnh bìa là **1:1 tràn lề** trên điện thoại (390×390) và cột 7/12
 cao ≥ 640 trên desktop; ảnh trong ô bảng quản trị phải `display:inline-block`
 vì preflight đặt `img{display:block}`.
+
+**Hai dấu trên ảnh thẻ, một cỡ** (lát 11). Dấu SOLD OUT `.stamp` ở góc **trái
+trên** (`left:10px; top:10px`), biển Số `.sotag` ở góc **trái dưới**
+(`left:10px; bottom:10px`) — trên thẻ 171px của điện thoại hai dấu không gặp
+nhau. Cả hai cao **28px** (**32px** từ 900), chữ Unbounded 800 `--fs-xs` 11 /
+`--fs-sm` 12, cách `.1em`, `line-height:1`. Dấu giữ vải, viền 1,5px, đường may
+đứt nét và bo `--r-sm` của nó; đệm **10 / 12px** — đệm của biển (17 / 19) trừ
+phần chốt mà dấu không có. Biển là **chính biển của nav**: `.s .nav3 .itag,
+.s .card3 .sotag` chung một khối khai báo trong `nav.css` và chung bước 900px
+trong `desktop.css`; phần chỉ của thanh (không co, lớp phủ chạm ±9, hover) ở
+quy tắc riêng `.nav3 .itag`, chỗ đứng trên ảnh ở `cards.css`. Biển trên ảnh là
+`aria-hidden` và `pointer-events:none` — tên dưới ảnh đã nói Số, cú chạm đi qua
+tới liên kết ảnh; nó không phải điều khiển nên không có vùng chạm.
+
+**Thẻ hẹp cho tên một dòng riêng** (lát 11). `.card3{container-type:inline-size}`
+và `@container (max-width:260px)` đặt `.toc .n{flex-basis:100%}`: dưới 260px
+(hai cột điện thoại, 171px ở 390) tên đứng một dòng, leader và giá cùng xuống
+dòng dưới — "S05 – KHÓI" không đẩy giá sang một dòng lẻ. Container query vì bề
+ngang thẻ do lưới định: mọi lưới chứa thẻ (`.grid3`, `.grid3.four`,
+`.grid3.single`) là rãnh `minmax(0,1fr)`.
 
 **Bìa Số.** Điện thoại: ảnh rồi nhãn đen may đứt nét mật ong phía trên (`.face`,
 `border-top:1px dashed var(--brand)`), "SỐ" 11px đặt lên baseline số 96px mật
@@ -631,7 +710,7 @@ lại theo từng trang, còn lớp chờ phải sống qua lúc đổi để ch
 trang mới. Thời lượng ở `WAIT` (`lib/wait.ts`).
 
 - **Khi nào.** Chỉ khi **pathname đổi** (`shouldVeil`). Lọc, sắp xếp, tab họ,
-  biển Số từ `/products?family=…`, tìm từ `/search`, tra đơn, hash — đều ở lại
+  biển Số từ `/so/5?family=…` (trang của Số từ lát 11), tìm từ `/search`, tra đơn, hash — đều ở lại
   trang và không có lớp chờ. Không khi nhấp chuột giữa, có phím bổ trợ,
   `target` khác `_self`, `download`, hay khác origin. **Không bao giờ ở
   `/admin`**, cả đi lẫn về; ở đó component không render và không nghe gì. Ba
@@ -707,6 +786,22 @@ mở `--sel`). **Lọc, tab, kỳ xem và trang sống trong URL** (QĐ-8, giữ
 `.seg3` là liên kết `?days=`); cột hiện/ẩn trong `brand.adminCols`. Cột số canh
 phải là `td.right` (không phải `.num` — `.s .num` là vai chữ hiển thị).
 
+**Bảng mẫu — tab Cố định** (lát 12, `components/admin/ProductsTable.tsx`, luật
+trong `lib/admin-products.ts`). Tab đầu là **"Cố định"** (`FIXED_WORD`) và là tab
+`/admin/products` mở khi không có tham số (`?fixed=1` gọi tên nó); các tab Số
+theo sau, Số đang bán trước. **Sắp hết tính theo từng ô**: một màu ở một size
+còn ≤ `FIXED_LOW_AT = 2` (`lib/inventory.ts`; ô về 0 cũng tính) là mẫu sắp hết,
+dù phần còn lại của kệ nhiều bao nhiêu. Mẫu sắp hết đứng đầu tab, mang badge
+`hot` "Sắp hết" (kệ trống: `shut` "Hết"; còn lại `ok` "Đang bán"), dưới số còn
+một dòng đỏ nói size nào (`lowNote`: "M hết · L còn 2"), cột size hết đỏ, và tab
+mang chấm đỏ để thấy từ tab khác. Mẫu cố định **không có thanh tồn** — không có
+lần cắt để đo. Menu `⋯` của mọi mẫu cố định mở đầu bằng **"Nhập thêm"**, mở
+`InventoryAdjustSheet` ở **chế độ `restock`**: cùng sheet, cùng lưới màu × size
+`.invgrid`, mỗi ô ghi "còn N" phía trên (đỏ khi ≤ 2, `isThin`) và ô nhập số
+**thêm vào**; tiêu đề "Nhập thêm · <tên>", không dòng giải thích dưới tiêu đề;
+nút xác nhận vô hiệu nói việc còn lại ("Nhập số cần thêm"), sẵn sàng thì
+"Nhập thêm N chiếc". Luật ở `lib/restock.ts`.
+
 Chỉ **một** breakpoint cho cửa hàng: `@media (min-width:900px)` trong
 `desktop.css` và các khối desktop cuối mỗi tệp; `max-width:460px` chỉ dùng cho
 vùng chạm; `max-width:899.98px` cho vài bố cục điện thoại.
@@ -722,8 +817,9 @@ vùng chạm; `max-width:899.98px` cho vài bố cục điện thoại.
 | `.lnk` | liên kết chữ đứng một mình, gạch chân mờ 45% | `buttons.css` |
 | `.badge` + `ok` `warn` `info` `hot` `shut` `flat` | viên trạng thái họ B: 24px, 11/700 hoa `.08em`, không viền, luôn kèm chấm; `ok` = vải đen/mật ong (đang bán, đã thanh toán); `warn`/`""`/`shut` = vải mộc `--hair`; `flat` = nhãn tên, mật ong nhạt, không chấm | `buttons.css`, `components/ui/Badge.tsx` |
 | `.chip3` (+ `.on` `.cnt` `.dot`) trong `.chips3(.wrapped)` | chip lọc 36px viền `--line`, chọn đảo `--sel`; hàng cuộn ngang có mask mờ mép | `listing.css` |
-| `.tabs3` + `.cnt` | tab họ là liên kết, gạch dưới 2px mật ong khi `.on` | `listing.css` |
-| `.card3` + `.img` `.imgbox` `.stamp` `.meta` `.toc(.n .ld .p)` `.ct(.low)` `.kind` `.act .addbtn3(.view)` `.unsave` | thẻ sản phẩm = **một mục trong mục lục**: ảnh 4:5, dòng tên…giá có leader, số còn, một nút viền mực; `.sold` mờ ảnh 50% + dấu SOLD OUT | `cards.css` |
+| `.tabs3` + `.cnt` | tab họ là liên kết, hàng cuộn ngang. Kẻ mực 1px dưới hàng vẽ **bên trong hộp**, `box-shadow: inset 0 -1px 0 var(--ink)`, không phải `border-bottom`: hộp cuộn cắt ở mép hộp đệm, border nằm ngoài phần nó vẽ, nên vạch `bottom:-1px` cũ mất pixel dưới và hiện thành sợi mật ong 1px chồng lên kẻ mực (lát 11). Vạch 2px mật ong của `.on` ở **`bottom:0`**, phủ pixel kẻ cuối | `listing.css` |
+| `.lhead` + `.row1 .big .meta`, `.lhead.bare` | đầu danh sách. Trang của Số: h1 "Số 05", số mẫu, còn/cắt, đồng hồ, `padding-top` `--s4`. `/products`: `.bare` — không tiêu đề, không số đếm (tab "Tất cả N" nói cả hai), tab cách thanh 12px `--s3`, h1 "Tất cả mẫu" `sr-only` | `listing.css`, `components/product/Listing.tsx` |
+| `.card3` + `.img` `.imgbox` `.stamp` `.sotag` `.meta` `.toc(.n .ld .p)` `.ct(.low)` `.kind` `.act .addbtn3(.view)` `.unsave` | thẻ sản phẩm = **một mục trong mục lục**: ảnh 4:5, dòng tên…giá có leader, số còn, một nút viền mực; `.sold` mờ ảnh 50% + dấu SOLD OUT 28 / 32px góc trái trên; `.sotag` biển Số góc trái dưới (prop `plate`, chỉ ở lưới trộn hai loại) — hình học ở §4; thẻ là container, dưới 260px tên một dòng riêng. Mẫu cố định: xem dưới bảng | `cards.css`, `nav.css`, `desktop.css`, `components/product/ProductCard.tsx` |
 | `.grid3` | lưới 2 cột → 3 cột từ 900px, `minmax(0,1fr)` | `home.css`, `listing.css` |
 | `.cover` (+ `.soon` `.shut` `.first`) với `.photo` `.face` `.issue(.k .num)` `.state` `.clock` `.t` `.lead` `.cta` `.lows` | bìa Số ba trạng thái; đồng hồ chỉ dựng ở trình duyệt (`Countdown`, chữ "00" ẩn giữ chỗ) | `home.css` |
 | `.tocrow` | một dòng mục lục trên vải: tên · leader đứt nét mật ong · giá, ≥ 44px | `home.css` |
@@ -732,7 +828,7 @@ vùng chạm; `max-width:899.98px` cho vài bố cục điện thoại.
 | `.sec .rules .r` | bốn quy tắc: danh sách định nghĩa, không icon, không thẻ | `home.css` |
 | `.past` | dòng "Số 04 · đã đóng" | `home.css` |
 | `.band.remind` | dải nhắc: vải đen, chuông và liên kết mật ong, 44px | `nav.css` + `home.css` |
-| `.nav3` + `.in` `.wm svg` `.itag(.on)` `.links a(.on)` `.icons .ib .ic b` | nav dính 56 / 64px trên bóng mềm, ba nhóm theo thứ tự đọc và Tab: của ai (logo), đang bán gì (biển Số, năm họ), bốn việc. **Logo** `NavLogo`: SVG lockup mark M2 + chữ W3 chép từ `prototype/name/logo/hive-lockup-nav.svg` (chữ 62,5% chiều cao mark — tỉ lệ riêng của thanh; tệp logo giữ 52%), màu logo viết thẳng, `aria-hidden`, liên kết tên "HIVE, trang chủ"; cao **30px** (rộng 70,9) điện thoại / **32px** (75,7) từ 900, trong hộp liên kết cao 44 không co. **Biển Số `.itag`**: **chỉ render khi Số đang bán** (`featuredDrop` → `OPEN`), không còn biển xanh/xám; vải `--stage`, chữ mật ong Unbounded 800 11px `.1em` hoa (12px từ 900), cao 28 đệm 17 (32 / 19 từ 900), bo `--r-plate` 5px, đường chỉ mật ong 1px lùi 2px vào trong (vẽ bằng `box-shadow` inset — một đường, không phải bóng), một chốt tròn mật ong mỗi đầu (radial-gradient, tâm cách mép 8,5 / 9,5px); in đúng `issueLabel` ("Số 05"), `aria-label`/`title` là `plateLabel` ("Số 05, đang bán"); dẫn tới `/products`; hover đổi vải sang `--stage-hair`; `.on` (đang xem cả Số, `aria-current="page"`) gạch 2px mật ong cách đáy 6px qua `::before`, vì `::after` là lớp phủ chạm ±9 (28 → 46). **Không đồng hồ trong thanh.** **Năm họ** (TEE · HOODIE · JACKET · SHIRT · PANTS, chữ từ `FAMILY_SHORT_LABELS`) chỉ từ 900px: 13px `--ink2`, gap 24, `.on` mực 600 gạch 2px mật ong, phủ ±9. **Bốn nút icon** tìm · đã lưu · tài khoản · giỏ: hộp 40×44 (44×44 từ 900), glyph Iconsax Linear **20px** (hệ là 18), luôn Linear dù có đếm hay đã đăng nhập; **bong bóng đếm** mật ong chữ mực, 16px, 11/700 số bảng, `top 4 right 2`, chỉ khi > 0, chỉ ở đã lưu và giỏ, điền sau khi provider `ready` (khung server không vẽ bong bóng). **Từ 900px** `.in` là lưới `minmax(0,1fr) auto auto minmax(0,1fr)` gap 24, lề 40 trái / 28 phải, tối đa `--max`; không có biển thì `.in:not(:has(> .itag))` còn **ba cột** để cụm họ vẫn giữa — lệch phải 6px **có chủ ý** vì hai lề 40/28. Điện thoại: logo, biển, bốn icon; không có họ | `nav.css`, `desktop.css`, `components/shop/SiteNav.tsx`, `NavLogo.tsx`, `lib/lexicon.ts` |
+| `.nav3` + `.in` `.wm svg` `.itag(.on)` `.links a(.on)` `.icons .ib .ic b` | nav dính 56 / 64px trên bóng mềm, ba nhóm theo thứ tự đọc và Tab: của ai (logo), đang bán gì (biển Số, năm họ), bốn việc. **Logo** `NavLogo`: SVG lockup mark M2 + chữ W3 chép từ `prototype/name/logo/hive-lockup-nav.svg` (chữ 62,5% chiều cao mark — tỉ lệ riêng của thanh; tệp logo giữ 52%), màu logo viết thẳng, `aria-hidden`, liên kết tên "HIVE, trang chủ"; cao **30px** (rộng 70,9) điện thoại / **32px** (75,7) từ 900, trong hộp liên kết cao 44 không co. **Biển Số `.itag`**: **chỉ render khi Số đang bán** (`featuredDrop` → `OPEN`), không còn biển xanh/xám; vải `--stage`, chữ mật ong Unbounded 800 11px `.1em` hoa (12px từ 900), cao 28 đệm 17 (32 / 19 từ 900), bo `--r-plate` 5px, đường chỉ mật ong 1px lùi 2px vào trong (vẽ bằng `box-shadow` inset — một đường, không phải bóng), một chốt tròn mật ong mỗi đầu (radial-gradient, tâm cách mép 8,5 / 9,5px); in đúng `issueLabel` ("Số 05"), `aria-label`/`title` là `plateLabel` ("Số 05, đang bán"); dẫn tới trang của Số `/so/N` (`issueHref`, từ lát 11); cùng khối khai báo với biển trên ảnh thẻ `.card3 .sotag`; hover đổi vải sang `--stage-hair`; `.on` (đang xem cả Số, `aria-current="page"`) gạch 2px mật ong cách đáy 6px qua `::before`, vì `::after` là lớp phủ chạm ±9 (28 → 46). **Không đồng hồ trong thanh.** **Năm họ** (Áo thun · Hoodie · Khoác · Sơ mi · Quần — `NAV_FAMILIES`, chữ từ `FAMILY_SHORT_LABELS`; Gile không lên thanh, có ở tab `/products`) chỉ từ 900px: 13px `--ink2`, gap 24, `.on` mực 600 gạch 2px mật ong, phủ ±9. **Bốn nút icon** tìm · đã lưu · tài khoản · giỏ: hộp 40×44 (44×44 từ 900), glyph Iconsax Linear **20px** (hệ là 18), luôn Linear dù có đếm hay đã đăng nhập; **bong bóng đếm** mật ong chữ mực, 16px, 11/700 số bảng, `top 4 right 2`, chỉ khi > 0, chỉ ở đã lưu và giỏ, điền sau khi provider `ready` (khung server không vẽ bong bóng). **Từ 900px** `.in` là lưới `minmax(0,1fr) auto auto minmax(0,1fr)` gap 24, lề 40 trái / 28 phải, tối đa `--max`; không có biển thì `.in:not(:has(> .itag))` còn **ba cột** để cụm họ vẫn giữa — lệch phải 6px **có chủ ý** vì hai lề 40/28. Điện thoại: logo, biển, bốn icon; không có họ | `nav.css`, `desktop.css`, `components/shop/SiteNav.tsx`, `NavLogo.tsx`, `lib/lexicon.ts` |
 | `.foot3` + `.in` `.cols` `.cal` `.colophon` | chân trang: kẻ 2px mực, 2 cột → 4 cột, lịch ra Số từ fixture, `NeedWrite` cho pháp nhân/kênh liên hệ | `base.css`, `desktop.css` |
 | `.wrap3` | lề trang 18 → 40 + `max-width:1320` | `base.css`, `desktop.css` |
 | `.ic` (+ `.sm` `.mk` `.duo`) | icon Iconsax Linear, hộp 18 / 15 / 12 (28 ở `.empty3`), stroke 1.5, **màu thừa kế**; `plus`/`minus`/`check` cắt viewBox quang học (`OPTICAL` trong `components/icon/Icon.tsx`: 4/16, 4/16, 6.5/11); `--il`/`--ir` cắt lề trong suốt khỏi hộp bố cục khi đứng cạnh chữ, **không** trong cột icon của menu | `nav.css`, `components/icon/` |
@@ -758,9 +854,42 @@ vùng chạm; `max-width:899.98px` cho vài bố cục điện thoại.
 | `.prose` `.prep` `.faq3` `.nf` `.solds` `.checks3` | trang chữ: giới thiệu, FAQ (`<details>`), đổi trả, liên hệ, 404, kho lưu trữ Số đã đóng, checklist mật khẩu | `pages.css` |
 | `.s.adm3` + `.side(.wm nav a .cnt .simbar)` `.main` `.top(h1 .sub .crumb .acts)` `.seg3` `.kpis3(.five) .kpi3` `.panel3 .bd` `.split3` `.fine3` `.chart3(.hi .zero .peak) .axis .daytable` `.queue3 .q(.sub .late .act)` `.rank3 .r(.two)` `.dt3(.bar(.bulk) .stabs .cb .rowmenu .foot .pages .none)` `.avatar` `.nextstep` `.fgrid` `.totalbar` `.addrblock` `.notes3 .ni` `.invgrid` `.delta` `.log3` `.ctag` `.slips .slip` + `@media print` | khu quản trị v3 | `admin.css` |
 | `.colorpick` (chip màu mang `.pos` thứ tự), `.cslots .cslot .shot(.blank .over .prog) .hd .ord(.flip) .file .acts .photopick .cutgrid`; sheet cắt `AdminSheet variant="crop"` 720px + `.cropwrap .cropper .frame(i[data-h]) .cropside(.err)`; `.field3 .inp[readonly]` nền `--plate` chữ `--ink2`; crumb `AdminTop` "Mẫu › X" | form Thêm/Sửa mẫu (lát 7, 24/09, QĐ-27): bảy chip màu theo thứ tự dải (màu đầu là ảnh đại diện), một hàng mỗi màu với ô ảnh 4:5 ở bốn trạng thái (chưa có · tệp đã chọn qua sheet cắt 4:5 khoá tỉ lệ · mượn tạm có nhãn · ảnh đã tải lên), nút lưu nói việc còn thiếu, tải ảnh có tiến trình; màn sửa không có chip (màu chốt lúc cắt); toán khung `lib/photo-crop.ts`, mã hoá `lib/photo-encode.ts` (≤ 1.200×1.500 WebP), luật form `lib/product-form.ts` | `admin.css`, `forms.css` |
+| `.rowmenu[aria-expanded="true"]`, `td .stockcell` + `.lownote`, `td.hotsize`, `.stabs .lowdot`, `.pfxin .pfx`, `.invgrid .onhand(.hot)` | mẫu cố định trong quản trị (lát 12, khối cuối `admin.css`, chép từ `prototype/v3/line/line-mock.css`; xem §7): nút `⋯` đang mở menu giữ nền `--plate` chữ mực, để hàng của menu vẫn được đánh dấu khi con trỏ ở trong menu · ô tồn là cột dọc gap 2, rộng tối thiểu 120: "còn N" rồi dòng đỏ `--hot` 11/600 · ô "size hết" đỏ 600 khi có size hết · chấm đỏ 7px `--hot` cách chữ tab 6px, chữ nằm ở `aria-label`/`title` · ô tên mẫu thuộc Số mang **khúc cố định** "S06 –" (`stylePrefix`) ở đầu ô: nền `--plate` như ô chỉ đọc, kẻ `--hair` bên phải, chữ 14/600 `.02em`, ô nhập lùi 76px; mẫu cố định không có khúc, ô Số chỉ đọc ghi "Cố định" · trong sheet Nhập thêm "còn N" 12px `--ink2` trên mỗi ô, đỏ 600 khi ≤ 2 | `admin.css`, `ProductsTable.tsx`, `ProductForm.tsx`, `InventoryAdjustSheet.tsx` |
 | `.sheetwrap` + `.scrim` `.sheetbody` `.grab` `.shead(.x)` `.sact`; `.menu3` + `.ticked` `.tally` `.mk`; `.toast(.show)` | ba lớp nổi portal ra `body` | `sheet.css` |
 | `.veil` (+ `.on` `.hold` `svg` `.stitches`) | lớp chờ chuyển trang: trắng 92% dưới mép nav, mark M2 giữa, cung mũi chỉ mật ong quay; `.hold` giữ con trỏ + `cursor:progress` chỉ khi đang chờ — xem §6 | `sheet.css`, `components/shop/WaitVeil.tsx`, `lib/wait.ts` |
 | `.sr-only` | utility duy nhất, tự định nghĩa | `base.css` |
+
+**Hai trang danh sách, một component** (lát 11, `components/product/Listing.tsx`).
+`/products` là **mọi mẫu đang bán** — mẫu của Số đang mở (kể cả mẫu đã hết) và
+mọi mẫu cố định — trong một lưới, không thuộc Số nào: `.lhead.bare`, h1 `sr-only`,
+biển Số trên ảnh mẫu thuộc Số. `/so/N` là **trang của Số**: đang bán thì là danh
+sách của Số (đầu `.lhead`, không biển trên ảnh), đã đóng thì là hồ sơ của Số
+(`ClosedIssue`), chưa mở thì chuyển sang teaser. Mọi lối "xem cả Số" dẫn về
+`/so/N` qua `issueHref` (`lib/drop.ts`): biển trên nav, nút bìa, "Xem cả 10
+mẫu", đường dẫn trang sản phẩm, lịch chân trang. Lối về cửa hàng của các màn
+khác đi qua `wayToShop`: Số đang bán → `/so/N` ("Xem số 05"), không Số nào bán →
+`/products` ("Xem tất cả mẫu").
+
+**Biển Số trên ảnh chỉ ở lưới trộn hai loại mẫu** (prop `plate` của
+`ProductCard`): `/products`, "Cùng loại" dưới mẫu cố định, kết quả tìm kiếm, Đã
+lưu. **Không vẽ** ở chỗ cả hàng là một Số — `/so/N`, "Trong số này", "Cùng số
+05", trang Số đã đóng — vì ở đó biển không nói gì thêm.
+
+**Thẻ mẫu cố định** (`isFixed`). Không con số tồn: dòng đếm là bốn size, size
+hết ở mọi màu bị gạch ngang (`<s>`); dòng giỏ, danh sách để dành và tài khoản
+cũng không in "còn N" (dòng đỏ chặn đặt hàng vẫn giữ số). Kệ trống là tạm hết,
+không phải hết hẳn: **không SOLD OUT, không làm mờ ảnh** — mọi size gạch và nút
+lặng "Xem chi tiết" (`.addbtn3.view`). SOLD OUT chỉ dành cho mẫu của Số.
+
+**Trang chủ, hai trạng thái** (`app/page.tsx`). Số đang bán: bìa · "Trong số
+này" (sáu mẫu của Số) · **"Đang bán"** · "Theo loại" · bốn quy tắc · teaser Số kế
+tiếp · dòng Số trước. Giữa hai Số (đã đóng hoặc chưa mở): bìa · **"Đang bán"**
+ngay dưới bìa · "Theo loại" · mục lục Số đã đóng (chỉ khi bìa là Số đã đóng) ·
+bốn quy tắc · teaser (nếu Số sắp mở chưa là bìa) · dòng Số trước. "Đang bán" là
+**sáu mẫu cố định còn hàng, mỗi họ một mẫu trước** (`showcaseOnSale`,
+`SHOWCASE = 6`), không mẫu nào của Số đang mở và không có biển trên ảnh; liên
+kết "Xem tất cả N mẫu" đếm mọi thứ `/products` liệt kê. "Theo loại" đếm mọi mẫu
+đang bán cả hai loại.
 
 **Bẫy trùng tên đã gặp trong đợt v3** (mỗi cái tốn một buổi; tên mới được grep
 trước khi đặt): `.sec` (mục trang chủ) vs `.btn.sec` của mock → `.btn.ink`;
@@ -856,6 +985,14 @@ trang tới (`c844bca`). Đo trên bản chạy `next start` cổng 3200, 25/09/
   34,4 dB), toàn bộ ở mép glyph — app khử răng cưa bằng xám, Chrome trên bảng
   dùng viền LCD; mảng phẳng giống hệt. `/twitter-image` trùng từng byte với
   `/opengraph-image`.
+
+**Đợt mẫu cố định** (25/09/2026): B5 `28ee1bc`, lát 11 `8558b82` + `3c04d6f`,
+lát 12 `bd44b0c` + `50c3aeb`. CSS đếm lại: **16 tệp / 4.108 dòng**. Kiểm trên
+bản chạy cổng 3200 khi ghi tài liệu: `/products/khoi` trả 308 về
+`/products/s05-khoi`; tên in ra là `S05` U+00A0 `–` U+2013 rồi khoảng trắng
+thường; `/products` vẽ `.sotag` "Số 05" `aria-hidden`; 17 PNG trong
+`public/flats/` đều 1040×1300 và mang chunk `impeccable:prompt`. Hình học của
+biển và dấu trên ảnh **chưa đo từng pixel** ở lượt này — số trong §4 đọc từ CSS.
 
 Cách đo không đổi: `tools/layout-sweep.js` quét route cửa hàng × 390/1280 và
 route quản trị × 1280 — console, tràn ngang, chữ < 11px, hộp inline sai, ảnh

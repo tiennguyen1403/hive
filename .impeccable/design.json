@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T00:00:00+07:00",
+  "generatedAt": "2026-09-25T12:00:00+07:00",
   "title": "Design System: HIVE — nhãn dệt",
   "extensions": {
     "colorMeta": {
@@ -121,9 +121,9 @@
       "name": "Thẻ sản phẩm — một mục trong mục lục",
       "kind": "card",
       "refersTo": "card-action",
-      "description": "Ảnh 4:5 trên plate, dòng tên…giá có leader chấm, số còn (đỏ chỉ khi còn ít), một nút viền mực đảo đen/mật ong khi hover. Mẫu đã hết: ảnh mờ + dấu SOLD OUT may đứt nét.",
-      "html": "<article class=\"ds-card\"><a class=\"ds-card__img\" href=\"#\"><span class=\"ds-card__stamp\">SOLD OUT</span></a><a class=\"ds-card__meta\" href=\"#\"><span class=\"ds-card__toc\"><b>BỤI</b><i class=\"ds-card__ld\"></i><span class=\"ds-card__p\">890.000₫</span></span><span class=\"ds-card__ct\"><em>còn 2</em> · hết S M</span></a><div class=\"ds-card__act\"><button class=\"ds-card__add\">Thêm vào giỏ</button></div></article>",
-      "css": ".ds-card{position:relative;display:flex;flex-direction:column;width:200px;font-family:var(--font-sans,'Be Vietnam Pro',system-ui,sans-serif);color:var(--ink,#171410)}.ds-card__img{display:block;position:relative;aspect-ratio:4/5;background:var(--plate,#f4efe6);border-radius:var(--r,4px);overflow:hidden}.ds-card__stamp{position:absolute;left:10px;top:10px;padding:6px 10px;background:var(--stage,#171410);color:var(--brand,#eba400);border:1.5px solid var(--stage,#171410);border-radius:var(--r-sm,3px);font-family:var(--font-display,'Unbounded',sans-serif);font-weight:800;font-size:12px;letter-spacing:.12em}.ds-card__stamp::after{content:'';position:absolute;inset:2.5px;border:1px dashed var(--brand,#eba400);border-radius:1px;pointer-events:none}.ds-card__meta{display:block;position:relative;padding-top:10px;color:inherit;text-decoration:none}.ds-card__meta::after{content:'';position:absolute;inset:-2px 0 -4px}.ds-card__meta:hover b{color:var(--brand-text,#9e6817)}.ds-card__toc{display:flex;align-items:baseline;gap:8px}.ds-card__toc b{font-family:var(--font-display,'Unbounded',sans-serif);font-weight:800;font-size:14px;letter-spacing:-.01em}.ds-card__ld{flex:1;min-width:12px;border-bottom:1px dotted var(--line,#9c937f);transform:translateY(-4px)}.ds-card__p{font-size:13px;font-variant-numeric:tabular-nums;margin-left:auto}.ds-card__ct{display:block;margin-top:4px;font-size:12px;color:var(--ink2,#6b6250);font-variant-numeric:tabular-nums}.ds-card__ct em{font-style:normal;color:var(--hot,#b3261e);font-weight:500}.ds-card__act{margin-top:auto;padding-top:8px}.ds-card__add{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:40px;border:1px solid var(--ink,#171410);border-radius:var(--r,4px);font:inherit;font-size:12px;font-weight:600;color:var(--ink,#171410);background:var(--bg,#fff);cursor:pointer;transition:background-color .15s ease,color .15s ease}.ds-card__add::after{content:'';position:absolute;inset:-3px 0}.ds-card__add:hover{background:var(--ink,#171410);color:var(--brand,#eba400)}.ds-card__add:focus-visible{outline:2px solid var(--mark,#c28800);outline-offset:2px}"
+      "description": "Ảnh 4:5 trên plate, dòng tên…giá có leader chấm, số còn (đỏ chỉ khi còn ít), một nút viền mực đảo đen/mật ong khi hover. Mẫu của Số đã hết: ảnh mờ + dấu SOLD OUT may đứt nét, cao 28px như biển, góc trái trên. Ở lưới trộn hai loại mẫu, mẫu thuộc Số mang biển Số của nav góc trái dưới (aria-hidden, pointer-events:none). Mẫu cố định: không số tồn, size hết gạch ngang; kệ trống không SOLD OUT, không mờ.",
+      "html": "<article class=\"ds-card\"><a class=\"ds-card__img\" href=\"#\"><span class=\"ds-card__stamp\">SOLD OUT</span><span class=\"ds-card__sotag\" aria-hidden=\"true\">Số 05</span></a><a class=\"ds-card__meta\" href=\"#\"><span class=\"ds-card__toc\"><b>S05 – BỤI</b><i class=\"ds-card__ld\"></i><span class=\"ds-card__p\">890.000₫</span></span><span class=\"ds-card__ct\"><em>còn 2</em> · hết S M</span></a><div class=\"ds-card__act\"><button class=\"ds-card__add\">Thêm vào giỏ</button></div></article>",
+      "css": ".ds-card{position:relative;display:flex;flex-direction:column;width:200px;font-family:var(--font-sans,'Be Vietnam Pro',system-ui,sans-serif);color:var(--ink,#171410)}.ds-card__img{display:block;position:relative;aspect-ratio:4/5;background:var(--plate,#f4efe6);border-radius:var(--r,4px);overflow:hidden}.ds-card__stamp{position:absolute;left:10px;top:10px;display:inline-flex;align-items:center;height:28px;padding:0 10px;background:var(--stage,#171410);color:var(--brand,#eba400);border:1.5px solid var(--stage,#171410);border-radius:var(--r-sm,3px);font-family:var(--font-display,'Unbounded',sans-serif);font-weight:800;font-size:11px;line-height:1;letter-spacing:.1em}.ds-card__sotag{--pl:var(--stage,#171410);--pi:var(--brand,#eba400);position:absolute;left:10px;bottom:10px;pointer-events:none;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;height:28px;padding:0 17px;border-radius:var(--r-plate,5px);background:radial-gradient(circle at 8.5px 50%,var(--pi) 0 1.6px,transparent 2.1px),radial-gradient(circle at calc(100% - 8.5px) 50%,var(--pi) 0 1.6px,transparent 2.1px),var(--pl);box-shadow:inset 0 0 0 2px var(--pl),inset 0 0 0 3px var(--pi);color:var(--pi);font-family:var(--font-display,'Unbounded',sans-serif);font-weight:800;font-size:11px;line-height:1;letter-spacing:.1em;text-transform:uppercase}.ds-card__stamp::after{content:'';position:absolute;inset:2.5px;border:1px dashed var(--brand,#eba400);border-radius:1px;pointer-events:none}.ds-card__meta{display:block;position:relative;padding-top:10px;color:inherit;text-decoration:none}.ds-card__meta::after{content:'';position:absolute;inset:-2px 0 -4px}.ds-card__meta:hover b{color:var(--brand-text,#9e6817)}.ds-card__toc{display:flex;align-items:baseline;gap:8px}.ds-card__toc b{font-family:var(--font-display,'Unbounded',sans-serif);font-weight:800;font-size:14px;letter-spacing:-.01em}.ds-card__ld{flex:1;min-width:12px;border-bottom:1px dotted var(--line,#9c937f);transform:translateY(-4px)}.ds-card__p{font-size:13px;font-variant-numeric:tabular-nums;margin-left:auto}.ds-card__ct{display:block;margin-top:4px;font-size:12px;color:var(--ink2,#6b6250);font-variant-numeric:tabular-nums}.ds-card__ct em{font-style:normal;color:var(--hot,#b3261e);font-weight:500}.ds-card__act{margin-top:auto;padding-top:8px}.ds-card__add{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:40px;border:1px solid var(--ink,#171410);border-radius:var(--r,4px);font:inherit;font-size:12px;font-weight:600;color:var(--ink,#171410);background:var(--bg,#fff);cursor:pointer;transition:background-color .15s ease,color .15s ease}.ds-card__add::after{content:'';position:absolute;inset:-3px 0}.ds-card__add:hover{background:var(--ink,#171410);color:var(--brand,#eba400)}.ds-card__add:focus-visible{outline:2px solid var(--mark,#c28800);outline-offset:2px}"
     },
     {
       "name": "Bìa Số (lockup)",
@@ -154,10 +154,12 @@
       "Từ vựng \"Số\"; SOLD OUT là từ tiếng Anh duy nhất trên màn khách.",
       "Thanh điều hướng: logo SVG, biển Số vải đen chỉ khi Số đang bán, không đồng hồ; bong bóng đếm mật ong chữ mực.",
       "Lớp chờ chỉ khi đổi pathname, sau 120ms, không ở quản trị; giữ con trỏ chỉ khi đang chờ.",
-      "Tệp thương hiệu (favicon, biểu tượng, ảnh chia sẻ) sinh bằng scripts/brand-assets.ts, không vẽ tay."
+      "Tệp thương hiệu (favicon, biểu tượng, ảnh chia sẻ) sinh bằng scripts/brand-assets.ts, không vẽ tay.",
+      "Một biển Số, hai chỗ: thanh điều hướng và ảnh thẻ ở lưới trộn hai loại mẫu; dấu SOLD OUT cùng cỡ biển.",
+      "Tên mẫu thuộc Số mang mã Số: \"S05\u00a0– KHÓI\"; mẫu cố định in tên trần, không số tồn trên thẻ."
     ],
     "rules": [
-      { "name": "Quy tắc Vải Đen Không Phải Theme", "body": "Vải đen chỉ được dùng cho Số và những gì thuộc về nó: bìa, teaser, biển Số trên nav (chỉ khi Số đang bán), dải nhắc, dải bước tiếp theo, thanh bên quản trị, thanh hàng loạt, badge sống, dấu SOLD OUT, ảnh chia sẻ O2. Không sơn một mặt nào khác thành đen vì nó \"cần sức nặng\".", "section": "colors" },
+      { "name": "Quy tắc Vải Đen Không Phải Theme", "body": "Vải đen chỉ được dùng cho Số và những gì thuộc về nó: bìa, teaser, biển Số trên nav (chỉ khi Số đang bán) và cùng biển ấy trên ảnh mẫu thuộc Số ở lưới trộn hai loại mẫu, dải nhắc, dải bước tiếp theo, thanh bên quản trị, thanh hàng loạt, badge sống, dấu SOLD OUT, ảnh chia sẻ O2. Không sơn một mặt nào khác thành đen vì nó \"cần sức nặng\".", "section": "colors" },
       { "name": "Quy tắc Một Sợi Chỉ", "body": "Mỗi màn chỉ có một mảng mật ong là hành động chính. Nút thứ hai là mực viền mực, nút thứ ba là chữ gạch chân. Trên thẻ sản phẩm nút thêm giỏ là viền mực, đảo thành đen/mật ong khi hover. Quy tắc đếm mảng mật ong người mua bấm để làm việc chính: đĩa logo, chỉ may trên biển Số và bong bóng đếm 16px trên nav là nhận diện, chất liệu của Số và dấu trạng thái — không phải hành động.", "section": "colors" },
       { "name": "Mật ong không mang nổi chữ trắng", "body": "Chữ trên mật ong là mực; chữ muốn là mật ong dùng bậc 700 #9e6817.", "section": "colors" },
       { "name": "Màu không bao giờ là kênh duy nhất", "body": "Mọi badge mang một chấm và một chữ; mốc dòng thời gian mang hình dạng và chữ.", "section": "colors" },
@@ -176,7 +178,10 @@
       "Do gọi giờ qua demoNow() và giữ lọc/tab/trang trong URL.",
       "Do chỉ render biển Số khi Số đang bán; không biển thì lưới nav ba cột.",
       "Do để lớp chờ nhả con trỏ ngay khi trang tới; phần đóng chơi trên trang mới.",
-      "Do sinh lại tệp thương hiệu bằng scripts/brand-assets.ts khi logo, lưới F2 hay câu đề bìa đổi."
+      "Do sinh lại tệp thương hiệu bằng scripts/brand-assets.ts khi logo, lưới F2 hay câu đề bìa đổi.",
+      "Do vẽ biển Số trên ảnh thẻ chỉ ở lưới trộn hai loại mẫu; giữ một khối khai báo chung với biển trên nav.",
+      "Do ghép tên mẫu qua styleName/stylePrefix; không lưu tiền tố, không tự gõ dấu cách thường trước gạch.",
+      "Do sinh lại hình phẳng bằng scripts/flats.ts khi lib/flats.ts hay phối màu mẫu cố định đổi."
     ],
     "donts": [
       "Don't dùng utilities Tailwind hay đặt tên class trùng một utility trần.",
@@ -189,7 +194,9 @@
       "Don't bịa số, bịa chữ, hay dựng nút chết.",
       "Don't đặt đồng hồ hay màu trạng thái lên biển Số trên nav.",
       "Don't cho lớp chờ phủ thanh điều hướng hay hiện ở /admin.",
-      "Don't sửa tay favicon, biểu tượng, lib/brand/logo.ts hay lib/brand/share-headline.ts."
+      "Don't sửa tay favicon, biểu tượng, lib/brand/logo.ts hay lib/brand/share-headline.ts.",
+      "Don't đóng dấu SOLD OUT hay làm mờ ảnh của mẫu cố định hết kệ.",
+      "Don't vẽ đường kẻ dưới một hàng cuộn bằng border khi có vạch chồng lên nó; vẽ bằng box-shadow inset."
     ]
   }
 }
