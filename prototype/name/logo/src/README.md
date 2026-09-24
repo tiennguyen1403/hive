@@ -17,3 +17,6 @@ libraries beside them in `lib/` (not committed):
 
 `build.cjs` also reads `fonts/Barlow-Black.ttf` (OFL, Google Fonts) for the digits,
 and `measure.py` reads the original board from the user's Downloads folder.
+
+The user chose **M2** (24/09/2026, QĐ-29). `../v2/mark-m2-chatgpt.png` is M2 at 820 px on a white
+1024 px square: the image to attach to the ChatGPT wordmark prompt in `../prompt-wordmark.md`.

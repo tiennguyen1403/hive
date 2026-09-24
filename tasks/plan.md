@@ -1614,3 +1614,19 @@ mép trái, đường may, số và câu đề bìa, không ảnh), **O2 Bìa c�
 lỗi console, 0 tràn ở 1280/390; sửa một đợt (nhãn "SỐ" căn theo chân số, đường may 3/1200, số trong dải O3, va tên lớp `.line`, chữ
 thường "bán theo số", Be Vietnam Pro chỉ có tới 600). **Phát hiện:** ảnh bìa Số 05 (`hero-lg`, ảnh thay thế Unsplash) là áo in logo
 Champion — đang nằm trên bìa trang chủ thật, và là lý do O2 chỉ nên chọn khi có ảnh thật.
+
+**Logo: vẽ lại và vòng 2 (24/09/2026).** Người dùng tạo logo bằng ChatGPT và nhờ vẽ lại vì ảnh mờ. Bản vẽ lại nằm ở
+`prototype/name/logo/`: mark cùng ba bản màu, wordmark, lockup HIVE.05, PNG từ 16 đến 1024 px; trang duyệt `prototype/name/logo.html`
+(`c55d11f`). Cách làm: đo ảnh từng hàng điểm ảnh, dựng lại thành hình học đối xứng bằng paper.js; chồng lên ảnh gốc trùng 95,6% phần
+mực. Bộ dựng ở `prototype/name/logo/src/`. Vòng 2 (`prototype/name/logo-2.html`, `51e0ecf`): người dùng thấy mark "gần như là hoàn
+hảo", còn wordmark "quá đậm, nặng" và "trông như font mặc định". Bảng có bốn mark (M0 hiện tại · M1 tinh chỉnh · M2 một góc · M3 cỡ
+nhỏ) và bốn wordmark (W1 Unbounded 500 · W2 Nét rời · W3 Stencil · W4 Bodoni).
+
+**QĐ-29 (24/09/2026) — Mark HIVE là M2 "một góc"; wordmark làm lại bằng ChatGPT.** M2 là bản vẽ lại, thêm ba chỉnh sửa: khe mật
+ong đều 42, râu dày 26, đầu thân H vát 19,9° song song cánh ong, nên cả hình chỉ dùng một góc (`prototype/name/logo/v2/mark-m2.svg`,
+tham số `m2` trong `src/gen.cjs`). Người dùng không chọn W nào và sẽ tự tạo lại wordmark bằng ChatGPT. Phiên chính đã soạn prompt ở
+`prototype/name/logo/prompt-wordmark.md`: giữ M2 và bố cục HIVE.05 của lockup cũ; nét chữ cỡ trung bình, khoảng nửa thân H trong mark;
+một chi tiết riêng lặp đều trên mọi chữ; bốn hướng (cùng góc 20° · khía chỗ nối · chân vuông · để ChatGPT chọn). Ảnh đính kèm:
+`v2/mark-m2-chatgpt.png`. **Khi nhận ảnh:** vẽ lại thành vector (HIVE, dấu chấm, số 0–9 vì Số đổi theo đợt), ghép lockup với M2,
+thay bộ tệp chuẩn ở `prototype/name/logo/` (hiện vẫn là M0 + wordmark cũ), sửa câu "trùng 95,6%" ở `logo.html` cho khớp. Sau đó mới
+làm favicon và ảnh OG; favicon F1–F3 ở `share.html` phần lớn đã lỗi thời vì nay đã có mark.

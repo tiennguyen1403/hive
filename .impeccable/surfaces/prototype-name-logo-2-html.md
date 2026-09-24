@@ -35,3 +35,6 @@ FORM: hai bảng lưới hairline — mark theo cột, wordmark theo hàng; khô
 (new-work §3, "shape directly").
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance — áp dụng khi lựa chọn đi vào app; bảng mock kết thúc ở vòng duyệt của người dùng.
+
+KẾT QUẢ (24/09/2026, QĐ-29): người dùng chọn **M2**. Không chọn W nào: người dùng tự tạo lại wordmark bằng ChatGPT theo
+`prototype/name/logo/prompt-wordmark.md`, rồi phiên chính vẽ lại thành vector.
