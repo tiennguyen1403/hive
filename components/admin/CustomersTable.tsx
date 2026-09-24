@@ -108,7 +108,7 @@ export function CustomersTable({
     } catch {
       // An insecure origin or a permission policy refuses. Say what happened
       // rather than claiming a copy that did not take place.
-      say(`Trình duyệt không cho chép tự động — email là ${email}`);
+      say(`Trình duyệt không cho chép tự động — email là ${email}`, "error");
     }
   }
 

@@ -9,9 +9,17 @@
  *     npx supabase db reset      # schema + seed_* mirrors + reset_demo()
  *     npm run seed:users         # the nine accounts, then reset_demo() again
  *
- * and this script is idempotent: an email that already has an account is
- * skipped, not re-created, so running it twice is safe and prints "0 created,
- * 9 already there" the second time.
+ * and this script is idempotent: an email that already has an account is not
+ * re-created, so running it twice is safe and prints "0 created, 9 already
+ * there" the second time.
+ *
+ * AN ACCOUNT THAT IS ALREADY THERE GETS ITS PASSWORD BACK (slice B4b). The
+ * nine share `DEMO_PASSWORD`, which the sign-in screen prints; the app refuses
+ * to change it (`changePassword`, `lib/demo-accounts.ts`) and the daily reset
+ * sets back any the demo password no longer opens (`/api/reset`). This is the
+ * owner's own repair for the same thing, and it does not ask first: run it
+ * against a project whose demo login broke, and all nine are set and open
+ * again — signing out whoever was using them. It prints how many it set.
  *
  * THE MANAGER (slice B3a) is `lib/demo-admin.ts`: an ordinary user whose
  * `app_metadata.role` is "admin". `app_metadata` is writable only with the
@@ -19,9 +27,9 @@
  * `public.is_admin()` reads — "raw_app_meta_data … cannot be updated by the
  * user, so it's a good place to store authorization data"
  * (https://supabase.com/docs/guides/database/postgres/row-level-security).
- * When the account already exists its role is written again
- * (`auth.admin.updateUserById`), so a run always leaves the manager a
- * manager, whatever happened to the account in between.
+ * When the account already exists its role is written again, in the same
+ * `auth.admin.updateUserById` as its password, so a run always leaves the
+ * manager a manager, whatever happened to the account in between.
  *
  * It holds the SERVICE ROLE key, which bypasses row level security — so it
  * runs under `tsx` on a developer machine or in CI, never inside the app.
@@ -62,24 +70,31 @@ function isAlreadyThere(error: { code?: string; message: string }): boolean {
 }
 
 /**
- * The account behind an email, walking the admin API's pages — a public demo
- * collects sign-ups, and the manager is not guaranteed to be on page one.
+ * The accounts behind these emails, walking the admin API's pages once — a
+ * public demo collects sign-ups, and a demo account is not guaranteed to be
+ * on page one. Keyed by the lower-cased email, which is how Auth stores it.
  */
-async function userIdOf(email: string): Promise<string> {
+async function idsByEmail(emails: readonly string[]): Promise<Map<string, string>> {
+  const wanted = new Set(emails.map((e) => e.toLowerCase()));
+  const found = new Map<string, string>();
   const perPage = 1000;
-  for (let page = 1; ; page += 1) {
+  for (let page = 1; found.size < wanted.size; page += 1) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
     if (error) throw new Error(`listUsers failed: ${error.message}`);
-    const found = data.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-    if (found) return found.id;
+    for (const u of data.users) {
+      const email = u.email?.toLowerCase();
+      if (email && wanted.has(email)) found.set(email, u.id);
+    }
     if (data.users.length < perPage) break;
   }
-  throw new Error("the demo manager's account exists but could not be found");
+  return found;
 }
 
 async function main(): Promise<void> {
   let created = 0;
   let skipped = 0;
+  /** Accounts that were already there: their password goes back to the demo one. */
+  const existing: string[] = [];
 
   for (const customer of CUSTOMERS) {
     const { error } = await admin.auth.admin.createUser({
@@ -105,6 +120,7 @@ async function main(): Promise<void> {
         throw new Error(`createUser failed for a demo account: ${error.message}`);
       }
       skipped += 1;
+      existing.push(customer.email);
       continue;
     }
     created += 1;
@@ -123,13 +139,30 @@ async function main(): Promise<void> {
       throw new Error(`createUser failed for the demo manager: ${manager.error.message}`);
     }
     skipped += 1;
-    // Already there: make sure it is still a manager.
-    const { error } = await admin.auth.admin.updateUserById(await userIdOf(DEMO_ADMIN.email), {
-      app_metadata: { role: "admin" },
-    });
-    if (error) throw new Error(`updateUserById failed for the demo manager: ${error.message}`);
+    existing.push(DEMO_ADMIN.email);
   } else {
     created += 1;
+  }
+
+  // ── the accounts that were already there: the demo password again, and
+  // for the manager its role again, in one call each. Whatever somebody set
+  // since, the sign-in screen's password opens all nine after this.
+  let restored = 0;
+  if (existing.length > 0) {
+    const ids = await idsByEmail(existing);
+    for (const email of existing) {
+      const id = ids.get(email.toLowerCase());
+      if (!id) throw new Error(`${email} already has an account, but it could not be found`);
+      const isManager = email === DEMO_ADMIN.email;
+      const { error } = await admin.auth.admin.updateUserById(
+        id,
+        isManager
+          ? { password: env.DEMO_PASSWORD, app_metadata: { role: "admin" } }
+          : { password: env.DEMO_PASSWORD },
+      );
+      if (error) throw new Error(`updateUserById failed for ${email}: ${error.message}`);
+      restored += 1;
+    }
   }
 
   // The trigger fills a profile from the metadata; this puts the rest of the
@@ -145,6 +178,7 @@ async function main(): Promise<void> {
   const total = CUSTOMERS.length + 1;
   process.stdout.write(
     `demo accounts: ${created} created, ${skipped} already there (of ${total})\n` +
+      `passwords set back to DEMO_PASSWORD: ${restored}\n` +
       `${DEMO_ADMIN.email} carries app_metadata.role = admin\n` +
       "profiles, addresses, sample orders and their log reset to the latest 18:50 anchor\n",
   );

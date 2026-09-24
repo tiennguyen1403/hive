@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import { OrderError, cancelOrder, placeOrder, rememberGuestReceipt } from "@/lib/db/orders";
+import { takeRate } from "@/lib/db/rate-limit";
 import { getSession, requireSession } from "@/lib/db/session";
 import { isOrderCode } from "@/lib/lookup";
 import {
@@ -53,10 +54,23 @@ import {
  * the new stock; `CheckoutScreen` keeps drawing what was pressed until the
  * receipt takes over, so that re-render cannot flash "vừa hết" over an order
  * that went through.
+ *
+ * Slice B4b: a request that reads as an order then spends two tokens of the
+ * visitor's rate limits (`lib/db/rate-limit.ts`) before the database sees it
+ * — one order of five per ten minutes, and its pieces of sixty a day — so one
+ * visitor cannot buy an issue's shelf empty, twenty pieces at a time. A token
+ * spent is not given back when the order then fails; a refusal spends none.
+ * It answers `RATE_LIMITED`, and the catalogue did not move.
  */
 export async function placeOrderAction(payload: unknown): Promise<PlaceOrderResult> {
   const read = readPlaceOrderPayload(payload);
   if (!read.ok) return { ok: false, failure: "INVALID", message: read.message };
+
+  const pace = await takeRate("order_place");
+  if (!pace.ok) return { ok: false, failure: "RATE_LIMITED", message: pace.message };
+  const pieces = read.input.lines.reduce((n, line) => n + line.qty, 0);
+  const volume = await takeRate("order_units", pieces);
+  if (!volume.ok) return { ok: false, failure: "RATE_LIMITED", message: volume.message };
 
   const session = await getSession();
   try {
@@ -87,9 +101,15 @@ export async function placeOrderAction(payload: unknown): Promise<PlaceOrderResu
  * the overview's rows and the notifications all read the same orders, the
  * order's own page is the one being looked at — and the pieces went back on
  * the shelf, which the product pages and the browser's catalogue show.
+ *
+ * Slice B4b: one token of the visitor's `account` limit, right after the
+ * session check (thirty account writes per ten minutes).
  */
 export async function cancelOrderAction(code: unknown): Promise<CancelOrderResult> {
   await requireSession("/account/orders");
+
+  const pace = await takeRate("account");
+  if (!pace.ok) return { ok: false, message: pace.message };
 
   if (typeof code !== "string" || !isOrderCode(code)) {
     return { ok: false, message: cancelFailureMessage("NOT_OWNER") };

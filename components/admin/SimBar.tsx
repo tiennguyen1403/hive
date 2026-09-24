@@ -54,7 +54,10 @@ export function SimBar({
       startReset(() => {
         setAsking(false);
         if (result.ok) router.refresh();
-        say(result.message ?? result.errors.form ?? "Chưa đặt lại được. Thử lại sau ít phút.");
+        say(
+          result.message ?? result.errors.form ?? "Chưa đặt lại được. Thử lại sau ít phút.",
+          result.ok ? "ok" : "error",
+        );
       });
     });
   }

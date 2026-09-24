@@ -113,7 +113,7 @@ export function AdminOrdersScreen({
       const result = await call();
       startAction(() => {
         if (result.ok) after?.();
-        say(result.message ?? result.errors.form ?? "");
+        say(result.message ?? result.errors.form ?? "", result.ok ? "ok" : "error");
       });
     });
   }
@@ -235,7 +235,10 @@ export function AdminOrdersScreen({
                    ticked is harder to read than one that explains itself. */
                 const unpaid = chosen.filter((o) => nextMove(o, now) === "MARK_PAID");
                 if (unpaid.length === 0) {
-                  return say("Chỉ đơn đang chờ tiền mới đánh dấu được — chưa chọn đơn nào như vậy");
+                  return say(
+                    "Chỉ đơn đang chờ tiền mới đánh dấu được — chưa chọn đơn nào như vậy",
+                    "error",
+                  );
                 }
                 act(
                   () => markPaid(unpaid.map((o) => String(o.code))),

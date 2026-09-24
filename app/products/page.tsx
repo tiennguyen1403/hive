@@ -31,7 +31,7 @@ import { demoNow } from "@/lib/clock";
 /**
  * "Số 05 · mười mẫu" — which issue this is and how big it is, both counted
  * rather than typed (`featuredDrop`, `styleCountLabel`). The layout's
- * template adds "· BRAND".
+ * template adds "· HIVE".
  */
 export async function generateMetadata(): Promise<Metadata> {
   const catalog = await loadCatalog();

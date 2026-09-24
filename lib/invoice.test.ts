@@ -45,7 +45,7 @@ describe("invoiceOf — an order the shop shipped", () => {
   const inv = invoiceOf(trackedOfOrder(FIXTURE_CATALOG, order, "88 Xuân Thuỷ, Phường Cầu Giấy, TP. Hà Nội", DURING_5));
 
   it("carries the order's own identity", () => {
-    expect(inv.brand).toBe("BRAND");
+    expect(inv.brand).toBe("HIVE");
     expect(inv.code).toBe("DH-2425");
   });
 

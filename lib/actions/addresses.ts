@@ -6,6 +6,7 @@ import { ADDRESS_LABELS, type AddressLabel } from "@/data/types";
 import { validateAddressForm, type AddressDraft } from "@/lib/account-form";
 import { normalisePhone } from "@/lib/checkout-form";
 import * as book from "@/lib/db/addresses";
+import { takeRate } from "@/lib/db/rate-limit";
 import { requireSession } from "@/lib/db/session";
 import type { ActionState } from "./state";
 
@@ -25,6 +26,13 @@ import type { ActionState } from "./state";
  * project, so the page reads the database on every request and what needs
  * clearing is the client router's copy of it
  * (`02-guides/caching-without-cache-components.md`).
+ *
+ * Slice B4b: each one spends a token of the visitor's `account` limit right
+ * after the session check — thirty account writes per ten minutes, shared with
+ * "Huỷ đơn" (`lib/db/rate-limit.ts`). `saveAddress` says so in the form; the
+ * other three answer nothing by design (a form posting with no state, a step
+ * of checkout that must not stop the order), so a refused one simply leaves
+ * the book as it was.
  */
 
 const ADDRESS_PATHS = ["/account/addresses", "/account", "/checkout"] as const;
@@ -66,6 +74,9 @@ function draftOf(form: FormData): AddressDraft {
 export async function saveAddress(_prev: ActionState, form: FormData): Promise<ActionState> {
   await requireSession("/account/addresses");
 
+  const pace = await takeRate("account");
+  if (!pace.ok) return { errors: { form: pace.message } };
+
   const draft = draftOf(form);
   const found = validateAddressForm(draft);
   const errors: Record<string, string> = {};
@@ -98,6 +109,8 @@ export async function saveAddress(_prev: ActionState, form: FormData): Promise<A
 export async function rememberAddress(draft: AddressDraft): Promise<void> {
   await requireSession("/checkout");
 
+  if (!(await takeRate("account")).ok) return;
+
   const clean: AddressDraft = {
     recipient: String(draft.recipient ?? ""),
     phone: normalisePhone(String(draft.phone ?? "")) || String(draft.phone ?? ""),
@@ -115,6 +128,7 @@ export async function rememberAddress(draft: AddressDraft): Promise<void> {
 
 export async function removeAddress(form: FormData): Promise<void> {
   await requireSession("/account/addresses");
+  if (!(await takeRate("account")).ok) return;
   const id = field(form, "id");
   if (id) await book.removeAddress(id);
   refreshAddressScreens();
@@ -122,6 +136,7 @@ export async function removeAddress(form: FormData): Promise<void> {
 
 export async function makeDefault(form: FormData): Promise<void> {
   await requireSession("/account/addresses");
+  if (!(await takeRate("account")).ok) return;
   const id = field(form, "id");
   if (id) await book.setDefaultAddress(id);
   refreshAddressScreens();

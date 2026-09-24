@@ -36,7 +36,7 @@ const unbounded = Unbounded({
 });
 
 export const metadata: Metadata = {
-  title: { default: "BRAND", template: "%s · BRAND" },
+  title: { default: "HIVE", template: "%s · HIVE" },
   description: "Streetwear unisex bán theo số. Mỗi số cắt một lần.",
 };
 

@@ -4,8 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { CUSTOMERS } from "@/data/customers";
 import { validateChangePassword, validateSignUp, type SignUpDraft } from "@/lib/account-form";
+import { takeRate } from "@/lib/db/rate-limit";
 import { getSupabase, supabaseEnv } from "@/lib/db/server";
 import { getSession } from "@/lib/db/session";
+import { DEMO_ACCOUNT_PASSWORD_LOCKED, isDemoEmail } from "@/lib/demo-accounts";
 import { DEMO_ADMIN } from "@/lib/demo-admin";
 import { safeNext, type ActionState } from "./state";
 
@@ -23,6 +25,18 @@ import { safeNext, type ActionState } from "./state";
  *
  * The browser never talks to Supabase (QĐ-25): the client is built here, on
  * the server, and the only thing that crosses back is an `ActionState`.
+ *
+ * SLICE B4B, the public demo's guards:
+ *
+ *   · every call that reaches Supabase Auth with a password first spends a
+ *     token of the visitor's own rate limit (`lib/db/rate-limit.ts`): ten
+ *     sign-ins per five minutes across the three sign-in buttons, three
+ *     sign-ups an hour, five password changes per ten minutes. The token goes
+ *     immediately before the Auth call, so a form the rules refuse costs
+ *     nothing. Supabase Auth's own limit is per IP address too, and every
+ *     call here comes from this server's address — one visitor hammering the
+ *     form would otherwise use it up for everybody;
+ *   · the nine shared accounts never change password (`lib/demo-accounts.ts`).
  */
 
 /**
@@ -51,6 +65,9 @@ export async function signIn(_prev: ActionState, form: FormData): Promise<Action
 
   if (!email || !password) return { errors: { form: SIGN_IN_FAILED } };
 
+  const pace = await takeRate("sign_in");
+  if (!pace.ok) return { errors: { form: pace.message } };
+
   const supabase = await getSupabase();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { errors: { form: SIGN_IN_FAILED } };
@@ -72,6 +89,9 @@ export async function signIn(_prev: ActionState, form: FormData): Promise<Action
 export async function demoSignIn(_prev: ActionState, form: FormData): Promise<ActionState> {
   const password = process.env.DEMO_PASSWORD;
   if (!password) return { errors: { form: SIGN_IN_FAILED } };
+
+  const pace = await takeRate("sign_in");
+  if (!pace.ok) return { errors: { form: pace.message } };
 
   const supabase = await getSupabase();
   const { error } = await supabase.auth.signInWithPassword({
@@ -96,6 +116,9 @@ export async function demoSignIn(_prev: ActionState, form: FormData): Promise<Ac
 export async function demoAdminSignIn(_prev: ActionState, form: FormData): Promise<ActionState> {
   const password = process.env.DEMO_PASSWORD;
   if (!password) return { errors: { form: SIGN_IN_FAILED } };
+
+  const pace = await takeRate("sign_in");
+  if (!pace.ok) return { errors: { form: pace.message } };
 
   const supabase = await getSupabase();
   const { error } = await supabase.auth.signInWithPassword({ email: DEMO_ADMIN.email, password });
@@ -127,6 +150,9 @@ export async function signUp(_prev: ActionState, form: FormData): Promise<Action
     if (key !== "phone" && message) errors[key] = message;
   }
   if (Object.keys(errors).length > 0) return { errors };
+
+  const pace = await takeRate("sign_up");
+  if (!pace.ok) return { errors: { form: pace.message } };
 
   const supabase = await getSupabase();
   const { data, error } = await supabase.auth.signUp({
@@ -208,6 +234,16 @@ export async function changePassword(
 
   const session = await getSession();
   if (!session) redirect("/sign-in?next=%2Faccount%2Fpassword");
+
+  // Slice B4b: a shared demo account's password is printed on the sign-in
+  // screen and has to keep opening it for the next visitor. Refused before
+  // the current password is even tried, so no Auth call is made for it.
+  if (isDemoEmail(session.email)) {
+    return { errors: { current: DEMO_ACCOUNT_PASSWORD_LOCKED } };
+  }
+
+  const pace = await takeRate("password");
+  if (!pace.ok) return { errors: { next: pace.message } };
 
   if (!(await passwordIsCurrent(session.email, draft.current))) {
     return { errors: { current: "Mật khẩu hiện tại chưa đúng." } };

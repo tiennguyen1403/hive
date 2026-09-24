@@ -24,7 +24,7 @@ import {
  * "Tìm “áo” · Số 05" — the term and the issue it was searched in, because a
  * tab kept open through three searches has to say which one it is. Both
  * halves are read, never typed: the issue comes off the clock through
- * `featuredDrop`, the word off `lib/lexicon.ts`. The layout adds "· BRAND".
+ * `featuredDrop`, the word off `lib/lexicon.ts`. The layout adds "· HIVE".
  */
 export async function generateMetadata(props: PageProps<"/search">): Promise<Metadata> {
   const sp = await props.searchParams;

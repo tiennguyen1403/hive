@@ -9,7 +9,7 @@ import { loadMe } from "@/lib/db/profiles";
 import { requireAdmin } from "@/lib/db/session";
 
 export const metadata: Metadata = {
-  title: { default: "Quản trị", template: "%s · Quản trị · BRAND" },
+  title: { default: "Quản trị", template: "%s · Quản trị · HIVE" },
   // A back office belongs in no search index, and the rule has to sit on the
   // layout so a screen added later cannot forget it.
   robots: { index: false, follow: false },

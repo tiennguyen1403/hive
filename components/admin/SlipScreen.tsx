@@ -99,7 +99,7 @@ export function SlipScreen({
             return (
               <section className="slip" key={code}>
                 <div className="hd">
-                  <span className="wm">BRAND</span>
+                  <span className="wm">HIVE</span>
                   <span className="code">{code}</span>
                 </div>
 

@@ -96,7 +96,7 @@ export function AdminDropsScreen({
       const result = await call();
       startAction(() => {
         if (result.ok) after();
-        say(result.message ?? result.errors.form ?? "");
+        say(result.message ?? result.errors.form ?? "", result.ok ? "ok" : "error");
       });
     });
   }

@@ -1,9 +1,14 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState } from "react";
-import { Toast } from "@/components/shop/Toast";
+import { Toast, type ToastTone } from "@/components/shop/Toast";
 
-type Say = (message: string) => void;
+/**
+ * Say something in the back office's toast: a confirmation (the default), or
+ * — `"error"` — a refusal, which carries the `danger` icon and is announced
+ * as an alert (slice B4b, `components/shop/Toast.tsx`).
+ */
+type Say = (message: string, tone?: ToastTone) => void;
 
 const Ctx = createContext<Say | null>(null);
 
@@ -16,17 +21,22 @@ const Ctx = createContext<Say | null>(null);
  * toán · đã lưu", "Tồn kho đã đổi ở nơi khác — tải lại rồi sửa tiếp" — or a
  * copy, a download. Mounted once by the admin layout, so a sheet that closes
  * on success can still be answered after it has gone.
+ *
+ * Since slice B4b the caller says which of the two it is: an action's answer
+ * is `ok` when `result.ok`, `"error"` otherwise, and a sentence written here
+ * to refuse something ("Ghi chú trống thì chưa có gì để lưu") is `"error"`.
  */
 export function AdminToastProvider({ children }: { children: React.ReactNode }) {
-  const [message, setMessage] = useState<string | null>(null);
-  // Stable, so the toast's timer runs from the moment it was raised rather
-  // than restarting on every render of the screen under it.
-  const done = useCallback(() => setMessage(null), []);
+  const [said, setSaid] = useState<{ message: string; tone: ToastTone } | null>(null);
+  // Both stable, so the toast's timer runs from the moment it was raised
+  // rather than restarting on every render of the screen under it.
+  const done = useCallback(() => setSaid(null), []);
+  const say = useCallback<Say>((message, tone = "ok") => setSaid({ message, tone }), []);
 
   return (
-    <Ctx.Provider value={setMessage}>
+    <Ctx.Provider value={say}>
       {children}
-      <Toast message={message} onDone={done} />
+      <Toast message={said?.message ?? null} tone={said?.tone ?? "ok"} onDone={done} />
     </Ctx.Provider>
   );
 }

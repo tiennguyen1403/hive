@@ -312,7 +312,7 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
         onClose={() => {
           if (!saving) setAdjusting(null);
         }}
-        onBlocked={say}
+        onBlocked={(message) => say(message, "error")}
         onSave={(cells, reason, ref, note) => {
           if (!adjusting || saving) return;
           const id = String(adjusting.id);
@@ -323,7 +323,7 @@ export function ProductsTable({ nowIso, query }: { nowIso: string; query: Query 
             const result = await adjustStock(id, cells, reason, ref, note);
             startSaving(() => {
               if (result.ok) setAdjusting(null);
-              say(result.message ?? result.errors.form ?? "");
+              say(result.message ?? result.errors.form ?? "", result.ok ? "ok" : "error");
             });
           });
         }}

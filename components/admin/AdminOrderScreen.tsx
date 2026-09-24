@@ -110,7 +110,7 @@ export function AdminOrderScreen({
       startAction(() => {
         setBusy(null);
         if (result.ok) after?.();
-        say(result.message ?? result.errors.form ?? "");
+        say(result.message ?? result.errors.form ?? "", result.ok ? "ok" : "error");
       });
     });
   }
@@ -134,7 +134,7 @@ export function AdminOrderScreen({
 
   function addNote() {
     const text = note.trim();
-    if (!text) return say("Ghi chú trống thì chưa có gì để lưu");
+    if (!text) return say("Ghi chú trống thì chưa có gì để lưu", "error");
     act("NOTE", () => noteOrder(code, text), () => setNote(""));
   }
 

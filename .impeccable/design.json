@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-09-23T00:00:00+07:00",
-  "title": "Design System: BRAND — nhãn dệt",
+  "title": "Design System: HIVE — nhãn dệt",
   "extensions": {
     "colorMeta": {
       "brand": { "role": "primary", "displayName": "Chỉ mật ong", "canonical": "#eba400", "tonalRamp": ["#171410", "#6e4a12", "#9e6817", "#c28800", "#eba400", "#f1c04a", "#f7d98e", "#fbf1da"] },
@@ -102,7 +102,7 @@
       "kind": "nav",
       "refersTo": "nav-issue-tag",
       "description": "Thanh dính 56/64px trên bóng mềm; wordmark Unbounded cách .14em; tem Số là mảnh vải đen duy nhất trên thanh, chấm + chữ; bong bóng đếm đen/mật ong.",
-      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav__wm\">BRAND</span><span class=\"ds-nav__itag\"><i></i>Số 05</span><span class=\"ds-nav__icons\"><span class=\"ds-nav__ib\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7.5 7.67V6.7c0-2.25 1.81-4.46 4.06-4.67a4.5 4.5 0 0 1 4.94 4.48v1.38M9 22h6c4.02 0 4.74-1.61 4.95-3.57l.75-6C20.97 9.99 20.27 8 16 8H8c-4.27 0-4.97 1.99-4.7 4.43l.75 6C4.26 20.39 4.98 22 9 22Z\"/></svg><b>2</b></span></span></nav>",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav__wm\">HIVE</span><span class=\"ds-nav__itag\"><i></i>Số 05</span><span class=\"ds-nav__icons\"><span class=\"ds-nav__ib\"><svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7.5 7.67V6.7c0-2.25 1.81-4.46 4.06-4.67a4.5 4.5 0 0 1 4.94 4.48v1.38M9 22h6c4.02 0 4.74-1.61 4.95-3.57l.75-6C20.97 9.99 20.27 8 16 8H8c-4.27 0-4.97 1.99-4.7 4.43l.75 6C4.26 20.39 4.98 22 9 22Z\"/></svg><b>2</b></span></span></nav>",
       "css": ".ds-nav{display:flex;align-items:center;gap:10px;height:56px;padding:0 8px 0 18px;background:var(--bg,#fff);border-bottom:1px solid var(--hair,#ece7dd);box-shadow:0 1px 0 rgba(23,20,16,.04),0 10px 24px -14px rgba(23,20,16,.28);font-family:var(--font-sans,'Be Vietnam Pro',system-ui,sans-serif);color:var(--ink,#171410)}.ds-nav__wm{font-family:var(--font-display,'Unbounded',sans-serif);font-weight:800;font-size:16px;letter-spacing:.14em}.ds-nav__itag{display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 10px;border-radius:var(--r-sm,3px);background:var(--stage,#171410);color:var(--brand,#eba400);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;position:relative}.ds-nav__itag::after{content:'';position:absolute;inset:-9px 0}.ds-nav__itag i{width:6px;height:6px;border-radius:99px;background:currentColor}.ds-nav__icons{margin-left:auto;display:flex}.ds-nav__ib{position:relative;width:40px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r,4px);cursor:pointer}.ds-nav__ib:hover{background:var(--plate,#f4efe6)}.ds-nav__ib b{position:absolute;top:5px;right:3px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--stage,#171410);color:var(--brand,#eba400);font-size:11px;line-height:16px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums}"
     },
     {

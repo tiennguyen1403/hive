@@ -280,12 +280,12 @@ export function ProductForm({
   async function pickFile(color: ColorKey, file: File | undefined) {
     if (!file) return;
     const problem = pickProblem(file);
-    if (problem) return say(problem);
+    if (problem) return say(problem, "error");
     const src = URL.createObjectURL(file);
     const size = await naturalSize(src);
     if (!size) {
       URL.revokeObjectURL(src);
-      return say("Không đọc được ảnh này · chọn tệp khác");
+      return say("Không đọc được ảnh này · chọn tệp khác", "error");
     }
     setPicking(null);
     setCropping({
@@ -378,7 +378,7 @@ export function ProductForm({
       form.set("color", color);
       const answer = await uploadProductPhoto(form);
       if (answer.ok && answer.key) return answer.key;
-      say(answer.errors.form ?? catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", label));
+      say(answer.errors.form ?? catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", label), "error");
     } catch (e) {
       // A refusal of the encoder has its own words; anything else — the
       // request never answered, a body over the limit — is "không tải được".
@@ -386,6 +386,7 @@ export function ProductForm({
         e instanceof PhotoEncodeError
           ? `Không tải được ảnh ${label}: ${lowerFirst(e.message)}`
           : catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", label),
+        "error",
       );
     }
     return null;
@@ -473,7 +474,7 @@ export function ProductForm({
         answer = await sendInTransition(snapshot, keys);
       }
       if (!answer.ok) {
-        say(answer.errors.form ?? catalogFailureMessage("ADD_PRODUCT", "UNAVAILABLE"));
+        say(answer.errors.form ?? catalogFailureMessage("ADD_PRODUCT", "UNAVAILABLE"), "error");
         return;
       }
       say(answer.message ?? "");

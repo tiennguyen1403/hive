@@ -66,7 +66,7 @@ export function AdminNav({
 
   return (
     <aside className="side">
-      <span className="wm">BRAND</span>
+      <span className="wm">HIVE</span>
       <nav aria-label="Khu quản trị">
         {LINKS.map((l) => {
           const on = isOpen(pathname, l.href);

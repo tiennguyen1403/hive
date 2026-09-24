@@ -123,7 +123,9 @@ GHN/GHTK API. Schema đã chừa chỗ.
 - [ ] **A2** Vercel Hobby (phi thương mại) hợp lệ cho portfolio. Kiểm: fair-use guidelines.
 - [ ] **A3** Tắt xác nhận email chấp nhận được với người xem demo. Áp dụng từ B1 23/09 (`enable_confirmations = false`, tài khoản thử công khai); chờ phản hồi người xem để tick.
 - [ ] **A4** Đăng ký/đặt đơn tự do + reset hằng ngày là đủ vệ sinh; rate limit mặc định của
-  Supabase Auth (30 yêu cầu/5 phút/IP) đủ. Kiểm: chạy demo 1 tuần.
+  Supabase Auth (30 yêu cầu/5 phút/IP) đủ. Kiểm: chạy demo 1 tuần. *B4b 24/09:* Supabase Auth tính giới hạn theo IP
+  của **máy chủ** gọi nó (docs "IP address forwarding") → mọi người xem dùng chung 30 lượt; app thêm giới hạn riêng
+  theo người xem (`rate_hits`). Bịt hẳn cần header `Sb-Forwarded-For` + bật cờ trên hosted — chưa làm.
 - [x] **A5** Docker Desktop chạy được để `supabase start` — kiểm ở B0b 23/09: lần đầu 9 phút 29
   giây (tải image), lần sau 30 giây; `db reset` 31 giây.
 - [x] **A6** Playwright sweep chạy được trên DB cục bộ sau `reset_demo()` — kiểm ở B0b 23/09: 59
@@ -138,7 +140,7 @@ GHN/GHTK API. Schema đã chừa chỗ.
 | **B2 Đặt hàng** | `place_order()`, `cancel_order()`; xác nhận đơn, Đơn của tôi, `/track` đọc DB; một hình dạng `Order`; xoá `brand.orders` | 2 đơn cùng ô tồn kho song song → không bán quá; huỷ trả hàng về kệ |
 | **B3 Quản trị** | Claim admin; 16 hành động thành Server Actions (guard chuyển trạng thái trong SQL); `events` thay `brand.adminSim`; "Đặt lại dữ liệu mẫu" gọi `reset_demo()`; đổi lời simbar; đồng hồ thật, anchor = `now()`. **Đã làm:** B3a 24/09 (vai, 6 hàm đơn, `events`, reset neo), B3b 24/09 (10 hàm `admin_*` kho/Số/teaser/mã/sửa mẫu, `promotions.paused`, `sold_out_at` sống, xoá `admin-sim`); B3c 24/09 (bucket `product-photos`, `/photos/[...key]`, `admin_add_product`/`set_product_photo`/`reorder_colors`, ẩn mẫu Số chưa mở, purge ảnh khi reset) | mọi nút admin ghi DB; log/CSV từ `events`; reset đưa về seed |
 | **B4 Triển khai** — **XONG 24/09** | Dự án Supabase hosted `hive-demo` (`ap-southeast-1`, PG 17), 6 migration + seed + 9 tài khoản mẫu; Vercel Hobby dự án `hive` (`sin1`), `vercel.json` hai cron UTC: health `0 3`, reset `0 12` (Hobby chỉ hứa đúng giờ ±59 phút nên reset nằm trọn sau mốc 18:50 VN); `GET /api/reset` sau `CRON_SECRET` (404 khi không có khoá); GitHub public; `TZ` là biến reserved trên Vercel, không đặt được (app đúng giờ VN dưới UTC) | https://hive-neon-three.vercel.app chạy; cron đăng ký trong project |
-| **B4b Gia cố demo công khai** — brief 24/09 | Tài khoản mẫu không đổi được mật khẩu, cron đặt lại cũng đặt lại mật khẩu mẫu; giới hạn tần suất đếm trong Postgres (bảng `rate_hits`, hàm `take_rate` chỉ `service_role`, khoá = HMAC của IP) cho đặt đơn, đăng nhập/đăng ký, tải ảnh, thao tác quản trị; toast lỗi có dạng riêng; BRAND → HIVE (QĐ-28). Brief `tasks/briefs/backend-b4b.md` | một người lạ không làm hỏng được nút thử, không mua sạch kho, không làm đầy bucket |
+| **B4b Gia cố demo công khai** — **XONG 24/09** | Tài khoản mẫu không đổi được mật khẩu; cron đặt lại **dò** mật khẩu 9 tài khoản mẫu và chỉ đặt lại tài khoản đã lệch (đặt lại bằng admin API thu hồi mọi phiên, nên không đặt lại vô điều kiện); giới hạn tần suất đếm trong Postgres (bảng `rate_hits`, `take_rate`/`tidy_rate_hits` chỉ `service_role`, khoá = HMAC của IP, IPv6 theo /64, mở khi hỏng) cho đặt đơn, đăng nhập/đăng ký/đổi mật khẩu, sổ địa chỉ, mọi thao tác quản trị, tải ảnh (300/ngày toàn demo); toast lỗi có dạng riêng; BRAND → HIVE (QĐ-28). Brief `tasks/briefs/backend-b4b.md` | một người lạ không làm hỏng được nút thử, không mua sạch kho, không làm đầy bucket |
 | **B5 Tuỳ chọn** | Realtime tồn kho, Resend SMTP, tên miền (Storage đã dùng từ B3c) | theo nhu cầu |
 
 Giữ nguyên: mọi hàm thuần trong `lib/`; giỏ, yêu thích, giữ lại sau, tìm kiếm gần đây, tuỳ

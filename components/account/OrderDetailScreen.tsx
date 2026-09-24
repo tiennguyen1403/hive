@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Countdown } from "@/components/shop/Countdown";
 import { CopyButton } from "@/components/shop/CopyButton";
 import { InvoiceSheet } from "@/components/shop/InvoiceSheet";
+import type { ToastTone } from "@/components/shop/Toast";
 import { cancelOrderAction } from "@/lib/actions/orders";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { invoiceOf } from "@/lib/invoice";
@@ -26,8 +27,11 @@ interface OrderDetailScreenProps {
   dueAt?: string;
   /** What the money does on an order that was called off. */
   refund?: string | null;
-  /** The sentence to show once "Huỷ đơn" has been answered, either way. */
-  onDone: (message: string) => void;
+  /**
+   * The sentence to show once "Huỷ đơn" has been answered, either way — and
+   * which way (slice B4b): a refusal is shown as one, not with a tick.
+   */
+  onDone: (message: string, tone: ToastTone) => void;
 }
 
 /**
@@ -75,6 +79,7 @@ export function OrderDetailScreen({ order, dueAt, refund, onDone }: OrderDetailS
           result.ok
             ? `Đã huỷ ${order.code} · ${countWord(order.units)} chiếc về kệ`
             : result.message,
+          result.ok ? "ok" : "error",
         );
       });
     });

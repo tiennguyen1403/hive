@@ -442,6 +442,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_hits: {
+        Row: {
+          bucket: string
+          hits: number
+          subject: string
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          hits: number
+          subject: string
+          window_start: string
+        }
+        Update: {
+          bucket?: string
+          hits?: number
+          subject?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       seed_addresses: {
         Row: {
           handle: string
@@ -1050,6 +1071,21 @@ export type Database = {
       sync_sold_out: {
         Args: { p_now: string; p_product_ids: string[] }
         Returns: undefined
+      }
+      take_rate: {
+        Args: {
+          p_bucket: string
+          p_cost: number
+          p_limit: number
+          p_now?: string
+          p_subject: string
+          p_window_seconds: number
+        }
+        Returns: number
+      }
+      tidy_rate_hits: {
+        Args: { p_clear?: string[]; p_now?: string }
+        Returns: number
       }
       track_order: { Args: { p_code: string; p_phone: string }; Returns: Json }
       update_address: {

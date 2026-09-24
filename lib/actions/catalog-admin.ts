@@ -41,6 +41,7 @@ import {
   removeUploadedPhotos,
   storeUploadedPhoto,
 } from "@/lib/db/photos";
+import { takeRates } from "@/lib/db/rate-limit";
 import { getSupabase } from "@/lib/db/server";
 import { requireAdmin } from "@/lib/db/session";
 import { dropState } from "@/lib/drop";
@@ -68,6 +69,11 @@ import type { ActionState } from "./state";
  * B3a (`lib/actions/admin.ts`):
  *
  *   1. `requireAdmin()` — no session goes to sign in, a shopper's gets 404;
+ *      then, since slice B4b, the visitor's rate limits (`lib/db/rate-limit.ts`):
+ *      `admin` for every move (120 per ten minutes), plus `admin_create` for
+ *      the four that create something (20 an hour), plus `upload` (40 an hour)
+ *      and `upload_global` (300 a day for everybody, ≤ 450 MB into the 1 GB
+ *      bucket) for a photo — refused with the wait as the toast's sentence;
  *   2. reads its arguments as `unknown` and checks every one with the rules
  *      the sheets already apply, restated in `lib/catalog-admin.ts` against
  *      the catalogue as the database has it NOW (`loadCatalog()`), never as
@@ -160,6 +166,8 @@ export async function adjustStock(
   note: unknown,
 ): Promise<ActionState> {
   await requireAdmin("/admin/products");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
   if (typeof id !== "string") return failed("ADJUST_STOCK", "NOT_FOUND");
 
   const catalog = await loadCatalog();
@@ -192,6 +200,8 @@ export async function adjustStock(
 /** "Tạo số": the next number, two instants. */
 export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
+  const pace = await takeRates("admin", "admin_create");
+  if (!pace.ok) return refused(pace.message);
   const n = readDropNo(no);
   if (n === null) return failed("ADD_DROP", "BAD_INPUT");
   const window = readWindow(opensAt, closesAt);
@@ -225,6 +235,8 @@ export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown):
 /** "Sửa giờ": an issue's two instants, moved — any issue, in any state. */
 export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
   const n = readDropNo(no);
   if (n === null) return failed("SCHEDULE_DROP", "NOT_FOUND");
   const window = readWindow(opensAt, closesAt);
@@ -251,6 +263,8 @@ export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unkn
  */
 export async function closeDropNow(no: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
   const n = readDropNo(no);
   if (n === null) return failed("CLOSE_DROP", "NOT_FOUND");
 
@@ -281,6 +295,8 @@ export async function closeDropNow(no: unknown): Promise<ActionState> {
  */
 export async function addTeaser(draft: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
+  const pace = await takeRates("admin", "admin_create");
+  if (!pace.ok) return refused(pace.message);
   const catalog = await loadCatalog();
   const read = readTeaser(draft, catalog);
   if (!read.ok) return refused(read.error);
@@ -309,6 +325,8 @@ export async function addTeaser(draft: unknown): Promise<ActionState> {
  */
 export async function addPromo(draft: unknown, copyOf?: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
+  const pace = await takeRates("admin", "admin_create");
+  if (!pace.ok) return refused(pace.message);
   const read = readPromoDraft(draft);
   if (!read.ok) return refused(read.error);
   const { code, terms } = read.value;
@@ -337,6 +355,8 @@ export async function addPromo(draft: unknown, copyOf?: unknown): Promise<Action
  */
 export async function editPromo(code: unknown, draft: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
   const key = normalisePromoCode(text(code));
   const catalog = await loadCatalog();
   const current = catalog.promoByCode.get(key as never);
@@ -361,6 +381,8 @@ export async function editPromo(code: unknown, draft: unknown): Promise<ActionSt
 /** "Tạm dừng" / "Tiếp tục". Checkout refuses a paused code from the next order on. */
 export async function pausePromo(code: unknown, paused: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
   const key = normalisePromoCode(text(code));
   if (key === "") return failed("PAUSE_PROMO", "NOT_FOUND");
   if (typeof paused !== "boolean") return failed("PAUSE_PROMO", "BAD_INPUT", key);
@@ -383,6 +405,8 @@ export async function pausePromo(code: unknown, paused: unknown): Promise<Action
  */
 export async function raisePromoLimit(code: unknown, after: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
   const key = normalisePromoCode(text(code));
   const catalog = await loadCatalog();
   const current = catalog.promoByCode.get(key as never);
@@ -402,6 +426,8 @@ export async function raisePromoLimit(code: unknown, after: unknown): Promise<Ac
 /** "Kết thúc sớm": the closing hour becomes now. Only a code that is running. */
 export async function endPromo(code: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
   const key = normalisePromoCode(text(code));
   if (key === "") return failed("END_PROMO", "NOT_FOUND");
 
@@ -445,6 +471,8 @@ export async function endPromo(code: unknown): Promise<ActionState> {
  */
 export async function updateProduct(id: unknown, form: unknown): Promise<ActionState> {
   await requireAdmin("/admin/products");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
   if (typeof id !== "string") return failed("UPDATE_PRODUCT", "NOT_FOUND");
 
   const catalog = await loadCatalog();
@@ -596,6 +624,8 @@ function photoSummary(photos: ReadonlyArray<{ before: string; after: string }>):
  */
 export async function createProduct(draft: unknown): Promise<ActionState & { id?: string }> {
   await requireAdmin("/admin/products/new");
+  const pace = await takeRates("admin", "admin_create");
+  if (!pace.ok) return refused(pace.message);
   const catalog = await loadCatalog();
   const read = readNewProduct(draft, catalog);
   if (!read.ok) return refused(read.error);
@@ -647,6 +677,8 @@ export async function createProduct(draft: unknown): Promise<ActionState & { id?
  */
 export async function uploadProductPhoto(form: FormData): Promise<ActionState & { key?: string }> {
   await requireAdmin("/admin/products");
+  const pace = await takeRates("admin", "upload", "upload_global");
+  if (!pace.ok) return refused(pace.message);
   if (!(form instanceof FormData)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD");
   const color = form.get("color");
   const label = typeof color === "string" ? colorLabelOf(color) : "";
@@ -673,6 +705,8 @@ export async function uploadProductPhoto(form: FormData): Promise<ActionState & 
  */
 export async function removeUploadedPhoto(key: unknown): Promise<ActionState> {
   await requireAdmin("/admin/products");
+  const pace = await takeRates("admin");
+  if (!pace.ok) return refused(pace.message);
   if (!isUploadedKey(key)) return failed("UPLOAD_PHOTO", "BAD_INPUT");
   if (await photoKeyInUse(key)) return refused("Ảnh này đang dùng cho một mẫu — giữ lại, không xoá.");
 

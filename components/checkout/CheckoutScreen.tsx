@@ -435,7 +435,7 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
         </div>
         {/* A refusal can arrive after the basket it was about has emptied —
             another tab placed the same pieces — so it is said here too. */}
-        <Toast message={failure} ms={6000} onDone={dismissFailure} />
+        <Toast message={failure} ms={6000} tone="error" onDone={dismissFailure} />
       </ShopFrame>
     );
   }
@@ -816,7 +816,7 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
       </div>
 
       <Toast message={toast} onDone={() => setToast(null)} />
-      <Toast message={failure} ms={6000} onDone={dismissFailure} />
+      <Toast message={failure} ms={6000} tone="error" onDone={dismissFailure} />
     </ShopFrame>
   );
 }

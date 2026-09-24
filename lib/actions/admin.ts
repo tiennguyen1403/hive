@@ -18,9 +18,11 @@ import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import type { Json } from "@/lib/db/database.types";
 import { purgeUploadedPhotos } from "@/lib/db/photos";
+import { takeRates, tidyRateHits } from "@/lib/db/rate-limit";
 import { getSupabase } from "@/lib/db/server";
 import { requireAdmin } from "@/lib/db/session";
 import { isOrderCode } from "@/lib/lookup";
+import type { RateBucket } from "@/lib/rate-limit";
 import type { ActionState } from "./state";
 
 /**
@@ -34,7 +36,11 @@ import type { ActionState } from "./state";
  * So each one, in this order:
  *
  *   1. `requireAdmin()` — no session goes to sign in, a shopper's gets 404,
- *      exactly as the admin pages answer (`lib/db/session.ts`);
+ *      exactly as the admin pages answer (`lib/db/session.ts`); then, since
+ *      slice B4b, a token of the visitor's `admin` limit (120 per ten
+ *      minutes; the reset also `reset`, three per ten minutes), refused with
+ *      the wait as the toast's sentence (`lib/db/rate-limit.ts`) — the back
+ *      office is open to anybody on the public demo;
  *   2. reads its arguments as `unknown` and checks every one: the order code,
  *      the reason against the four the sheet offers, the carrier against the
  *      services the shop sells, the tracking number against what a label can
@@ -69,6 +75,16 @@ const refused = (move: AdminMove, failure: AdminFailure, code = ""): ActionState
 });
 
 const text = (value: unknown): string => (typeof value === "string" ? value.trim() : "");
+
+/**
+ * Slice B4b: the visitor's back-office limits — `admin`, and whatever else the
+ * move spends. Null when every token was there; the refusal, as the toast's
+ * sentence, when one was not.
+ */
+async function overLimit(...extra: RateBucket[]): Promise<ActionState | null> {
+  const verdict = await takeRates("admin", ...extra);
+  return verdict.ok ? null : { errors: { form: verdict.message } };
+}
 
 function record(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -110,6 +126,8 @@ function orderMoved(): void {
  */
 export async function markPaid(codes: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
+  const limited = await overLimit();
+  if (limited) return limited;
 
   if (
     !Array.isArray(codes) ||
@@ -147,6 +165,8 @@ export async function markPaid(codes: unknown): Promise<ActionState> {
  */
 export async function handOver(code: unknown, form: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
+  const limited = await overLimit();
+  if (limited) return limited;
   if (typeof code !== "string" || !isOrderCode(code)) return refused("HAND_OVER", "NOT_FOUND");
 
   const fields = record(form);
@@ -173,6 +193,8 @@ export async function handOver(code: unknown, form: unknown): Promise<ActionStat
 /** "Đã giao": the parcel arrived. No courier reports it, so the shop does. */
 export async function markDelivered(code: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
+  const limited = await overLimit();
+  if (limited) return limited;
   if (typeof code !== "string" || !isOrderCode(code)) return refused("MARK_DELIVERED", "NOT_FOUND");
 
   const failure = await run("admin_mark_delivered", { p_code: code, p_now: now() });
@@ -195,6 +217,8 @@ export async function cancelOrderAdmin(
   note: unknown,
 ): Promise<ActionState> {
   await requireAdmin("/admin/orders");
+  const limited = await overLimit();
+  if (limited) return limited;
   if (typeof code !== "string" || !isOrderCode(code)) return refused("CANCEL", "NOT_FOUND");
 
   const why = text(reason);
@@ -217,6 +241,8 @@ export async function cancelOrderAdmin(
 /** "Thêm" under the internal notes. Nothing about the order changes. */
 export async function noteOrder(code: unknown, body: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
+  const limited = await overLimit();
+  if (limited) return limited;
   if (typeof code !== "string" || !isOrderCode(code)) return refused("NOTE", "NOT_FOUND");
 
   const note = text(body);
@@ -237,6 +263,8 @@ export async function noteOrder(code: unknown, body: unknown): Promise<ActionSta
  */
 export async function editAddress(code: unknown, form: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
+  const limited = await overLimit();
+  if (limited) return limited;
   if (typeof code !== "string" || !isOrderCode(code)) return refused("EDIT_ADDRESS", "NOT_FOUND");
 
   const fields = record(form);
@@ -288,6 +316,8 @@ export async function editAddress(code: unknown, form: unknown): Promise<ActionS
  */
 export async function resetDemo(): Promise<ActionState> {
   await requireAdmin("/admin");
+  const limited = await overLimit("reset");
+  if (limited) return limited;
 
   const supabase = await getSupabase();
   const anchor = await supabase.rpc("demo_anchor");
@@ -306,6 +336,10 @@ export async function resetDemo(): Promise<ActionState> {
   try {
     const removed = await purgeUploadedPhotos();
     if (removed > 0) photos = ` · đã xoá ${removed} ảnh tải lên`;
+    // Slice B4b: the bucket is empty again, so the day's photo count
+    // (`upload_global`) describes photos that are gone. Only after a purge
+    // that went through — a bucket still full keeps its count.
+    await tidyRateHits(["upload_global"]);
   } catch (e) {
     console.error("reset: uploaded photos left in the bucket:", e instanceof Error ? e.message : e);
     photos = " · ảnh tải lên chưa xoá được";

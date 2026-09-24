@@ -1,5 +1,5 @@
 ---
-name: BRAND — nhãn dệt
+name: HIVE — nhãn dệt
 description: Vải đen, chỉ mật ong, sàn trắng — cửa hàng bán theo Số, mỗi Số một bìa, một mục lục, một giờ đóng.
 colors:
   brand: "#eba400"

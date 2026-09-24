@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ButtonLink } from "@/components/ui/Button";
 import { Empty } from "@/components/shop/Empty";
-import { Toast } from "@/components/shop/Toast";
+import { Toast, type ToastTone } from "@/components/shop/Toast";
 import { formatAddressLine } from "@/data/regions";
 import type { Order } from "@/data/types";
 import {
@@ -56,7 +56,8 @@ interface OrdersScreenProps {
  */
 export function OrdersScreen({ orders, currentDropNo, tab, openCode }: OrdersScreenProps) {
   const catalog = useCatalog();
-  const [toast, setToast] = useState<string | null>(null);
+  // What "Huỷ đơn" answered, and whether it was a refusal (slice B4b).
+  const [toast, setToast] = useState<{ message: string; tone: ToastTone } | null>(null);
 
   // One instant for the whole render, so a deadline and the state derived
   // from it are judged against the same clock. Re-taken whenever the orders
@@ -129,10 +130,19 @@ export function OrdersScreen({ orders, currentDropNo, tab, openCode }: OrdersScr
       )}
 
       {openCode && (
-        <OpenOrder code={openCode} orders={orders} now={now} onDone={setToast} />
+        <OpenOrder
+          code={openCode}
+          orders={orders}
+          now={now}
+          onDone={(message, tone) => setToast({ message, tone })}
+        />
       )}
 
-      <Toast message={toast} onDone={() => setToast(null)} />
+      <Toast
+        message={toast?.message ?? null}
+        tone={toast?.tone ?? "ok"}
+        onDone={() => setToast(null)}
+      />
     </>
   );
 }
@@ -154,7 +164,7 @@ function OpenOrder({
   code: string;
   orders: Order[];
   now: Date;
-  onDone: (message: string) => void;
+  onDone: (message: string, tone: ToastTone) => void;
 }) {
   const catalog = useCatalog();
   const found = orders.find((o) => o.code === code);

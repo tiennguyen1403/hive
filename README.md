@@ -15,6 +15,9 @@ Demo: https://hive-neon-three.vercel.app
 - **Hai cron hằng ngày** (`vercel.json`): `/api/reset` đặt lại dữ liệu mẫu trong khung 19:00–20:00 giờ Việt Nam
   (gói Hobby chỉ hứa đúng giờ, không hứa đúng phút); `/api/health` truy vấn cơ sở dữ liệu mỗi ngày để dự án
   Supabase Free không bị tạm dừng.
+- **Giới hạn tần suất đếm trong Postgres** (bảng `rate_hits`, chỉ máy chủ đọc ghi; khoá là HMAC của IP, IPv6 tính
+  theo dải /64): đặt đơn, đăng nhập và đăng ký, sổ địa chỉ, mọi thao tác quản trị, tải ảnh — để một người xem không
+  làm hỏng demo cho người khác.
 
 ## Chạy cục bộ
 
@@ -39,6 +42,10 @@ Mật khẩu chung `xemthu-2026`, **công khai theo thiết kế**: màn đăng 
 (khách `minhanh@email.com`) và "Vào quản trị thử" (quản lý `quanly@email.com`) mở tài khoản bằng một lần bấm.
 Ai cũng đăng ký được tài khoản mới. Mỗi ngày đơn hàng, tồn kho, Số, mã giảm giá, mẫu thêm mới và ảnh tải lên về
 lại bản mẫu; nút "Đặt lại dữ liệu mẫu" trong khu quản trị làm việc đó ngay lập tức.
+
+Tài khoản mẫu dùng chung nên **không đổi được mật khẩu**; muốn thử đổi mật khẩu thì đăng ký tài khoản riêng. Lần
+đặt lại hằng ngày cũng kiểm lại mật khẩu của chín tài khoản mẫu và chỉ trả về `xemthu-2026` tài khoản nào đã bị đổi,
+nên không đăng xuất người đang xem.
 
 ## Cố ý không có
 

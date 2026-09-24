@@ -73,7 +73,7 @@ export const HOME_COVER = {
  * `/about` says so in a `.prep` block instead of filling it in.
  */
 export const ABOUT_LEAD =
-  `BRAND bán streetwear unisex theo ${LEX.tl}: mỗi ${LEX.tl} mở đúng giờ, ` +
+  `HIVE bán streetwear unisex theo ${LEX.tl}: mỗi ${LEX.tl} mở đúng giờ, ` +
   "mỗi mẫu cắt đúng một lần, hết là hết.";
 
 /**

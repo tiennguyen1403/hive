@@ -1569,3 +1569,30 @@ chuyển hướng từ tên cũ; remote `origin` đổi theo); `package.json` / 
 đổi thành **HIVE** trong lát B4b — chỉ thay chữ trong wordmark đã có (`.wm`), không thêm mark, không thêm số. Chờ: mark (QĐ-26),
 favicon và ảnh OG (qua vòng mock), README cho người tuyển dụng. Thư mục máy `D:\Code\e-commerce` giữ nguyên. `PRODUCT.md` mục
 Brand Commitments ghi tên và trỏ sang `DESIGN.md`.
+
+**Lát B4b ĐẠT (24/09/2026, `backend-implementer` trên Opus 5.5, hai vòng; phiên chính duyệt độc lập).** Gia cố demo công khai.
+Migration `20260924150000_rate_limits.sql`: bảng `rate_hits` (RLS bật, 0 policy, mọi quyền chỉ `service_role`), `take_rate(p_bucket,
+p_subject, p_cost, p_limit, p_window_seconds, p_now)` (cửa sổ cố định `date_bin` từ epoch; một câu `insert … on conflict … where …
+returning` nên hai người tranh token cuối chỉ một thắng; từ chối thì không ghi), `tidy_rate_hits(p_now, p_clear)`. TS: `lib/rate-limit.ts`
+(11 bucket; `clientIpOf` đọc `x-forwarded-for` — docs Vercel: header này bị ghi đè để chống giả mạo; `rateKeyOf` gom IPv6 theo /64, IPv4-mapped
+về IPv4; `subjectOf` HMAC-SHA256 khoá `SUPABASE_SECRET_KEY`; câu chữ), `lib/db/rate-limit.ts` (`takeRate`/`takeRates`/`tidyRateHits`, mở khi
+hỏng), `lib/demo-accounts.ts` + `lib/db/demo-accounts.ts`. Gắn vào: 3 action đăng nhập (`sign_in` 10/5 phút), đăng ký (3/giờ), đổi mật khẩu
+(tài khoản mẫu bị từ chối trước mọi lời gọi Supabase; 5/10 phút), đặt đơn (`order_place` 5/10 phút + `order_units` 60 chiếc/ngày), 5 action
+tài khoản (30/10 phút), 21 action quản trị (`admin` 120/10 phút + `admin_create` 20/giờ, `upload` 40/giờ, `upload_global` 300/ngày toàn demo,
+`reset` 3/10 phút). `/api/reset` trả `passwordsChecked`/`passwordsRestored` và dọn `upload_global` khi đã xoá ảnh; `seed:users` đặt lại mật
+khẩu mẫu vô điều kiện (lệnh sửa tay). `Toast` có `tone` (lỗi = icon `danger` + `role="alert"` như `Field3`); agent phân loại từng chỗ gọi
+`say(`, hai toast `failure` ở checkout và câu trả lời "Huỷ đơn". BRAND → HIVE (QĐ-28). **Vòng 2 (phiên chính yêu cầu):** agent đo được
+`updateUserById` kèm mật khẩu thu hồi mọi phiên của tài khoản, kể cả khi mật khẩu trùng → đặt lại vô điều kiện sẽ đăng xuất mọi người đang
+dùng tài khoản thử mỗi tối; nay cron dò bằng client vứt đi, đóng phiên dò bằng `signOut({ scope: "local" })` (đo: `auth.sessions` 3 → 4 → 3),
+chỉ tài khoản trả `invalid_credentials` mới đặt lại; và IPv6 tính theo /64. **Kiểm:** typecheck sạch; `npm test` **62 tệp / 1.292**; `npm run
+test:db` **6 tệp / 180** (19 test mới); types trùng; build sạch. Phiên chính tự đi: "Đăng nhập thử" rồi đổi mật khẩu → câu từ chối dưới "Mật
+khẩu hiện tại" kèm icon (lượt đầu script của phiên chính bấm nhầm nút khác, chạy lại với selector đúng); người xem B bị chặn ở lượt đăng nhập
+sai thứ 11 "Thử lại sau 4 phút", người xem C vẫn vào; ngày thường `/api/reset` → 9/0 và trình duyệt vẫn giữ phiên; làm hỏng minhanh →
+"Đăng nhập thử" hỏng → `/api/reset` 9/1 → vào được; sweep **81 lượt** 0/0/0/0, tồn dư 48 + 2; xem ảnh `.playwright-cli/shots/backend/b4b/`.
+Migration lên hosted cùng ngày (người dùng gõ `db push`; lần đầu lỗi pooler `auth_query secret check timed out`, lần hai được), hosted 7/7.
+**Phiên chính sửa thêm:** README (giới hạn tần suất, tài khoản mẫu không đổi được mật khẩu), `DESIGN.md` + `.impeccable/design.json` đổi tên
+hệ thành "HIVE — nhãn dệt", `tasks/backend.md` §8 A4 và §9. **Mở:** Supabase Auth tính giới hạn theo IP máy chủ Vercel → mọi người xem dùng
+chung 30 lượt đăng nhập + đăng ký / 5 phút; bịt hẳn cần `Sb-Forwarded-For` + cờ `security_sb_forwarded_for_enabled` trên hosted (chờ người
+dùng); cron dò tiêu 9 lượt của ngân sách đó mỗi ngày; `removeAddress`/`makeDefault`/`rememberAddress` từ chối trong im lặng; token quản trị
+trừ trước khi kiểm đầu vào (450 MB là trần trên); trang đổi mật khẩu có thể báo trước cho tài khoản mẫu (việc UI, cần mock); stack local nay
+chạy đúng phiên bản của hosted (storage v1.77.5, gotrue v2.197.0) vì `supabase link` ghi `supabase/.temp`.

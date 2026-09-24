@@ -2,7 +2,9 @@ import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { cronAuthorized } from "@/lib/cron-auth";
 import { toVnIso } from "@/lib/datetime";
+import { restoreDemoPasswords } from "@/lib/db/demo-accounts";
 import { purgeUploadedPhotos } from "@/lib/db/photos";
+import { tidyRateHits } from "@/lib/db/rate-limit";
 import { getServiceSupabase } from "@/lib/db/service";
 
 /**
@@ -31,9 +33,30 @@ import { getServiceSupabase } from "@/lib/db/service";
  * WHY THE SERVICE CLIENT. With no session there is no user to act as.
  * `reset_demo()` lets the `service_role` through — and logs the reset as the
  * system, not as a manager — and `demo_anchor()` is granted to it, so the
- * secret key (`getServiceSupabase()`, server-only) makes exactly those two
- * calls; the photo bucket needs that key anyway. No table is read or written
- * here directly.
+ * secret key (`getServiceSupabase()`, server-only) makes those two calls; the
+ * photo bucket, the demo passwords and the rate-limit table need that key
+ * anyway. No table is read or written here directly.
+ *
+ * THE NINE DEMO PASSWORDS (slice B4b). The sign-in screen prints one
+ * password for the eight sample shoppers and the manager; `changePassword`
+ * refuses to change it, and this is the second lock: after `reset_demo()`,
+ * each of the nine is TRIED with `DEMO_PASSWORD` — a sign-in on a throwaway
+ * client, whose own session is closed again with `signOut({ scope: "local" })`
+ * — and only an account Auth answers `invalid_credentials` for is set back
+ * (`restoreDemoPasswords`, `lib/db/demo-accounts.ts`). Not all nine every
+ * day: measured on the local stack, setting a password through the admin API
+ * ends every session of that account, the same password included, so an
+ * unconditional reset would sign out whoever is using a demo account when the
+ * cron fires. Any other answer (too many requests, the network) touches
+ * nothing. The nine probes go from this server like every Auth call, so they
+ * spend nine of Supabase Auth's shared `sign_in_sign_ups` budget — counted per
+ * IP address, https://supabase.com/docs/guides/auth/rate-limits — every day.
+ * The back office's button does not do this part at all.
+ *
+ * THE RATE LIMITS (slice B4b). Once the photo bucket is empty the day's photo
+ * count (`upload_global`) describes photos that are gone, so it is cleared —
+ * only when the bucket really was emptied — and every counter window that is
+ * long over is forgotten either way (`tidyRateHits`, `lib/db/rate-limit.ts`).
  *
  * WHY THE SCHEDULE — `vercel.json` cannot hold a comment, so it is here.
  * Vercel reads a cron schedule in UTC, always (https://vercel.com/docs/cron-jobs,
@@ -62,13 +85,16 @@ import { getServiceSupabase } from "@/lib/db/service";
  * second run rebuilds the same sample on the same anchor and finds `up/`
  * already empty (`photosRemoved: 0`), and a missed day is caught by the next.
  *
- * THE ANSWER. `{ ok: true, anchor, photosRemoved }` — the anchor written as
- * Vietnamese wall-clock time, and how many uploaded photos went. When the
- * database cannot be reached or refuses, `{ ok: false }` with 503, and the
- * reason goes to the server log only: this endpoint is public, and a Postgres
- * error names schemas and roles. When the database part went through but the
- * bucket could not be emptied, the reset still happened, so the answer is
- * still 200, with `photosRemoved: null` — the same reasoning as `resetDemo`.
+ * THE ANSWER. `{ ok: true, anchor, passwordsChecked, passwordsRestored,
+ * photosRemoved }` — the anchor written as Vietnamese wall-clock time, how
+ * many of the nine demo accounts gave a clear answer to the probe (normally 9)
+ * and how many had to be set back (normally 0), and how many uploaded photos
+ * went. When the database cannot be reached or refuses, `{ ok: false }` with
+ * 503, and the reason goes to the server log only: this endpoint is public,
+ * and a Postgres error names schemas and roles. When the database part went
+ * through but the passwords or the bucket could not be seen to, the reset
+ * still happened, so the answer is still 200, with the two password counts
+ * or `photosRemoved` null — the same reasoning as `resetDemo`.
  */
 
 // Never prerendered, never served from a cache: a cached answer would report
@@ -105,6 +131,10 @@ export async function GET(request: NextRequest) {
     return Response.json({ ok: false }, { status: 503, headers: NO_STORE });
   }
 
+  // The nine shared accounts open with the printed password again: any that
+  // no longer does is set back. Never throws; null when it could not start.
+  const passwords = await restoreDemoPasswords();
+
   // The sample uses borrowed frames only, so after the reset no row shows an
   // upload and every object under `up/` is one nobody links to.
   let photosRemoved: number | null;
@@ -115,6 +145,10 @@ export async function GET(request: NextRequest) {
     photosRemoved = null;
   }
 
+  // Old counter windows go every day; the photo count only once the bucket it
+  // counts is really empty. Never throws.
+  await tidyRateHits(photosRemoved === null ? [] : ["upload_global"]);
+
   // Every page reads something the reset rebuilt. From a Route Handler this
   // marks them stale for their next visit (`03-api-reference/04-functions/revalidatePath.md`).
   revalidatePath("/", "layout");
@@ -122,7 +156,13 @@ export async function GET(request: NextRequest) {
   return Response.json(
     // PostgREST writes a timestamptz in the database's zone (UTC); the app
     // writes every instant as Vietnamese wall-clock time.
-    { ok: true, anchor: toVnIso(new Date(anchor.data)), photosRemoved },
+    {
+      ok: true,
+      anchor: toVnIso(new Date(anchor.data)),
+      passwordsChecked: passwords?.checked ?? null,
+      passwordsRestored: passwords?.restored ?? null,
+      photosRemoved,
+    },
     { headers: NO_STORE },
   );
 }

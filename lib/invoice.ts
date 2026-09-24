@@ -35,7 +35,7 @@ export interface InvoiceRow {
 }
 
 export interface Invoice {
-  /** The wordmark, the same placeholder the nav and the footer carry. */
+  /** The wordmark, the same one the nav and the footer carry — HIVE (QĐ-28). */
   brand: string;
   title: string;
   code: string;
@@ -86,7 +86,7 @@ export function invoiceOf(o: TrackedOrder): Invoice {
   }
 
   return {
-    brand: "BRAND",
+    brand: "HIVE",
     title: "Hoá đơn",
     code: o.code,
     placedAtLabel: `${clockLabel(o.placedAt)} · ${dayMonthYear(o.placedAt)}`,

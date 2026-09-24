@@ -195,5 +195,7 @@ describe("what the database's refusals become", () => {
     expect(failureMovesCatalog("PROMO_INVALID")).toBe(true);
     expect(failureMovesCatalog("BAD_INPUT")).toBe(false);
     expect(failureMovesCatalog("UNAVAILABLE")).toBe(false);
+    // Slice B4b: a refusal for going too fast moved nothing on the shelf.
+    expect(failureMovesCatalog("RATE_LIMITED")).toBe(false);
   });
 });

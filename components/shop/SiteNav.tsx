@@ -89,7 +89,7 @@ export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
     <header className="nav3">
       <div className="in">
         <Link className="wm nm" href="/">
-          BRAND
+          HIVE
         </Link>
 
         <nav className="links" aria-label="Danh mục">

@@ -93,7 +93,7 @@ export function DashboardScreen({
       startPaying(() => {
         setBusy(null);
         if (result.ok) setDone((d) => [...d, code]);
-        say(result.message ?? result.errors.form ?? "");
+        say(result.message ?? result.errors.form ?? "", result.ok ? "ok" : "error");
       });
     });
   }

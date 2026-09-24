@@ -88,11 +88,14 @@ export type OrderFailure = OrderErrorCode | "UNAVAILABLE";
 /**
  * What "Đặt hàng" hands back to the screen: the order number, or a sentence
  * and why it was chosen. `INVALID` is a request this module refused before
- * the database saw it. No key, no database text — only what the UI renders.
+ * the database saw it; `RATE_LIMITED` (slice B4b) is a visitor who placed too
+ * many orders, or too many pieces, inside the window (`lib/rate-limit.ts`),
+ * refused before `place_order()` ran. No key, no database text — only what
+ * the UI renders.
  */
 export type PlaceOrderResult =
   | { ok: true; code: string }
-  | { ok: false; failure: OrderFailure | "INVALID"; message: string };
+  | { ok: false; failure: OrderFailure | "INVALID" | "RATE_LIMITED"; message: string };
 
 /** What "Huỷ đơn" hands back. */
 export type CancelOrderResult = { ok: true } | { ok: false; message: string };
@@ -146,9 +149,10 @@ export function cancelFailureMessage(failure: OrderFailure): string {
 /**
  * Whether the screen should read the catalogue again after this failure:
  * the stock, the issue's window or the code's uses moved under the basket,
- * and the cart and the summary have to show what is true now.
+ * and the cart and the summary have to show what is true now. A visitor
+ * refused for going too fast (`RATE_LIMITED`) moved nothing.
  */
-export function failureMovesCatalog(failure: OrderFailure): boolean {
+export function failureMovesCatalog(failure: OrderFailure | "RATE_LIMITED"): boolean {
   return failure === "OUT_OF_STOCK" || failure === "DROP_CLOSED" || failure === "PROMO_INVALID";
 }
 

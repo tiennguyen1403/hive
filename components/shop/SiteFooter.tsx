@@ -160,7 +160,7 @@ export function SiteFooter() {
           </div>
 
           <div>
-            <h4>Về BRAND</h4>
+            <h4>Về HIVE</h4>
             <ul>
               <li>
                 <Link href="/about">Giới thiệu</Link>
@@ -176,7 +176,7 @@ export function SiteFooter() {
         </div>
 
         <div className="colophon">
-          <span className="wm nm">BRAND</span>
+          <span className="wm nm">HIVE</span>
           <span>Streetwear unisex. Mỗi {LEX.tl} cắt một lần.</span>
           {/* Not a copyright line: nobody has told this build what the
               company is called, and inventing one is exactly what NeedWrite
