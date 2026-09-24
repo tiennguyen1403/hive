@@ -98,7 +98,9 @@ qua server.**
    "a few user requests to the database each day over the previous 7-day period is enough".
 9. **Cache**: chưa bật `cacheComponents` → trang có DB render động; dedupe theo request bằng
    `React.cache`; `products/[slug]` bỏ prerender lúc build. Không bật Cache Components đợt này.
-10. **Ảnh**: giữ Unsplash qua `next/image`; Supabase Storage để sau.
+10. **Ảnh**: ảnh mẫu vẫn là Unsplash qua `next/image`; ảnh tải lên từ khu quản trị nằm ở Supabase Storage
+    (bucket `product-photos`, QĐ-27, lát B3c), đi qua máy chủ và phục vụ ở route `/photos/…` của app nên trình
+    duyệt vẫn không gọi Supabase.
 
 Đường mở rộng nếu thành shop thật: Supabase Pro 25 USD (hết ngủ, có backup); webhook
 SePay/PayOS vào một route handler khớp `code` với nội dung chuyển khoản; Resend làm SMTP;
@@ -136,7 +138,8 @@ GHN/GHTK API. Schema đã chừa chỗ.
 | **B2 Đặt hàng** | `place_order()`, `cancel_order()`; xác nhận đơn, Đơn của tôi, `/track` đọc DB; một hình dạng `Order`; xoá `brand.orders` | 2 đơn cùng ô tồn kho song song → không bán quá; huỷ trả hàng về kệ |
 | **B3 Quản trị** | Claim admin; 16 hành động thành Server Actions (guard chuyển trạng thái trong SQL); `events` thay `brand.adminSim`; "Đặt lại dữ liệu mẫu" gọi `reset_demo()`; đổi lời simbar; đồng hồ thật, anchor = `now()`. **Đã làm:** B3a 24/09 (vai, 6 hàm đơn, `events`, reset neo), B3b 24/09 (10 hàm `admin_*` kho/Số/teaser/mã/sửa mẫu, `promotions.paused`, `sold_out_at` sống, xoá `admin-sim`); B3c 24/09 (bucket `product-photos`, `/photos/[...key]`, `admin_add_product`/`set_product_photo`/`reorder_colors`, ẩn mẫu Số chưa mở, purge ảnh khi reset) | mọi nút admin ghi DB; log/CSV từ `events`; reset đưa về seed |
 | **B4 Triển khai** — **XONG 24/09** | Dự án Supabase hosted `hive-demo` (`ap-southeast-1`, PG 17), 6 migration + seed + 9 tài khoản mẫu; Vercel Hobby dự án `hive` (`sin1`), `vercel.json` hai cron UTC: health `0 3`, reset `0 12` (Hobby chỉ hứa đúng giờ ±59 phút nên reset nằm trọn sau mốc 18:50 VN); `GET /api/reset` sau `CRON_SECRET` (404 khi không có khoá); GitHub public; `TZ` là biến reserved trên Vercel, không đặt được (app đúng giờ VN dưới UTC) | https://hive-neon-three.vercel.app chạy; cron đăng ký trong project |
-| **B5 Tuỳ chọn** | Storage cho ảnh, Realtime tồn kho, Resend SMTP, tên miền | theo nhu cầu |
+| **B4b Gia cố demo công khai** — brief 24/09 | Tài khoản mẫu không đổi được mật khẩu, cron đặt lại cũng đặt lại mật khẩu mẫu; giới hạn tần suất đếm trong Postgres (bảng `rate_hits`, hàm `take_rate` chỉ `service_role`, khoá = HMAC của IP) cho đặt đơn, đăng nhập/đăng ký, tải ảnh, thao tác quản trị; toast lỗi có dạng riêng; BRAND → HIVE (QĐ-28). Brief `tasks/briefs/backend-b4b.md` | một người lạ không làm hỏng được nút thử, không mua sạch kho, không làm đầy bucket |
+| **B5 Tuỳ chọn** | Realtime tồn kho, Resend SMTP, tên miền (Storage đã dùng từ B3c) | theo nhu cầu |
 
 Giữ nguyên: mọi hàm thuần trong `lib/`; giỏ, yêu thích, giữ lại sau, tìm kiếm gần đây, tuỳ
 chọn vẫn ở `localStorage` (tiện ích thiết bị).
@@ -147,7 +150,8 @@ chọn vẫn ở `localStorage` (tiện ích thiết bị).
   tránh pháp lý; schema chừa chỗ.
 - API vận chuyển (GHN/GHTK/Viettel Post) — mã vận đơn nhập tay; chưa ký đối tác nào.
 - Gửi email/SMS/push — "đang chuẩn bị" giữ nguyên; Resend là bước sau.
-- Supabase Realtime, Edge Functions, Storage, Cache Components của Next 16 — thêm mảnh.
+- Supabase Realtime, Edge Functions, Cache Components của Next 16 — thêm mảnh. (Storage từng nằm ở đây; QĐ-27
+  đưa nó vào cho ảnh tải lên từ lát B3c.)
 - Đưa giỏ/yêu thích/tìm kiếm gần đây lên server — tiện ích thiết bị.
 - Tự host, Medusa/Payload, Haravan/Shopify — phí hoặc nặng, trái ngân sách 0đ.
 

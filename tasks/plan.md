@@ -1,4 +1,4 @@
-# Kế hoạch dựng frontend — khoi-store
+# Kế hoạch dựng frontend — HIVE (repo `tiennguyen1403/hive`, tên cũ `khoi-store`)
 
 Ngày lập: 2026-09-20. Trạng thái: **XONG — 6/6 phase, chốt kiểm 6 ĐẠT 2026-09-20**.
 
@@ -1550,3 +1550,22 @@ của Vercel, chỉ `hive-neon-three.vercel.app` công khai — README và hồ 
 trên Vercel, không đặt được: 5 biến môi trường là đủ. **Mở:** cron thật chỉ nhìn thấy sau 10:00 và 19:00 VN ngày 25/09 (Logs của dự
 án hoặc `vercel crons list`); Supabase Free ngủ sau 7 ngày không truy vấn, health hằng ngày lo việc đó; `.env.local` có thêm
 `VERCEL_OIDC_TOKEN` do `vercel link` (vô hại, git bỏ qua); B5 tuỳ chọn (Resend owner-only, realtime) chưa bắt đầu.
+
+**Quét lại toàn dự án (24/09/2026 chiều, phiên chính).** Typecheck sạch, `npm test` 59 tệp / 1.250, `npm run test:db` 5 tệp /
+161 — khớp mục B4. Production 200; lượt lạnh đầu tiên vào `/` TTFB 2,8 s, lượt ấm ~0,4 s; mọi trang `no-store`. Sáu điểm chưa có
+trong hồ sơ: (1) `changePassword` không chặn 9 tài khoản mẫu, `/api/reset` không đụng `auth.users`, `seed:users` không ghi lại
+mật khẩu của tài khoản đã có → một người lạ làm hỏng được "Đăng nhập thử" và "Vào quản trị thử" cho mọi người tới khi sửa tay
+(kết luận từ đọc mã, không thử trên production); (2) không có giới hạn tần suất nào — đơn tối đa 20 chiếc nhưng số đơn không giới
+hạn (mua sạch kho được), tải ảnh không giới hạn số tệp (bucket 1 GB); (3) chữ giữ chỗ BRAND ở 9 chỗ người xem thấy, không có
+favicon / ảnh OG; (4) không có CI; (5) cold start ở lượt đầu; (6) `PRODUCT.md` (thương hiệu, từ vựng) và `tasks/backend.md`
+§6.10/§9/§10 (Storage) lệch mã — đã sửa cùng ngày. Vercel MCP nối trong phiên trả 403 với scope team → muốn đọc log/cron qua
+MCP thì người dùng phải đăng nhập lại có quyền vào team. Người dùng chốt: **viết brief B4b và giao agent ngay** (§ dưới),
+**chốt tên HIVE và đổi tên repo** (QĐ-28). Chưa chốt: ngôn ngữ README cho người tuyển dụng; có thu hẹp phạm vi "quản lý công
+khai" không (hiện ai cũng sửa được tên mẫu, teaser, ảnh — khách khác thấy tới lần đặt lại 19:00; phương án 0đ: pg_cron gọi
+`/api/reset` dày hơn). Chưa bàn tới: CI, Cache Components.
+
+**QĐ-28 (24/09/2026) — Tên HIVE chốt; repo đổi tên `hive`.** `gh repo rename` `khoi-store` → `tiennguyen1403/hive` (GitHub giữ
+chuyển hướng từ tên cũ; remote `origin` đổi theo); `package.json` / `package-lock.json` name `hive`. Chữ giữ chỗ "BRAND" trên app
+đổi thành **HIVE** trong lát B4b — chỉ thay chữ trong wordmark đã có (`.wm`), không thêm mark, không thêm số. Chờ: mark (QĐ-26),
+favicon và ảnh OG (qua vòng mock), README cho người tuyển dụng. Thư mục máy `D:\Code\e-commerce` giữ nguyên. `PRODUCT.md` mục
+Brand Commitments ghi tên và trỏ sang `DESIGN.md`.
