@@ -11,7 +11,12 @@ slice should fit the garment inside a safe box rather than by width alone.
 
 Pillow only (no numpy on the machine it was written on).
 
-usage: python tools/photo-frame-trial.py <in.png> <out.webp> [width_frac] [top_frac]
+usage: python tools/photo-frame-trial.py <in.png> <out.webp> [width_frac] [top_frac] [height_frac]
+
+Since 25/09 (MUỐI, the first trousers) the garment is fitted inside a box, not
+by width alone: width_frac of the canvas wide AND height_frac tall at most,
+whichever binds first. Tops and hoodies stay width-bound (they reach 70-82% of
+the height at 84% of the width); trousers and long coats become height-bound.
 """
 import random
 import sys
@@ -21,6 +26,7 @@ OUT_W, OUT_H = 1200, 1500
 src_path, out_path = sys.argv[1], sys.argv[2]
 WIDTH_FRAC = float(sys.argv[3]) if len(sys.argv) > 3 else 0.84
 TOP_FRAC = float(sys.argv[4]) if len(sys.argv) > 4 else 0.12
+HEIGHT_FRAC = float(sys.argv[5]) if len(sys.argv) > 5 else 0.82
 
 im = Image.open(src_path).convert("RGB")
 W, H = im.size
@@ -90,10 +96,14 @@ mask = mask.filter(ImageFilter.MedianFilter(3))
 mp = mask.load()
 cols = [x for x in range(small_w) if sum(1 for y in range(small_h) if mp[x, y]) >= 3]
 rows = [y for y in range(small_h) if sum(1 for x in range(small_w) if mp[x, y]) >= 3]
-gx0, gx1, gy0 = cols[0] * 4, cols[-1] * 4 + 4, rows[0] * 4
+gx0, gx1, gy0, gy1 = cols[0] * 4, cols[-1] * 4 + 4, rows[0] * 4, rows[-1] * 4 + 4
 
-# 3. Scale so the garment is WIDTH_FRAC of the canvas, centred, its top at TOP_FRAC.
-s = OUT_W * WIDTH_FRAC / (gx1 - gx0)
+# 3. Scale so the garment is WIDTH_FRAC of the canvas wide, or HEIGHT_FRAC tall
+#    if that binds first; centred, its top at TOP_FRAC.
+s_w = OUT_W * WIDTH_FRAC / (gx1 - gx0)
+s_h = OUT_H * HEIGHT_FRAC / (gy1 - gy0)
+s = min(s_w, s_h)
+bound = "width" if s_w <= s_h else "height"
 sw, sh = round(W * s), round(H * s)
 scaled = im.resize((sw, sh), Image.LANCZOS)
 ox = round(OUT_W / 2 - (gx0 + gx1) / 2 * s)
@@ -150,4 +160,4 @@ ImageDraw.Draw(alpha).rectangle((feather, feather, sw - feather, sh - feather), 
 alpha = alpha.filter(ImageFilter.GaussianBlur(feather / 2))
 canvas.paste(scaled, (ox, oy), alpha)
 canvas.save(out_path, "WEBP", quality=86, method=6)
-print(f"{src_path}: garment x {gx0}-{gx1} top {gy0}; scale {s:.3f}; photo at ({ox},{oy}) {sw}x{sh}; grain {grain:.2f}")
+print(f"{src_path}: garment x {gx0}-{gx1} y {gy0}-{gy1}; {bound}-bound, scale {s:.3f}; photo at ({ox},{oy}) {sw}x{sh}; grain {grain:.2f}")
