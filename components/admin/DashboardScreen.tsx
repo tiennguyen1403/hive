@@ -9,7 +9,6 @@ import { useAdminToast } from "@/components/admin/AdminToast";
 import { RevenueChart } from "@/components/admin/RevenueChart";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { Icon } from "@/components/icon/Icon";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { markPaid } from "@/lib/actions/admin";
 import type { AdminOrder } from "@/lib/admin-orders";
@@ -180,7 +179,8 @@ export function DashboardScreen({
           {awaiting} chờ tiền · {toHandOver} chờ bàn giao
           {queue.length > 0 && (
             <>
-              {" · "}
+              {/* The separator stays on the line it ends (v3 slice 13). */}
+              {"\u00a0· "}
               <a href="#queue">xử lý ngay</a>
             </>
           )}
@@ -198,164 +198,166 @@ export function DashboardScreen({
       </div>
 
       <section className="panel3">
-        <h2>
-          Doanh thu {days} ngày gần nhất
-          <span className="meta">cột trống = ngày không có đơn đã thanh toán</span>
-        </h2>
+        <h2>Doanh thu {days} ngày gần nhất</h2>
         <RevenueChart points={window.points} totalVnd={window.totalVnd} peak={window.peak} />
       </section>
 
+      {/* Two columns that stack on their own (v3 slice 13): the work on the
+          left, the stock and the customers on the right. As two rows of
+          pairs, each row took its taller panel's height, and a short
+          "Cần xử lý" left a 66px hole above "Đơn mới nhất". Tab follows
+          the columns, since that is the order they are in. */}
       <div className="split3">
-        <section className="panel3" id="queue">
-          <h2>
-            Cần xử lý
-            <span className="meta">
-              {queue.length} đơn · việc của cửa hàng, không phải của khách hay bên vận chuyển
-            </span>
-          </h2>
-          <div className="bd queue3">
-            {queue.length === 0 ? (
-              <p className="none">Không còn đơn nào chờ cửa hàng. Đơn mới sẽ hiện ở đây.</p>
-            ) : (
-              queue.map((q, i) => (
-                <div className="q" key={q.code}>
-                  <b>
-                    <Link href={`/admin/orders/${q.code}`}>{q.code}</Link> · {q.customer} ·{" "}
-                    {vnd(q.totalVnd)}
-                  </b>
-                  <span className="sub">
-                    {q.standing}
-                    {q.due && (
-                      <>
-                        {" · "}
-                        {q.late ? <span className="late">{q.due}</span> : q.due}
-                      </>
-                    )}
-                    {" · "}
-                    {q.items}
-                  </span>
-                  {/* ONE HONEY BUTTON IN THE PANEL, and it is the top row.
-                      The queue is already sorted into the order it should be
-                      worked, so "one primary action per screen" means the
-                      first job — the rest carry the ink outline. Five honey
-                      buttons down a list is a list of equals, which is the
-                      opposite of what a queue says, and on this screen they
-                      were also competing with the chart, the badges and the
-                      stamp for the same colour. */}
-                  <span className="act">
-                    {q.action === "MARK_PAID" ? (
-                      <Button
-                        tone={i === 0 ? "sm" : "ink sm"}
-                        {...(busy === q.code || done.includes(q.code)
-                          ? {}
-                          : { icon: "check" as const })}
-                        disabled={busy !== null || done.includes(q.code)}
-                        onClick={() => confirmPaid(q.code)}
-                      >
-                        {busy === q.code
-                          ? "Đang lưu…"
-                          : done.includes(q.code)
-                            ? "Đã lưu"
-                            : "Đã nhận tiền"}
-                      </Button>
-                    ) : (
-                      /* The handover form lives on the order, because it
-                         needs a tracking number. The link opens it there. */
-                      <ButtonLink
-                        tone={i === 0 ? "sm" : "ink sm"}
-                        icon="box"
-                        href={`/admin/orders/${q.code}?handover=1#handover`}
-                      >
-                        Đóng gói và bàn giao
-                      </ButtonLink>
-                    )}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
+        <div>
+          <section className="panel3" id="queue">
+            <h2>
+              Cần xử lý
+              <span className="meta">{queue.length} đơn</span>
+            </h2>
+            <div className="bd queue3">
+              {queue.length === 0 ? (
+                <p className="none">Không còn đơn nào chờ cửa hàng. Đơn mới sẽ hiện ở đây.</p>
+              ) : (
+                queue.map((q, i) => (
+                  <div className="q" key={q.code}>
+                    <b>
+                      <Link href={`/admin/orders/${q.code}`}>{q.code}</Link> · {q.customer} ·{" "}
+                      {vnd(q.totalVnd)}
+                    </b>
+                    {/* A separator ends the line it is on, never starts the
+                        next: "· S05 – MUỐI ×2" opened a line (v3 slice 13). */}
+                    <span className="sub">
+                      {q.standing}
+                      {q.due && (
+                        <>
+                          {"\u00a0· "}
+                          {q.late ? <span className="late">{q.due}</span> : q.due}
+                        </>
+                      )}
+                      {"\u00a0· "}
+                      {q.items}
+                    </span>
+                    {/* ONE HONEY BUTTON IN THE PANEL, and it is the top row.
+                        The queue is already sorted into the order it should be
+                        worked, so "one primary action per screen" means the
+                        first job — the rest carry the ink outline. Five honey
+                        buttons down a list is a list of equals, which is the
+                        opposite of what a queue says, and on this screen they
+                        were also competing with the chart, the badges and the
+                        stamp for the same colour. */}
+                    <span className="act">
+                      {q.action === "MARK_PAID" ? (
+                        <Button
+                          tone={i === 0 ? "sm" : "ink sm"}
+                          {...(busy === q.code || done.includes(q.code)
+                            ? {}
+                            : { icon: "check" as const })}
+                          disabled={busy !== null || done.includes(q.code)}
+                          onClick={() => confirmPaid(q.code)}
+                        >
+                          {busy === q.code
+                            ? "Đang lưu…"
+                            : done.includes(q.code)
+                              ? "Đã lưu"
+                              : "Đã nhận tiền"}
+                        </Button>
+                      ) : (
+                        /* The handover form lives on the order, because it
+                           needs a tracking number. The link opens it there. */
+                        <ButtonLink
+                          tone={i === 0 ? "sm" : "ink sm"}
+                          icon="box"
+                          href={`/admin/orders/${q.code}?handover=1#handover`}
+                        >
+                          Đóng gói và bàn giao
+                        </ButtonLink>
+                      )}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
 
-        <section className="panel3">
-          <h2>
-            Bán chạy trong {LEX.tl} {issueNo(currentDropNo)}
-            <span className="meta">đã bán / đã cắt</span>
-          </h2>
-          <div className="bd rank3">
-            {ranking.slice(0, 5).map((r, i) => (
-              <div className="r" key={r.product.id}>
-                <span className="no">{i + 1}</span>
-                <Image
-                  src={photoUrl(r.product.photoKeys[0]!, 120)}
-                  alt=""
-                  width={36}
-                  height={45}
-                />
-                <b>{styleName(r.product.name, r.product.dropNo)}</b>
-                <div
-                  className={
-                    r.left === 0 ? "meter gone" : r.percent >= 85 ? "meter hot" : "meter"
-                  }
-                  aria-hidden="true"
-                >
-                  <i style={{ width: `${r.percent}%` }} />
-                </div>
-                <span className="n">
-                  <b>{r.sold}</b> / {r.cut} · {r.left === 0 ? "hết" : `${r.percent}%`}
-                </span>
-              </div>
-            ))}
-            <p className="fine3">
-              <Link className="lnk" href={`/admin/drops/${issueNo(currentDropNo)}`}>
-                Xem cả {ranking.length} mẫu của {LEX.tl}
+          <section className="panel3">
+            <h2>
+              Đơn mới nhất
+              <Link className="more" href="/admin/orders">
+                Xem tất cả
               </Link>
-            </p>
-          </div>
-        </section>
-      </div>
-
-      <div className="split3">
-        <section className="panel3">
-          <h2>
-            Đơn mới nhất
-            <Link className="more" href="/admin/orders">
-              Xem tất cả
-            </Link>
-          </h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Mã đơn</th>
-                <th>Khách</th>
-                <th>Thời gian</th>
-                <th className="right">Giá trị</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              {latest.map((o) => {
-                const s = STATE_LABEL[o.status.state];
-                return (
-                  <tr key={o.code}>
-                    <td>
-                      <Link href={`/admin/orders/${o.code}`}>{o.code}</Link>
-                    </td>
-                    <td className="nw">{orderCustomer(o)}</td>
-                    <td className="nw">
-                      {dayMonth(o.placedAt)} · {clockLabel(o.placedAt)}
-                    </td>
-                    <td className="right">{plainVnd(orderTotalVnd(o))}</td>
-                    <td>
-                      <Badge tone={s.tone}>{s.text}</Badge>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </section>
+            </h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Khách</th>
+                  <th>Thời gian</th>
+                  <th className="right">Giá trị</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {latest.map((o) => {
+                  const s = STATE_LABEL[o.status.state];
+                  return (
+                    <tr key={o.code}>
+                      <td>
+                        <Link href={`/admin/orders/${o.code}`}>{o.code}</Link>
+                      </td>
+                      <td className="nw">{orderCustomer(o)}</td>
+                      <td className="nw">
+                        {dayMonth(o.placedAt)} · {clockLabel(o.placedAt)}
+                      </td>
+                      <td className="right">{plainVnd(orderTotalVnd(o))}</td>
+                      <td>
+                        <Badge tone={s.tone}>{s.text}</Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
+        </div>
 
         <div>
+          <section className="panel3">
+            <h2>
+              Bán chạy trong {LEX.tl} {issueNo(currentDropNo)}
+              <span className="meta">đã bán / đã cắt</span>
+            </h2>
+            <div className="bd rank3 best">
+              {ranking.slice(0, 5).map((r, i) => (
+                <div className="r" key={r.product.id}>
+                  <span className="no">{i + 1}</span>
+                  <Image
+                    src={photoUrl(r.product.photoKeys[0]!, 120)}
+                    alt=""
+                    width={36}
+                    height={45}
+                  />
+                  <b>{styleName(r.product.name, r.product.dropNo)}</b>
+                  <div
+                    className={
+                      r.left === 0 ? "meter gone" : r.percent >= 85 ? "meter hot" : "meter"
+                    }
+                    aria-hidden="true"
+                  >
+                    <i style={{ width: `${r.percent}%` }} />
+                  </div>
+                  <span className="n">
+                    <b>{r.sold}</b> / {r.cut} · {r.left === 0 ? "hết" : `${r.percent}%`}
+                  </span>
+                </div>
+              ))}
+              <p className="fine3">
+                <Link className="lnk" href={`/admin/drops/${issueNo(currentDropNo)}`}>
+                  Xem cả {ranking.length} mẫu của {LEX.tl}
+                </Link>
+              </p>
+            </div>
+          </section>
+
           <section className="panel3">
             <h2>
               Sắp hết<span className="meta">{alerts.length} mẫu</span>
@@ -417,14 +419,6 @@ export function DashboardScreen({
           </section>
         </div>
       </div>
-
-      <p className="fine3">
-        <Icon name="info" className="ic sm" /> Dữ liệu mẫu: {book.length} đơn, {summary.styles}{" "}
-        mẫu · mọi thao tác lưu trên máy chủ ·{" "}
-        <Link className="lnk" href="/admin/log">
-          Chi tiết
-        </Link>
-      </p>
     </>
   );
 }

@@ -182,12 +182,3 @@ export function issuesLabel(issues: number[]): string {
   if (issues.length === 0) return "—";
   return `${LEX.t} ${issues.map((n) => String(n).padStart(2, "0")).join(" · ")}`;
 }
-
-/** The legend the table prints beside its search box, in one place. */
-export function tagLegend(): string {
-  return (
-    `Thân thiết: mua ≥ ${LOYAL_ISSUES} ${LEX.tl} liên tiếp · ` +
-    `Quay lại: ≥ ${RETURNING_ORDERS} đơn · ` +
-    `Mới: đơn đầu trong ${LEX.tl} đang bán`
-  );
-}

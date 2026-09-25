@@ -361,9 +361,7 @@ export function AdminOrderScreen({
                     {ward ? `, ${wardLabel(ward)}` : ""}
                     {province ? `, ${provinceLabel(province)}` : ""}
                     <br />
-                    <span className="muted">
-                      {delivery.label} · {delivery.note}
-                    </span>
+                    <span className="muted">{delivery.label}</span>
                   </div>
                   {editReason && (
                     <p className="fine3">Đã sửa địa chỉ · lý do: {editReason}</p>
@@ -509,8 +507,7 @@ function NextStep({
       <div className="nextstep">
         <b>Bước tiếp theo: xác nhận đã nhận tiền</b>
         <span>
-          {PAYMENT_LABEL[order.payment]} · chưa nối cổng thanh toán, đối chiếu tay ·{" "}
-          {vnd(orderTotalVnd(order))}
+          {PAYMENT_LABEL[order.payment]} · đối chiếu tay · {vnd(orderTotalVnd(order))}
         </span>
         {payButton}
       </div>

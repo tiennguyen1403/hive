@@ -117,12 +117,6 @@ export function DropFormModal({
           ? `Tạo ${LEX.tl} ${issueNo(no)}`
           : `Sửa giờ ${LEX.tl} ${issueNo(no)}`
       }
-      sub={
-        <>
-          Một {LEX.tl} chỉ cần giờ mở và giờ đóng. Mẫu, giá và số cắt thêm sau ở Mẫu. Trạng thái
-          luôn suy từ hai mốc này, nên “đóng sớm” cũng chỉ là đổi giờ đóng.
-        </>
-      }
       footer={
         <>
           <Button tone="ink sm" icon="back" disabled={pending} onClick={onClose}>

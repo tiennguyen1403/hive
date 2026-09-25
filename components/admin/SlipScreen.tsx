@@ -57,7 +57,7 @@ export function SlipScreen({
         title={orders.length > 1 ? `Phiếu giao · ${orders.length} đơn` : "Phiếu giao"}
         sub={
           orders.length > 0
-            ? `${orders.map((o) => o.code).join(" · ")} · in ${orders.length} phiếu, hai phiếu một trang A4`
+            ? `${orders.map((o) => o.code).join(" · ")} · ${orders.length} phiếu`
             : undefined
         }
       >
@@ -128,7 +128,9 @@ export function SlipScreen({
                   </div>
                   <div className="qrph">
                     <div className="cells" aria-hidden="true" />
-                    <span>QR tra cứu đơn · chờ</span>
+                    {/* "· chờ" stays on the word before it: it stood alone
+                        under the QR slot (v3 slice 13). */}
+                    <span>{"QR tra cứu đơn\u00a0·\u00a0chờ"}</span>
                   </div>
                 </div>
 
@@ -176,15 +178,6 @@ export function SlipScreen({
             );
           })}
         </div>
-      )}
-
-      {orders.length > 0 && (
-        <p className="fine3 noprint">
-          Đơn COD in thêm ô “Thu hộ” đậm ở cuối phiếu, gồm cả phụ thu{" "}
-          {vnd(COD_SURCHARGE_VND)}. Khi in, thanh bên và tiêu đề ẩn; hai phiếu một trang. Phiếu in
-          từ đơn hàng trên máy chủ — chưa nối đơn vị vận chuyển nào, nên không hệ thống vận đơn nào
-          nhận bản in này.
-        </p>
       )}
     </>
   );

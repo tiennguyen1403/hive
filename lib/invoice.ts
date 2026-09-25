@@ -60,9 +60,7 @@ export interface Invoice {
   disclaimer: string;
 }
 
-const DISCLAIMER =
-  "Bản in dành cho người mua. Tên pháp nhân và mã số thuế chưa chốt, nên đây " +
-  "không phải hoá đơn giá trị gia tăng.";
+const DISCLAIMER = "Bản in dành cho người mua, không phải hoá đơn giá trị gia tăng.";
 
 /** Has the money arrived, is it still owed, or is the order over. */
 function paidLabelOf(o: TrackedOrder): string {

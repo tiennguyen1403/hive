@@ -85,7 +85,3 @@ export function customerRows(
   }));
 }
 
-/** "N khách · 8 tài khoản mẫu …" — how many of them came from the sample. */
-export function sampleAccounts(customers: AdminCustomer[]): number {
-  return customers.filter((c) => isShopper(c) && c.handle !== null).length;
-}

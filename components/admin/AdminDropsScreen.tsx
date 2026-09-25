@@ -31,7 +31,7 @@ import {
   soldOutSizes,
   soldUnits,
 } from "@/lib/inventory";
-import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
+import { LEX, issueLabel, issueNo, styleInList, styleName } from "@/lib/lexicon";
 import { compactVnd, plainVnd, vnd } from "@/lib/money";
 import { photoUrl } from "@/lib/photos";
 import { soldOutTimes } from "@/lib/sold-out-times";
@@ -119,10 +119,7 @@ export function AdminDropsScreen({
 
   return (
     <>
-      <AdminTop
-        title={LEX.adm}
-        sub="Trạng thái suy từ giờ mở và giờ đóng, không có cờ bật tắt"
-      >
+      <AdminTop title={LEX.adm}>
         <Button tone="sm" icon="plus" onClick={() => setCreating(true)}>
           Tạo {LEX.tl}
         </Button>
@@ -284,7 +281,7 @@ export function AdminDropsScreen({
             <>
               Giờ đóng đổi từ {dateTimeLabel(drops.find((d) => d.no === closing)?.closesAt ?? "")}{" "}
               thành bây giờ. {dropSummary(catalog, closing, products).onHand} chiếc còn lại rời kệ; đơn đã
-              đặt không bị ảnh hưởng. Cùng một cơ chế, không phải một trạng thái thứ tư.
+              đặt không bị ảnh hưởng.
             </>
           )
         }
@@ -428,10 +425,7 @@ function IssueDetail({
 
       {summary.styles === 0 ? (
         <div className="dt3">
-          <p className="none">
-            {LEX.t} này chưa có mẫu nào. Mẫu, giá và số cắt được thêm ở Mẫu; số liệu xuất hiện ngay
-            sau đó.
-          </p>
+          <p className="none">{LEX.t} này chưa có mẫu nào.</p>
         </div>
       ) : (
         <>
@@ -477,7 +471,11 @@ function IssueDetail({
               <b>{low.length} mẫu</b>
               {low.length > 0
                 ? low
-                    .map((a) => `${styleName(a.product.name, a.product.dropNo)} còn ${a.left}`)
+                    .map(
+                      // Each name held together (`styleInList`, v3 slice 13):
+                      // the KPI broke "S05 –" over "SƯƠNG còn 3".
+                      (a) => `${styleInList(styleName(a.product.name, a.product.dropNo))} còn ${a.left}`,
+                    )
                     .join(" · ")
                 : "chưa mẫu nào xuống thấp"}
             </div>
@@ -541,10 +539,7 @@ function IssueDetail({
           </div>
 
           <section className="panel3" style={{ marginTop: 16 }}>
-            <h2>
-              {issueLabel(no + 1)} · mẫu hé lộ
-              <span className="meta">hiện ở trang chủ từ giờ tới khi mở</span>
-            </h2>
+            <h2>{issueLabel(no + 1)} · mẫu hé lộ</h2>
             <div className="bd teasers">
               {teasers.length === 0 ? (
                 <p className="none" style={{ padding: 0 }}>

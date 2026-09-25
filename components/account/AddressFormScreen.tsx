@@ -74,7 +74,6 @@ export function AddressFormScreen({ provinces, editing, seed }: AddressFormScree
     <>
       <div className="pghead">
         <h1>{title}</h1>
-        <span className="meta">lưu vào tài khoản</span>
       </div>
 
       {state.errors.form && (
@@ -202,7 +201,10 @@ export function AddressFormScreen({ provinces, editing, seed }: AddressFormScree
           <span className="lbl" id="addr-label">
             Nhãn
           </span>
-          <div className="chips3" role="group" aria-labelledby="addr-label">
+          {/* `wrapped`: three choices shown whole, not a row that scrolls — and
+              `.chips3:not(.wrapped)` is hidden from 900px (listing.css), which
+              left the label unchoosable on a desktop (v3 slice 13). */}
+          <div className="chips3 wrapped" role="group" aria-labelledby="addr-label">
             {ADDRESS_LABELS.map((l) => (
               <button
                 key={l}
@@ -249,14 +251,6 @@ export function AddressFormScreen({ provinces, editing, seed }: AddressFormScree
           </ButtonLink>
         </div>
       </form>
-
-      <p className="note3" style={{ marginTop: 16 }}>
-        <Icon name="info" className="ic sm" />
-        <span>
-          Lưu vào sổ địa chỉ của tài khoản. Địa chỉ mặc định được điền sẵn ở bước thanh
-          toán.
-        </span>
-      </p>
     </>
   );
 }

@@ -80,7 +80,7 @@ export function CancelOrderModal({
         order && (
           <>
             {paid
-              ? `Đơn đã thanh toán ${vnd(total)}. Huỷ thì phải hoàn tiền tay — chưa nối cổng thanh toán nào.`
+              ? `Đơn đã thanh toán ${vnd(total)}. Huỷ thì phải hoàn tiền tay.`
               : `Đơn ${vnd(total)} chưa nhận được tiền. Huỷ là đóng lại, không có gì phải hoàn.`}{" "}
             Khách thấy lý do ở màn đơn của họ. Hàng về kệ ngay.
           </>

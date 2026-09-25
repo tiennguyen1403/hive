@@ -72,10 +72,7 @@ export function HandoverForm({
       </h2>
       <div className="bd">
         <div className="fgrid">
-          <Field3
-            label="Hình thức giao"
-            help="Chưa ký đơn vị vận chuyển nào: ô này là hình thức giao khách đã chọn, mã vận đơn nhập tay."
-          >
+          <Field3 label="Hình thức giao">
             {({ id, describedBy }) => (
               <span aria-describedby={describedBy}>
                 <Select

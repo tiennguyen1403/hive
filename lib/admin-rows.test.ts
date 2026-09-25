@@ -113,7 +113,8 @@ describe("orderNote", () => {
       testOrder({ state: "AWAITING_TRANSFER", dueAt: "2026-09-21T08:05:00+07:00" }),
       NOW,
     )!;
-    expect(soon.text).toBe("hạn 08:05 21/09");
+    // The hour and the day never part (v3 slice 13): a no-break space.
+    expect(soon.text).toBe("hạn 08:05\u00a021/09");
     expect(soon.late).toBe(false);
 
     const past = orderNote(
@@ -130,7 +131,7 @@ describe("orderNote", () => {
     });
     expect(
       orderNote(testOrder({ state: "PAID", paidAt: "2026-09-17T10:00:00+07:00" }), NOW),
-    ).toEqual({ text: "chưa bàn giao · 3 ngày", late: true });
+    ).toEqual({ text: "chưa bàn giao · 3\u00a0ngày", late: true });
   });
 
   it("quotes the courier's number while a parcel is out", () => {
@@ -146,7 +147,7 @@ describe("orderNote", () => {
     const cod = { ...testOrder({ state: "RECEIVED" }), payment: "COD" as const };
     expect(orderNote({ ...cod, placedAt: at }, NOW)).toEqual({ text: "chưa bàn giao", late: false });
     expect(orderNote({ ...cod, placedAt: "2026-09-17T10:00:00+07:00" }, NOW)).toEqual({
-      text: "chưa bàn giao · 3 ngày",
+      text: "chưa bàn giao · 3\u00a0ngày",
       late: true,
     });
     const card = { ...testOrder({ state: "RECEIVED" }), payment: "CARD" as const };
@@ -208,9 +209,11 @@ describe("queueRows", () => {
         { ...first.lines[0]!, productId: tee.id, qty: 1 },
       ],
     };
+    // Each entry held together, the list breakable at its comma (v3 slice 13).
     expect(orderItemsLabel(FIXTURE_CATALOG, order)).toBe(
-      `${styleName("KHÓI", 5)} ×2, ÁO THUN TRƠN ×1`,
+      "S05\u00a0–\u2060\u00a0KHÓI\u00a0×2, ÁO THUN TRƠN\u00a0×1",
     );
+    expect(styleName("KHÓI", 5)).toBe("S05\u00a0– KHÓI");
   });
 
   it("hands a COD order over from RECEIVED, and asks for a card order's money first (slice B3a)", () => {
@@ -220,7 +223,7 @@ describe("queueRows", () => {
     const [c2, c1] = queueRows(FIXTURE_CATALOG, [cod, card], NOW);
     expect(c2).toMatchObject({ code: "DH-2433", action: "MARK_PAID", late: false, due: null });
     expect(c2!.standing).toMatch(/^Đã nhận đơn .* · thẻ, chưa thu tiền$/);
-    expect(c1).toMatchObject({ code: "DH-2432", action: "HAND_OVER", late: true, due: "3 ngày" });
+    expect(c1).toMatchObject({ code: "DH-2432", action: "HAND_OVER", late: true, due: "3\u00a0ngày" });
     expect(c1!.standing).toBe("Đã nhận đơn 09:00 17/09 · COD, thu khi giao");
     expect(c1!.customer).toBe(base.owner!.name);
   });

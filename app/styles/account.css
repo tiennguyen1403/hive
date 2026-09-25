@@ -63,8 +63,11 @@
 /* The email and the number WRAP rather than truncate: in a 240px rail the
    line is longer than the column, and an address cut off mid-domain is an
    address nobody can read back. `anywhere` because an email has no spaces
-   to break on. */
-.s .acctrail3 .who span{ display:block; font-size:var(--fs-sm); color:var(--ink2);
+   to break on.
+   `.txt > span`, not `span`: the name's own wrapper is a `<span class="txt">`
+   too, and the broader rule greyed "Trần Minh Anh" into the secondary ink
+   (v3 slice 13). */
+.s .acctrail3 .who .txt > span{ display:block; font-size:var(--fs-sm); color:var(--ink2);
   overflow-wrap:anywhere; }
 
 /* -- the doors ----------------------------------------------------------- */
@@ -94,6 +97,14 @@
 .s .acctrail3 nav a .dotn{ width:8px; height:8px; border-radius:99px;
   background:var(--brand); flex:none; }
 .s .acctrail3 .out{ margin-top:14px; }
+/* The row scrolls, so it clips: the keyboard's ring, drawn 2px OUTSIDE the
+   door by default, lost its top and bottom edges. Drawn 2px inside the
+   door instead, all four edges show (v3 slice 13). Still only while the
+   keyboard is driving — `html[data-pointer]` switches every ring off. From
+   900px the rail is a column that clips nothing, and keeps the usual ring. */
+@media (max-width:899.98px){
+  .s .acctrail3 nav a:focus-visible{ outline-offset:-2px; }
+}
 
 @media (min-width:900px){
   .s .acct3{ display:grid; grid-template-columns:240px minmax(0,1fr);
@@ -157,13 +168,21 @@
   background:var(--plate); display:block; }
 
 /* -- the codes that are running ------------------------------------------ */
-.s .codes .code{ display:grid; grid-template-columns:auto minmax(0,1fr) auto;
+/* ONE grid for the list, each row a `subgrid` (the `.solds` device,
+   pages.css), so the code column is one width down the list and every
+   description starts at the same x (v3 slice 13). Each row used to size its
+   own `auto`: DOT05's line began at x 880, CHAOBAN's at 909, FREESHIP's at
+   904. The note under the list is outside it and keeps the full width. */
+.s .codes{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; column-gap:10px; }
+.s .codes .code{ grid-column:1 / -1; display:grid; grid-template-columns:subgrid;
   align-items:center; gap:10px; padding:10px 0;
   border-bottom:1px solid var(--hair); font-size:var(--fs-sm); }
 .s .codes .code:last-child{ border-bottom:0; }
 .s .codes .code b{ font-family:var(--font-display); font-weight:var(--fw-display);
   letter-spacing:.04em; font-size:var(--fs-ui); }
-.s .codes .code > span{ color:var(--ink2); }
+/* The shared code column leaves the terms a narrower column on a phone, so
+   the line wraps more; it does not leave "lượt" alone at the end of one. */
+.s .codes .code > span{ color:var(--ink2); text-wrap-style:pretty; }
 /* 36px with a 5px overlay is 46, and 46 is the number a probe can confirm
    (checkout.css says why). Its neighbour is the code's own description,
    which is text, so nothing is stolen. */
@@ -334,3 +353,14 @@
 /* The address book's rows hold two of them, so the row has to be tall enough
    for a 44px target to sit inside it without reaching into its neighbours. */
 .s .acct3 .content .rows3 .row{ min-height:60px; }
+/* On a narrow phone the address book's actions go UNDER the address, set
+   left (v3 slice 13). Beside it, "Sửa · Đặt mặc định · Xoá" took the right
+   column and left the address about 150px, and pushed one row's "Công ty"
+   label onto a line of its own, so two rows of one list looked like two
+   kinds of row. The links keep their 44px boxes and their 22px gap.
+   `:has(> .acts)` is what tells an address row from an order row, whose
+   right column is its state and its total. */
+@media (max-width:460px){
+  .s .rows3 .row > .right:has(> .acts){ grid-column:1 / -1; grid-row:auto;
+    justify-self:start; align-items:flex-start; }
+}

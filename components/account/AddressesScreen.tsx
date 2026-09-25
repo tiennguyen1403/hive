@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { Icon } from "@/components/icon/Icon";
 import { Empty } from "@/components/shop/Empty";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
 import type { Address } from "@/data/types";
@@ -104,14 +103,6 @@ export function AddressesScreen({ addresses }: { addresses: Address[] }) {
           ))}
         </div>
       )}
-
-      <p className="note3" style={{ marginTop: 16 }}>
-        <Icon name="info" className="ic sm" />
-        <span>
-          Địa chỉ mặc định được điền sẵn ở bước thanh toán. Sổ này thuộc tài khoản, nên
-          mở ở thiết bị nào cũng thấy.
-        </span>
-      </p>
 
       {addresses.length > 0 && (
         <p style={{ marginTop: 16 }}>

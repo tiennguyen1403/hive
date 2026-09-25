@@ -373,7 +373,7 @@ function IssueRow({
       <StyleCell p={p} />
       <td>{kindAndFit(p)}</td>
       <td className="right">{plainVnd(p.priceVnd)}</td>
-      <td>{p.colors.map((c) => COLORS[c].label).join(" · ")}</td>
+      <td>{colourList(p)}</td>
       <td>
         <div className="cellmeter">
           <div
@@ -429,6 +429,15 @@ function IssueRow({
   );
 }
 
+/**
+ * "Trắng · Xanh than": each colour's name one block (no-break spaces inside
+ * it), the " · " between two colours the place a line may break. The table
+ * broke "Xanh" over "than" (v3 slice 13).
+ */
+function colourList(p: Product): string {
+  return p.colors.map((c) => COLORS[c].label.replace(/ /g, "\u00a0")).join(" · ");
+}
+
 const FIXED_BADGE = {
   OUT: { tone: "shut", text: "Hết" },
   LOW: { tone: "hot", text: "Sắp hết" },
@@ -463,7 +472,7 @@ function FixedRow({
       <StyleCell p={p} />
       <td>{kindAndFit(p)}</td>
       <td className="right">{plainVnd(p.priceVnd)}</td>
-      <td>{p.colors.map((c) => COLORS[c].label).join(" · ")}</td>
+      <td>{colourList(p)}</td>
       <td>
         <div className="stockcell">
           <span>còn {onHand(p)}</span>

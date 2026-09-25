@@ -62,6 +62,12 @@ export function TrackScreen({ code, phone, found }: TrackScreenProps) {
   const router = useRouter();
   const [typedCode, setTypedCode] = useState(code);
   const [typedPhone, setTypedPhone] = useState(phone);
+  // Which box a press of "Tra cứu" found empty. Cleared box by box as each
+  // one is typed into.
+  const [missingCode, setMissingCode] = useState(false);
+  const [missingPhone, setMissingPhone] = useState(false);
+  const codeRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const trackingRef = useRef<HTMLElement>(null);
 
   // The URL is the query. When it changes — a submit, a Back, a shared link
@@ -73,6 +79,8 @@ export function TrackScreen({ code, phone, found }: TrackScreenProps) {
     setSeen({ code, phone });
     setTypedCode(code);
     setTypedPhone(phone);
+    setMissingCode(false);
+    setMissingPhone(false);
   }
 
   const order = found;
@@ -81,6 +89,18 @@ export function TrackScreen({ code, phone, found }: TrackScreenProps) {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
+    // A press with a box left empty used to do nothing at all — no lookup,
+    // no word about why. Now each empty box says what it needs, and the
+    // first one takes the focus (v3 slice 13). Without the script the GET
+    // form still goes to the server as it always did.
+    const noCode = typedCode.trim() === "";
+    const noPhone = typedPhone.trim() === "";
+    if (noCode || noPhone) {
+      setMissingCode(noCode);
+      setMissingPhone(noPhone);
+      (noCode ? codeRef : phoneRef).current?.focus();
+      return;
+    }
     const q = new URLSearchParams({
       code: normaliseOrderCode(typedCode),
       // A number that is not a number still goes into the URL: the lookup
@@ -107,38 +127,51 @@ export function TrackScreen({ code, phone, found }: TrackScreenProps) {
             only tidies what goes into the URL. */}
         <form className="lookup" action="/track" method="get" onSubmit={submit}>
           <div className="row2">
-            <Field3 label="Mã đơn">
-              {({ id }) => (
+            <Field3 label="Mã đơn" {...(missingCode ? { error: "Cần mã đơn." } : {})}>
+              {({ id, describedBy }) => (
                 <input
+                  ref={codeRef}
                   id={id}
                   name="code"
-                  className="inp"
+                  className={missingCode ? "inp bad" : "inp"}
                   placeholder="DH-0000"
                   autoComplete="off"
                   style={{ textTransform: "uppercase" }}
+                  aria-describedby={describedBy}
+                  aria-invalid={missingCode || undefined}
                   value={typedCode}
-                  onChange={(e) => setTypedCode(e.target.value)}
+                  onChange={(e) => {
+                    setTypedCode(e.target.value);
+                    setMissingCode(false);
+                  }}
                 />
               )}
             </Field3>
-            <Field3 label="Số điện thoại đặt hàng">
-              {({ id }) => (
+            <Field3
+              label="Số điện thoại đặt hàng"
+              {...(missingPhone ? { error: "Cần số điện thoại đã dùng khi đặt." } : {})}
+            >
+              {({ id, describedBy }) => (
                 <input
+                  ref={phoneRef}
                   id={id}
                   name="phone"
-                  className="inp"
+                  className={missingPhone ? "inp bad" : "inp"}
                   type="tel"
                   inputMode="tel"
                   autoComplete="tel"
+                  aria-describedby={describedBy}
+                  aria-invalid={missingPhone || undefined}
                   value={typedPhone}
-                  onChange={(e) => setTypedPhone(e.target.value)}
+                  onChange={(e) => {
+                    setTypedPhone(e.target.value);
+                    setMissingPhone(false);
+                  }}
                 />
               )}
             </Field3>
           </div>
-          <p className="help" style={{ marginTop: 8 }}>
-            Đúng số đã dùng khi đặt, để người khác không tra được đơn chỉ bằng mã.
-          </p>
+          <p className="help">Đúng số đã dùng khi đặt.</p>
           <p className="act">
             <Button type="submit" icon="search">
               Tra cứu
@@ -262,9 +295,12 @@ function Result({
                   <dt>Mã vận đơn</dt>
                   <dd>
                     {/* The service the shop handed it to, when the handover
-                        recorded one (slice B3a). */}
-                    {order.carrier && <span className="muted">{order.carrier} · </span>}
-                    <b ref={trackingRef}>{order.trackingCode}</b>
+                        recorded one (slice B3a). One item with the code, so
+                        the row's 8px gap falls only before the button. */}
+                    <span>
+                      {order.carrier && <span className="muted">{order.carrier} · </span>}
+                      <b ref={trackingRef}>{order.trackingCode}</b>
+                    </span>
                     <CopyButton value={order.trackingCode} selectRef={trackingRef} />
                   </dd>
                 </>

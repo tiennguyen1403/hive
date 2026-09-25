@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duyệt câu chữ · HIVE</title>
+<link rel="stylesheet" href="../v2/fonts.css">
+<link rel="stylesheet" href="fonts-trial.css">
+<style>
+  :root{ --font-sans:"Be Vietnam Pro",system-ui,sans-serif; --font-display:"Unbounded",sans-serif;
+    --ink:#171410; --ink2:#6b6250; --hair:#ece7dd; --line:#9c937f; --plate:#f4efe6;
+    --brand:#eba400; --brand-soft:#fbf1da; --brand-text:#9e6817; --hot:#b3261e; --hot-bg:#fbeaea;
+    --ok:#1b6b3a; --ok-bg:#e6f4ea; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:#fff; color:var(--ink);
+    font-family:var(--font-sans); font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .page{ max-width:980px; margin:0 auto; padding:32px 24px 120px; }
+  h1{ font-family:var(--font-display); font-weight:800; font-size:24px; line-height:1.1; letter-spacing:-.03em; margin:0 0 8px; }
+  .intro{ color:var(--ink2); max-width:70ch; margin:0 0 8px; }
+  .rules{ display:flex; flex-wrap:wrap; gap:6px 18px; font-size:12px; color:var(--ink2); margin:0 0 24px; }
+  .rules b{ color:var(--ink); }
+  h2{ font-family:var(--font-display); font-weight:800; font-size:18px; line-height:1.2; letter-spacing:-.03em; margin:36px 0 0;
+    padding-bottom:10px; border-bottom:2px solid var(--ink); }
+  .item{ display:grid; grid-template-columns:44px minmax(0,1fr) 250px; gap:10px 16px;
+    padding:14px 0; border-bottom:1px solid var(--hair); align-items:start; }
+  .id{ font-family:var(--font-display); font-weight:800; font-size:12px; line-height:1.6; color:var(--ink2); }
+  .where{ font-size:12px; color:var(--ink2); margin-bottom:4px; }
+  .now{ margin:0; }
+  .now q{ quotes:"“" "”"; }
+  .item[data-choice="drop"] .now{ text-decoration:line-through; text-decoration-color:var(--hot);
+    color:var(--ink2); }
+  .short{ margin:6px 0 0; font-size:13px; }
+  .short::before{ content:"→ "; color:var(--brand-text); font-weight:600; }
+  .item:not([data-choice="short"]) .short{ display:none; }
+  .why{ margin:6px 0 0; font-size:12px; color:var(--ink2); }
+  .pick{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .pick button{ height:34px; padding:0 12px; border:1px solid var(--line); border-radius:4px;
+    background:#fff; color:var(--ink); font:inherit; font-size:12px; cursor:pointer; }
+  .pick button:hover{ border-color:var(--ink); }
+  .pick button[aria-pressed="true"]{ background:var(--ink); border-color:var(--ink); color:var(--brand); }
+  .pick button.rec::after{ content:" · đề xuất"; opacity:.75; }
+  .note{ grid-column:2 / -1; }
+  .note input{ width:100%; height:34px; padding:0 10px; border:1px solid var(--hair);
+    border-radius:4px; font:inherit; font-size:12px; color:var(--ink); }
+  .note input:focus{ outline:none; border-color:var(--brand); }
+  .bar{ position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--ink);
+    box-shadow:0 -8px 24px -16px rgba(23,20,16,.3); }
+  .bar .in{ max-width:980px; margin:0 auto; padding:12px 24px; display:flex; gap:16px;
+    align-items:center; flex-wrap:wrap; }
+  .bar .count{ font-size:12px; color:var(--ink2); }
+  .bar .count b{ color:var(--ink); }
+  .bar .go{ margin-left:auto; height:40px; padding:0 18px; border:1px solid var(--brand);
+    border-radius:4px; background:var(--brand); color:var(--ink); font:inherit; font-weight:600;
+    cursor:pointer; }
+  .bar .go:hover{ background:#f1c04a; }
+  .bar .done{ font-size:12px; color:var(--ok); }
+  .done1{ margin-top:36px; border-top:1px solid var(--hair); padding-top:12px; font-size:12px; color:var(--ink2); }
+  .done1 summary{ cursor:pointer; color:var(--ink); font-weight:600; min-height:44px; display:flex; align-items:center; }
+  .done1 .d1{ margin:4px 0; }
+  textarea.out{ position:absolute; left:-9999px; }
+  @media (max-width:720px){
+    .item{ grid-template-columns:36px minmax(0,1fr); }
+    .pick{ grid-column:2; justify-content:flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Duyệt câu chữ</h1>
+  <p class="intro"><b>Vòng 2.</b> 14 câu giải thích còn sót mà vòng 1 chưa có: trong sheet quản trị, hành trình và hoá đơn in của đơn, hồ sơ, thông báo, trang xác nhận. Cùng luật, cùng cách chọn. Mỗi dòng đã chọn sẵn đề xuất của tôi; bấm để đổi, gõ ghi chú nếu muốn câu khác. Xong thì bấm <b>Sao chép kết quả</b> và dán lại cho tôi.</p>
+  <p class="rules"><span><b>Giữ</b> — không đổi</span><span><b>Rút gọn</b> — thay bằng câu sau mũi tên</span>
+    <span><b>Xoá</b> — bỏ cả câu (hoặc cả dòng)</span><span>Câu là dữ liệu, thao tác, chính sách mua hàng hay lời nhắc tài khoản thử thì không nằm ở đây.</span></p>
+  <div id="list"></div>
+  <details class="done1"><summary>Vòng 1 — đã chốt 26/09: 56 câu, bạn nhận hết đề xuất</summary><div id="done1"></div></details>
+</div>
+<div class="bar"><div class="in">
+  <span class="count" id="count"></span>
+  <span class="done" id="done" hidden>Đã chép — dán lại cho tôi.</span>
+  <button type="button" class="go" id="copy">Sao chép kết quả</button>
+</div></div>
+<textarea class="out" id="out" aria-hidden="true"></textarea>
+<script>
+// Round 2: what round 1 missed. [id, group, where, current sentence, recommended, short version, why]
+const ITEMS = [
+  ["V1","Cửa hàng & tài khoản","Hành trình đơn (tra cứu đơn, chi tiết đơn của khách) — mốc “Đang trên đường giao”","09:15 · 21/09 · mã vận đơn VNP-8842204 · đơn vị vận chuyển chưa nối, mốc này cập nhật tay từ cửa hàng","short","09:15 · 21/09 · mã vận đơn VNP-8842204","vế sau tả hạ tầng chưa nối"],
+  ["V2","Cửa hàng & tài khoản","Hoá đơn in (tra cứu đơn, chi tiết đơn) — dòng cuối","Bản in dành cho người mua. Tên pháp nhân và mã số thuế chưa chốt, nên đây không phải hoá đơn giá trị gia tăng.","short","Bản in dành cho người mua, không phải hoá đơn giá trị gia tăng.","giữ sự thật pháp lý, bỏ lý do"],
+  ["V3","Cửa hàng & tài khoản","/account/profile — dòng “Tiếp tục với Google”","Chưa liên kết — cổng đăng nhập chưa nối.","short","Đang chuẩn bị.","cùng cách với T4, T8 ở vòng 1"],
+  ["V4","Cửa hàng & tài khoản","/account/profile — dòng “Xoá tài khoản”","Xoá hồ sơ và sổ địa chỉ. Đơn đã đặt vẫn được giữ để đối soát. Chưa bật trong bản dựng này.","short","Xoá hồ sơ và sổ địa chỉ. Đơn đã đặt vẫn được giữ. Đang chuẩn bị.","giữ hệ quả; “bản dựng này” là lời của người làm app"],
+  ["V5","Cửa hàng & tài khoản","/account/notifications — công tắc “Giờ mở số mới”","Ở đây và dải nhắc trang chủ.","drop","","tả nơi hiện — cùng loại với T3 đã xoá"],
+  ["V6","Cửa hàng & tài khoản","/account/notifications — công tắc “Trạng thái đơn”","Chờ thanh toán, đã giao, và hạn đổi trả.","keep","","nói công tắc bao những gì — dữ liệu"],
+  ["V7","Cửa hàng & tài khoản","/account/notifications — công tắc “Mã sắp hết hạn”","Trước 5 ngày, cho mã đang chạy.","keep","","nói khi nào nhận — dữ liệu"],
+  ["V8","Cửa hàng & tài khoản","/account/addresses/new — dòng phụ cạnh tiêu đề “Thêm địa chỉ”","lưu vào tài khoản","drop","","nơi lưu — cùng loại với T2 đã xoá"],
+  ["V9","Cửa hàng & tài khoản","Trang xác nhận đơn — khối “Mã QR tra cứu đơn”","Sinh từ liên kết tra cứu — đang chuẩn bị. Liên kết: /track?code=DH-2430&phone=0912345678","short","Đang chuẩn bị. Liên kết: /track?code=DH-2430&phone=0912345678","bỏ vế tả cách sinh QR; giữ liên kết và nút chép"],
+  ["V10","Quản trị","Sheet “Thêm mẫu hé lộ” — dưới lưới ảnh","Chưa có ảnh sản phẩm thật, nên đây là bộ ảnh mượn tạm các mẫu đang dùng.","drop","","giải thích lý do"],
+  ["V11","Quản trị","Sheet “Đóng sớm” — câu cuối (hai câu trước là hệ quả, giữ)","Cùng một cơ chế, không phải một trạng thái thứ tư.","drop","","tả cơ chế"],
+  ["V12","Quản trị","Sheet “Điều chỉnh tồn kho” (mẫu thuộc Số) — câu dưới tiêu đề","Số đang là số còn trên kệ; đã bán là số đã cắt trừ số này. Chỉnh khi kiểm kê lệch, hàng trả về, hoặc hư hỏng. Không phải cách để “may thêm”: tăng quá 35 chiếc đã cắt thì bị chặn.","short","Tăng quá 35 chiếc đã cắt thì bị chặn.","giữ luật chặn, bỏ định nghĩa — cùng loại với Q18 đã xoá"],
+  ["V13","Quản trị","Sửa mẫu — ô ảnh của từng màu","MƯỢN TẠM · ảnh của mẫu S05 – KHÓI · thay bằng ảnh thật khi có","short","MƯỢN TẠM · ảnh của mẫu S05 – KHÓI","vế cuối là lời dặn"],
+  ["V14","Quản trị","Chú thích cách tính tiền, 5 chỗ: Tổng quan “chỉ tính đơn đã thanh toán” · Các số “theo giá niêm yết” và “doanh thu theo giá niêm yết, chưa trừ mã giảm giá” · Khách hàng “tổng chi tính từ đơn đã thanh toán, chưa trừ hoàn tiền” · hồ sơ khách “chỉ tính đơn đã thanh toán, chưa trừ hoàn tiền”","(năm câu như trên)","keep","","nói con số tiền tính thế nào — thiếu thì dễ đọc sai"]
+];
+// Round 1, decided 26/09/2026: the user took every recommendation. Kept as a record, read-only.
+// [id, group, where, current sentence, recommended, short version, why]
+const DONE = [
+  ["K1","Cửa hàng","/faq — dòng phụ cạnh tiêu đề","chỉ những gì code đang thực thi","drop","","lời của người làm app, không phải của cửa hàng"],
+  ["K2","Cửa hàng","Trang Số đã đóng (/so/N) — cuối bảng “Hết lúc nào”","Chưa mẫu nào có mốc “hết lúc”: sổ cửa hàng chưa ghi, và dữ liệu đơn mẫu chỉ là một phần của sổ bán nên không suy ra được. Không đủ dữ liệu thì để trống, không điền giờ nghe hợp lý.","drop","","ô “–” đã nói là chưa có; câu giải thích nguồn dữ liệu"],
+  ["K3","Cửa hàng","Trang Số đã đóng — dòng phụ tiêu đề “Hết lúc nào”","theo sổ cửa hàng · dữ liệu mẫu","drop","","giải thích nguồn số"],
+  ["K4","Cửa hàng","Trang Số đã đóng — câu dưới câu đề bìa","Bản ghi của số 04: mẫu nào, cắt bao nhiêu, hết lúc nào. Không mua được nữa; mẫu có thể quay lại ở một số sau, cũng có thể không.","keep","Không mua được nữa; mẫu có thể quay lại ở một số sau, cũng có thể không.","vế đầu tả trang; vế sau là sự thật cho người mua"],
+  ["K5","Cửa hàng","Trang chủ — dưới nút “Đặt nhắc giờ mở” của Số kế tiếp","Nhắc lưu trên thiết bị này. Trang chủ hiện lại khi còn 2 giờ tới giờ mở.","drop","","tả cơ chế nhắc; toast sau khi bấm đã nói “lưu trên thiết bị này”"],
+  ["K6","Cửa hàng","Trang sản phẩm — dòng phụ “Cùng số 05” / “Cùng loại”","cùng loại, cùng tầm giá","drop","","tả luật chọn mẫu gợi ý"],
+  ["K7","Cửa hàng","/track — dưới hai ô nhập","Đúng số đã dùng khi đặt, để người khác không tra được đơn chỉ bằng mã.","short","Đúng số đã dùng khi đặt.","vế sau giải thích lý do bảo mật"],
+  ["K8","Cửa hàng","/sign-up — câu dưới tiêu đề","Một email, một mật khẩu. Số điện thoại lấy từ đơn đầu tiên.","short","Một email, một mật khẩu.","vế sau tả luồng dữ liệu"],
+  ["K9","Cửa hàng","/returns — đoạn đầu","7 ngày kể từ khi nhận, nếu chưa qua sử dụng. Đây là điều thanh toán và trang sản phẩm đang cam kết.","short","7 ngày kể từ khi nhận, nếu chưa qua sử dụng.","câu sau tả chỗ khác của app"],
+  ["K10","Cửa hàng","/about · /returns · /contact — ba khối “đang chuẩn bị”","… phần này để trống cho tới khi có lời thật, không điền tạm. / … hiện khi có quyết định, không viết tạm. / … hiện khi có thông tin thật.","short","Giữ tiêu đề in đậm + danh sách thứ sẽ có (vd “Câu chuyện thương hiệu đang chuẩn bị. Ai làm, làm ở đâu, vì sao bắt đầu.”), bỏ vế “để trống / không điền tạm”.","vế cuối nói về cách làm app"],
+  ["K11","Cửa hàng","Thanh toán — dưới ô “Ghi chú cho người giao”","In lên phiếu giao và lưu cùng đơn.","drop","","tả nơi dữ liệu đi"],
+  ["T1","Tài khoản","/account/notifications — khối ghi chú đầu trang","Gom ba nguồn đang có: nhắc giờ mở, trạng thái đơn, mã sắp hết hạn. Không có máy chủ đẩy: mục này tính lại mỗi lần mở, từ đồng hồ, đơn trong tài khoản và kho trên thiết bị, nên không có “thông báo” nào bịa.","drop","","tả cơ chế, nói về máy chủ"],
+  ["T2","Tài khoản","Dòng phụ “lưu trên thiết bị này” / “lưu trên thiết bị, giữ size đã chọn” (Thông báo, Đã lưu, Tuỳ chọn, Tìm gần đây, Giữ lại sau)","… · lưu trên thiết bị này","drop","","nơi lưu là chuyện kỹ thuật; số đếm cạnh đó giữ"],
+  ["T3","Tài khoản","/account — Tuỳ chọn “Nhắc giờ mở số mới”","Hiện dải nhắc ở trang chủ khi còn 2 giờ, và một thông báo ở đây.","drop","","tả cơ chế; nhãn công tắc đã đủ"],
+  ["T4","Tài khoản","/account — Tuỳ chọn “Email khi đơn đổi trạng thái”","Đã thanh toán, đã bàn giao, đã giao. Gửi thư cần máy chủ, đang chuẩn bị.","short","Đang chuẩn bị.","giữ sự thật “chưa gửi được”, bỏ phần máy chủ"],
+  ["T5","Tài khoản","/account — Tuỳ chọn “Chưa ghi nhớ size nào”","Bật ở trang sản phẩm, sau khi chọn một size.","keep","","chỉ thao tác"],
+  ["T6","Tài khoản","/account — ghi chú đầu trang Tổng quan","Đơn đặt khi chưa đăng nhập không nằm trong tài khoản — tra cứu bằng mã đơn và số điện thoại.","keep","","chỉ đường tìm đơn"],
+  ["T7","Tài khoản","/account/profile — dòng phụ cạnh tiêu đề","tài khoản đang đăng nhập","drop","","hiển nhiên"],
+  ["T8","Tài khoản","/account/profile — ghi chú","Đọc từ tài khoản của bạn. Sửa tên và số điện thoại chưa mở trong bản này; đổi mật khẩu thì được.","short","Sửa tên và số điện thoại đang chuẩn bị.","giữ sự thật “chưa sửa được”"],
+  ["T9","Tài khoản","/account/password — cuối form","Đổi xong, thiết bị này vẫn giữ đăng nhập. Các thiết bị khác bị đăng xuất ở lần làm mới phiên kế tiếp.","drop","","tả cơ chế phiên"],
+  ["T10","Tài khoản","/account/addresses — ghi chú cuối sổ","Địa chỉ mặc định được điền sẵn ở bước thanh toán. Sổ này thuộc tài khoản, nên mở ở thiết bị nào cũng thấy.","drop","","tả khái niệm sổ địa chỉ"],
+  ["T11","Tài khoản","/account/addresses/new — ghi chú dưới form","Lưu vào sổ địa chỉ của tài khoản. Địa chỉ mặc định được điền sẵn ở bước thanh toán.","drop","","như T10"],
+  ["T12","Tài khoản","/account/wishlist — trạng thái rỗng","Bấm “Lưu” ở trang sản phẩm. Danh sách nằm trong trình duyệt này, không cần tài khoản.","short","Bấm “Lưu” ở trang sản phẩm.","vế sau tả nơi lưu"],
+  ["T13","Tài khoản","/account/wishlist — dòng cuối danh sách","Mẫu đã hết vẫn nằm trong danh sách. Mẫu trong “Giữ lại sau” của giỏ là một danh sách khác: có size, đưa lại vào giỏ được ngay.","short","Mẫu đã hết vẫn nằm trong danh sách.","câu đầu bạn đã duyệt ở lát 11; câu sau giải thích khái niệm"],
+  ["T14","Tài khoản","Đơn đã huỷ (/account/orders/…) — dưới dòng thời gian","Không có gì để hoàn. Đơn chưa từng được thanh toán nên không phát sinh hoàn tiền.","short","Không có gì để hoàn.","câu sau giải thích lý do"],
+  ["T15","Tài khoản","Trang xác nhận đơn — ghi chú cột phải","Đơn nằm trong “Đơn hàng” của tài khoản. Xác nhận qua email tới …: đang chuẩn bị, chưa có máy chủ gửi thư.","short","Đơn nằm trong “Đơn hàng” của tài khoản. Email xác nhận đang chuẩn bị.","bỏ phần máy chủ"],
+  ["Q1","Quản trị","/admin/drops — dòng phụ tiêu đề “Các số”","Trạng thái suy từ giờ mở và giờ đóng, không có cờ bật tắt","drop","","tả cơ chế"],
+  ["Q2","Quản trị","/admin/drops — dòng phụ “Số 06 · mẫu hé lộ”","hiện ở trang chủ từ giờ tới khi mở","drop","","tả cơ chế"],
+  ["Q3","Quản trị","/admin/drops/06 — Số chưa có mẫu","Số này chưa có mẫu nào. Mẫu, giá và số cắt được thêm ở Mẫu; số liệu xuất hiện ngay sau đó.","short","Số này chưa có mẫu nào.","vế sau hướng dẫn quy trình"],
+  ["Q4","Quản trị","Sheet “Tạo số” — câu dưới tiêu đề","Một số chỉ cần giờ mở và giờ đóng. Mẫu, giá và số cắt thêm sau ở Mẫu. Trạng thái luôn suy từ hai mốc này, nên “đóng sớm” cũng chỉ là đổi giờ đóng.","drop","","tả khái niệm Số"],
+  ["Q5","Quản trị","Sheet “Thêm mẫu hé lộ” — câu dưới tiêu đề","Chỉ tên, loại và ảnh. Không giá, không số cắt: hai thứ đó công bố đúng lúc mở. Mẫu thêm ở đây hiện ngay trên bìa số 06 ở trang chủ.","drop","","tả khái niệm hé lộ"],
+  ["Q6","Quản trị","Tổng quan — dòng phụ biểu đồ doanh thu","cột trống = ngày không có đơn đã thanh toán","drop","","chú giải biểu đồ"],
+  ["Q7","Quản trị","Tổng quan — dòng phụ “Cần xử lý”","4 đơn · việc của cửa hàng, không phải của khách hay bên vận chuyển","short","4 đơn","vế sau định nghĩa khái niệm"],
+  ["Q8","Quản trị","Tổng quan — dòng cuối trang","Dữ liệu mẫu: 24 đơn, 10 mẫu · mọi thao tác lưu trên máy chủ · Chi tiết","drop","","nhãn “DỮ LIỆU MẪU” và thanh dưới trái đã nói"],
+  ["Q9","Quản trị","/admin/customers — dòng phụ tiêu đề (sau khi bỏ “8 khách”)","8 tài khoản mẫu và người đăng ký thật · nhãn suy từ đơn đã thanh toán","drop","","tả nguồn dữ liệu"],
+  ["Q10","Quản trị","/admin/customers — chú giải nhãn cạnh ô tìm","Thân thiết: mua ≥ 3 số liên tiếp · Quay lại: ≥ 2 đơn · Mới: đơn đầu trong số đang bán","drop","","định nghĩa nhãn — admin đã biết"],
+  ["Q11","Quản trị","Hồ sơ khách — dòng phụ “Nhãn”","suy từ đơn, không gõ tay","drop","","tả cơ chế"],
+  ["Q12","Quản trị","/admin/promotions — dòng phụ tiêu đề (sau khi bỏ số trùng tab)","số lượt đã dùng gồm cả dữ liệu mẫu","drop","","tả nguồn dữ liệu"],
+  ["Q13","Quản trị","/admin/promotions — dòng cuối bảng","Hết lượt: mã còn hạn nhưng đã dùng hết số lượt, trang thanh toán đang từ chối mã này.","drop","","định nghĩa trạng thái"],
+  ["Q14","Quản trị","Sheet “Tạo / Sửa mã” — ghi chú","Khách đang thấy mã đang chạy trong mục “Mã đang chạy” của tài khoản. Sửa, tạm dừng hoặc kết thúc sớm thì mục đó cập nhật ngay.","drop","","tả cơ chế"],
+  ["Q15","Quản trị","Sheet “Tạo / Sửa mã” — câu dưới tiêu đề","đổi điều kiện chỉ áp cho đơn đặt từ lúc lưu.","keep","","hệ quả của thao tác sửa"],
+  ["Q16","Quản trị","/admin/products — dòng phụ tiêu đề","29 mẫu · 18 đang bán · tồn kho theo size và màu","short","29 mẫu · 18 đang bán","vế cuối tả khái niệm"],
+  ["Q17","Quản trị","Sửa mẫu — dòng phụ tiêu đề","Số 05 đã cắt 35 chiếc. Lưới dưới là số còn lại theo từng màu và size. (mẫu cố định: chỉ câu sau)","short","Số 05 đã cắt 35 chiếc. (mẫu cố định: bỏ dòng)","câu sau tả lưới"],
+  ["Q18","Quản trị","Sửa mẫu — dưới lưới tồn kho","Đổi số còn ở đây được ghi thành một lần điều chỉnh tồn kho: có lý do, vào nhật ký, và không vượt số đã cắt. Không phải cách để may thêm.","drop","","tả cơ chế điều chỉnh"],
+  ["Q19","Quản trị","Sửa mẫu — dòng dưới “Màu và ảnh”","Đen · Kem. Thứ tự dải màu và ảnh thì đổi được.","short","Đen · Kem.","vế sau tả khả năng; nút lên/xuống đã nói"],
+  ["Q20","Quản trị","Thêm mẫu — dưới chip màu","Thứ tự chọn là thứ tự dải màu trên thẻ; màu đầu là ảnh đại diện.","keep","","luật thứ tự — số trên chip chưa nói “màu đầu là ảnh đại diện”"],
+  ["Q21","Quản trị","Sheet “Chọn vùng cắt” — câu dưới tiêu đề","Ảnh trên trang luôn là 4:5. Kéo khung để dời, kéo góc để đổi cỡ; phần ngoài khung không được lưu.","short","Kéo khung để dời, kéo góc để đổi cỡ.","giữ phần thao tác"],
+  ["Q22","Quản trị","Đơn chờ chuyển khoản — dải “Bước tiếp theo”","Chuyển khoản · chưa nối cổng thanh toán, đối chiếu tay · 400.000₫","short","Chuyển khoản · đối chiếu tay · 400.000₫","bỏ phần cổng thanh toán"],
+  ["Q23","Quản trị","Sheet “Huỷ đơn” — câu dưới tiêu đề (đơn đã thanh toán)","Đơn đã thanh toán 1.272.000₫. Huỷ thì phải hoàn tiền tay — chưa nối cổng thanh toán nào. Khách thấy lý do ở màn đơn của họ. Hàng về kệ ngay.","short","Đơn đã thanh toán 1.272.000₫. Huỷ thì phải hoàn tiền tay. Khách thấy lý do ở màn đơn của họ. Hàng về kệ ngay.","giữ hệ quả, bỏ phần cổng thanh toán"],
+  ["Q24","Quản trị","Form “Bàn giao” — dưới ô Hình thức giao","Chưa ký đơn vị vận chuyển nào: ô này là hình thức giao khách đã chọn, mã vận đơn nhập tay.","drop","","tả tình trạng hạ tầng"],
+  ["Q25","Quản trị","Form “Bàn giao” — dưới ô Mã vận đơn","Khách thấy mã này ở tra cứu đơn và Đơn hàng.","keep","","hệ quả của thao tác"],
+  ["Q26","Quản trị","Form “Sửa địa chỉ” — dưới ô Lý do sửa","Ghi vào nhật ký và phiếu giao. Chỉ sửa được trước khi bàn giao.","short","Chỉ sửa được trước khi bàn giao.","vế đầu tả nơi dữ liệu đi"],
+  ["Q27","Quản trị","Chi tiết đơn — ô “Giao tới”","Giao tiêu chuẩn · 2–4 ngày · giao bởi đối tác vận chuyển","short","Giao tiêu chuẩn · 2–4 ngày","vế cuối hiển nhiên"],
+  ["Q28","Quản trị","/admin/slips — dòng phụ tiêu đề","DH-2429 · in 1 phiếu, hai phiếu một trang A4","short","DH-2429 · 1 phiếu","vế sau tả cách in"],
+  ["Q29","Quản trị","/admin/slips — dòng cuối trang","Đơn COD in thêm ô “Thu hộ” đậm ở cuối phiếu, gồm cả phụ thu 15.000₫. Khi in, thanh bên và tiêu đề ẩn; hai phiếu một trang. Phiếu in từ đơn hàng trên máy chủ — chưa nối đơn vị vận chuyển nào, nên không hệ thống vận đơn nào nhận bản in này.","drop","","tả cơ chế in"],
+  ["Q30","Quản trị","/admin/log — dòng phụ tiêu đề","Nhật ký trên máy chủ · mỗi thao tác một dòng, có trước và sau","drop","","tả khái niệm nhật ký"]
+];
+const LABEL = { keep:"Giữ", short:"Rút gọn", drop:"Xoá" };
+const KEY = "copyboard.v2";
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+const list = document.getElementById("list");
+let group = "";
+for (const [id, g, where, now, rec, short, why] of ITEMS) {
+  if (g !== group) { group = g; const h = document.createElement("h2"); h.textContent = g; list.appendChild(h); }
+  const s = state[id] || { choice: rec, note: "" };
+  const el = document.createElement("div");
+  el.className = "item"; el.dataset.id = id; el.dataset.choice = s.choice;
+  const opts = short ? ["keep","short","drop"] : ["keep","drop"];
+  el.innerHTML = `<span class="id">${id}</span>
+    <div><div class="where"></div><p class="now"><q></q></p><p class="short"></p><p class="why"></p></div>
+    <div class="pick" role="group" aria-label="Quyết định cho ${id}">${opts.map((o) =>
+      `<button type="button" data-o="${o}" class="${o === rec ? "rec" : ""}" aria-pressed="${o === s.choice}">${LABEL[o]}</button>`).join("")}</div>
+    <div class="note"><input type="text" placeholder="Ghi chú hoặc câu khác (không bắt buộc)" aria-label="Ghi chú cho ${id}"></div>`;
+  el.querySelector(".where").textContent = where;
+  el.querySelector("q").textContent = now;
+  el.querySelector(".short").textContent = short;
+  el.querySelector(".why").textContent = why;
+  const input = el.querySelector("input"); input.value = s.note || "";
+  el.querySelectorAll(".pick button").forEach((b) => b.addEventListener("click", () => {
+    el.dataset.choice = b.dataset.o;
+    el.querySelectorAll(".pick button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    save();
+  }));
+  input.addEventListener("input", save);
+  list.appendChild(el);
+}
+function read() {
+  const out = {};
+  document.querySelectorAll(".item").forEach((el) => {
+    out[el.dataset.id] = { choice: el.dataset.choice, note: el.querySelector("input").value.trim() };
+  });
+  return out;
+}
+function save() {
+  state = read();
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  count();
+}
+function count() {
+  const s = read(); const n = { keep:0, short:0, drop:0 };
+  Object.values(s).forEach((v) => n[v.choice]++);
+  document.getElementById("count").innerHTML = `${ITEMS.length} câu · <b>${n.drop}</b> xoá · <b>${n.short}</b> rút gọn · <b>${n.keep}</b> giữ`;
+}
+count();
+{
+  const box = document.getElementById("done1");
+  for (const [id, , where, now, rec, short] of DONE) {
+    const p = document.createElement("p");
+    p.className = "d1";
+    p.textContent = `${id} ${LABEL[rec]} — ${where}${rec === "short" ? " → " + short : ""}`;
+    box.appendChild(p);
+  }
+}
+document.getElementById("copy").addEventListener("click", async () => {
+  const s = read();
+  const lines = ["Kết quả duyệt câu chữ — vòng 2 (prototype/v3/copy.html):"];
+  for (const [id, , where, , rec, short] of ITEMS) {
+    const v = s[id];
+    let line = `${id} ${LABEL[v.choice]}${v.choice !== rec ? " (đổi so với đề xuất " + LABEL[rec] + ")" : ""} — ${where}`;
+    if (v.choice === "short") line += ` → ${short}`;
+    if (v.note) line += ` · ghi chú: ${v.note}`;
+    lines.push(line);
+  }
+  const text = lines.join("\n");
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) { const t = document.getElementById("out"); t.value = text; t.select(); document.execCommand("copy"); }
+  const d = document.getElementById("done"); d.hidden = false; setTimeout(() => { d.hidden = true; }, 2500);
+});
+</script>
+</body>
+</html>

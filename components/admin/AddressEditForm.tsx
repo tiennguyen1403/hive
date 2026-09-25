@@ -135,7 +135,7 @@ export function AddressEditForm({
       <Field3
         label="Lý do sửa"
         error={error ?? undefined}
-        help="Ghi vào nhật ký và phiếu giao. Chỉ sửa được trước khi bàn giao."
+        help="Chỉ sửa được trước khi bàn giao."
       >
         {({ id, describedBy }) => (
           <input

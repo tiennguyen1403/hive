@@ -213,8 +213,7 @@ export function orderTimeline(o: Order): TimelineStep[] {
  * worst sentence on the site; saying "sẽ được hoàn" on one nobody paid for is
  * the second worst.
  */
-export const REFUND_NONE =
-  "Không có gì để hoàn. Đơn chưa từng được thanh toán nên không phát sinh hoàn tiền.";
+export const REFUND_NONE = "Không có gì để hoàn.";
 export const REFUND_TO_SOURCE = "Khoản đã thanh toán sẽ được hoàn về nguồn ban đầu.";
 
 export function refundNote(o: Order): string | null {

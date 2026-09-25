@@ -172,7 +172,7 @@ export function OrderConfirmed({ order, addressLine, way, inAccount }: OrderConf
                 <div className="cells" aria-hidden="true" />
                 <div>
                   <b>Mã QR tra cứu đơn</b>
-                  Sinh từ liên kết tra cứu — đang chuẩn bị. Liên kết:
+                  Đang chuẩn bị. Liên kết:
                   <span className="link" ref={linkRef}>
                     {lookup}
                   </span>
@@ -245,8 +245,11 @@ export function OrderConfirmed({ order, addressLine, way, inAccount }: OrderConf
                 <dt>Địa chỉ</dt>
                 <dd>{addressLine}</dd>
                 <dt>Cách giao</dt>
+                {/* "nhận 20/09 – 22/09" is one block (a no-break space after
+                    "nhận"; the range holds itself, lib/datetime.ts): the line
+                    breaks at the " · " before it (v3 slice 13). */}
                 <dd>
-                  {deliveryShortLabel(order.delivery)} · nhận{" "}
+                  {deliveryShortLabel(order.delivery)} · nhận{"\u00a0"}
                   {deliveryWindowLabel(order.delivery, order.placedAt)}
                 </dd>
                 <dt>Ghi chú</dt>
@@ -283,8 +286,7 @@ export function OrderConfirmed({ order, addressLine, way, inAccount }: OrderConf
                 {inAccount
                   ? "Đơn nằm trong “Đơn hàng” của tài khoản. "
                   : "Tra cứu lại bằng mã đơn và số điện thoại đã đặt. "}
-                Xác nhận qua email tới {order.email}: đang chuẩn bị, chưa có máy chủ gửi
-                thư.
+                Email xác nhận đang chuẩn bị.
               </span>
             </p>
           </aside>

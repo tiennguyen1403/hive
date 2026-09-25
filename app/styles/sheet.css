@@ -238,7 +238,14 @@
 
    Dark ground with light text is the one place this system allows it — a
    12px strip on screen for 2.6 seconds is not a "large colour area", and it
-   has to read over whatever it is covering. 16.8:1. */
+   has to read over whatever it is covering. 16.8:1.
+
+   `width:max-content` is load-bearing (v3 slice 13). A box placed at
+   `left:50%` with an automatic width shrinks to fit the space to the RIGHT
+   of that line — half the screen — so on a 390px phone every toast was
+   squeezed into 195px and "Đã thêm S05 – KHÓI size M vào giỏ" broke in two.
+   Its own sentence decides the width now, up to the gutters, and a sentence
+   longer than that wraps inside the box. */
 .toast {
   position: fixed;
   left: 50%;
@@ -248,6 +255,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  width: max-content;
   max-width: calc(100vw - 36px);
   padding: 10px 14px;
   border-radius: var(--r);

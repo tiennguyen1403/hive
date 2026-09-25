@@ -127,6 +127,28 @@ export function styleName(name: string, dropNo: number | null): string {
 }
 
 /**
+ * One entry of a LIST of styles — `"S05 – KHÓI ×1"` — held together as one
+ * unit, so a list breaks between its entries and never inside one (v3 slice
+ * 13). Measured before this at 390: "…S05 – SƯƠNG, S05 –" over "THAN", and
+ * "S05 – KHÓI" over "×1".
+ *
+ * `shown` is the name as `styleName` gives it. The space after its dash
+ * becomes a NO-BREAK space here, with a WORD JOINER (U+2060) in front of
+ * it: UAX #14 (LB12a) still allows a break before a no-break space that
+ * follows a dash, and the en dash is one (class BA) — measured, the list
+ * kept breaking after "S05 –" with the no-break space alone. The space
+ * before the count is a no-break space too. The spaces INSIDE a fixed
+ * style's name are left alone, so "ÁO THUN TAY DÀI" can still wrap between
+ * its words. A name standing on its own keeps the ordinary space
+ * `styleName` gives it (DESIGN.md §3). The list's own ", " stays an
+ * ordinary break.
+ */
+export function styleInList(shown: string, qty?: number): string {
+  const held = shown.replace(/– /g, "–\u2060\u00a0");
+  return qty === undefined ? held : `${held}\u00a0×${qty}`;
+}
+
+/**
  * `"S06 –"` — the part of `styleName` an issue gives, on its own: what the
  * back office's name field shows as a fixed segment in front of the typed
  * name (v3 slice 12, the fixed-styles board, round 4). The same no-break

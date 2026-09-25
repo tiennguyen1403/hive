@@ -50,6 +50,7 @@ import { appliedPromo } from "@/lib/promotions";
 import {
   COD_SURCHARGE_VND,
   DELIVERY_OPTIONS,
+  deliveryTitle,
   EXPRESS_FEE_VND,
   FREE_SHIPPING_FROM_VND,
   RETURN_WINDOW_DAYS,
@@ -632,7 +633,10 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
                     <span className="lbl" id="addr-label">
                       Nhãn
                     </span>
-                    <div className="chips3" role="group" aria-labelledby="addr-label">
+                    {/* `wrapped`: three choices shown whole, not a row that scrolls — and
+                        `.chips3:not(.wrapped)` is hidden from 900px (listing.css), which
+                        left the label unchoosable on a desktop (v3 slice 13). */}
+                    <div className="chips3 wrapped" role="group" aria-labelledby="addr-label">
                       {ADDRESS_LABELS.map((l) => (
                         <button
                           key={l}
@@ -694,9 +698,10 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
                     >
                       <span className="radio" />
                       <span className="t">
-                        <b>{o.label}</b>
+                        <b>{deliveryTitle(o)}</b>
                         <span>
-                          Nhận {when} ·{" "}
+                          {/* The same block as the receipt's "nhận 20/09 – 22/09". */}
+                          Nhận{"\u00a0"}{when} ·{" "}
                           {o.method === "STANDARD"
                             ? `miễn phí cho đơn từ ${vnd(FREE_SHIPPING_FROM_VND)}`
                             : available
@@ -718,7 +723,6 @@ export function CheckoutScreen({ provinces, accountAddresses = [] }: CheckoutScr
                     Ghi chú cho người giao <span className="opt">· không bắt buộc</span>
                   </>
                 }
-                help="In lên phiếu giao và lưu cùng đơn."
               >
                 {({ id, describedBy }) => (
                   <textarea
@@ -847,7 +851,8 @@ function payments() {
     },
     {
       method: "COD" as const,
-      label: "Thanh toán khi nhận (COD)",
+      // "nhận (COD)" holds together: at 360 "(COD)" stood alone (v3 slice 13).
+      label: "Thanh toán khi nhận\u00a0(COD)",
       note: `Thu hộ ${vnd(COD_SURCHARGE_VND)} · kiểm hàng trước khi trả`,
       price: `+${vnd(COD_SURCHARGE_VND)}`,
     },

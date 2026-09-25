@@ -114,19 +114,17 @@ export default async function IssuePage(props: PageProps<"/so/[no]">) {
  *
  * Two sources, in that module's order: the orders that paid for it where
  * they can prove it, otherwise the shop's own record on the style. The
- * column is still ALLOWED to be empty — a style with neither prints "—" and
- * the line under the table appears to say why. Filling it with plausible
- * hours would be inventing the record this page exists to show (DESIGN.md
- * §9 rule 1).
+ * column is still ALLOWED to be empty — a style with neither prints "—".
+ * Filling it with plausible hours would be inventing the record this page
+ * exists to show (DESIGN.md §9 rule 1). The heading's explanation and the
+ * line under the table that said why a cell was empty went at v3 slice 13
+ * (the user's copy review): the dash says it.
  */
 function SoldOutTable({ rows }: { rows: SoldOutRow[] }) {
-  const missing = rows.filter((r) => r.soldOutAt === undefined).length;
-
   return (
     <section className="sec" aria-labelledby="h-solds">
       <div className="hd">
         <h2 id="h-solds">Hết lúc nào</h2>
-        <span className="meta">theo sổ cửa hàng · dữ liệu mẫu</span>
       </div>
 
       <div className="solds">
@@ -159,14 +157,6 @@ function SoldOutTable({ rows }: { rows: SoldOutRow[] }) {
           </div>
         ))}
       </div>
-
-      {missing > 0 && (
-        <p className="fine3">
-          {missing === rows.length ? "Chưa mẫu nào" : `${missing} mẫu chưa`} có mốc “hết
-          lúc”: sổ cửa hàng chưa ghi, và dữ liệu đơn mẫu chỉ là một phần của sổ bán nên
-          không suy ra được. Không đủ dữ liệu thì để trống, không điền giờ nghe hợp lý.
-        </p>
-      )}
     </section>
   );
 }

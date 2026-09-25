@@ -162,13 +162,6 @@ export function totalRowLabel(state: OrderState): string {
 }
 
 /**
- * The courier has not been connected, so every milestone after despatch is
- * typed in by the shop. The timeline says so where it matters rather than
- * implying a tracking feed nobody is sending.
- */
-const HAND_UPDATED = "đơn vị vận chuyển chưa nối, mốc này cập nhật tay từ cửa hàng";
-
-/**
  * `"16/09 · 20:30"` → `"20:30 · 16/09"`.
  *
  * `eventStamp` puts the day first, and every v2 screen that reads a timeline
@@ -188,9 +181,7 @@ function restamp(step: TimelineStep): TrackStep {
 }
 
 /**
- * The account's timeline, plus the one thing this screen knows that the
- * account's version does not: a parcel "đang giao" is only as current as the
- * last hand update.
+ * The account's timeline, stamped clock first.
  *
  * It is handed the order with the status the CLOCK says it is in
  * (`effectiveStatus`), so a transfer whose hold has run out arrives here
@@ -198,12 +189,10 @@ function restamp(step: TimelineStep): TrackStep {
  * khoản" rather than a step marked late under a live deadline.
  */
 function trackSteps(o: Order): TrackStep[] {
-  return orderTimeline(o).map(restamp).map((step): TrackStep => {
-    if (o.status.state === "SHIPPING" && step.state === "now") {
-      return { ...step, detail: `${step.detail} · ${HAND_UPDATED}` };
-    }
-    return step;
-  });
+  // The milestone on the road used to add "đơn vị vận chuyển chưa nối, mốc
+  // này cập nhật tay từ cửa hàng"; it went with the explanatory copy (v3
+  // slice 13): the milestone is its stamp and the courier's number.
+  return orderTimeline(o).map(restamp);
 }
 
 /**

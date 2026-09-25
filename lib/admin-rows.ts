@@ -5,7 +5,7 @@ import type { AdminOrder } from "./admin-orders";
 import { clockLabel, dayMonth, dateTimeLabel, rangeLabel } from "./datetime";
 import { dropState } from "./drop";
 import { dropRevenueVnd, dropSummary } from "./inventory";
-import { styleName } from "./lexicon";
+import { styleInList, styleName } from "./lexicon";
 import { orderTotalVnd, orderUnits } from "./orders";
 import { vnd } from "./money";
 import { STANDARD_FEE_VND } from "./shipping";
@@ -43,13 +43,15 @@ export function orderCustomer(o: AdminOrder): string {
 
 /**
  * "S05 – MUỐI ×2, ÁO THUN TRƠN ×1" — what is in the box, in the fewest
- * characters, each style as the back office names it (v3 slice 12).
+ * characters, each style as the back office names it (v3 slice 12). Each
+ * entry is held together (`styleInList`, v3 slice 13) so the list breaks at
+ * its commas: the table printed "S05 – GIÓ ×1, S05 –" over "KHÓI ×1".
  */
 export function orderItemsLabel(catalog: Catalog, o: Order): string {
   return o.lines
     .map((l) => {
       const p = catalog.byId.get(l.productId);
-      return `${p ? styleName(p.name, p.dropNo) : "?"} ×${l.qty}`;
+      return styleInList(p ? styleName(p.name, p.dropNo) : "?", l.qty);
     })
     .join(", ");
 }
@@ -79,15 +81,19 @@ export interface OrderNote {
  */
 export function orderNote(o: Order, now: Date): OrderNote | null {
   switch (o.status.state) {
+    // The hour and the day are one moment: a no-break space between them, or
+    // the table printed "hạn 08:05" over "26/09" (v3 slice 13).
     case "AWAITING_TRANSFER":
       return {
-        text: `hạn ${clockLabel(o.status.dueAt)} ${dayMonth(o.status.dueAt)}`,
+        text: `hạn ${clockLabel(o.status.dueAt)}\u00a0${dayMonth(o.status.dueAt)}`,
         late: now.getTime() > Date.parse(o.status.dueAt),
       };
+    // A count and its unit never part: the queue broke "2" over "ngày"
+    // (v3 slice 13).
     case "PAID": {
       const days = Math.floor((now.getTime() - Date.parse(o.status.paidAt)) / 86_400_000);
       return {
-        text: days >= 1 ? `chưa bàn giao · ${days} ngày` : "chưa bàn giao",
+        text: days >= 1 ? `chưa bàn giao · ${days}\u00a0ngày` : "chưa bàn giao",
         late: days >= HANDOVER_LATE_DAYS,
       };
     }
@@ -99,7 +105,7 @@ export function orderNote(o: Order, now: Date): OrderNote | null {
       if (o.payment !== "COD") return { text: "chưa thu tiền", late: false };
       const days = Math.floor((now.getTime() - Date.parse(o.placedAt)) / 86_400_000);
       return {
-        text: days >= 1 ? `chưa bàn giao · ${days} ngày` : "chưa bàn giao",
+        text: days >= 1 ? `chưa bàn giao · ${days}\u00a0ngày` : "chưa bàn giao",
         late: days >= HANDOVER_LATE_DAYS,
       };
     }

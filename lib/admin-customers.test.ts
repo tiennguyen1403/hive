@@ -9,7 +9,6 @@ import {
   isCustomerKey,
   isShopper,
   ordersOfCustomer,
-  sampleAccounts,
   type AdminCustomer,
 } from "./admin-customers";
 import { DEMO_ADMIN } from "./demo-admin";
@@ -56,10 +55,6 @@ describe("who counts as a customer", () => {
     expect(isShopper(MANAGER)).toBe(false);
     expect(SHOPPERS.every(isShopper)).toBe(true);
     expect(isShopper(SIGNED_UP)).toBe(true);
-  });
-
-  it("counts the sample accounts, not the sign-ups or the manager", () => {
-    expect(sampleAccounts([...SHOPPERS, MANAGER, SIGNED_UP])).toBe(8);
   });
 });
 

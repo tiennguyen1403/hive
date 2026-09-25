@@ -189,9 +189,7 @@ export function CustomerScreen({
           )}
 
           <section className="panel3" style={{ marginTop: 16 }}>
-            <h2>
-              Nhãn<span className="meta">suy từ đơn, không gõ tay</span>
-            </h2>
+            <h2>Nhãn</h2>
             <div className="bd">
               {facts.tag ? (
                 <p>

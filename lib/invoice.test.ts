@@ -80,6 +80,10 @@ describe("invoiceOf — an order the shop shipped", () => {
   it("says what it is not", () => {
     expect(inv.disclaimer).toContain("không phải hoá đơn giá trị gia tăng");
   });
+
+  it("says it in the one sentence the user approved (v3 slice 13)", () => {
+    expect(inv.disclaimer).toBe("Bản in dành cho người mua, không phải hoá đơn giá trị gia tăng.");
+  });
 });
 
 describe("invoiceOf — an order placed at checkout, cash on delivery", () => {

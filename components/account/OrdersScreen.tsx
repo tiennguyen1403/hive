@@ -81,12 +81,12 @@ export function OrdersScreen({ orders, currentDropNo, tab, openCode }: OrdersScr
 
   return (
     <>
+      {/* The tab row under the heading already says "Tất cả 5", so the line
+          says only what the tabs do not: how many transfers are still owed
+          — and is not drawn when that is none (v3 slice 13). */}
       <div className="pghead">
         <h1>Đơn hàng</h1>
-        <span className="meta">
-          {rows.length} đơn
-          {waiting > 0 ? ` · ${waiting} chờ chuyển khoản` : ""}
-        </span>
+        {waiting > 0 && <span className="meta">{waiting} chờ chuyển khoản</span>}
       </div>
 
       {rows.length > 0 && (

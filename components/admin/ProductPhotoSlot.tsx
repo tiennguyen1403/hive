@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/icon/Icon";
 import { COLORS } from "@/data/colors";
 import type { ColorKey } from "@/data/types";
+import { styleInList } from "@/lib/lexicon";
 import { dims, outputSize, previewBox, type Crop } from "@/lib/photo-crop";
 import { photoUrl } from "@/lib/photos";
 import { PICK_TYPES, fileSizeLabel, type LoanPhoto } from "@/lib/product-form";
@@ -161,8 +162,9 @@ export function ProductPhotoSlot({
     caption =
       photo.kind === "loan" ? (
         <>
-          <Badge tone="shut">mượn tạm</Badge> {owner ? `ảnh của mẫu ${owner} · ` : ""}thay bằng
-          ảnh thật khi có
+          <Badge tone="shut">mượn tạm</Badge>
+          {/* The name held whole: "S04 –" over "RÊU" at 1280 (v3 slice 13). */}
+          {owner ? ` ảnh của mẫu ${styleInList(owner)}` : ""}
         </>
       ) : (
         "Ảnh đã tải lên"

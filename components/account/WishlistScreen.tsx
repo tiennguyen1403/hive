@@ -56,12 +56,11 @@ export function WishlistScreen() {
       <>
         <div className="pghead">
           <h1>Đã lưu</h1>
-          <span className="meta">lưu trên thiết bị này</span>
         </div>
         <Empty
           icon="heart"
           title="Chưa lưu mẫu nào"
-          text="Bấm “Lưu” ở trang sản phẩm. Danh sách nằm trong trình duyệt này, không cần tài khoản."
+          text="Bấm “Lưu” ở trang sản phẩm."
           action={
             // The issue selling now, on its own page; every style on sale
             // when none is (v3 slice 11).
@@ -78,9 +77,7 @@ export function WishlistScreen() {
     <>
       <div className="pghead">
         <h1>Đã lưu</h1>
-        <span className="meta">
-          {saved.items.length} mẫu · lưu trên thiết bị này
-        </span>
+        <span className="meta">{saved.items.length} mẫu</span>
       </div>
 
       <div className="grid3">
@@ -100,8 +97,7 @@ export function WishlistScreen() {
       </div>
 
       <p className="fine3" style={{ marginTop: 20 }}>
-        Mẫu đã hết vẫn nằm trong danh sách. Mẫu trong “Giữ lại sau” của giỏ là một
-        danh sách khác: có size, đưa lại vào giỏ được ngay.
+        Mẫu đã hết vẫn nằm trong danh sách.
       </p>
     </>
   );

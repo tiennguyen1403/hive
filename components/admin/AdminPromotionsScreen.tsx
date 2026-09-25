@@ -100,10 +100,6 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
   const shown = tab ? rows.filter((r) => r.standing === tab) : rows;
 
   const counts = (s: Standing) => rows.filter((r) => r.standing === s).length;
-  const summary = (["LIVE", "PAUSED", "ENDED", "USED_UP"] as Standing[])
-    .filter((s) => counts(s) > 0)
-    .map((s) => `${counts(s)} ${STANDING[s].label.toLocaleLowerCase("vi")}`)
-    .join(" · ");
 
   /** The issue a copy of a code would run with: the next one not yet open. */
   const nextIssue = [...catalog.drops]
@@ -144,7 +140,7 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
 
   return (
     <>
-      <AdminTop title="Mã giảm giá" sub={`${summary} · số lượt đã dùng gồm cả dữ liệu mẫu`}>
+      <AdminTop title="Mã giảm giá">
         <ExportCsvButton label="Tải CSV" filename="ma-giam-gia.csv" rows={csvRows} />
         <Button tone="sm" icon="plus" onClick={() => setCreating(true)}>
           Tạo mã
@@ -263,15 +259,7 @@ export function AdminPromotionsScreen({ nowIso, query }: { nowIso: string; query
             })}
           </tbody>
         </table>
-        {shown.length === 0 ? (
-          <p className="none">Không có mã nào trong nhóm này.</p>
-        ) : (
-          <div className="foot">
-            <span>
-              Hết lượt: mã còn hạn nhưng đã dùng hết số lượt, trang thanh toán đang từ chối mã này.
-            </span>
-          </div>
-        )}
+        {shown.length === 0 && <p className="none">Không có mã nào trong nhóm này.</p>}
       </div>
 
       <PromoFormSheet

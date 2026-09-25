@@ -21,8 +21,23 @@
 @media (min-width: 900px) {
   /* The comps are 1280 wide. Past that the hero would stretch to the width
      of the monitor and the two-column product page would pull its own
-     halves apart, so the page stops growing and centres instead. */
-  .s {
+     halves apart, so the CONTENT stops growing at 1280 and centres.
+
+     The FRAME does not (v3 slice 13). Until then this rule capped `.s`
+     itself, which capped every frame with it: at 1440 the nav's ground, its
+     hairline and its soft shadow stopped at x=80 and x=1360 with both ends
+     of the shadow showing, the footer's 2px rule stopped there too, and the
+     back office floated its black sidebar 80px in from the left edge between
+     two white strips. So `.s.v3` spans the viewport and only its `main` is
+     held to 1280; the bar's and the footer's inner blocks are held to the
+     same 1280 below, so the logo, the page's content and the footer keep one
+     left edge at every width. `.s.adm3` fills the viewport (admin.css).
+
+     Up to 1280 not a pixel moves: `.s` was never wider than 1280 there, and
+     neither is `main`. `.narrow` (the confirmation, the search) keeps its own
+     600px column, which is why it is left out. */
+  .s.v3 > main:not(.narrow) {
+    width: 100%;
     max-width: 1280px;
     margin-inline: auto;
   }
@@ -65,13 +80,16 @@
    track still keeps a gap on each side and pushes the families 12px off
    the middle. */
 @media (min-width: 900px) {
+  /* 1280, not `--max` (1320): the bar spans the viewport and its inner block
+     stops at the page's own measure, so the logo stands on the content's
+     left edge at every width (v3 slice 13). */
   .s .nav3 .in {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto auto minmax(0, 1fr);
     column-gap: 24px;
     height: 64px;
     padding: 0 28px 0 var(--gutd);
-    max-width: var(--max);
+    max-width: 1280px;
     margin: 0 auto;
   }
   .s .nav3 .in:not(:has(> .itag)) {
@@ -147,9 +165,11 @@
   }
 
   /* ── the footer, v3 ──────────────────────────────────────────────────── */
+  /* The 2px rule runs edge to edge; the columns stop at 1280, level with
+     the bar and the page (v3 slice 13). */
   .s .foot3 .in {
     padding: var(--s6) var(--gutd) var(--s7);
-    max-width: var(--max);
+    max-width: 1280px;
     margin: 0 auto;
   }
   .s .foot3 .cols {

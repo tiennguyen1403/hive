@@ -5,10 +5,13 @@
    candidate cards, the visual lab (`.vlab`) and the spec page
    (`.s.specpage`), which went with the `/system` route itself. What is left
    above the v3 block is what the SHOP renders and has always rendered from
-   this file: the details disclosure, the cart line's snag row, the slot
-   whose copy is not written yet, and the password checklist. The FAQ
-   accordion (`.qa`) went with `components/shop/Faq.tsx` at slice 6 — the
-   questions are `<details>` inside `.faq3` (pages.css) since slice 4.
+   this file: the details disclosure, the cart line's snag row and the slot
+   whose copy is not written yet. The FAQ accordion (`.qa`) went with
+   `components/shop/Faq.tsx` at slice 6 — the questions are `<details>`
+   inside `.faq3` (pages.css) since slice 4. The v2 password checklist
+   (`.s .rules`) went at v3 slice 13: the password screen draws `.checks3`
+   (pages.css) since slice 4, and the dead block was still reaching the only
+   `.rules` left, the home page's four rules, and greying their titles.
 
    They stay in this file rather than moving to one that fits them better:
    moving a rule moves it in SOURCE ORDER too, and `globals.css` records
@@ -36,14 +39,6 @@
   color:var(--warn); letter-spacing:.06em; }
 .s .needwrite .lb svg{ width:13px; height:13px; color:var(--warn); }
 .s .needwrite p{ margin:7px 0 0; font-size:12px; color:var(--ink2); line-height:1.55; }
-
-/* password requirements */
-.s .rules{ padding:10px 18px 0; }
-.s .rules div{ display:flex; gap:8px; align-items:center; font-size:11.5px;
-  color:var(--ink2); padding:3px 0; }
-.s .rules svg{ width:14px; height:14px; flex:none; }
-.s .rules .ok{ color:var(--ok); }
-.s .rules .no{ color:var(--hot); }
 
 /* ============================================================================
    THE v3 ROUND — the back office
@@ -78,7 +73,12 @@
 /* The back office is a DESKTOP surface and stays one: the mock draws every
    admin screen at 1280 and none at phone width, and an eight-column table
    has no honest phone layout (DESIGN.md §7). The floor keeps it a shrunken
-   desktop that scrolls sideways rather than a broken one. */
+   desktop that scrolls sideways rather than a broken one.
+
+   And no ceiling: the frame fills the viewport at any width, the sidebar on
+   the left edge and the plate to the right one, `.main` taking the rest.
+   The 1280px cap in desktop.css used to reach this frame too, which left the
+   app floating between two white strips at 1440 (v3 slice 13). */
 .s.adm3{ display:flex; flex-direction:row; min-height:100dvh; min-width:1180px;
   background:var(--plate); font-size:var(--fs-ui); }
 .s.adm3 .side{ width:208px; flex:none; position:sticky; top:0; height:100dvh;
@@ -183,16 +183,17 @@
   margin-bottom:16px; }
 .s.adm3 .kpis3.five{ grid-template-columns:repeat(5, 1fr); }
 .s.adm3 .kpi3{ background:var(--bg); border:1px solid var(--hair); border-radius:var(--r);
-  padding:12px 14px; font-size:var(--fs-sm); color:var(--ink2); }
+  padding:12px 14px; font-size:var(--fs-sm); color:var(--ink2); text-wrap-style:pretty; }
 .s.adm3 .kpi3 .k{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
 .s.adm3 .kpi3 b{ display:block; font-family:var(--font-display);
   font-weight:var(--fw-display); font-size:22px; color:var(--ink);
   letter-spacing:var(--ls-display); font-variant-numeric:tabular-nums; margin:2px 0 4px; }
 .s.adm3 .kpi3 .meter{ margin-top:8px; }
 /* An inline link inside a KPI keeps its line box; the hit zone grows into
-   the margins instead of pushing the sentence apart. */
+   the margins instead of pushing the sentence apart. It never breaks in two:
+   "xử lý / ngay" across two lines is two links (v3 slice 13). */
 .s.adm3 .kpi3 a{ color:var(--brand-text); text-decoration:underline;
-  text-underline-offset:3px; position:relative; }
+  text-underline-offset:3px; position:relative; white-space:nowrap; }
 .s.adm3 .kpi3 a::after{ content:""; position:absolute; inset:-14px 0; }
 .s.adm3 .meter{ height:4px; background:var(--plate); margin-top:8px; position:relative;
   border-radius:99px; overflow:hidden; }
@@ -289,6 +290,22 @@
 /* The low-stock rows carry no rank and no bar: a photo, a name, what went. */
 .s.adm3 .rank3 .r.two{ grid-template-columns:36px 1fr auto; }
 .s.adm3 .rank3 .r .sub{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
+/* The best sellers are ONE grid with each row a `subgrid` (the `.solds`
+   device, pages.css), so the columns line up across rows without the rows
+   knowing about each other (v3 slice 13). Each row used to size its own
+   `1fr 120px auto`: the count ("16 / 31 · 52%" against "14 / 14 · hết")
+   moved the name column row by row, the bars started at x 1029, 1033 and
+   1040, and the name, prefixed with its issue since slice 11, broke into
+   "S05 –" over "KHÓI" in the 59–69px left to it at 1280.
+   Now the name takes the width of the longest name and never wraps, the bar
+   takes what is left — the same start and end on every row — and the count
+   is one column, set flush right. */
+.s.adm3 .rank3.best{ display:grid; grid-template-columns:20px 36px auto minmax(0,1fr) auto;
+  column-gap:10px; }
+.s.adm3 .rank3.best > *{ grid-column:1 / -1; }
+.s.adm3 .rank3.best .r{ grid-template-columns:subgrid; }
+.s.adm3 .rank3.best .r > b{ white-space:nowrap; }
+.s.adm3 .rank3.best .r .n{ text-align:right; }
 
 /* -- the data table ------------------------------------------------------ */
 .s.adm3 .dt3{ background:var(--bg); border:1px solid var(--hair); border-radius:var(--r); }
@@ -329,6 +346,10 @@
 .s.adm3 td a{ color:var(--brand-text); text-decoration:underline; text-underline-offset:3px;
   position:relative; }
 .s.adm3 td a::after{ content:""; position:absolute; inset:-14px 0; }
+/* On the row that is marked (`--brand-soft`) the honey text is 4.20:1 —
+   under AA for 13px. The next step of the ramp, `--gold-800` #6e4a12, is
+   7.05:1 there (v3 slice 13, computed before it was written). */
+.s.adm3 tr.on td a{ color:var(--gold-800); }
 .s.adm3 td .sub{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
 .s.adm3 td .sub.late{ color:var(--hot); }
 .s.adm3 td .nm{ font-family:var(--font-display); font-weight:var(--fw-display);
@@ -340,7 +361,13 @@
   border-radius:2px; vertical-align:middle; margin-right:8px; background:var(--plate); }
 .s.adm3 td .cellmeter{ display:flex; align-items:center; gap:8px; min-width:140px; }
 .s.adm3 td .cellmeter .meter{ flex:1; margin:0; }
-.s.adm3 td .cellmeter span{ white-space:nowrap; }
+/* The count is a box of one width on every row, flush right, so the bar
+   beside it starts and ends at the same x down the column (v3 slice 13):
+   each count used to take its own width, and "14 · hết" left its bar 17px
+   longer than "16 · còn 15" in the same column. 5.5em is 71.5px at 13px,
+   room for the widest count these tables print today ("còn 12 / 26", 70px);
+   a longer one still shows whole and only its own bar gives way. */
+.s.adm3 td .cellmeter span{ white-space:nowrap; min-width:5.5em; text-align:right; }
 /* Short columns hold their line; long ones wrap. The table must not push
    past 1265px at 1280. */
 .s.adm3 th, .s.adm3 td.nw, .s.adm3 td.right,
@@ -386,8 +413,26 @@
   letter-spacing:var(--ls-display); }
 .s.adm3 .nextstep > span{ font-size:var(--fs-sm); color:var(--stage-ink2); }
 .s.adm3 .nextstep .btn{ margin-left:auto; }
-.s.adm3 .fgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+/* A paired row of a form. Its two halves start at the top of the row, and
+   the row keeps the form's own rhythm with its neighbours — the 14px
+   `.field3` gives between two single rows, above it and between its own
+   rows (v3 slice 13). It used to stand at 0: "TỈNH / THÀNH" sat right on
+   the box above it in the address form. */
+.s.adm3 .fgrid{ display:grid; grid-template-columns:1fr 1fr; gap:14px 12px; }
 .s.adm3 .fgrid > .field3{ margin-top:0; }
+.s.adm3 .field3 + .fgrid, .s.adm3 .fgrid + .fgrid{ margin-top:14px; }
+/* The actions under a form that opens inside a panel (Bàn giao, Sửa địa
+   chỉ): the way out, then the confirm, right-aligned, one height, one top —
+   `admin-order.html`'s own row. Without it the two buttons sat left, touching,
+   4px apart in height where one carried an icon (v3 slice 13). The sheet's
+   footer is `.sheetwrap .sheetbody .ft`, below. */
+.s.adm3 .ft{ display:flex; gap:8px; justify-content:flex-end; align-items:center;
+  flex-wrap:wrap; margin-top:16px; }
+/* The last column of the lines table ends on the panel's 16px gutter, where
+   the sums and the total below it end: one right edge for every figure in
+   the block (v3 slice 13). At 12, the table's own padding, "1.380.000" ended
+   4px right of "1.272.000₫" under it. */
+.s.adm3 .panel3 > table:has(+ .bd > .sum3) :is(th, td):last-child{ padding-right:16px; }
 .s.adm3 .sum3{ margin-top:0; border-top:0; padding-top:0; }
 .s.adm3 .totalbar{ display:flex; justify-content:space-between; align-items:baseline;
   padding:12px 16px; border-top:1px solid var(--ink); font-size:var(--fs-ui); gap:12px; }
@@ -404,7 +449,11 @@
 .s.adm3 .notes3 .add{ display:flex; gap:8px; padding-top:12px; }
 .s.adm3 .notes3 .add .inp{ height:44px; }
 .s.adm3 .ctagrow{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.s.adm3 .ctagrow .sub{ width:100%; padding-left:36px; font-size:var(--fs-sm);
+/* The second line starts where the name's letters start: the avatar (28),
+   its own 8px margin, and the row's 8px gap — 44. The mock's 36 counted the
+   margin but not the gap, and the line stood 8px left of the name (measured:
+   name x 928, line x 920 on `/admin/customers/c-minhanh`, v3 slice 13). */
+.s.adm3 .ctagrow .sub{ width:100%; padding-left:44px; font-size:var(--fs-sm);
   color:var(--ink2); }
 
 /* -- the inventory grid -------------------------------------------------- */
@@ -505,9 +554,13 @@
    (`buttons.css` cancels it on `.sm`). Measured 35 in the cancel sheet. */
 .sheetwrap .sheetbody .ft .btn.sm{ height:36px; font-size:var(--fs-sm); }
 .sheetwrap .sheetbody .ft .btn.sm::after{ content:""; position:absolute; inset:-5px 0; }
-.sheetwrap .sheetbody .fgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px;
+/* 14 between rows and after a single field, as in the page's own forms
+   (`.s.adm3 .fgrid` above, v3 slice 13); 12 under the title stays. */
+.sheetwrap .sheetbody .fgrid{ display:grid; grid-template-columns:1fr 1fr; gap:14px 12px;
   margin-top:12px; }
 .sheetwrap .sheetbody .fgrid > .field3{ margin-top:0; }
+.sheetwrap .sheetbody .field3 + .fgrid,
+.sheetwrap .sheetbody .fgrid + .fgrid{ margin-top:14px; }
 @media (min-width:900px){
   .sheetwrap .sheetbody.wide{ width:680px; }
 }

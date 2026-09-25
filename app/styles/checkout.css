@@ -78,6 +78,14 @@
     gap:var(--s7); align-items:start; }
   .s .two3 > .aside3{ position:sticky; top:84px; }
 }
+/* On a phone the cart's money stacks under the lines, and it is a section of
+   its own: one section's step above it (v3 slice 13). It used to start on
+   the last line's hairline — "MÃ GIẢM GIÁ" 8px under "Giữ lại sau". The
+   checkout's order box keeps the gap it already has (`details`, admin.css),
+   which is why this names the cart's column and not every `.aside3`. */
+@media (max-width:899.98px){
+  .s .two3:has(.cartlist) > .aside3{ margin-top:var(--s5); }
+}
 
 /* -- the step bar -------------------------------------------------------- */
 .s .steps3{ display:flex; margin:var(--s2) 0 var(--s5); position:relative; }
@@ -260,13 +268,24 @@
 .s .field3 .inp.bad{ border-color:var(--hot); }
 /* A refusal under the code box sits in the same rhythm as the chip. */
 .s .field3 .note3{ margin-top:8px; }
-.s .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+/* 14 between rows, the rhythm two single `.field3` keep: when the pair
+   stacks on a narrow phone its two halves are two rows of the form. */
+.s .row2{ display:grid; grid-template-columns:1fr 1fr; gap:14px 12px; }
 /* Both halves start at the top of the row: the rhythm between rows is the
    grid's gap, not a margin the second cell would carry on its own. */
 .s .row2 > .field3{ margin-top:0; }
+/* …and the row itself keeps that rhythm with the row above it (v3 slice 13).
+   It used to stand at 0, so "TỈNH / THÀNH" sat right on the box above it:
+   measured on the checkout's address form at 1280, the box's bottom and the
+   label's top were both at y 519. */
+.s .field3 + .row2, .s .row2 + .row2{ margin-top:14px; }
 /* Narrow phones: a paired row stacks, so a long label never pushes one input
    below the other. */
 @media (max-width:480px){ .s .row2{ grid-template-columns:1fr; } }
+/* The line of help under the lookup's pair of boxes: the system's help line
+   (`.field3 .help`), 8px under the row rather than 6px under one box, since
+   it speaks for both (v3 slice 13; it was an inline style and body type). */
+.s .lookup > .help{ margin-top:8px; font-size:var(--fs-sm); color:var(--ink2); }
 /* The custom <Select> wearing the v3 input skin: same 44px box, same 14px
    type, the chevron at the small icon size in the secondary ink. */
 .s .field3 .selbtn{ height:44px; font-size:var(--fs-body); }
@@ -300,7 +319,11 @@
 .s .picks3 .pick[aria-checked="true"] .radio::after{ content:""; position:absolute;
   inset:5px; border-radius:99px; background:var(--ink); }
 .s .picks3 .pick .t b{ display:block; font-weight:600; font-size:var(--fs-body); }
-.s .picks3 .pick .t > span{ display:block; color:var(--ink2); font-size:var(--fs-sm); }
+/* The line under a choice does not end on one lone word: "kiểm hàng trước
+   khi" over "trả" at 390 (v3 slice 13). The longhand, as in base.css, so
+   the wrapping mode itself is left alone. */
+.s .picks3 .pick .t > span{ display:block; color:var(--ink2); font-size:var(--fs-sm);
+  text-wrap-style:pretty; }
 .s .picks3 .pick .p{ font-variant-numeric:tabular-nums; white-space:nowrap; }
 /* The chosen row is washed from the plate towards nothing: a tint, not a
    block of colour. */
@@ -325,6 +348,11 @@
 
 /* -- checkout: what is being paid for ------------------------------------ */
 .s .orderbox3{ border:1px solid var(--hair); border-radius:var(--r); }
+/* From 900px the box heads the right-hand column, level with the first
+   panel on the left: it does not take the 14px `.s details` gives every
+   disclosure (admin.css), which stood it 14px lower (233 against 219 at
+   1280, v3 slice 13). On a phone it keeps that 14px under the last panel. */
+@media (min-width:900px){ .s .orderbox3{ margin-top:0; } }
 /* `color` is stated because `admin.css` carries
    `.s details summary{ color:var(--link) }` (0,1,2) for the back office's
    open questions, and without it this summary inherited the link brown.
@@ -471,7 +499,12 @@
 .s .kvs dd{ margin:0; min-width:0; }
 .s .kvs dd b{ font-family:var(--font-display); font-weight:var(--fw-display);
   letter-spacing:.02em; }
-.s .kvs dd .btn{ margin-left:8px; vertical-align:middle; }
+/* A value with a button after it ("VD-8842-1907 [Chép]"): 8px apart on one
+   line, and flush left under the value when the button wraps. The margin it
+   used to carry stayed on the wrapped button and indented it 8px (v3 slice
+   13). The value is one item (`<span>`), so a carrier before a code keeps
+   its own space. */
+.s .kvs dd:has(> .btn){ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
 
 /* -- small buttons on these four screens --------------------------------
    36px, as the mock draws them, with the 4px overlay that takes the target

@@ -13,7 +13,6 @@ import { useCatalog } from "@/components/shop/CatalogContext";
 import {
   customerKey,
   customerRows,
-  sampleAccounts,
   type AdminCustomer,
 } from "@/lib/admin-customers";
 import type { AdminOrder } from "@/lib/admin-orders";
@@ -22,7 +21,6 @@ import {
   customerGroup,
   inGroup,
   issuesLabel,
-  tagLegend,
   type CustomerFacts,
 } from "@/lib/customer-tags";
 import { dayMonth } from "@/lib/datetime";
@@ -114,10 +112,7 @@ export function CustomersTable({
 
   return (
     <>
-      <AdminTop
-        title="Khách hàng"
-        sub={`${all.length} khách · ${sampleAccounts(customers)} tài khoản mẫu và người đăng ký thật · nhãn suy từ đơn đã thanh toán`}
-      >
+      <AdminTop title="Khách hàng">
         <ExportCsvButton label="Tải CSV" filename="khach-hang.csv" rows={csvRows} />
       </AdminTop>
 
@@ -147,8 +142,6 @@ export function CustomersTable({
             label="Tìm khách"
             onSubmit={(v) => router.replace(hrefWith(PATH, query, { q: v || null, page: null }))}
           />
-          <span className="fill" />
-          <span className="legend">{tagLegend()}</span>
         </div>
 
         <table>

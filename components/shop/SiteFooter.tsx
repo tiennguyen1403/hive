@@ -87,10 +87,14 @@ export function SiteFooter() {
                     {/* The weekday, not just the date: a calendar row is
                         read to plan around, and "02/10" makes a shopper
                         count days on their fingers (`clockDayLabel`). */}
+                    {/* "2 mẫu hé lộ" is one phrase, and a separator ends a
+                        line rather than starting one: no-break spaces inside
+                        the phrase and before the "·". At 390 the line broke
+                        as "… 2 mẫu hé" over "lộ" (v3 slice 13). */}
                     <span className="st">
                       {clockDayLabel(cal.upcoming.opensAt)}
                       {teasersIn(catalog, cal.upcoming.no).length > 0 &&
-                        ` · ${teasersIn(catalog, cal.upcoming.no).length} mẫu hé lộ`}
+                        `\u00a0· ${teasersIn(catalog, cal.upcoming.no).length}\u00a0mẫu\u00a0hé\u00a0lộ`}
                     </span>
                   </Link>
                 </li>
@@ -104,8 +108,12 @@ export function SiteFooter() {
                     {/* How much of the cut went, not how many styles there
                         were: on an issue that is over, that ratio is the one
                         stock fact still worth printing. */}
+                    {/* "200 / 200 đã bán ·" is one unit and "xem lại" another,
+                        so the line breaks before "xem lại" and nowhere inside
+                        either: at 390 "lại" stood alone (v3 slice 13). */}
                     <span className="st">
-                      {dayMonth(cal.closed.closesAt)} · {soldInDrop(catalog, cal.closed)} đã bán · xem lại
+                      {dayMonth(cal.closed.closesAt)} · {soldInDrop(catalog, cal.closed)}
+                      {"\u00a0đã\u00a0bán\u00a0· xem\u00a0lại"}
                     </span>
                   </Link>
                 </li>
@@ -189,10 +197,10 @@ export function SiteFooter() {
   );
 }
 
-/** `"30 / 30"` — how much of a finished issue's cut went. */
+/** `"30 / 30"` — how much of a finished issue's cut went, as one figure. */
 function soldInDrop(catalog: Catalog, drop: Drop): string {
   const styles = productsInDrop(catalog, drop.no);
   const sold = styles.reduce((n, p) => n + soldUnits(p), 0);
   const cut = styles.reduce((n, p) => n + p.cutUnits, 0);
-  return `${sold} / ${cut}`;
+  return `${sold}\u00a0/\u00a0${cut}`;
 }

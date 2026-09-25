@@ -45,9 +45,12 @@
 
    THREE COLLISIONS were measured before writing this, because the system
    has lost that fight before (DESIGN.md §8):
-   · `.s .rules` is the password checklist in `admin.css` (0,2,0) and its
-     `.s .rules div` (0,2,1) would flatten these rows into 11.5px flex rows.
-     Everything here is scoped `.s .sec .rules …`, which outranks both.
+   · `.s .rules` was the v2 password checklist in `admin.css` (0,2,0), and
+     its `.s .rules div` (0,2,1) would flatten these rows into 11.5px flex
+     rows. Everything here is scoped `.s .sec .rules …`, which outranked
+     both — but not in colour, which the rows below never state: the
+     checklist's `--ink2` greyed every rule's title until the dead block went
+     at v3 slice 13.
    · `.s .row` in `lists.css` (0,2,0) is a flex list row with a top border;
      the family index's rows are `.s .index .row` (0,3,0) and restate
      display, padding, gap and border. Still true after the slice-6 sweep:
@@ -109,8 +112,11 @@
   font-size:var(--fs-h1); letter-spacing:var(--ls-display); text-transform:none;
   color:var(--stage-ink2); margin-right:0; }
 
+/* Balanced like every `h1` (base.css) — including when the line is the
+   teaser's `h2`, at the end of a page that is selling, which `.s h1` does
+   not reach: "…công bố đúng lúc / mở." at 1280 (v3 slice 13). */
 .s .cover .t{ font-size:var(--fs-disp); line-height:1.05; letter-spacing:-.025em;
-  margin:var(--s5) 0 0; max-width:14ch; }
+  margin:var(--s5) 0 0; max-width:14ch; text-wrap-style:balance; }
 .s .cover .lead{ margin-top:var(--s3); padding:0; font-size:var(--fs-body);
   color:var(--stage-ink2); max-width:44ch; }
 
@@ -278,6 +284,23 @@
 .s .band.remind{ min-height:44px; background:var(--stage); color:var(--stage-ink); }
 .s .band.remind svg{ color:var(--brand); }
 .s .band.remind .lnk{ color:var(--brand); }
+
+/* ── the tablet band, 600–899px (v3 slice 13) ───────────────────────────
+   The phone layout, lightly tuned rather than a third layout (the user's
+   choice, 26/09/2026): below 600 and from 900 nothing here applies.
+   · Three cards to a row, not two stretched to 380px apiece. `.single`
+     keeps its one 340px column (listing.css outranks this).
+   · The cover's photo stops being a square: at 768 it was 768px tall and
+     the whole first screen was the photograph. It keeps the square while
+     the screen is tall enough and never takes more than 60% of it. The
+     width is stated because with `width:auto` a box with an aspect ratio
+     carries its max-height across into its width: measured, the photo
+     shrank to 614×614 and left a band of cloth beside it. The teaser's two
+     4:5 tiles (`.soon`) keep their shape. */
+@media (min-width:600px) and (max-width:899.98px){
+  .s .grid3{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  .s .cover:not(.soon) .photo{ width:100%; max-height:60svh; }
+}
 
 /* ── 900px and up, v3 ───────────────────────────────────────────────────── */
 @media (min-width:900px){

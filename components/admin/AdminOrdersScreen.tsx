@@ -196,7 +196,7 @@ export function AdminOrdersScreen({
     <>
       <AdminTop
         title="Đơn hàng"
-        sub={`${book.length} đơn trong dữ liệu mẫu · ${waiting} cần xử lý`}
+        sub={`${waiting} cần xử lý`}
       >
         <ExportCsvButton label="Tải CSV" filename="don-hang.csv" rows={csvRows(shown)} />
         {readyToPack.length > 0 && (
@@ -485,23 +485,25 @@ function paymentCell(o: Order) {
           <span className="sub">chưa thu tiền · chưa nối cổng</span>
         )}
         {o.status.state === "PAID" && (
-          <span className="sub">
+          <span className="sub nw">
             nhận {clockLabel(o.status.paidAt)} · {dayMonth(o.status.paidAt)}
           </span>
         )}
       </>
     );
   }
+  // "nhận 07:52 · 23/09" is one moment: the line holds together (`.nw`), or
+  // the day dropped onto a line of its own under "nhận 07:52 ·" (v3 slice 13).
   return (
     <>
       {label}
       {o.status.state === "AWAITING_TRANSFER" && (
-        <span className="sub">
+        <span className="sub nw">
           hạn {clockLabel(o.status.dueAt)} · {dayMonth(o.status.dueAt)}
         </span>
       )}
       {o.status.state === "PAID" && (
-        <span className="sub">
+        <span className="sub nw">
           nhận {clockLabel(o.status.paidAt)} · {dayMonth(o.status.paidAt)}
         </span>
       )}

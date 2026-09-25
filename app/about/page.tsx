@@ -35,8 +35,7 @@ export default function AboutPage() {
 
           <div className="prep">
             <b>Câu chuyện thương hiệu đang chuẩn bị.</b>
-            Ai làm, làm ở đâu, vì sao bắt đầu: phần này để trống cho tới khi có lời thật,
-            không điền tạm.
+            Ai làm, làm ở đâu, vì sao bắt đầu.
           </div>
         </div>
 

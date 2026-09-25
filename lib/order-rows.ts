@@ -4,7 +4,7 @@ import { effectiveStatus, inTab, type OrderTabKey } from "./customer-orders";
 import { dayMonth } from "./datetime";
 import { orderTotalVnd, orderUnits } from "./orders";
 import { demoNow } from "./clock";
-import { styleName } from "./lexicon";
+import { styleInList, styleName } from "./lexicon";
 
 /**
  * One line of "Đơn của tôi".
@@ -81,8 +81,10 @@ const MAX_THUMBS = 2;
  */
 export function rowOfOrder(catalog: Catalog, o: Order, now: Date = demoNow()): OrderRow {
   const products = o.lines.map((l) => catalog.byId.get(l.productId));
-  // "S05 – KHÓI" for an issue's style (v3 slice 11), the bare name for a fixed one.
-  const names = products.map((p) => (p ? styleName(p.name, p.dropNo) : "—"));
+  // "S05 – KHÓI" for an issue's style (v3 slice 11), the bare name for a fixed
+  // one — each held together as a list entry (`styleInList`, v3 slice 13), so
+  // "S05 – SƯƠNG, S05 – THAN" breaks at the comma and not after "S05 –".
+  const names = products.map((p) => (p ? styleInList(styleName(p.name, p.dropNo)) : "—"));
   const status = effectiveStatus(o, now);
   // The first style in it that belongs to an issue: a fixed style (slice B5)
   // has none, and an order of fixed styles only has no issue to be dated by.
@@ -123,12 +125,14 @@ function noteOfOrder(o: Order): string {
     case "AWAITING_TRANSFER":
     case "RECEIVED":
       return PAYMENT_IN_LINE[o.payment];
+    // What happened and the day it happened hold together (v3 slice 13):
+    // at 390 the row broke "đã" over "giao 20/09".
     case "PAID":
-      return `đã thanh toán ${dayMonth(o.status.paidAt)}`;
+      return `đã\u00a0thanh\u00a0toán\u00a0${dayMonth(o.status.paidAt)}`;
     case "SHIPPING":
-      return `gửi đi ${dayMonth(o.status.shippedAt)}`;
+      return `gửi\u00a0đi\u00a0${dayMonth(o.status.shippedAt)}`;
     case "DELIVERED":
-      return `đã giao ${dayMonth(o.status.deliveredAt)}`;
+      return `đã\u00a0giao\u00a0${dayMonth(o.status.deliveredAt)}`;
     case "CANCELLED":
       return cancelNote(o);
   }

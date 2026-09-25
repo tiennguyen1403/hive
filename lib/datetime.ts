@@ -132,15 +132,22 @@ export function shortRangeLabel(fromIso: string, toIso: string): string {
 }
 
 /**
- * ` – ` with NO-BREAK SPACES around it.
+ * ` – ` with NO-BREAK SPACES around it, and a WORD JOINER (U+2060) after
+ * the dash.
  *
  * A window is one value. Let a line break fall on either side of the dash
  * and a shopper reads "22/09" at the end of one line and "– 24/09" at the
  * start of the next, which looks like two dates rather than a range. Both
  * of these strings are rendered inside running sentences, so the wrapping
  * is real and not hypothetical.
+ *
+ * The no-break space alone did not hold the far side: UAX #14 (LB12a) lets
+ * a line break before a no-break space that follows a dash, and the en
+ * dash is one. Measured at 390 on the order receipt: "nhận 20/09 –" over
+ * "22/09" (v3 slice 13). The joiner forbids a break on both of its sides;
+ * `styleInList` in lib/lexicon.ts holds a style's name the same way.
  */
-const DASH = "\u00A0–\u00A0";
+const DASH = "\u00A0–\u2060\u00A0";
 
 // ───────────────────────────────────────────────────── typing a date in
 /**

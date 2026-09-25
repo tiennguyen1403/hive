@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/Button";
-import { Icon } from "@/components/icon/Icon";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { usePrefs, writePrefs } from "@/components/shop/prefs";
 import { useReminders, writeReminders } from "@/components/shop/reminders";
@@ -82,9 +81,7 @@ function NotificationsBody({
     <>
       <div className="pghead">
         <h1>Thông báo</h1>
-        <span className="meta">
-          {ready ? `${unread} mới` : "đang mở…"} · lưu trên thiết bị này
-        </span>
+        <span className="meta">{ready ? `${unread} mới` : "đang mở…"}</span>
         {unread > 0 && (
           <Button
             tone="quiet"
@@ -96,15 +93,6 @@ function NotificationsBody({
           </Button>
         )}
       </div>
-
-      <p className="note3">
-        <Icon name="info" bulk className="ic sm" />
-        <span>
-          Gom ba nguồn đang có: nhắc giờ mở, trạng thái đơn, mã sắp hết hạn. Không có
-          máy chủ đẩy: mục này tính lại mỗi lần mở, từ đồng hồ, đơn trong tài khoản và
-          kho trên thiết bị, nên không có “thông báo” nào bịa.
-        </span>
-      </p>
 
       {ready && groups.length === 0 && (
         <p className="fine3">
@@ -125,21 +113,16 @@ function NotificationsBody({
       ))}
 
       <section className="panel3" style={{ marginTop: "var(--s6)" }}>
-        <h3>
-          Nhận thông báo về
-          <span className="meta">lưu trên thiết bị này</span>
-        </h3>
+        <h3>Nhận thông báo về</h3>
 
         {/* The first switch is the SAME state as "Đặt nhắc" on the home page
             and in Tuỳ chọn: one key, `brand.reminder`, so three screens
             cannot disagree about whether a reminder is set. */}
         <SourceRow
           title={`Giờ mở ${LEX.tl} mới`}
-          detail={
-            nextDropNo !== undefined
-              ? "Ở đây và dải nhắc trang chủ."
-              : `Chưa có ${LEX.tl} nào sắp mở.`
-          }
+          // With an issue coming the switch needs no line (v3 slice 13);
+          // without one, the line says why there is no switch.
+          {...(nextDropNo === undefined ? { detail: `Chưa có ${LEX.tl} nào sắp mở.` } : {})}
           {...(nextDropNo !== undefined && remindersReady
             ? {
                 on: hasReminder(reminders, nextDropNo),
@@ -199,7 +182,8 @@ function SourceRow({
   onFlip,
 }: {
   title: string;
-  detail: string;
+  /** The line under the title; a switch that needs none has none (as `PrefRow`). */
+  detail?: string;
   on?: boolean;
   onFlip?: () => void;
 }) {
@@ -207,7 +191,7 @@ function SourceRow({
     <div className="prefrow">
       <div>
         <b>{title}</b>
-        <span>{detail}</span>
+        {detail && <span>{detail}</span>}
       </div>
       {onFlip && (
         <button

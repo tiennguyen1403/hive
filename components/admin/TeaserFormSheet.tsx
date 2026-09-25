@@ -106,12 +106,6 @@ export function TeaserFormSheet({
       open={open}
       onClose={onClose}
       title={`Thêm mẫu hé lộ cho ${LEX.tl} ${issueNo(no)}`}
-      sub={
-        <>
-          Chỉ tên, loại và ảnh. Không giá, không số cắt: hai thứ đó công bố đúng lúc mở. Mẫu thêm ở
-          đây hiện ngay trên bìa {LEX.tl} {issueNo(no)} ở trang chủ.
-        </>
-      }
       footer={
         <>
           <Button tone="ink sm" icon="back" disabled={pending} onClick={onClose}>
@@ -165,7 +159,6 @@ export function TeaserFormSheet({
       </Field3>
       <Field3
         label="Ảnh"
-        help="Chưa có ảnh sản phẩm thật, nên đây là bộ ảnh mượn tạm các mẫu đang dùng."
         error={error && clean && kind && !photo ? error : undefined}
       >
         {() => (

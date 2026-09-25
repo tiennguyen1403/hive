@@ -145,19 +145,11 @@ function AdjustSheet({ product, pending = false, onClose, onSave, onBlocked }: A
       onClose={onClose}
       wide
       title={`Điều chỉnh tồn kho · ${styleName(product.name, product.dropNo)}`}
-      sub={
-        product.cutUnits === null ? (
-          // A fixed style (slice B5): no cut, so neither "đã bán" nor the
-          // ceiling is true of it.
-          <>Số đang là số còn trên kệ. Chỉnh khi kiểm kê lệch, hàng trả về, hoặc hư hỏng.</>
-        ) : (
-          <>
-            Số đang là số còn trên kệ; đã bán là số đã cắt trừ số này. Chỉnh khi kiểm kê lệch, hàng
-            trả về, hoặc hư hỏng. Không phải cách để “may thêm”: tăng quá {product.cutUnits} chiếc đã
-            cắt thì bị chặn.
-          </>
-        )
-      }
+      // The ceiling is the one line left (v3 slice 13). A fixed style (slice
+      // B5) has no cut and so no ceiling: its sheet has no line at all.
+      {...(product.cutUnits !== null
+        ? { sub: <>Tăng quá {product.cutUnits} chiếc đã cắt thì bị chặn.</> }
+        : {})}
       footer={
         <>
           <Button tone="ink sm" icon="back" disabled={pending} onClick={onClose}>

@@ -99,9 +99,11 @@ export function ClosedCover({
             Mở {closedAtLabel(drop.opensAt)} · đóng {closedAtLabel(drop.closesAt)}
           </span>
         </p>
+        {/* "108 / 181" is one figure: no-break spaces either side of the
+            slash, or the line broke after "108 /" (v3 slice 13). */}
         <h1 className="disp t" id={headingId}>
-          {capitalise(styleCountLabel(summary.styles))}. {summary.soldUnits} /{" "}
-          {summary.cutUnits} chiếc đã bán.
+          {capitalise(styleCountLabel(summary.styles))}.{" "}
+          {`${summary.soldUnits}\u00a0/\u00a0${summary.cutUnits}`} chiếc đã bán.
         </h1>
         <p className="lead">
           Bản ghi của {LEX.tl} {issueNo(drop.no)}: mẫu nào, cắt bao nhiêu, hết lúc nào.

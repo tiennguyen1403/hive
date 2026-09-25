@@ -38,8 +38,11 @@ export function validateSignUp(d: SignUpDraft): SignUpErrors {
   // way it can fail (QĐ-15), and this validator stopped consulting
   // `data/customers.ts` when the fixture stopped being the account list.
   const email = d.email.trim().toLowerCase();
+  // One sentence for every malformed address, the one checkout says. "Email
+  // này thiếu phần sau dấu chấm." was only true of one kind of mistake and
+  // was said of all of them — "khong-hop-le" has no @ at all (v3 slice 13).
   if (!email) e.email = "Cần email để nhận xác nhận đơn.";
-  else if (!looksLikeEmail(email)) e.email = "Email này thiếu phần sau dấu chấm.";
+  else if (!looksLikeEmail(email)) e.email = "Email chưa đúng định dạng.";
 
   if (!d.phone.trim()) e.phone = "Cần số điện thoại để người giao gọi.";
   else if (!normalisePhone(d.phone)) {

@@ -85,13 +85,13 @@ export function productsTab(query: Query): ProductsTab {
 }
 
 /**
- * "29 mẫu · 18 đang bán · tồn kho theo size và màu" — every style the shop
- * has, issue or fixed (teasers are not styles yet), then the ones on sale
- * now (`productsOnSale`: the open issue's, sold out included, and every
- * fixed one).
+ * "29 mẫu · 18 đang bán" — every style the shop has, issue or fixed (teasers
+ * are not styles yet), then the ones on sale now (`productsOnSale`: the open
+ * issue's, sold out included, and every fixed one). The clause that explained
+ * the stock columns went at v3 slice 13 (the user's copy review).
  */
 export function stylesLine(catalog: Catalog, now: Date): string {
   const all = catalog.products.length;
   const selling = productsOnSale(catalog, now).length;
-  return `${all} mẫu · ${selling} đang bán · tồn kho theo size và màu`;
+  return `${all} mẫu · ${selling} đang bán`;
 }

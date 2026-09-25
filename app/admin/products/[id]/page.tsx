@@ -68,12 +68,11 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
       <AdminTop
         crumb={{ label: "Mẫu", href: "/admin/products", here: shown }}
         title={shown}
-        sub={
-          // A fixed style (slice B5) was cut for no issue: only the grid's line is true of it.
-          (product.dropNo !== null && product.cutUnits !== null
-            ? `${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc. `
-            : "") + "Lưới dưới là số còn lại theo từng màu và size."
-        }
+        // An issue's style says how much of it was cut; a fixed style (slice
+        // B5) was cut for no issue and has no line (v3 slice 13).
+        {...(product.dropNo !== null && product.cutUnits !== null
+          ? { sub: `${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc.` }
+          : {})}
       >
         <ButtonLink tone="ink sm" icon="eye" href={`/products/${product.slug}`}>
           Xem trên cửa hàng

@@ -105,10 +105,7 @@ export function ActivityLogScreen({
 
   return (
     <>
-      <AdminTop
-        title="Nhật ký thao tác"
-        sub="Nhật ký trên máy chủ · mỗi thao tác một dòng, có trước và sau"
-      >
+      <AdminTop title="Nhật ký thao tác">
         <ExportCsvButton label="Tải CSV" filename="nhat-ky.csv" rows={csvRows} />
       </AdminTop>
 

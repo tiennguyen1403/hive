@@ -12,7 +12,6 @@ import {
   issueOf,
   issuesLabel,
   longestStreak,
-  tagLegend,
 } from "./customer-tags";
 
 /** Inside issue 05's window, after every order in the fixtures. */
@@ -171,11 +170,5 @@ describe("what the screen prints", () => {
   it("names the issues in the shop's own word", () => {
     expect(issuesLabel([3, 4, 5])).toBe("Số 03 · 04 · 05");
     expect(issuesLabel([])).toBe("—");
-  });
-
-  it("states the three thresholds it actually applied", () => {
-    expect(tagLegend()).toContain(`≥ ${LOYAL_ISSUES} số liên tiếp`);
-    expect(tagLegend()).toContain(`≥ ${RETURNING_ORDERS} đơn`);
-    expect(tagLegend()).toContain("đơn đầu trong số đang bán");
   });
 });

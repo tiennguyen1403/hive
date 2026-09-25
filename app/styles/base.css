@@ -73,6 +73,19 @@
 .s h1{ text-wrap:balance; }
 .s p,
 .s .lead{ text-wrap:pretty; }
+/* The small second lines, too (v3 slice 13): the footer calendar left "lộ"
+   and "lại" alone at 390 on every page, a teaser caption "mở", the size
+   note "này.". The LONGHAND on purpose: the `text-wrap` shorthand also sets
+   `text-wrap-mode`, and would turn wrapping back on in a line another rule
+   holds with `white-space:nowrap`. The phrases that must never part ("hé
+   lộ", "xem lại", "khi mở") are held with no-break spaces where the string
+   is made. */
+.s .sub,
+.s .meta,
+.s .help,
+.s .fine3,
+.s figcaption,
+.s .note3{ text-wrap-style:pretty; }
 
 .s .lead{ padding:11px 18px 0; font-size:12.5px; line-height:1.55; color:var(--ink2); max-width:46ch; }
 
@@ -155,7 +168,7 @@
 .s .foot3 .cal b{ display:block; font-family:var(--font-display);
   font-weight:var(--fw-display); font-size:var(--fs-ui); letter-spacing:var(--ls-display); }
 .s .foot3 .cal .st{ display:block; font-size:var(--fs-xs); color:var(--ink2);
-  margin-top:1px; font-variant-numeric:tabular-nums; }
+  margin-top:1px; font-variant-numeric:tabular-nums; text-wrap-style:pretty; }
 .s .foot3 .cal .st.on{ color:var(--ok); font-weight:500; }
 /* `.needwrite` carries the page gutter as a margin and a cream ground
    (admin.css), both of which belong to the back office. In a footer column

@@ -36,9 +36,7 @@ export function LaterList({ items, onAdd, onRemove }: LaterListProps) {
     <section className="later" aria-labelledby="later-h">
       <div className="hd">
         <h2 id="later-h">Giữ lại sau</h2>
-        <span className="meta">
-          {items.length} món · lưu trên thiết bị, giữ size đã chọn
-        </span>
+        <span className="meta">{items.length} món</span>
       </div>
 
       {items.map((item) => {

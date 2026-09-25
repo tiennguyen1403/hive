@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { AdminSheet } from "@/components/admin/AdminSheet";
 import { Button } from "@/components/ui/Button";
 import { Field3 } from "@/components/ui/Field3";
-import { Icon } from "@/components/icon/Icon";
 import { Select } from "@/components/ui/Select";
 import type { Promotion } from "@/data/types";
 import { PROMO_KIND_LABEL } from "@/lib/admin-rows";
@@ -181,7 +180,9 @@ export function PromoFormSheet({
       title={promo ? `Sửa mã ${promo.code}` : "Tạo mã"}
       sub={
         <>
-          {standing ? `${standing} · ` : ""}đổi điều kiện chỉ áp cho đơn đặt từ lúc lưu.
+          {/* Opening the sentence on a new code, the verb takes the capital
+              (v3 slice 13); after the standing it stays lower case. */}
+          {standing ? `${standing} · đổi` : "Đổi"} điều kiện chỉ áp cho đơn đặt từ lúc lưu.
           {duplicate ? ` Nhân bản thì mã mới tên ${duplicate.code}, hiệu lực theo ${duplicate.label}.` : ""}
         </>
       }
@@ -346,13 +347,6 @@ export function PromoFormSheet({
         </Field3>
       </div>
 
-      <p className="note3">
-        <Icon name="info" className="ic sm" />
-        <span>
-          Khách đang thấy mã đang chạy trong mục “Mã đang chạy” của tài khoản. Sửa, tạm dừng hoặc
-          kết thúc sớm thì mục đó cập nhật ngay.
-        </span>
-      </p>
       <p className="fine3">
         Xem trước: <b>{clean || "—"}</b>{" "}
         {kind === "PERCENT"

@@ -41,7 +41,7 @@ export default function ContactPage() {
 
           <div className="prep">
             <b>Kênh liên hệ đang chuẩn bị.</b>
-            Email, số điện thoại, giờ làm việc, mạng xã hội: hiện khi có thông tin thật.
+            Email, số điện thoại, giờ làm việc, mạng xã hội.
           </div>
         </div>
       </div>

@@ -171,9 +171,12 @@ describe("trackedOfOrder", () => {
     expect(tracked.units).toBe(2);
   });
 
-  it("says out loud that the courier feed is not connected", () => {
+  it("prints the milestone on the road as it is, with no note about the courier feed", () => {
+    // "đơn vị vận chuyển chưa nối, mốc này cập nhật tay từ cửa hàng" went
+    // with the explanatory copy the user dropped (v3 slice 13).
     const now = tracked.steps.find((s) => s.state === "now");
-    expect(now?.detail).toContain("cập nhật tay từ cửa hàng");
+    expect(now?.detail).toMatch(/^\d{2}:\d{2} · \d{2}\/\d{2} · mã vận đơn VNP-8842204$/);
+    expect(now?.detail).not.toContain("cập nhật tay");
   });
 
   it("stamps the milestones clock first", () => {

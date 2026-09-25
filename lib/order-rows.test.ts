@@ -52,7 +52,9 @@ describe("a sample order as a row", () => {
   it("carries the styles, the count, the total and the thumbnails", () => {
     const row = rowOfOrder(FIXTURE_CATALOG, fixture("DH-2430"), NOW);
     expect(row.code).toBe("DH-2430");
-    expect(row.names).toBe("S05\u00a0– SƯƠNG, S05\u00a0– THAN");
+    // Each name held together as a list entry (v3 slice 13): the list
+    // breaks at its comma, never after "S05 –".
+    expect(row.names).toBe("S05\u00a0–\u2060\u00a0SƯƠNG, S05\u00a0–\u2060\u00a0THAN");
     expect(row.units).toBe(2);
     expect(row.totalVnd).toBe(2_680_000);
     // The photo follows the COLOUR that was ordered, not the style: SƯƠNG in
@@ -68,8 +70,8 @@ describe("a sample order as a row", () => {
     // Waiting on money: how it is being paid.
     expect(note("DH-2430")).toBe("chuyển khoản");
     // On the road: the day it LEFT. No arrival date is stored anywhere.
-    expect(note("DH-2422")).toBe("gửi đi 18/09");
-    expect(note("DH-2416")).toBe("đã giao 16/09");
+    expect(note("DH-2422")).toBe("gửi\u00a0đi\u00a018/09");
+    expect(note("DH-2416")).toBe("đã\u00a0giao\u00a016/09");
     expect(note("DH-2310")).toBe("quá hạn chuyển khoản");
   });
 
@@ -108,7 +110,7 @@ describe("an order placed at checkout, as a row", () => {
     const row = rowOfOrder(FIXTURE_CATALOG, placed(), NOW);
     expect(row).toMatchObject({
       code: "DH-2432",
-      names: "S05\u00a0– KHÓI",
+      names: "S05\u00a0–\u2060\u00a0KHÓI",
       units: 1,
       totalVnd: 420_000,
       note: "chuyển khoản",
@@ -116,7 +118,7 @@ describe("an order placed at checkout, as a row", () => {
       dueAt: "2026-09-21T05:50:00+07:00",
       dropNo: 5,
     });
-    expect(row.items).toEqual([{ name: "S05\u00a0– KHÓI", qty: 1 }]);
+    expect(row.items).toEqual([{ name: "S05\u00a0–\u2060\u00a0KHÓI", qty: 1 }]);
   });
 
   it("counts the handling fee into a COD order's total", () => {
@@ -240,8 +242,8 @@ describe("what a row carries for the line under the code", () => {
   it("counts each style in a sample order and names its issue", () => {
     const row = rowOfOrder(FIXTURE_CATALOG, fixture("DH-2430"), NOW);
     expect(row.items).toEqual([
-      { name: "S05\u00a0– SƯƠNG", qty: 1 },
-      { name: "S05\u00a0– THAN", qty: 1 },
+      { name: "S05\u00a0–\u2060\u00a0SƯƠNG", qty: 1 },
+      { name: "S05\u00a0–\u2060\u00a0THAN", qty: 1 },
     ]);
     expect(row.dropNo).toBe(5);
   });

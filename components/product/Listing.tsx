@@ -71,11 +71,12 @@ export function Listing({ catalog, query, path, pool, issue }: ListingProps) {
             <h1 className="big">
               {LEX.t} <span className="num">{issueNo(issue.drop.no)}</span>
             </h1>
-            {/* Three facts about the issue itself, all arithmetic over the
-                catalog: how many styles, how much of the cut is left, and
-                how long the window has to run. */}
+            {/* Two facts about the issue itself, both arithmetic over the
+                catalog: how much of the cut is left, and how long the window
+                has to run. How many styles it has is the first tab's to say
+                ("Tất cả 10"), and it is not said twice (v3 slice 13). */}
             <span className="meta">
-              {pool.length} mẫu · {summary.onHand} / {summary.cutUnits} còn ·{" "}
+              {summary.onHand} / {summary.cutUnits} còn ·{" "}
               {issue.state === "CLOSED" ? (
                 `đã đóng ${dayMonth(issue.drop.closesAt)}`
               ) : (

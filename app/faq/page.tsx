@@ -38,7 +38,6 @@ export default function FaqPage() {
       <div className="wrap3 readpage">
         <div className="pghead">
           <h1>Câu hỏi thường gặp</h1>
-          <span className="meta">chỉ những gì code đang thực thi</span>
         </div>
 
         <div className="faq3">

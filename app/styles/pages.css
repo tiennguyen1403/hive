@@ -94,10 +94,14 @@
 .s .solds .r > span:nth-child(n+2){ text-align:right; color:var(--ink);
   font-size:var(--fs-ui); }
 /* The head row is the one that carries the ink rule, the way every other
-   table in the shop opens. */
+   table in the shop opens. Its three labels are one micro voice. The rule
+   for the labels names `.r.hrow` (0,4,1) so it ties with the number columns'
+   `.r > span:nth-child(n+2)` above and wins by coming later: at (0,3,1) it
+   lost, and "ĐÃ BÁN" and "HẾT LÚC" came out 13px in ink beside an 11px
+   grey "MẪU" (v3 slice 13). They keep that rule's right alignment. */
 .s .solds .hrow{ font-size:var(--fs-xs); letter-spacing:.06em;
   text-transform:uppercase; color:var(--ink2); border-bottom:1px solid var(--ink); }
-.s .solds .hrow > span{ color:var(--ink2); font-size:var(--fs-xs); }
+.s .solds .r.hrow > span{ color:var(--ink2); font-size:var(--fs-xs); }
 /* A moment the orders cannot prove. It reads as a gap on purpose — the row
    is saying the record is incomplete, not that the style never sold out. */
 .s .solds .r .none{ color:var(--ink2); }

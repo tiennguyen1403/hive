@@ -225,10 +225,7 @@ export function AccountHome({
         )}
 
         <section className="panel3 full">
-          <h3>
-            Tuỳ chọn
-            <span className="meta">lưu trên thiết bị này</span>
-          </h3>
+          <h3>Tuỳ chọn</h3>
 
           {/* The reminder is the one switch here that DOES something
               beyond being kept: the home page reads the same key and
@@ -236,11 +233,7 @@ export function AccountHome({
               opens, and the notifications screen counts it. */}
           <PrefRow
             title={`Nhắc giờ mở ${LEX.tl} mới`}
-            detail={
-              nextDropNo !== undefined
-                ? "Hiện dải nhắc ở trang chủ khi còn 2 giờ, và một thông báo ở đây."
-                : `Chưa có ${LEX.tl} nào sắp mở.`
-            }
+            {...(nextDropNo === undefined ? { detail: `Chưa có ${LEX.tl} nào sắp mở.` } : {})}
             {...(nextDropNo !== undefined && remindersReady
               ? {
                   on: hasReminder(reminders, nextDropNo),
@@ -259,7 +252,7 @@ export function AccountHome({
 
           <PrefRow
             title="Email khi đơn đổi trạng thái"
-            detail="Đã thanh toán, đã bàn giao, đã giao. Gửi thư cần máy chủ, đang chuẩn bị."
+            detail="Đang chuẩn bị."
             on={prefsReady && prefs.emailOnStatus}
             onFlip={() => flip("emailOnStatus")}
           />
@@ -379,7 +372,8 @@ function PrefRow({
   onFlip,
 }: {
   title: string;
-  detail: string;
+  /** The line under the title; a switch that needs none has none. */
+  detail?: string;
   on?: boolean;
   onFlip?: () => void;
 }) {
@@ -387,7 +381,7 @@ function PrefRow({
     <div className="prefrow">
       <div>
         <b>{title}</b>
-        <span>{detail}</span>
+        {detail && <span>{detail}</span>}
       </div>
       {onFlip && (
         <button

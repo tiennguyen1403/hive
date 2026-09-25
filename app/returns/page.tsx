@@ -30,14 +30,12 @@ export default function ReturnsPage() {
 
         <div className="prose">
           <p>
-            <b>{RETURN_WINDOW_DAYS} ngày kể từ khi nhận, nếu chưa qua sử dụng.</b> Đây là
-            điều thanh toán và trang sản phẩm đang cam kết.
+            <b>{RETURN_WINDOW_DAYS} ngày kể từ khi nhận, nếu chưa qua sử dụng.</b>
           </p>
 
           <div className="prep">
             <b>Điều kiện chi tiết đang chuẩn bị.</b>
-            Còn tag hay không, ai chịu phí gửi về, mẫu giảm giá có đổi được không: hiện
-            khi có quyết định, không viết tạm.
+            Còn tag hay không, ai chịu phí gửi về, mẫu giảm giá có đổi được không.
           </div>
         </div>
       </div>

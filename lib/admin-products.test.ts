@@ -121,9 +121,9 @@ describe("stylesLine · the line under the heading", () => {
   it("counts every style, then every style on sale", () => {
     // Số 05 open: its ten, sold out included, and the eight fixed.
     const open = new Date("2026-09-20T18:50:00+07:00");
-    expect(stylesLine(catalog, open)).toBe("29 mẫu · 18 đang bán · tồn kho theo size và màu");
+    expect(stylesLine(catalog, open)).toBe("29 mẫu · 18 đang bán");
     // Between two issues only the fixed ones sell.
     const gap = new Date("2026-09-28T12:00:00+07:00");
-    expect(stylesLine(catalog, gap)).toBe("29 mẫu · 8 đang bán · tồn kho theo size và màu");
+    expect(stylesLine(catalog, gap)).toBe("29 mẫu · 8 đang bán");
   });
 });

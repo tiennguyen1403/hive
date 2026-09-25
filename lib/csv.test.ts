@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { toCsv } from "./csv";
+import { styleInList, styleName } from "./lexicon";
+import { formatPhone } from "./phone";
 
 describe("toCsv", () => {
   it("joins cells with commas and rows with CRLF", () => {
@@ -35,5 +37,19 @@ describe("toCsv", () => {
 
   it("returns an empty string for no rows at all", () => {
     expect(toCsv([])).toBe("");
+  });
+
+  it("writes a style list with plain spaces and no word joiner (v3 slice 13)", () => {
+    // On screen the entry is held together with U+00A0 and U+2060; in a
+    // spreadsheet those would only break a search typed with a space bar.
+    const entry = styleInList(styleName("KHÓI", 5), 1);
+    expect(entry).toContain("\u2060");
+    expect(toCsv([[entry]])).toBe("S05 – KHÓI ×1");
+  });
+
+  it("writes a phone number with plain spaces", () => {
+    const phone = formatPhone("0912345678");
+    expect(phone).toContain("\u00a0");
+    expect(toCsv([[phone]])).toBe("0912 345 678");
   });
 });

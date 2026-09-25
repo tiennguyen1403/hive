@@ -110,7 +110,7 @@ describe("openingLabel", () => {
 describe("rangeLabel", () => {
   it("joins two dates for an estimated delivery window", () => {
     expect(rangeLabel("2026-09-21T00:00:00+07:00", "2026-09-23T00:00:00+07:00")).toBe(
-      "21/09\u00A0–\u00A023/09/2026",
+      "21/09\u00A0–\u2060\u00A023/09/2026",
     );
   });
 });
@@ -127,7 +127,7 @@ describe("addDaysIso", () => {
   it("builds the delivery window the confirmation screen prints", () => {
     const placed = "2026-09-20T15:30:00+07:00";
     expect(rangeLabel(addDaysIso(placed, 2), addDaysIso(placed, 4))).toBe(
-      "22/09\u00A0–\u00A024/09/2026",
+      "22/09\u00A0–\u2060\u00A024/09/2026",
     );
   });
 
@@ -157,16 +157,22 @@ describe("shortRangeLabel", () => {
     // window. Both range helpers are printed inside running sentences.
     const r = shortRangeLabel("2026-09-22T18:50:00+07:00", "2026-09-24T18:50:00+07:00");
     expect(r).not.toContain(" ");
-    expect(r).toContain("\u00A0–\u00A0");
+    expect(r).toContain("\u00A0–\u2060\u00A0");
+    // …and the joiner after the dash, because a no-break space that follows
+    // a dash still allows a break before it (UAX #14, LB12a): measured,
+    // "20/09 –" over "22/09" on the receipt at 390 (v3 slice 13).
+    expect([...r].map((c) => c.codePointAt(0)!.toString(16))).toEqual([
+      "32", "32", "2f", "30", "39", "a0", "2013", "2060", "a0", "32", "34", "2f", "30", "39",
+    ]);
     expect(rangeLabel("2026-09-21T00:00:00+07:00", "2026-09-23T00:00:00+07:00")).toContain(
-      "\u00A0–\u00A0",
+      "\u00A0–\u2060\u00A0",
     );
   });
 
   it("joins the two ends of a delivery window, no year", () => {
     expect(
       shortRangeLabel("2026-09-22T18:50:00+07:00", "2026-09-24T18:50:00+07:00"),
-    ).toBe("22/09\u00A0–\u00A024/09");
+    ).toBe("22/09\u00A0–\u2060\u00A024/09");
   });
 
   it("prints one date when the window is a single day", () => {

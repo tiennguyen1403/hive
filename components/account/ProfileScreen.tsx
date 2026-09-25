@@ -24,15 +24,11 @@ export function ProfileScreen({ me }: { me: Me }) {
     <>
       <div className="pghead">
         <h1>Hồ sơ</h1>
-        <span className="meta">tài khoản đang đăng nhập</span>
       </div>
 
       <p className="note3">
         <Icon name="info" className="ic sm" />
-        <span>
-          Đọc từ tài khoản của bạn. Sửa tên và số điện thoại chưa mở trong bản này; đổi
-          mật khẩu thì được.
-        </span>
+        <span>Sửa tên và số điện thoại đang chuẩn bị.</span>
       </p>
 
       <section className="panel3" style={{ marginTop: 16 }}>
@@ -69,7 +65,7 @@ export function ProfileScreen({ me }: { me: Me }) {
         <div className="prefrow">
           <div>
             <b>Tiếp tục với Google</b>
-            <span>Chưa liên kết — cổng đăng nhập chưa nối.</span>
+            <span>Đang chuẩn bị.</span>
           </div>
         </div>
         <div className="prefrow" style={{ borderBottom: 0 }}>
@@ -77,10 +73,7 @@ export function ProfileScreen({ me }: { me: Me }) {
             <b>Xoá tài khoản</b>
             {/* Says exactly what would go and what would stay. A delete
                 that does not is a delete nobody can consent to. */}
-            <span>
-              Xoá hồ sơ và sổ địa chỉ. Đơn đã đặt vẫn được giữ để đối soát. Chưa bật
-              trong bản dựng này.
-            </span>
+            <span>Xoá hồ sơ và sổ địa chỉ. Đơn đã đặt vẫn được giữ. Đang chuẩn bị.</span>
           </div>
         </div>
       </section>

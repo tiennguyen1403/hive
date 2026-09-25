@@ -8,6 +8,7 @@ import {
   issueNo,
   kindInSentence,
   plateLabel,
+  styleInList,
   styleName,
   stylePrefix,
 } from "./lexicon";
@@ -67,6 +68,39 @@ describe("styleName", () => {
 
   it("leaves a fixed style's name exactly as it is", () => {
     expect(styleName("ÁO THUN TRƠN", null)).toBe("ÁO THUN TRƠN");
+  });
+});
+
+/**
+ * v3 slice 13: in a LIST of styles each entry is one unbreakable unit, so
+ * the line breaks at the list's commas and never inside a name ("S05 –" over
+ * "THAN") or between a name and its count ("KHÓI" over "×1").
+ */
+describe("styleInList", () => {
+  const codes = (s: string) => [...s].map((c) => c.codePointAt(0)!.toString(16));
+
+  it("holds an issue's style together, code, dash and name", () => {
+    const entry = styleInList(styleName("THAN", 5));
+    // No ordinary space anywhere in it: U+00A0 before the dash; after it a
+    // word joiner, then U+00A0 — a no-break space alone still lets a line
+    // break after a dash (UAX #14, LB12a).
+    expect(entry).toBe("S05\u00a0–\u2060\u00a0THAN");
+    expect(codes(entry).slice(0, 7)).toEqual(["53", "30", "35", "a0", "2013", "2060", "a0"]);
+  });
+
+  it("joins the count to the name with a no-break space", () => {
+    expect(styleInList(styleName("KHÓI", 5), 1)).toBe("S05\u00a0–\u2060\u00a0KHÓI\u00a0×1");
+    expect(styleInList("ÁO THUN TRƠN", 2)).toBe("ÁO THUN TRƠN\u00a0×2");
+  });
+
+  it("lets a fixed style's longer name still wrap between its words", () => {
+    const entry = styleInList("ÁO THUN TAY DÀI", 1);
+    expect(entry.split(" ")).toEqual(["ÁO", "THUN", "TAY", "DÀI\u00a0×1"]);
+  });
+
+  it("leaves the name a style shows on its own untouched", () => {
+    // DESIGN.md §3: standing alone, a long name may wrap after the dash.
+    expect(styleName("KHÓI", 5)).toBe("S05\u00a0– KHÓI");
   });
 });
 

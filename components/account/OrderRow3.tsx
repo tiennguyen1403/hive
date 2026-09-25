@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { clockLabel, dayMonth } from "@/lib/datetime";
-import { issueLabel } from "@/lib/lexicon";
+import { issueLabel, styleInList } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { STATE_LABEL } from "@/lib/order-labels";
 import type { OrderRow } from "@/lib/order-rows";
@@ -45,9 +45,11 @@ export function OrderRow3({ row, currentDropNo, variant = "full", open }: OrderR
     ? `${clockLabel(row.placedAt)} · ${dayMonth(row.placedAt)}`
     : `${dayMonth(row.placedAt)} · ${issueLabel(row.dropNo!)}`;
 
+  // Each entry held together with its count (`styleInList`, v3 slice 13):
+  // "S05 – KHÓI" over "×1" at 390 read as two things.
   const styles =
     variant === "full"
-      ? row.items.map((i) => `${i.name} ×${i.qty}`).join(", ")
+      ? row.items.map((i) => styleInList(i.name, i.qty)).join(", ")
       : row.names;
 
   // What the order is waiting for, or where it got to. An unpaid transfer
@@ -58,7 +60,11 @@ export function OrderRow3({ row, currentDropNo, variant = "full", open }: OrderR
       ? `giữ hàng tới ${clockLabel(row.dueAt)} ${dayMonth(row.dueAt)}`
       : row.note;
 
-  const sub = [when, styles, variant === "full" ? tail : null].filter(Boolean).join(" · ");
+  // Each "·" ends the line it is on — a no-break space before it — so a
+  // wrapped line never opens with "· đã giao 20/09" (v3 slice 13).
+  const sub = [when, styles, variant === "full" ? tail : null]
+    .filter(Boolean)
+    .join("\u00a0· ");
 
   return (
     <Link

@@ -71,6 +71,17 @@ export interface DeliveryOption {
   leadDays: readonly [number, number];
 }
 
+/**
+ * A delivery label as the checkout prints it: a count and the word after it
+ * never part ("24 giờ", "2–4 ngày") — at 360 the choice broke "24" over
+ * "giờ" (v3 slice 13). The label itself keeps ordinary spaces, because it
+ * is also DATA: a handover stores it as the order's carrier, and
+ * `isCarrier` (lib/admin-orders.ts) matches it character for character.
+ */
+export function deliveryTitle(o: DeliveryOption): string {
+  return o.label.replace(/(\d) /g, "$1\u00a0");
+}
+
 export const DELIVERY_OPTIONS: DeliveryOption[] = [
   {
     method: "STANDARD",

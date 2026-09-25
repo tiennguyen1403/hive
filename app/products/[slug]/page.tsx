@@ -82,7 +82,6 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
             <section className="sec" aria-labelledby="h-rel">
               <div className="hd">
                 <h2 id="h-rel">Cùng loại</h2>
-                <span className="meta">{family}, cùng tầm giá</span>
                 <Link className="more" href={`/products?family=${product.family}`}>
                   Xem tất cả {family}
                 </Link>
@@ -126,7 +125,6 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
               <h2 id="h-rel">
                 Cùng {LEX.tl} {no}
               </h2>
-              <span className="meta">cùng loại, cùng tầm giá</span>
               {/* The whole issue, on its own page (v3 slice 11). */}
               <Link className="more" href={issueHref(dropNo)}>
                 Xem cả {productsInDrop(catalog, dropNo).length} mẫu

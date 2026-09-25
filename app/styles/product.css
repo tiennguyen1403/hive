@@ -176,6 +176,8 @@
   padding:6px 0; border-top:1px solid var(--hair); border-bottom:1px solid var(--hair);
   font-size:var(--fs-sm); color:var(--ink2); }
 .s .mysize b{ display:block; font-size:var(--fs-ui); font-weight:600; color:var(--ink); }
+/* "…Lưu trên thiết bị / này." left "này." alone at 390 (v3 slice 13). */
+.s .mysize > div{ text-wrap-style:pretty; }
 .s .mysize .switch3{ margin-left:auto; }
 .s .switch3{ position:relative; width:40px; height:24px; flex:none; padding:0; border:0;
   border-radius:99px; background:var(--line); cursor:pointer;
@@ -226,6 +228,18 @@
 @media (prefers-reduced-motion:reduce){
   .s .buybar3, .s .buybar3.show{ transition:none; }
 }
+/* The bar is fixed, so the page has to make room for it at its own end, or
+   the last lines of the footer scroll under it and stay there: at 390 the
+   colophon ("Tên pháp nhân · MST — chờ chốt") was never readable (v3 slice
+   13). The room is the bar's own height — 10 + 10 of padding, the 1px rule,
+   and the two lines of `.who` (14px and 12px at line-height 1.55), which
+   stand taller than its 40px button — plus the home indicator's inset. The
+   bar only exists below 900px. */
+@media (max-width:899.98px){
+  .s.v3:has(.buybar3){
+    padding-bottom:calc(21px + 1.55 * (var(--fs-body) + var(--fs-sm)) + env(safe-area-inset-bottom));
+  }
+}
 
 /* ── the size chart, inside its sheet ───────────────────────────────────── */
 .s .fit{ width:100%; margin-top:14px; border-collapse:collapse; border-top:1px solid var(--ink);
@@ -242,6 +256,15 @@
   border-radius:var(--r); background:var(--brand-soft); color:var(--ink);
   font-size:var(--fs-sm); line-height:1.5; }
 .s .note3 > .ic{ flex:none; margin-top:1px; color:var(--brand-text); }
+
+/* ── the tablet band, 600–899px (v3 slice 13) ───────────────────────────
+   Still the phone's swipe, dots and "1 / 2", but a frame no taller than 70%
+   of the screen: at 768 a 4:5 frame was 960px and the name and the price
+   began two screens down. The photo is cropped to it (`object-fit:cover`
+   above). Below 600 and from 900 nothing here applies. */
+@media (min-width:600px) and (max-width:899.98px){
+  .s .gal figure{ max-height:70svh; }
+}
 
 /* ── 900px and up, v3 ───────────────────────────────────────────────────── */
 @media (min-width:900px){

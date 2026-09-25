@@ -1,9 +1,17 @@
 export type CsvCell = string | number;
 export type CsvRow = CsvCell[];
 
-/** Quote a field only when it needs it, doubling any quote inside. RFC 4180. */
+/**
+ * Quote a field only when it needs it, doubling any quote inside. RFC 4180.
+ *
+ * First the characters that only set type on a screen go (v3 slice 13): the
+ * word joiner (U+2060) is dropped and every no-break space (U+00A0) becomes
+ * an ordinary one. They hold "S05 – KHÓI ×1" or "0912 345 678" together on
+ * a line; in a spreadsheet they only stop a search for the same words typed
+ * with a space bar from matching.
+ */
 function field(v: CsvCell): string {
-  const s = String(v);
+  const s = String(v).replace(/\u2060/g, "").replace(/\u00a0/g, " ");
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

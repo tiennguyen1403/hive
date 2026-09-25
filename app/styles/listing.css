@@ -71,6 +71,12 @@
    its last two, so under the tab that is on the rule is honey. */
 .s .tabs3 a.on::after{ content:""; position:absolute; left:12px; right:12px; bottom:0;
   height:2px; background:var(--brand); }
+/* A scroll container clips at its box, and a tab is exactly as tall as the
+   row: the keyboard's ring, 2px outside the tab by default, lost its top
+   and bottom edges. It is drawn 2px inside the tab here, and so is the
+   chips' below, whose first chip lost its left edge the same way (v3 slice
+   13). The ring is still only the keyboard's (`html[data-pointer]`). */
+.s .tabs3 a:focus-visible{ outline-offset:-2px; }
 
 /* ── the phone's quick chips ─────────────────────────────────────────────
    A scroll container again, and this one DOES clip: the chips are 36px with
@@ -85,6 +91,9 @@
    the whole list has to be visible at once. Nothing to scroll, so nothing to
    clip and no tail to fade. */
 .s .chips3.wrapped{ flex-wrap:wrap; overflow:visible; mask-image:none; }
+/* The ring inside the chip, where the row's clip cannot reach it (see
+   `.tabs3` above). A wrapped row clips nothing and keeps the usual ring. */
+.s .chips3:not(.wrapped) .chip3:focus-visible{ outline-offset:-2px; }
 
 .s .chip3{ position:relative; display:inline-flex; align-items:center; gap:6px; height:36px;
   padding:0 12px; border:1px solid var(--line); border-radius:var(--r);

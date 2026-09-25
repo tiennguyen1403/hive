@@ -753,19 +753,6 @@ export function ProductForm({
                   </tbody>
                 </table>
               )}
-              {/* A fixed style has no cut to stay under, and its sizes ARE
-                  brought back: the ceiling half is true of an issue's style only. */}
-              {mode === "edit" && !fixed && (
-                <p className="fine3">
-                  Đổi số còn ở đây được ghi thành một lần điều chỉnh tồn kho: có lý do, vào nhật ký,
-                  và không vượt số đã cắt. Không phải cách để may thêm.
-                </p>
-              )}
-              {mode === "edit" && fixed && (
-                <p className="fine3">
-                  Đổi số còn ở đây được ghi thành một lần điều chỉnh tồn kho: có lý do, vào nhật ký.
-                </p>
-              )}
             </div>
           </section>
         </div>
@@ -806,8 +793,7 @@ export function ProductForm({
                 </div>
               ) : (
                 <p className="fine3" style={{ marginTop: 0 }}>
-                  {values.colors.map((c) => COLORS[c].label).join(" · ")}. Thứ tự dải màu và ảnh
-                  thì đổi được.
+                  {values.colors.map((c) => COLORS[c].label).join(" · ")}.
                 </p>
               )}
               <div className="cslots">

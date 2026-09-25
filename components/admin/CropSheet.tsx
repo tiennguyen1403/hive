@@ -178,7 +178,7 @@ function CropSheetOpen({
       variant="crop"
       onClose={onCancel}
       title={`Chọn vùng cắt · ${label}`}
-      sub="Ảnh trên trang luôn là 4:5. Kéo khung để dời, kéo góc để đổi cỡ; phần ngoài khung không được lưu."
+      sub="Kéo khung để dời, kéo góc để đổi cỡ."
       footer={
         <>
           <Button tone="ink sm" icon="back" onClick={onCancel}>

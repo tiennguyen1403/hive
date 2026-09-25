@@ -32,6 +32,14 @@ describe("validateSignUp", () => {
     expect(validateSignUp({ ...GOOD_SIGNUP, email: "minhanh@email" }).email).toBeTruthy();
   });
 
+  it("says the one sentence checkout says, true of every malformed address", () => {
+    // v3 slice 13: "Email này thiếu phần sau dấu chấm." was said of
+    // "khong-hop-le" too, which has no @ at all.
+    for (const email of ["minhanh@email", "khong-hop-le", "a@", "@vidu.vn"]) {
+      expect(validateSignUp({ ...GOOD_SIGNUP, email }).email).toBe("Email chưa đúng định dạng.");
+    }
+  });
+
   it("does NOT say whether an address already has an account", () => {
     // It used to, from the fixture. Slice B1 put a real auth server behind
     // this form, and "email này đã có tài khoản" is how somebody finds out

@@ -38,7 +38,6 @@ export function RecentSearches({ current, hits = 0 }: { current?: string; hits?:
     <section className="sec" aria-labelledby="h-recent">
       <div className="hd">
         <h2 id="h-recent">Tìm gần đây</h2>
-        <span className="meta">lưu trên thiết bị này</span>
         <button type="button" className="more" onClick={clearSearches}>
           Xoá
         </button>

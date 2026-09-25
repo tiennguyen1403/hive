@@ -89,9 +89,7 @@ export function SignUpScreen() {
       <div className="wrap3">
         <section className="authcard3" aria-labelledby="h-up">
           <h1 id="h-up">Đăng ký</h1>
-          <p className="lead">
-            Một email, một mật khẩu. Số điện thoại lấy từ đơn đầu tiên.
-          </p>
+          <p className="lead">Một email, một mật khẩu.</p>
 
           {state.errors.form && (
             <p className="note3 hot" role="alert">

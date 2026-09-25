@@ -160,15 +160,6 @@ export function PasswordScreen() {
           <span>Đã đổi mật khẩu. Lần đăng nhập sau dùng mật khẩu mới.</span>
         </p>
       )}
-
-      {/* Measured on this build, not assumed: the device that changes the
-          password keeps its session, and every other device loses its
-          refresh token — so it drops out at the next renewal rather than
-          instantly. */}
-      <p className="fine3">
-        Đổi xong, thiết bị này vẫn giữ đăng nhập. Các thiết bị khác bị đăng xuất ở lần
-        làm mới phiên kế tiếp.
-      </p>
     </>
   );
 }

@@ -371,9 +371,11 @@ function NextIssue({
             <figure key={t.slug}>
               <Image src={photoUrl(t.photoKey, 520)} alt="" width={520} height={650} />
               <Badge tone="info">Chưa mở</Badge>
+              {/* "khi mở" held together: "mở" alone on the caption's last
+                  line at 390 (v3 slice 13). */}
               <figcaption>
                 <b>{styleName(t.name, t.dropNo)}</b>
-                {t.kind} · giá công bố khi mở
+                {t.kind} · giá công bố khi{"\u00a0"}mở
               </figcaption>
             </figure>
           ))}
@@ -396,15 +398,12 @@ function NextIssue({
             : "Chưa hé lộ mẫu nào."}{" "}
           Giá và số lượng công bố đúng lúc mở.
         </Line>
+        {/* The note under the button that explained what a reminder does
+            went at v3 slice 13 (the user's copy review): the toast the
+            button raises says it, and `ReminderBand` does it. */}
         <div className="cta">
           <RemindButton drop={drop} tone="ghost" />
         </div>
-        {/* The mock promised a message two hours ahead. Nothing in this
-            build can send one, so the note says what really happens — and
-            `ReminderBand` is what does it. */}
-        <p className="remind">
-          Nhắc lưu trên thiết bị này. Trang chủ hiện lại khi còn 2 giờ tới giờ mở.
-        </p>
       </div>
     </section>
   );
