@@ -2122,3 +2122,47 @@ Kiểm production sau khi nạp:
 - 0 lỗi console.
 
 Công cụ Vercel MCP trả 403 cho scope `tiennguyen1403s-projects`; kiểm bằng trang công khai thay.
+
+**26/09, lát 13 — soát UI toàn app, sửa lỗi nhỏ (`/redesign-existing-projects`).** Người dùng: "quét hết tất cả các màn hình,
+tìm các điểm lỗi UI, polish lại cho chỉn chu … không để lại lỗi nhỏ nào". Phiên chính hiểu là **sửa lỗi trong hệ đã duyệt**, không
+thiết kế lại: các gợi ý chung của skill (đổi font, thêm grain, bỏ lưới ba cột…) trái DESIGN.md và QĐ đã chốt, nên không làm.
+
+Cách soát (script ở scratchpad phiên 76f6b540, thư mục `audit/`):
+- mọi route khách / người mua / quản trị ở 390 và 1280, thêm 360, 768, 1440 cho các màn chính; ảnh chụp theo khung nhìn cuộn thật;
+- máy dò riêng `detect.cjs` (chữ bị cắt, tràn mép, chữ chồng, ảnh hỏng, tương phản, mồ côi, nút lệch hàng, icon lệch) cùng
+  `tools/layout-sweep.js`;
+- mở mọi lớp nổi; so với mock v3 chụp lại ở 3100; trạng thái giữa hai Số dựng bằng cách đóng tạm Số 05 trên DB cục bộ rồi khôi phục.
+
+Người dùng quyết ba câu:
+- tablet 600–899: **tinh chỉnh nhẹ**;
+- **bỏ số đếm trùng với hàng tab** ngay dưới tiêu đề;
+- câu chữ giải thích: **duyệt từng câu** trên `prototype/v3/copy.html`. Vòng 1: 56 câu, vòng 2: 14 câu; cả hai vòng người dùng
+  **nhận hết đề xuất**.
+
+**26/09, lát 13 ĐẠT (`025fc2d`).** `ui-implementer` làm P1–P37 theo `tasks/briefs/v3-lat-13-polish.md`, cộng ba chỉnh cuối
+(P30b, V13b, P33b). Phiên chính duyệt độc lập:
+- chụp lại toàn bộ cửa hàng + tài khoản ở 390/1280 và so từng ảnh: trên các trang không có mục sửa, chỉ số đồng hồ ở chân trang
+  khác;
+- lượt chụp lại khu quản trị bị hệ thống dừng vì máy thiếu RAM, còn 14 màn chưa chụp lại → phần quản trị duyệt bằng ảnh
+  `after-*` của agent (`.playwright-cli/shots/v3/polish/`);
+- `tsc` sạch; 1483/1483 test; build sạch; sweep 91 lượt, chỉ còn hai miễn trừ đã ghi (nút icon nav 40×44, hai nút trạng thái
+  rỗng canh trái).
+
+Nguyên nhân đáng nhớ (đã đo):
+- quy tắc v2 chết vẫn rơi lên màn mới: `.s .rules` làm xám tiêu đề Bốn quy tắc (xoá); `.s details{margin-top:14px}` làm cột phải
+  thanh toán thấp 14px (desktop đặt 0);
+- `.s{max-width:1280px}` chặn cả thanh điều hướng lẫn khu quản trị ở màn > 1280 → khung trải hết, chỉ `main` chặn 1280;
+- toast `left:50%` bị bóp còn nửa khung nhìn → `width:max-content`;
+- UAX #14 LB12a: khoảng trắng không ngắt đứng sau gạch vẫn cho ngắt → thêm U+2060 (`styleInList`, `DASH` trong
+  `lib/datetime.ts`), CSV bỏ các ký tự này.
+
+Lệch mock chấp nhận:
+- cột tên của "Bán chạy" rộng theo tên dài nhất (tên có tiền tố "S05 –" không vừa `1fr 120px`);
+- lề `.ctagrow .sub` là 44 (mock 36 quên khe 8);
+- ở 390, cột mã "Mã đang chạy" dùng chung nên mô tả hẹp hơn.
+
+Còn mở:
+- DESIGN.md: documenter cập nhật theo code mới (khung > 1280, dải tablet, `text-wrap-style`, `styleInList`/U+2060, vòng focus
+  lõm trong hàng cuộn, `--gold-800` trên dòng `tr.on`, nhịp hàng form 14, `.ft` trong panel quản trị);
+- tàn dư v2 `.s details{font-size:11.5px}` vẫn áp cho `details` khác (đã ghi ở DESIGN §10);
+- chưa push.
