@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T12:00:00+07:00",
+  "generatedAt": "2026-09-26T12:00:00+07:00",
   "title": "Design System: HIVE — nhãn dệt",
   "extensions": {
     "colorMeta": {
@@ -47,7 +47,8 @@
     "breakpoints": [
       { "name": "touch", "value": "460px", "purpose": "max-width — chỉ cho vùng chạm 44px của liên kết chữ, breadcrumb, menu." },
       { "name": "phone-only", "value": "899.98px", "purpose": "max-width — vài bố cục điện thoại (đầu mục, chân trang)." },
-      { "name": "desktop", "value": "900px", "purpose": "Breakpoint duy nhất của cửa hàng; `.s` dừng ở 1280px, `.wrap3` 1320px lề 40." },
+      { "name": "tablet", "value": "600px–899.98px", "purpose": "Dải tinh chỉnh nhẹ (lát 13): `.grid3` ba cột, ảnh bìa đang bán max-height 60svh, ảnh trang sản phẩm 70svh. Không gì khác." },
+      { "name": "desktop", "value": "900px", "purpose": "Breakpoint chính của cửa hàng. Khung `.s.v3` trải hết; `main:not(.narrow)`, `.nav3 .in`, `.foot3 .in` dừng ở 1280px chung một mép trái; `.wrap3` 1320px lề 40." },
       { "name": "admin-floor", "value": "1180px", "purpose": "min-width của `.s.adm3` — khu quản trị chỉ có bản desktop." }
     ],
     "layers": [
@@ -164,7 +165,7 @@
       { "name": "Mật ong không mang nổi chữ trắng", "body": "Chữ trên mật ong là mực; chữ muốn là mật ong dùng bậc 700 #9e6817.", "section": "colors" },
       { "name": "Màu không bao giờ là kênh duy nhất", "body": "Mọi badge mang một chấm và một chữ; mốc dòng thời gian mang hình dạng và chữ.", "section": "colors" },
       { "name": "Sàn 11px cho chữ chức năng", "body": "Không có cỡ dưới 11 ở bất cứ đâu (QĐ-22).", "section": "typography" },
-      { "name": "Vòng focus là outline duy nhất", "body": "2px #c28800 offset 2px, chỉ khi bàn phím điều khiển (html[data-pointer] tắt). Muốn một đường thì vẽ một đường.", "section": "elevation" },
+      { "name": "Vòng focus là outline duy nhất", "body": "2px #c28800 offset 2px (lõm -2px trong hàng cuộn ngang `.tabs3`, `.chips3:not(.wrapped)`, rail tài khoản dưới 900px), chỉ khi bàn phím điều khiển (html[data-pointer] tắt). Muốn một đường thì vẽ một đường.", "section": "elevation" },
       { "name": "Đo, không ước", "body": "Vùng chạm đo bằng elementFromPoint từ tâm; hộp danh nghĩa 46 để máy đọc ra 44.", "section": "layout" },
       { "name": "Thứ tự chồng lớp là một thang", "body": "2 bìa · 30 gợi ý tìm, thanh mua · 35 lớp chờ · 40 nav · 50 sheet · 55 menu · 80 toast. Lớp mới chọn một bậc và ghi vào DESIGN.md §6.", "section": "elevation" }
     ],
