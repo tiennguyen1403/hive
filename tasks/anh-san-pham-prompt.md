@@ -2,20 +2,23 @@
 
 Viết ngày 25/09/2026 cho ChatGPT (GPT Image). Người dùng đã chốt:
 - **Ảnh thẻ sản phẩm:** chỉ có món đồ, không người. Đồ mặc trên ma-nơ-canh vô hình, nền giấy trơn, cùng ánh sáng và góc chụp.
+- **Ảnh người mẫu bổ sung:** mỗi **sản phẩm × màu** dùng một người mẫu nam Việt khác, góc máy/khung hình và bối cảnh khác mọi ảnh lookbook đã làm, kể cả ảnh của sản phẩm khác. Từ BỤI bản mới trở đi, người mẫu theo brief cao **ít nhất 1,75 m**, dáng cao và gọn vừa phải, không đậm người hoặc cơ bắp quá mức; ưu tiên khung toàn thân để thấy tỉ lệ. Đây là định hướng tạo ảnh, không phải số đo có thể kiểm chứng trên người ảo. Đối chiếu và cập nhật `tasks/lookbook-register.md`. Không chỉ đổi màu trên cùng một ảnh người mẫu. Dùng ảnh sản phẩm đúng màu làm tham chiếu để giữ nguyên dáng, hình in và chi tiết áo. Ảnh lookbook bổ sung không nằm trong bảng 58 tệp dưới đây.
 - **Ảnh bìa Số:** có người mẫu Việt, một nam một nữ, mặc vài món của Số đó.
 - Công cụ tạo ảnh là **ChatGPT**.
 
-Mỗi màu của một mẫu có một ảnh. Web luôn hiện ảnh sản phẩm theo tỉ lệ **4:5**. Tổng cộng có 31 món:
+Mỗi màu của một mẫu có một ảnh thẻ sản phẩm. Web luôn hiện ảnh sản phẩm theo tỉ lệ **4:5**. Tổng cộng có 31 món:
 - 21 mẫu đang có trong dữ liệu, thuộc Số 03, 04 và 05, kể cả mẫu đã hết (vẫn hiện trên web với dấu SOLD OUT);
 - 2 mẫu hé lộ của Số 06;
 - 8 mẫu cố định (thêm ngày 25/09, sau khi người dùng duyệt bảng `prototype/v3/line.html`).
 
 31 món này cần 57 ảnh, cộng 1 ảnh bìa là 58 ảnh.
 
+Các bước đổi màu và giữ cùng nền/đèn trong mục 1–5 dành cho ảnh thẻ **không người**; ảnh lookbook phải theo quy tắc người mẫu riêng ở trên.
+
 Prompt viết bằng tiếng Anh vì công cụ tạo ảnh hiểu tiếng Anh tốt nhất; phần giải thích viết tiếng Việt.
 
-> Dữ liệu chỉ ghi loại áo, chất liệu, form và màu. Các chi tiết may (túi, khoá, bo, mũ) và ba hình in (NGUỘI, SÓNG, NGÓI) là **đề
-> xuất của tôi**. Muốn khác thì sửa thẳng trong khối prompt. Ảnh tạo ra sẽ quyết định món đồ trông thế nào, nên hãy xem kỹ.
+> Dữ liệu chỉ ghi loại áo, chất liệu, form và màu. Các chi tiết may (túi, khoá, bo, mũ) và họa tiết in là **đề xuất theo concept của HIVE**;
+> KHÓI, BỤI, NGUỘI và NẮNG đã được tạo lại theo các brief riêng. Muốn khác thì sửa thẳng trong khối prompt. Ảnh tạo ra sẽ quyết định món đồ trông thế nào, nên hãy xem kỹ.
 
 ---
 
@@ -120,30 +123,32 @@ làm bằng câu đổi màu ở mục 5.
 
 ```text
 KHÓI — oversized T-shirt. Colour: black (#1C1C1C), a soft true black.
-Heavyweight 250 gsm cotton jersey, dense, smooth and slightly matte. Plain, no print.
+Heavyweight 250 gsm cotton jersey, dense, smooth and slightly matte.
 Oversized cut: dropped shoulders, wide boxy body, straight hem at hip length, wide short sleeves ending just above the elbow, thick 2.5 cm ribbed crew neck.
+Front design: a bold diagonal ribbon of broken halftone smoke screen-print, rising from the lower right hem toward the upper left chest and dissolving into sparse particles. Warm ash-grey and bone-white matte ink, with a few fine honey-amber (#EBA400) strokes. One tiny black side-seam tab has a single amber line but no text. The graphic follows the fabric folds; no actual smoke in the scene.
 Front view.
 ```
 
-Đổi màu: `cream` → `khoi-cream.png`
+Đổi màu: `cream` → `khoi-cream.png`; giữ nguyên hình in, đổi mực sáng sang than/xám đậm để đủ tương phản trên vải kem, giữ nét vàng mật ong.
 
 **BỤI** · Áo hoodie · Nỉ bông 380gsm · Oversize · 890.000₫
 
 ```text
 BỤI — oversized pullover hoodie. Colour: black (#1C1C1C), a soft true black.
-Heavyweight 380 gsm brushed-back cotton fleece, thick and soft, with a dry matte face. Plain, no print.
+Heavyweight 380 gsm brushed-back cotton fleece, thick and soft, with a dry matte face.
 Oversized cut: dropped shoulders, roomy body, double-layer hood standing up around the neck with its opening facing forward, two flat drawcords in the same colour with small metal tips, kangaroo pocket, wide ribbed cuffs and hem band.
+Front design — "Bản đồ mòn": five asymmetrical, interlocking fractured concrete-plate shapes screen-printed across the upper-middle chest, above the kangaroo pocket. Their irregular silhouette carries intricate miniature street-grid lines, thin eroded contour scratches, sparse halftone mineral grain and sharp negative-space fissures. Warm bone and ash-grey matte inks contrast against the black fleece; one tiny muted honey-amber (#EBA400) angled construction mark adds a restrained accent. The design reads as one bold city-map composition at thumbnail size and has close-up detail. Ink follows the fabric folds; this is deliberate print, not real dirt, smoke, or simple horizontal bars. Pocket and sleeves stay plain; no words or logos.
 Front view.
 ```
 
-Đổi màu: `grey` → `bui-grey.png`
+Đổi màu: `grey` → `bui-grey.png`; vải xám phẳng #8C8C8C, giữ nguyên bố cục năm mảng bản đồ vỡ nhưng chuyển mực sang than đậm và xám đá để đủ tương phản, giữ nét vàng mật ong.
 
 **NGUỘI** · Áo hoodie in · Nỉ bông 380gsm · Oversize · 1.290.000₫. Hình in là đề xuất.
 
 ```text
 NGUỘI — oversized printed pullover hoodie. Colour: black (#1C1C1C), a soft true black.
 Heavyweight 380 gsm brushed-back cotton fleece. Oversized cut: dropped shoulders, roomy body, double-layer hood standing up around the neck with its opening facing forward, flat drawcords with small metal tips, kangaroo pocket, wide ribbed cuffs and hem band.
-Print: one large screen print centred on the chest, about 26 cm wide, in a single honey-yellow ink (#EBA400): concentric rings that break up into scattered dots toward the outside, like ripples cooling off. Matte ink with a soft hand. The print contains no letters, numbers or symbols.
+Front design — "Dư nhiệt": one asymmetric, vertically oval thermal imprint across the upper chest, about 30 cm wide and ending above the kangaroo pocket. Seven to nine warped, interrupted isotherm contours orbit an off-centre black void. Honey-amber (#EBA400) ink is most vivid at the lower right, then cools through burnt ochre into pale ash-grey micro-halftone grain dispersing at the upper left. Add a few fine cooling fissures and subtle screen-print misregistration; keep all inks matte and bonded to the fleece. This is a residual heat mark, not a clean bullseye, sun, flame, smoke or concrete map. The print contains no letters, numbers or logos.
 Front view.
 ```
 
@@ -153,12 +158,13 @@ Chỉ có màu đen.
 
 ```text
 NẮNG — regular-fit T-shirt. Colour: white (#F2F1ED), a clean soft white, not grey, not yellow.
-Midweight 220 gsm cotton jersey, smooth. Plain, no print.
+Midweight 220 gsm cotton jersey, smooth.
 Regular cut: set-in shoulders on the natural shoulder line, straight body, hem at the top of the hip, short sleeves ending mid-bicep, narrow 1.5 cm ribbed crew neck.
+Front design — "Mảng nắng": one asymmetric, rough-edged patch of sunlight across the upper-middle chest, about 29 cm wide. Layer honey-amber and warm-ochre halftone ink with dark charcoal silhouettes of tropical roadside leaves and two very fine diagonal utility-wire shadows. Fade the patch edges into sparse print grain. Keep it a deliberately printed, matte graphic on the shirt, not real sunlight or shadows in the product photograph. No circular sun, letters, numbers, logos, smoke, city grid or simple stripes.
 Front view.
 ```
 
-Đổi màu: `cream` → `nang-cream.png` · `moss` → `nang-moss.png`
+Đổi màu: `cream` → `nang-cream.png`, vải kem #E6DFD1 và mảng in đất nung/ochre đậm hơn để không chìm trên nền sáng; `moss` → `nang-moss.png`, vải rêu #4A5240 và mảng nắng màu xương sáng pha vàng mật ong để đủ tương phản. Giữ nguyên bố cục lá và hai bóng dây điện ở cả ba màu.
 
 **SƯƠNG** · Áo khoác dù · Dù chống nước 2 lớp · Oversize · 1.450.000₫
 
@@ -166,21 +172,23 @@ Front view.
 SƯƠNG — oversized hooded shell jacket. Colour: black (#1C1C1C), a soft true black.
 Two-layer waterproof nylon with a faint technical sheen and a crisp, slightly stiff drape.
 Oversized cut: dropped shoulders, boxy body reaching the upper thigh, full-length front zip closed to the top under a snap storm flap, stand collar with the hood attached and lying down behind it, two zipped hand pockets, adjustable tab cuffs, drawcord hem with small toggles.
+Surface design — "Lớp sương": on both upper chest panels and fading onto the shoulder yoke, two asymmetric complementary fields of small reflective-look slate-grey micro-dashes and rectangular halftone pixels. They are densest near the outer shoulders and dissolve toward the central storm flap and lower chest; three or four extremely fine interrupted silvery tracers run through them. One tiny muted honey-amber (#EBA400) bartack-like mark sits near the left upper chest. Keep the placket, pockets and seams clear. This is an intentional technical transfer print on nylon, not real condensation, water, dirt, smoke or large solid stripes. No letters or logos.
 Front view.
 ```
 
-Đổi màu: `moss` → `suong-moss.png`
+Đổi màu: `moss` → `suong-moss.png`; vải rêu trầm #4A5240, giữ nguyên bố cục hạt/nét ở vai và ngực, đổi mực sang xám đá sáng pha lục nhạt để đọc rõ trên nền rêu, giữ dấu vàng mật ong nhỏ.
 
 **MUỐI** · Quần jogger · Nỉ da cá 320gsm · Regular · 690.000₫. Mẫu đã hết, vẫn cần ảnh.
 
 ```text
 MUỐI — jogger trousers. Colour: black (#1C1C1C), a soft true black.
-320 gsm cotton French terry (loopback), soft and matte. Plain.
+320 gsm cotton French terry (loopback), soft and matte.
 Regular tapered fit: covered elastic waistband with a flat drawcord, side-seam pockets, straight through the thigh and tapering to ribbed ankle cuffs, full length.
+Front design — "Kết tinh": on the wearer's left leg (viewer's right), a narrow asymmetric trail of angular cubic salt-crystal wireframes, partial solid facets, micro-square grains and a few fine connecting fractures. The roughly 8 cm wide print starts below the side pocket at the outer upper thigh, crosses the front-outside of the knee, then disperses by mid-shin, well above the ribbed cuff. Warm mineral-bone and ash-grey matte inks contrast against the black fleece; one tiny honey-amber (#EBA400) mark accents the top. Keep the other leg mostly plain. Deliberate printed graphic, not real salt residue, stains, snowflakes, a side stripe, text or logo.
 Shown from the front on an invisible lower-body mannequin, legs straight and slightly apart, the waistband slightly open so its inside back is visible.
 ```
 
-Đổi màu: `grey` → `muoi-grey.png`
+Đổi màu: `grey` → `muoi-grey.png`; vải xám phẳng #8C8C8C, giữ đúng họa tiết trên ống trái và đổi mực sang than đậm với vài mặt tinh thể xám đá sáng để đủ tương phản, giữ dấu vàng nhỏ.
 
 **THAN** · Áo khoác bomber · Dù chần bông · Oversize · 1.350.000₫
 
@@ -188,21 +196,23 @@ Shown from the front on an invisible lower-body mannequin, legs straight and sli
 THAN — oversized padded bomber jacket. Colour: black (#1C1C1C), a soft true black.
 Matte nylon shell with light padding, stitched in horizontal channel quilting about 5 cm apart.
 Oversized cut: dropped shoulders, boxy body ending at the waist on a wide ribbed hem band, ribbed stand collar and ribbed cuffs, full front zip closed to the top, two slanted welt pockets.
+Front design — "Mạch than": an asymmetric web of fine jagged graphite-grey coal-vein lines crossing only the wearer's left upper chest (viewer's right) over two quilted channels, with a small echo on the same upper sleeve. A few muted honey-amber (#EBA400) strokes run through the centres; small mineral-grey facets and grains break away at the ends. Matte printed/embroidered artwork follows the padded fabric without covering seams, zipper or pockets. Keep the other side plain. Not real cracks, fire, lightning, smoke, a city map, text or logo.
 Front view.
 ```
 
-Đổi màu: `navy` → `than-navy.png`
+Đổi màu: `navy` → `than-navy.png`; vải dù xanh navy trầm hơi xám, giữ cùng vị trí và nét vẽ Mạch than; đổi nét xám chì thành xám đá/xám lam sáng hơn để đọc rõ trên nền navy, giữ điểm nhấn vàng mật ong tiết chế.
 
 **CÁT** · Áo thun tay lỡ · Cotton 240gsm · Oversize · 420.000₫
 
 ```text
 CÁT — oversized T-shirt with elbow-length sleeves. Colour: cream (#E6DFD1), a warm sand off-white, not yellow.
-240 gsm cotton jersey, soft and slightly matte. Plain, no print.
+240 gsm cotton jersey, soft and slightly matte.
 Oversized cut: deeply dropped shoulders, wide boxy body a little longer than usual, wide sleeves falling to the elbow, 2 cm ribbed crew neck.
+Front design — "Vân xói": on the upper-middle torso, slightly toward the wearer's right (viewer's left), one roughly 30 × 29 cm asymmetric stepped wedge of six to eight differently sized wind-carved sand terraces. A dark central mass, angular tapering shards, directional etched hatching and tiny stippled grains give it depth; a diagonal channel of untouched shirt fabric cuts through the composition, and one lower edge disperses into sparse grain fragments. Matte charcoal and dusty deep-umber screenprint with one short muted honey-amber (#EBA400) notch. Complex and readable at thumbnail size, but leave generous plain fabric around it. Not actual sand, dirt, parallel brush stripes, an oval of contours, a city map, text or logo.
 Front view.
 ```
 
-Đổi màu: `white` → `cat-white.png` · `brown` → `cat-brown.png`
+Đổi màu: `white` → `cat-white.png`, vải trắng dịu #F2F1ED, giữ nguyên hình Vân xói và mực than/nâu đất. `brown` → `cat-brown.png`, vải nâu đất sẫm #5C4536, giữ chính xác bố cục hình; đổi phần mực nâu/than chính sang xương khoáng và xám taupe sáng để rõ trên nền tối, vẫn có khoảng âm nâu, vài nét than và một dấu vàng mật ong.
 
 **GIÓ** · Áo sơ mi dệt · Kate lụa · Regular · 750.000₫
 
@@ -210,10 +220,11 @@ Front view.
 GIÓ — regular-fit woven shirt. Colour: white (#F2F1ED), a clean soft white, not grey, not yellow.
 Kate lụa: a smooth, lightweight poly-cotton plain weave with a soft silky sheen.
 Regular cut: point collar, full button placket with small tonal buttons, buttoned up to the second button, one patch pocket on the left chest, long sleeves with one-button cuffs, curved shirttail hem.
+Front design — "Luồng cắt": on the wearer's right front panel (viewer's left), five interlocking elongated airfoil-like slivers rise from mid-chest toward the shoulder in a loose asymmetric fan. Vary their widths, lengths and spacing; fill the slate-grey and ash-grey matte ink with intricate oblique woven hatching and broken pinstripe traces, tapering into fine sharp ends. One small muted honey-amber (#EBA400) stitch marks the lower start. Keep the placket, collar and opposite chest pocket unobscured; the remaining fabric is plain. Deliberate flat print/embroidery, not cut-out fabric, actual feathers, smoke, identical stripes, text or logo.
 Front view.
 ```
 
-Đổi màu: `navy` → `gio-navy.png`
+Đổi màu: `navy` → `gio-navy.png`; vải xanh navy trầm #2B3A52, giữ nguyên phom, túi, nút và năm nét Luồng cắt; dùng mực xám đá/xám lam sáng hơn để đủ tương phản, giữ một dấu vàng mật ong nhỏ.
 
 **ĐÁ** · Quần cargo · Kaki 320gsm · Regular · 980.000₫
 
