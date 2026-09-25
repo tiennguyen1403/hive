@@ -2100,3 +2100,25 @@ lát 8–12 và B5.
    - trang quản trị có tab Cố định;
    - `og:image` trỏ đúng domain (còn treo từ lát 10).
    Nếu seed nạp lại xoá liên kết tài khoản mẫu thì chạy `ENV_FILE=.env.hosted.local npm run seed:users` như B4.
+
+**25/09, mẫu cố định LÊN ONLINE.** Người dùng push `24f41bf`; Vercel tự deploy. Phiên chính thấy bản mới đã chạy (`/so/5` 200,
+h1 sr-only "Tất cả mẫu") trước khi đụng DB. Sau đó:
+1. Người dùng chạy `db push --linked --include-seed --dry-run`: 1 migration, seed "(hash update)".
+2. Người dùng chạy lệnh thật: migration `20260925090000` đã lên. **Nhưng seed không chạy.**
+   - Với seed đã đổi, CLI 2.117 chỉ in "Updating seed hash to supabase/seed.sql..." và ghi hash mới, không chạy tệp.
+   - Online vẫn slug cũ, không mẫu cố định: `/products/khoi` 200, `/products/s05-khoi` 404.
+3. Nạp seed bằng `npx supabase db query --linked -f supabase/seed.sql`, người dùng gõ với `!`. Lệnh gửi qua Management API và nhận
+   tệp nhiều câu lệnh. Bản `--local` của cùng lệnh bị từ chối ("cannot insert multiple commands into a prepared statement") và
+   không đổi gì. Tệp kết thúc bằng `reset_demo(demo_anchor())`.
+
+Kiểm production sau khi nạp:
+- `/products/khoi` trả 308 sang `/products/s05-khoi`;
+- `/products` có 18 mẫu (10 `s05-*` + 8 cố định); `/products/ao-thun-tron` 200; `/flats/*.png` 200;
+- `og:image` là `https://hive-neon-three.vercel.app/opengraph-image?…`, **xong việc treo từ lát 10**;
+- quản trị (đăng nhập "Vào quản trị thử", chỉ đọc):
+  - tab "Cố định 8" đầu, chấm "3 mẫu sắp hết", ba mẫu sắp hết lên đầu;
+  - tab Số 05 có tên "S05 – KHÓI";
+  - 8 khách còn đơn của họ, nên tài khoản mẫu vẫn nối đúng;
+- 0 lỗi console.
+
+Công cụ Vercel MCP trả 403 cho scope `tiennguyen1403s-projects`; kiểm bằng trang công khai thay.
