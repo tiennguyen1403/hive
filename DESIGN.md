@@ -240,8 +240,8 @@ components:
 
 Tài liệu này **mô tả cái đang chạy**, không mô tả ý định. Mọi token trong
 frontmatter và dưới đây tồn tại thật trong `app/globals.css`; mọi con số lấy từ
-`app/styles/*.css` (**4.324 dòng, mười sáu tệp** — đếm lại 2026-09-26 sau lát 13;
-sau lát 12 (đợt mẫu cố định) là 4.108; sau lát 10 của v3 là 4.003; lát 6 đã quét sạch lớp v2 và để lại 3.740; `table.css` là tệp thứ
+`app/styles/*.css` (**4.340 dòng, mười sáu tệp** — đếm lại 2026-09-26 sau lát 14;
+sau lát 13 là 4.324; sau lát 12 (đợt mẫu cố định) là 4.108; sau lát 10 của v3 là 4.003; lát 6 đã quét sạch lớp v2 và để lại 3.740; `table.css` là tệp thứ
 mười bảy và đã đi cùng route `/system`). Chỗ nào tài liệu và code lệch nhau thì
 **code đúng** — sửa tài liệu, đừng sửa code cho khớp tài liệu.
 
@@ -268,6 +268,14 @@ và ký tự giữ cụm chữ (§3); vòng focus lõm trong hàng cuộn, toast
 luật căn hàng mới (§4, §8); khối checklist mật khẩu v2 `.s .rules` đã xoá (§3,
 §8); chữ trên màn không giải thích khái niệm (§3); phép đo (§10).
 
+**Cập nhật 2026-09-26 sau lát 14 của v3** — Số 05 mặc ảnh của chính nó
+(`b73c6cf`, brief `tasks/briefs/v3-lat-14-photos.md`). Không token, màu, mặt
+chữ hay bo góc nào đổi. Đổi: nguồn ảnh — ảnh thẻ và ảnh mặc trên người sinh bằng
+AI trong `public/shots/`, danh sách khung còn mượn (§1); bìa Số đã đóng giữ ảnh
+cao (§4); dải tablet giữ khung 4:5 nguyên, không cắt (§7); gallery trang sản
+phẩm là các khung của màu đang chọn, ô ảnh quản trị "Ảnh thật", tên khung mượn
+có màu (§8); phép đo (§10).
+
 ---
 
 ## 1. Nguồn của sự thật
@@ -282,6 +290,7 @@ luật căn hàng mới (§4, §8); khối checklist mật khẩu v2 `.s .rules`
 | Đồng hồ | `lib/clock.ts` — `demoNow()` (QĐ-24) |
 | Logo | `prototype/name/logo/` — mark M2 (QĐ-29), chữ W3 (QĐ-30). Thanh điều hướng chép `hive-lockup-nav.svg` vào `components/shop/NavLogo.tsx`, lớp chờ chép `hive-mark.svg` vào `components/shop/WaitVeil.tsx`, ảnh chia sẻ đọc `lib/brand/logo.ts` do script sinh. Màu của logo viết thẳng, **không đọc token**: logo không theo theme |
 | Tên, mô tả, màu trình duyệt | `lib/site.ts` — `SITE_NAME`, `SITE_DESCRIPTION` (mô tả A), `THEME_COLOR`, `siteOrigin()` → `metadataBase` |
+| Ảnh | `lib/photos.ts` — `photoUrl()` (mọi URL ảnh, bốn loại khoá), `lookbookUrl()`, `PHOTO_IDS`; `lib/shots.ts` — ảnh đi kèm app (`SHOTS`, `shotKey`); `lib/flats.ts` — hình phẳng. Xem mục con "Ảnh" dưới |
 | Nhịp lớp chờ | `lib/wait.ts` — `WAIT` (mọi thời lượng), `shouldVeil` (khi nào), `showingFrame` / `closingFrame` (từng frame) |
 
 **Tailwind chỉ là theme + preflight** (QĐ-23). `globals.css` nhập
@@ -311,42 +320,74 @@ sâu hơn.
 
 ### Ảnh — nguồn gốc từng raster (FINISH: mọi raster giao đi mang nguồn gốc)
 
-Bản dựng **chưa có ảnh sản phẩm của thương hiệu** (tệp nhận diện — favicon, biểu tượng, ảnh chia sẻ —
-thì có, xem mục con cuối). Mọi ảnh sản phẩm, ảnh bìa và ảnh hé lộ là **ảnh thay thế**
-lấy từ Unsplash qua `lib/photos.ts` (`photoUrl(key, width, quality)` → `images.unsplash.com/photo-<id>`,
-Unsplash License), không có plate trong repo và không ghi tên tác giả trên màn. Chúng đứng chỗ cho ảnh
-thật: khi có ảnh của cửa hàng, thay từng khoá dưới đây trong `PHOTO_IDS` (hoặc đổi `photoUrl` sang plate tự
-chứa) là mọi màn đổi theo, bố cục không đổi. Ảnh tra cứu Unsplash bằng ID sau `photo-`.
+Mọi URL ảnh dựng ở **một chỗ**, `photoUrl(key, width, quality)` trong `lib/photos.ts`, và khoá tự nói nó là
+loại nào, xét theo thứ tự: **ảnh tải lên** (`up/<32 hex>.webp|jpg`) · **ảnh đi kèm app** (`shot-<mẫu>-<màu>`) ·
+**hình phẳng** (`flat-<dáng>-<màu>`, mục con dưới) · còn lại là **khung mượn** Unsplash (`PHOTO_IDS`); khoá lạ, kể
+cả `shot-…`/`flat-…` không có tệp, rơi về `hero`. Tệp nhận diện — favicon, biểu tượng, ảnh chia sẻ — ở mục con cuối.
+
+**Ảnh của Số 05 — sinh bằng AI, đi kèm app (lát 14, 26/09/2026).** Mười mẫu của Số 05, **21 phối màu**, mặc ảnh
+của chính chúng trong `public/shots/`: ảnh thẻ (món đồ trên ma-nơ-canh vô hình, trước giấy studio)
+`<mẫu>-<màu>.webp` và ảnh mặc trên người `<mẫu>-<màu>-look.webp` — **42 tệp WebP 1200×1500** (4:5), tổng
+**7,2 MB**. Làm bằng ChatGPT (GPT Image) từ prompt trong `tasks/anh-san-pham-prompt.md` và
+`tasks/lookbook-register.md`. Khoá `shot-<mẫu>-<màu>` (`shotKey`; `<mẫu>` là gốc `khoi`, không phải `s05-khoi`),
+danh sách `SHOTS` trong `lib/shots.ts`, `lib/shots.test.ts` giữ khớp với tệp trên đĩa và catalogue. `photoUrl`
+trả **ảnh thẻ** (`/shots/khoi-black.webp`, `next/image` tối ưu như ảnh tải lên) — đó là ảnh của màu ấy ở mọi nơi
+có ảnh. **Ảnh mặc trên người** chỉ tới qua `lookbookUrl(key)`, suy ra từ chính khoá ảnh thẻ, không có cột riêng,
+và chỉ gallery trang sản phẩm gọi nó (§8); màu có ảnh thẻ bị thay bằng ảnh tải lên thì mất luôn khung ấy, vì nó
+cho thấy món đồ đã bị thay.
+
+Đường ống **`scripts/shots.ts`** biến `photos-raw/` (không vào git) thành `public/shots/`:
+- **Ảnh thẻ** vào một khung chung: món đồ vừa hộp **84% bề ngang hoặc 82% chiều cao**, cái nào chạm trước; mép
+  trên (cổ áo, mũ, cạp quần) ở **12%** chiều cao; căn theo trục của chính nó. **Chỉ nền** được đưa về một tông
+  giấy chung **`PAPER = #C3BBB2`** — trung vị giấy của 19 ảnh thẻ không phải KHÓI, ghi thành hằng để ảnh làm lại
+  sau rơi đúng tông ấy; điểm ảnh của món đồ giữ nguyên. **KHÓI giữ nền gốc** (`KEEP_PAPER`: `khoi-black`,
+  `khoi-cream`) — nền vải xám loang có vignette, làm phẳng thì làm sáng luôn hình in sát gấu — cho tới khi hai ảnh
+  được tạo lại trên giấy chuẩn.
+- **Ảnh mặc trên người** chỉ đổi cỡ về 1200×1500 (Lanczos): không chỉnh tông, không cắt.
+- WebP chất lượng **90** (ảnh thẻ) / **86** (ảnh mặc). **Nguồn gốc ghi bằng XMP** trong từng tệp: IPTC digital
+  source type `trainedAlgorithmicMedia`, công cụ, tên tệp gốc và prompt như tệp prompt ghi — C2PA của ChatGPT
+  không sống qua lần nén lại. `impeccable embed-prompt --scan` không đọc XMP nên báo thiếu cả 42 tệp; đã chấp nhận.
+
+Chạy lại cho đúng cặp đã làm lại: `npx tsx scripts/shots.ts khoi-black` (`--measure` in lại trung vị giấy,
+`--debug <dir>` ghi mặt nạ để xem trước khi tin một tệp); `lib/shots.test.ts` đỏ khi thiếu tệp.
+
+**Còn mượn — khung Unsplash** qua `PHOTO_IDS` (`images.unsplash.com/photo-<id>`, Unsplash License, không plate
+trong repo, không ghi tên tác giả trên màn): **bìa trang chủ `hero`**, mọi mẫu **Số 03 và 04**, hai teaser **Số 06**.
+Khung mượn không bao giờ là món đồ nó đứng thay, và khu quản trị nói vậy ("mượn tạm", §8). Thay một khoá dưới
+đây, hoặc đưa màu sang `shot-…` / ảnh tải lên, là mọi màn đổi theo, bố cục không đổi. Ảnh tra cứu Unsplash bằng
+ID sau `photo-`.
 
 | Khoá | ID Unsplash | Dùng ở |
 |---|---|---|
-| `hero` | `1593278641722-49b1047ede21` | bìa Số đang bán (hero) |
-| `khoi` | `1503341338985-c0477be52513` | mẫu KHÓI |
-| `bui` | `1620799140188-3b2a02fd9a77` | mẫu BỤI |
-| `nguoi` | `1680292783974-a9a336c10366` | mẫu NGUỘI |
-| `nang` | `1503341504253-dff4815485f1` | mẫu NẮNG |
-| `suong` | `1564557287817-3785e38ec1f5` | mẫu SƯƠNG |
-| `muoi` | `1601063476271-a159c71ab0b3` | mẫu MUỐI |
-| `than` | `1508216310976-c518daae0cdc` | mẫu THAN |
-| `cat` | `1578768079052-aa76e52ff62e` | mẫu CÁT |
-| `gio` | `1615397587950-3cbb55f95b77` | mẫu GIÓ |
-| `da` | `1542406775-ade58c52d2e4` | mẫu ĐÁ |
-| `reu` | `1611817757591-c3f345024273` | mẫu RÊU |
-| `tro` | `1614214191247-5b2d3a734f1b` | mẫu TRO |
-| `song` | `1688111421205-a0a85415b224` | mẫu SÓNG |
-| `vo` | `1565978771542-0db9ab9ad3de` | mẫu VỎ |
-| `mua` | `1633292750937-120a94f5c2bb` | mẫu MƯA |
-| `kho` | `1542327534-59a1fe8daf73` | mẫu KHÔ |
-| `dat` | `1632682582909-2b3a2581eef7` | mẫu ĐẤT |
-| `lua` | `1561151593-7059b6b4ff57` | mẫu LỬA |
+| `hero` | `1593278641722-49b1047ede21` | bìa trang chủ |
+| `khoi` | `1503341338985-c0477be52513` | — (không màu nào mang từ lát 14) |
+| `bui` | `1620799140188-3b2a02fd9a77` | S03 – BÃO |
+| `nguoi` | `1680292783974-a9a336c10366` | teaser S06 – NGÓI |
+| `nang` | `1503341504253-dff4815485f1` | S03 – MEN |
+| `suong` | `1564557287817-3785e38ec1f5` | S03 – VÔI; teaser S06 – SỎI |
+| `muoi` | `1601063476271-a159c71ab0b3` | — (không màu nào mang từ lát 14) |
+| `than` | `1508216310976-c518daae0cdc` | màu Đen của S04 – TRO và S03 – ĐẤT |
+| `cat` | `1578768079052-aa76e52ff62e` | — (không màu nào mang từ lát 14) |
+| `gio` | `1615397587950-3cbb55f95b77` | — (không màu nào mang từ lát 14) |
+| `da` | `1542406775-ade58c52d2e4` | — (không màu nào mang từ lát 14) |
+| `reu` | `1611817757591-c3f345024273` | S04 – RÊU; màu Rêu của S04 – KHÔ |
+| `tro` | `1614214191247-5b2d3a734f1b` | S04 – TRO |
+| `song` | `1688111421205-a0a85415b224` | S04 – SÓNG; màu Trắng của S03 – LỬA |
+| `vo` | `1565978771542-0db9ab9ad3de` | S04 – VỎ; màu Xám của S03 – VÔI |
+| `mua` | `1633292750937-120a94f5c2bb` | S04 – MƯA |
+| `kho` | `1542327534-59a1fe8daf73` | S04 – KHÔ; màu Kem của S04 – VỎ |
+| `dat` | `1632682582909-2b3a2581eef7` | S03 – ĐẤT |
+| `lua` | `1561151593-7059b6b4ff57` | S03 – LỬA |
 
-19 khoá, 1 bìa + 18 mẫu (Số 03–06). `PHOTO_KEYS` xuất từ cùng bảng để form quản trị và sheet hé lộ
-chỉ chọn được ảnh đã có nguồn. Mẫu cố định không dùng bảng này — xem "Hình phẳng" dưới.
+19 khoá trong bảng; **14 còn được mang** — bìa và 13 khung của Số 03, 04 và teaser Số 06. Năm khoá `khoi` `muoi`
+`cat` `gio` `da` còn trong `PHOTO_IDS` nhưng không màu nào mang, nên danh sách "Mượn tạm" của form quản trị
+(`loanPhotos`: khoá catalogue đang mang, trừ ảnh tải lên, chỉ khoá có trong `PHOTO_IDS`) có **13 khung**. Mẫu cố
+định không dùng bảng này — xem "Hình phẳng" dưới.
 
-**Từ B3c (24/09/2026) có ảnh thật do quản trị tải lên:** nằm ở bucket `product-photos` (Supabase Storage, công khai đọc, chỉ máy chủ
+**Từ B3c (24/09/2026) có ảnh do quản trị tải lên:** nằm ở bucket `product-photos` (Supabase Storage, công khai đọc, chỉ máy chủ
 ghi) dưới khoá `up/<32 hex>.webp|jpg`, phục vụ qua route của chính app `/photos/<khoá>` (cache một năm, bất biến) rồi `next/image` như
-mọi ảnh khác, nên trình duyệt vẫn không gọi Supabase. `photoUrl()` phân biệt hai loại khoá; `photo_key` của `product_colors` mang một
-trong hai. Ảnh tải lên là ảnh của cửa hàng, không mang nhãn mượn; "Đặt lại dữ liệu mẫu" xoá mọi ảnh tải lên.
+mọi ảnh khác, nên trình duyệt vẫn không gọi Supabase. `photo_key` của `product_colors` mang một trong bốn loại khoá. Ảnh tải lên
+và ảnh đi kèm app đều là **ảnh thật** (`isRealPhotoKey`), không mang nhãn mượn; "Đặt lại dữ liệu mẫu" xoá mọi ảnh tải lên.
 
 ### Hình phẳng của mẫu cố định — sinh bằng máy (lát 11)
 
@@ -372,7 +413,7 @@ trang mới. **Mỗi tệp mang chunk `impeccable:prompt`** ghi script, `lib/fla
 (`npx tsx scripts/flats.ts`, cần Google Chrome) khi `lib/flats.ts` hay phối màu của mẫu cố định đổi;
 `lib/flats.test.ts` đỏ cho tới khi tệp khớp khoá.
 
-Khoá `flat-*` **đi nhánh riêng trong `photoUrl`**, sau ảnh tải lên và trước Unsplash: `flatPath(key)` trả
+Khoá `flat-*` **đi nhánh riêng trong `photoUrl`**, sau ảnh tải lên và ảnh đi kèm app, trước Unsplash: `flatPath(key)` trả
 `/flats/<dáng>-<màu>.png`, `next/image` tối ưu như ảnh tải lên. Chỉ 17 khoá có tệp (`isFlatKey`); khoá
 `flat-…` khác rơi về `hero` như mọi khoá lạ. Chúng **không nằm trong `PHOTO_IDS`**, nên `PHOTO_KEYS` của form
 quản trị và sheet hé lộ không đổi. Ngày có ảnh thật, khoá đổi và không gì khác đổi.
@@ -646,6 +687,14 @@ Desktop: lưới `5fr 7fr`, nhãn trái (mép may chuyển sang `border-right`),
 phải `order:2`, `min-height:640`, đồng hồ 40px, số 168px. Teaser `.cover.soon` là
 cùng bìa nhưng số nhạt 72/120, hai ô ảnh 4:5 mờ 45% với badge "Chưa mở".
 
+**Bìa Số đã đóng giữ ảnh cao** (lát 14). Ảnh của `.cover.shut` là ảnh mẫu đầu
+của Số, và từ lát 14 có thể là ảnh thẻ 4:5 — mép trên món đồ ở 12%, gấu gần 79%.
+Căn giữa thì ở 1280 khung 738×640 chỉ thấy 69% chiều cao và mất cổ áo, nên ảnh
+mang `object-position:50% 30%` (**`50% 35%` từ 900px**), cùng `grayscale(.6)` và
+`opacity:.85` vốn có. Đo: ở 390 cách cổ áo 28px, dưới gấu 31px; ở 768×1024 cổ áo
+còn 15px, gấu ra ngoài khung; 12 / 7px ở 1280; 9 / 2px ở 1440 (khung rộng nhất,
+747×640). Ảnh mượn dọc (của Số 04) chỉ được thêm khoảng đầu.
+
 ---
 
 ## 5. Vùng chạm — đo, không ước
@@ -858,8 +907,13 @@ cho vài bố cục điện thoại.
 26/09/2026): `@media (min-width:600px) and (max-width:899.98px)` chỉ làm ba việc
 — `.grid3` **ba cột**, ảnh bìa đang bán `.cover:not(.soon) .photo` `width:100%`
 `max-height:60svh` (khai `width` vì hộp có tỉ lệ sẽ mang `max-height` sang bề
-ngang), ảnh trang sản phẩm `.gal figure` `max-height:70svh`. Điện thoại và
-desktop không đổi. Không thêm gì vào dải này nếu người dùng chưa duyệt.
+ngang), và gallery trang sản phẩm **không cao quá 70% màn mà không bị cắt** (lát
+14 thay `.gal figure{max-height:70svh}` của lát 13, vốn cắt 22% ảnh ở 768×1024 —
+đầu và chân người mẫu): `.gal` hẹp lại còn `--galw: min(100% + 2·--gut, 70svh ×
+4/5)` và đứng giữa (`margin-inline: (100% − --galw) / 2`, tức phần còn lại của lề
+tràn, nên không bao giờ thò ra ngoài màn), `.galbar` rộng `min(100%, 70svh × 4/5)`
+giữa; khung giữ nguyên 4:5. Vẫn là vuốt, chấm và "1 / 2" của điện thoại. Điện
+thoại và desktop không đổi. Không thêm gì vào dải này nếu người dùng chưa duyệt.
 
 ---
 
@@ -893,7 +947,7 @@ desktop không đổi. Không thêm gì vào dải này nếu người dùng ch�
 | `.row` (+ `.thumb` `.t` `.d` `.amt` `.fill`) | hàng danh sách phẳng của tài khoản/quản trị | `lists.css` |
 | `.inp` (+ `.area` `.sel` `.bad`), `.selbtn`, `.box(.on)`, `.radio(.on)` | ô nhập trần 40px, nút select, hộp đánh dấu 17px v2 | `forms.css` |
 | `.field3` + `.lbl(.opt)` `.help` `.err` | trường form v3 (`components/ui/Field3.tsx`): nhãn micro viết hoa `--ink2`, ô 44px chữ 14, focus viền mật ong, lỗi `--hot` có icon | `checkout.css` |
-| `.pdp3` + `.crumbs` `.gallery3` `.sw` `.sizes` `.mysize` `.switch3` `.stock .meter(.hot/.gone)` `.buybar3(.show)` | trang sản phẩm: đĩa màu 32px vòng `--line`, **bảng size một dòng một size** với leader chấm, ô đánh dấu 20px và dòng chọn đảo `--sel` tick mật ong, công tắc 40×24, thanh tồn kho 4px (`--mark` / `--hot` / mực khi hết), thanh mua dính đáy | `product.css` |
+| `.pdp3` + `.crumbs` `.gal` `.galbar(.cur .dots i.on)` `.sw` `.sizes` `.mysize` `.switch3` `.stock .meter(.hot/.gone)` `.buybar3(.show)` | trang sản phẩm: gallery là **các khung của màu đang chọn** (xem dưới bảng) — điện thoại vuốt tràn lề khung 4:5 nền `--plate`, dưới là "1 / 2" 11px `--ink2` số bảng và chấm 6px `--hair` (đang xem mực); từ 900px các khung đứng một cột gap 12, bo `--r`, không thanh đếm; đĩa màu 32px vòng `--line`, **bảng size một dòng một size** với leader chấm, ô đánh dấu 20px và dòng chọn đảo `--sel` tick mật ong, công tắc 40×24, thanh tồn kho 4px (`--mark` / `--hot` / mực khi hết), thanh mua dính đáy | `product.css` |
 | `.steps3 .st(.done/.on)` | thanh bước: vòng 28px, xong = mực/tick mật ong, đang = mật ong | `checkout.css` |
 | `.cartline3` + `.thumb` `.n` `.kind i` `.p` `.ctl` `.stockline(.hot)` `.acts` `.fixes` | dòng giỏ lưới 72px ảnh 4:5 | `checkout.css` |
 | `.qty3` + `.qntap` | ô số lượng 44px: hai nút 40×44, ô 40 | `checkout.css`, `lists.css` |
@@ -908,7 +962,7 @@ desktop không đổi. Không thêm gì vào dải này nếu người dùng ch�
 | `.acct3` + `.acctrail3(.who .ava .out nav a .cnt .dotn)` `.content` `.acctgrid3` `.rows3` `.notif(.read)` `.prefrow .switch3` `.codes .code` `.thumbs3` `.authcard3` `.forgot` `.divider3` | tài khoản: rail trái từ 900px với số đếm, hàng đơn `OrderRow3`, thông báo (`brand.notif.read`), công tắc (`brand.prefs`), mã, thẻ đăng nhập | `account.css` |
 | `.prose` `.prep` `.faq3` `.nf` `.solds` `.checks3` | trang chữ: giới thiệu, FAQ (`<details>`), đổi trả, liên hệ, 404, kho lưu trữ Số đã đóng, checklist mật khẩu | `pages.css` |
 | `.s.adm3` + `.side(.wm nav a .cnt .simbar)` `.main` `.top(h1 .sub .crumb .acts)` `.seg3` `.kpis3(.five) .kpi3` `.panel3 .bd` `.split3` `.fine3` `.chart3(.hi .zero .peak) .axis .daytable` `.queue3 .q(.sub .late .act)` `.rank3 .r(.two)` `.dt3(.bar(.bulk) .stabs .cb .rowmenu .foot .pages .none)` `.avatar` `.nextstep` `.fgrid` `.totalbar` `.addrblock` `.notes3 .ni` `.invgrid` `.delta` `.log3` `.ctag` `.slips .slip` + `@media print` | khu quản trị v3 | `admin.css` |
-| `.colorpick` (chip màu mang `.pos` thứ tự), `.cslots .cslot .shot(.blank .over .prog) .hd .ord(.flip) .file .acts .photopick .cutgrid`; sheet cắt `AdminSheet variant="crop"` 720px + `.cropwrap .cropper .frame(i[data-h]) .cropside(.err)`; `.field3 .inp[readonly]` nền `--plate` chữ `--ink2`; crumb `AdminTop` "Mẫu › X" | form Thêm/Sửa mẫu (lát 7, 24/09, QĐ-27): bảy chip màu theo thứ tự dải (màu đầu là ảnh đại diện), một hàng mỗi màu với ô ảnh 4:5 ở bốn trạng thái (chưa có · tệp đã chọn qua sheet cắt 4:5 khoá tỉ lệ · mượn tạm có nhãn · ảnh đã tải lên), nút lưu nói việc còn thiếu, tải ảnh có tiến trình; màn sửa không có chip (màu chốt lúc cắt); toán khung `lib/photo-crop.ts`, mã hoá `lib/photo-encode.ts` (≤ 1.200×1.500 WebP), luật form `lib/product-form.ts` | `admin.css`, `forms.css` |
+| `.colorpick` (chip màu mang `.pos` thứ tự), `.cslots .cslot .shot(.blank .over .prog) .hd .ord(.flip) .file .acts .photopick .cutgrid`; sheet cắt `AdminSheet variant="crop"` 720px + `.cropwrap .cropper .frame(i[data-h]) .cropside(.err)`; `.field3 .inp[readonly]` nền `--plate` chữ `--ink2`; crumb `AdminTop` "Mẫu › X" | form Thêm/Sửa mẫu (lát 7, 24/09, QĐ-27): bảy chip màu theo thứ tự dải (màu đầu là ảnh đại diện), một hàng mỗi màu với ô ảnh 4:5 ở bốn trạng thái (chưa có · tệp đã chọn qua sheet cắt 4:5 khoá tỉ lệ · mượn tạm có nhãn · ảnh thật — xem dưới bảng), nút lưu nói việc còn thiếu, tải ảnh có tiến trình; màn sửa không có chip (màu chốt lúc cắt); toán khung `lib/photo-crop.ts`, mã hoá `lib/photo-encode.ts` (≤ 1.200×1.500 WebP), luật form `lib/product-form.ts` | `admin.css`, `forms.css` |
 | `.rowmenu[aria-expanded="true"]`, `td .stockcell` + `.lownote`, `td.hotsize`, `.stabs .lowdot`, `.pfxin .pfx`, `.invgrid .onhand(.hot)` | mẫu cố định trong quản trị (lát 12, khối cuối `admin.css`, chép từ `prototype/v3/line/line-mock.css`; xem §7): nút `⋯` đang mở menu giữ nền `--plate` chữ mực, để hàng của menu vẫn được đánh dấu khi con trỏ ở trong menu · ô tồn là cột dọc gap 2, rộng tối thiểu 120: "còn N" rồi dòng đỏ `--hot` 11/600 · ô "size hết" đỏ 600 khi có size hết · chấm đỏ 7px `--hot` cách chữ tab 6px, chữ nằm ở `aria-label`/`title` · ô tên mẫu thuộc Số mang **khúc cố định** "S06 –" (`stylePrefix`) ở đầu ô: nền `--plate` như ô chỉ đọc, kẻ `--hair` bên phải, chữ 14/600 `.02em`, ô nhập lùi 76px; mẫu cố định không có khúc, ô Số chỉ đọc ghi "Cố định" · trong sheet Nhập thêm "còn N" 12px `--ink2` trên mỗi ô, đỏ 600 khi ≤ 2 | `admin.css`, `ProductsTable.tsx`, `ProductForm.tsx`, `InventoryAdjustSheet.tsx` |
 | `.sheetwrap` + `.scrim` `.sheetbody` `.grab` `.shead(.x)` `.sact`; `.menu3` + `.ticked` `.tally` `.mk`; `.toast(.show)` | ba lớp nổi portal ra `body`; toast `width:max-content` (§6) | `sheet.css` |
 | `.veil` (+ `.on` `.hold` `svg` `.stitches`) | lớp chờ chuyển trang: trắng 92% dưới mép nav, mark M2 giữa, cung mũi chỉ mật ong quay; `.hold` giữ con trỏ + `cursor:progress` chỉ khi đang chờ — xem §6 | `sheet.css`, `components/shop/WaitVeil.tsx`, `lib/wait.ts` |
@@ -952,6 +1006,25 @@ hết ở mọi màu bị gạch ngang (`<s>`); dòng giỏ, danh sách để d�
 cũng không in "còn N" (dòng đỏ chặn đặt hàng vẫn giữ số). Kệ trống là tạm hết,
 không phải hết hẳn: **không SOLD OUT, không làm mờ ảnh** — mọi size gạch và nút
 lặng "Xem chi tiết" (`.addbtn3.view`). SOLD OUT chỉ dành cho mẫu của Số.
+
+**Gallery trang sản phẩm là màu đang chọn** (lát 14, `ProductView.tsx`, đúng
+gallery của `prototype/v3/product.html`; thay luật cũ "mỗi màu một khung", vốn
+chỉ là đường ống của ảnh mượn). Khung đầu là ảnh của màu ấy, khung thứ hai —
+nếu màu có — là ảnh mặc trên người (`lookbookUrl`), alt "<tên> — màu <Màu>, ảnh
+mặc trên người". Số 05 có hai khung mỗi màu; màu không có ảnh mặc (hình phẳng,
+khung mượn, ảnh tải lên) có **một khung, không số đếm, không chấm**. Chọn màu
+khác thay khung và đưa vuốt về khung đầu **ngay**, không trượt (`behavior:
+"instant"`) — thứ vuốt sẽ lướt qua là màu cũ; `aria-label` của gallery đếm số
+khung của màu.
+
+**Ô ảnh trong form mẫu** (`ProductPhotoSlot.tsx`, `lib/product-form.ts`). Ảnh
+đi kèm app là **ảnh thật** như ảnh tải lên (`storedPhotoKind` → `saved`): dòng
+chú "**Ảnh thật**" (ảnh tải lên vẫn là "Ảnh đã tải lên", `savedPhotoCaption`),
+hai nút "Đổi ảnh" và "Mượn tạm", meta của panel "N màu · đủ ảnh". Khung mượn mang
+badge `shut` "mượn tạm" và tên mẫu nó là ảnh của; khung chỉ là **màu không phải
+màu đầu** của một mẫu thì tên kèm màu — "S04 – TRO, màu Đen" — để hai khung của
+một mẫu không trùng tên (`loanOwner`). Hình phẳng của mẫu cố định vẫn đứng cùng
+khung mượn.
 
 **Trang chủ, hai trạng thái** (`app/page.tsx`). Số đang bán: bìa · "Trong số
 này" (sáu mẫu của Số) · **"Đang bán"** · "Theo loại" · bốn quy tắc · teaser Số kế
@@ -1082,6 +1155,18 @@ sạch, **1483/1483** test, build sạch. CSS đếm lại: **16 tệp / 4.324 d
 Lệch mock chấp nhận: cột tên "Bán chạy" rộng theo tên dài nhất; `.ctagrow .sub`
 lùi 44 (mock 36 quên khe 8); ở 390 cột mã "Mã đang chạy" dùng chung nên mô tả
 hẹp hơn.
+
+**Lát 14** (26/09/2026, `b73c6cf`, duyệt `ece9b3f`) — Số 05 mặc ảnh của chính
+nó. Đo: nền chung **`#C3BBB2`**, **19** ảnh thẻ lệch nền ≤ 1 mức; ΔE của lõi món
+đồ **bằng 0** trước khi nén; 42 tệp, tổng **7,2 MB**. Phiên chính duyệt độc lập
+ảnh ghép 21 ảnh thẻ + 21 ảnh mặc, ảnh chụp 390, 600, 768, 1280 và trạng thái đã
+đóng, và một lượt Playwright trên cổng 3200: ảnh Số 05 đều từ `/shots/`, 0 ảnh
+hỏng, đổi màu thì gallery về "1 / 2", 0 lỗi console. `tsc` sạch, **1512/1512**
+test, 198/198 test DB, build sạch, sweep 91 lượt chỉ còn hai miễn trừ đã ghi. CSS
+đếm lại: **16 tệp / 4.340 dòng**. **Còn mở:** hai tệp KHÓI (`khoi-black`,
+`khoi-cream`) phải tạo lại trên giấy chuẩn, rồi bỏ khỏi `KEEP_PAPER` và chạy
+`npx tsx scripts/shots.ts khoi-black khoi-cream`; bìa trang chủ `hero`, Số 03/04
+và teaser Số 06 vẫn mượn; mẫu cố định vẫn là hình phẳng.
 
 **Để nguyên, có biết:** tàn dư v2 `.s details{margin-top:14px; font-size:11.5px}`
 (`admin.css`) vẫn rơi lên mọi `<details>` khác trong `.s`. Lát 13 chỉ đặt
