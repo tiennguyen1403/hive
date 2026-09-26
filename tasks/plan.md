@@ -2166,3 +2166,35 @@ Còn mở:
   lõm trong hàng cuộn, `--gold-800` trên dòng `tr.on`, nhịp hàng form 14, `.ft` trong panel quản trị);
 - tàn dư v2 `.s details{font-size:11.5px}` vẫn áp cho `details` khác (đã ghi ở DESIGN §10);
 - chưa push.
+
+**26/09, lát 14 — ảnh thật cho Số 05.** Người dùng: "hiện tại đã có hình ảnh cho tất cả sản phẩm của số 05. giúp tôi thêm ảnh
+thật vào sản phẩm sau đó deploy". Nguồn: `photos-raw/`, gồm 21 ảnh thẻ và 21 ảnh lookbook, đều 4:5, mang C2PA của ChatGPT.
+Brief ở `tasks/briefs/v3-lat-14-photos.md`.
+
+Phiên chính quyết, không cần hỏi lại:
+- **Ảnh lookbook là khung thứ hai trong gallery**, đúng mock đã duyệt (`prototype/v3/product.html`, "ảnh mặc trên người").
+  Gallery hiện các khung của màu đang chọn. Luật "mỗi màu một khung" cũ chỉ là đường ống của ảnh mượn.
+- Dải tablet giữ "≤ 70svh" nhưng **không cắt ảnh**, vì cắt thì mất đầu và chân người mẫu.
+- Ảnh đi kèm app, trong quản trị ghi "Ảnh thật".
+- Nguồn gốc ghi bằng XMP (IPTC `trainedAlgorithmicMedia` + prompt), không dùng sidecar. `impeccable embed-prompt --scan` không
+  đọc XMP, nên báo thiếu cả 42 tệp; chấp nhận.
+
+**26/09, lát 14 ĐẠT (`b73c6cf`).** `ui-implementer` làm hai vòng.
+- Vòng 2 sửa ba chỗ:
+  - bìa Số đã đóng giữ ảnh cao lên (`object-position` 30%, từ 900px là 35%), vì ở 1280 ảnh thẻ bị cắt mất cổ áo;
+  - khung mượn của màu thứ hai có thêm tên màu, vì `than` và `tro` trùng tên;
+  - một bước trong `tools/layout-sweep.js`.
+- Phiên chính duyệt độc lập:
+  - xem ảnh ghép 21 ảnh thẻ và 21 ảnh lookbook;
+  - xem ảnh chụp 390, 600, 768, 1280 và trạng thái đã đóng;
+  - chạy lượt Playwright riêng trên 3200: ảnh Số 05 đều từ `/shots/`, 0 ảnh hỏng, gallery đổi màu về "1 / 2", 0 lỗi console;
+  - `tsc` sạch, 1512/1512 test, 198/198 test DB (agent), build sạch, sweep 91 lượt chỉ còn hai miễn trừ đã ghi.
+- Số đo: nền chung `#C3BBB2`, 19 ảnh lệch ≤ 1 mức; ΔE lõi món đồ bằng 0 trước khi nén; tổng 7,2 MB.
+
+Còn mở:
+- **KHÓI giữ nền gốc** (xám loang, vignette): làm phẳng thì làm sáng luôn hình in sát gấu. Người dùng tạo lại hai ảnh trên
+  nền giấy chuẩn, rồi bỏ KHÓI khỏi `KEEP_PAPER` và chạy `npx tsx scripts/shots.ts khoi-black khoi-cream`.
+- Ảnh bìa trang chủ `hero` vẫn là Unsplash; prompt bìa Số 05 ở §7 của tệp prompt.
+- Số 03/04, mẫu hé lộ Số 06 và mẫu cố định chưa có ảnh.
+- DESIGN.md: documenter cập nhật.
+- Hosted: nạp lại seed sau khi deploy.

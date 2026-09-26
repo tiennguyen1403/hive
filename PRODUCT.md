@@ -54,7 +54,8 @@ Chưa quyết định (không được bịa): điểm khác biệt cụ thể c
 **Ràng buộc kỹ thuật:**
 - Backend (từ 23/09/2026, QĐ-25): Supabase Postgres + Auth + Storage (ảnh tải lên, QĐ-27), đọc qua Server Components và ghi qua Server Actions; **trình duyệt không gọi Supabase**. `data/types.ts` vẫn là hợp đồng dữ liệu; `data/*.ts` là fixture cho test và nguồn sinh seed. Thanh toán: chuyển khoản đối chiếu tay + COD; không cổng thanh toán.
 - Ngôn ngữ giao diện: **tiếng Việt**. Tiền tệ: **VND**. Không xây i18n đa ngôn ngữ trong bản mock này.
-- Không có thư viện ảnh sản phẩm thật (xem `## Evidence on Hand`).
+- Không có ảnh chụp sản phẩm. Số 05 có ảnh do AI tạo; các màn khác vẫn dùng ảnh thay thế hoặc hình phẳng (xem
+  `## Evidence on Hand`).
 
 **Từ vựng chốt trong sản phẩm** (đợt v3, hằng số ở `lib/lexicon.ts`): **Số** là một lần mở bán, thay cho *drop / đợt / lô* ("Số 05"); *size* (S/M/L/XL và số); *form* (oversize / regular); dấu **SOLD OUT** trên ảnh mẫu đã hết, còn trong câu vẫn nói "đã hết".
 
@@ -79,13 +80,21 @@ Hệ thiết kế (màu, chữ, giọng) đã chốt qua các đợt v2–v3; ng
 
 ## Evidence on Hand
 
-**Không có gì.** Đây là dự án trống hoàn toàn — không ảnh sản phẩm, không tên sản phẩm thật, không giá thật, không đánh giá của khách, không số liệu bán hàng, không đối tác vận chuyển đã ký, không cổng thanh toán đã tích hợp.
+**Không có gì.** Đây là dự án trống hoàn toàn — không ảnh chụp sản phẩm (ảnh Số 05 là ảnh AI, xem dưới), không tên sản phẩm thật, không giá thật, không đánh giá của khách, không số liệu bán hàng, không đối tác vận chuyển đã ký, không cổng thanh toán đã tích hợp.
 
 Hệ quả bắt buộc cho mọi công việc sau này:
 - Không được bịa testimonial, số lượt khách, doanh thu, giải thưởng, hay hợp tác.
 - Mọi con số trong khu quản trị là dữ liệu mô phỏng và phải hiển thị như vậy.
-- Ảnh trên mọi màn là **ảnh thay thế** từ Unsplash (19 ảnh, ID ghi trong `lib/photos.ts` và DESIGN.md §1) tới khi có ảnh
-  thật của thương hiệu; không phải ảnh sản phẩm thật và không được trình bày như thật (ghi 23/09/2026).
+- Mười mẫu Số 05 có **ảnh do AI tạo**: người dùng tạo bằng ChatGPT (GPT Image) ngày 25–26/09/2026, theo
+  `tasks/anh-san-pham-prompt.md`.
+  - 21 ảnh thẻ: món đồ trên ma-nơ-canh vô hình, nền giấy.
+  - 21 ảnh người mặc: người mẫu nam Việt, bối cảnh riêng cho từng màu; sổ ghi ở `tasks/lookbook-register.md`.
+  - Nằm ở `public/shots/`, xử lý bằng `scripts/shots.ts`: khung 1.200×1.500, nền ảnh thẻ về một tông, WebP.
+  - Mỗi tệp mang XMP ghi nguồn gốc AI (IPTC `trainedAlgorithmicMedia`) và prompt.
+  - Đây là ảnh của **thiết kế**, không phải ảnh chụp hàng đã may (ghi 26/09/2026).
+- Ảnh bìa trang chủ, các mẫu Số 03/04 và hai mẫu hé lộ Số 06 vẫn là **ảnh thay thế** từ Unsplash (ID ghi trong
+  `lib/photos.ts` và DESIGN.md §1). Không phải ảnh sản phẩm thật và không được trình bày như thật (ghi 23/09/2026; phạm vi
+  thu hẹp 26/09/2026).
 - Tám mẫu cố định dùng **hình phẳng**: 17 PNG ở `public/flats/`, vẽ bằng `scripts/flats.ts` từ `lib/flats.ts`, mỗi tệp có ghi
   nguồn gốc. Đây là hình vẽ, không phải ảnh, và dùng tới khi có ảnh thật (ghi 25/09/2026).
 - Trang phải được thiết kế để **sống được mà không có ảnh chụp chuyên nghiệp**, đồng thời nhận được ảnh thật ngay khi có mà không phải dựng lại bố cục.
