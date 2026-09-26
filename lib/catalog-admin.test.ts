@@ -636,9 +636,9 @@ describe("readPhotoMap and readColorOrder", () => {
   const colors = ["black", "cream"] as const;
 
   it("reads a borrowed frame or an upload's key per colour, leaving out an empty one", () => {
-    expect(readPhotoMap({ black: "khoi", cream: UP }, colors, catalog)).toEqual({
+    expect(readPhotoMap({ black: "mua", cream: UP }, colors, catalog)).toEqual({
       ok: true,
-      value: { black: "khoi", cream: UP },
+      value: { black: "mua", cream: UP },
     });
     expect(readPhotoMap({ black: " ", cream: "reu" }, colors, catalog)).toEqual({ ok: true, value: { cream: "reu" } });
     expect(readPhotoMap(undefined, colors, catalog)).toEqual({ ok: true, value: {} });
@@ -650,9 +650,9 @@ describe("readPhotoMap and readColorOrder", () => {
       error: "Ảnh Kem không còn trên kho, chọn lại",
     });
     expect(readPhotoMap({ cream: "up/zz.webp" }, colors, catalog).ok).toBe(false);
-    expect(readPhotoMap({ moss: "khoi" }, colors, catalog).ok).toBe(false);
+    expect(readPhotoMap({ moss: "mua" }, colors, catalog).ok).toBe(false);
     expect(readPhotoMap({ black: 7 }, colors, catalog).ok).toBe(false);
-    expect(readPhotoMap("khoi", colors, catalog).ok).toBe(false);
+    expect(readPhotoMap("mua", colors, catalog).ok).toBe(false);
   });
 
   it("takes a new band order of exactly the colours the style has", () => {
@@ -677,7 +677,7 @@ describe("readNewProduct — the new-style form, as the database takes it", () =
     material: "Dù hai lớp",
     dropNo: 6,
     colors: ["black", "cream", "moss"],
-    photos: { black: UP, cream: "cat", moss: "tro" },
+    photos: { black: UP, cream: "lua", moss: "tro" },
     cells: {
       black: { S: 3, M: 4, L: 4, XL: 1 },
       cream: { S: 2, M: 4, L: 4, XL: 2 },
@@ -701,7 +701,7 @@ describe("readNewProduct — the new-style form, as the database takes it", () =
         dropNo: 6,
         colors: [
           { color: "black", photoKey: UP },
-          { color: "cream", photoKey: "cat" },
+          { color: "cream", photoKey: "lua" },
           { color: "moss", photoKey: "tro" },
         ],
         cells: {
@@ -798,7 +798,7 @@ describe("readNewProduct — the new-style form, as the database takes it", () =
     const read = readNewProduct(
       draft({
         colors: ["black"],
-        photos: { black: "khoi" },
+        photos: { black: "mua" },
         cells: { black: { M: 2 }, cream: { S: 9, M: 9, L: 9, XL: 9 } },
       }),
       catalog,
@@ -811,11 +811,11 @@ describe("readNewProduct — the new-style form, as the database takes it", () =
       const read = readNewProduct(draft({ photos }), catalog);
       return read.ok ? null : read.error;
     };
-    expect(error({ black: UP, cream: "cat" })).toBe("Chọn ảnh cho Rêu");
-    expect(error({ black: UP, cream: "cat", moss: "" })).toBe("Chọn ảnh cho Rêu");
+    expect(error({ black: UP, cream: "lua" })).toBe("Chọn ảnh cho Rêu");
+    expect(error({ black: UP, cream: "lua", moss: "" })).toBe("Chọn ảnh cho Rêu");
     expect(error(undefined)).toBe("Chọn ảnh cho Đen");
-    expect(error({ black: UP, cream: "cat", moss: "khong-co" })).toBe("Ảnh Rêu không còn trên kho, chọn lại");
-    expect(error({ black: UP, cream: "cat", moss: "tro", navy: "khoi" })).toBe(
+    expect(error({ black: UP, cream: "lua", moss: "khong-co" })).toBe("Ảnh Rêu không còn trên kho, chọn lại");
+    expect(error({ black: UP, cream: "lua", moss: "tro", navy: "mua" })).toBe(
       "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.",
     );
   });

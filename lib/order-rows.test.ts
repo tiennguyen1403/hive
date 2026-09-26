@@ -58,9 +58,8 @@ describe("a sample order as a row", () => {
     expect(row.units).toBe(2);
     expect(row.totalVnd).toBe(2_680_000);
     // The photo follows the COLOUR that was ordered, not the style: SƯƠNG in
-    // moss borrows the frame filed under `mua` (`lib/photos.ts` — eighteen
-    // frames for twenty-one colourways).
-    expect(row.photoKeys).toEqual(["mua", "than"]);
+    // moss is SƯƠNG's moss packshot, not its first colour's (v3 slice 14).
+    expect(row.photoKeys).toEqual(["shot-suong-moss", "shot-than-black"]);
   });
 
   it("says where each state got to, and nothing it cannot know", () => {

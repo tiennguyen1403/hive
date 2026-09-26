@@ -157,9 +157,11 @@ export interface Product {
   soldOutAt?: string;
   stock: Stock;
   /**
-   * Which borrowed photo stands in for each colour, in band order.
-   * Placeholder plumbing: PRODUCT.md records that no real photography exists.
-   * When real photos land this field goes away and nothing else moves.
+   * The photo of each colour, in band order: a key `lib/photos.ts` turns into
+   * a URL — the style's own photograph shipped with the app (`shot-…`, Số 05
+   * since v3 slice 14), one the back office uploaded (`up/…`), a fixed
+   * style's flat drawing (`flat-…`), or a borrowed stand-in where no
+   * photograph exists yet. The first colour's photo is the style's cover.
    */
   photoKeys: string[];
 }

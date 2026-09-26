@@ -25,7 +25,7 @@ import { isFixed, isLowStock, isSoldOut, onHand, onHandByColor, onHandOf } from 
 import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { setSizePref } from "@/lib/prefs";
 import { vnd } from "@/lib/money";
-import { photoUrl } from "@/lib/photos";
+import { lookbookUrl, photoUrl } from "@/lib/photos";
 import { PAYMENT_LABEL } from "@/lib/order-labels";
 import {
   COD_SURCHARGE_VND,
@@ -64,9 +64,16 @@ interface ProductViewProps {
  * beside each colour, the number on each size row.
  *
  * One component and not two, because the colourway is the hinge: choosing it
- * moves the gallery AND rewrites every size count, since stock is held per
+ * changes the gallery AND rewrites every size count, since stock is held per
  * colour. Split in two, that state would have to be lifted into a parent with
  * no other reason to exist.
+ *
+ * THE GALLERY IS THE COLOUR ON SCREEN (v3 slice 14, `prototype/v3/product.html`):
+ * its packshot, then — where the colour has one — the same colour worn, the
+ * lookbook frame `lookbookUrl` derives from the packshot's key. Two frames
+ * for Số 05, one for a style whose colour has no lookbook (a flat, a
+ * borrowed frame, an upload); a single frame has no count and no dots.
+ * Choosing another colour puts its frames in and the swipe back on the first.
  *
  * The rule the page is built around: a size that has run out is visible
  * BEFORE the button is pressed — a struck row saying "hết", not an error
@@ -127,19 +134,25 @@ export function ProductView({ product, issue }: ProductViewProps) {
     .filter(Boolean)
     .join(" ");
 
-  function pickColor(next: ColorKey, index: number) {
+  /** The colour's own frames: its photo, then its lookbook frame if it has one. */
+  const photoKey = product.photoKeys[product.colors.indexOf(color)] ?? product.photoKeys[0]!;
+  const look = lookbookUrl(photoKey);
+  const label = COLORS[color].label;
+  const frames = [
+    { id: photoKey, src: photoUrl(photoKey, 760, 72), alt: `${name} — màu ${label}` },
+    ...(look ? [{ id: `${photoKey}-look`, src: look, alt: `${name} — màu ${label}, ảnh mặc trên người` }] : []),
+  ];
+
+  function pickColor(next: ColorKey) {
     setColor(next);
     // A size chosen in one colour may not exist in the next. Losing the
     // selection is kinder than letting Add be pressed on something gone.
     if (size && onHandOf(product, next, size) === 0) setSize(null);
-    // Move the gallery to that colourway — but only where the gallery is a
-    // swipe. From 900px every frame is already on screen in a column, and
-    // scrolling the page under the shopper would be an answer to a question
-    // nobody asked.
-    const gal = galRef.current;
-    if (gal && gal.scrollWidth > gal.clientWidth) {
-      gal.scrollTo({ left: index * gal.clientWidth, behavior: "smooth" });
-    }
+    // The new colour's frames start at the first: its photo, "1 / 2". At
+    // once, not smoothly — what the swipe would glide past is the old colour.
+    // From 900px the frames stand in a column and nothing scrolls.
+    galRef.current?.scrollTo({ left: 0, behavior: "instant" });
+    setShot(0);
   }
 
   function addNow() {
@@ -204,32 +217,26 @@ export function ProductView({ product, issue }: ProductViewProps) {
           <div
             className="gal"
             ref={galRef}
-            aria-label={`Ảnh ${name}, ${product.photoKeys.length} tấm`}
+            aria-label={`Ảnh ${name}, ${frames.length} tấm`}
             onScroll={(e) => {
               const el = e.currentTarget;
               if (el.clientWidth > 0) setShot(Math.round(el.scrollLeft / el.clientWidth));
             }}
           >
-            {product.photoKeys.map((key, i) => (
-              <figure key={key + i}>
-                <Image
-                  src={photoUrl(key, 760, 72)}
-                  alt={`${name} — màu ${COLORS[product.colors[i] ?? color].label}`}
-                  width={760}
-                  height={950}
-                  priority={i === 0}
-                />
+            {frames.map((f, i) => (
+              <figure key={f.id}>
+                <Image src={f.src} alt={f.alt} width={760} height={950} priority={i === 0} />
               </figure>
             ))}
           </div>
-          {product.photoKeys.length > 1 && (
+          {frames.length > 1 && (
             <div className="galbar">
               <span>
-                <span className="cur">{shot + 1}</span> / {product.photoKeys.length}
+                <span className="cur">{shot + 1}</span> / {frames.length}
               </span>
               <span className="dots" aria-hidden="true">
-                {product.photoKeys.map((key, i) => (
-                  <i key={key + i} className={i === shot ? "on" : undefined} />
+                {frames.map((f, i) => (
+                  <i key={f.id} className={i === shot ? "on" : undefined} />
                 ))}
               </span>
             </div>
@@ -293,7 +300,7 @@ export function ProductView({ product, issue }: ProductViewProps) {
           {product.colors.length > 1 && (
             <div className="fld">
               <div className="sw" role="group" aria-label="Màu">
-                {product.colors.map((c, i) => {
+                {product.colors.map((c) => {
                   const n = onHandByColor(product, c);
                   return (
                     <button
@@ -306,7 +313,7 @@ export function ProductView({ product, issue }: ProductViewProps) {
                           ? `Màu ${COLORS[c].label}`
                           : `Màu ${COLORS[c].label}, ${n === 0 ? "đã hết" : `còn ${n}`}`
                       }
-                      onClick={() => pickColor(c, i)}
+                      onClick={() => pickColor(c)}
                     >
                       <i style={{ background: COLORS[c].hex }} aria-hidden="true" />
                       <span>{fixed ? COLORS[c].label : `${COLORS[c].label} ${n}`}</span>

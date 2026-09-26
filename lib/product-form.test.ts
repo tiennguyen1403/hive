@@ -15,7 +15,9 @@ import {
   photoTally,
   pickProblem,
   rowTotal,
+  savedPhotoCaption,
   staleUploads,
+  storedPhotoKind,
   type NewStyleState,
 } from "./product-form";
 
@@ -88,6 +90,29 @@ describe("newStyleBlocker", () => {
   });
 });
 
+describe("a photo already on the style (v3 slice 14)", () => {
+  it("is a real photo when it was uploaded or ships with the app, a stand-in otherwise", () => {
+    expect(storedPhotoKind(`up/${HEX}.webp`)).toBe("saved");
+    expect(storedPhotoKind("shot-khoi-black")).toBe("saved");
+    expect(storedPhotoKind("reu")).toBe("loan");
+    // A flat is a drawing, not a photograph of the style: it stays where it was.
+    expect(storedPhotoKind("flat-tee-white")).toBe("loan");
+    // A shot key with no file is not a photograph either.
+    expect(storedPhotoKind("shot-khoi-moss")).toBe("loan");
+  });
+
+  it("is captioned as a real photo when it ships with the app, since nobody uploaded it", () => {
+    expect(savedPhotoCaption("shot-khoi-cream")).toBe("Ảnh thật");
+    expect(savedPhotoCaption(`up/${HEX}.jpg`)).toBe("Ảnh đã tải lên");
+  });
+
+  it("leaves KHÓI's two colours with nothing to ask for: 2 màu · đủ ảnh", () => {
+    const khoi = FIXTURE_CATALOG.products.find((p) => p.slug === "s05-khoi")!;
+    const kinds = Object.fromEntries(khoi.colors.map((c, i) => [c, storedPhotoKind(khoi.photoKeys[i]!)]));
+    expect(panelMeta(khoi.colors, photoTally(khoi.colors, kinds))).toBe("2 màu · đủ ảnh");
+  });
+});
+
 describe("photoTally and panelMeta", () => {
   it("says what the photos lack, most urgent first", () => {
     const three = ["black", "cream", "moss"] as const;
@@ -148,9 +173,18 @@ describe("droppedColorMessage", () => {
 describe("loanPhotos", () => {
   const loans = loanPhotos(FIXTURE_CATALOG);
 
-  it("offers the eighteen borrowed frames, in the order lib/photos.ts lists them", () => {
-    expect(loans).toHaveLength(18);
-    expect(loans.map((l) => l.key)).toEqual(PHOTO_KEYS.filter((k) => k !== "hero"));
+  it("offers the borrowed frames the catalogue still wears, in the order lib/photos.ts lists them", () => {
+    // Thirteen since v3 slice 14: the five frames only Số 05 wore (`khoi`,
+    // `muoi`, `cat`, `gio`, `da`) went with Số 05's own photographs, and a
+    // frame nothing wears is one the database no longer takes either.
+    expect(loans.map((l) => l.key)).toEqual(
+      PHOTO_KEYS.filter((k) => !["hero", "khoi", "muoi", "cat", "gio", "da"].includes(k)),
+    );
+    expect(loans).toHaveLength(13);
+  });
+
+  it("never offers a photograph that ships with the app, or a flat", () => {
+    expect(loans.some((l) => l.key.startsWith("shot-") || l.key.startsWith("flat-"))).toBe(false);
   });
 
   it("names each after the style it is the photo of, as the back office names it (v3 slice 12)", () => {
@@ -159,24 +193,30 @@ describe("loanPhotos", () => {
       const p = FIXTURE_CATALOG.products.find((x) => x.slug === slug)!;
       return styleName(p.name, p.dropNo);
     };
-    expect(name("khoi")).toBe(shown("s05-khoi"));
-    expect(name("khoi")).toBe(styleName("KHÓI", 5));
-    expect(name("cat")).toBe(shown("s05-cat"));
     expect(name("reu")).toBe(shown("s04-reu"));
+    expect(name("reu")).toBe(styleName("RÊU", 4));
     expect(name("tro")).toBe(shown("s04-tro"));
+    expect(name("bui")).toBe(shown("s03-bao"));
+    // Worn by no style first: the first style wearing it at all, with the
+    // colour that wears it (v3 slice 14), then a teaser as it is.
+    expect(name("than")).toBe(`${shown("s04-tro")}, màu Đen`);
+    expect(name("nguoi")).toBe(styleName("NGÓI", 6));
     expect(loans.every((l) => l.name !== "")).toBe(true);
   });
 
+  it("gives no two frames one name, so no two radios in the grid read alike", () => {
+    const names = loans.map((l) => l.name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+
   it("never offers another style's uploaded photo", () => {
-    const [first, ...rest] = FIXTURE_CATALOG.products;
-    const catalog = {
-      ...FIXTURE_CATALOG,
-      products: [{ ...first!, photoKeys: [`up/${HEX}.webp`, ...first!.photoKeys.slice(1)] }, ...rest],
-    };
-    const keys = loanPhotos(catalog).map((l) => l.key);
+    const i = FIXTURE_CATALOG.products.findIndex((p) => p.slug === "s04-mua");
+    const products = [...FIXTURE_CATALOG.products];
+    products[i] = { ...products[i]!, photoKeys: [`up/${HEX}.webp`] };
+    const keys = loanPhotos({ ...FIXTURE_CATALOG, products }).map((l) => l.key);
     expect(keys.some((k) => k.startsWith("up/"))).toBe(false);
-    // KHÓI's black wore the `khoi` frame and nothing else does, so it is no longer offered.
-    expect(keys).not.toContain("khoi");
+    // MƯA wore the `mua` frame and nothing else does, so it is no longer offered.
+    expect(keys).not.toContain("mua");
   });
 });
 

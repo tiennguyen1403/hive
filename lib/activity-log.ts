@@ -18,7 +18,7 @@ import { dropSummary } from "./inventory";
 import { RESTOCK_REASON } from "./inventory-adjust";
 import { LEX, issueLabel, styleName } from "./lexicon";
 import { vnd } from "./money";
-import { isUploadedKey } from "./photos";
+import { isRealPhotoKey } from "./photos";
 import { TRANSFER_HOLD_HOURS, orderTotalVnd } from "./orders";
 import { STATE_LABEL } from "./order-labels";
 
@@ -236,9 +236,12 @@ function termsWindow(t: PromoTerms): string {
   return `${dateTimeLabel(t.startsAt)} → ${dateTimeLabel(t.endsAt)}`;
 }
 
-/** What kind of photo a key is, the way the product form labels it. */
+/**
+ * What kind of photo a key is, the way the product form labels it: uploaded
+ * or shipped with the app (`shot-…`, v3 slice 14), it is "ảnh thật".
+ */
 function photoWord(key: string): string {
-  return isUploadedKey(key) ? "ảnh thật" : "ảnh mượn";
+  return isRealPhotoKey(key) ? "ảnh thật" : "ảnh mượn";
 }
 
 /** "Đen · Kem" — a band order. */

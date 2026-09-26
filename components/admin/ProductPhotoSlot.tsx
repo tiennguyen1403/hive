@@ -10,7 +10,7 @@ import type { ColorKey } from "@/data/types";
 import { styleInList } from "@/lib/lexicon";
 import { dims, outputSize, previewBox, type Crop } from "@/lib/photo-crop";
 import { photoUrl } from "@/lib/photos";
-import { PICK_TYPES, fileSizeLabel, type LoanPhoto } from "@/lib/product-form";
+import { PICK_TYPES, fileSizeLabel, savedPhotoCaption, type LoanPhoto } from "@/lib/product-form";
 
 /**
  * What one colour row holds for its photo (`PhotoKind` in `lib/product-form`
@@ -51,9 +51,11 @@ const ACCEPT = PICK_TYPES.join(",");
  * The photo is one of four things, and the row says which — a picked FILE
  * (name, size, the region and the size it will be saved at), a BORROWED
  * stand-in (always labelled "mượn tạm", naming the style it belongs to —
- * PRODUCT.md: a stand-in is never shown as the real thing), a photo already
- * UPLOADED for this style, or NOTHING yet (a dashed box). Every one of them
- * also takes a file dropped on it. There is no "Bỏ ảnh": the mock took it out.
+ * PRODUCT.md: a stand-in is never shown as the real thing), a REAL photo
+ * already on the style ("Ảnh đã tải lên" when uploaded, "Ảnh thật" when it
+ * ships with the app, v3 slice 14), or NOTHING yet (a dashed box). Every one
+ * of them also takes a file dropped on it. There is no "Bỏ ảnh": the mock
+ * took it out.
  *
  * The file pickers are `<label>`s wrapping a visually hidden `<input
  * type=file>`, so the button and the link ARE the input for a click, a tap,
@@ -167,7 +169,7 @@ export function ProductPhotoSlot({
           {owner ? ` ảnh của mẫu ${styleInList(owner)}` : ""}
         </>
       ) : (
-        "Ảnh đã tải lên"
+        savedPhotoCaption(photo.key)
       );
     actions =
       photo.kind === "loan" ? (

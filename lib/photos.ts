@@ -1,17 +1,26 @@
 /**
- * Borrowed photography, and the one place it is borrowed from.
+ * Every photo's URL, whatever kind of photo it is — the one place they are
+ * built, so a new kind of photo is one branch here and not thirty screens.
  *
- * PRODUCT.md is explicit: this project has no product photography. Every
- * image on every screen is an Unsplash stand-in. Two consequences are built
- * into this file rather than left to remember:
+ * FOUR KINDS OF KEY, told apart by shape and by the lists that name them:
  *
- * · Every URL is built here, so the day real photos arrive the swap is one
- *   function, not thirty screens.
- * · The open drop needs 21 photo sets (one per colourway) and the borrowed
- *   library has 18 usable frames, so three appear twice across the grid.
- *   That repetition is a mark of the placeholder, not of the design.
+ * · an UPLOAD (`up/<hex>.webp`), the back office's own photo — below;
+ * · a SHOT (`shot-khoi-black`), a photograph that ships with the app — below;
+ * · a FLAT (`flat-tee-white`), a fixed style's drawing — below;
+ * · anything else is a BORROWED Unsplash frame (`PHOTO_IDS`), standing in
+ *   where no photograph of the style exists yet: Số 03 and 04, the teasers
+ *   of Số 06, and the cover of the home page. A borrowed frame is never the
+ *   garment it stands for, and the back office says so ("mượn tạm").
  *
- * REAL PHOTOS (slice B3c). A photo the back office uploads is an object in
+ * SHOTS (v3 slice 14). Số 05 has its own photographs: a packshot for every
+ * colourway and a lookbook frame beside each, in `public/shots/`, made with
+ * ChatGPT and put into one frame and one paper by `scripts/shots.ts`
+ * (`lib/shots.ts` lists them). The packshot is the colour's photo wherever a
+ * photo is shown; the lookbook frame is reached only through `lookbookUrl`,
+ * which the product page's gallery alone calls. A `shot-…` key with no file
+ * falls back to the hero frame, like any key this file does not know.
+ *
+ * UPLOADS (slice B3c). A photo the back office uploads is an object in
  * the `product-photos` bucket named `up/<32 hex>.webp` (or `.jpg`), and the
  * app serves it from its own origin — `/photos/<key>`, a route that streams
  * it from the bucket (`app/photos/[...key]/route.ts`). So an uploaded key and
@@ -31,10 +40,11 @@
  */
 
 import { flatPath } from "./flats";
+import { isShotKey, lookPath, shotPath } from "./shots";
 
 const UNSPLASH = "https://images.unsplash.com/photo-{id}?auto=format&fit=crop&w={w}&q={q}";
 
-/** Photo id per key. Keys are the catalog's `photoKeys`. */
+/** Unsplash photo id per borrowed key. */
 const PHOTO_IDS: Record<string, string> = {
   hero: "1593278641722-49b1047ede21",
   khoi: "1503341338985-c0477be52513",
@@ -68,12 +78,15 @@ const PHOTO_IDS: Record<string, string> = {
  * URL asking for that width and quality, as before; an unknown one falls back
  * to the hero frame.
  *
- * A flat's key is a file of this app, `/flats/tee-white.png`, optimised by
- * `next/image` like an upload. Only the seventeen drawings that exist
- * (`isFlatKey`); any other `flat-…` key is unknown and falls back too.
+ * A shot's key is a file of this app, `/shots/khoi-black.webp` — its
+ * packshot — and a flat's key one too, `/flats/tee-white.png`; `next/image`
+ * optimises both like an upload. Only the files that exist (`isShotKey`,
+ * `isFlatKey`); any other `shot-…` or `flat-…` key is unknown and falls back.
  */
 export function photoUrl(key: string, width: number, quality = 70): string {
   if (isUploadedKey(key)) return `/photos/${key}`;
+  const shot = shotPath(key);
+  if (shot) return shot;
   const flat = flatPath(key);
   if (flat) return flat;
   const id = PHOTO_IDS[key] ?? PHOTO_IDS.hero!;
@@ -83,6 +96,26 @@ export function photoUrl(key: string, width: number, quality = 70): string {
 }
 
 export const PHOTO_KEYS = Object.keys(PHOTO_IDS);
+
+/**
+ * The lookbook frame that goes with a colour's photo — `/shots/khoi-black-look.webp`
+ * — or null when the key has none: a borrowed frame, a flat, an upload (a
+ * colour whose packshot was replaced has lost the frame that showed it), a
+ * shot made without one. Derived from the key; there is no column for it.
+ */
+export function lookbookUrl(key: string): string | null {
+  return lookPath(key);
+}
+
+/**
+ * Whether a key is a photograph of the style itself — one the back office
+ * uploaded, or one that ships with the app (`shot-…`) — rather than a
+ * borrowed stand-in or a drawing. The back office calls both "ảnh thật".
+ * Whether a file is in the bucket is a different question: `isUploadedKey`.
+ */
+export function isRealPhotoKey(key: string): boolean {
+  return isUploadedKey(key) || isShotKey(key);
+}
 
 // ─────────────────────────────────────────────────────────── uploaded photos
 /**

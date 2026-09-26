@@ -25,7 +25,7 @@ const snapshot = () => ({
       dropNo: 5,
       soldOutAt: null,
       colors: ["black", "cream"],
-      photoKeys: ["khoi", "reu"],
+      photoKeys: ["shot-khoi-black", "shot-khoi-cream"],
       stock: {
         black: { S: 3, M: 4, L: 2, XL: 1 },
         cream: { S: 2, M: 2, L: 2, XL: 1 },
@@ -128,7 +128,7 @@ describe("a well-formed snapshot", () => {
         black: { S: 3, M: 4, L: 2, XL: 1 },
         cream: { S: 2, M: 2, L: 2, XL: 1 },
       },
-      photoKeys: ["khoi", "reu"],
+      photoKeys: ["shot-khoi-black", "shot-khoi-cream"],
     });
   });
 
@@ -304,7 +304,7 @@ describe("a snapshot that is wrong", () => {
     expect(() =>
       parseCatalogSnapshot(
         broken((doc) => {
-          doc.products[0].photoKeys = ["khoi"];
+          doc.products[0].photoKeys = ["shot-khoi-black"];
         }),
       ),
     ).toThrow("products[0].photoKeys must hold one key per colour (2)");

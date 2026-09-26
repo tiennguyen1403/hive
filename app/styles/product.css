@@ -257,13 +257,19 @@
   font-size:var(--fs-sm); line-height:1.5; }
 .s .note3 > .ic{ flex:none; margin-top:1px; color:var(--brand-text); }
 
-/* ── the tablet band, 600–899px (v3 slice 13) ───────────────────────────
+/* ── the tablet band, 600–899px (v3 slices 13 and 14) ───────────────────
    Still the phone's swipe, dots and "1 / 2", but a frame no taller than 70%
    of the screen: at 768 a 4:5 frame was 960px and the name and the price
-   began two screens down. The photo is cropped to it (`object-fit:cover`
-   above). Below 600 and from 900 nothing here applies. */
+   began two screens down. The frame keeps its 4:5 and is never cropped:
+   the swipe narrows to 70svh × 4/5 and stands centred (its side margins
+   are what is left of the full bleed, so it never pokes past the screen),
+   and the count under it takes the same width. Slice 13 capped the frame's
+   height instead and the photo was cut to it — 22% at 768 × 1024, a model's
+   head and feet. Below 600 and from 900 nothing here applies. */
 @media (min-width:600px) and (max-width:899.98px){
-  .s .gal figure{ max-height:70svh; }
+  .s .gal{ --galw:min(calc(100% + 2 * var(--gut)), calc(70svh * 4 / 5));
+    width:var(--galw); margin-inline:calc((100% - var(--galw)) / 2); }
+  .s .galbar{ width:min(100%, calc(70svh * 4 / 5)); margin-inline:auto; }
 }
 
 /* ── 900px and up, v3 ───────────────────────────────────────────────────── */

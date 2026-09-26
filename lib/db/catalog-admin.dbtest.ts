@@ -152,7 +152,7 @@ function soi(over: Record<string, unknown> = {}) {
     dropNo: 6,
     colors: [
       { color: "black", photoKey: "suong" },
-      { color: "cream", photoKey: "cat" },
+      { color: "cream", photoKey: "lua" },
       { color: "moss", photoKey: "tro" },
     ],
     cells: {
@@ -970,7 +970,7 @@ describe("reset_demo after the catalogue was worked on", () => {
     // Slice B3c: a new style, a new band order, a new photo.
     await run("admin_add_product", { p_input: soi() });
     await run("admin_reorder_colors", { p_id: "p-bui", p_colors: ["grey", "black"] });
-    await run("admin_set_product_photo", { p_id: "p-nang", p_color: FIXTURE_CATALOG.byId.get("p-nang" as never)!.colors[0], p_photo_key: "cat" });
+    await run("admin_set_product_photo", { p_id: "p-nang", p_color: FIXTURE_CATALOG.byId.get("p-nang" as never)!.colors[0], p_photo_key: "lua" });
 
     await resetTo(FIXTURE_ANCHOR);
     const catalog = await snapshot();
@@ -1035,7 +1035,7 @@ describe("admin_add_product", () => {
       p_input: soi({
         colors: [
           { color: "black", photoKey: up },
-          { color: "cream", photoKey: "cat" },
+          { color: "cream", photoKey: "lua" },
           { color: "moss", photoKey: "tro" },
         ],
       }),
@@ -1063,7 +1063,7 @@ describe("admin_add_product", () => {
       .order("position");
     expect(colors.data).toEqual([
       { color: "black", position: 0, photo_key: up },
-      { color: "cream", position: 1, photo_key: "cat" },
+      { color: "cream", position: 1, photo_key: "lua" },
       { color: "moss", position: 2, photo_key: "tro" },
     ]);
     const cells = await service.from("stock_cells").select("on_hand").eq("product_id", "p-soi");
@@ -1095,7 +1095,7 @@ describe("admin_add_product", () => {
 
     // The manager sees it, the shop does not: Số 06 has not opened.
     const seen = (await snapshotAs(manager)).bySlug.get("soi");
-    expect(seen).toMatchObject({ colors: ["black", "cream", "moss"], photoKeys: [up, "cat", "tro"], cutUnits: 36, dropNo: 6 });
+    expect(seen).toMatchObject({ colors: ["black", "cream", "moss"], photoKeys: [up, "lua", "tro"], cutUnits: 36, dropNo: 6 });
     expect((await snapshot()).bySlug.has("soi")).toBe(false);
     expect((await snapshotAs(minhanh)).bySlug.has("soi")).toBe(false);
     expect((await snapshot()).products).toHaveLength(FIXTURE_CATALOG.products.length);
@@ -1113,7 +1113,7 @@ describe("admin_add_product", () => {
       p_now: now(),
     });
     expect(opened.error).toBeNull();
-    expect((await snapshot()).bySlug.get("soi")?.photoKeys).toEqual([up, "cat", "tro"]);
+    expect((await snapshot()).bySlug.get("soi")?.photoKeys).toEqual([up, "lua", "tro"]);
   });
 
   it("puts a style of the issue that is selling on the shop at once, and checkout takes it", async () => {
@@ -1159,15 +1159,15 @@ describe("admin_add_product", () => {
     const unlisted = await add({ cells: { black: cut.black, cream: cut.cream } });
     expect(unlisted.error).toMatchObject({ message: "COLOR_EMPTY", details: "moss" });
     // The photos.
-    const missing = await add({ colors: colors3("suong", "cat", "") });
+    const missing = await add({ colors: colors3("suong", "lua", "") });
     expect(missing.error).toMatchObject({ message: "PHOTO_MISSING", details: "moss" });
-    const ghost = await add({ colors: colors3(ghostKey(), "cat", "tro") });
+    const ghost = await add({ colors: colors3(ghostKey(), "lua", "tro") });
     expect(ghost.error).toMatchObject({ message: "PHOTO_UNKNOWN", details: "black" });
     const unknown = await add({ colors: colors3("suong", "khong-co", "tro") });
     expect(unknown.error).toMatchObject({ message: "PHOTO_UNKNOWN", details: "cream" });
     // Everything else a form could not have sent.
     for (const [what, over] of [
-      ["a colour twice", { colors: [{ color: "black", photoKey: "suong" }, { color: "black", photoKey: "cat" }], cells: { black: cut.black } }],
+      ["a colour twice", { colors: [{ color: "black", photoKey: "suong" }, { color: "black", photoKey: "lua" }], cells: { black: cut.black } }],
       ["a cell of 1000", { cells: { ...cut, black: { ...cut.black, M: 1000 } } }],
       ["a cell of -1", { cells: { ...cut, black: { ...cut.black, M: -1 } } }],
       ["a size missing", { cells: { ...cut, black: { S: 3, M: 4, L: 4 } } }],
@@ -1223,18 +1223,18 @@ describe("admin_set_product_photo", () => {
       p_now: now(),
     });
     expect(swapped.error).toBeNull();
-    expect(swapped.data).toBe("reu");
-    expect((await snapshot()).byId.get("p-khoi" as never)!.photoKeys).toEqual(["khoi", up]);
+    expect(swapped.data).toBe("shot-khoi-cream");
+    expect((await snapshot()).byId.get("p-khoi" as never)!.photoKeys).toEqual(["shot-khoi-black", up]);
     expect(await lastEvent()).toMatchObject({
       kind: "PRODUCT_PHOTO_SET",
       product_id: "p-khoi",
-      payload: { id: "p-khoi", color: "cream", before: "reu", after: up },
+      payload: { id: "p-khoi", color: "cream", before: "shot-khoi-cream", after: up },
     });
 
     const back = await manager.rpc("admin_set_product_photo", {
       p_id: "p-khoi",
       p_color: "cream",
-      p_photo_key: "reu",
+      p_photo_key: "shot-khoi-cream",
       p_now: now(),
     });
     expect(back.error).toBeNull();
@@ -1247,11 +1247,11 @@ describe("admin_set_product_photo", () => {
       manager.rpc("admin_set_product_photo", {
         p_id: "p-khoi",
         p_color: "cream",
-        p_photo_key: "cat",
+        p_photo_key: "lua",
         p_now: now(),
         ...over,
       } as never);
-    expect((await set({ p_photo_key: "reu" })).error?.message).toBe("BAD_INPUT");
+    expect((await set({ p_photo_key: "shot-khoi-cream" })).error?.message).toBe("BAD_INPUT");
     expect((await set({ p_photo_key: "" })).error?.message).toBe("BAD_INPUT");
     expect((await set({ p_color: "moss" })).error?.message).toBe("NOT_FOUND");
     expect((await set({ p_id: "p-khong-co" })).error?.message).toBe("NOT_FOUND");
@@ -1259,10 +1259,10 @@ describe("admin_set_product_photo", () => {
     expect((await set({ p_photo_key: ghostKey() })).error?.message).toBe("PHOTO_UNKNOWN");
     expect((await set({ p_now: shifted(10 / 60) })).error?.message).toBe("BAD_INPUT");
     expect(
-      (await minhanh.rpc("admin_set_product_photo", { p_id: "p-khoi", p_color: "cream", p_photo_key: "cat", p_now: now() }))
+      (await minhanh.rpc("admin_set_product_photo", { p_id: "p-khoi", p_color: "cream", p_photo_key: "lua", p_now: now() }))
         .error?.message,
     ).toBe("NOT_ADMIN");
-    expect((await snapshot()).byId.get("p-khoi" as never)!.photoKeys).toEqual(["khoi", "reu"]);
+    expect((await snapshot()).byId.get("p-khoi" as never)!.photoKeys).toEqual(["shot-khoi-black", "shot-khoi-cream"]);
   });
 });
 
@@ -1279,7 +1279,7 @@ describe("admin_reorder_colors", () => {
     expect(error).toBeNull();
     const now2 = (await snapshot()).byId.get("p-khoi" as never)!;
     expect(now2.colors).toEqual(["cream", "black"]);
-    expect(now2.photoKeys).toEqual(["reu", "khoi"]);
+    expect(now2.photoKeys).toEqual(["shot-khoi-cream", "shot-khoi-black"]);
     expect(now2.stock).toEqual(was.stock);
     expect(await eventCount()).toBe(before + 1);
     expect(await lastEvent()).toMatchObject({
@@ -1353,12 +1353,12 @@ describe("admin_add_drop and photo_key_ok, slice B3c", () => {
     expect((await teaser("thu-6", up)).error).toBeNull();
     expect((await teaser("thu-7", ghostKey())).error?.message).toBe("BAD_INPUT");
     // The borrowed rule is the old one: a frame the catalogue uses.
-    expect((await teaser("thu-8", "gio")).error).toBeNull();
+    expect((await teaser("thu-8", "vo")).error).toBeNull();
   });
 
   it("keeps the photo check out of reach of every API role", async () => {
     for (const client of [anon, minhanh, manager]) {
-      const { error } = await client.rpc("photo_key_ok" as never, { p_key: "khoi" } as never);
+      const { error } = await client.rpc("photo_key_ok" as never, { p_key: "shot-khoi-black" } as never);
       expect(error).not.toBeNull();
     }
   });

@@ -50,6 +50,7 @@ import { PRODUCT_EDIT_REASON, RESTOCK_REASON, cellDelta } from "@/lib/inventory-
 import { LEX, issueNo, styleName } from "@/lib/lexicon";
 import {
   MAX_UPLOAD_BYTES,
+  isRealPhotoKey,
   isUploadedKey,
   uploadKey,
   uploadProblem,
@@ -647,11 +648,12 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
 
 /**
  * "1 ảnh thật thay ảnh mượn, 1 ảnh thật mới" — what the photo swaps of one
- * save amounted to, by what each colour went from and to.
+ * save amounted to, by what each colour went from and to. A photo that ships
+ * with the app (`shot-…`, v3 slice 14) is as real as an upload.
  */
 function photoSummary(photos: ReadonlyArray<{ before: string; after: string }>): string {
   const count = (test: (p: { before: string; after: string }) => boolean) => photos.filter(test).length;
-  const real = (key: string) => isUploadedKey(key);
+  const real = (key: string) => isRealPhotoKey(key);
   return [
     [count((p) => real(p.after) && !real(p.before)), "ảnh thật thay ảnh mượn"],
     [count((p) => real(p.after) && real(p.before)), "ảnh thật mới"],

@@ -9,9 +9,14 @@ import { issueCode } from "@/lib/lexicon";
 
 /**
  * Simulated data. There is no real merchandise behind any of this — PRODUCT.md
- * records that the project has no photography, no real product names and no
- * sales history. Every admin screen that shows a number derived from here has
- * to label it "dữ liệu mô phỏng".
+ * records that the project has no real product names and no sales history.
+ * Every admin screen that shows a number derived from here has to label it
+ * "dữ liệu mô phỏng".
+ *
+ * Photos: each colourway names its photo in `photoKeys`, in band order. Số 05
+ * wears its own (`shot-<style>-<colour>`, AI-made packshots with a lookbook
+ * frame each — `lib/shots.ts`, v3 slice 14); Số 03 and 04 and the teasers
+ * still borrow Unsplash frames; the fixed styles are flat drawings.
  *
  * The figures themselves are carried over unchanged from the approved
  * prototype, and `catalog.test.ts` pins them against it style by style.
@@ -41,8 +46,8 @@ export const DROPS: Drop[] = [
  *
  * No price and no stock: "Giá và số lượng công bố đúng lúc mở" is what the
  * upcoming-drop screen promises, and the data has to keep that promise rather
- * than carry the numbers around invisibly. Photography is borrowed like
- * everywhere else — see `lib/photos.ts`.
+ * than carry the numbers around invisibly. Their photos are borrowed frames
+ * — see `lib/photos.ts`.
  */
 export const TEASERS: Teaser[] = [
   { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong" },
@@ -86,7 +91,7 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 3, M: 4, L: 2, XL: 1 },
       cream: { S: 2, M: 2, L: 2, XL: 1 },
     },
-    photoKeys: ["khoi", "reu"],
+    photoKeys: ["shot-khoi-black", "shot-khoi-cream"],
   },
   {
     slug: "bui",
@@ -103,7 +108,7 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 0, M: 0, L: 1, XL: 0 },
       grey: { S: 0, M: 0, L: 0, XL: 1 },
     },
-    photoKeys: ["bui", "tro"],
+    photoKeys: ["shot-bui-black", "shot-bui-grey"],
   },
   {
     slug: "nguoi",
@@ -117,7 +122,7 @@ const styles: Array<Omit<Product, "id">> = [
     cutUnits: 12,
     dropNo: 5,
     stock: { black: { S: 1, M: 2, L: 1, XL: 1 } },
-    photoKeys: ["nguoi"],
+    photoKeys: ["shot-nguoi-black"],
   },
   {
     slug: "nang",
@@ -135,7 +140,7 @@ const styles: Array<Omit<Product, "id">> = [
       cream: { S: 1, M: 1, L: 1, XL: 1 },
       moss: { S: 1, M: 1, L: 1, XL: 0 },
     },
-    photoKeys: ["nang", "song", "vo"],
+    photoKeys: ["shot-nang-white", "shot-nang-cream", "shot-nang-moss"],
   },
   {
     slug: "suong",
@@ -152,7 +157,7 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 0, M: 1, L: 0, XL: 1 },
       moss: { S: 0, M: 0, L: 1, XL: 0 },
     },
-    photoKeys: ["suong", "mua"],
+    photoKeys: ["shot-suong-black", "shot-suong-moss"],
   },
   {
     slug: "muoi",
@@ -169,7 +174,7 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 0, M: 0, L: 0, XL: 0 },
       grey: { S: 0, M: 0, L: 0, XL: 0 },
     },
-    photoKeys: ["muoi", "kho"],
+    photoKeys: ["shot-muoi-black", "shot-muoi-grey"],
   },
   {
     slug: "than",
@@ -186,7 +191,7 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 1, M: 1, L: 1, XL: 0 },
       navy: { S: 0, M: 1, L: 1, XL: 1 },
     },
-    photoKeys: ["than", "dat"],
+    photoKeys: ["shot-than-black", "shot-than-navy"],
   },
   {
     slug: "cat",
@@ -204,7 +209,7 @@ const styles: Array<Omit<Product, "id">> = [
       white: { S: 1, M: 2, L: 1, XL: 1 },
       brown: { S: 1, M: 1, L: 1, XL: 0 },
     },
-    photoKeys: ["cat", "lua", "reu"],
+    photoKeys: ["shot-cat-cream", "shot-cat-white", "shot-cat-brown"],
   },
   {
     slug: "gio",
@@ -221,7 +226,7 @@ const styles: Array<Omit<Product, "id">> = [
       white: { S: 1, M: 2, L: 1, XL: 0 },
       navy: { S: 1, M: 1, L: 1, XL: 0 },
     },
-    photoKeys: ["gio", "tro"],
+    photoKeys: ["shot-gio-white", "shot-gio-navy"],
   },
   {
     slug: "da",
@@ -238,7 +243,7 @@ const styles: Array<Omit<Product, "id">> = [
       moss: { S: 0, M: 1, L: 1, XL: 1 },
       black: { S: 1, M: 1, L: 1, XL: 0 },
     },
-    photoKeys: ["da", "song"],
+    photoKeys: ["shot-da-moss", "shot-da-black"],
   },
 
   // ── Drop 04 — closed, sold out ───────────────────────────────────────

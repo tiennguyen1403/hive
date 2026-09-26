@@ -253,17 +253,25 @@ describe("drop 5 matches the approved prototype", () => {
   });
 });
 
-describe("photography placeholders", () => {
+describe("photos", () => {
   it("needs one photo set per colour — 21 for the open drop", () => {
     const open = CATALOG.filter((p) => p.dropNo === CURRENT_DROP_NO);
     const sets = open.reduce((n, p) => n + p.colors.length, 0);
     expect(sets).toBe(21);
   });
 
-  it("hands every colour a stand-in photo until real ones exist", () => {
+  it("hands every colour a photo", () => {
     for (const p of CATALOG) {
       expect(p.photoKeys, `${p.slug} photo count`).toHaveLength(p.colors.length);
     }
+  });
+
+  it("gives every colour of Số 05 its own packshot, shot-<style>-<colour>, in band order (v3 slice 14)", () => {
+    for (const p of CATALOG.filter((x) => x.dropNo === CURRENT_DROP_NO)) {
+      const stem = p.id.slice("p-".length);
+      expect(p.photoKeys, p.slug).toEqual(p.colors.map((c) => `shot-${stem}-${c}`));
+    }
+    expect(CATALOG.find((p) => p.id === "p-khoi")!.photoKeys).toEqual(["shot-khoi-black", "shot-khoi-cream"]);
   });
 });
 

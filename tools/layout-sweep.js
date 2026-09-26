@@ -552,7 +552,7 @@ async (page) => {
       await page.locator(".cslot").first().getByRole("button", { name: "Mượn tạm" }).click();
     }],
     ["/admin/products/p-khoi#photopick", "admin-product-edit-photopick-1280", async () => {
-      await page.locator(".cslot").first().getByRole("button", { name: "Đổi ảnh mượn" }).click();
+      await page.locator(".cslot").first().getByRole("button", { name: "Mượn tạm" }).click();
     }],
   ];
   for (const [route, name, open] of ADMIN_OVERLAYS) await visit(route, 1280, name, open);

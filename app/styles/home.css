@@ -259,8 +259,17 @@
 .s .past .lnk{ display:inline-flex; align-items:center; min-height:44px; }
 
 /* ── an issue that is over ──────────────────────────────────────────────── */
-/* The photo says it quietly, so the page does not have to say it twice. */
-.s .cover.shut .photo img{ filter:grayscale(.6); opacity:.85; }
+/* The photo says it quietly, so the page does not have to say it twice.
+   It is the issue's first style's own photo, and since v3 slice 14 that
+   can be a packshot: 4:5, the garment's top 12% down, its hem near 79%. A
+   centred crop cut KHÓI's collar off at 1280, where the 738 × 640 frame
+   shows 69% of the photo's height. Held high instead — 30% here, 35% from
+   900px (below). Measured: 28px above the collar and 31px under the hem at
+   390; 15px above the collar at 768 × 1024, whose frame shows only 65% of
+   the height, so the hem goes; 12px and 7px at 1280, 9px and 2px at 1440,
+   the widest the frame gets (747 × 640). A borrowed portrait (Số 04's)
+   only gains headroom. */
+.s .cover.shut .photo img{ filter:grayscale(.6); opacity:.85; object-position:50% 30%; }
 .s .cover.shut .issue .num{ color:var(--stage-ink2); }
 
 /* ── the one authored moment ────────────────────────────────────────────
@@ -310,6 +319,7 @@
      — reduces to the gutter itself here. */
   .s .cover{ display:grid; grid-template-columns:5fr 7fr; min-height:640px; }
   .s .cover .photo{ order:2; aspect-ratio:auto; min-height:640px; }
+  .s .cover.shut .photo img{ object-position:50% 35%; }
   /* 16 on top, not 48: the first viewport has to hold the whole label,
      "Còn ít" included, and the label's own content is 760px tall against
      the 735 a 1280×800 window leaves under the bar. The mock lands on 16

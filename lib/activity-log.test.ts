@@ -505,6 +505,23 @@ describe("what the shop did to the catalogue", () => {
     expect(diffText(again)).toBe("ảnh thật → ảnh thật");
   });
 
+  it("counts a photo that ships with the app as a real one (v3 slice 14)", () => {
+    const row = rowsOf(
+      done({
+        kind: "PRODUCT_PHOTO_SET",
+        productId: "p-khoi",
+        color: "cream",
+        before: "shot-khoi-cream",
+        after: `up/${"d".repeat(32)}.webp`,
+      }),
+    )[0]!;
+    expect(diffText(row)).toBe("ảnh thật → ảnh thật");
+    const lent = rowsOf(
+      done({ kind: "PRODUCT_PHOTO_SET", productId: "p-khoi", color: "black", before: "shot-khoi-black", after: "reu" }),
+    )[0]!;
+    expect(diffText(lent)).toBe("ảnh thật → ảnh mượn");
+  });
+
   it("records a new band order as the colours before and after", () => {
     const row = rowsOf(
       done({

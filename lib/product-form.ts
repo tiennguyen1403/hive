@@ -10,7 +10,7 @@ import {
 } from "./catalog-admin";
 import { LEX, styleName } from "./lexicon";
 import { vnd } from "./money";
-import { PHOTO_KEYS, isUploadedKey } from "./photos";
+import { PHOTO_KEYS, isRealPhotoKey, isUploadedKey } from "./photos";
 
 /**
  * The rules of the style form (v3 slice 7) — what its save button says, what
@@ -28,11 +28,31 @@ import { PHOTO_KEYS, isUploadedKey } from "./photos";
  *
  * · `none`  — nothing yet (a new style only);
  * · `loan`  — one of the borrowed stand-ins, always labelled "mượn tạm";
- * · `saved` — a photo already uploaded and attached to the style (editing);
+ * · `saved` — a real photo already attached to the style (editing): one the
+ *             back office uploaded, or one that ships with the app (v3 slice
+ *             14, Số 05's `shot-…`), which nobody uploaded;
  * · `file`  — a file picked on this device and cropped, not uploaded until
  *             the form is saved.
  */
 export type PhotoKind = "none" | "loan" | "saved" | "file";
+
+/**
+ * What a photo already on the style is to the form: a real photo (`saved`)
+ * or a borrowed stand-in (`loan`). A fixed style's flat drawing is neither
+ * a photograph nor the style's own, and stays with the stand-ins, as before.
+ */
+export function storedPhotoKind(key: string): "saved" | "loan" {
+  return isRealPhotoKey(key) ? "saved" : "loan";
+}
+
+/**
+ * The line under a real photo: "Ảnh đã tải lên" for one the back office
+ * uploaded, "Ảnh thật" for one that ships with the app — nobody uploaded it,
+ * and it is not borrowed.
+ */
+export function savedPhotoCaption(key: string): string {
+  return isUploadedKey(key) ? "Ảnh đã tải lên" : "Ảnh thật";
+}
 
 /** Pieces per colour and size, as the form's grid holds them. */
 export type CellGrid = Partial<Record<ColorKey, Partial<Record<Size, number>>>>;
@@ -169,10 +189,12 @@ export interface LoanPhoto {
  * uploads — an upload is another style's real photo, not a stand-in — in the
  * order `lib/photos.ts` lists the frames.
  *
- * Each is named after the style it is the photo OF ("ảnh của mẫu S05 – CÁT",
+ * Each is named after the style it is the photo OF ("ảnh của mẫu S04 – RÊU",
  * the name the back office shows since v3 slice 12): the first style whose
- * first colour wears it, else the first style wearing it at all, else the
- * teaser that does. Read from the catalogue, never typed.
+ * first colour wears it; else the first style wearing it at all, with that
+ * colour ("S04 – TRO, màu Đen") — two frames of one style must not share a
+ * name, and since v3 slice 14 `than` is only TRO's black; else the teaser
+ * that does. Read from the catalogue, never typed.
  *
  * Only a key `lib/photos.ts` has a frame for (slice B5): the fixed styles
  * carry `flat-…` keys whose drawings do not exist yet, and until they do
@@ -190,11 +212,16 @@ export function loanPhotos(catalog: Catalog): LoanPhoto[] {
 }
 
 function loanOwner(catalog: Catalog, key: string): string {
-  const owner =
-    catalog.products.find((p) => p.photoKeys[0] === key) ??
-    catalog.products.find((p) => p.photoKeys.includes(key)) ??
-    catalog.teasers.find((t) => t.photoKey === key);
-  return owner ? styleName(owner.name, owner.dropNo) : "";
+  const first = catalog.products.find((p) => p.photoKeys[0] === key);
+  if (first) return styleName(first.name, first.dropNo);
+  const other = catalog.products.find((p) => p.photoKeys.includes(key));
+  if (other) {
+    const color = other.colors[other.photoKeys.indexOf(key)];
+    const shown = styleName(other.name, other.dropNo);
+    return color ? `${shown}, màu ${COLORS[color].label}` : shown;
+  }
+  const teaser = catalog.teasers.find((t) => t.photoKey === key);
+  return teaser ? styleName(teaser.name, teaser.dropNo) : "";
 }
 
 /**

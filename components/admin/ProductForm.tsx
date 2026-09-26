@@ -39,7 +39,7 @@ import { FIXED_WORD, LEX, stylePrefix } from "@/lib/lexicon";
 import { moneyInitial, moneyInput, parseVnd, plainVnd } from "@/lib/money";
 import { defaultCrop, sameCrop, type Crop } from "@/lib/photo-crop";
 import { PhotoEncodeError, encodeCrop } from "@/lib/photo-encode";
-import { UPLOAD_TYPES, isUploadedKey } from "@/lib/photos";
+import { UPLOAD_TYPES } from "@/lib/photos";
 import {
   droppedColorMessage,
   gridTotal,
@@ -50,6 +50,7 @@ import {
   pickProblem,
   rowTotal,
   staleUploads,
+  storedPhotoKind,
   type CellGrid,
   type PhotoKind,
 } from "@/lib/product-form";
@@ -842,12 +843,15 @@ export function ProductForm({
   );
 }
 
-/** The photos a style already has, one per colour: borrowed, or uploaded (B3c). */
+/**
+ * The photos a style already has, one per colour: a real one — uploaded
+ * (B3c) or shipped with the app (v3 slice 14) — or a borrowed stand-in.
+ */
 function storedPhotos(values: ProductFormValues): Photos {
   const out: Photos = {};
   values.colors.forEach((c, i) => {
     const key = values.photoKeys[i];
-    if (key) out[c] = isUploadedKey(key) ? { kind: "saved", key } : { kind: "loan", key };
+    if (key) out[c] = { kind: storedPhotoKind(key), key };
   });
   return out;
 }
