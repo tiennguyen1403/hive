@@ -99,10 +99,11 @@ export function orderNote(o: Order, now: Date): OrderNote | null {
     }
     // Taken and not yet paid for (slice B3a brought these to the back
     // office). A COD order waits to be handed over — its money comes at the
-    // door, so its age counts from the order — and a card order waits for the
-    // shop to confirm the money by hand, with no gateway to do it.
+    // door, so its age counts from the order. A card order here was taken
+    // before slice B7, when card orders were RECEIVED; a card pays by
+    // transfer now, so it waits for one, like every card order.
     case "RECEIVED": {
-      if (o.payment !== "COD") return { text: "chưa thu tiền", late: false };
+      if (o.payment !== "COD") return { text: "chờ chuyển khoản", late: false };
       const days = Math.floor((now.getTime() - Date.parse(o.placedAt)) / 86_400_000);
       return {
         text: days >= 1 ? `chưa bàn giao · ${days}\u00a0ngày` : "chưa bàn giao",
@@ -154,7 +155,9 @@ export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date): Qu
           code: o.code,
           customer,
           totalVnd: orderTotalVnd(o),
-          standing: "Chờ chuyển khoản",
+          // A card order pays by transfer (slice B7) and waits like one; the
+          // row names the card, or it would pass for a plain transfer.
+          standing: o.payment === "CARD" ? "Chờ chuyển khoản · thẻ" : "Chờ chuyển khoản",
           due: `hạn ${dateTimeLabel(o.status.dueAt)}`,
           late: note?.late ?? false,
           action: "MARK_PAID" as const,
@@ -169,7 +172,7 @@ export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date): Qu
           totalVnd: orderTotalVnd(o),
           standing: cod
             ? `Đã nhận đơn ${clockLabel(o.placedAt)} ${dayMonth(o.placedAt)} · COD, thu khi giao`
-            : `Đã nhận đơn ${clockLabel(o.placedAt)} ${dayMonth(o.placedAt)} · thẻ, chưa thu tiền`,
+            : `Đã nhận đơn ${clockLabel(o.placedAt)} ${dayMonth(o.placedAt)} · thẻ, chờ chuyển khoản`,
           due: cod && note?.late ? note.text.replace("chưa bàn giao · ", "") : null,
           late: cod ? (note?.late ?? false) : false,
           action: cod ? ("HAND_OVER" as const) : ("MARK_PAID" as const),

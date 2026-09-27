@@ -2425,3 +2425,19 @@ Người dùng cho phép, phiên chính dừng nó để agent dựng và chụp
   - nút "Ghi nhớ size" của v3 mất cùng trang v3, lát 3 đưa "Size của tôi" vào Hồ sơ;
   - mã v3 mồ côi dọn ở lát cuối;
   - `tools/layout-sweep.js` thêm `/so`, `/search`, `/products/s05-da`.
+
+**Lát B7 ĐẠT (27/09/2026, `backend-implementer`, phiên chính duyệt).** Brief `tasks/briefs/backend-b7.md`.
+- **Đã làm:**
+  - `place_order` v5 (`20260927120000_card_pays_by_transfer.sql`): CARD vào `AWAITING_TRANSFER`, giữ 12 giờ như chuyển
+    khoản;
+  - `lib/orders.ts#paysByTransfer`;
+  - nhãn quản trị "chờ chuyển khoản" cho đơn thẻ; nhật ký ghi "thẻ → chờ chuyển khoản";
+  - ghi chú Thẻ ở thanh toán v3 "Tạm thời trả bằng chuyển khoản.".
+  - Các hàm quá hạn, đánh dấu đã trả, bàn giao chỉ đọc trạng thái nên không phải sửa; đã có test chứng minh.
+- **Kiểm:** 1655/1655 test, 215/215 test DB, build sạch. Đặt đơn thẻ thật trên 3200 và đánh dấu đã trả trong quản trị.
+- **Deploy:**
+  - đẩy code trước; `db push` sau khi Vercel READY; không cần nạp lại seed cho B7 (B6 thì cần);
+  - đơn thẻ `RECEIVED` đặt trước deploy, nếu có, **để tới lần reset 19:00**. Phiên chính quyết: dữ liệu mẫu, không xoá đơn
+    khách đang xem.
+- **Còn mở:** `refundNote` lệch từ trước (đơn chuyển khoản đã trả bị huỷ ghi "Không có gì để hoàn"), gộp vào lát backend đổi
+  trả.

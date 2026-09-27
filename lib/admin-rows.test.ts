@@ -143,15 +143,28 @@ describe("orderNote", () => {
     ).toBe("VNP-8842377");
   });
 
-  it("ages a COD order taken from its placing, and says a card order's money is not in", () => {
+  it("ages a COD order taken from its placing, and says a card order waits for a transfer", () => {
     const cod = { ...testOrder({ state: "RECEIVED" }), payment: "COD" as const };
     expect(orderNote({ ...cod, placedAt: at }, NOW)).toEqual({ text: "chưa bàn giao", late: false });
     expect(orderNote({ ...cod, placedAt: "2026-09-17T10:00:00+07:00" }, NOW)).toEqual({
       text: "chưa bàn giao · 3\u00a0ngày",
       late: true,
     });
+    // Taken before slice B7, when a card order was RECEIVED: it pays by
+    // transfer now, like every card order.
     const card = { ...testOrder({ state: "RECEIVED" }), payment: "CARD" as const };
-    expect(orderNote(card, NOW)).toEqual({ text: "chưa thu tiền", late: false });
+    expect(orderNote(card, NOW)).toEqual({ text: "chờ chuyển khoản", late: false });
+  });
+
+  it("gives a card order waiting for its transfer the transfer's deadline (slice B7)", () => {
+    const card = {
+      ...testOrder({ state: "AWAITING_TRANSFER", dueAt: "2026-09-21T08:05:00+07:00" }),
+      payment: "CARD" as const,
+    };
+    expect(orderNote(card, NOW)).toEqual(
+      orderNote({ ...card, payment: "BANK_TRANSFER" }, NOW),
+    );
+    expect(orderNote(card, NOW)!.late).toBe(false);
   });
 
   it("says nothing about an order that is finished", () => {
@@ -219,13 +232,26 @@ describe("queueRows", () => {
   it("hands a COD order over from RECEIVED, and asks for a card order's money first (slice B3a)", () => {
     const base = BOOK.find((o) => o.code === "DH-2429")!;
     const cod: AdminOrder = { ...base, code: "DH-2432" as AdminOrder["code"], payment: "COD", placedAt: "2026-09-17T09:00:00+07:00", status: { state: "RECEIVED" } };
+    // A card order taken before slice B7, when card orders were RECEIVED.
     const card: AdminOrder = { ...base, code: "DH-2433" as AdminOrder["code"], payment: "CARD", status: { state: "RECEIVED" } };
     const [c2, c1] = queueRows(FIXTURE_CATALOG, [cod, card], NOW);
     expect(c2).toMatchObject({ code: "DH-2433", action: "MARK_PAID", late: false, due: null });
-    expect(c2!.standing).toMatch(/^Đã nhận đơn .* · thẻ, chưa thu tiền$/);
+    expect(c2!.standing).toMatch(/^Đã nhận đơn .* · thẻ, chờ chuyển khoản$/);
     expect(c1).toMatchObject({ code: "DH-2432", action: "HAND_OVER", late: true, due: "3\u00a0ngày" });
     expect(c1!.standing).toBe("Đã nhận đơn 09:00 17/09 · COD, thu khi giao");
     expect(c1!.customer).toBe(base.owner!.name);
+  });
+
+  it("lists a card order waiting for its transfer as one, and names the card (slice B7)", () => {
+    const base = BOOK.find((o) => o.code === "DH-2430")!; // a transfer inside its hold
+    const card: AdminOrder = { ...base, code: "DH-2434" as AdminOrder["code"], payment: "CARD" };
+    const rows = queueRows(FIXTURE_CATALOG, [base, card], NOW);
+    const cardRow = rows.find((r) => r.code === "DH-2434");
+    const transferRow = rows.find((r) => r.code === "DH-2430");
+    expect(cardRow).toMatchObject({ code: "DH-2434", action: "MARK_PAID", standing: "Chờ chuyển khoản · thẻ" });
+    expect(transferRow).toMatchObject({ code: "DH-2430", action: "MARK_PAID", standing: "Chờ chuyển khoản" });
+    expect(cardRow!.due).toBe(transferRow!.due);
+    expect(cardRow!.late).toBe(transferRow!.late);
   });
 
   it("names the recipient of an order placed signed out, and says it is a guest's (slice B3b)", () => {

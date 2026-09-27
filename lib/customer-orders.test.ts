@@ -261,6 +261,19 @@ describe("effectiveStatus — the status is read off the clock", () => {
     effectiveOrder(waiting, new Date("2026-09-22T10:00:00+07:00"));
     expect(waiting.status.state).toBe("AWAITING_TRANSFER");
   });
+
+  it("holds a card order exactly like a transfer: it pays by one (slice B7)", () => {
+    const card: Order = { ...waiting, payment: "CARD" };
+    expect(effectiveStatus(card, new Date("2026-09-21T19:49:00+07:00"))).toBe(card.status);
+    const late = effectiveStatus(card, new Date("2026-09-22T10:00:00+07:00"));
+    expect(late).toEqual({
+      state: "CANCELLED",
+      cancelledAt: "2026-09-21T19:50:00+07:00",
+      reason: OVERDUE_REASON,
+    });
+    // Nobody paid a hold that ran out, whatever the method was.
+    expect(refundNote({ ...card, status: late })).toBe(REFUND_NONE);
+  });
 });
 
 /**

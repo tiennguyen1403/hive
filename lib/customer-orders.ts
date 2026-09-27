@@ -71,6 +71,10 @@ export function ordersForTab(orders: Order[], tab: OrderTabKey): Order[] {
  * exactly this reason, and the back office's own log says "Huỷ đơn / quá 12
  * giờ chưa chuyển khoản · Hệ thống").
  *
+ * Since slice B7 a card order is such a transfer: no card gateway is
+ * connected, so it pays by one and waits in the same state. Nothing here asks
+ * how an order is paid, only what state it is in, so it is read the same way.
+ *
  * The moment recorded is the DEADLINE, not "now": that is when the pieces
  * went back on the shelf, and it is the same number however long after the
  * fact the screen is opened.
@@ -151,8 +155,9 @@ export function orderTimeline(o: Order): TimelineStep[] {
       ];
 
     // Taken, and nobody has paid or packed anything yet — a COD order, or a
-    // card order with no gateway behind it. What is known is the order and
-    // the two steps still ahead of it, and nothing is claimed as done.
+    // card order taken before slice B7 (a card pays by transfer since, and
+    // waits in AWAITING_TRANSFER). What is known is the order and the two
+    // steps still ahead of it, and nothing is claimed as done.
     case "RECEIVED":
       return [
         { ...placed, state: "now" },

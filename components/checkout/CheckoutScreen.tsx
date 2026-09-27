@@ -45,7 +45,7 @@ import {
 import { toVnIso } from "@/lib/datetime";
 import { vnd } from "@/lib/money";
 import { MAX_NOTE_LENGTH, failureMovesCatalog } from "@/lib/order-payload";
-import { TRANSFER_HOLD_HOURS } from "@/lib/orders";
+import { TRANSFER_HOLD_HOURS, paysByTransfer } from "@/lib/orders";
 import { appliedPromo } from "@/lib/promotions";
 import {
   COD_SURCHARGE_VND,
@@ -859,17 +859,24 @@ function payments() {
     {
       method: "CARD" as const,
       label: "Thẻ (nội địa, Visa)",
-      note: 'Cổng thẻ chưa nối · đơn ghi "chưa thu tiền" cho tới khi có cổng',
+      // No card gateway is connected, so a card order pays by transfer and is
+      // held like one (slice B7). The transfer row above already states the
+      // hold, so this note keeps only what differs, in the Feed mock's words
+      // (`prototype/explore/feed/checkout.js`, PAY_NOTE).
+      note: "Tạm thời trả bằng chuyển khoản.",
       price: "",
     },
   ];
 }
 
-/** What happens after the button is pressed, per method. All three are true. */
+/**
+ * What happens after the button is pressed, per method. All three are true:
+ * a card order pays by transfer (`paysByTransfer`, slice B7), so it gets the
+ * transfer's sentence.
+ */
 function afterOrder(payment: CheckoutDraft["payment"]): string {
-  if (payment === "COD") return "Đặt xong, cửa hàng gọi xác nhận trước khi giao.";
-  if (payment === "CARD") {
-    return "Đặt xong, đơn ghi chưa thu tiền cho tới khi có cổng thẻ.";
+  if (paysByTransfer(payment)) {
+    return `Đặt xong, chuyển khoản trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng. Quá giờ, đơn tự huỷ và chiếc đó về kệ.`;
   }
-  return `Đặt xong, chuyển khoản trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng. Quá giờ, đơn tự huỷ và chiếc đó về kệ.`;
+  return "Đặt xong, cửa hàng gọi xác nhận trước khi giao.";
 }

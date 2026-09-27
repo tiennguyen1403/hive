@@ -274,10 +274,12 @@ export type DeliveryMethod = "STANDARD" | "EXPRESS";
  * every consumer to handle `trackingCode?: string` on a pending order.
  *
  * `RECEIVED` joined at slice B2: an order the shop has taken and nobody has
- * paid for yet — every COD order, and a card order while no gateway is
- * connected. Until then only an order kept in the browser could be in it;
- * now the database issues it, and calling such an order `PAID` would be the
- * screen claiming money changed hands.
+ * paid for yet — every COD order. Until then only an order kept in the
+ * browser could be in it; now the database issues it, and calling such an
+ * order `PAID` would be the screen claiming money changed hands. A card order
+ * was RECEIVED too until slice B7; no card gateway is connected, so since B7
+ * a card order pays by transfer and waits in `AWAITING_TRANSFER` like one
+ * (`lib/orders.ts#paysByTransfer`).
  *
  * `carrier` joined `SHIPPING` at slice B3a, when the back office's handover
  * started writing to the database: the delivery service the parcel went by,

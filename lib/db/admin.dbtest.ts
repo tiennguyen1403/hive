@@ -249,8 +249,11 @@ describe("(b) admin_mark_paid", () => {
     });
   });
 
-  it("RECEIVED → PAID (a card or COD order the shop has taken)", async () => {
-    const code = await placeAsGuest({ payment: "CARD" });
+  // Since slice B7 a card order is placed AWAITING_TRANSFER, so a COD order is
+  // the one checkout still takes as RECEIVED; a card order left RECEIVED from
+  // before B7 is `card-transfer.dbtest.ts`'s.
+  it("RECEIVED → PAID (an order the shop has taken, nobody paid yet)", async () => {
+    const code = await placeAsGuest({ payment: "COD" });
     const { error } = await manager.rpc("admin_mark_paid", { p_code: code, p_now: now() });
     expect(error).toBeNull();
     expect((await stateOf(code)).state).toBe("PAID");
@@ -321,6 +324,7 @@ describe("(b) admin_hand_over", () => {
     expect((await stateOf(cod)).state).toBe("SHIPPING");
     expect((await eventsOf(cod)).map((e) => e.kind)).toEqual(["ORDER_PLACED", "ORDER_SHIPPED"]);
 
+    // A card order waits for its transfer (slice B7): nothing to ship yet.
     const card = await placeAsGuest({ payment: "CARD" });
     const refused = await manager.rpc("admin_hand_over", {
       p_code: card,

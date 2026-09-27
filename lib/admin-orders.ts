@@ -50,10 +50,11 @@ export type ShipTo = Order["shipTo"];
  * cancelled here, as on every screen — and the database refuses to confirm,
  * ship, re-address or cancel it for the same reason.
  *
- *   · AWAITING_TRANSFER → confirm the money arrived;
+ *   · AWAITING_TRANSFER → confirm the money arrived — a transfer, or a card
+ *                         order, which pays by transfer since slice B7;
  *   · RECEIVED, COD     → hand it over: the money is collected at the door;
- *   · RECEIVED, card    → confirm the money: no gateway is connected, so the
- *                         shop checks by hand before anything ships;
+ *   · RECEIVED, card    → a card order taken before B7: confirm the money by
+ *                         hand before anything ships;
  *   · PAID              → hand it over;
  *   · SHIPPING          → record the delivery (no courier reports it);
  *   · DELIVERED, CANCELLED → nothing is left to do.

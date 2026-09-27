@@ -63,8 +63,9 @@ interface OrderConfirmedProps {
  *   row says that rather than showing a made-up number;
  * · cash on delivery gets the sentence about the call before the courier
  *   comes, and no bank block at all;
- * · a card gets the plain admission that no gateway is connected, because
- *   the alternative is a screen implying money changed hands;
+ * · a card order pays by transfer while no card gateway is connected (slice
+ *   B7), so it IS a transfer being waited on and gets that screen; one taken
+ *   before B7 sits in RECEIVED and says that it pays by transfer;
  * · an order that has moved on — paid, on its way, cancelled — says so, and
  *   asks for no transfer.
  *
@@ -335,9 +336,11 @@ function headline(state: OrderState, order: Order): string {
   switch (state) {
     case "AWAITING_TRANSFER":
       return `Đã nhận đơn. Chuyển khoản trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng.`;
+    // COD, or a card order taken before slice B7 (card orders were RECEIVED
+    // then): a card pays by transfer now, the checkout note's words.
     case "RECEIVED":
       return order.payment === "CARD"
-        ? "Đã nhận đơn. Chưa thu tiền cho tới khi có cổng thẻ."
+        ? "Đã nhận đơn. Tạm thời trả bằng chuyển khoản."
         : "Đã nhận đơn. Cửa hàng gọi xác nhận trước khi giao.";
     case "PAID":
       return "Đã nhận đơn. Đã thanh toán.";

@@ -19,7 +19,7 @@ import { RESTOCK_REASON } from "./inventory-adjust";
 import { LEX, issueLabel, styleName } from "./lexicon";
 import { vnd } from "./money";
 import { isRealPhotoKey } from "./photos";
-import { TRANSFER_HOLD_HOURS, orderTotalVnd } from "./orders";
+import { TRANSFER_HOLD_HOURS, orderTotalVnd, paysByTransfer } from "./orders";
 import { STATE_LABEL } from "./order-labels";
 
 /**
@@ -267,6 +267,8 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
   switch (e.kind) {
     case "ORDER_PLACED": {
       const payment = book.get(e.code)?.payment;
+      // The state `place_order()` wrote it in, read off the method: a transfer
+      // and, since slice B7, a card order wait for the money; COD is taken.
       return {
         id,
         at: e.at,
@@ -276,7 +278,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent): LogRow {
         ...(payment ? { detail: PAYMENT_WORD[payment] } : {}),
         ...orderSubject(book, e.code),
         ...(payment
-          ? { after: stateWord(payment === "BANK_TRANSFER" ? "AWAITING_TRANSFER" : "RECEIVED") }
+          ? { after: stateWord(paysByTransfer(payment) ? "AWAITING_TRANSFER" : "RECEIVED") }
           : {}),
         ...totalTail(book, e.code),
       };

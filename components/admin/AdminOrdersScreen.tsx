@@ -37,7 +37,8 @@ const PATH = "/admin/orders";
 const TABS: Array<{ value: OrderState | null; label: string }> = [
   { value: null, label: "Tất cả" },
   { value: "AWAITING_TRANSFER", label: STATE_LABEL.AWAITING_TRANSFER.text },
-  // Slice B3a: a COD or card order checkout took, waiting on the shop.
+  // Slice B3a: a COD order checkout took, waiting on the shop — and a card
+  // order taken before slice B7, when card orders were RECEIVED.
   { value: "RECEIVED", label: STATE_LABEL.RECEIVED.text },
   { value: "PAID", label: STATE_LABEL.PAID.text },
   { value: "SHIPPING", label: STATE_LABEL.SHIPPING.text },
@@ -475,28 +476,20 @@ function paymentCell(o: Order) {
       </>
     );
   }
-  if (o.payment === "CARD") {
-    // "Chưa thu tiền" only while it is true: since slice B3a the shop marks
-    // a card order paid by hand, and a delivered card order was paid.
-    return (
-      <>
-        {label}
-        {o.status.state === "RECEIVED" && (
-          <span className="sub">chưa thu tiền · chưa nối cổng</span>
-        )}
-        {o.status.state === "PAID" && (
-          <span className="sub nw">
-            nhận {clockLabel(o.status.paidAt)} · {dayMonth(o.status.paidAt)}
-          </span>
-        )}
-      </>
-    );
-  }
+  // A transfer, and a card order: no card gateway is connected, so a card
+  // order pays by transfer (slice B7) and reads like one — its deadline, then
+  // the moment the money came. While its money is owed, "chờ chuyển khoản"
+  // under "Thẻ" says why a card row carries a transfer's deadline. A card
+  // order taken before B7 is RECEIVED, with no deadline, and waits for the
+  // same transfer.
+  //
   // "nhận 07:52 · 23/09" is one moment: the line holds together (`.nw`), or
   // the day dropped onto a line of its own under "nhận 07:52 ·" (v3 slice 13).
+  const owed = o.status.state === "AWAITING_TRANSFER" || o.status.state === "RECEIVED";
   return (
     <>
       {label}
+      {o.payment === "CARD" && owed && <span className="sub">chờ chuyển khoản</span>}
       {o.status.state === "AWAITING_TRANSFER" && (
         <span className="sub nw">
           hạn {clockLabel(o.status.dueAt)} · {dayMonth(o.status.dueAt)}

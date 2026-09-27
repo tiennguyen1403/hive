@@ -1,4 +1,4 @@
-import type { Order, Promotion } from "@/data/types";
+import type { Order, PaymentMethod, Promotion } from "@/data/types";
 import { demoNow } from "./clock";
 import { addHoursIso } from "./datetime";
 
@@ -83,6 +83,22 @@ export function isPromoLive(promo: Promotion, now: Date = demoNow()): boolean {
  * itself; this constant is what the screens print.
  */
 export const TRANSFER_HOLD_HOURS = 12;
+
+/**
+ * Whether an order is paid by bank transfer — and so waits in
+ * AWAITING_TRANSFER, holding its pieces for `TRANSFER_HOLD_HOURS`, and
+ * cancels itself when the hold runs out.
+ *
+ * A transfer, and since slice B7 a card order too: no card gateway is
+ * connected, so a shopper who picks card pays by transfer (user, 27/09; the
+ * Feed mock's `HIVE.paysByTransfer`). COD is the one method that is not —
+ * it is paid at the door, so nothing is held for it. `place_order()` names
+ * the same two methods (`lib/orders.test.ts` pins that the SQL and this
+ * agree).
+ */
+export function paysByTransfer(payment: PaymentMethod): boolean {
+  return payment === "BANK_TRANSFER" || payment === "CARD";
+}
 
 /** When an unpaid transfer order cancels itself and the pieces go back. */
 export function transferDeadlineIso(placedAtIso: string): string {

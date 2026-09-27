@@ -16,7 +16,8 @@ import type { OrderState, PaymentMethod } from "@/data/types";
  */
 export const STATE_LABEL: Record<OrderState, { text: string; tone: BadgeTone }> = {
   AWAITING_TRANSFER: { text: "Chờ chuyển khoản", tone: "warn" },
-  // Taken, and waiting for nothing but the shop — a COD or card order. "Đã
+  // Taken, and waiting for nothing but the shop — a COD order, or a card
+  // order from before slice B7 (a card pays by transfer since). "Đã
   // nhận đơn" and not "Đã thanh toán": no money has moved, and `PAID` on that
   // row would be the screen inventing a payment. Until slice B2 only an order
   // kept in the browser could be in this state, so it had a map of its own

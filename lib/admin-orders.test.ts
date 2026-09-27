@@ -36,8 +36,16 @@ describe("nextMove — the SQL guard read as a to-do list", () => {
     expect(nextMove(awaiting("2026-09-20T18:00:00+07:00"), NOW)).toBeNull();
   });
 
+  it("confirms a card order's transfer inside its hold, and has nothing left once it ran out (slice B7)", () => {
+    const card = (dueAt: string) => order({ state: "AWAITING_TRANSFER", dueAt }, "CARD");
+    expect(nextMove(card("2026-09-21T19:50:00+07:00"), NOW)).toBe("MARK_PAID");
+    expect(nextMove(card("2026-09-20T18:00:00+07:00"), NOW)).toBeNull();
+    expect(canCancel(card("2026-09-20T18:00:00+07:00"), NOW)).toBe(false);
+  });
+
   it("hands a COD order over, and asks for a card order's money first", () => {
     expect(nextMove(order({ state: "RECEIVED" }, "COD"), NOW)).toBe("HAND_OVER");
+    // A card order taken before slice B7, when card orders were RECEIVED.
     expect(nextMove(order({ state: "RECEIVED" }, "CARD"), NOW)).toBe("MARK_PAID");
   });
 

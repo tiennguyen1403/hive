@@ -124,7 +124,7 @@ describe("what the shop's hand wrote", () => {
     expect(row.tail).toMatch(/₫$/);
   });
 
-  it("says where a card order's payment came from: taken, not waited for", () => {
+  it("says where a payment came from on an order only taken — a card order from before slice B7", () => {
     const row = rowsOf(pressed({ kind: "ORDER_PAID", from: "RECEIVED" }))[0]!;
     expect(row.before).toBe("đã nhận đơn");
   });
@@ -217,6 +217,15 @@ describe("who did it", () => {
     expect(row.action).toBe("Huỷ đơn");
     expect(row.detail).toBe("khách huỷ");
     expect(row.after).toBe("đã huỷ");
+  });
+
+  it("files a card order placed as waiting for a transfer, and a COD order as taken (slice B7)", () => {
+    const placedAs = (code: string) =>
+      rowsOf(pressed({ actorRole: "customer", actor: "vy@example.test", kind: "ORDER_PLACED", code }))[0]!;
+    const card = placedAs("DH-2428"); // paid by card in the sample
+    expect(card).toMatchObject({ action: "Đặt đơn", detail: "thẻ", after: "chờ chuyển khoản" });
+    const cod = placedAs("DH-2420");
+    expect(cod).toMatchObject({ action: "Đặt đơn", detail: "COD", after: "đã nhận đơn" });
   });
 
   it("says Hệ thống for a transfer that matched itself", () => {
