@@ -1,0 +1,872 @@
+/* Round v4 "Feed" (QĐ-32) — the rules of `prototype/explore/feed/feed.css`
+   the app has ported so far, in the mock's order, every selector under the
+   Feed zone `[data-ui="feed"]` and every token renamed `--x` → `--f-x`
+   (the token block is in `app/globals.css`).
+
+   PORTED AT SLICE 0, for the kit page `/system`: the zone's ground and type
+   (the mock's `body` rule, and its `button` and `a` resets), the focus ring,
+   `.disp`, the icon box `.i`, the buttons `.btn`, the filter chips
+   `.chips` `.chip`, the sheet's panel and head (`.sheet-panel`, `.grab`,
+   `.sh-*`) and the sort list, with their hover and press rules.
+
+   PORTED AT SLICE 1a, for the home page `/` and the frame every later Feed
+   screen sits in (`components/feed/FeedFrame.tsx`): the page column (the
+   mock's `body` as a flex column), the top bar and the home tabs, the phone
+   tab bar, the shared bits (live chip, line chip, tag, stock line, pill,
+   heart, ĐÃ HẾT stamp, text link), the feed (story, cards, rails, the next
+   issue, the closed issues), the footer, the shop grid, the calendar, the
+   sheets as native <dialog>s (quick add, added, size guide), the reveal on
+   scroll, the tablet column, the desktop web app and the 900–1199 band. The
+   product page (`.pbar`, `.gal`, `.pinfo`…), the pushed screens' bar
+   (`.mbar`) and the account menu wait for their slices; the mock's `.vh` is
+   the app's `.sr-only`; its logo rules (`.mark`, `.word`) are `.logo`, the
+   black-and-white lockup (QĐ-33). A rule is ported whole, with the
+   selectors it groups.
+
+   Renamed as they came in, because the name was taken:
+   · `.grid` (the shop grid) → `.shop-grid`: a Tailwind utility's name
+     (`lib/classnames.test.ts`);
+   · the keyframes → `f-live`, `f-pop`, `f-fade-in`, `f-sheet-up`…, so no
+     Feed animation shares a name with a v3 one.
+
+   Translations, the same in every Feed file:
+   · the mock's `.motion` on <html> (feed.js sets it unless reduced motion is
+     asked for) is `@media (prefers-reduced-motion: no-preference)`;
+   · the mock's `html[data-mouse]` is the app's `html[data-pointer]`
+     (`app/layout.tsx`); the off switch in globals.css already takes the
+     ring off every `:focus-visible` while the pointer drives;
+   · the mock's `html` and `body` rules that only make sense for the whole
+     document (the scroll padding under the sticky bar, the page lock while
+     a sheet is open) are written `html:has([data-ui="feed"] …)`: they reach
+     the document only while a Feed screen is on it;
+   · the home's panels are shown by the zone's `data-tab` (the tabs set it,
+     and so does a script before the first paint), not by the `hidden`
+     attribute the mock's script toggles.
+   The hex colours the mock writes into its rules are tokens (`--f-bg3`
+   #E4E6EA, `--f-blue2` #0F37D6, `--f-grab` #D5D7DC, `--f-white` #fff,
+   `--f-plate` #F4EFE6, `--f-plate2` #F2EEE8, `--f-on-ink2` #D9DBE0); its
+   rgba literals stay as it writes them. The last block keeps the mock's
+   `!important` (round v4: the mock wins over the project's no-`!important`
+   rule, confirmed by the user on 27/09/2026); `.only-desk` does without it,
+   winning on source order.
+
+   Two project rules the user kept over the mock (27/09/2026), for every
+   slice that ports more of it:
+   · a control whose visible box is under 44px carries an invisible
+     `::after` overlay reaching 46, not the mock's 44 (`scope.test.ts`
+     checks each overlay against its control's height);
+   · the selection and the caret are drawn in Feed's colours (below). */
+
+/* ── the document, while a Feed screen is on it: focus and anchor jumps land
+   clear of the sticky top bar (52 + the home tabs 44 + 12) and of the phone's
+   tab bar (64 + the safe area + 12); from 900px the bar is 64 and nothing is
+   at the bottom. The zone's tokens do not reach <html>, so the sums are
+   written out. ── */
+html:has([data-ui="feed"]) {
+  scroll-padding-top: 108px;
+  scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── the zone: the mock's `body`, less the column (that is the frame's) ── */
+[data-ui="feed"] {
+  background: var(--f-bg);
+  color: var(--f-ink);
+  font-family: var(--f-font);
+  font-size: 15px;
+  font-weight: 450;
+  font-stretch: 100%;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+/* The page is a column at least one window tall: on a short page the footer sits at the bottom (on the phone, just
+   above the tab bar, whose space the frame's padding keeps); a tall page is laid out exactly as before. The frame
+   (`FeedFrame`) is the mock's <body>. */
+[data-ui="feed"].feed-frame { display: flex; flex-direction: column; min-height: 100dvh; }
+[data-ui="feed"].feed-frame.has-tabbar { padding-bottom: calc(var(--f-tabbar) + var(--f-sb)); }
+[data-ui="feed"].feed-frame > main { flex: 1 0 auto; width: 100%; align-content: start; }   /* rows keep their height as main grows */
+[data-ui="feed"] button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: inherit; }
+[data-ui="feed"] button:disabled { cursor: default; }
+[data-ui="feed"] a { color: inherit; text-decoration: none; }
+
+/* Focus ring for keyboard users only: `html[data-pointer]` turns it off. */
+[data-ui="feed"] :focus-visible { outline: 2px solid var(--f-blue); outline-offset: 2px; }
+
+/* Not in the mock, which leaves them to the browser: the selection and the caret, the
+   project's rule for the surfaces a browser draws, in Feed's colours (the user kept the
+   rule on 27/09/2026). Scrollbars stay as Feed has them: hidden in rails, the browser's
+   elsewhere. */
+[data-ui="feed"] { caret-color: var(--f-blue); }
+[data-ui="feed"]::selection, [data-ui="feed"] ::selection { background: var(--f-select); color: var(--f-ink); }
+
+/* Display type: Mona Sans at 75% width. Stacked Vietnamese marks reach 1.04em above
+   the baseline, so multi-line display text keeps line-height at 1.06 or more. */
+[data-ui="feed"] .disp {
+  font-stretch: 75%;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: -.004em;
+}
+
+/* ── icons (Phosphor, `FeedIcon`): the mock's masked span, drawn as the same path
+   filled with currentColor. The span sat on the baseline as an empty inline-block;
+   preflight puts an svg in the middle, so the baseline is restated. ── */
+[data-ui="feed"] .i {
+  display: inline-block; flex: none; width: 24px; height: 24px;
+  vertical-align: baseline;
+}
+
+/* ── the logo: the black-and-white lockup (QĐ-33, `FeedLogo`) where the mock sets its
+   italic word and H tile, which are not used; its height from the bar it stands in ── */
+[data-ui="feed"] .logo { display: block; flex: none; width: auto; height: 30px; }
+
+/* ── app bar and tabs (phone) ── */
+[data-ui="feed"] .top {
+  position: sticky; top: 0; z-index: 40;
+  background: var(--f-bg);
+  box-shadow: 0 1px 0 var(--f-line);
+}
+[data-ui="feed"] .top-in {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "brand acts" "tabs tabs";
+  align-items: center;
+  max-width: var(--f-max);
+  margin: 0 auto;
+}
+[data-ui="feed"] .brand {
+  grid-area: brand; justify-self: start;
+  display: flex; align-items: center; gap: 10px;
+  height: var(--f-bar); padding: 0 12px 0 var(--f-g);
+}
+[data-ui="feed"] .acts { grid-area: acts; display: flex; align-items: center; padding-right: 6px; }
+[data-ui="feed"] .ib {
+  position: relative; display: grid; place-items: center; flex: none;
+  width: 44px; height: 44px; border-radius: var(--f-r-pill); color: var(--f-ink);
+  transition: background-color .15s;
+}
+[data-ui="feed"] .ib .i { width: 24px; height: 24px; }
+[data-ui="feed"] .badge {
+  position: absolute; top: 4px; right: 1px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: var(--f-r-pill); background: var(--f-ink); color: var(--f-white);
+  font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
+  box-shadow: 0 0 0 2px var(--f-bg);
+}
+[data-ui="feed"] .only-desk { display: none; }
+
+[data-ui="feed"] .tabs { grid-area: tabs; position: relative; display: grid; grid-template-columns: repeat(3, 1fr); height: var(--f-tabs-h); }
+[data-ui="feed"] .tab {
+  position: relative; display: grid; place-items: center; height: 100%;
+  font-size: 15px; font-weight: 540; color: var(--f-ink2); letter-spacing: -.005em;
+  transition: color .2s;
+}
+/* The tab on show: the zone's `data-tab` (no attribute is Bảng tin), so the bar agrees with the
+   panel from the first paint; on the other screens the link to the screen's own place. */
+[data-ui="feed"]:not([data-tab]) .tab[data-tab="bang-tin"],
+[data-ui="feed"][data-tab="bang-tin"] .tab[data-tab="bang-tin"],
+[data-ui="feed"][data-tab="cua-hang"] .tab[data-tab="cua-hang"],
+[data-ui="feed"][data-tab="sap-mo"] .tab[data-tab="sap-mo"],
+[data-ui="feed"] .tab[aria-current="page"] { color: var(--f-ink); font-weight: 650; }
+/* The indicator is 100px wide and moved with translateX + scaleX, so only transform animates. */
+[data-ui="feed"] .tabs-ink {
+  position: absolute; left: 0; bottom: 0; height: 3px; width: 100px;
+  background: var(--f-blue); transform-origin: left center; transform: scaleX(0);
+  transition: transform .42s var(--f-spring);
+  pointer-events: none;
+}
+[data-ui="feed"] .tabs.links { display: none; }
+@media (max-width: 899.98px) {
+  [data-ui="feed"] .top:not([data-top="brand"]) { display: none; }
+}
+[data-ui="feed"] .tabs.links .tab[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--f-blue); }
+
+/* ── bottom tab bar (phone) ── */
+[data-ui="feed"] .tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  height: calc(var(--f-tabbar) + var(--f-sb)); padding-bottom: var(--f-sb);
+  background: var(--f-bg); box-shadow: 0 -1px 0 var(--f-line);
+}
+[data-ui="feed"] .tb {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: var(--f-ink2); font-size: 11px; font-weight: 560; line-height: 1.1;
+}
+[data-ui="feed"] .tb .i { width: 24px; height: 24px; }
+[data-ui="feed"] .tb[aria-current="page"], [data-ui="feed"] .tb.is-on { color: var(--f-ink); font-weight: 680; }
+[data-ui="feed"] .tb .badge { top: 6px; right: calc(50% - 24px); }
+
+/* ── shared bits ── */
+[data-ui="feed"] .chip-live {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 28px; padding: 0 12px 0 10px; border-radius: var(--f-r-pill);
+  background: var(--f-blue); color: var(--f-white);
+  font-size: 12px; font-weight: 700; letter-spacing: .06em; line-height: 1;
+}
+[data-ui="feed"] .chip-live .dot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--f-white); }
+[data-ui="feed"] .chip-live .dot::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .9);
+  animation: f-live 1.8s var(--f-out) infinite;
+}
+@keyframes f-live { 0% { transform: scale(.4); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+[data-ui="feed"] .chip-line {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: var(--f-r-pill);
+  border: 1.5px solid currentColor; font-size: 12px; font-weight: 700; letter-spacing: .06em; line-height: 1;
+}
+[data-ui="feed"] .chip-tag {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: var(--f-r-pill);
+  background: var(--f-bg2); color: var(--f-ink); font-size: 13px; font-weight: 640; line-height: 1;
+}
+
+[data-ui="feed"] .stock { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 6px; font-size: 13px; line-height: 1.35; color: var(--f-ink2); font-weight: 520; }
+[data-ui="feed"] .stock .i { width: 16px; height: 16px; color: var(--f-ink); margin-right: -2px; }
+[data-ui="feed"] .stock b { font-weight: 700; color: var(--f-ink); }
+[data-ui="feed"] .stock .gone::before { content: "·"; margin-right: 6px; color: var(--f-ink2); }
+[data-ui="feed"] .stock .gone:first-child::before { content: none; }
+[data-ui="feed"] .stock.is-low b {
+  display: inline-flex; align-items: center; gap: 3px;
+  height: 24px; padding: 0 9px 0 6px; border-radius: var(--f-r-pill);
+  background: var(--f-ink); color: var(--f-white); font-weight: 700; line-height: 1;
+}
+[data-ui="feed"] .stock.is-low b .i { color: var(--f-white); width: 15px; height: 15px; margin: 0; }
+[data-ui="feed"] .stock.is-low .gone::before { margin-left: 2px; }
+
+[data-ui="feed"] .pill {
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 36px; padding: 0 16px; border-radius: var(--f-r-pill);
+  background: var(--f-bg2); color: var(--f-ink);
+  font-size: 14px; font-weight: 640; white-space: nowrap;
+  transition: background-color .15s, transform .15s;
+}
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46 (DESIGN.md §5, kept by the user). */
+[data-ui="feed"] .pill::after { content: ""; position: absolute; inset: -5px 0; }
+[data-ui="feed"] .pill .i { width: 18px; height: 18px; }
+
+[data-ui="feed"] .fav {
+  position: absolute; z-index: 3; top: 10px; right: 10px;
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--f-r-pill);
+  background: rgba(252, 252, 253, .92); color: var(--f-ink);
+}
+[data-ui="feed"] .fav .i { width: 22px; height: 22px; }
+[data-ui="feed"] .fav.pop .i { animation: f-pop .42s var(--f-spring); }
+@keyframes f-pop { from { transform: scale(1.3); } to { transform: scale(1); } }
+
+[data-ui="feed"] .plate {
+  position: absolute; z-index: 2; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  padding: 13px 18px 9px; background: var(--f-ink); color: var(--f-white);
+  font-stretch: 75%; font-weight: 900; font-size: 34px; line-height: 1; letter-spacing: .02em; white-space: nowrap;
+}
+[data-ui="feed"] .is-sold img.shot { filter: grayscale(1) contrast(.92) brightness(1.04); }
+
+/* ── buttons ── */
+[data-ui="feed"] .btn {
+  position: relative; display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; height: 52px; padding: 0 20px; border-radius: var(--f-r-pill);
+  font-size: 16px; font-weight: 640; line-height: 1; white-space: nowrap;
+  transition: background-color .15s, color .15s, transform .15s;
+}
+[data-ui="feed"] .btn .i { width: 20px; height: 20px; }
+[data-ui="feed"] .btn-blue { background: var(--f-blue); color: var(--f-white); }
+[data-ui="feed"] .btn-line { background: var(--f-bg); color: var(--f-ink); box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+[data-ui="feed"] .btn:disabled, [data-ui="feed"] .btn[aria-disabled="true"] { background: var(--f-bg2); color: var(--f-ink2); box-shadow: none; }
+[data-ui="feed"] .btn .price { font-weight: 560; opacity: .92; }
+
+[data-ui="feed"] .link {
+  position: relative; display: inline-flex; align-items: center; gap: 4px; min-height: 44px;
+  font-size: 14px; font-weight: 640; color: var(--f-ink);
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px;
+}
+[data-ui="feed"] .link .i { width: 18px; height: 18px; }
+
+/* Press feedback, the native way (the mock's `.motion` rule). */
+@media (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .pill:active, [data-ui="feed"] .btn:not(:disabled):active, [data-ui="feed"] .chip:active, [data-ui="feed"] .seg-btn:active { transform: scale(.97); }
+}
+
+/* ── feed (phone) ── */
+[data-ui="feed"] .feed { display: block; }
+/* The home's three panels. The zone's `data-tab` says which one shows — written by the tabs, and before the
+   first paint by the page's own script from the address's hash — and with none it is Bảng tin. */
+[data-ui="feed"] .panel { animation: none; }
+[data-ui="feed"] .panel:not([data-panel="bang-tin"]) { display: none; }
+[data-ui="feed"][data-tab="cua-hang"] .panel[data-panel="bang-tin"],
+[data-ui="feed"][data-tab="sap-mo"] .panel[data-panel="bang-tin"] { display: none; }
+[data-ui="feed"][data-tab="cua-hang"] .panel[data-panel="cua-hang"],
+[data-ui="feed"][data-tab="sap-mo"] .panel[data-panel="sap-mo"] { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .panel.enter { animation: f-fade-in .28s var(--f-out); }
+}
+@keyframes f-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* The story: the open issue's cover, a photo with its facts set on a scrim. */
+[data-ui="feed"] .story { position: relative; display: block; overflow: hidden; background: var(--f-ink); color: var(--f-white); }
+[data-ui="feed"] .story-media { position: relative; }
+[data-ui="feed"] .story-media img { width: 100%; aspect-ratio: 8 / 11; object-fit: cover; object-position: 56% 50%; }
+[data-ui="feed"] .story-media::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, .42), rgba(0, 0, 0, 0) 22%),
+    linear-gradient(to top, rgba(0, 0, 0, .78) 0%, rgba(0, 0, 0, .56) 34%, rgba(0, 0, 0, 0) 64%);
+}
+[data-ui="feed"] .story-top { position: absolute; z-index: 2; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 10px; padding: 14px var(--f-g); }
+[data-ui="feed"] .story-no { font-stretch: 75%; font-weight: 850; font-size: 22px; line-height: 1; letter-spacing: .01em; }
+[data-ui="feed"] .story-body { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; padding: 0 var(--f-g) 18px; }
+[data-ui="feed"] .cover { font-size: min(64px, 16.4vw); line-height: 1.06; }   /* "Không tái bản." holds one line down to a 320px phone */
+[data-ui="feed"] .cover span { display: block; }
+[data-ui="feed"] .story-close { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .28); }
+[data-ui="feed"] .cd-label { font-size: 13px; font-weight: 560; color: rgba(255, 255, 255, .86); line-height: 1.3; }
+[data-ui="feed"] .cd-big { font-stretch: 75%; font-weight: 800; font-size: 32px; line-height: 1.05; text-transform: uppercase; letter-spacing: .005em; white-space: nowrap; }
+[data-ui="feed"] .dg { display: inline-block; width: 1ch; text-align: center; }
+[data-ui="feed"] .story-go { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: var(--f-r-pill); background: var(--f-white); color: var(--f-ink); font-size: 14px; font-weight: 660; white-space: nowrap; }
+[data-ui="feed"] .story-go .i { width: 18px; height: 18px; }
+[data-ui="feed"] .story-panel { display: contents; }
+[data-ui="feed"] .story-stats { display: none; }
+
+/* The fixed line's lead (the quiet gap): the same frame on the flat drawings' plate, set in ink. On the phone the
+   status, the drawing and the words stack in the frame instead of sharing it, so no line crosses the drawing.
+   The piece's name opens it (a link stretched over the whole frame); "Xem 8 mẫu" sits above that. */
+[data-ui="feed"] .story-fixed { background: var(--f-plate); color: var(--f-ink); }
+[data-ui="feed"] .story-fixed .story-media::after { display: none; }
+[data-ui="feed"] .story-fixed .story-close { border-top-color: rgba(17, 18, 20, .16); align-items: center; }
+@media (max-width: 899.98px) {
+  [data-ui="feed"] .story-fixed { display: grid; grid-template-areas: "top" "media" "body"; }
+  [data-ui="feed"] .story-fixed .story-top { grid-area: top; position: static; padding: 14px var(--f-g) 0; }
+  [data-ui="feed"] .story-fixed .story-media { grid-area: media; }
+  [data-ui="feed"] .story-fixed .story-media img { width: 68%; aspect-ratio: 4 / 5; margin: 0 auto; object-fit: contain; }
+  [data-ui="feed"] .story-fixed .story-body { grid-area: body; position: static; padding: 4px var(--f-g) 18px; }
+}
+[data-ui="feed"] .story-piece { min-width: 0; }
+[data-ui="feed"] .story-piece-name { font-size: 26px; line-height: 1.05; padding-top: 2px; }
+[data-ui="feed"] .story-piece-name a { display: inline-flex; align-items: center; min-height: 44px; margin: -8px 0; }
+[data-ui="feed"] .story-piece-name a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+[data-ui="feed"] .story-piece-meta { margin-top: 4px; font-size: 14px; color: var(--f-ink2); }
+[data-ui="feed"] .story-piece-meta b { color: var(--f-ink); font-weight: 680; }
+[data-ui="feed"] .story-fixed .story-go { position: relative; z-index: 2; height: 44px; padding: 0 16px; background: var(--f-ink); color: var(--f-white); }
+
+/* A style in the feed. The phone and the desktop order the feed differently (the mock builds one or the other);
+   the page carries both and shows the one for the width: `.feed-ph` below 900px, `.feed-dk` from it. */
+[data-ui="feed"] .card { position: relative; margin-top: 36px; }
+[data-ui="feed"] .story + .feed-ph > .card:first-child { margin-top: 0; }
+[data-ui="feed"] .story-fixed + .feed-ph > .card:first-child { margin-top: 36px; }   /* both on the drawings' plate: keep them apart */
+[data-ui="feed"] .card-media { position: relative; background: var(--f-bg2); }
+[data-ui="feed"] .card-media img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+[data-ui="feed"] .card-body {
+  display: grid; grid-template-columns: 1fr auto; align-items: center;
+  column-gap: 12px; padding: 16px var(--f-g) 0;
+}
+[data-ui="feed"] .card-name { grid-column: 1 / -1; font-size: 48px; line-height: 1.02; padding-top: 4px; }
+[data-ui="feed"] .card-name a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+[data-ui="feed"] .card-meta { grid-column: 1 / -1; margin-top: 6px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .card-price { margin-top: 10px; font-size: 16px; font-weight: 680; }
+[data-ui="feed"] .card-stock { grid-column: 1; margin-top: 2px; }
+[data-ui="feed"] .card-act { grid-column: 2; grid-row: 3 / span 2; position: relative; z-index: 2; align-self: center; }
+[data-ui="feed"] .card .fav, [data-ui="feed"] .card .pill { z-index: 2; }
+[data-ui="feed"] .card-extra { display: none; }
+
+/* Rails: horizontal lists that snap. */
+[data-ui="feed"] .rail { margin-top: 44px; }
+[data-ui="feed"] .rail-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 0 var(--f-g); margin-bottom: 12px; }
+[data-ui="feed"] .rail-titles { min-width: 0; }
+[data-ui="feed"] .rail-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: 30px; line-height: 1.06; }
+[data-ui="feed"] .rail-title .chip-tag { font-stretch: 100%; text-transform: none; letter-spacing: 0; background: var(--f-bg); }
+[data-ui="feed"] .rail-sub { margin-top: 6px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .rail-sub b { color: var(--f-ink); font-weight: 640; }
+[data-ui="feed"] .rail-side { display: flex; align-items: center; gap: 16px; }
+[data-ui="feed"] .rail-nav { display: none; }
+[data-ui="feed"] .rail-track {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 44%; gap: 12px;
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
+  padding: 0 var(--f-g) 4px; scroll-padding: 0 var(--f-g);
+  scrollbar-width: none;
+}
+[data-ui="feed"] .rail-track::-webkit-scrollbar { display: none; }
+[data-ui="feed"] .mini { position: relative; display: block; scroll-snap-align: start; min-width: 0; }
+[data-ui="feed"] .mini-media { position: relative; background: var(--f-bg2); }
+[data-ui="feed"] .mini-media img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+[data-ui="feed"] .mini-media .plate { font-size: 20px; padding: 9px 11px 6px; }
+[data-ui="feed"] .mini-name { margin-top: 10px; font-size: 22px; line-height: 1.06; }
+[data-ui="feed"] .mini-price { margin-top: 3px; font-size: 13px; font-weight: 620; }
+[data-ui="feed"] .mini .stock { margin-top: 2px; font-size: 12px; }
+[data-ui="feed"] .mini .stock .i { width: 14px; height: 14px; }
+[data-ui="feed"] .mini .stock.is-low b, [data-ui="feed"] .gcard-stock.is-low b { height: 22px; padding: 0 8px 0 5px; }
+[data-ui="feed"] .gcard-stock { margin-top: 3px; }
+[data-ui="feed"] .mini-flat .mini-media { background: var(--f-plate2); }
+
+/* The next issue: the date, the countdown, its silhouettes. */
+[data-ui="feed"] .soon { margin-top: 44px; background: var(--f-bg2); padding: 24px var(--f-g) 28px; }
+[data-ui="feed"] .soon-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+[data-ui="feed"] .soon-no { font-size: 24px; line-height: 1; }
+[data-ui="feed"] .date { display: flex; align-items: flex-end; gap: 14px; margin-top: 18px; }
+[data-ui="feed"] .dd { font-stretch: 75%; font-weight: 900; font-size: 132px; line-height: .78; letter-spacing: -.02em; }
+[data-ui="feed"] .date-side { display: grid; gap: 6px; padding-bottom: 1px; }
+[data-ui="feed"] .mm { font-size: 34px; line-height: 1; }
+[data-ui="feed"] .dow { font-size: 20px; line-height: 1.1; }
+[data-ui="feed"] .soon-cd { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--f-line2); }
+[data-ui="feed"] .soon-cd .cd-label { color: var(--f-ink2); }
+[data-ui="feed"] .soon-cd .cd-big { font-size: 30px; }
+[data-ui="feed"] .teasers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+[data-ui="feed"] .teaser-plate { background: var(--f-bg2); isolation: isolate; }
+[data-ui="feed"] .teaser img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; filter: grayscale(1) brightness(1.03); mix-blend-mode: darken; }
+[data-ui="feed"] .teaser-name { margin-top: 8px; font-size: 26px; line-height: 1.06; }
+[data-ui="feed"] .teaser-kind { margin-top: 2px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .soon-note { margin-top: 16px; font-size: 14px; font-weight: 560; }
+/* The next issue leading the feed between issues: dark like the open issue's story. */
+[data-ui="feed"] .soon-lead { margin-top: 0; background: var(--f-ink); color: var(--f-white); padding: 20px var(--f-g) 28px; }
+[data-ui="feed"] .soon-lead .soon-head { justify-content: flex-start; }
+[data-ui="feed"] .soon-lead .soon-no { font-size: 26px; }
+[data-ui="feed"] .soon-lead .dd { font-size: 168px; }
+[data-ui="feed"] .soon-lead .soon-cd { border-top-color: rgba(255, 255, 255, .28); }
+[data-ui="feed"] .soon-lead .soon-cd .cd-label, [data-ui="feed"] .soon-lead .teaser-kind { color: rgba(255, 255, 255, .8); }
+[data-ui="feed"] .soon-lead .remind[aria-pressed="true"] { background: transparent; color: var(--f-white); box-shadow: inset 0 0 0 1.5px var(--f-white); }
+
+[data-ui="feed"] .rail-past { background: var(--f-bg2); padding: 24px 0 26px; }
+[data-ui="feed"] .line-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; padding: 0 var(--f-g) 14px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .line-status b { color: var(--f-ink); font-weight: 640; }
+[data-ui="feed"] .cal-empty { display: grid; justify-items: center; gap: 12px; padding: 40px var(--f-g) 36px; text-align: center; background: var(--f-bg2); }
+[data-ui="feed"] .cal-empty-ic { width: 40px; height: 40px; color: var(--f-ink2); }
+[data-ui="feed"] .cal-empty-title { font-size: 20px; font-weight: 700; }
+[data-ui="feed"] .cal-empty .btn { width: auto; padding: 0 24px; }
+[data-ui="feed"] .remind { margin-top: 16px; }
+[data-ui="feed"] .remind[aria-pressed="true"] { background: var(--f-bg); color: var(--f-ink); box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+
+/* Closed issues. */
+[data-ui="feed"] .closed { margin-top: 44px; padding: 0 var(--f-g); }
+[data-ui="feed"] .closed-title { font-size: 30px; line-height: 1.06; }
+[data-ui="feed"] .closed-head { margin-bottom: 8px; }
+[data-ui="feed"] .closed-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+[data-ui="feed"] .closed-head .link { min-height: 44px; margin: -12px 0; }
+[data-ui="feed"] .closed-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 14px 0; border-top: 1px solid var(--f-line); color: inherit; }
+[data-ui="feed"] .closed-no { font-size: 24px; line-height: 1.1; }
+[data-ui="feed"] .closed-sold { align-self: center; font-size: 13px; font-weight: 640; }
+[data-ui="feed"] .closed-dates { font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .closed-names { grid-column: 1 / -1; margin-top: 4px; font-size: 13px; color: var(--f-ink2); }
+
+/* ── footer ── */
+[data-ui="feed"] .foot { margin-top: 48px; background: var(--f-bg2); }
+[data-ui="feed"] .foot-in { max-width: var(--f-max); margin: 0 auto; padding: 28px var(--f-g) 32px; display: grid; gap: 24px; }
+[data-ui="feed"] .foot-brand { display: flex; align-items: center; gap: 10px; align-self: start; }
+[data-ui="feed"] .foot h2 { font-size: 13px; font-weight: 700; color: var(--f-ink); margin-bottom: 6px; }
+[data-ui="feed"] .foot-links { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+[data-ui="feed"] .foot-links a { display: flex; align-items: center; min-height: 44px; font-size: 14px; font-weight: 560; }
+[data-ui="feed"] .foot-facts { display: grid; gap: 6px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .foot-facts li { display: flex; justify-content: space-between; gap: 12px; }
+[data-ui="feed"] .foot-facts b { color: var(--f-ink); font-weight: 620; white-space: nowrap; }
+
+/* ── shop (the Cửa hàng tab, and `/products` from slice 1b) ── */
+[data-ui="feed"] .shop-top { padding: 16px var(--f-g) 0; }
+[data-ui="feed"] .page-title { font-size: 44px; line-height: 1.04; padding-top: 6px; margin-bottom: 14px; }
+[data-ui="feed"] .seg {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  height: 44px; padding: 3px; border-radius: var(--f-r-pill); background: var(--f-bg2);
+}
+[data-ui="feed"] .seg-btn {
+  position: relative; border-radius: var(--f-r-pill); text-align: center;
+  font-size: 14px; font-weight: 600; color: var(--f-ink2);
+  transition: background-color .22s var(--f-out), color .22s var(--f-out);
+}
+/* The mock's overlay is -3px (38 → 44); the project's reaches 46. */
+[data-ui="feed"] .seg-btn::after { content: ""; position: absolute; inset: -4px 0; }
+[data-ui="feed"] .seg-btn[aria-pressed="true"] { background: var(--f-ink); color: var(--f-white); }
+
+/* ── the filter chips (the shop's row) ── */
+[data-ui="feed"] .chips {
+  display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain;
+  padding: 12px var(--f-g);
+  scrollbar-width: none;
+}
+[data-ui="feed"] .chips::-webkit-scrollbar { display: none; }
+[data-ui="feed"] .chip {
+  position: relative; flex: none; display: inline-flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 14px; border-radius: var(--f-r-pill);
+  background: var(--f-bg2); color: var(--f-ink); font-size: 14px; font-weight: 560; white-space: nowrap;
+  transition: background-color .18s, color .18s, transform .15s;
+}
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46, so the probe that stops
+   a pixel inside each edge still reads 44 (DESIGN.md §5, kept by the user on 27/09/2026). */
+[data-ui="feed"] .chip::after { content: ""; position: absolute; inset: -5px 0; }
+[data-ui="feed"] .chip[aria-pressed="true"] { background: var(--f-ink); color: var(--f-white); font-weight: 600; }
+[data-ui="feed"] .chip .i { width: 18px; height: 18px; }
+[data-ui="feed"] .shop-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 var(--f-g) 12px; }
+[data-ui="feed"] .count { font-size: 14px; font-weight: 620; }
+[data-ui="feed"] .sort-btn { padding: 0 12px 0 14px; }
+[data-ui="feed"] .sort-btn .i:last-child { width: 16px; height: 16px; }
+
+[data-ui="feed"] .shop-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2px; row-gap: 28px; }
+[data-ui="feed"] .gcard { position: relative; min-width: 0; }
+[data-ui="feed"] .gcard-link { display: block; height: 100%; }
+[data-ui="feed"] .gcard-media { position: relative; background: var(--f-bg2); }
+[data-ui="feed"] .gcard-media img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+[data-ui="feed"] .gcard .fav { top: 8px; right: 8px; width: 36px; height: 36px; }
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46. */
+[data-ui="feed"] .gcard .fav::after { content: ""; position: absolute; inset: -5px; }
+[data-ui="feed"] .gcard .fav .i { width: 20px; height: 20px; }
+[data-ui="feed"] .gcard-flat .gcard-media { background: var(--f-plate2); }
+[data-ui="feed"] .gcard .plate { font-size: 24px; padding: 10px 13px 7px; }
+[data-ui="feed"] .gcard-body { padding: 10px 12px 0; }
+[data-ui="feed"] .gcard-name { font-size: 24px; line-height: 1.06; overflow-wrap: anywhere; }
+[data-ui="feed"] .gcard-meta { margin-top: 3px; font-size: 13px; color: var(--f-ink2); line-height: 1.3; }
+[data-ui="feed"] .gcard-price { margin-top: 6px; font-size: 14px; font-weight: 680; }
+[data-ui="feed"] .gcard-stock { margin-top: 1px; font-size: 12px; }
+[data-ui="feed"] .gcard-stock .i { width: 14px; height: 14px; }
+/* On the picture's bottom-right corner: the picture is 4:5 of the card's width, and a percentage
+   margin on an absolute box resolves against that width. */
+[data-ui="feed"] .gcard-add {
+  position: absolute; z-index: 2; right: 8px; top: 0; margin-top: calc(125% - 44px);
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--f-r-pill);
+  background: rgba(252, 252, 253, .92); color: var(--f-ink);
+}
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46. */
+[data-ui="feed"] .gcard-add::after { content: ""; position: absolute; inset: -5px; }
+[data-ui="feed"] .gcard-add .i { width: 18px; height: 18px; }
+[data-ui="feed"] .empty { padding: 40px var(--f-g) 8px; text-align: center; }
+[data-ui="feed"] .shop-grid > .empty { grid-column: 1 / -1; }   /* the mock's inline style on the empty grid's message */
+[data-ui="feed"] .empty p { font-size: 16px; font-weight: 640; margin-bottom: 14px; }
+[data-ui="feed"] .empty .btn { width: auto; display: inline-flex; }
+
+/* ── Sắp mở tab: the launch calendar ── */
+[data-ui="feed"] .cal { padding: 8px 0 0; }
+[data-ui="feed"] .cal-row { display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 14px; padding: 22px var(--f-g); border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .cal-row:first-child { border-top: 0; }
+[data-ui="feed"] .cal-row.is-next { background: var(--f-bg2); border-top: 0; }
+[data-ui="feed"] .cal-date { text-align: left; }
+[data-ui="feed"] .cal-dd { font-stretch: 75%; font-weight: 900; font-size: 60px; line-height: .8; letter-spacing: -.02em; }
+[data-ui="feed"] .cal-mm { margin-top: 8px; font-size: 16px; line-height: 1.1; }
+[data-ui="feed"] .cal-body { min-width: 0; }
+[data-ui="feed"] .cal-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; }
+[data-ui="feed"] .cal-no { font-size: 30px; line-height: 1.06; }
+[data-ui="feed"] .cal-when { margin-top: 6px; font-size: 14px; color: var(--f-ink2); }
+[data-ui="feed"] .cal-when b { color: var(--f-ink); font-weight: 640; }
+[data-ui="feed"] .cal-cd { margin-top: 10px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+[data-ui="feed"] .cal-cd .cd-label { color: var(--f-ink2); }
+[data-ui="feed"] .cal-cd .cd-big { font-size: 28px; }
+[data-ui="feed"] .cal-row > .teasers, [data-ui="feed"] .cal-row > .cal-act { grid-column: 1 / -1; }
+[data-ui="feed"] .cal-row > .teasers { margin-top: 18px; }
+[data-ui="feed"] .cal-act .soon-note { margin-top: 14px; }
+[data-ui="feed"] .cal-names { margin-top: 6px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .cal-go { margin-top: 12px; }
+
+/* ── sheets (<dialog>, springing up from the bottom) ── */
+[data-ui="feed"] dialog.sheet {
+  position: fixed; inset: auto 0 0 0; margin: 0;
+  width: 100%; max-width: 100%; max-height: calc(100dvh - 40px);
+  padding: 0; border: 0; background: transparent; color: var(--f-ink); overflow: visible;
+}
+[data-ui="feed"] dialog.sheet::backdrop { background: rgba(17, 18, 20, .46); }
+[data-ui="feed"] .sheet-panel {
+  max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain;
+  background: var(--f-bg); border-radius: var(--f-r-sheet) var(--f-r-sheet) 0 0; box-shadow: var(--f-lift);
+  padding: 8px var(--f-g) calc(18px + var(--f-sb));
+}
+[data-ui="feed"] .grab { width: 40px; height: 5px; border-radius: var(--f-r-pill); background: var(--f-grab); margin: 0 auto 10px; }
+@media (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] dialog.sheet[open] .sheet-panel { animation: f-sheet-up .48s var(--f-spring); }
+  [data-ui="feed"] dialog.sheet[open]::backdrop { animation: f-fade-in .3s var(--f-out); }
+  [data-ui="feed"] dialog.sheet.closing .sheet-panel { animation: f-sheet-down .22s cubic-bezier(.4, 0, 1, 1) forwards; }
+  [data-ui="feed"] dialog.sheet.closing::backdrop { animation: f-fade-out .22s ease-in forwards; }
+}
+@keyframes f-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes f-sheet-down { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes f-fade-out { from { opacity: 1; } to { opacity: 0; } }
+/* The page stays put under an open sheet; `--f-sw` (written on <html> as the first sheet opens) is the
+   classic scrollbar's width, kept as padding so nothing shifts sideways. */
+html:has([data-ui="feed"] dialog[open]) { overflow: hidden; }
+html:has([data-ui="feed"] dialog[open]) body { padding-right: var(--f-sw, 0px); }
+
+[data-ui="feed"] .sh-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 2px 0 16px; }
+[data-ui="feed"] .sh-head.plain { grid-template-columns: minmax(0, 1fr) auto; }
+[data-ui="feed"] .sh-thumb { width: 56px; height: 70px; border-radius: var(--f-r-thumb); object-fit: cover; background: var(--f-bg2); }
+[data-ui="feed"] .sh-name { font-size: 30px; line-height: 1.06; }
+[data-ui="feed"] .sh-sub { margin-top: 2px; font-size: 14px; color: var(--f-ink2); }
+[data-ui="feed"] .sh-sub b { color: var(--f-ink); font-weight: 680; }
+[data-ui="feed"] .sh-title { font-size: 20px; font-weight: 700; line-height: 1.25; }
+[data-ui="feed"] .sh-x { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--f-r-pill); background: var(--f-bg2); align-self: start; }
+[data-ui="feed"] .sh-x .i { width: 20px; height: 20px; }
+[data-ui="feed"] .sh-block { padding: 14px 0 4px; border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .sh-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; margin-bottom: 10px; font-size: 14px; font-weight: 680; }
+[data-ui="feed"] .sh-label span { font-weight: 520; color: var(--f-ink2); }
+[data-ui="feed"] .sh-label .sh-label-t { font-weight: inherit; color: inherit; }
+[data-ui="feed"] .sh-label .link { min-height: 44px; margin: -8px 0; }
+[data-ui="feed"] .sh-cta { margin-top: 18px; }
+[data-ui="feed"] .sh-foot-note { margin-top: 10px; font-size: 13px; color: var(--f-ink2); text-align: center; }
+
+/* Colours: packshot crops. Sizes: pills. Both are native radio groups. */
+[data-ui="feed"] .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+[data-ui="feed"] .swatch { position: relative; display: grid; justify-items: center; gap: 6px; width: 72px; cursor: pointer; }
+[data-ui="feed"] .swatch input, [data-ui="feed"] .size input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: inherit; }
+[data-ui="feed"] .swatch-img { width: 64px; height: 80px; border-radius: var(--f-r-thumb); overflow: hidden; background: var(--f-bg2); transition: box-shadow .18s; }
+[data-ui="feed"] .swatch-img img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.18); transform-origin: 50% 42%; }
+[data-ui="feed"] .swatch-img.flat img { transform: scale(1.1); }
+[data-ui="feed"] .swatch:has(input:checked) .swatch-img { box-shadow: 0 0 0 2px var(--f-bg), 0 0 0 4px var(--f-ink); }
+[data-ui="feed"] .swatch:has(input:focus-visible) .swatch-img { outline: 2px solid var(--f-blue); outline-offset: 5px; }
+[data-ui="feed"] .swatch-name { font-size: 13px; font-weight: 620; line-height: 1.2; text-align: center; }
+[data-ui="feed"] .swatch-left { font-size: 12px; color: var(--f-ink2); line-height: 1.2; margin-top: -3px; }
+
+[data-ui="feed"] .sizes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+[data-ui="feed"] .size {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 56px; border-radius: var(--f-r-pill); background: var(--f-bg); box-shadow: inset 0 0 0 1.5px var(--f-line2);
+  font-size: 16px; font-weight: 680; line-height: 1.1; cursor: pointer;
+  transition: background-color .15s, color .15s, box-shadow .15s;
+}
+[data-ui="feed"] .size small { font-size: 11px; font-weight: 600; color: var(--f-ink2); line-height: 1.2; margin-top: 2px; }
+[data-ui="feed"] .size:has(input:checked) { background: var(--f-ink); color: var(--f-white); box-shadow: none; }
+[data-ui="feed"] .size:has(input:checked) small { color: var(--f-on-ink2); }
+[data-ui="feed"] .size:has(input:disabled) { background: var(--f-bg2); color: var(--f-ink2); box-shadow: none; cursor: default; }
+[data-ui="feed"] .size:has(input:disabled)::after { content: ""; position: absolute; z-index: 0; left: 16%; right: 16%; top: 50%; height: 1.5px; background: rgba(91, 95, 102, .38); transform: rotate(-22deg); pointer-events: none; }
+[data-ui="feed"] .size .sz, [data-ui="feed"] .size small { position: relative; z-index: 1; }
+[data-ui="feed"] .size:has(input:focus-visible) { outline: 2px solid var(--f-blue); outline-offset: 2px; }
+html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [data-ui="feed"] .swatch:has(input:focus) .swatch-img { outline: none; }
+
+[data-ui="feed"] .fit-table { width: 100%; font-size: 14px; }
+[data-ui="feed"] .fit-table th { padding: 0 4px 10px; font-size: 12px; font-weight: 640; color: var(--f-ink2); text-align: right; line-height: 1.25; vertical-align: bottom; }
+[data-ui="feed"] .fit-table td { padding: 12px 4px; text-align: right; border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .fit-table th:first-child, [data-ui="feed"] .fit-table td:first-child { text-align: left; padding-left: 10px; }
+[data-ui="feed"] .fit-table td:first-child { font-weight: 700; }
+[data-ui="feed"] .fit-table td:last-child, [data-ui="feed"] .fit-table th:last-child { padding-right: 10px; }
+[data-ui="feed"] .fit-table td:last-child { white-space: nowrap; }
+[data-ui="feed"] .fit-table tr.on td { background: var(--f-bg2); font-weight: 680; }
+[data-ui="feed"] .fit-note { margin-top: 12px; font-size: 13px; color: var(--f-ink2); }
+
+[data-ui="feed"] .added { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 14px 0 18px; border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .added img { width: 72px; height: 90px; border-radius: var(--f-r-thumb); object-fit: cover; background: var(--f-bg2); }
+[data-ui="feed"] .added-name { font-size: 28px; line-height: 1.06; }
+[data-ui="feed"] .added-meta { margin-top: 2px; font-size: 14px; color: var(--f-ink2); }
+[data-ui="feed"] .added-price { margin-top: 4px; font-size: 16px; font-weight: 680; }
+[data-ui="feed"] .ok-head { display: flex; align-items: center; gap: 10px; }
+[data-ui="feed"] .ok-head .i { width: 26px; height: 26px; color: var(--f-blue); }
+[data-ui="feed"] .stack { display: grid; gap: 10px; }
+
+[data-ui="feed"] .sort-list { display: grid; }
+[data-ui="feed"] .sort-opt {
+  display: flex; align-items: center; justify-content: space-between; min-height: 56px; padding: 0 4px;
+  font-size: 16px; font-weight: 560; border-top: 1px solid var(--f-line);
+}
+[data-ui="feed"] .sort-opt .i { width: 22px; height: 22px; visibility: hidden; color: var(--f-blue); }
+[data-ui="feed"] .sort-opt[aria-checked="true"] { font-weight: 700; }
+[data-ui="feed"] .sort-opt[aria-checked="true"] .i { visibility: visible; }
+
+/* ── reveal on scroll (motion only) ── */
+@media (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .rv { transition: opacity .6s var(--f-out), transform .6s var(--f-out); }
+  [data-ui="feed"] .rv:not(.in) { opacity: 0; transform: translateY(16px); }
+}
+
+/* ── tablet (phone chrome, calmer column) ── */
+@media (min-width: 600px) and (max-width: 899.98px) {
+  [data-ui="feed"] .feed, [data-ui="feed"] .cal, [data-ui="feed"] .shop { max-width: 600px; margin-left: auto; margin-right: auto; }
+  [data-ui="feed"] .shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  [data-ui="feed"] dialog.sheet { left: 50%; right: auto; width: 600px; transform: translateX(-50%); }
+}
+
+/* ── desktop: a web app ── */
+@media (min-width: 900px) {
+  html:has([data-ui="feed"]) { scroll-padding-top: 80px; scroll-padding-bottom: 12px; }
+  [data-ui="feed"].feed-frame.has-tabbar { padding-bottom: 0; }
+  [data-ui="feed"] .tabbar { display: none; }
+  [data-ui="feed"] .only-desk { display: grid; }
+
+  [data-ui="feed"] .top-in { grid-template-columns: 1fr auto 1fr; grid-template-areas: "brand tabs acts"; height: 64px; padding: 0 var(--f-wg); }
+  [data-ui="feed"] .brand { height: 64px; padding: 0; }
+  [data-ui="feed"] .logo { height: 32px; }
+  [data-ui="feed"] .tabs, [data-ui="feed"] .tabs.links { display: flex; gap: 4px; height: 64px; }
+  [data-ui="feed"] .tab { padding: 0 18px; font-size: 15px; }
+  [data-ui="feed"] .tab:hover { color: var(--f-ink); }
+  [data-ui="feed"] .acts { justify-self: end; gap: 2px; padding: 0; }
+  [data-ui="feed"] .ib:hover { background: var(--f-bg2); }
+
+  [data-ui="feed"] .wrap { max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg); }
+
+  /* Bảng tin: the story becomes a split, the feed a three-column grid with wide cards. */
+  [data-ui="feed"] .feed { max-width: var(--f-max); margin: 0 auto; }
+  [data-ui="feed"] .story { display: grid; grid-template-columns: 5fr 7fr; background: var(--f-ink); }
+  [data-ui="feed"] .story-media::after { display: none; }
+  [data-ui="feed"] .story-media img { aspect-ratio: 4 / 5; height: 100%; object-position: 50% 20%; }
+  [data-ui="feed"] .story-top, [data-ui="feed"] .story-body { position: static; padding: 0; }
+  [data-ui="feed"] .story-panel {
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 44px 56px 44px 56px; min-width: 0;
+  }
+  [data-ui="feed"] .story-no { font-size: 26px; }
+  [data-ui="feed"] .cover { font-size: clamp(76px, 7.4vw, 104px); margin-top: 28px; }
+  [data-ui="feed"] .story-close { margin-top: 28px; padding-top: 20px; align-items: flex-end; }
+  [data-ui="feed"] .cd-label { font-size: 14px; }
+  [data-ui="feed"] .cd-big { font-size: 46px; }
+  [data-ui="feed"] .story-close { gap: 24px; }
+  [data-ui="feed"] .story-cd { flex: 0 0 auto; }
+  [data-ui="feed"] .story-stats { display: grid; gap: 2px; text-align: right; margin-left: auto; }
+  [data-ui="feed"] .story-go { height: 52px; padding: 0 24px; font-size: 16px; background: var(--f-blue); color: var(--f-white); }
+  [data-ui="feed"] .story-fixed { background: var(--f-plate); }
+  [data-ui="feed"] .story-fixed .story-media { aspect-ratio: auto; display: block; }
+  [data-ui="feed"] .story-fixed .story-media img { width: 100%; height: 100%; aspect-ratio: 4 / 5; margin: 0; object-fit: cover; }
+  [data-ui="feed"] .story-fixed .story-go { height: 52px; padding: 0 24px; background: var(--f-blue); }
+  [data-ui="feed"] .story-piece-name { font-size: 40px; }
+  [data-ui="feed"] .story-piece-meta { font-size: 15px; }
+  [data-ui="feed"] .card.wide.card-flat { background: var(--f-plate); }
+
+  [data-ui="feed"] .rows { padding: 0 var(--f-wg); }
+  [data-ui="feed"] .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-top: 56px; }
+  [data-ui="feed"] .card { margin-top: 0; display: flex; flex-direction: column; }
+  [data-ui="feed"] .card-body { padding: 16px 0 0; }
+  [data-ui="feed"] .card-name { font-size: 46px; }
+  [data-ui="feed"] .card-meta { font-size: 14px; }
+  [data-ui="feed"] .card.wide { grid-column: span 2; display: grid; grid-template-columns: calc((100% - 24px) / 2) minmax(0, 1fr); background: var(--f-bg2); }
+  [data-ui="feed"] .card.wide.flip { grid-template-columns: minmax(0, 1fr) calc((100% - 24px) / 2); }
+  [data-ui="feed"] .card.wide.flip .card-media { order: 2; }
+  [data-ui="feed"] .card.wide .card-media { min-height: 100%; }
+  [data-ui="feed"] .card.wide .card-media img { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; object-position: 50% 30%; }
+  [data-ui="feed"] .card.wide .card-body { padding: 36px 40px; align-content: start; }
+  [data-ui="feed"] .card.wide .card-name { font-size: 76px; }
+  [data-ui="feed"] .card.wide .card-meta { font-size: 15px; }
+  [data-ui="feed"] .card.wide .card-price { font-size: 20px; margin-top: 18px; }
+  [data-ui="feed"] .card.wide .pill { background: var(--f-bg); }
+  [data-ui="feed"] .card.wide .pill:hover { background: var(--f-white); box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+  [data-ui="feed"] .card.wide .card-extra { display: grid; grid-column: 1 / -1; gap: 18px; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--f-line2); }
+  [data-ui="feed"] .card-colors { font-size: 14px; color: var(--f-ink2); }
+  [data-ui="feed"] .card-colors b { color: var(--f-ink); font-weight: 640; }
+
+  [data-ui="feed"] .rail { margin-top: 64px; }
+  [data-ui="feed"] .rail-head { padding: 0 var(--f-wg); margin-bottom: 16px; }
+  [data-ui="feed"] .rail-title { font-size: 40px; }
+  [data-ui="feed"] .rail-nav { display: flex; gap: 8px; align-items: center; }
+  [data-ui="feed"] .rail-nav .ib { background: var(--f-bg2); }
+  [data-ui="feed"] .rail-nav .ib:hover { background: var(--f-bg3); }
+  [data-ui="feed"] .rail-nav .ib:disabled { opacity: .4; }
+  [data-ui="feed"] .rail-track { grid-auto-columns: calc((100% - 4 * 16px) / 5); gap: 16px; padding: 0 var(--f-wg) 4px; scroll-padding: 0 var(--f-wg); }
+  [data-ui="feed"] .mini-name { font-size: 24px; }
+  [data-ui="feed"] .mini-price { font-size: 14px; }
+
+  [data-ui="feed"] .soon {
+    margin: 64px var(--f-wg) 0; padding: 40px 44px 44px;
+    display: grid; column-gap: 56px;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 34%);
+    grid-template-rows: auto 1fr auto auto auto;
+    grid-template-areas: "date head teasers" "date . teasers" "date cd teasers" "date note teasers" "date btn teasers";
+  }
+  [data-ui="feed"] .soon-head { grid-area: head; flex-direction: column; align-items: flex-start; gap: 16px; }
+  [data-ui="feed"] .soon-no { font-size: clamp(52px, 5.6vw, 72px); line-height: 1.06; }
+  [data-ui="feed"] .soon .date { grid-area: date; margin-top: 0; flex-direction: column; align-items: flex-start; gap: 18px; align-self: stretch; justify-content: flex-end; }
+  [data-ui="feed"] .soon .dd { font-size: clamp(150px, 16vw, 208px); }
+  [data-ui="feed"] .soon .mm { font-size: 48px; }
+  [data-ui="feed"] .soon .dow { font-size: 26px; }
+  [data-ui="feed"] .soon-cd { grid-area: cd; margin-top: 0; }
+  [data-ui="feed"] .soon-cd .cd-big { font-size: clamp(34px, 3.7vw, 48px); }
+  [data-ui="feed"] .soon .teasers { grid-area: teasers; margin-top: 0; align-self: end; }
+  [data-ui="feed"] .soon-note { grid-area: note; }
+  [data-ui="feed"] .soon .remind { grid-area: btn; width: auto; justify-self: start; padding: 0 28px; }
+
+  [data-ui="feed"] .soon-lead { margin: 0; padding: 48px 56px 52px; }
+  [data-ui="feed"] .soon-lead .soon-no { font-size: clamp(52px, 5.6vw, 72px); }
+  [data-ui="feed"] .rail-past { margin: 64px var(--f-wg) 0; padding: 36px 0 36px; }
+  [data-ui="feed"] .rail-past .rail-head { padding: 0 36px; }
+  [data-ui="feed"] .rail-past .rail-track { padding: 0 36px 4px; scroll-padding: 0 36px; }
+  [data-ui="feed"] .line-status { padding: 0 0 16px; font-size: 14px; }
+  [data-ui="feed"] .cal-empty { padding: 56px 40px 52px; }
+  [data-ui="feed"] .closed { margin: 64px auto 0; max-width: var(--f-max); padding: 0 var(--f-wg); display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; }
+  [data-ui="feed"] .closed-head { grid-column: 1 / -1; margin-bottom: 12px; }
+  [data-ui="feed"] .closed-title { font-size: 40px; }
+  [data-ui="feed"] .closed-row { padding: 18px 0; }
+  [data-ui="feed"] .closed-no { font-size: 30px; }
+
+  [data-ui="feed"] .foot { margin-top: 80px; }
+  [data-ui="feed"] .foot-in { grid-template-columns: 1.1fr 1.2fr 1.4fr 1fr; gap: 48px; padding: 44px var(--f-wg) 48px; }
+  [data-ui="feed"] .foot-links { grid-template-columns: 1fr; }
+  [data-ui="feed"] .foot-links a { min-height: 34px; }
+  [data-ui="feed"] .foot-links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  [data-ui="feed"] .foot-lite .foot-in { grid-template-columns: 1.1fr 4.6fr; align-items: start; }
+  [data-ui="feed"] .foot-lite .foot-links { display: flex; flex-wrap: wrap; column-gap: 36px; }
+
+  /* Shop */
+  [data-ui="feed"] .shop { max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg); }
+  [data-ui="feed"] .shop-top { padding: 32px 0 0; display: grid; grid-template-columns: 1fr auto; align-items: end; column-gap: 32px; }
+  [data-ui="feed"] .page-title { font-size: 72px; margin: 0; }
+  [data-ui="feed"] .shop-top .seg { width: 420px; }
+  [data-ui="feed"] .chips { padding: 20px 0 16px; flex-wrap: wrap; overflow: visible; }
+  [data-ui="feed"] .chip:hover:not([aria-pressed="true"]) { background: var(--f-bg3); }
+  [data-ui="feed"] .shop-bar { padding: 0 0 16px; border-bottom: 1px solid var(--f-line); margin-bottom: 24px; }
+  [data-ui="feed"] .shop-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 40px; }
+  [data-ui="feed"] .gcard-body { padding: 12px 14px 0; }
+
+  [data-ui="feed"] .gcard-name { font-size: 28px; }
+  [data-ui="feed"] .gcard-meta { font-size: 13px; }
+  [data-ui="feed"] .panel-shop .shop-top { grid-template-columns: 1fr; }
+  [data-ui="feed"] .panel-shop .shop-top .seg { width: 320px; }
+
+  /* Calendar */
+  [data-ui="feed"] .cal { max-width: var(--f-max); margin: 0 auto; padding: 24px var(--f-wg) 0; }
+  [data-ui="feed"] .cal-row { grid-template-columns: 180px minmax(0, 1fr); column-gap: 40px; padding: 32px 40px; }
+  [data-ui="feed"] .cal-dd { font-size: 112px; }
+  [data-ui="feed"] .cal-mm { font-size: 26px; margin-top: 12px; }
+  [data-ui="feed"] .cal-no { font-size: 44px; }
+  [data-ui="feed"] .cal-when { font-size: 15px; }
+  [data-ui="feed"] .cal-cd .cd-big { font-size: clamp(32px, 3.2vw, 40px); }
+  [data-ui="feed"] .cal-row.is-next { grid-template-columns: 180px minmax(0, 1fr) minmax(0, 36%); grid-template-rows: auto 1fr; }
+  [data-ui="feed"] .cal-row.is-next .cal-date { grid-row: 1 / span 2; }
+  [data-ui="feed"] .cal-row.is-next .cal-body { grid-column: 2; grid-row: 1; }
+  [data-ui="feed"] .cal-row.is-next > .teasers { grid-column: 3; grid-row: 1 / span 2; margin-top: 0; }
+  [data-ui="feed"] .cal-row.is-next > .cal-act { grid-column: 2; grid-row: 2; align-self: end; }
+  [data-ui="feed"] .cal-row.is-next .btn { width: auto; padding: 0 28px; }
+
+  /* Sheets become centred dialogs; the cart confirmation drops from the bag; sort drops from its chip. */
+  [data-ui="feed"] dialog.sheet { inset: 0; margin: auto; width: min(460px, calc(100vw - 48px)); height: fit-content; max-height: calc(100vh - 96px); }
+  [data-ui="feed"] .sheet-panel { border-radius: var(--f-r-sheet); padding: 20px 24px 24px; max-height: calc(100vh - 96px); box-shadow: 0 24px 64px rgba(17, 18, 20, .18); }
+  [data-ui="feed"] .grab { display: none; }
+  [data-ui="feed"] dialog.sheet.at-bag { inset: 72px max(var(--f-wg), calc((100vw - var(--f-max)) / 2 + var(--f-wg))) auto auto; margin: 0; width: 400px; }
+  [data-ui="feed"] dialog.sheet.at-bag::backdrop, [data-ui="feed"] dialog.sheet.drop::backdrop { background: rgba(17, 18, 20, .06); }
+  [data-ui="feed"] dialog.sheet.drop { inset: auto; margin: 0; width: 280px; }
+  [data-ui="feed"] dialog.sheet.drop .sheet-panel { padding: 8px 16px 10px; }
+  [data-ui="feed"] dialog.sheet.drop .sh-head { display: none; }
+  [data-ui="feed"] dialog.sheet.drop .sort-opt:first-child { border-top: 0; }
+
+  /* One composition of the feed per width (see `.card` above). Last in the block, so the phone's copy
+     stays hidden whatever display its own rules give it. */
+  [data-ui="feed"] .feed-ph { display: none; }
+}
+@media (max-width: 899.98px) {
+  [data-ui="feed"] .feed-dk { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) and (min-width: 900px) {
+  [data-ui="feed"] dialog.sheet[open] .sheet-panel { animation: f-pop-in .34s var(--f-spring); }
+  [data-ui="feed"] dialog.sheet.closing .sheet-panel { animation: f-pop-out .18s ease-in forwards; }
+}
+
+@media (min-width: 900px) and (max-width: 1199.98px) {
+  [data-ui="feed"] .story-stats { display: none; }
+  [data-ui="feed"] .story .cd-big { font-size: 38px; }
+  [data-ui="feed"] .story-panel { padding: 36px 40px; }
+  [data-ui="feed"] .cal-row { grid-template-columns: 140px minmax(0, 1fr); column-gap: 28px; padding: 28px 28px; }
+  [data-ui="feed"] .cal-row.is-next { grid-template-columns: 140px minmax(0, 1fr) minmax(0, 36%); }
+  [data-ui="feed"] .cal-dd { font-size: 92px; }
+}
+
+@keyframes f-pop-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes f-pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px) scale(.98); } }
+
+/* Pointer hover, where there is one. */
+@media (hover: hover) and (pointer: fine) {
+  [data-ui="feed"] .pill:hover, [data-ui="feed"] .chip:not([aria-pressed="true"]):hover, [data-ui="feed"] .sh-x:hover { background: var(--f-bg3); }
+  [data-ui="feed"] .gcard-add:hover { background: var(--f-white); }
+  [data-ui="feed"] .fav:hover { background: var(--f-white); }
+  [data-ui="feed"] .btn-blue:not(:disabled):hover { background: var(--f-blue2); }
+  [data-ui="feed"] .btn-line:hover { background: var(--f-bg2); }
+  [data-ui="feed"] .seg-btn:not([aria-pressed="true"]):hover { color: var(--f-ink); }
+  [data-ui="feed"] .size:not(:has(input:disabled)):not(:has(input:checked)):hover { box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+  [data-ui="feed"] .swatch:hover .swatch-img { box-shadow: 0 0 0 2px var(--f-bg), 0 0 0 4px var(--f-line2); }
+  [data-ui="feed"] .swatch:has(input:checked):hover .swatch-img { box-shadow: 0 0 0 2px var(--f-bg), 0 0 0 4px var(--f-ink); }
+  [data-ui="feed"] .sort-opt:hover { background: var(--f-bg2); }
+  [data-ui="feed"] .link:hover { text-decoration-thickness: 2.5px; }
+  [data-ui="feed"] .closed-row:hover .closed-no { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+  [data-ui="feed"] .story:hover .story-go { background: var(--f-blue2); }
+  [data-ui="feed"] .card-media, [data-ui="feed"] .gcard-media, [data-ui="feed"] .mini-media { overflow: hidden; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .card-media img, [data-ui="feed"] .gcard-media img, [data-ui="feed"] .mini-media img { transition: transform .7s var(--f-out); }
+  [data-ui="feed"] .card:hover .card-media img, [data-ui="feed"] .gcard:hover .gcard-media img, [data-ui="feed"] .mini:hover .mini-media img { transform: scale(1.03); }
+}
+
+/* Reduced motion: nothing moves, everything is there at once. */
+@media (prefers-reduced-motion: reduce) {
+  [data-ui="feed"], [data-ui="feed"] *, [data-ui="feed"] *::before, [data-ui="feed"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  [data-ui="feed"] .rv { opacity: 1 !important; transform: none !important; }
+}

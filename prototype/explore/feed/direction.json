@@ -1,0 +1,310 @@
+{
+  "id": "feed",
+  "name": "Feed",
+  "family": "App drop dạng feed",
+  "refs": [
+    "Nike SNKRS",
+    "adidas CONFIRMED",
+    "StockX",
+    "GOAT"
+  ],
+  "idea": "Cửa hàng như một ứng dụng lướt: mỗi mẫu là một khung ảnh tràn màn hình, lịch mở bán và đếm ngược luôn trong tầm mắt.",
+  "palette": [
+    {
+      "hex": "#FCFCFD",
+      "role": "Nền"
+    },
+    {
+      "hex": "#F1F2F4",
+      "role": "Nền nhóm, chip khi nghỉ, ô nhập, nền hình dáng Số 06"
+    },
+    {
+      "hex": "#111214",
+      "role": "Chữ, lựa chọn đang bật, dấu ĐÃ HẾT, lời mở Số 06"
+    },
+    {
+      "hex": "#5B5F66",
+      "role": "Chữ phụ"
+    },
+    {
+      "hex": "#1846F0",
+      "role": "Điểm nhấn duy nhất: nút chính, chip ĐANG MỞ, vạch tab, thanh tiến trình ảnh, dấu đã đặt"
+    },
+    {
+      "hex": "#C62A1D",
+      "role": "Chỉ cho lỗi: dòng giỏ hết size, ô nhập sai, mã không dùng được; không dùng trang trí"
+    }
+  ],
+  "type": [
+    {
+      "family": "Mona Sans (độ rộng 75%)",
+      "use": "Tên mẫu, câu bìa, ngày mở, đồng hồ đếm ngược, tiêu đề trang",
+      "weights": "800, 850, 900"
+    },
+    {
+      "family": "Mona Sans (độ rộng 100%)",
+      "use": "Chữ giao diện: nút, chip, giá, thông số, ô nhập",
+      "weights": "450, 520, 560, 620, 680, 700"
+    },
+    {
+      "family": "Mona Sans Italic (độ rộng 75%)",
+      "use": "Chữ HIVE",
+      "weights": "900"
+    }
+  ],
+  "logo": "Chữ HIVE Mona Sans hẹp 900 nghiêng, khoảng chữ khít; biểu tượng app là ô vuông màu mực bo 22% chứa chữ H trắng hẹp nghiêng, dùng ở thanh điều hướng máy tính, chân trang và favicon.",
+  "words": [
+    {
+      "was": "Trang chủ (một trang cuộn)",
+      "now": "Ba tab: Bảng tin, Cửa hàng, Sắp mở"
+    },
+    {
+      "was": "Danh mục",
+      "now": "Cửa hàng"
+    },
+    {
+      "was": "Lịch ra số",
+      "now": "Sắp mở"
+    },
+    {
+      "was": "Đặt nhắc giờ mở",
+      "now": "Nhắc tôi"
+    },
+    {
+      "was": "Đã đặt nhắc",
+      "now": "Đã bật nhắc"
+    },
+    {
+      "was": "Còn ít",
+      "now": "Còn 2 (kèm biểu tượng lửa)"
+    },
+    {
+      "was": "Mười mẫu. Cắt một lần. Hết là hết.",
+      "now": "Cắt 1 lần. Không tái bản."
+    },
+    {
+      "was": "Bảng số đo",
+      "now": "Bảng size"
+    },
+    {
+      "was": "Tìm kiếm",
+      "now": "Tìm"
+    },
+    {
+      "was": "Tài khoản",
+      "now": "Tôi"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Đủ size (mẫu Cố định còn mọi size)"
+    },
+    {
+      "was": "SOLD OUT",
+      "now": "ĐÃ HẾT (dấu trên ảnh; thẻ không lặp lại bằng dòng chữ)"
+    },
+    {
+      "was": "Tất cả (ô lọc theo loại)",
+      "now": "Mọi loại"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Tìm gần đây, Gợi ý, Thử tìm (màn Tìm)"
+    },
+    {
+      "was": "Phí giao",
+      "now": "Giao hàng (dòng trong Tóm tắt của giỏ)"
+    },
+    {
+      "was": "Món đang vướng",
+      "now": "Hết size M. Đổi size để thanh toán. (một dòng ngay trên món đó)"
+    },
+    {
+      "was": "Người nhận (phần đầu màn thanh toán)",
+      "now": "Liên hệ"
+    },
+    {
+      "was": "Địa chỉ giao",
+      "now": "Địa chỉ"
+    },
+    {
+      "was": "Cách giao",
+      "now": "Giao hàng"
+    },
+    {
+      "was": "Hình thức thanh toán",
+      "now": "Thanh toán"
+    },
+    {
+      "was": "Đã nhận đơn",
+      "now": "Đã đặt hàng"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Giữ hàng (khối đếm ngược 12 giờ của đơn chuyển khoản)"
+    },
+    {
+      "was": "Xem số đang mở",
+      "now": "Tiếp tục mua"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Chưa có Số mới (tab Sắp mở khi chưa công bố số nào)"
+    },
+    {
+      "was": "Về số 05",
+      "now": "Xem lại 10 mẫu (Số 05 sau khi đóng)"
+    },
+    {
+      "was": "Tài khoản (menu trang tài khoản)",
+      "now": "Tôi"
+    },
+    {
+      "was": "Tổng quan (trang đầu tài khoản)",
+      "now": "Tôi (tên người mua, đơn đang cần làm gì, rồi các ô Yêu thích, Nhắc, Size của tôi, Giao tới)"
+    },
+    {
+      "was": "Size ghi nhớ",
+      "now": "Size của tôi (ở Hồ sơ; trang sản phẩm và thêm nhanh chọn sẵn size này khi còn hàng, hàng size đổi nhãn thành Size của tôi)"
+    },
+    {
+      "was": "Đơn đã thanh toán / Đơn đang trên đường (dòng trạng thái)",
+      "now": "Thanh dòng thời gian bốn chặng: Đặt hàng, Thanh toán (COD: Xác nhận), Gửi hàng, Đã giao"
+    },
+    {
+      "was": "Huỷ đơn này?",
+      "now": "Huỷ đơn DH-1507?"
+    },
+    {
+      "was": "Không",
+      "now": "Giữ đơn (nút phụ của sheet huỷ)"
+    },
+    {
+      "was": "Địa chỉ giao (khối trong trang đơn)",
+      "now": "Giao tới"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Mua lại"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Đổi trả, năm bước: Chọn món, Lý do, Đổi hay trả, Xem lại, Đã gửi"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Mã yêu cầu DT-1496 (đổi trả của đơn DH-1496)"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Đã quá hạn đổi trả / Chưa đổi trả được"
+    },
+    {
+      "was": "Sổ địa chỉ",
+      "now": "Địa chỉ, với Tên địa chỉ: Nhà, Công ty, Khác"
+    },
+    {
+      "was": "Dùng làm địa chỉ mặc định khi thanh toán.",
+      "now": "Đặt làm mặc định / Mặc định"
+    },
+    {
+      "was": "Hồ sơ > Sửa tên và số điện thoại đang chuẩn bị",
+      "now": "Hồ sơ sửa được tên, số điện thoại, email (email mới chờ liên kết xác nhận)"
+    },
+    {
+      "was": "Đăng ký",
+      "now": "Tạo tài khoản"
+    },
+    {
+      "was": "Gửi (quên mật khẩu)",
+      "now": "Gửi liên kết"
+    },
+    {
+      "was": "Tra cứu đơn (nút ở màn xác nhận khi đã đăng nhập)",
+      "now": "Xem đơn"
+    },
+    {
+      "was": "Câu hỏi thường gặp (tên trang hỏi đáp)",
+      "now": "Hỏi đáp (trang và liên kết ở chân trang; cột chân trang vẫn tên Trợ giúp)"
+    },
+    {
+      "was": "Đã lưu (trang mẫu đã lưu)",
+      "now": "Yêu thích"
+    },
+    {
+      "was": "Trạng thái đơn (công tắc trong Nhận thông báo về)",
+      "now": "Đơn hàng"
+    },
+    {
+      "was": "Giờ mở Số mới (công tắc trong Nhận thông báo về)",
+      "now": "Nhắc mở bán: thẻ Số 06 có giờ mở, đếm ngược và hai công tắc Trong app, Email"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Số mới và Mẫu đã lưu sắp hết (hai công tắc thêm vào Nhận thông báo về; Mã sắp hết hạn giữ như app)"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Các Số đã đóng (trang liệt kê Số 05 khi đã đóng, Số 04, Số 03)"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Chiều cao của bạn (hàng chọn chiều cao ở Bảng size, đánh dấu size hợp)"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Giữa hai size (hai dòng cách chọn, cuối Bảng size)"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Xem trang đơn / Đăng nhập để xem trang đơn (cuối kết quả Tra cứu đơn)"
+    },
+    {
+      "was": "Kênh liên hệ đang chuẩn bị",
+      "now": "Số điện thoại và email cửa hàng: Đang chuẩn bị (ô trống ở trang Liên hệ)"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Gửi tin nhắn (cuối Hỏi đáp); Gửi, Đã gửi, Gửi tin khác, Trả lời trong 24 giờ tới (trang Liên hệ)"
+    },
+    {
+      "was": "Xem Đang bán (nút ở giỏ trống, yêu thích trống, đơn trống)",
+      "now": "Xem Cửa hàng"
+    },
+    {
+      "was": "Bảng số đo (chỉ áo)",
+      "now": "Bảng size: Áo oversize, Áo regular, Quần dài, Quần short (Vòng eo, Vòng mông, Dài quần, Ngang đùi)"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Hỏi đáp: Giao tới đâu?, Ai trả phí gửi hàng về?, Hoàn tiền thế nào?"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Lọc đơn: Tất cả, Đang xử lý, Đã giao, Đã huỷ; Mọi dòng hàng, Số 05, Số 04, Số 03, Cố định; Bỏ lọc"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Tài khoản nhận tiền: Ngân hàng, Số tài khoản, Chủ tài khoản (đổi trả, khi chọn Hoàn tiền)"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Gửi hàng về: Cửa hàng trả phí; Gồm phí COD / phí giao hàng (bước Xem lại của Đổi trả)"
+    },
+    {
+      "was": "Cổng thẻ chưa nối. Đơn ghi chưa thu tiền cho tới khi có cổng.",
+      "now": "Tạm thời trả bằng chuyển khoản (ghi chú của Thẻ khi thanh toán)"
+    },
+    {
+      "was": "(chưa có)",
+      "now": "Đã có tài khoản / Chưa có tài khoản (trang Tôi lúc chưa đăng nhập, máy tính: đăng nhập ngay tại trang)"
+    }
+  ],
+  "shape": "Ảnh tràn viền, góc vuông; mọi nút, chip, ô size và ô nhập bo tròn hẳn; thẻ lựa chọn giao hàng và thanh toán bo 16px; sheet bo 20px ở hai góc trên; ảnh nhỏ bo 10px; bóng mềm chỉ ở sheet, thanh mua và thông báo nhỏ.",
+  "motion": "Vạch tab trượt và nội dung tab mờ dần sang; thẻ nổi lên 16px khi cuộn tới; sheet bật lên kiểu lò xo; tim nảy khi bấm; chip ĐANG MỞ có vòng nhịp, vòng lặp duy nhất vì đó là trạng thái thật; thanh tiến trình ảnh đầy lên khi đổi khung; thông báo nhỏ trồi lên khi xoá hay đổi size, có Hoàn tác; đồng hồ đếm từng giây.",
+  "dials": {
+    "variance": 6,
+    "motion": 6,
+    "density": 4
+  },
+  "open": []
+}

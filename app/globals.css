@@ -104,6 +104,23 @@
 /* Last, so its breakpoint outranks the phone rules it widens rather than
    racing them on specificity. */
 @import "./styles/desktop.css";
+/* ── Round v4 "Feed" (QĐ-32), one folder, every rule under the Feed zone ──
+   Each file mirrors the mock stylesheet of the same name
+   (`prototype/explore/feed/feed.css`, `flow.css`) and keeps its rules in the
+   mock's order, so the cascade among Feed rules is the mock's: every
+   selector gains the same `[data-ui="feed"]` (0,1,0), which leaves their
+   order of specificity as the mock had it. No Feed rule can reach an element
+   of `.s.v3` or `.s.adm3`, and no v3 rule scoped to `.s` can reach a Feed
+   element, so the placement after `desktop.css` settles no tie. The four v3
+   layers that are NOT scoped to `.s` (`.sheetwrap`, `.menu3`, `.toast`,
+   `.veil`) reach any element wearing those names, so the Feed files must
+   not use them — the mock's `.toast` included — which
+   `styles/feed/scope.test.ts` checks; `.sr-only` is shared on purpose.
+   `system.css` is the kit page's own layout and leaves with `/system` when
+   the round ends. */
+@import "./styles/feed/feed.css";
+@import "./styles/feed/flow.css";
+@import "./styles/feed/system.css";
 
 /* =========================================================================
    TOKEN LAYER — v3, hướng NHÃN (nhãn dệt: vải đen, chỉ mật ong, sàn trắng).
@@ -309,6 +326,96 @@
     --fs-h1: 28px;
     --fs-h2: 21px;
     --fs-h3: 16px;
+  }
+}
+
+/* =========================================================================
+   TOKEN LAYER — v4, hướng FEED (QĐ-32, 27/09/2026). SCOPED, not global.
+
+   HOW A ROUTE TURNS THE FEED ZONE ON. Render the screen inside
+   `<FeedScope>` (`components/feed/FeedScope.tsx`), or give the frame's own
+   root element `{...FEED_ZONE}` (the attribute `data-ui="feed"`) and the
+   class `feedFontClass` (next/font's `--font-mona`). Everything below, and
+   every rule in `styles/feed/*.css`, is declared under `[data-ui="feed"]`:
+   inside that element the Feed applies, outside it nothing changes by a
+   pixel — the v3 screens (`.s.v3`) and the back office (`.s.adm3`) never
+   carry the attribute. A layer portalled out of the zone (a toast on
+   <body>) carries the attribute and the class on its own root; a
+   `<dialog>` rendered inside the zone inherits them where it sits.
+
+   Values are copied from the approved mock, `prototype/explore/feed/
+   feed.css` `:root` (`styles/feed/scope.test.ts` holds every one to it),
+   under their own names: `--f-*` never reuses a v3 name (`--ink`, `--line`,
+   `--bg`, `--max`… mean the v3 values everywhere, inside the zone too).
+   Not in `@theme`: Tailwind emits `@theme` on `:root`, where these would
+   stop being the zone's, and it generates no utilities here anyway (QĐ-23).
+
+   Text pairs, computed before writing (WCAG 2 relative luminance):
+     --f-ink on --f-bg 18.3:1 · on --f-bg2 16.7:1 · on --f-bg3 15.0:1
+     --f-ink2 on --f-bg 6.3:1 · on --f-bg2 5.7:1 · on --f-bg3 5.1:1
+     --f-white on --f-blue 6.6:1 · on --f-blue2 8.3:1 · on --f-ink 18.7:1
+     --f-err on --f-bg 5.5:1 · on --f-white 5.6:1 · on --f-bg2 5.0:1
+     --f-blue (focus ring, links) on --f-bg 6.5:1
+     --f-ink on --f-select (selected text) 12.6:1
+     --f-ink on --f-plate 16.4:1 · --f-ink2 on --f-plate 5.6:1 (the fixed lead, slice 1a)
+     --f-on-ink2 on --f-ink 13.5:1 (a chosen size's note, slice 1a)
+   ========================================================================= */
+[data-ui="feed"] {
+  /* colour: one accent, blue; red only for errors */
+  --f-bg: #fcfcfd; /* the ground */
+  --f-bg2: #f1f2f4; /* grouped rows, chips at rest, inputs, the silhouettes' plate */
+  --f-ink: #111214; /* text, the selected choice, the ĐÃ HẾT stamp */
+  --f-ink2: #5b5f66; /* secondary text */
+  --f-blue: #1846f0; /* the one accent: primary button, live chip, tab rule, photo progress, focus ring */
+  --f-err: #c62a1d; /* errors only: a line that cannot be bought, a field; never decoration */
+  --f-line: rgba(17, 18, 20, .1); /* hairlines */
+  --f-line2: rgba(17, 18, 20, .2); /* control borders, the heavier rule */
+  /* the literals the mock writes into its rules, named here instead */
+  --f-bg3: #e4e6ea; /* a grey control under the pointer (.chip, .pill, .sh-x) */
+  --f-blue2: #0f37d6; /* the blue button under the pointer */
+  --f-grab: #d5d7dc; /* a sheet's grab handle */
+  --f-white: #ffffff; /* text on blue and on ink; an input's ground while it has focus */
+  --f-plate: #f4efe6; /* the flat drawings' own plate: the fixed line's lead frame, a wide fixed card (slice 1a) */
+  --f-plate2: #f2eee8; /* behind a flat drawing in a rail or the shop grid (slice 1a) */
+  --f-on-ink2: #d9dbe0; /* the small line under a chosen size, on ink (slice 1a) */
+  /* not in the mock: the text selection, a light tint of the blue under ink (12.6:1) —
+     the project's rule for browser surfaces, kept in Feed's colours (user, 27/09/2026) */
+  --f-select: color-mix(in srgb, var(--f-blue) 24%, var(--f-white));
+
+  /* depth: the scrim under any text set on a photo; the shadow of sheets and bars */
+  --f-scrim: linear-gradient(to top, rgba(0, 0, 0, .66), rgba(0, 0, 0, 0) 58%);
+  --f-lift: 0 -8px 28px rgba(17, 18, 20, .12);
+
+  /* motion: sheets spring up, everything else eases out */
+  --f-spring: cubic-bezier(.2, .9, .2, 1.05);
+  --f-out: cubic-bezier(.22, .8, .24, 1);
+
+  /* type: Mona Sans (`components/feed/font.ts`), 75% wide for display, 100% for the interface */
+  --f-font: var(--font-mona), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* space and frame: the phone gutter, the top bar, the home tabs, the bottom tab bar
+     and the safe area under it; content stops at 1280 with a 32px desktop gutter */
+  --f-g: 16px;
+  --f-bar: 52px;
+  --f-tabs-h: 44px;
+  --f-tabbar: 64px;
+  --f-sb: env(safe-area-inset-bottom, 0px);
+  --f-max: 1280px;
+  --f-wg: 32px;
+
+  /* shape: controls are pills; selection cards 16; sheets 20 on their top corners;
+     small images 10. Photos stay square-cornered. */
+  --f-r-pill: 999px;
+  --f-r-card: 16px;
+  --f-r-sheet: 20px;
+  --f-r-thumb: 10px;
+
+  color-scheme: light;
+}
+
+@media (min-width: 900px) {
+  [data-ui="feed"] {
+    --f-g: 32px;
   }
 }
 

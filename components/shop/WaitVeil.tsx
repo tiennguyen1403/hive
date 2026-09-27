@@ -2,10 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import { startTransition, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { HONEY, INK, MONO } from "@/lib/brand/palette";
 import {
   WAIT,
   closingFrame,
   isAdminPath,
+  isFeedPath,
   shouldVeil,
   showingFrame,
   type VeilFrame,
@@ -96,6 +98,11 @@ export function startWait(href: string): void {
  * `aria-hidden` always: the veil draws a mark, not a message. While it shows,
  * the page's `<main>` carries `aria-busy="true"`; the new page's title is
  * announced by Next when it lands. Focus is neither moved nor trapped.
+ *
+ * Round v4 "Feed" (slice 1a): over a Feed screen, or on the way to one
+ * (`isFeedPath`, `lib/wait.ts`), the mark is the logo in black and white and
+ * the stitches are ink — no honey (QĐ-33) — and the veil starts under the
+ * Feed bar. Between two v3 screens it is unchanged.
  */
 export function WaitVeil() {
   const pathname = usePathname();
@@ -104,7 +111,9 @@ export function WaitVeil() {
   const veilRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<SVGSVGElement>(null);
   const arcRef = useRef<SVGCircleElement>(null);
-  const [veil] = useState(() => createVeil(veilRef, markRef, arcRef));
+  const discRef = useRef<SVGCircleElement>(null);
+  const beeRef = useRef<SVGPathElement>(null);
+  const [veil] = useState(() => createVeil(veilRef, markRef, arcRef, discRef, beeRef));
 
   // Every start that goes out in a transition carries the next number; the
   // wait is over when the LATEST one has committed.
@@ -134,8 +143,11 @@ export function WaitVeil() {
   useEffect(() => {
     if (off) return;
 
-    const begin = () => {
-      veil.begin(performance.now());
+    // Black and white when the page on screen or the one on its way is a Feed screen (round v4, QĐ-33).
+    const feedly = (to: { pathname: string }) => isFeedPath(shown.current) || isFeedPath(to.pathname);
+
+    const begin = (to: { pathname: string }) => {
+      veil.begin(performance.now(), feedly(to));
       const n = ++asked.current;
       startTransition(() => setSettled(n));
     };
@@ -156,7 +168,7 @@ export function WaitVeil() {
         target: a.getAttribute("target"),
         download: a.hasAttribute("download"),
       };
-      if (shouldVeil(window.location, to, click)) begin();
+      if (shouldVeil(window.location, to, click)) begin(to);
     };
 
     // Back and Forward always win: Next's router drops a navigation still on
@@ -169,7 +181,7 @@ export function WaitVeil() {
     const onPopState = () => {
       const to = window.location;
       const now = performance.now();
-      if (shouldVeil({ origin: to.origin, pathname: shown.current }, to)) veil.begin(now);
+      if (shouldVeil({ origin: to.origin, pathname: shown.current }, to)) veil.begin(now, feedly(to));
       else veil.done(now);
     };
 
@@ -184,7 +196,7 @@ export function WaitVeil() {
     window.addEventListener("pageshow", onPageShow);
     beginFromCode = (href) => {
       const to = parse(href, window.location.href);
-      if (to && shouldVeil(window.location, to)) begin();
+      if (to && shouldVeil(window.location, to)) begin(to);
     };
     return () => {
       document.removeEventListener("click", onClick, true);
@@ -228,11 +240,14 @@ export function WaitVeil() {
         </g>
         {/* Mark M2, copied byte for byte from `prototype/name/logo/hive-mark.svg`
             as `NavLogo` copies it. The logo's own colours, not tokens: a logo
-            does not follow a theme. */}
+            does not follow a theme. Honey and ink as the server renders it;
+            over or towards a Feed screen the veil repaints it in black and
+            white (`dress` below, QĐ-33). */}
         <g transform="scale(.064)">
-          <circle r="500" fill="#eba400" />
+          <circle ref={discRef} r="500" fill={HONEY} />
           <path
-            fill="#171410"
+            ref={beeRef}
+            fill={INK}
             d="M-169,381.17l-145.42,-52.65l0,-266.87c15.71,10.41 33.29,19.48 51.75,21.81c21.04,2.66 42.61,-1.95 62.92,-7.17c25.77,-6.63 51.06,-15.12 76.21,-23.84c-22.5,35.38 -45.46,77.68 -45.46,99.85l0,15l0,0zM-314.42,-328.52l145.42,-52.65l0,238.97c-33.74,-12.22 -67.47,-24.43 -101.21,-36.65c-12.68,-4.59 -25.35,-9.18 -38.03,-13.77c-2.07,-0.75 -4.12,-1.49 -6.18,-2.2zM169,-381.17l145.42,52.65l0,133.68c-2.06,0.73 -4.11,1.48 -6.18,2.23c-13.15,4.76 -26.29,9.52 -39.44,14.28c-33.27,12.05 -66.53,24.09 -99.8,36.14zM314.42,328.52l-145.42,52.65v-213.86l0,0v-15c0,-22.18 -22.98,-64.5 -45.48,-99.88c4.39,1.51 8.78,3 13.18,4.49c25.06,8.47 50.32,16.87 76.19,22.52c17.17,3.75 35.22,6.46 52.73,3.61c17.38,-2.83 33.92,-11.51 48.79,-21.38zM-264.74,40.11c-60.28,-21.83 -138.41,-120.12 -131.88,-164.06c7.88,-29.45 33.57,-43.84 61.39,-33.77l265.01,95.95c1.39,-18.59 5.79,-29.61 16.58,-35.96c-17.98,-11.93 -29.4,-29.75 -29.4,-49.67c0,-21.25 13,-40.11 33.1,-51.98c-0.82,-1.57 -1.59,-3.17 -2.45,-4.64c-3.94,-6.82 -8.46,-13.3 -13.62,-19.2c-5.86,-6.69 -12.54,-12.6 -19.93,-17.41c-4.24,-2.76 -10.01,-4.58 -13.53,-8.25c-4.31,-4.49 -4.9,-11.75 -1.37,-16.93c7.6,-11.14 20.31,-2.53 28.51,2.81c14.84,9.66 27.32,22.75 37.14,37.72c2.12,3.23 5.45,10.3 7.65,16.49c8.62,-2.37 17.88,-3.66 27.53,-3.66c8.99,0 17.66,1.12 25.77,3.19c1.88,-5.03 5.58,-10.02 8.2,-14.14c10.01,-15.76 22.89,-29.54 38.36,-39.6c7.17,-4.67 17.03,-12.04 25.36,-6.04c5.71,4.11 7.17,12.48 3.2,18.39c-2.58,3.84 -7.02,5.28 -10.81,7.47c-5.17,2.98 -10.05,6.48 -14.57,10.43c-7.85,6.85 -14.57,15 -20.2,23.87c-1.23,1.94 -3.56,5.55 -6.11,9.07c20.52,11.84 33.83,30.91 33.83,52.41c0,19.91 -11.42,37.73 -29.4,49.67c10.79,6.35 15.19,17.37 16.58,35.96l265.01,-95.95c27.82,-10.07 53.51,4.32 61.39,33.77c6.54,43.94 -71.6,142.23 -131.88,164.06c-26.15,9.47 -91.24,-14.55 -197.02,-51.73c-6.2,22.98 -23.68,27.88 -67.71,27.88c-44.03,0 -61.51,-4.9 -67.71,-27.88c-105.78,37.18 -170.87,61.2 -197.02,51.73zM-109.5,121.28c3.54,-23.98 13.05,-45.66 26.73,-63.02l165.53,0c13.68,17.36 23.19,39.04 26.73,63.02zM109.5,163.28c-3.54,23.98 -13.05,45.66 -26.73,63.02l-165.53,0c-13.68,-17.36 -23.19,-39.04 -26.73,-63.02zM-52.08,268.3h104.15l-52.08,87.42z"
           />
         </g>
@@ -251,7 +266,7 @@ function parse(href: string, base: string): URL | null {
 
 /**
  * The veil's clock and brush. One per mounted `WaitVeil`; it touches the DOM
- * through the three refs and nothing else.
+ * through its refs and nothing else.
  *
  * idle → wait (the first 120 ms: nothing shows) → on (the white and the
  * turning arc) → end (the arc closes, the white fades) → idle. A page that
@@ -263,6 +278,8 @@ function createVeil(
   veilRef: RefObject<HTMLDivElement | null>,
   markRef: RefObject<SVGSVGElement | null>,
   arcRef: RefObject<SVGCircleElement | null>,
+  discRef: RefObject<SVGCircleElement | null>,
+  beeRef: RefObject<SVGPathElement | null>,
 ) {
   let phase: "idle" | "wait" | "on" | "end" = "idle";
   let still = false;
@@ -293,12 +310,35 @@ function createVeil(
     veilRef.current?.classList.toggle("hold", on);
   }
 
+  /**
+   * The look of this wait. Over or towards a Feed screen (round v4): the mark
+   * in the logo's black and white (`MONO.light`, QĐ-33), the stitches in ink
+   * (`.veil.feed`, sheet.css) — no honey. And the veil starts under the bar
+   * of the page it covers: a Feed screen's bar is not v3's 56/64, so it is
+   * measured, plus the bar's 1px rule. Anywhere else, the v3 veil exactly as
+   * the server rendered it.
+   */
+  function dress(feed: boolean) {
+    const el = veilRef.current;
+    if (!el) return;
+    el.classList.toggle("feed", feed);
+    discRef.current?.setAttribute("fill", feed ? MONO.light.disc : HONEY);
+    beeRef.current?.setAttribute("fill", feed ? MONO.light.bee : INK);
+    const bars = [...document.querySelectorAll<HTMLElement>('[data-ui="feed"] .top')];
+    const bottom = Math.max(0, ...bars.map((b) => b.getBoundingClientRect().bottom));
+    if (bottom > 0) el.style.top = `${Math.round(bottom) + 1}px`;
+    else el.style.removeProperty("top");
+  }
+
   /** Back to exactly what the server rendered. */
   function clear() {
     opacity = 0;
     const el = veilRef.current;
     el?.style.removeProperty("opacity");
-    el?.classList.remove("on", "hold");
+    el?.style.removeProperty("top");
+    el?.classList.remove("on", "hold", "feed");
+    discRef.current?.setAttribute("fill", HONEY);
+    beeRef.current?.setAttribute("fill", INK);
     markRef.current?.style.removeProperty("transform");
     arcRef.current?.setAttribute("transform", "rotate(-90)");
     arcRef.current?.setAttribute("stroke-dasharray", `${WAIT.arc} ${100 - WAIT.arc}`);
@@ -337,13 +377,14 @@ function createVeil(
     raf = requestAnimationFrame(frame);
   }
 
-  function begin(now: number) {
+  function begin(now: number, feed: boolean) {
     // A second press while waiting: the veil stays where it is and the wait
     // now leads to the new page. A press while it closes over the page that
     // just arrived starts over from nothing.
     if (phase === "end") reset();
     if (phase === "idle") {
       phase = "wait";
+      dress(feed);
       still = matchMedia("(prefers-reduced-motion: reduce)").matches;
       delay = window.setTimeout(show, Math.max(0, WAIT.delay - (performance.now() - now)));
     }

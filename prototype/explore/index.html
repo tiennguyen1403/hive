@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HIVE · Feed</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23222'/%3E%3C/svg%3E">
+<style>
+  :root { --bg:#ececea; --card:#fafaf9; --ink:#1b1b1b; --ink2:#5c5c58; --line:#d3d3cf; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 "Segoe UI", system-ui, sans-serif; }
+  a { color: inherit; }
+  header.top { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .bar { max-width: 1600px; margin: 0 auto; padding: 10px 24px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .bar nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .bar nav a { text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
+  .bar nav a:hover { background: #dfdfdc; }
+  main { max-width: 1600px; margin: 0 auto; padding: 32px 24px 96px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; }
+  .lead { max-width: 76ch; color: var(--ink2); margin: 0 0 12px; }
+  ul.pal { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0; margin: 0 0 8px; }
+  .pal li { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink2); }
+  .pal i { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(0,0,0,.18); }
+  .grp { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line); scroll-margin-top: 64px; }
+  h2 { font-size: 24px; margin: 0 0 14px; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink2); margin: 24px 0 10px; }
+  .row { display: grid; grid-auto-flow: column; grid-auto-columns: 300px; gap: 14px; overflow-x: auto; padding-bottom: 10px; }
+  .desk-row { grid-auto-columns: 640px; }
+  figure { margin: 0; }
+  figcaption { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--ink2); padding: 0 2px 8px; }
+  figcaption a { font-weight: 600; color: var(--ink); white-space: nowrap; }
+  .screen { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: auto; }
+  .phone .screen { height: 620px; }
+  .desk .screen { height: 460px; }
+  .screen img { display: block; width: 100%; height: auto; }
+  .chot { margin-top: 48px; padding: 24px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; scroll-margin-top: 64px; }
+  .chot-in { display: grid; grid-template-columns: 1fr 1.4fr; gap: 28px; }
+  .chot h2 { margin-bottom: 12px; }
+  table.words { border-collapse: collapse; font-size: 14px; width: 100%; }
+  .words th { text-align: left; font-weight: 600; color: var(--ink2); font-size: 12px; padding: 4px 8px 4px 0; }
+  .words td { padding: 5px 8px 5px 0; border-top: 1px solid var(--line); }
+  ul.open { list-style: none; margin: 0; padding: 0; }
+  .open li { font-size: 14px; padding: 4px 0 4px 14px; position: relative; }
+  .open li::before { content: ""; position: absolute; left: 0; top: 13px; width: 6px; height: 1px; background: var(--ink2); }
+  .muted { color: var(--ink2); }
+  @media (max-width: 900px) { .chot-in { grid-template-columns: 1fr; } .desk-row { grid-auto-columns: 86vw; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="bar"><strong>HIVE · Feed</strong><nav><a href="#mua">Luồng mua</a><a href="#tai-khoan">Tài khoản và đơn hàng</a><a href="#quanh">Quanh tài khoản</a><a href="#chot">Cần chốt</a></nav></div></header>
+<main>
+  <h1>Feed</h1>
+  <p class="lead">Cửa hàng như một ứng dụng lướt: mỗi mẫu là một khung ảnh tràn màn hình, lịch mở bán và đếm ngược luôn trong tầm mắt. Kéo ngang từng hàng để xem hết luồng; bấm "Mở bản sống" để thử.</p>
+  <ul class="pal"><li><i style="background:#FCFCFD"></i><span>Nền</span></li><li><i style="background:#F1F2F4"></i><span>Nền nhóm, chip khi nghỉ, ô nhập, nền hình dáng Số 06</span></li><li><i style="background:#111214"></i><span>Chữ, lựa chọn đang bật, dấu ĐÃ HẾT, lời mở Số 06</span></li><li><i style="background:#5B5F66"></i><span>Chữ phụ</span></li><li><i style="background:#1846F0"></i><span>Điểm nhấn duy nhất: nút chính, chip ĐANG MỞ, vạch tab, thanh tiến trình ảnh, dấu đã đặt</span></li><li><i style="background:#C62A1D"></i><span>Chỉ cho lỗi: dòng giỏ hết size, ô nhập sai, mã không dùng được; không dùng trang trí</span></li></ul>
+  
+  <section class="grp" id="mua">
+    <h2>Luồng mua</h2>
+    <div class="row"><figure class="phone"><figcaption>Trang chủ, đang mở<a href="feed/home.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-home-390.jpg" alt="Trang chủ, đang mở" loading="lazy"></div></figure><figure class="phone"><figcaption>Trang chủ, sắp mở<a href="feed/home.html?state=upcoming" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-home_state_upcoming-390.jpg" alt="Trang chủ, sắp mở" loading="lazy"></div></figure><figure class="phone"><figcaption>Trang chủ, 3 ngày sau khi đóng<a href="feed/home.html?state=closed" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-home_state_closed-390.jpg" alt="Trang chủ, 3 ngày sau khi đóng" loading="lazy"></div></figure><figure class="phone"><figcaption>Trang chủ, 10 ngày sau khi đóng<a href="feed/home.html?state=quiet" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-home_state_quiet-390.jpg" alt="Trang chủ, 10 ngày sau khi đóng" loading="lazy"></div></figure><figure class="phone"><figcaption>Tìm kiếm<a href="feed/search.html?q=hoodie" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-search_q_hoodie-390.jpg" alt="Tìm kiếm" loading="lazy"></div></figure><figure class="phone"><figcaption>Danh sách<a href="feed/products.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-products-390.jpg" alt="Danh sách" loading="lazy"></div></figure><figure class="phone"><figcaption>Trang sản phẩm<a href="feed/product.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-product-390.jpg" alt="Trang sản phẩm" loading="lazy"></div></figure><figure class="phone"><figcaption>Giỏ<a href="feed/cart.html?cart=full" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-cart_cart_full-390.jpg" alt="Giỏ" loading="lazy"></div></figure><figure class="phone"><figcaption>Giỏ, món vừa hết<a href="feed/cart.html?cart=soldout" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-cart_cart_soldout-390.jpg" alt="Giỏ, món vừa hết" loading="lazy"></div></figure><figure class="phone"><figcaption>Thanh toán<a href="feed/checkout.html?cart=full&amp;fill=1" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-checkout_cart_full_fill_1-390.jpg" alt="Thanh toán" loading="lazy"></div></figure><figure class="phone"><figcaption>Thanh toán, báo lỗi<a href="feed/checkout.html?cart=full&amp;errors=1" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-checkout_cart_full_errors_1-390.jpg" alt="Thanh toán, báo lỗi" loading="lazy"></div></figure><figure class="phone"><figcaption>Đặt hàng xong, chuyển khoản<a href="feed/order-confirmed.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-order-confirmed-390.jpg" alt="Đặt hàng xong, chuyển khoản" loading="lazy"></div></figure><figure class="phone"><figcaption>Đặt hàng xong, COD<a href="feed/order-confirmed.html?pay=cod" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-order-confirmed_pay_cod-390.jpg" alt="Đặt hàng xong, COD" loading="lazy"></div></figure><figure class="phone"><figcaption>Đặt hàng xong, thẻ<a href="feed/order-confirmed.html?pay=card" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-order-confirmed_pay_card-390.jpg" alt="Đặt hàng xong, thẻ" loading="lazy"></div></figure></div>
+    <h3>Trên máy tính</h3><div class="row desk-row"><figure class="desk"><figcaption>Trang chủ<a href="feed/home.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-home-1280.jpg" alt="Trang chủ" loading="lazy"></div></figure><figure class="desk"><figcaption>Trang sản phẩm<a href="feed/product.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-product-1280.jpg" alt="Trang sản phẩm" loading="lazy"></div></figure><figure class="desk"><figcaption>Trang sản phẩm, 8 ảnh<a href="feed/product.html?frames=8" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-product_frames_8-1280.jpg" alt="Trang sản phẩm, 8 ảnh" loading="lazy"></div></figure><figure class="desk"><figcaption>Thanh toán<a href="feed/checkout.html?cart=full&amp;fill=1" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-checkout_cart_full_fill_1-1280.jpg" alt="Thanh toán" loading="lazy"></div></figure><figure class="desk"><figcaption>Đặt hàng xong<a href="feed/order-confirmed.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-order-confirmed-1280.jpg" alt="Đặt hàng xong" loading="lazy"></div></figure></div>
+  </section>
+  <section class="grp" id="tai-khoan">
+    <h2>Tài khoản và đơn hàng</h2>
+    <div class="row"><figure class="phone"><figcaption>Tôi<a href="feed/account.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-account-390.jpg" alt="Tôi" loading="lazy"></div></figure><figure class="phone"><figcaption>Tôi, chưa đăng nhập<a href="feed/account.html?auth=out" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-account_auth_out-390.jpg" alt="Tôi, chưa đăng nhập" loading="lazy"></div></figure><figure class="phone"><figcaption>Đăng nhập<a href="feed/sign-in.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-sign-in-390.jpg" alt="Đăng nhập" loading="lazy"></div></figure><figure class="phone"><figcaption>Đơn hàng<a href="feed/orders.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-orders-390.jpg" alt="Đơn hàng" loading="lazy"></div></figure><figure class="phone"><figcaption>Đơn hàng, lọc Cố định<a href="feed/orders.html?group=fixed" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-orders_group_fixed-390.jpg" alt="Đơn hàng, lọc Cố định" loading="lazy"></div></figure><figure class="phone"><figcaption>Đơn hàng, lọc không có đơn<a href="feed/orders.html?phase=active&amp;state=closed" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-orders_phase_active_state_closed-390.jpg" alt="Đơn hàng, lọc không có đơn" loading="lazy"></div></figure><figure class="phone"><figcaption>Đơn chờ chuyển khoản<a href="feed/order.html?id=DH-1507" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-order_id_DH-1507-390.jpg" alt="Đơn chờ chuyển khoản" loading="lazy"></div></figure><figure class="phone"><figcaption>Đơn đang giao<a href="feed/order.html?id=DH-1499" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-order_id_DH-1499-390.jpg" alt="Đơn đang giao" loading="lazy"></div></figure><figure class="phone"><figcaption>Đơn đã giao<a href="feed/order.html?id=DH-1496" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-order_id_DH-1496-390.jpg" alt="Đơn đã giao" loading="lazy"></div></figure><figure class="phone"><figcaption>Đơn đã huỷ<a href="feed/order.html?id=DH-1310" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-order_id_DH-1310-390.jpg" alt="Đơn đã huỷ" loading="lazy"></div></figure><figure class="phone"><figcaption>Đổi trả<a href="feed/return.html?id=DH-1496" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-return_id_DH-1496-390.jpg" alt="Đổi trả" loading="lazy"></div></figure><figure class="phone"><figcaption>Đổi trả, xem lại<a href="feed/return.html?id=DH-1499&amp;state=closed&amp;step=review" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-return_id_DH-1499_state_closed_step_review-390.jpg" alt="Đổi trả, xem lại" loading="lazy"></div></figure><figure class="phone"><figcaption>Địa chỉ<a href="feed/addresses.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-addresses-390.jpg" alt="Địa chỉ" loading="lazy"></div></figure><figure class="phone"><figcaption>Hồ sơ<a href="feed/profile.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-profile-390.jpg" alt="Hồ sơ" loading="lazy"></div></figure></div>
+    <h3>Trên máy tính</h3><div class="row desk-row"><figure class="desk"><figcaption>Tôi<a href="feed/account.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-account-1280.jpg" alt="Tôi" loading="lazy"></div></figure><figure class="desk"><figcaption>Tôi, chưa đăng nhập<a href="feed/account.html?auth=out" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-account_auth_out-1280.jpg" alt="Tôi, chưa đăng nhập" loading="lazy"></div></figure><figure class="desk"><figcaption>Đơn đang giao<a href="feed/order.html?id=DH-1499" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-order_id_DH-1499-1280.jpg" alt="Đơn đang giao" loading="lazy"></div></figure><figure class="desk"><figcaption>Đơn hàng<a href="feed/orders.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-orders-1280.jpg" alt="Đơn hàng" loading="lazy"></div></figure></div>
+  </section>
+  <section class="grp" id="quanh">
+    <h2>Quanh tài khoản</h2>
+    <div class="row"><figure class="phone"><figcaption>Yêu thích<a href="feed/favorites.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-favorites-390.jpg" alt="Yêu thích" loading="lazy"></div></figure><figure class="phone"><figcaption>Thông báo<a href="feed/notifications.html?state=closed" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-notifications_state_closed-390.jpg" alt="Thông báo" loading="lazy"></div></figure><figure class="phone"><figcaption>Tra cứu đơn<a href="feed/track.html?code=DH-1499&amp;phone=0938571204" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-track_code_DH-1499_phone_0938571204-390.jpg" alt="Tra cứu đơn" loading="lazy"></div></figure><figure class="phone"><figcaption>Các Số đã đóng<a href="feed/archive.html?state=closed" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-archive_state_closed-390.jpg" alt="Các Số đã đóng" loading="lazy"></div></figure><figure class="phone"><figcaption>Số 04<a href="feed/issue.html?no=4" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-issue_no_4-390.jpg" alt="Số 04" loading="lazy"></div></figure><figure class="phone"><figcaption>Hỏi đáp<a href="feed/help.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-help-390.jpg" alt="Hỏi đáp" loading="lazy"></div></figure><figure class="phone"><figcaption>Bảng size<a href="feed/size-guide.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-size-guide-390.jpg" alt="Bảng size" loading="lazy"></div></figure><figure class="phone"><figcaption>Liên hệ<a href="feed/contact.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-contact-390.jpg" alt="Liên hệ" loading="lazy"></div></figure><figure class="phone"><figcaption>Liên hệ, đã gửi<a href="feed/contact.html?sent=1" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-contact_sent_1-390.jpg" alt="Liên hệ, đã gửi" loading="lazy"></div></figure><figure class="phone"><figcaption>Không tìm thấy<a href="feed/404.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-404-390.jpg" alt="Không tìm thấy" loading="lazy"></div></figure></div>
+    <h3>Trên máy tính</h3><div class="row desk-row"><figure class="desk"><figcaption>Yêu thích<a href="feed/favorites.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-favorites-1280.jpg" alt="Yêu thích" loading="lazy"></div></figure><figure class="desk"><figcaption>Yêu thích, chưa đăng nhập<a href="feed/favorites.html?auth=out" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-favorites_auth_out-1280.jpg" alt="Yêu thích, chưa đăng nhập" loading="lazy"></div></figure><figure class="desk"><figcaption>Tra cứu đơn<a href="feed/track.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-track-1280.jpg" alt="Tra cứu đơn" loading="lazy"></div></figure><figure class="desk"><figcaption>Tra cứu đơn, đã tra<a href="feed/track.html?code=DH-1499&amp;phone=0938571204" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-track_code_DH-1499_phone_0938571204-1280.jpg" alt="Tra cứu đơn, đã tra" loading="lazy"></div></figure><figure class="desk"><figcaption>Hỏi đáp<a href="feed/help.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-help-1280.jpg" alt="Hỏi đáp" loading="lazy"></div></figure><figure class="desk"><figcaption>Bảng size<a href="feed/size-guide.html" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-size-guide-1280.jpg" alt="Bảng size" loading="lazy"></div></figure><figure class="desk"><figcaption>Các Số đã đóng<a href="feed/archive.html?state=closed" target="_blank" rel="noopener">Mở bản sống</a></figcaption>
+    <div class="screen"><img src="_shots/feed/bd-archive_state_closed-1280.jpg" alt="Các Số đã đóng" loading="lazy"></div></figure></div>
+  </section>
+  <section class="chot" id="chot">
+    <div class="chot-in">
+      <div><h2>Tên gọi mới</h2><table class="words"><thead><tr><th>Đang gọi</th><th>Feed gọi</th></tr></thead><tbody><tr><td>Trang chủ (một trang cuộn)</td><td>Ba tab: Bảng tin, Cửa hàng, Sắp mở</td></tr><tr><td>Danh mục</td><td>Cửa hàng</td></tr><tr><td>Lịch ra số</td><td>Sắp mở</td></tr><tr><td>Đặt nhắc giờ mở</td><td>Nhắc tôi</td></tr><tr><td>Đã đặt nhắc</td><td>Đã bật nhắc</td></tr><tr><td>Còn ít</td><td>Còn 2 (kèm biểu tượng lửa)</td></tr><tr><td>Mười mẫu. Cắt một lần. Hết là hết.</td><td>Cắt 1 lần. Không tái bản.</td></tr><tr><td>Bảng số đo</td><td>Bảng size</td></tr><tr><td>Tìm kiếm</td><td>Tìm</td></tr><tr><td>Tài khoản</td><td>Tôi</td></tr><tr><td>(chưa có)</td><td>Đủ size (mẫu Cố định còn mọi size)</td></tr><tr><td>SOLD OUT</td><td>ĐÃ HẾT (dấu trên ảnh; thẻ không lặp lại bằng dòng chữ)</td></tr><tr><td>Tất cả (ô lọc theo loại)</td><td>Mọi loại</td></tr><tr><td>(chưa có)</td><td>Tìm gần đây, Gợi ý, Thử tìm (màn Tìm)</td></tr><tr><td>Phí giao</td><td>Giao hàng (dòng trong Tóm tắt của giỏ)</td></tr><tr><td>Món đang vướng</td><td>Hết size M. Đổi size để thanh toán. (một dòng ngay trên món đó)</td></tr><tr><td>Người nhận (phần đầu màn thanh toán)</td><td>Liên hệ</td></tr><tr><td>Địa chỉ giao</td><td>Địa chỉ</td></tr><tr><td>Cách giao</td><td>Giao hàng</td></tr><tr><td>Hình thức thanh toán</td><td>Thanh toán</td></tr><tr><td>Đã nhận đơn</td><td>Đã đặt hàng</td></tr><tr><td>(chưa có)</td><td>Giữ hàng (khối đếm ngược 12 giờ của đơn chuyển khoản)</td></tr><tr><td>Xem số đang mở</td><td>Tiếp tục mua</td></tr><tr><td>(chưa có)</td><td>Chưa có Số mới (tab Sắp mở khi chưa công bố số nào)</td></tr><tr><td>Về số 05</td><td>Xem lại 10 mẫu (Số 05 sau khi đóng)</td></tr><tr><td>Tài khoản (menu trang tài khoản)</td><td>Tôi</td></tr><tr><td>Tổng quan (trang đầu tài khoản)</td><td>Tôi (tên người mua, đơn đang cần làm gì, rồi các ô Yêu thích, Nhắc, Size của tôi, Giao tới)</td></tr><tr><td>Size ghi nhớ</td><td>Size của tôi (ở Hồ sơ; trang sản phẩm và thêm nhanh chọn sẵn size này khi còn hàng, hàng size đổi nhãn thành Size của tôi)</td></tr><tr><td>Đơn đã thanh toán / Đơn đang trên đường (dòng trạng thái)</td><td>Thanh dòng thời gian bốn chặng: Đặt hàng, Thanh toán (COD: Xác nhận), Gửi hàng, Đã giao</td></tr><tr><td>Huỷ đơn này?</td><td>Huỷ đơn DH-1507?</td></tr><tr><td>Không</td><td>Giữ đơn (nút phụ của sheet huỷ)</td></tr><tr><td>Địa chỉ giao (khối trong trang đơn)</td><td>Giao tới</td></tr><tr><td>(chưa có)</td><td>Mua lại</td></tr><tr><td>(chưa có)</td><td>Đổi trả, năm bước: Chọn món, Lý do, Đổi hay trả, Xem lại, Đã gửi</td></tr><tr><td>(chưa có)</td><td>Mã yêu cầu DT-1496 (đổi trả của đơn DH-1496)</td></tr><tr><td>(chưa có)</td><td>Đã quá hạn đổi trả / Chưa đổi trả được</td></tr><tr><td>Sổ địa chỉ</td><td>Địa chỉ, với Tên địa chỉ: Nhà, Công ty, Khác</td></tr><tr><td>Dùng làm địa chỉ mặc định khi thanh toán.</td><td>Đặt làm mặc định / Mặc định</td></tr><tr><td>Hồ sơ &gt; Sửa tên và số điện thoại đang chuẩn bị</td><td>Hồ sơ sửa được tên, số điện thoại, email (email mới chờ liên kết xác nhận)</td></tr><tr><td>Đăng ký</td><td>Tạo tài khoản</td></tr><tr><td>Gửi (quên mật khẩu)</td><td>Gửi liên kết</td></tr><tr><td>Tra cứu đơn (nút ở màn xác nhận khi đã đăng nhập)</td><td>Xem đơn</td></tr><tr><td>Câu hỏi thường gặp (tên trang hỏi đáp)</td><td>Hỏi đáp (trang và liên kết ở chân trang; cột chân trang vẫn tên Trợ giúp)</td></tr><tr><td>Đã lưu (trang mẫu đã lưu)</td><td>Yêu thích</td></tr><tr><td>Trạng thái đơn (công tắc trong Nhận thông báo về)</td><td>Đơn hàng</td></tr><tr><td>Giờ mở Số mới (công tắc trong Nhận thông báo về)</td><td>Nhắc mở bán: thẻ Số 06 có giờ mở, đếm ngược và hai công tắc Trong app, Email</td></tr><tr><td>(chưa có)</td><td>Số mới và Mẫu đã lưu sắp hết (hai công tắc thêm vào Nhận thông báo về; Mã sắp hết hạn giữ như app)</td></tr><tr><td>(chưa có)</td><td>Các Số đã đóng (trang liệt kê Số 05 khi đã đóng, Số 04, Số 03)</td></tr><tr><td>(chưa có)</td><td>Chiều cao của bạn (hàng chọn chiều cao ở Bảng size, đánh dấu size hợp)</td></tr><tr><td>(chưa có)</td><td>Giữa hai size (hai dòng cách chọn, cuối Bảng size)</td></tr><tr><td>(chưa có)</td><td>Xem trang đơn / Đăng nhập để xem trang đơn (cuối kết quả Tra cứu đơn)</td></tr><tr><td>Kênh liên hệ đang chuẩn bị</td><td>Số điện thoại và email cửa hàng: Đang chuẩn bị (ô trống ở trang Liên hệ)</td></tr><tr><td>(chưa có)</td><td>Gửi tin nhắn (cuối Hỏi đáp); Gửi, Đã gửi, Gửi tin khác, Trả lời trong 24 giờ tới (trang Liên hệ)</td></tr><tr><td>Xem Đang bán (nút ở giỏ trống, yêu thích trống, đơn trống)</td><td>Xem Cửa hàng</td></tr><tr><td>Bảng số đo (chỉ áo)</td><td>Bảng size: Áo oversize, Áo regular, Quần dài, Quần short (Vòng eo, Vòng mông, Dài quần, Ngang đùi)</td></tr><tr><td>(chưa có)</td><td>Hỏi đáp: Giao tới đâu?, Ai trả phí gửi hàng về?, Hoàn tiền thế nào?</td></tr><tr><td>(chưa có)</td><td>Lọc đơn: Tất cả, Đang xử lý, Đã giao, Đã huỷ; Mọi dòng hàng, Số 05, Số 04, Số 03, Cố định; Bỏ lọc</td></tr><tr><td>(chưa có)</td><td>Tài khoản nhận tiền: Ngân hàng, Số tài khoản, Chủ tài khoản (đổi trả, khi chọn Hoàn tiền)</td></tr><tr><td>(chưa có)</td><td>Gửi hàng về: Cửa hàng trả phí; Gồm phí COD / phí giao hàng (bước Xem lại của Đổi trả)</td></tr><tr><td>Cổng thẻ chưa nối. Đơn ghi chưa thu tiền cho tới khi có cổng.</td><td>Tạm thời trả bằng chuyển khoản (ghi chú của Thẻ khi thanh toán)</td></tr><tr><td>(chưa có)</td><td>Đã có tài khoản / Chưa có tài khoản (trang Tôi lúc chưa đăng nhập, máy tính: đăng nhập ngay tại trang)</td></tr></tbody></table></div>
+      <div><h2>Câu cần chốt</h2><p class="muted">Không có.</p></div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

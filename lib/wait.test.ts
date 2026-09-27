@@ -4,6 +4,7 @@ import {
   closingFrame,
   easeOut,
   isAdminPath,
+  isFeedPath,
   shouldVeil,
   showingFrame,
   type WaitClick,
@@ -119,6 +120,15 @@ describe("isAdminPath", () => {
     expect(isAdminPath("/admin/orders/DH-2429")).toBe(true);
     expect(isAdminPath("/administrator")).toBe(false);
     expect(isAdminPath("/products/admin")).toBe(false);
+  });
+});
+
+describe("isFeedPath", () => {
+  it("is the home page since v4 slice 1a, and no v3 screen", () => {
+    expect(isFeedPath("/")).toBe(true);
+    for (const p of ["/products", "/products/s05-khoi", "/cart", "/account", "/so/5", "/admin"]) {
+      expect(isFeedPath(p), p).toBe(false);
+    }
   });
 });
 

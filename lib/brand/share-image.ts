@@ -1,16 +1,23 @@
 import { createHash } from "node:crypto";
 import { HOME_COVER } from "@/lib/lexicon";
-import { lockup } from "./lockup";
-import { CLOTH, HONEY, WHITE } from "./palette";
+import { LOCKUP_ON_DARK, lockup } from "./lockup";
+import { CLOTH, WHITE } from "./palette";
 import { SHARE_HEADLINE_PATH, SHARE_HEADLINE_SOURCE } from "./share-headline";
 
 /**
  * Share image O2 (QĐ-31, `prototype/name/share.html?og=o2`): the picture a
  * link card shows when someone pastes the shop's address into Messenger,
- * Zalo, Facebook or X. On the black cloth of an issue: the lockup `HIVE.NN`,
- * a honey seam, and the cover line in two lines. No photo, no closing time,
- * no stock figure — the apps keep the picture they scraped for as long as
- * they like, so it says only what stays true: which issue, and the rule.
+ * Zalo, Facebook or X. On the black ground: the lockup `HIVE.NN`, a seam, and
+ * the cover line in two lines. No photo, no closing time, no stock figure —
+ * the apps keep the picture they scraped for as long as they like, so it
+ * says only what stays true: which issue, and the rule.
+ *
+ * In black and white since round v4 slice 1a (QĐ-33: the logo loses its
+ * honey, so the Feed's blue is the one accent on screen): the lockup as it
+ * stands on a dark ground — white disc, ink bee, white name and number
+ * (`LOCKUP_ON_DARK`) — and the seam in white. The cover line is set as the
+ * Feed sets it: Mona Sans at 75% width, weight 900, in capitals. Every length
+ * is still O2's.
  *
  * It is ONE SVG document, drawn by `app/opengraph-image.tsx` through
  * `next/og`: the logo and the cover line are outlines, so nothing is set in
@@ -64,7 +71,7 @@ export function headlineSource(text: string): string {
 // drawn again.
 if (headlineSource(HOME_COVER.headline) !== SHARE_HEADLINE_SOURCE) {
   throw new Error(
-    "HOME_COVER.headline has changed since the share image's outlines were drawn: run `npx tsx scripts/brand-assets.ts`.",
+    "HOME_COVER.headline has changed since the share image's outlines were drawn: run `npx tsx scripts/brand-assets.ts --share`.",
   );
 }
 
@@ -75,14 +82,14 @@ if (headlineSource(HOME_COVER.headline) !== SHARE_HEADLINE_SOURCE) {
  */
 export function shareImageSvg(no: string): string {
   const { width, height } = SHARE_IMAGE_SIZE;
-  const mark = lockup(no, WHITE);
+  const mark = lockup(no, LOCKUP_ON_DARK);
   const scale = LOCKUP.height / 1000;
   const left = Number((width / 2 - (mark.width * scale) / 2).toFixed(3));
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
     `<rect width="${width}" height="${height}" fill="${CLOTH}"/>` +
     `<g transform="translate(${left} ${LOCKUP.top}) scale(${scale}) translate(500 500)">${mark.inner}</g>` +
-    `<g fill="${HONEY}">${seam()}</g>` +
+    `<g fill="${WHITE}">${seam()}</g>` +
     `<path fill="${WHITE}" d="${SHARE_HEADLINE_PATH}"/>` +
     `</svg>`
   );

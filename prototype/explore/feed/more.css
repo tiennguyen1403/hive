@@ -1,0 +1,519 @@
+/*
+ * HIVE style exploration, direction 3 "Feed", round 3, builder B: the screens around the account.
+ * Yêu thích, Thông báo, Tra cứu đơn, the closed issues and one closed issue, Hỏi đáp, Bảng size, Liên hệ, 404.
+ * Loaded after feed.css and flow.css. Same rules: phone first, a web app from 900px; controls are pills (999px),
+ * panels and photos square, sheets 20px, thumbnails 10px, slots 12px; the one blue for primary actions, live states
+ * and progress; error red only for errors. Every class here starts with "b-" so it never meets the chrome's.
+ */
+
+/* ------------------------------------------------------------------ icons this set adds (Phosphor regular, icons/) */
+.i-package { -webkit-mask-image: url(icons/package.svg); mask-image: url(icons/package.svg); }
+.i-package-fill { -webkit-mask-image: url(icons/package-fill.svg); mask-image: url(icons/package-fill.svg); }
+.i-calendar-star { -webkit-mask-image: url(icons/calendar-star.svg); mask-image: url(icons/calendar-star.svg); }
+.i-alarm { -webkit-mask-image: url(icons/alarm.svg); mask-image: url(icons/alarm.svg); }
+.i-chat-circle-text { -webkit-mask-image: url(icons/chat-circle-text.svg); mask-image: url(icons/chat-circle-text.svg); }
+.i-paper-plane-tilt { -webkit-mask-image: url(icons/paper-plane-tilt.svg); mask-image: url(icons/paper-plane-tilt.svg); }
+.i-compass { -webkit-mask-image: url(icons/compass.svg); mask-image: url(icons/compass.svg); }
+.i-checks { -webkit-mask-image: url(icons/checks.svg); mask-image: url(icons/checks.svg); }
+.i-device-mobile { -webkit-mask-image: url(icons/device-mobile.svg); mask-image: url(icons/device-mobile.svg); }
+.i-envelope-simple { -webkit-mask-image: url(icons/envelope-simple.svg); mask-image: url(icons/envelope-simple.svg); }
+.i-storefront { -webkit-mask-image: url(icons/storefront.svg); mask-image: url(icons/storefront.svg); }
+.i-question { -webkit-mask-image: url(icons/question.svg); mask-image: url(icons/question.svg); }
+.i-arrow-counter-clockwise { -webkit-mask-image: url(icons/arrow-counter-clockwise.svg); mask-image: url(icons/arrow-counter-clockwise.svg); }
+.i-t-shirt { -webkit-mask-image: url(icons/t-shirt.svg); mask-image: url(icons/t-shirt.svg); }
+.i-newspaper { -webkit-mask-image: url(icons/newspaper.svg); mask-image: url(icons/newspaper.svg); }
+.i-ticket { -webkit-mask-image: url(icons/ticket.svg); mask-image: url(icons/ticket.svg); }
+/* The account menu's icons, in case these pages load before the chrome's own list has them. */
+.i-map-pin { -webkit-mask-image: url(icons/map-pin.svg); mask-image: url(icons/map-pin.svg); }
+.i-identification-card { -webkit-mask-image: url(icons/identification-card.svg); mask-image: url(icons/identification-card.svg); }
+.i-sign-in { -webkit-mask-image: url(icons/sign-in.svg); mask-image: url(icons/sign-in.svg); }
+.i-sign-out { -webkit-mask-image: url(icons/sign-out.svg); mask-image: url(icons/sign-out.svg); }
+
+/* ------------------------------------------------------------------ page frame */
+/* The page title, as the account pages set theirs; on a pushed screen the phone bar shows it once it has scrolled away. */
+.b-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 18px var(--g) 14px; }
+.b-title { font-size: 44px; line-height: 1.04; }
+.b-head .link { min-height: 44px; margin: -10px 0; }
+.mbar.title-late .mbar-title { opacity: 0; transition: opacity .2s; }
+.mbar.title-on .mbar-title { opacity: 1; }
+.acc-main.b-acc { padding: 0; }
+.b-gatewrap { padding: 0 var(--g); }
+.b-count { font-size: 14px; font-weight: 620; color: var(--ink2); white-space: nowrap; }
+.b-sec { padding: 24px var(--g) 26px; border-top: 8px solid var(--bg2); }
+.b-sec > .sect-title { margin-bottom: 12px; }
+.b-quiet { font-size: 15px; font-weight: 600; color: var(--ink2); }
+
+@media (max-width: 899.98px) {
+  .b-desk-only { display: none !important; }
+}
+/* The 404 brings its own phone bar: the wordmark, like a tab root. */
+.b-mbar .brand { height: var(--bar); padding: 0 12px; }
+
+
+
+/* A settings row is one switch: the whole row toggles, the pill on the right shows the state. */
+.b-set { display: grid; }
+.b-setrow {
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 14px;
+  width: 100%; min-height: 60px; padding: 10px 0; border-top: 1px solid var(--line); text-align: left;
+}
+.b-setrow:first-child { border-top: 0; }
+.b-setrow > .i { width: 22px; height: 22px; }
+.b-setrow-label { min-width: 0; font-size: 15px; font-weight: 600; line-height: 1.3; }
+.b-setrow-label small { display: block; margin-top: 2px; font-size: 13px; font-weight: 480; color: var(--ink2); overflow-wrap: anywhere; }
+.b-switch {
+  position: relative; flex: none; width: 52px; height: 32px; border-radius: 999px;
+  background: var(--bg); box-shadow: inset 0 0 0 2px var(--ink2);
+  transition: background-color .2s var(--out), box-shadow .2s var(--out);
+}
+.b-switch::after {
+  content: ""; position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border-radius: 999px;
+  background: var(--ink2); transition: transform .32s var(--spring), background-color .2s var(--out);
+}
+[aria-checked="true"] > .b-switch { background: var(--ink); box-shadow: none; }
+[aria-checked="true"] > .b-switch::after { background: #fff; transform: translateX(20px) scale(1.5); }
+.b-setrow:focus-visible { outline-offset: -2px; border-radius: 12px; }
+
+/* An empty list: the flow's empty state, a little closer to the title. */
+.b-empty { padding-top: 40px; }
+
+/* An empty slot the shop fills later (its phone and email), drawn like the checkout's QR slot. */
+.b-slot {
+  display: grid; gap: 4px; padding: 16px 18px; border-radius: 12px; box-shadow: inset 0 0 0 1.5px var(--line2);
+  background: repeating-linear-gradient(135deg, transparent 0 10px, rgba(17, 18, 20, .035) 10px 11px);
+}
+.b-slot b { font-size: 14px; font-weight: 700; }
+.b-slot span { font-size: 13px; color: var(--ink2); }
+
+/* Busy: a button waiting on the shop, and the grey blocks that stand in for a result. */
+.btn[aria-busy="true"] { cursor: progress; }
+.b-skel { display: grid; gap: 12px; padding: 22px var(--g); }
+.b-skel i { display: block; height: 16px; border-radius: 999px; background: var(--bg2); }
+.b-skel i:nth-child(1) { width: 38%; height: 40px; }
+.b-skel i:nth-child(2) { width: 72%; }
+.b-skel i:nth-child(3) { width: 56%; }
+.b-skel i:nth-child(4) { width: 64%; }
+.motion .b-skel i { animation: b-shimmer 1.1s ease-in-out infinite alternate; }
+@keyframes b-shimmer { from { opacity: 1; } to { opacity: .45; } }
+
+/* A style with no photo (Số 03 and 04): its name on a plate. */
+.b-type {
+  display: grid; place-items: center; overflow: hidden; background: var(--bg2); color: var(--ink);
+  font-stretch: 75%; font-weight: 900; text-transform: uppercase; line-height: 1; text-align: center;
+}
+.b-chips { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.b-chip { display: inline-block; width: 12px; height: 12px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(17, 18, 20, .22); }
+
+/* ------------------------------------------------------------------ Yêu thích: a watch list */
+.b-fcs { display: grid; gap: 22px; padding: 8px var(--g) 0; }
+.b-fc { position: relative; display: grid; grid-template-columns: 136px minmax(0, 1fr); column-gap: 16px; align-items: start; }
+.b-fc-media { position: relative; display: block; background: var(--bg2); overflow: hidden; }
+.b-fc-media img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+.b-fc.is-flat .b-fc-media { background: #F2EEE8; }
+.b-fc .plate { font-size: 18px; padding: 8px 10px 5px; }
+.b-fc-fav.fav { top: 6px; right: auto; left: 94px; width: 36px; height: 36px; }
+.b-fc-fav.fav::after { content: ""; position: absolute; inset: -4px; }
+.b-fc-fav .i { width: 20px; height: 20px; }
+.b-fc-body { display: grid; justify-items: start; min-width: 0; padding-top: 2px; }
+.b-fc-name { font-size: 30px; line-height: 1.04; overflow-wrap: anywhere; }
+.b-fc-name a { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; margin: -7px 0; }
+.b-fc-name a::after { content: ""; position: absolute; inset: 0 0 0 152px; z-index: 0; }
+.b-fc-meta { margin-top: 4px; font-size: 13px; color: var(--ink2); line-height: 1.35; }
+.b-fc-price { margin-top: 6px; font-size: 15px; font-weight: 680; }
+.b-fc-stock { margin-top: 6px; }
+.b-fc-sizes { position: relative; z-index: 1; display: flex; gap: 6px; margin-top: 12px; }
+.b-sz {
+  position: relative; display: grid; place-items: center; width: 42px; height: 36px; border-radius: 999px;
+  background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--line2); font-size: 14px; font-weight: 680;
+  transition: box-shadow .15s, background-color .15s, transform .15s;
+}
+.b-sz::after { content: ""; position: absolute; inset: -4px -1px; }
+.b-sz:disabled { background: var(--bg2); color: var(--ink2); box-shadow: none; }
+.b-sz:disabled::before { content: ""; position: absolute; left: 22%; right: 22%; top: 50%; height: 1.5px; background: rgba(91, 95, 102, .45); transform: rotate(-24deg); }
+.motion .b-sz:not(:disabled):active { transform: scale(.94); }
+.b-fc.is-sold .b-fc-name, .b-fc.is-closed .b-fc-name { color: var(--ink); }
+.motion .b-fc.b-out { opacity: 0; transform: translateX(-12px); transition: opacity .2s var(--out), transform .2s var(--out); }
+.b-fc .b-type { width: 100%; aspect-ratio: 4 / 5; font-size: 34px; }
+
+/* ------------------------------------------------------------------ Thông báo */
+.mbar-acts .link { min-height: 44px; padding: 0 6px; font-size: 14px; text-decoration: none; }
+.b-ngroup { padding-top: 6px; }
+.b-ngroup-title { padding: 14px var(--g) 4px; font-size: 13px; font-weight: 700; color: var(--ink2); }
+.b-nrow {
+  position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; column-gap: 14px; align-items: center;
+  min-height: 72px; padding: 12px var(--g); transition: background-color .15s;
+}
+.b-nic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; background: var(--bg2); color: var(--ink); transition: background-color .2s, color .2s; }
+.b-nic .i { width: 22px; height: 22px; }
+.b-nmain { display: grid; gap: 2px; min-width: 0; }
+.b-ntitle { font-size: 15px; font-weight: 560; line-height: 1.3; }
+.b-nbody { font-size: 13px; line-height: 1.35; color: var(--ink2); }
+.b-ntime { align-self: start; padding-top: 2px; font-size: 13px; color: var(--ink2); white-space: nowrap; }
+/* Unread: the icon sits on ink and the title is bold; two cues that are not a colour. */
+.b-nrow.is-unread .b-nic { background: var(--ink); color: #fff; }
+.b-nrow.is-unread .b-ntitle { font-weight: 720; }
+.b-nrow.is-unread .b-ntime { color: var(--ink); font-weight: 650; }
+.b-nrow:focus-visible { outline-offset: -2px; }
+
+.b-rem { background: var(--bg2); padding: 18px 18px 8px; }
+.b-rem-no { font-size: 30px; line-height: 1.06; }
+.b-rem-cd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.b-rem-cd .cd-label { color: var(--ink2); }
+.b-rem-cd .cd-big { font-size: 26px; }
+.b-rem .b-set { margin-top: 14px; border-top: 1px solid var(--line2); }
+.b-rem .remind { margin: 16px 0 12px; }
+
+/* ------------------------------------------------------------------ Tra cứu đơn */
+.b-trk-form { display: grid; gap: 16px; padding: 18px var(--g) 8px; }
+.b-trk-form .field + .field { margin-top: 0; }
+.b-trk-form .btn { margin-top: 4px; }
+.b-trk-alt { display: flex; align-items: center; gap: 6px; padding: 4px var(--g) 0; font-size: 14px; color: var(--ink2); }
+/* With a result the form folds away and the order's code is the heading on screen; the page's h1 stays for assistive
+   tech (on the phone the bar carries the title). */
+.b-trk.has-result .b-trk-side { display: none; }
+.b-head-quiet { position: absolute !important; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 899.98px) {
+  /* On the phone grey blocks hold the result's place under the form while the lookup runs. */
+  .b-trk.is-busy .b-trk-alt { display: none; }
+}
+@keyframes b-fade { from { opacity: 0; } to { opacity: 1; } }
+.b-res { padding: 0 var(--g) 8px; }
+.b-res-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0 4px; }
+.b-res-head .link { min-height: 44px; }
+
+/* The countdown under a live issue's title (Số 05 open, Số 06 announced). */
+.b-state-cd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.b-state-cd .cd-label { color: var(--ink2); }
+.b-state-cd .cd-big { font-size: 30px; }
+.b-res-go { padding: 22px 0 4px; }
+
+/* ------------------------------------------------------------------ the closed issues */
+.b-now {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 14px var(--g) 0; padding: 12px 16px;
+  background: var(--bg2); font-size: 14px; color: var(--ink2); min-height: 56px;
+}
+.b-now-no { font-size: 22px; line-height: 1; color: var(--ink); }
+.b-now .cd-big { font-size: 20px; color: var(--ink); }
+.b-now > .i { margin-left: auto; width: 20px; height: 20px; color: var(--ink); }
+.b-arc { padding-top: 8px; }
+.b-issue { position: relative; padding: 26px var(--g) 28px; border-top: 1px solid var(--line); }
+.b-issue:first-child { border-top: 0; }
+.b-issue-no { font-size: 96px; line-height: .86; letter-spacing: -.01em; padding-top: .18em; }
+.b-issue-no a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.b-issue-meta { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 14px; font-size: 14px; color: var(--ink2); }
+.b-issue-meta b { color: var(--ink); font-weight: 680; }
+.b-names { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; margin-top: 16px; }
+.b-name { display: inline-flex; align-items: center; gap: 6px; }
+.b-name .disp { font-size: 30px; line-height: 1.08; }
+.b-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; font-size: 15px; font-weight: 650; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.b-go .i { width: 18px; height: 18px; transition: transform .2s var(--out); }
+/* Số 05 once closed: its own photo, dark like the open issue's story. */
+.b-issue.is-photo { padding: 0; border-top: 0; background: var(--ink); color: #fff; }
+.b-issue.is-photo + .b-issue { border-top: 0; }
+.b-issue-media img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: 50% 22%; }
+.b-issue-body { padding: 22px var(--g) 28px; }
+.is-photo .b-issue-meta { color: rgba(255, 255, 255, .8); }
+.is-photo .b-issue-meta b { color: #fff; }
+.is-photo .b-names .disp { color: #fff; }
+
+/* ------------------------------------------------------------------ one closed issue */
+.b-hero { padding: 22px var(--g) 8px; }
+.b-hero .chip-tag, .b-hero .chip-live, .b-hero .chip-line { margin-bottom: 14px; }
+.b-hero-no { font-size: 112px; line-height: .86; letter-spacing: -.01em; padding-top: .2em; }
+.b-hero-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 16px; font-size: 15px; color: var(--ink2); }
+.b-hero-meta b { color: var(--ink); font-weight: 700; }
+.b-hero .btn { margin-top: 20px; }
+.b-hero-cd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.b-hero-cd .cd-label { color: var(--ink2); }
+.b-hero-cd .cd-big { font-size: 34px; }
+.b-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2px; row-gap: 26px; margin-top: 22px; }
+.b-tile { position: relative; min-width: 0; }
+.b-tile-link { display: block; }
+.b-tile-media { position: relative; background: var(--bg2); }
+.b-tile-media img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: 50% 30%; }
+/* The name is the picture: sized to the plate, as large as its letter count allows. */
+.b-tile-plate {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between; aspect-ratio: 4 / 5;
+  padding: 12px 12px 8px; background: var(--bg2); overflow: hidden; container-type: inline-size;
+}
+.b-tile-kind { font-size: 12px; font-weight: 620; color: var(--ink2); line-height: 1.3; }
+/* On the plate: the kind on the left, the colours it came in on the right. */
+.b-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.b-tile-top .b-chip { width: 16px; height: 16px; }
+.b-tile-big { font-size: min(62cqi, calc((100cqi - 24px) / var(--n, 4) / .62)); line-height: 1; white-space: nowrap; padding-top: .12em; letter-spacing: -.01em; }
+.b-tiles.is-odd .b-tile:first-child .b-tile-big { font-size: min(40cqi, calc((100cqi - 24px) / var(--n, 4) / .62)); }
+/* An odd count on the phone: the first style takes the row, so no plate stands alone at the end. */
+.b-tiles.is-odd .b-tile:first-child { grid-column: 1 / -1; }
+.b-tiles.is-odd .b-tile:first-child .b-tile-plate { aspect-ratio: 8 / 5; }
+.b-tiles.is-odd .b-tile:first-child .b-tile-media img { aspect-ratio: 8 / 5; }
+.b-tile-body { padding: 10px 12px 0; }
+.b-tile-name { font-size: 24px; line-height: 1.06; }
+.b-tile-meta { margin-top: 3px; font-size: 13px; color: var(--ink2); line-height: 1.3; }
+.b-tile-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; }
+.b-tile-price { font-size: 14px; font-weight: 680; }
+.b-tile-sold { font-size: 13px; font-weight: 600; color: var(--ink2); }
+.b-tile-sold b { color: var(--ink); font-weight: 700; }
+.b-next { margin-top: 44px; border-top: 8px solid var(--bg2); }
+.b-next-now { padding: 24px var(--g) 8px; }
+.b-next-now .sect-title { margin-bottom: 6px; }
+.b-next-now .btn { margin-top: 16px; }
+.b-next-now .remind { margin-top: 16px; }
+.b-pn { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2px; margin-top: 22px; }
+.b-pn.n-1 { grid-template-columns: minmax(0, 1fr); }
+.b-pn a { position: relative; display: grid; gap: 4px; padding: 16px var(--g) 18px; background: var(--bg2); min-height: 88px; }
+.b-pn a.is-next { text-align: right; justify-items: end; }
+.b-pn small { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink2); }
+.b-pn small .i { width: 16px; height: 16px; }
+.b-pn .disp { font-size: 30px; line-height: 1.04; }
+
+/* ------------------------------------------------------------------ Hỏi đáp */
+.b-help-top { padding: 14px var(--g) 0; }
+.b-help-top .sform { height: 52px; }
+.b-cats { padding-top: 14px; padding-bottom: 4px; }
+.b-cats .chip { text-decoration: none; }
+.b-qgroup { padding: 24px var(--g) 4px; scroll-margin-top: calc(var(--bar) + 12px); }
+.b-qgroup-title { font-size: 30px; line-height: 1.06; margin-bottom: 8px; }
+.b-qa { border-top: 1px solid var(--line); }
+.b-qa:first-of-type { border-top: 0; }
+.b-qa summary {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px;
+  min-height: 56px; padding: 10px 0; list-style: none; cursor: pointer;
+  font-size: 16px; font-weight: 620; line-height: 1.35;
+}
+.b-qa summary::-webkit-details-marker { display: none; }
+.b-qa summary .i { width: 20px; height: 20px; color: var(--ink2); transition: transform .28s var(--spring); }
+.b-qa[open] summary .i { transform: rotate(45deg); color: var(--ink); }
+.b-qa summary:focus-visible { outline-offset: -2px; border-radius: 12px; }
+.b-qa-a { padding: 0 36px 18px 0; font-size: 15px; line-height: 1.55; max-width: 62ch; }
+.b-qa-a b { font-weight: 680; }
+.b-qa-a .link { margin-top: 2px; }
+.motion .b-qa[open] .b-qa-a { animation: b-drop .3s var(--out); }
+@keyframes b-drop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+mark.b-hit { background: rgba(24, 70, 240, .14); color: inherit; border-radius: 3px; padding: 0 1px; }
+.b-help-none { padding: 28px var(--g) 4px; }
+.b-help-none .snone-line { margin-bottom: 14px; }
+.b-help-none .btn { width: auto; display: inline-flex; padding: 0 24px; }
+.b-help-more { margin-top: 28px; padding: 24px var(--g) 26px; background: var(--bg2); }
+.b-help-more .sect-title { margin-bottom: 14px; }
+@media (max-width: 899.98px) {
+  .b-help.is-search .b-cats { display: none; }
+}
+
+/* ------------------------------------------------------------------ Bảng size */
+.b-sg-cap { padding: 16px var(--g) 0; font-size: 14px; color: var(--ink2); }
+.b-hpick { padding: 18px 0 0; }
+.b-hpick .sh-label { padding: 0 var(--g); margin-bottom: 0; }
+.b-hpick .chips { padding-top: 10px; padding-bottom: 8px; }
+.b-hres { min-height: 26px; padding: 2px var(--g) 0; font-size: 16px; font-weight: 600; }
+.b-hres b { font-weight: 800; }
+.b-fits { display: grid; gap: 0; margin-top: 14px; }
+.b-fit { padding: 22px var(--g) 22px; border-top: 8px solid var(--bg2); }
+.b-fit-title { font-size: 30px; line-height: 1.06; }
+.b-fit-names { margin: 6px 0 14px; font-size: 13px; color: var(--ink2); line-height: 1.45; }
+.b-fit .fit-table tr.on td { background: var(--ink); color: #fff; }
+.b-fit .fit-table td { transition: background-color .2s, color .2s; }
+.b-tips { padding: 22px var(--g) 8px; border-top: 8px solid var(--bg2); }
+.b-tips .sect-title { margin-bottom: 8px; }
+.b-tips p { font-size: 15px; line-height: 1.5; }
+/* One line under each pair of charts: how to measure a piece already worn. */
+.b-measure { display: flex; align-items: flex-start; gap: 10px; padding: 4px var(--g) 24px; font-size: 14px; line-height: 1.5; }
+.b-measure .i { flex: none; width: 20px; height: 20px; margin-top: 1px; color: var(--ink2); }
+/* Six columns on a phone: the trouser charts sit a little tighter than the tops'. */
+.b-fit .b-pants th, .b-fit .b-pants td { padding-left: 3px; padding-right: 3px; }
+.b-fit .b-pants th:first-child, .b-fit .b-pants td:first-child { padding-left: 8px; }
+.b-fit .b-pants th:last-child, .b-fit .b-pants td:last-child { padding-right: 8px; }
+.b-fit .b-pants td:last-child { white-space: nowrap; }
+
+/* ------------------------------------------------------------------ Liên hệ */
+.b-cform { display: grid; gap: 16px; padding: 18px var(--g) 8px; }
+.b-cform .field + .field { margin-top: 0; }
+.b-cform .field textarea { min-height: 140px; }
+.b-lblwrap { display: block; }
+.b-ochips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.b-ochips .schip[aria-pressed="true"] { background: var(--ink); color: #fff; box-shadow: none; }
+.b-cform .btn { margin-top: 4px; }
+.b-cside { padding: 16px var(--g) 8px; }
+.b-sent { display: grid; justify-items: start; gap: 6px; padding: 28px var(--g) 8px; }
+.b-sent .ok-title { font-size: 40px; line-height: 1.06; }   /* its check is on the title's line (feed.css .ok-mark) */
+.b-sent-to { margin-top: 4px; font-size: 15px; color: var(--ink2); }
+.b-sent-to b { color: var(--ink); font-weight: 680; overflow-wrap: anywhere; }
+.b-sent-acts { display: grid; gap: 10px; width: 100%; margin-top: 18px; }
+
+/* ------------------------------------------------------------------ 404 */
+.b-nf { padding: 28px var(--g) 8px; }
+.b-nf-title { font-size: 64px; line-height: 1.08; }
+.b-nf-links { display: grid; margin-top: 28px; }
+.b-nf-links a {
+  position: relative; display: flex; align-items: center; gap: 14px; min-height: 76px; border-top: 1px solid var(--line);
+}
+.b-nf-links a:last-child { border-bottom: 1px solid var(--line); }
+.b-nf-links .i { width: 26px; height: 26px; }
+.b-nf-links .disp { font-size: 34px; line-height: 1.04; }
+.b-nf-links .i-arrow-right { margin-left: auto; width: 22px; height: 22px; transition: transform .2s var(--out); }
+
+/* ------------------------------------------------------------------ tablet: the phone layout in a calmer column */
+@media (min-width: 600px) and (max-width: 899.98px) {
+  .b-page { max-width: 600px; margin-left: auto; margin-right: auto; }
+}
+
+/* ------------------------------------------------------------------ desktop */
+@media (min-width: 900px) {
+  .b-wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--wg); }
+  .b-head { padding: 36px 0 24px; align-items: flex-end; }
+  .acc-main .b-head { padding-top: 0; }
+  .b-title { font-size: 64px; }
+  .b-head .link { margin: 0 0 6px; }
+  .b-gatewrap { padding: 0; }
+  .b-count { font-size: 16px; padding-bottom: 10px; }
+  .b-sec { padding: 28px 0 8px; border-top: 1px solid var(--line); }
+  .b-empty { padding-top: 56px; }
+
+  /* Yêu thích: two across next to the account menu */
+  .b-fcs { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; row-gap: 40px; padding: 4px 0 0; }
+  .b-fc { grid-template-columns: 200px minmax(0, 1fr); column-gap: 22px; }
+  .b-fc-fav.fav { left: 156px; top: 8px; }
+  .b-fc-name { font-size: 44px; }
+  .b-fc-name a::after { inset: 0 0 0 222px; }
+  .b-fc-meta { font-size: 14px; }
+  .b-fc-price { font-size: 16px; margin-top: 8px; }
+  .b-fc-sizes { margin-top: 16px; }
+  .b-sz { width: 46px; height: 40px; }
+  .b-fc .plate { font-size: 24px; padding: 10px 13px 7px; }
+
+  /* Thông báo: the inbox, with the reminder and the settings beside it */
+  .b-notif { display: grid; grid-template-columns: minmax(0, 1fr) 340px; column-gap: 48px; align-items: start; }
+  .b-inbox { min-width: 0; }
+  .b-ngroup-title { padding: 18px 16px 6px; }
+  .b-nrow { padding: 12px 16px; }
+  .b-nside { position: sticky; top: 100px; display: grid; gap: 36px; }
+  .b-nside .b-sec { padding: 0; border-top: 0; }
+  .b-nside .sect-title { font-size: 20px; }
+
+  /* Tra cứu đơn: one column centred in the page, built as on the phone: the title and the form in 480px, the order in
+     720px with its code where the title stood. The wait shows on the button alone: the order takes the form's place
+     rather than landing below it, so no grey blocks stand there first. */
+  .p-track .b-head, .b-trk { max-width: 480px; margin-left: auto; margin-right: auto; }
+  .b-trk.has-result { max-width: 720px; }
+  .b-trk-form { padding: 0; }
+  .b-trk-alt { padding: 14px 0 0; }
+  .b-trk .b-skel { display: none; }
+  .b-res { padding: 0; }
+  .b-res-head { align-items: baseline; padding: 36px 0 6px; }
+  .b-res-go { padding: 24px 0 0; }
+  .b-res-go .btn { width: auto; display: inline-flex; padding: 0 28px; }
+  .motion .b-res.is-fresh { animation: b-fade .3s var(--out); }
+
+  /* the closed issues: one wide row per issue */
+  .b-now { margin: 0 0 8px; padding: 14px 20px; }
+  .b-arc { padding-top: 16px; }
+  .b-issue { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: 56px; align-items: start; padding: 40px 0 44px; }
+  .b-issue-no { font-size: 168px; }
+  .b-issue-side { grid-column: 2; }
+  .b-issue-meta { font-size: 15px; }
+  .b-names { margin-top: 0; gap: 0 26px; }
+  .b-name .disp { font-size: 72px; line-height: 1.06; }
+  .b-issue-side .b-go { margin-top: 22px; }
+  .b-issue.is-photo { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: 0; align-items: stretch; margin: 8px 0 12px; }
+  .b-issue-media { align-self: stretch; }
+  .b-issue-media img { height: 100%; aspect-ratio: 4 / 5; }
+  .b-issue-body { display: flex; flex-direction: column; justify-content: space-between; gap: 40px; padding: 44px 52px 48px; }
+  .is-photo .b-names { margin-top: 0; gap: 0 20px; }
+  .is-photo .b-name .disp { font-size: 52px; }
+
+  /* one closed issue */
+  .b-hero { padding: 40px 0 8px; }
+  .b-hero-no { font-size: 200px; }
+  .b-hero-meta { gap: 4px 20px; margin-top: 18px; font-size: 18px; }
+  .b-hero .btn, .b-hero .remind { width: auto; display: inline-flex; padding: 0 28px; }
+  .b-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 40px; margin-top: 36px; }
+  .b-tiles.n-6, .b-tiles.n-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .b-tiles.n-5, .b-tiles.n-10 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .b-tiles.is-odd .b-tile:first-child { grid-column: auto; }
+  .b-tiles.is-odd .b-tile:first-child .b-tile-plate, .b-tiles.is-odd .b-tile:first-child .b-tile-media img { aspect-ratio: 4 / 5; }
+  .b-tile-plate { padding: 16px 16px 10px; }
+  .b-tile-body { padding: 12px 14px 0; }
+  .b-tile-name { font-size: 28px; }
+  .b-next { display: grid; grid-template-columns: minmax(0, 2fr); gap: 4px; margin-top: 72px; border-top: 0; }
+  .b-next.pn-1 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .b-next.pn-2 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
+  .b-next .b-pn { display: contents; }
+  .b-next-now { padding: 32px 36px 36px; background: var(--bg2); }
+  .b-next-now .btn, .b-next-now .remind { width: auto; display: inline-flex; padding: 0 28px; }
+  .b-pn a { padding: 32px 36px; align-content: space-between; }
+  .b-pn .disp { font-size: 56px; }
+
+  /* Hỏi đáp */
+  .b-help-top { padding: 0; }
+  .b-help-top .sform { max-width: 720px; height: 60px; padding-left: 22px; margin-top: 18px; }
+  .b-help-top .sform > .i { width: 24px; height: 24px; }
+  .b-help-top .sform input { font-size: 19px; }
+  .b-help { display: grid; grid-template-columns: 200px minmax(0, 760px); column-gap: 64px; align-items: start; }
+  .b-cats { grid-row: 1 / span 2; position: sticky; top: 100px; display: grid; gap: 2px; padding: 34px 0 0; }
+  .b-cats .chip { justify-content: flex-start; height: 44px; padding: 0 16px; background: transparent; color: var(--ink2); font-size: 15px; font-weight: 560; }
+  .b-cats .chip:hover { background: var(--bg2); color: var(--ink); }
+  .b-help-body, .b-help-more { grid-column: 2; }
+  .b-qgroup { padding: 36px 0 4px; max-width: 760px; scroll-margin-top: 88px; }
+  .b-qgroup-title { font-size: 40px; margin-bottom: 10px; }
+  .b-qa summary { font-size: 17px; min-height: 60px; }
+  .b-qa-a { font-size: 16px; }
+  .b-help-none { padding: 36px 0 4px; }
+  .b-help-more { max-width: 760px; margin-top: 40px; padding: 32px 36px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .b-help-more .sect-title { margin: 0; }
+  .b-help-more .btn { width: auto; padding: 0 28px; }
+
+  /* Bảng size */
+  .b-sg-cap { padding: 0; }
+  .b-hpick { padding-top: 22px; }
+  .b-hpick .sh-label { padding: 0; }
+  .b-hpick .chips { padding: 12px 0 8px; }
+  .b-hres { padding: 4px 0 0; font-size: 18px; }
+  .b-fits { grid-template-columns: 1fr 1fr; column-gap: 48px; margin-top: 20px; }
+  .b-fit { padding: 28px 0 8px; border-top: 1px solid var(--line); }
+  .b-fit-title { font-size: 44px; }
+  .b-fit .fit-table { font-size: 15px; }
+  .b-tips { padding: 32px 0 0; margin-top: 32px; border-top: 1px solid var(--line); max-width: 760px; }
+  .b-measure { grid-column: 1 / -1; padding: 16px 0 8px; font-size: 15px; }
+  .b-fits + .b-fits { margin-top: 32px; }
+  .b-fit .b-pants th, .b-fit .b-pants td { padding-left: 4px; padding-right: 4px; }
+
+  /* Liên hệ */
+  .b-contact { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); column-gap: 64px; align-items: start; }
+  .b-cform { padding: 0; }
+  .b-cform .btn { width: auto; justify-self: start; padding: 0 32px; }
+  .b-cside { position: sticky; top: 100px; padding: 0; display: grid; gap: 16px; }
+  .b-sent { padding: 8px 0 0; }
+  .b-sent .ok-title { font-size: 48px; }
+  .b-sent-acts { grid-template-columns: auto auto; justify-content: start; }
+  .b-sent-acts .btn { width: auto; padding: 0 28px; }
+
+  /* 404 */
+  .b-nf { padding: 56px 0 8px; }
+  .b-nf-title { font-size: 120px; }
+  .b-nf-links { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 40px; }
+  .b-nf-links a, .b-nf-links a:last-child { flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 200px; padding: 24px 26px; border: 0; background: var(--bg2); }
+  .b-nf-links .disp { font-size: 48px; }
+  .b-nf-links .i-arrow-right { position: absolute; right: 26px; top: 26px; }
+}
+
+@media (min-width: 900px) and (max-width: 1199.98px) {
+  .b-notif { grid-template-columns: minmax(0, 1fr) 300px; column-gap: 32px; }
+  .b-hero-no { font-size: 160px; }
+}
+
+/* Pointer hover, where there is one. */
+@media (hover: hover) and (pointer: fine) {
+  .b-nrow:hover { background: var(--bg2); }
+  .b-sz:not(:disabled):hover { box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .b-nrow.is-unread:hover .b-nic { background: #2A2C30; }
+  .b-setrow:hover .b-switch { box-shadow: inset 0 0 0 2px var(--ink); }
+  .b-setrow[aria-checked="true"]:hover .b-switch { box-shadow: none; background: #2A2C30; }
+  .b-issue:hover .b-go .i, .b-nf-links a:hover .i-arrow-right { transform: translateX(4px); }
+  .b-nf-links a:hover { background: #E4E6EA; }
+  .b-pn a:hover { background: #E4E6EA; }
+  .b-qa summary:hover { color: var(--ink); }
+  .b-qa summary:hover .i { color: var(--ink); }
+  .b-ochips .schip:not([aria-pressed="true"]):hover { background: var(--bg2); box-shadow: none; }
+  .b-tile-link:hover .b-tile-media img { transform: scale(1.03); }
+  .b-tile-media { overflow: hidden; }
+  .motion .b-tile-media img { transition: transform .7s var(--out); }
+}

@@ -52,6 +52,19 @@ export function isAdminPath(pathname: string): boolean {
   return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
+/**
+ * The routes already rebuilt in the round v4 "Feed" design (QĐ-32): the home
+ * page since slice 1a. Each later slice adds its routes here. The veil takes
+ * the logo's black-and-white colours (QĐ-33) when it covers one of them or
+ * leads to one, and keeps the v3 honey only between two v3 screens.
+ */
+const FEED_PATHS: readonly string[] = ["/"];
+
+export function isFeedPath(pathname: string): boolean {
+  const trimmed = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  return FEED_PATHS.includes(trimmed);
+}
+
 function samePage(a: string, b: string): boolean {
   const trim = (p: string) => (p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p);
   return trim(a) === trim(b);

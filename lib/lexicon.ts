@@ -43,27 +43,27 @@ export const LEX = {
 } as const;
 
 /**
- * The two lines the home page opens with — the only copy on that screen that
- * is not arithmetic over `data/`.
+ * The cover line the home page opens with — the only copy on that screen that
+ * is not arithmetic over `data/` — and the v3 cover's lead under it.
  *
  * They live here, beside the lexicon, because they are the shop's own voice
- * rather than the home page's layout: the user is still weighing the wording
- * (four candidates were on the board as `HERO` in `prototype/v3/v3.js` on
- * 22/09/2026), and when they settle it the change is these two strings and
- * nothing else. The screen reads them; it never spells them out inline.
+ * rather than the home page's layout: when the wording changes, the change is
+ * these strings and nothing else. The screen reads them; it never spells them
+ * out inline.
  *
- * `headline` says ten because the open issue has ten styles. It is the one
- * figure on the page typed rather than counted, and it is typed because it
- * is a sentence, not a count — if the issue ever carries a different number
- * the line has to be rewritten by a person, not patched by a formatter.
+ * `headline` is "Cắt 1 lần. Không tái bản." since round v4 (the user's answer
+ * on the Feed mock, round 4, 27/09/2026): the Feed home's story sets it on
+ * its two lines (`coverLines`, `lib/feed-home.ts`). It names no count — the
+ * v3 line said ten, the one figure on that page typed rather than counted.
+ * `lead` belonged to the v3 cover and no Feed screen prints it.
  *
- * The share image (v3 slice 10) prints `headline` too, as outlines drawn from
- * it by `scripts/brand-assets.ts`: after changing it, run that script once.
- * Until then the build and the tests refuse the old outlines
- * (`lib/brand/share-image.ts`).
+ * The share image (v3 slice 10, redrawn at v4 slice 1a) prints `headline`
+ * too, as outlines drawn from it by `scripts/brand-assets.ts`: after changing
+ * it, run that script once. Until then the build and the tests refuse the old
+ * outlines (`lib/brand/share-image.ts`).
  */
 export const HOME_COVER = {
-  headline: "Mười mẫu. Cắt một lần. Hết là hết.",
+  headline: "Cắt 1 lần. Không tái bản.",
   lead:
     "Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt. Số còn lại của từng mẫu hiện ngay " +
     "bên dưới. Hết size là hết, không may thêm.",

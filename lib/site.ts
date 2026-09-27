@@ -14,10 +14,12 @@ export const SITE_NAME = "HIVE";
 export const SITE_DESCRIPTION = "Streetwear unisex bán theo số. Mỗi số cắt một lần.";
 
 /**
- * The white floor, as the browser's own chrome wears it: `viewport.themeColor`,
- * and the manifest's theme and background.
+ * The ground, as the browser's own chrome wears it: `viewport.themeColor`,
+ * and the manifest's theme and background. Since round v4 slice 1a the Feed's
+ * ground, `#FCFCFD` (the mock's `<meta name="theme-color">`; `--f-bg`), on
+ * every page: the browser's bar is one colour for the whole shop.
  */
-export const THEME_COLOR = "#ffffff";
+export const THEME_COLOR = "#FCFCFD";
 
 /**
  * The environment `siteOrigin` reads — `process.env`, or a stand-in in a

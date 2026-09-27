@@ -1,5 +1,5 @@
 import { ISSUE_NUMBER, MARK_FIGURE, NAME_RIGHT, WORDMARK } from "./logo";
-import { HONEY, INK, WHITE } from "./palette";
+import { MONO } from "./palette";
 
 /** A lockup ready to be placed: its inner markup and the width of its viewBox, both in logo units. */
 export interface Lockup {
@@ -8,6 +8,22 @@ export interface Lockup {
   /** The disc, the bee, the wordmark and (with an issue) the ".NN", as SVG markup. */
   inner: string;
 }
+
+/** The four fills of a lockup: the mark's disc and bee, the name, the ".NN". */
+export interface LockupColours {
+  disc: string;
+  bee: string;
+  name: string;
+  number: string;
+}
+
+/**
+ * The lockup on a dark ground in black and white (QĐ-33, round v4): the
+ * white disc with the bee in ink, and the name and the number in white —
+ * `hive-mark-negative.svg` and `hive-wordmark-white.svg`. The share image's
+ * colours since v4 slice 1a.
+ */
+export const LOCKUP_ON_DARK: LockupColours = { ...MONO.dark, number: MONO.dark.name };
 
 /**
  * The HIVE lockup, with ".NN" for an issue or without one: the board's
@@ -25,7 +41,7 @@ export interface Lockup {
  * hold is refused rather than skipped: a share image with a hole in its
  * number would say the wrong issue.
  */
-export function lockup(no: string, nameFill: string = WHITE): Lockup {
+export function lockup(no: string, colours: LockupColours = LOCKUP_ON_DARK): Lockup {
   let right = NAME_RIGHT;
   let parts = "";
   if (no) {
@@ -44,8 +60,8 @@ export function lockup(no: string, nameFill: string = WHITE): Lockup {
   return {
     width: Number((right + 500).toFixed(2)),
     inner:
-      `<circle r="500" fill="${HONEY}"/><path fill="${INK}" d="${MARK_FIGURE}"/>` +
-      `<path fill="${nameFill}" d="${WORDMARK}"/>` +
-      (parts ? `<g fill="${HONEY}">${parts}</g>` : ""),
+      `<circle r="500" fill="${colours.disc}"/><path fill="${colours.bee}" d="${MARK_FIGURE}"/>` +
+      `<path fill="${colours.name}" d="${WORDMARK}"/>` +
+      (parts ? `<g fill="${colours.number}">${parts}</g>` : ""),
   };
 }

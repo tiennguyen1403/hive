@@ -35,10 +35,17 @@ describe("the HIVE lockup", () => {
     expect(lockup("").inner).not.toContain("<g ");
   });
 
-  it("draws the mark in honey and ink, the name in the colour asked for, the number in honey", () => {
-    const { inner } = lockup("05", "#ffffff");
-    expect(inner).toContain(`<circle r="500" fill="#eba400"/><path fill="#171410" d="${MARK_FIGURE}"/>`);
+  it("draws the black-and-white lockup for a dark ground by default: white disc, ink bee, white name and number (QĐ-33)", () => {
+    const { inner } = lockup("05");
+    expect(inner).toContain(`<circle r="500" fill="#ffffff"/><path fill="#171410" d="${MARK_FIGURE}"/>`);
     expect(inner).toContain(`<path fill="#ffffff" d="${WORDMARK}"/>`);
+    expect(inner).toContain(`<g fill="#ffffff"><path transform="translate(1703.63 260) scale(0.26)"`);
+    expect(inner).not.toContain("#eba400");
+  });
+
+  it("draws the colours it is asked for, one per part", () => {
+    const { inner } = lockup("05", { disc: "#eba400", bee: "#171410", name: "#ffffff", number: "#eba400" });
+    expect(inner).toContain(`<circle r="500" fill="#eba400"/><path fill="#171410" d="${MARK_FIGURE}"/>`);
     expect(inner).toContain(`<g fill="#eba400"><path transform="translate(1703.63 260) scale(0.26)"`);
   });
 

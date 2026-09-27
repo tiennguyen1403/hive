@@ -2198,3 +2198,188 @@ Còn mở:
 - Số 03/04, mẫu hé lộ Số 06 và mẫu cố định chưa có ảnh.
 - DESIGN.md: documenter cập nhật.
 - Hosted: nạp lại seed sau khi deploy.
+
+## Đợt v4 "Feed": đưa giao diện Feed vào app *(27/09/2026)*
+
+**Bối cảnh.** Sau bốn vòng mock ở `prototype/explore/`, người dùng chọn hướng **Feed**, rồi yêu cầu (27/09): "cần deploy version
+này. check xem còn chỗ nào vướng hay cần chuẩn bị gì". Feed là mock tĩnh (HTML/CSS/JS, dữ liệu giả ở
+`prototype/explore/shared/data.js`), nên "deploy" nghĩa là dựng lại phần khách trong app, theo lát như v2 và v3.
+
+Nguồn chuẩn:
+- `prototype/explore/feed/*.html` cùng tệp JS của từng trang;
+- CSS dùng chung `feed.css`, `flow.css`, `account.css`, `more.css`;
+- `feed.js`, trong đó có hợp đồng khung trang;
+- `feed/BRIEF.md`, nơi ghi mọi quyết định của các vòng 1 đến 4 và các lượt sửa bố cục;
+- `feed/direction.json` cho tên gọi và bảng màu;
+- bảng xem `prototype/explore/index.html`.
+
+Kết quả soát (agent Explore đọc app, 27/09):
+- **App đã có:** danh mục, Số, tồn kho, đặt hàng chuyển khoản giữ 12 giờ, COD, địa chỉ hai cấp, tra cứu đơn theo mã và số
+  điện thoại, mã giảm giá, ảnh Số 05, quản trị (đơn, mẫu, Số, khách, mã, nhật ký).
+- **App chưa có:**
+  - bảng cho yêu thích, nhắc mở bán, trạng thái thông báo và size ghi nhớ; cả bốn đang ở localStorage;
+  - yêu cầu đổi trả: `/returns` chỉ là trang chính sách, không có bảng hay trạng thái;
+  - form liên hệ;
+  - bất kỳ đường gửi email nào: không có nhà cung cấp; quên mật khẩu chỉ chạy trên trình duyệt;
+  - sửa hồ sơ: đang chỉ đọc;
+  - giới hạn tần suất cho `track_order`.
+- **Đơn thẻ** hiện là RECEIVED "chưa thu tiền", không có hạn.
+- **Tài sản thiết kế:** font Be Vietnam Pro + Unbounded (next/font/google), icon Iconsax (`components/icon/paths.ts`), màu
+  mật ong `#eba400`, bo 4px. Logo mark M2 + chữ W3 Stencil có màu mật ong, bản đen/trắng đã vẽ sẵn ở `prototype/name/logo/`.
+
+### QĐ-32: Feed thay hệ thiết kế v3 cho phần khách *(27/09/2026)*
+- **Màu:** một màu nhấn xanh `#1846F0`; đỏ `#C62A1D` chỉ cho lỗi; mực `#111214`, chữ phụ `#5B5F66`, nền `#FCFCFD`, nền nhóm
+  `#F1F2F4`.
+- **Chữ:** Mona Sans, hẹp 75% cho chữ hiển thị, 100% cho chữ giao diện.
+- **Icon:** Phosphor.
+- **Hình khối:** nút, chip, ô nhập bo tròn hẳn; thẻ lựa chọn 16px; sheet 20px hai góc trên; ảnh nhỏ 10px.
+- **Quản trị giữ v3** (`prototype/v3/`) cho tới vòng mock quản trị của Feed. Token Feed phải khoanh vùng: màn chưa tới lượt
+  và khu quản trị không đổi cho tới lát của chúng.
+- DESIGN.md do documenter viết lại khi xong đợt, như v3.
+
+### QĐ-33: Logo đã chốt, bản đen trắng *(27/09/2026)*
+- Người dùng chọn giữ mark M2 và chữ W3 Stencil (QĐ-29/30) nhưng dùng bản đen và bản trắng, bỏ màu mật ong, để xanh là màu
+  nhấn duy nhất.
+- Favicon, apple-icon, icon cài đặt và ảnh chia sẻ (QĐ-31) vẽ lại bản đen trắng qua `scripts/brand-assets.ts`.
+- Chữ HIVE nghiêng và ô chữ H trong mock Feed **không** dùng.
+
+### QĐ-34: Phần khách lên trước, đổi trả và liên hệ để sau *(27/09/2026)*
+- Lát 0 đến 4 đưa phần khách lên demo.
+- `/returns` và `/contact` giữ nội dung đang chạy, chỉ khoác khung Feed.
+- Luồng yêu cầu đổi trả và form liên hệ (đã chốt luật ở `feed/BRIEF.md` vòng 4) làm sau một vòng mock quản trị Feed, kèm lát
+  backend. Luồng đó thu số tài khoản ngân hàng của khách, trong khi quản trị demo mở công khai, nên phải che số hoặc không lưu.
+
+### QĐ-35: Chưa có email; Feed chỉ hứa Thông báo trong app *(27/09/2026)*
+- Chưa có tên miền riêng để xác minh gửi mail (demo chạy trên `*.vercel.app`) và chưa có dịch vụ gửi mail. Chữ "email" ở các
+  màn Feed đổi thành "Thông báo" hoặc bỏ.
+- Đổi email ở Hồ sơ giữ chỉ đọc. Quên mật khẩu giữ như app đang chạy.
+- Thêm email khi người dùng có tên miền và tài khoản dịch vụ (Resend đã ghi ở `tasks/backend.md`).
+
+### Bản đồ màn → route → lát
+
+| Mock Feed | Route app | Lát |
+|---|---|---|
+| token, font, icon, logo đen trắng, favicon/OG | toàn app (khoanh vùng) | 0 |
+| khung (thanh trên, tab đáy điện thoại, chân trang), `home.html` (Bảng tin / Cửa hàng / Sắp mở, bốn thời điểm) | `/` | 1 |
+| `products.html`, `product.html` (story), `search.html` | `/products`, `/products/[slug]`, `/search` | 1 |
+| `issue.html`, `archive.html` | `/so/[no]`, danh sách các Số đã đóng (route mới) | 1 |
+| `cart.html`, `checkout.html`, `order-confirmed.html` | `/cart`, `/checkout`, `/order-confirmed[/code]` | 2 |
+| `sign-in.html` (+ tạo tài khoản, quên mật khẩu), `account.html` | `/sign-in`, `/sign-up`, `/forgot-password`, `/account` | 3 |
+| `orders.html` (lọc), `order.html`, `addresses.html`, `profile.html` | `/account/orders[/code]`, `/account/addresses[/new]`, `/account/profile`, `/account/password` | 3 |
+| `favorites.html` | `/account/wishlist` | 3 |
+| `notifications.html`, `track.html`, `help.html`, `size-guide.html`, `404.html` | `/account/notifications`, `/track`, `/faq` (tên Hỏi đáp), bảng size (route mới), not-found | 4 |
+| không có mock | `/about`, `/contact`, `/returns`: khoác khung Feed, giữ nội dung | 4 |
+
+URL giữ nguyên (QĐ về URL tiếng Anh). Tab trang chủ đổi bằng hash hoặc tham số, không đổi route.
+
+### Backend theo lát (`backend-implementer`)
+- **Lát 2:** đơn thẻ trả bằng chuyển khoản, AWAITING_TRANSFER giữ 12 giờ, sửa ở `place_order`; nhãn quản trị theo đó.
+- **Lát 3:** yêu thích bắt buộc đăng nhập và lưu theo tài khoản; Size của tôi, công tắc thông báo, nhắc mở bán lưu theo tài
+  khoản; Hồ sơ sửa được tên và số điện thoại.
+- **Lát 4:** giới hạn tần suất cho tra cứu đơn.
+
+### Quy trình
+- Mỗi lát: brief ở `tasks/briefs/v4-lat-N.md`, agent dựng, phiên chính duyệt độc lập (ảnh 390/1280, mở lớp nổi, so với mock),
+  người dùng xem, rồi **commit và push chỉ khi người dùng cho phép**.
+- Lần commit đầu kèm mock Feed làm nguồn chuẩn, bỏ `prototype/explore/_shots/` (ảnh soát, khoảng 220 MB) vào `.gitignore`.
+- Hai tệp `tasks/anh-san-pham-prompt.md` và `tasks/lookbook-register.md` do phiên khác sửa, không commit chung.
+
+### Còn mở
+- Giữa các lát, demo có cả trang Feed lẫn trang v3 với hai kiểu khung. Hỏi người dùng lúc push lần đầu: lên từng lát, hay gom
+  lát 1 và 2 cho trọn luồng mua.
+- Tồn từ trước:
+  - KHÓI còn nền gốc;
+  - Số 03/04 và mẫu Cố định chưa có ảnh;
+  - giới hạn đăng nhập tính theo IP máy chủ Vercel;
+  - vài thao tác địa chỉ lỗi im lặng.
+- Ảnh bìa Unsplash sẽ không cần nữa, vì Bảng tin của Feed mở bằng ảnh NGUỘI của Số 05.
+
+### QĐ-36: Bản làm lại giống Feed hoàn toàn; luật cũ nhường, xung đột phải báo *(27/09/2026)*
+Người dùng: "có thể phá bỏ các rule hiện tại nếu nó chặn UI mới. tức là bản làm lại này phải giống hoàn toàn với feed. nhưng
+có conflict rule nào phải thông báo để tôi confirm".
+- Mock Feed thắng mọi luật cũ khi hai bên chặn nhau: DESIGN.md, các QĐ trước, luật trong định nghĩa agent, craft floor, hook
+  thiết kế.
+- Agent dựng theo Feed và liệt kê từng xung đột ở mục "Xung đột luật" trong báo cáo.
+- Phiên chính gom lại, hỏi người dùng xác nhận. Mục nào người dùng không nhận thì hoàn về luật cũ.
+- Trước lát 1, phiên chính rà sẵn các xung đột đã biết để người dùng xác nhận một lượt.
+
+**QĐ-36, người dùng xác nhận 18 xung đột (27/09).** Agent Explore rà mock Feed với các luật cũ và tìm ra 18 xung đột. Người dùng
+chọn:
+- **Theo Feed** ở 15 mục nhìn thấy được:
+  1. nút không icon;
+  2. khối nền tối chữ trắng;
+  3. tên mẫu không kèm "S05 –";
+  4. nhãn trên tiêu đề;
+  5. ảnh cắt khỏi 4:5 (story 8:11, thẻ rộng, 4:3);
+  6. nút vô hiệu ghi sự thật;
+  7. tim đặc để bỏ lưu;
+  8. chuyển động 0,6 đến 0,7 giây, hiện dần, lò xo;
+  9. xưng "tôi/bạn";
+  10. ô lồng trong khối;
+  11. hai nút xanh trên trang chủ máy tính;
+  12. cỡ icon tự do;
+  13. "ĐÃ HẾT" thay "SOLD OUT";
+  14. dải 900 đến 1199px và cột 600px ở tablet;
+  15. chữ hiển thị trên 6rem.
+- **Giữ luật cũ** ở 3 mục vô hình:
+  16. vùng chạm vô hình đạt 46 (đo ra ≥ 44);
+  17. bộ lọc tab Cửa hàng ở trang chủ lưu vào URL (QĐ-8);
+  18. `::selection` và `caret-color` tô theo màu Feed.
+
+Lát 0 báo thêm các xung đột nhỏ nằm trong tinh thần đó và đã làm theo Feed:
+- vòng focus xanh, không bo;
+- nhấn `scale(.97)`;
+- nút vô hiệu nền `--f-bg2`;
+- không `tabular-nums` ở giá thẻ lựa chọn;
+- `!important` trong khối giảm chuyển động.
+
+**Lát 0: cổng 3200.** Máy chủ xem thử cũ (PID 21444, bản dựng 07:37 26/09) bị hệ thống quyền chặn không cho agent dừng.
+Người dùng cho phép, phiên chính dừng nó để agent dựng và chụp ảnh "sau".
+
+**Lát 0 ĐẠT (27/09/2026, `ui-implementer`, phiên chính duyệt độc lập).** Brief `tasks/briefs/v4-lat-0.md`.
+- **Vùng Feed:** `[data-ui="feed"]` qua `components/feed/FeedScope.tsx` (`FeedScope`, `FEED_ZONE`, `feedFontClass`). Token
+  `--f-*` chỉ nằm trong vùng. CSS ở `app/styles/feed/{feed,flow,system}.css`, `scope.test.ts` giữ luật vùng.
+- **Chữ và icon:**
+  - Mona Sans qua `next/font/google` (trục `wdth`, chỉ kiểu thường, `--font-mona`);
+  - 69 icon Phosphor sinh bằng `scripts/feed-icons.ts` vào `components/feed/icon/`, kèm `LICENSE` MIT. Phiên chính đã đối
+    chiếu dòng bản quyền với `@phosphor-icons/core`.
+- **Logo:** `FeedLogo` tông sáng và tối. Favicon, apple-icon và icon manifest đen trắng qua `scripts/brand-assets.ts --icons`.
+  `lib/brand/palette.ts` thêm `MONO`.
+- **Trang kit `/system`:** noindex, xoá khi xong đợt.
+- **Kiểm:** tsc sạch, 1539/1539 test, build sạch. CSS v3 biên dịch giống hệt ở 1135 khối.
+- **Phiên chính chạy lại phép so điểm ảnh** trước và sau ở sáu route × hai cỡ. Chỗ khác nhau chỉ gồm:
+  - đồng hồ và giờ tương đối, ví dụ "Đóng sau 3 ngày 6 giờ" thành "5 giờ" vì hai lượt chụp cách nhau 35 phút;
+  - nhiễu giải mã ảnh ở hình phẳng và ảnh thu nhỏ, mắt không phân biệt được.
+- Hai luật cũ người dùng giữ đã có: chip `::after` `inset:-5px 0` (46), `::selection` và `caret-color` xanh.
+- **Để lát 1:** ảnh chia sẻ (OG), `WaitVeil` còn mật ong, `theme-color`, và đổi tên `.grid` / `.toast` của mock khi chép vào.
+
+**Lát 1a ĐẠT (27/09/2026, `ui-implementer`, phiên chính duyệt độc lập).** Brief `tasks/briefs/v4-lat-1a.md`.
+- **Đã giao:**
+  - khung Feed dùng chung ở `components/feed/` (`FeedFrame`, `FeedChrome`, `FeedCards`, `FeedBlocks`, `FeedShop`,
+    `QuickAdd`, `FeedSheet`, `FeedClock`, `now.tsx`);
+  - trang chủ `/` ba tab × bốn thời điểm (`lib/feed-home.ts`, `homeMoment`, `LEAD_DAYS` = 7);
+  - bộ lọc tab Cửa hàng trên URL (`line` / `family` / `sort`);
+  - ảnh chia sẻ đen trắng, câu bìa Mona Sans "Cắt 1 lần. Không tái bản." (`HOME_COVER.headline` đã đổi);
+  - `WaitVeil` đen trắng ở route Feed; `THEME_COLOR` `#FCFCFD`.
+- **Kiểm:** 1587/1587 test, build sạch.
+- **Phiên chính so ảnh app với mock** ở bốn thời điểm, 390 và 1280. Khớp bố cục, thứ tự khối, chữ và màu. Lệch có lý do:
+  - logo theo QĐ-33;
+  - thẻ rộng chưa có danh sách chi tiết may, vì app không có trường `details`;
+  - chân trang chưa có Bảng size, tới lát 4;
+  - "Đã đóng" chưa có "Xem tất cả", vì chưa có trang lưu trữ.
+- **Xung đột mới, phiên chính xử lý theo nguyên tắc người dùng đã chọn:**
+  - khoảng ngày " - " có thể xuống dòng: giữ luật cũ `DASH` (không ngắt), vì không đổi hình;
+  - font dự phòng cho ₫ (`adjustFontFallback: false`, Segoe UI như mock): nhận;
+  - selector `html:has([data-ui="feed"])`: nhận, là kỹ thuật;
+  - `THEME_COLOR` cho cả app: nhận.
+- **Phiên chính quyết cho các mục còn mở:**
+  - `/#rules` ở chân trang v3 trỏ `/faq` cho tới khi hết khung v3;
+  - `/?drop=N` với Số đang mở trỏ `/?line=N#cua-hang`, với Số sắp mở trỏ `/#sap-mo`;
+  - mã mồ côi (`RemindButton`, `ReminderBand`, `HOME_COVER.lead`, `home.css`) dọn ở lát cuối đợt;
+  - ảnh OG nền `#171410` và chữ hoa: nhận.
+- **Việc cho lát 1b:**
+  - trường `details` cho mẫu, qua `backend-implementer`: migration và seed lấy từ dữ liệu mock, vốn từ brief may mặc ở
+    `tasks/anh-san-pham-prompt.md`;
+  - bảng số đo quần mô phỏng trong `lib`;
+  - trang lưu trữ các Số, rồi nối "Xem tất cả".
+- **Để lát sau:** size nhớ theo áo và quần (lát 3); thêm quá tồn kho vẫn báo "Đã thêm" (lát 2).

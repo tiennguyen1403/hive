@@ -353,6 +353,12 @@
   fill: none;
   stroke: var(--brand);
 }
+/* Over or towards a Feed screen (round v4, slice 1a): the logo in black and
+   white (QĐ-33), so the stitches are the logo's ink, not honey. The mark's
+   fills and the veil's top (under the Feed bar) are written by the component. */
+.veil.feed .stitches {
+  stroke: var(--ink);
+}
 @media (min-width: 900px) {
   .veil {
     top: 65px;

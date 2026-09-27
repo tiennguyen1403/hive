@@ -1,13 +1,15 @@
 /**
  * The brand's files, drawn from the approved sources (v3 slice 10, decision
- * QĐ-31: favicon F2, phone icon P2, share image O2).
+ * QĐ-31: favicon F2, phone icon P2, share image O2; round v4 slice 0,
+ * decision QĐ-33: the icons in black and white; round v4 slice 1a: the
+ * share image in black and white, its cover line in the Feed's type).
  *
  * WHAT IT WRITES
  *   app/favicon.ico                  three PNG frames: 16 px is F2, the 16 px
  *                                    master drawn by hand; 32 and 48 px are
  *                                    mark M2 drawn from the vector
- *   app/apple-icon.png               180 × 180, P2: a honey square, the bee in
- *                                    ink at scale(.9), no transparency
+ *   app/apple-icon.png               180 × 180, P2: an ink square, the bee in
+ *                                    white at scale(.9), no transparency
  *   public/icons/hive-{192,512}.png  P2 as approved, for the manifest's
  *                                    purpose "any"
  *   public/icons/hive-maskable-{192,512}.png
@@ -15,35 +17,51 @@
  *                                    circle, for purpose "maskable"
  *   lib/brand/logo.ts                the mark's figure, the W3 wordmark and the
  *                                    ".NN" digit set, for the share image
- *   lib/brand/share-headline.ts      `HOME_COVER.headline` as outlines, set the
- *                                    way the O2 board sets it
+ *   lib/brand/share-headline.ts      `HOME_COVER.headline` as outlines, in the
+ *                                    Feed's display type, in O2's place
+ *
+ * COLOURS (QĐ-33, 27/09/2026). The icons are the logo in black and white,
+ * `MONO.light` in `lib/brand/palette.ts`: where the board draws a honey disc
+ * or square with the bee in ink, the files have an ink disc or square with
+ * the bee in white — F2's hand-drawn pixels included. Only the fills change;
+ * the geometry, the scales and the pixel grid are the board's. The share
+ * image's colours are not drawn here but in `lib/brand/share-image.ts`, which
+ * paints the outlines this writes.
+ *
+ * THE COVER LINE (round v4 slice 1a). Set as the Feed sets its cover
+ * (`prototype/explore/feed/feed.css`, `.cover.disp`): Mona Sans at 75% width,
+ * weight 900, in capitals, tracked -0.004em — in the box O2 gives its line
+ * (`.o2 .hl` on the board: 404 from the top, 36px, line-height 1.16, centred,
+ * broken after every sentence but the last). The type changes; O2 does not.
  *
  * WHERE FROM
  *   prototype/name/logo/hive-mark.svg, hive-lockup.svg, hive-number.json —
  *     the canonical logo (QĐ-29, QĐ-30), read exactly as the board's own copy
  *     is read (`prototype/name/share/build.cjs`)
  *   prototype/name/share.html — the approved board: the 16 px grid
- *     `MASTER16.f2`, the cover line's CSS (`.o2 .hl`) and its @font-face rules
- *   prototype/v3/fonts/unbounded-800-*.woff2 — the faces the board sets the
- *     cover line in
+ *     `MASTER16.f2`, and O2's box for the cover line (`.o2 .hl`)
+ *   prototype/explore/feed/fonts/mona-sans-wdth.css and its woff2 files —
+ *     Mona Sans as the approved Feed mock loads it, the faces the cover line
+ *     is set in
  *
  * HOW
  *   Every raster is drawn by Chrome through Playwright (a devDependency) in
  *   the same way the board's export mode draws it — the favicons on a
  *   canvas (`raster()`), the phone icons as inline SVG (`touchSVG()`) — so a
  *   file here and `share.html?icon=f2&size=16`, `?icon=f1&size=32`,
- *   `?touch=p2&size=180` hold the same pixels.
+ *   `?touch=p2&size=180` hold the same pixels in the board's colours; since
+ *   QĐ-33 the files swap honey for ink and ink for white, nothing else.
  *
  *   The cover line becomes outlines because the share image is drawn by
- *   `next/og` (Satori), which reads no woff2, and the only TrueType Unbounded
- *   on hand is the variable font, which Satori would set at its default
- *   weight, 400. So Chrome lays the line out with the board's own CSS
- *   (the board page itself, served from disk through `page.route`), each
- *   character's pen position is read off the layout, and each glyph's outline
- *   comes from the very woff2 file Chrome used for it, read with fontkit — the
- *   copy Next already ships for `next/font` (an internal path of the `next`
- *   package: if a Next upgrade moves it, this script stops with that message
- *   and the committed outlines stay valid). Nothing is fetched at run time.
+ *   `next/og` (Satori), which reads no woff2 and sets a variable font at its
+ *   default instance. So Chrome lays the line out in Mona Sans (a page of this
+ *   script's, the mock's font files served from disk through `page.route`),
+ *   each character's pen position is read off the layout, and each glyph's
+ *   outline comes from the very woff2 file Chrome used for it, at the same
+ *   width and weight, read with fontkit — the copy Next already ships for
+ *   `next/font` (an internal path of the `next` package: if a Next upgrade
+ *   moves it, this script stops with that message and the committed outlines
+ *   stay valid). Nothing is fetched at run time.
  *
  *   Provenance: every PNG carries an `impeccable:prompt` text chunk written
  *   by `impeccable embed-prompt`. The tool cannot write into an .ico (it
@@ -58,7 +76,9 @@
  *   until it has run, and the share image refuses to build with stale
  *   outlines (see `lib/brand/share-image.ts`).
  *
- *     npx tsx scripts/brand-assets.ts        (needs Google Chrome installed)
+ *     npx tsx scripts/brand-assets.ts          (needs Google Chrome installed)
+ *     npx tsx scripts/brand-assets.ts --icons  the favicon and phone icons only
+ *     npx tsx scripts/brand-assets.ts --share  the logo data and the cover line only
  */
 
 import { execFileSync } from "node:child_process";
@@ -69,7 +89,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import type { Browser, Page } from "@playwright/test";
-import { HONEY, INK } from "@/lib/brand/palette";
+import { MONO } from "@/lib/brand/palette";
 import { HOME_COVER } from "@/lib/lexicon";
 
 // ───────────────────────────────────────────────────────────────── where
@@ -208,16 +228,23 @@ ${glyphs}
 `;
 }
 
-/** The mark alone, exactly as the board's `markSVG()` writes it. */
+/**
+ * The icons' colours (QĐ-33): the logo on a light ground — the disc or the
+ * square in ink where the board has honey, the bee in white where the board
+ * has ink (`hive-mark-black.svg`).
+ */
+export const ICON_COLOURS = { ground: MONO.light.disc, bee: MONO.light.bee } as const;
+
+/** The mark alone, as the board's `markSVG()` writes it, in the icons' colours. */
 export function markSvg(figure: string): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-500 -500 1000 1000"><circle r="500" fill="${HONEY}"/><path fill="${INK}" d="${figure}"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-500 -500 1000 1000"><circle r="500" fill="${ICON_COLOURS.ground}"/><path fill="${ICON_COLOURS.bee}" d="${figure}"/></svg>`;
 }
 
-/** The phone icon, exactly as the board's `touchSVG("p2")` writes it, the bee at `scale`. */
+/** The phone icon, as the board's `touchSVG("p2")` writes it, in the icons' colours, the bee at `scale`. */
 export function touchSvg(figure: string, scale: number): string {
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-500 -500 1000 1000" role="img" aria-label="Icon P2">` +
-    `<rect x="-500" y="-500" width="1000" height="1000" fill="${HONEY}"/><g transform="scale(${scale})"><path fill="${INK}" d="${figure}"/></g></svg>`
+    `<rect x="-500" y="-500" width="1000" height="1000" fill="${ICON_COLOURS.ground}"/><g transform="scale(${scale})"><path fill="${ICON_COLOURS.bee}" d="${figure}"/></g></svg>`
   );
 }
 
@@ -315,32 +342,53 @@ export function readF2Grid(boardHtml: string): string[] {
   return rows;
 }
 
-export interface BoardFace {
+/** Mona Sans as the approved Feed mock loads it: one stylesheet, a woff2 file per subset. */
+export const FEED_FONT_CSS = join(ROOT, "prototype/explore/feed/fonts/mona-sans-wdth.css");
+
+/**
+ * The cover line's type and box. The type is the Feed's display voice
+ * (`.disp` and `.cover` in `prototype/explore/feed/feed.css`): 75% wide,
+ * weight 900, capitals, tracked -0.004em. The box is O2's (`.o2 .hl` on the
+ * board, in the frame's own pixels): its top 404, 36px, line-height 1.16,
+ * the whole width, centred.
+ */
+export const HEADLINE_TYPE = {
+  family: "Mona Sans Variable",
+  wdth: 75,
+  wght: 900,
+  top: 404,
+  size: 36,
+  lineHeight: 1.16,
+  tracking: -0.004,
+} as const;
+
+export interface FontFace {
   file: string;
   ranges: [number, number][];
 }
 
-/** The board's Unbounded @font-face rules, in the order they are declared. */
-export function readBoardFaces(boardHtml: string): BoardFace[] {
+/** The upright Mona Sans @font-face rules of the mock's stylesheet, in the order they are declared. */
+export function readFeedFaces(css: string, base: string = dirname(FEED_FONT_CSS)): FontFace[] {
   const faces = [
-    ...boardHtml.matchAll(
-      /@font-face\s*\{[^}]*font-family:\s*"Unbounded"[^}]*src:\s*url\("([^"]+)"\)[^}]*unicode-range:\s*([^;}]+)/g,
+    ...css.matchAll(
+      /@font-face\s*\{[^}]*font-family:\s*'Mona Sans Variable'[^}]*font-style:\s*normal[^}]*src:\s*url\(([^)]+)\)[^}]*unicode-range:\s*([^;}]+)/g,
     ),
   ].map((m) => ({
-    file: resolve(dirname(BOARD_FILE), m[1]!),
+    file: resolve(base, m[1]!.replace(/^["']|["']$/g, "")),
     ranges: m[2]!.split(",").map((part): [number, number] => {
       const [a, b] = part.trim().replace(/^U\+/i, "").split("-");
       return [parseInt(a!, 16), parseInt(b ?? a!, 16)];
     }),
   }));
-  if (faces.length === 0) throw new Error("no Unbounded @font-face rule found in prototype/name/share.html");
+  if (faces.length === 0) throw new Error("no upright Mona Sans @font-face rule found in the Feed mock's font stylesheet");
   return faces;
 }
 
 /**
- * The cover line in two lines, as the O2 board breaks it: every sentence but
- * the last on the first line, the last one alone below ("Mười mẫu. Cắt một
- * lần." / "Hết là hết."). A single sentence stays on one line.
+ * The cover line in two lines, as the O2 board breaks it and the Feed's
+ * story sets it: every sentence but the last on the first line, the last one
+ * alone below ("Cắt 1 lần." / "Không tái bản."). A single sentence stays on
+ * one line.
  */
 export function headlineLines(headline: string): string[] {
   const sentences = headline.trim().split(/(?<=[.!?…])\s+/u);
@@ -390,11 +438,15 @@ export function readIco(ico: Buffer): { size: number; data: Buffer }[] {
 
 // ───────────────────────────────────────────────────────────────── drawing
 
-/** The board's `raster()`: F2's grid on a round honey disc at 16 px, M2 from the vector above that. */
+/**
+ * The board's `raster()`: F2's grid on a round disc at 16 px, M2 from the
+ * vector above that — in the icons' colours, so the disc is ink and F2's "#"
+ * pixels are white.
+ */
 async function drawFavicons(page: Page, figure: string, grid: string[]): Promise<Buffer[]> {
   await page.setContent("<!doctype html><html><body></body></html>");
   const urls = await page.evaluate(
-    async ({ mark, grid, honey, ink }) => {
+    async ({ mark, grid, ground, bee }) => {
       const img = new Image();
       await new Promise<void>((done, fail) => {
         img.onload = () => done();
@@ -406,11 +458,11 @@ async function drawFavicons(page: Page, figure: string, grid: string[]): Promise
         c.width = c.height = n;
         const ctx = c.getContext("2d")!;
         if (n === 16) {
-          ctx.fillStyle = honey;
+          ctx.fillStyle = ground;
           ctx.beginPath();
           ctx.arc(8, 8, 8, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = ink;
+          ctx.fillStyle = bee;
           grid.forEach((row, y) =>
             [...row].forEach((ch, x) => {
               if (ch === "#") ctx.fillRect(x, y, 1, 1);
@@ -422,7 +474,7 @@ async function drawFavicons(page: Page, figure: string, grid: string[]): Promise
         return c.toDataURL("image/png");
       });
     },
-    { mark: markSvg(figure), grid, honey: HONEY, ink: INK },
+    { mark: markSvg(figure), grid, ground: ICON_COLOURS.ground, bee: ICON_COLOURS.bee },
   );
   return urls.map((u) => Buffer.from(u.slice(u.indexOf(",") + 1), "base64"));
 }
@@ -460,54 +512,68 @@ interface HeadlineLayout {
 }
 
 /**
- * The board page itself, served from disk, in export mode for O2; its cover
- * line replaced by ours; every character's pen position and each line's
- * baseline read off Chrome's layout, in the 1200 × 630 frame's pixels.
+ * A page of this script's own: the 1200 × 630 frame, the cover line in O2's
+ * box set in the Feed's type (`HEADLINE_TYPE`), Mona Sans loaded from the
+ * mock's own files served from disk; every character's pen position and each
+ * line's baseline read off Chrome's layout, in the frame's pixels.
  */
 async function layoutHeadline(page: Page, lines: string[]): Promise<HeadlineLayout> {
-  const origin = "http://board.test";
-  const base = join(ROOT, "prototype");
+  const origin = "http://feed.test";
+  const base = dirname(FEED_FONT_CSS);
+  const T = HEADLINE_TYPE;
+  const html =
+    `<!doctype html><html><head><meta charset="utf-8">` +
+    `<link rel="stylesheet" href="${origin}/mona-sans-wdth.css"><style>` +
+    `body{margin:0}.ogf{position:relative;width:1200px;height:630px;overflow:hidden}` +
+    `.hl{position:absolute;left:0;right:0;top:${T.top}px;margin:0;text-align:center;white-space:nowrap;` +
+    `font-family:"${T.family}";font-weight:${T.wght};font-stretch:${T.wdth}%;font-size:${T.size}px;` +
+    `line-height:${T.lineHeight};letter-spacing:${T.tracking}em}` +
+    `</style></head><body><div class="ogf"><p class="hl"></p></div></body></html>`;
   await page.route(`${origin}/**`, async (route) => {
-    const file = resolve(base, "." + decodeURIComponent(new URL(route.request().url()).pathname));
+    const path = decodeURIComponent(new URL(route.request().url()).pathname);
+    if (path === "/share.html") return route.fulfill({ contentType: "text/html; charset=utf-8", body: html });
+    const file = resolve(base, "." + path);
     if (!file.startsWith(base + sep) || !existsSync(file)) return route.fulfill({ status: 404, body: "" });
     return route.fulfill({ path: file });
   });
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto(`${origin}/name/share.html?og=o2&no=05`, { waitUntil: "load" });
-  await page.waitForFunction(() => document.querySelector("#export .o2 .hl") !== null);
-  return page.evaluate(async (lines) => {
-    const hl = document.querySelector<HTMLElement>("#export .o2 .hl")!;
-    const frame = document.querySelector("#export .ogf")!.getBoundingClientRect();
-    const kids: Node[] = [];
-    lines.forEach((l, i) => {
-      if (i) kids.push(document.createElement("br"));
-      kids.push(document.createTextNode(l));
-    });
-    hl.replaceChildren(...kids);
-    const all = lines.join(" ");
-    await document.fonts.load('800 36px "Unbounded"', all);
-    await document.fonts.ready;
-    if (!document.fonts.check('800 36px "Unbounded"', all)) throw new Error("Unbounded 800 did not load for every character");
-    const style = getComputedStyle(hl);
-    const out: { text: string; baseline: number; pens: number[] }[] = [];
-    for (const node of [...hl.childNodes].filter((n): n is Text => n.nodeType === Node.TEXT_NODE)) {
-      // A box of no size sits on the baseline and moves nothing.
-      const marker = document.createElement("span");
-      marker.style.cssText = "display:inline-block;width:0;height:0";
-      hl.insertBefore(marker, node);
-      const baseline = marker.getBoundingClientRect().bottom - frame.top;
-      marker.remove();
-      const pens: number[] = [];
-      for (let i = 0; i < node.data.length; i++) {
-        const r = document.createRange();
-        r.setStart(node, i);
-        r.setEnd(node, i + 1);
-        pens.push(r.getClientRects()[0]!.left - frame.left);
+  await page.goto(`${origin}/share.html`, { waitUntil: "load" });
+  return page.evaluate(
+    async ({ lines, font }) => {
+      const hl = document.querySelector<HTMLElement>(".hl")!;
+      const frame = document.querySelector(".ogf")!.getBoundingClientRect();
+      const kids: Node[] = [];
+      lines.forEach((l, i) => {
+        if (i) kids.push(document.createElement("br"));
+        kids.push(document.createTextNode(l));
+      });
+      hl.replaceChildren(...kids);
+      const all = lines.join(" ");
+      await document.fonts.load(font, all);
+      await document.fonts.ready;
+      if (!document.fonts.check(font, all)) throw new Error("Mona Sans did not load for every character");
+      const style = getComputedStyle(hl);
+      const out: { text: string; baseline: number; pens: number[] }[] = [];
+      for (const node of [...hl.childNodes].filter((n): n is Text => n.nodeType === Node.TEXT_NODE)) {
+        // A box of no size sits on the baseline and moves nothing.
+        const marker = document.createElement("span");
+        marker.style.cssText = "display:inline-block;width:0;height:0";
+        hl.insertBefore(marker, node);
+        const baseline = marker.getBoundingClientRect().bottom - frame.top;
+        marker.remove();
+        const pens: number[] = [];
+        for (let i = 0; i < node.data.length; i++) {
+          const r = document.createRange();
+          r.setStart(node, i);
+          r.setEnd(node, i + 1);
+          pens.push(r.getClientRects()[0]!.left - frame.left);
+        }
+        out.push({ text: node.data, baseline, pens });
       }
-      out.push({ text: node.data, baseline, pens });
-    }
-    return { fontSize: parseFloat(style.fontSize), letterSpacing: parseFloat(style.letterSpacing), lines: out };
-  }, lines);
+      return { fontSize: parseFloat(style.fontSize), letterSpacing: parseFloat(style.letterSpacing), lines: out };
+    },
+    { lines, font: `${T.wght} ${T.size}px "${T.family}"` },
+  );
 }
 
 // fontkit, as Next ships it for `next/font` (no type declarations; only what is used here).
@@ -517,16 +583,106 @@ interface FontkitCommand {
 }
 interface FontkitPath {
   commands: FontkitCommand[];
+  bbox: { minX: number; maxY: number };
   transform(a: number, b: number, c: number, d: number, e: number, f: number): FontkitPath;
 }
+interface FontkitPoint {
+  x: number;
+  y: number;
+}
 interface FontkitGlyph {
+  id: number;
   advanceWidth: number;
   path: FontkitPath;
+  _getPhantomPoints(decoded: DecodedGlyph): FontkitPoint[];
+}
+/** A glyph as fontkit's WOFF2 reader decodes it: points for a simple glyph, components for a composite. */
+interface DecodedGlyph {
+  numberOfContours: number;
+  points?: FontkitPoint[];
+  components?: { dx: number; dy: number }[];
+  xMin?: number;
+  yMax?: number;
+}
+interface VariationProcessor {
+  transformPoints(glyphId: number, points: FontkitPoint[]): void;
+  getAdvanceAdjustment(glyphId: number, hvar: unknown): number;
 }
 interface FontkitFont {
   unitsPerEm: number;
+  variationAxes: Record<string, { min: number; default: number; max: number }>;
+  fvar: { axis: { axisTag: string; minValue: number; defaultValue: number; maxValue: number }[] };
+  HVAR?: unknown;
+  variationCoords: number[] | null;
+  _variationProcessor: VariationProcessor | null;
+  _transformedGlyphs?: (DecodedGlyph | undefined)[];
+  _glyphs: Record<number, FontkitGlyph>;
   hasGlyphForCodePoint(cp: number): boolean;
   glyphForCodePoint(cp: number): FontkitGlyph;
+  getGlyph(id: number): FontkitGlyph;
+}
+
+/**
+ * One instance of a variable WOFF2 font — Mona Sans at `wdth` 75, `wght` 900
+ * — as outlines and advances.
+ *
+ * fontkit's own `getVariation()` cannot do it for a WOFF2 file: it reopens the
+ * raw stream as if it were a TrueType file, and its WOFF2 glyph reader never
+ * applies the `gvar` deltas (and trips over a composite glyph when asked to).
+ * So the glyphs are decoded at the default instance, and the deltas are then
+ * applied here exactly as fontkit applies them to a TrueType glyph
+ * (`_decodeSimple`, `_decodeComposite`): the points, or the components'
+ * offsets, plus the four phantom points, through a variation processor built
+ * for this font at the asked coordinates. Advances take the `HVAR`
+ * adjustment. `outlines()` checks the result against Chrome's own layout.
+ */
+function variableInstance(create: (data: Buffer) => FontkitFont, data: Buffer, settings: Record<string, number>) {
+  const font = create(data);
+  const coords = font.fvar.axis.map((a) => {
+    const tag = a.axisTag.trim();
+    return tag in settings ? Math.max(a.minValue, Math.min(a.maxValue, settings[tag]!)) : a.defaultValue;
+  });
+  // The processor's class, from a second copy that has not decoded anything yet (fontkit caches the
+  // first answer to `_variationProcessor` for good, and the font below has already asked).
+  const probe = create(data);
+  probe.variationCoords = coords;
+  const Processor = probe._variationProcessor!.constructor as new (f: FontkitFont, c: number[]) => VariationProcessor;
+  font.getGlyph(0); // decompresses and decodes the whole glyf table, at the default instance
+  const processor = new Processor(font, coords);
+  const decoded = font._transformedGlyphs ?? [];
+  const Point = decoded.find((g) => g && g.numberOfContours > 0)!.points![0]!.constructor as new (
+    onCurve: boolean,
+    endContour: boolean,
+    x: number,
+    y: number,
+  ) => FontkitPoint;
+  // Phantom points first, for every glyph, while every outline is still the default one.
+  const phantoms = decoded.map((g, id) => {
+    if (!g || g.numberOfContours === 0) return [];
+    const glyph = font.getGlyph(id);
+    const box = glyph.path.bbox;
+    g.xMin = box.minX;
+    g.yMax = box.maxY;
+    return glyph._getPhantomPoints(g);
+  });
+  decoded.forEach((g, id) => {
+    if (!g || g.numberOfContours === 0) return;
+    if (g.numberOfContours > 0) {
+      processor.transformPoints(id, [...g.points!, ...phantoms[id]!]);
+    } else {
+      const offsets = g.components!.map((c) => new Point(true, true, c.dx, c.dy));
+      processor.transformPoints(id, [...offsets, ...phantoms[id]!]);
+      offsets.forEach((p, i) => {
+        g.components![i]!.dx = p.x;
+        g.components![i]!.dy = p.y;
+      });
+    }
+  });
+  font._glyphs = {};
+  return {
+    font,
+    advance: (glyph: FontkitGlyph) => glyph.advanceWidth + (font.HVAR ? processor.getAdvanceAdjustment(glyph.id, font.HVAR) : 0),
+  };
 }
 
 function loadFontkit(): (data: Buffer) => FontkitFont {
@@ -556,22 +712,30 @@ function svgPath(commands: FontkitCommand[]): string {
 
 /**
  * Each glyph from the face Chrome used for it — the last declared face whose
- * unicode-range holds the character (CSS Fonts 4, "unicode-range") — scaled
- * to the computed font size and set at Chrome's pen position.
+ * unicode-range holds the character (CSS Fonts 4, "unicode-range") — at the
+ * width and weight the line is set in (the variable font's `wdth` and `wght`
+ * axes), scaled to the computed font size and set at Chrome's pen position.
  *
  * The baseline is rounded to a whole pixel, because that is where Chrome
- * PAINTS a line of text, whatever fraction its layout gives it. Measured on
- * the board: the second line's layout baseline is 479.75, and glyph by glyph
- * the board's ink sat a quarter pixel lower than outlines set at 479.75, the
- * same distance the first line (438.00) shows none of.
+ * PAINTS a line of text, whatever fraction its layout gives it (measured on
+ * the O2 board at v3 slice 10).
  *
  * The advance check compares Chrome's step from one character to the next
  * with the glyph's own advance plus the letter-spacing: it catches a wrong
- * glyph, while kerning inside a face shows as a small difference.
+ * glyph or a wrong instance of the variable font, while kerning inside a face
+ * shows as a small difference.
  */
-function outlines(layout: HeadlineLayout, faces: BoardFace[]): { d: string; worstStep: number } {
+function outlines(layout: HeadlineLayout, faces: FontFace[]): { d: string; worstStep: number } {
   const create = loadFontkit();
-  const fonts = faces.map((f) => ({ ...f, font: create(readFileSync(f.file)) })).reverse();
+  const T = HEADLINE_TYPE;
+  const fonts = faces
+    .map((f) => {
+      const data = readFileSync(f.file);
+      const axes = create(data).variationAxes;
+      if (!axes.wdth || !axes.wght) throw new Error(`${f.file} is not the variable Mona Sans with width and weight axes`);
+      return { ...f, ...variableInstance(create, data, { wdth: T.wdth, wght: T.wght }) };
+    })
+    .reverse();
   let d = "";
   let worstStep = 0;
   for (const line of layout.lines) {
@@ -582,12 +746,12 @@ function outlines(layout: HeadlineLayout, faces: BoardFace[]): { d: string; wors
       const face = fonts.find(
         (f) => f.ranges.some(([a, b]) => cp >= a && cp <= b) && f.font.hasGlyphForCodePoint(cp),
       );
-      if (!face) throw new Error(`no Unbounded face on the board holds "${ch}"`);
+      if (!face) throw new Error(`no Mona Sans face of the Feed mock holds "${ch}"`);
       const glyph = face.font.glyphForCodePoint(cp);
       const s = layout.fontSize / face.font.unitsPerEm;
       const next = line.pens[i + 1];
       if (next !== undefined) {
-        worstStep = Math.max(worstStep, Math.abs(next - line.pens[i]! - (glyph.advanceWidth * s + layout.letterSpacing)));
+        worstStep = Math.max(worstStep, Math.abs(next - line.pens[i]! - (face.advance(glyph) * s + layout.letterSpacing)));
       }
       if (/\s/u.test(ch)) return;
       d += svgPath(glyph.path.transform(s, 0, 0, -s, line.pens[i]!, baseline).commands);
@@ -596,10 +760,15 @@ function outlines(layout: HeadlineLayout, faces: BoardFace[]): { d: string; wors
   return { d, worstStep };
 }
 
+/** The cover line as it is set: in capitals, as the Feed's `.disp` sets it, on the O2 board's lines. */
+export function headlineText(headline: string): string[] {
+  return headlineLines(headline).map((l) => l.toLocaleUpperCase("vi"));
+}
+
 /** `lib/brand/share-headline.ts`, byte for byte. */
 export function renderHeadlineModule(source: string, d: string): string {
   return `// Generated by scripts/brand-assets.ts — do not edit by hand.
-// Run \`npx tsx scripts/brand-assets.ts\` after HOME_COVER.headline changes.
+// Run \`npx tsx scripts/brand-assets.ts --share\` after HOME_COVER.headline changes.
 
 /**
  * sha-256 of the sentence the outlines below spell: \`HOME_COVER.headline\`
@@ -609,11 +778,12 @@ export function renderHeadlineModule(source: string, d: string): string {
 export const SHARE_HEADLINE_SOURCE = ${JSON.stringify(source)};
 
 /**
- * The cover line of share image O2 (QĐ-31) as outlines: Unbounded 800 at the
- * board's size, broken into two lines as the board breaks it, every glyph at
- * the pen position Chrome gives it on \`prototype/name/share.html?og=o2\` and
- * on the whole-pixel baseline Chrome paints it on. In the share image's own
- * pixels (1200 × 630), filled white on the cloth.
+ * The cover line of share image O2 (QĐ-31) as outlines, since round v4 slice
+ * 1a in the Feed's display type: Mona Sans at 75% width, weight 900, in
+ * capitals, in O2's box (404 from the top, 36px, line-height 1.16, centred),
+ * broken into two lines as the board breaks it; every glyph at the pen
+ * position Chrome gives it and on the whole-pixel baseline Chrome paints it
+ * on. In the share image's own pixels (1200 × 630), filled white on the ground.
  */
 export const SHARE_HEADLINE_PATH = ${JSON.stringify(d)};
 `;
@@ -632,85 +802,103 @@ function embedProvenance(file: string, prompt: string): void {
   else execFileSync("sh", [join(skill, "scripts/impeccable"), ...args], { env, stdio: "pipe" });
 }
 
-const SOURCE_NOTE = "decision QD-31, tasks/plan.md; drawn by scripts/brand-assets.ts in Chrome (Playwright)";
+const SOURCE_NOTE =
+  "decisions QD-31 (shapes) and QD-33 (black and white), tasks/plan.md; drawn by scripts/brand-assets.ts in Chrome (Playwright)";
 
 // ───────────────────────────────────────────────────────────────── run
 
-async function main(): Promise<void> {
+/**
+ * Everything, or one half: `--icons` redraws the favicon and the phone icons
+ * and leaves the share image's data alone (round v4 slice 0); `--share`
+ * redraws the logo data and the cover line and leaves the icons alone (round
+ * v4 slice 1a, when the cover line changed).
+ */
+async function main(mode: "all" | "icons" | "share"): Promise<void> {
   const logo = readLogo();
   const board = readFileSync(BOARD_FILE, "utf8");
   const grid = readF2Grid(board);
-  const faces = readBoardFaces(board);
+  const faces = readFeedFaces(readFileSync(FEED_FONT_CSS, "utf8"));
   const reach = figureReach(logo.figure);
   const maskable = maskableScale(reach);
-  const lines = headlineLines(HOME_COVER.headline);
+  const lines = headlineText(HOME_COVER.headline);
+  const { ground, bee } = ICON_COLOURS;
+  const icons = mode !== "share";
+  const share = mode !== "icons";
 
   mkdirSync(dirname(OUT.logo), { recursive: true });
   mkdirSync(dirname(OUT.icon(192)), { recursive: true });
-  writeFileSync(OUT.logo, renderLogoModule(logo));
+  if (share) writeFileSync(OUT.logo, renderLogoModule(logo));
 
   const { chromium } = await import("@playwright/test");
   const browser = await chromium.launch({ channel: "chrome", headless: true });
-  let favicons: Buffer[];
+  let favicons: Buffer[] = [];
   const touch: { file: string; png: Buffer; prompt: string }[] = [];
-  let layout: HeadlineLayout;
+  let layout: HeadlineLayout | undefined;
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
-    favicons = await drawFavicons(page, logo.figure, grid);
-    const p2 = (size: number, purpose: string, scale: number, why: string) =>
-      `HIVE phone icon P2, ${size} x ${size}, opaque (${purpose}): a honey #eba400 square with the bee of mark M2 ` +
-      `(prototype/name/logo/hive-mark.svg) in ink #171410 at scale(${scale})${why}; ${SOURCE_NOTE}.`;
-    touch.push({ file: OUT.appleIcon, png: await drawTouch(browser, logo.figure, 180, P2_SCALE), prompt: p2(180, "apple-touch-icon", P2_SCALE, "") });
-    for (const size of [192, 512]) {
-      touch.push({ file: OUT.icon(size), png: await drawTouch(browser, logo.figure, size, P2_SCALE), prompt: p2(size, "manifest purpose any", P2_SCALE, "") });
-      touch.push({
-        file: OUT.maskable(size),
-        png: await drawTouch(browser, logo.figure, size, maskable),
-        prompt: p2(size, "manifest purpose maskable", maskable, `, so its farthest point (${reach.toFixed(2)} of 1000 units at scale 1) stays inside the 80% safe circle`),
-      });
+    if (icons) {
+      favicons = await drawFavicons(page, logo.figure, grid);
+      const p2 = (size: number, purpose: string, scale: number, why: string) =>
+        `HIVE phone icon P2 in black and white, ${size} x ${size}, opaque (${purpose}): an ink ${ground} square with the bee of ` +
+        `mark M2 (prototype/name/logo/hive-mark-black.svg) in white ${bee} at scale(${scale})${why}; ${SOURCE_NOTE}.`;
+      touch.push({ file: OUT.appleIcon, png: await drawTouch(browser, logo.figure, 180, P2_SCALE), prompt: p2(180, "apple-touch-icon", P2_SCALE, "") });
+      for (const size of [192, 512]) {
+        touch.push({ file: OUT.icon(size), png: await drawTouch(browser, logo.figure, size, P2_SCALE), prompt: p2(size, "manifest purpose any", P2_SCALE, "") });
+        touch.push({
+          file: OUT.maskable(size),
+          png: await drawTouch(browser, logo.figure, size, maskable),
+          prompt: p2(size, "manifest purpose maskable", maskable, `, so its farthest point (${reach.toFixed(2)} of 1000 units at scale 1) stays inside the 80% safe circle`),
+        });
+      }
     }
-    layout = await layoutHeadline(page, lines);
+    if (share) layout = await layoutHeadline(page, lines);
   } finally {
     await browser.close();
   }
 
-  // The ICO: each frame carries its provenance before it is packed.
-  const tmp = mkdtempSync(join(tmpdir(), "brand-assets-"));
-  try {
-    const frames = [16, 32, 48].map((size, i) => {
-      const file = join(tmp, `favicon-${size}.png`);
-      writeFileSync(file, favicons[i]!);
-      embedProvenance(
-        file,
-        size === 16
-          ? `HIVE favicon, 16 px frame of app/favicon.ico: F2, the hand-drawn grid MASTER16.f2 from prototype/name/share.html, ink #171410 on an antialiased honey #eba400 disc; ${SOURCE_NOTE}.`
-          : `HIVE favicon, ${size} px frame of app/favicon.ico: mark M2 (prototype/name/logo/hive-mark.svg) drawn from the vector on a canvas, as the share board draws it; ${SOURCE_NOTE}.`,
-      );
-      return { size, png: readFileSync(file) };
-    });
-    writeFileSync(OUT.favicon, packIco(frames));
-  } finally {
-    rmSync(tmp, { recursive: true, force: true });
+  if (icons) {
+    // The ICO: each frame carries its provenance before it is packed.
+    const tmp = mkdtempSync(join(tmpdir(), "brand-assets-"));
+    try {
+      const frames = [16, 32, 48].map((size, i) => {
+        const file = join(tmp, `favicon-${size}.png`);
+        writeFileSync(file, favicons[i]!);
+        embedProvenance(
+          file,
+          size === 16
+            ? `HIVE favicon, 16 px frame of app/favicon.ico: F2, the hand-drawn grid MASTER16.f2 from prototype/name/share.html, in black and white: white ${bee} pixels on an antialiased ink ${ground} disc; ${SOURCE_NOTE}.`
+            : `HIVE favicon, ${size} px frame of app/favicon.ico: mark M2 in black and white (prototype/name/logo/hive-mark-black.svg: ink ${ground} disc, white ${bee} bee) drawn from the vector on a canvas, as the share board draws it; ${SOURCE_NOTE}.`,
+        );
+        return { size, png: readFileSync(file) };
+      });
+      writeFileSync(OUT.favicon, packIco(frames));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+
+    for (const t of touch) {
+      writeFileSync(t.file, t.png);
+      embedProvenance(t.file, t.prompt);
+    }
+    console.log(`favicon          ${OUT.favicon} (16 F2, 32 and 48 M2; ${ground} and ${bee})`);
+    console.log(`phone icons      apple-icon 180; any 192, 512 at scale ${P2_SCALE}; maskable 192, 512 at scale ${maskable}`);
+    console.log(`bee reach        ${reach.toFixed(3)} units at scale 1, ${(reach * maskable).toFixed(3)} at ${maskable} (safe radius ${SAFE_RADIUS})`);
   }
 
-  for (const t of touch) {
-    writeFileSync(t.file, t.png);
-    embedProvenance(t.file, t.prompt);
+  if (layout) {
+    const { d, worstStep } = outlines(layout, faces);
+    writeFileSync(OUT.headline, renderHeadlineModule(headlineSource(HOME_COVER.headline), d));
+    console.log(`logo data        ${OUT.logo}`);
+    console.log(
+      `cover line       ${lines.map((l) => `"${l}"`).join(" / ")}; baselines ${layout.lines.map((l) => l.baseline.toFixed(3)).join(" / ")}, ` +
+        `font ${layout.fontSize}px, letter-spacing ${layout.letterSpacing}px, worst step vs advance ${worstStep.toFixed(3)} px`,
+    );
   }
-
-  const { d, worstStep } = outlines(layout, faces);
-  writeFileSync(OUT.headline, renderHeadlineModule(headlineSource(HOME_COVER.headline), d));
-
-  console.log(`logo data        ${OUT.logo}`);
-  console.log(`favicon          ${OUT.favicon} (16 F2, 32 and 48 M2)`);
-  console.log(`phone icons      apple-icon 180; any 192, 512 at scale ${P2_SCALE}; maskable 192, 512 at scale ${maskable}`);
-  console.log(`bee reach        ${reach.toFixed(3)} units at scale 1, ${(reach * maskable).toFixed(3)} at ${maskable} (safe radius ${SAFE_RADIUS})`);
-  console.log(`cover line       ${lines.length} line(s), baselines ${layout.lines.map((l) => l.baseline.toFixed(3)).join(" / ")}, ` +
-    `font ${layout.fontSize}px, letter-spacing ${layout.letterSpacing}px, worst step vs advance ${worstStep.toFixed(3)} px`);
 }
 
 if (process.argv[1] !== undefined && pathToFileURL(process.argv[1]).href === import.meta.url) {
-  main().catch((e) => {
+  const mode = process.argv.includes("--icons") ? "icons" : process.argv.includes("--share") ? "share" : "all";
+  main(mode).catch((e) => {
     console.error(e);
     process.exit(1);
   });

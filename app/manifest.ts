@@ -6,9 +6,10 @@ import { SITE_NAME, THEME_COLOR } from "@/lib/site";
  * adds HIVE to the home screen. `display: "browser"`: it opens as a tab like
  * any other; the shop does not install itself as an app.
  *
- * The icons are phone icon P2, drawn by `scripts/brand-assets.ts`:
- *   · purpose "any" — P2 as approved, the bee at scale(.9) on the honey
- *     square, the same drawing as `apple-icon.png`;
+ * The icons are phone icon P2, drawn by `scripts/brand-assets.ts` in black
+ * and white since round v4 (QĐ-33): a white bee on an ink square.
+ *   · purpose "any" — P2 as approved, the bee at scale(.9) on the square,
+ *     the same drawing as `apple-icon.png`;
  *   · purpose "maskable" — the same drawing, the bee at scale(.879). A phone
  *     crops a maskable icon to its own shape and promises only the circle of
  *     80 % of the tile, so nothing may reach further than 40 % of a side from

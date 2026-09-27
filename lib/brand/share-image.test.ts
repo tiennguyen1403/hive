@@ -46,6 +46,14 @@ describe("shareImageSvg", () => {
     expect(svg).toContain(`<path fill="#ffffff" d="${SHARE_HEADLINE_PATH}"/>`);
   });
 
+  it("is black and white since round v4 (QĐ-33): the lockup as on a dark ground, the seam white, no honey", () => {
+    expect(svg).toContain(`<circle r="500" fill="#ffffff"/><path fill="#171410" d=`);
+    expect(svg).toContain(`<g fill="#ffffff"><rect x="480" y="366" width="6" height="3"/>`);
+    expect(svg.toLowerCase()).not.toContain("#eba400");
+    const fills = new Set([...svg.matchAll(/fill="(#[0-9a-f]{6})"/g)].map((m) => m[1]));
+    expect(fills).toEqual(new Set(["#171410", "#ffffff"]));
+  });
+
   it("changes only the lockup from one issue to the next", () => {
     const next = shareImageSvg("06");
     expect(next).not.toBe(svg);

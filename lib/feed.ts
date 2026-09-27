@@ -1,0 +1,315 @@
+import { COLORS } from "@/data/colors";
+import { SIZES, type ColorKey, type Drop, type Family, type Product, type Size, type Teaser } from "@/data/types";
+import type { Catalog } from "./catalog";
+import { dayMonth } from "./datetime";
+import { dropState } from "./drop";
+import { FLATS_MADE, flatKey, type FlatShape } from "./flats";
+import {
+  isFixed,
+  isIssueStyle,
+  isLowStock,
+  isSoldOut,
+  onHand,
+  onHandByColor,
+  onHandOf,
+  productsInDrop,
+  soldOutSizes,
+  soldUnits,
+} from "./inventory";
+import { issueLabel, kindInSentence } from "./lexicon";
+import { lookbookUrl, photoUrl } from "./photos";
+
+/**
+ * What the Feed screens (round v4, QĐ-32) print about one style, and how
+ * their shop grid narrows and orders its styles.
+ *
+ * The rules are the approved mock's (`prototype/explore/feed/feed.js`:
+ * `firstColor`, `canBuy`, `stockLine`, `alt`, `sizeOpts`, `shop`), the facts
+ * the app's own (`lib/inventory.ts`, `lib/drop.ts`). Pure, and every function
+ * that depends on the time is handed `now`, like `lib/drop.ts`: the server
+ * render and the hydrating client must agree on it.
+ *
+ * Where the mock names one issue (its `LIVE` is "Số 05 is selling"), the app
+ * asks each style's own issue: a style is live while the issue it was cut for
+ * is open.
+ */
+
+// ─────────────────────────────────────────────────────────── one style
+
+/** The issue a style was cut for, or nothing for a fixed style. */
+function issueOf(catalog: Catalog, p: Product): Drop | undefined {
+  return p.dropNo === null ? undefined : catalog.dropByNo.get(p.dropNo);
+}
+
+/** An issue's style whose issue is selling now. A fixed style has no issue and is never "live". */
+export function isLive(catalog: Catalog, p: Product, now: Date): boolean {
+  const drop = issueOf(catalog, p);
+  return drop !== undefined && dropState(drop, now) === "OPEN";
+}
+
+/** An issue's style whose issue is not selling (the mock's `closedStyle`). */
+export function isOver(catalog: Catalog, p: Product, now: Date): boolean {
+  return !isFixed(p) && !isLive(catalog, p, now);
+}
+
+/**
+ * The ĐÃ HẾT stamp: an issue's style with nothing left. A fixed style's empty
+ * shelf is "tạm hết" — it comes back — and never gets the stamp.
+ */
+export function isGone(p: Product): boolean {
+  return !isFixed(p) && isSoldOut(p);
+}
+
+/** Whether the quick add is offered: a fixed style with anything left, an issue's style while its issue sells and it lasts. */
+export function canBuy(catalog: Catalog, p: Product, now: Date): boolean {
+  return isFixed(p) ? onHand(p) > 0 : isLive(catalog, p, now) && !isSoldOut(p);
+}
+
+/** The colour a card shows: the first with anything left, else the first. */
+export function firstColor(p: Product): ColorKey {
+  return p.colors.find((c) => onHandByColor(p, c) > 0) ?? p.colors[0]!;
+}
+
+/**
+ * The stock line under a style, as facts (the mock's `stockLine`):
+ * · `sold` — "108/181 đã bán"-style, for an issue that has closed, when the
+ *   grid asks for it (the closed issue's line in the shop);
+ * · `fixed` — the sizes gone in every colour, or "Đủ size";
+ * · `closed` — "Đã đóng 25/09", an issue's style once the issue has shut;
+ * · `left` — "Còn N", with the fire when N is three or fewer, and the sizes gone.
+ * Null for a sold-out issue's style: the ĐÃ HẾT stamp says it once, and for
+ * a style of an issue that has not opened.
+ */
+export type StockFacts =
+  | { kind: "sold"; sold: number; cut: number }
+  | { kind: "fixed"; gone: Size[] }
+  | { kind: "closed"; day: string }
+  | { kind: "left"; n: number; low: boolean; gone: Size[] };
+
+export function stockFacts(
+  catalog: Catalog,
+  p: Product,
+  now: Date,
+  opts: { soldCount?: boolean } = {},
+): StockFacts | null {
+  if (opts.soldCount && isOver(catalog, p, now) && !isSoldOut(p) && isIssueStyle(p)) {
+    return { kind: "sold", sold: soldUnits(p), cut: p.cutUnits };
+  }
+  const gone = soldOutSizes(p);
+  if (isFixed(p)) return { kind: "fixed", gone };
+  if (isSoldOut(p)) return null;
+  const drop = issueOf(catalog, p);
+  if (!drop) return null;
+  const state = dropState(drop, now);
+  if (state === "CLOSED") return { kind: "closed", day: dayMonth(drop.closesAt) };
+  if (state === "UPCOMING") return null;
+  return { kind: "left", n: onHand(p), low: isLowStock(p), gone };
+}
+
+// ─────────────────────────────────────────────────────────── pictures
+
+/** Which picture of a colour: its packshot (a fixed style's flat drawing), or the lookbook frame. */
+export type PictureKind = "pack" | "look";
+
+/** Every picture the Feed shows is 4:5; the shots are 1200 × 1500. */
+export const PICTURE = { width: 1200, height: 1500 } as const;
+
+/** The photo key of one colourway. */
+export function photoKeyOf(p: Product, color: ColorKey): string {
+  return p.photoKeys[p.colors.indexOf(color)] ?? p.photoKeys[0]!;
+}
+
+/**
+ * A colour's picture. "look" is the lookbook frame when the colour has one
+ * (Số 05's shots); a colour without one — a flat, an upload, a borrowed
+ * frame — shows its packshot instead, and says so with `look: false`.
+ */
+export function pictureOf(p: Product, color: ColorKey, kind: PictureKind): { src: string; look: boolean } {
+  const key = photoKeyOf(p, color);
+  if (kind === "look") {
+    const look = lookbookUrl(key);
+    if (look) return { src: look, look: true };
+  }
+  return { src: photoUrl(key, PICTURE.width), look: false };
+}
+
+/** "Người mặc NGUỘI màu đen" for a lookbook frame, "KHÓI, áo thun oversize màu kem" otherwise. */
+export function pictureAlt(p: Product, color: ColorKey, look: boolean): string {
+  const c = kindInSentence(COLORS[color].label);
+  return look ? `Người mặc ${p.name} màu ${c}` : `${p.name}, ${kindInSentence(p.kind)} màu ${c}`;
+}
+
+/**
+ * The shape a teaser is drawn as. A teaser has no photo of its own and no
+ * price; the mock shows the next issue's styles as flat silhouettes of their
+ * kind of garment, never another style's photo.
+ */
+const TEASER_SHAPE: Record<Family, FlatShape> = {
+  TEE: "tee",
+  HOODIE: "hoodie",
+  JACKET: "jacket",
+  VEST: "vest",
+  SHIRT: "shirt",
+  PANTS: "trousers",
+};
+
+/** The flat drawing a teaser stands as: its family's shape, in black where that drawing exists. */
+export function teaserPicture(t: Teaser): string {
+  const shape = TEASER_SHAPE[t.family];
+  const made = FLATS_MADE[shape];
+  const color = made.includes("black") ? "black" : made[0]!;
+  return photoUrl(flatKey(shape, color), PICTURE.width);
+}
+
+// ─────────────────────────────────────────────────────────── the quick add
+
+/** One size of one colour and what is left of it. */
+export function sizesIn(p: Product, color: ColorKey): { size: Size; n: number }[] {
+  return SIZES.map((size) => ({ size, n: onHandOf(p, color, size) }));
+}
+
+/** The small line under a size pill: "Hết", "Còn 1", "Còn 2", or nothing. */
+export function sizeNote(n: number): string | null {
+  if (n === 0) return "Hết";
+  return n <= 2 ? `Còn ${n}` : null;
+}
+
+/** Under a colour: "Còn 4" or "Hết" for an issue's style; nothing for a fixed one. */
+export function swatchNote(p: Product, color: ColorKey): string | null {
+  if (isFixed(p)) return null;
+  const n = onHandByColor(p, color);
+  return n ? `Còn ${n}` : "Hết";
+}
+
+/** The size a quick add starts on: the remembered one, when this colour still has it. */
+export function startSize(p: Product, color: ColorKey, remembered: Size | null): Size | null {
+  return remembered && onHandOf(p, color, remembered) > 0 ? remembered : null;
+}
+
+/** "Size của tôi" while the chosen size is the remembered one, "Size" otherwise. */
+export function sizeRowLabel(size: Size | null, mine: Size | null): string {
+  return size !== null && size === mine ? "Size của tôi" : "Size";
+}
+
+// ─────────────────────────────────────────────────────────── the shop grid
+
+/**
+ * A line of the shop: every style on the switch ("all"), the fixed styles
+ * ("fixed"), or one issue's styles (its number). In the URL: `?line=all`,
+ * `?line=fixed`, `?line=5`.
+ */
+export type ShopLine = "all" | "fixed" | number;
+
+/** The mock's three orders. The keys are `lib/catalog-query.ts`'s, the words the mock's. */
+export const SHOP_SORTS = ["newest", "price-asc", "price-desc"] as const;
+export type ShopSort = (typeof SHOP_SORTS)[number];
+export const SHOP_SORT_LABELS: Record<ShopSort, string> = {
+  newest: "Mới nhất",
+  "price-asc": "Giá tăng dần",
+  "price-desc": "Giá giảm dần",
+};
+
+/** The filter row, in the mock's order ("Mọi loại" first, Gile last). */
+export const SHOP_FAMILIES: readonly Family[] = ["TEE", "HOODIE", "JACKET", "SHIRT", "PANTS", "VEST"];
+
+export interface ShopState {
+  line: ShopLine;
+  family: Family | "ALL";
+  sort: ShopSort;
+}
+
+/**
+ * The lines on the switch, in the order it draws them (the mock's
+ * `shopLines`): while the issue sells it leads — after "Tất cả" where that is
+ * offered — and the fixed line follows; once it has closed the fixed line is
+ * what sells and leads, the issue stays viewable after it. With no issue at
+ * all, the fixed line alone.
+ */
+export function shopLines(issue: Drop | undefined, live: boolean, withAll: boolean): ShopLine[] {
+  if (!issue) return ["fixed"];
+  if (live) return withAll ? ["all", issue.no, "fixed"] : [issue.no, "fixed"];
+  return ["fixed", issue.no];
+}
+
+/** The line a visit starts on: the first that is not "Tất cả". */
+export function defaultLine(lines: readonly ShopLine[]): ShopLine {
+  return lines.find((l) => l !== "all") ?? lines[0] ?? "fixed";
+}
+
+/** "Tất cả" · "Số 05" · "Cố định". */
+export function lineLabel(line: ShopLine): string {
+  if (line === "all") return "Tất cả";
+  if (line === "fixed") return "Cố định";
+  return issueLabel(line);
+}
+
+/** "Số 05" for an issue's style, "Cố định" for a fixed one — the line a style belongs to. */
+export function lineOfStyle(p: Product): string {
+  return p.dropNo === null ? "Cố định" : issueLabel(p.dropNo);
+}
+
+type RawParams = Record<string, string | string[] | undefined>;
+
+function firstParam(v: string | string[] | undefined): string | undefined {
+  const one = Array.isArray(v) ? v[0] : v;
+  const t = one?.trim();
+  return t ? t : undefined;
+}
+
+/**
+ * The grid's state from the URL — `?line=`, `?family=`, `?sort=` — each value
+ * checked against what it may be; anything else is the default (QĐ-8: the
+ * filters live in the URL, so a reload or a shared link opens the same grid).
+ */
+export function parseShopState(sp: RawParams, lines: readonly ShopLine[]): ShopState {
+  const rawLine = firstParam(sp.line);
+  let line = defaultLine(lines);
+  if (rawLine === "all" || rawLine === "fixed") {
+    if (lines.includes(rawLine)) line = rawLine;
+  } else if (rawLine && /^\d{1,3}$/.test(rawLine) && lines.includes(Number(rawLine))) {
+    line = Number(rawLine);
+  }
+  const rawFamily = firstParam(sp.family);
+  const family = (SHOP_FAMILIES as readonly string[]).includes(rawFamily ?? "") ? (rawFamily as Family) : "ALL";
+  const rawSort = firstParam(sp.sort);
+  const sort = (SHOP_SORTS as readonly string[]).includes(rawSort ?? "") ? (rawSort as ShopSort) : "newest";
+  return { line, family, sort };
+}
+
+/** The same state as a query, defaults left out: `line=fixed&family=TEE`, or "". */
+export function shopQuery(state: ShopState, lines: readonly ShopLine[]): string {
+  const q = new URLSearchParams();
+  if (state.line !== defaultLine(lines)) q.set("line", String(state.line));
+  if (state.family !== "ALL") q.set("family", state.family);
+  if (state.sort !== "newest") q.set("sort", state.sort);
+  return q.toString();
+}
+
+/** A line's styles in catalogue order; "Tất cả" is the issue's, then the fixed ones. */
+export function lineStyles(catalog: Catalog, lines: readonly ShopLine[], line: ShopLine): Product[] {
+  const fixed = catalog.products.filter((p) => isFixed(p));
+  if (line === "fixed") return fixed;
+  if (line === "all") {
+    const no = lines.find((l): l is number => typeof l === "number");
+    return [...(no === undefined ? [] : productsInDrop(catalog, no)), ...fixed];
+  }
+  return productsInDrop(catalog, line);
+}
+
+/** What the grid shows: the line, narrowed to one family, in the order asked for. */
+export function shopList(catalog: Catalog, lines: readonly ShopLine[], state: ShopState): Product[] {
+  const list = lineStyles(catalog, lines, state.line).filter(
+    (p) => state.family === "ALL" || p.family === state.family,
+  );
+  if (state.sort === "price-asc") return [...list].sort((a, b) => a.priceVnd - b.priceVnd);
+  if (state.sort === "price-desc") return [...list].sort((a, b) => b.priceVnd - a.priceVnd);
+  return list;
+}
+
+/** For an empty grid: another line that has the family asked for, if one does. */
+export function otherLineWith(catalog: Catalog, lines: readonly ShopLine[], state: ShopState): ShopLine | undefined {
+  if (state.family === "ALL") return undefined;
+  return lines.find(
+    (l) => l !== state.line && l !== "all" && lineStyles(catalog, lines, l).some((p) => p.family === state.family),
+  );
+}
