@@ -2383,3 +2383,19 @@ Người dùng cho phép, phiên chính dừng nó để agent dựng và chụp
   - bảng số đo quần mô phỏng trong `lib`;
   - trang lưu trữ các Số, rồi nối "Xem tất cả".
 - **Để lát sau:** size nhớ theo áo và quần (lát 3); thêm quá tồn kho vẫn báo "Đã thêm" (lát 2).
+
+**Lát B6 ĐẠT (27/09/2026, `backend-implementer`, phiên chính duyệt).** Brief `tasks/briefs/backend-b6.md`.
+- **Đã làm:**
+  - `Product.details: string[]`: 10 mẫu Số 05 chép nguyên văn từ mock (45 dòng); mẫu khác `[]`;
+  - migration `20260927100000_product_details.sql`: cột ở `products` và `seed_products`, `reset_demo` v6,
+    `catalog_snapshot` v5;
+  - seed sinh lại; DAL đọc `details`, snapshot thiếu khoá thì đọc thành `[]` để deploy được theo thứ tự "code trước".
+- **Kiểm:** 1596/1596 test, 204/204 test DB, build sạch, không màn nào đổi hình. Agent đối chiếu 10 mẫu với brief may: khớp. Hai
+  điểm nhỏ chưa sửa: NGUỘI thiếu "Bo tay và gấu bản rộng"; "Đai dán" là diễn giải.
+- **Khi deploy, người dùng chạy trên hosted,** sau khi Vercel READY:
+  1. `npx supabase db push --linked --dry-run`: thấy đúng một migration;
+  2. `npx supabase db push --linked --yes`;
+  3. `npx supabase db query --linked -f supabase/seed.sql`: chỉ sau bước 2;
+  4. kiểm: 10 mẫu có dòng, tổng 45 dòng;
+  5. nếu tài khoản mẫu mất liên kết thì `ENV_FILE=.env.hosted.local npm run seed:users`.
+- **Còn mở:** ô nhập chi tiết trong form quản trị; dòng chi tiết cho Số 03/04 và Cố định (mock không có).

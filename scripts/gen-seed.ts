@@ -50,6 +50,17 @@ const strOrNull = (value: string | null | undefined): string =>
   value === null || value === undefined ? "null" : str(value);
 
 /**
+ * A SQL `text[]` (`Product.details`, slice B6), through the ARRAY constructor
+ * so every element is an ordinary string literal, escaped like any other. The
+ * cast is what lets an empty list be written at all: "since it's impossible
+ * to have an array with no type, you must explicitly cast your empty array to
+ * the desired type"
+ * (https://www.postgresql.org/docs/current/sql-expressions.html#SQL-SYNTAX-ARRAY-CONSTRUCTORS).
+ */
+const textArray = (values: readonly string[]): string =>
+  `array[${values.map(str).join(", ")}]::text[]`;
+
+/**
  * Ten digits starting with zero, which is the one form the database accepts
  * (`phone ~ '^0[0-9]{9}$'`) and the one `lib/checkout-form.ts` stores.
  *
@@ -188,7 +199,11 @@ export function renderSeedSql(
         "drop_no",
         "sold_out_at",
         "position",
+        "details",
       ],
+      // `details` (slice B6) is written out for every style, an empty list
+      // included, rather than left to the column default: it is what
+      // `reset_demo()` copies back, so the seed says what a reset restores.
       input.products.map((p, index) => [
         str(p.id),
         str(p.slug),
@@ -202,6 +217,7 @@ export function renderSeedSql(
         num(p.dropNo),
         tsOrNull(p.soldOutAt),
         num(index),
+        textArray(p.details),
       ]),
     ),
   );

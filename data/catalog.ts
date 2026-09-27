@@ -18,6 +18,14 @@ import { issueCode } from "@/lib/lexicon";
  * frame each — `lib/shots.ts`, v3 slice 14); Số 03 and 04 and the teasers
  * still borrow Unsplash frames; the fixed styles are flat drawings.
  *
+ * Construction lines (`details`, backend slice B6): only Số 05 has them. They
+ * are the garment briefs its photos were made from
+ * (`tasks/anh-san-pham-prompt.md`), copied word for word from the Feed mock
+ * that prints them (`ISSUE_05[].details` in
+ * `prototype/explore/shared/data.js`), and `catalog.test.ts` reads the mock
+ * to prove it. The mock prints lines for Số 05 alone, so every other style
+ * has an empty list.
+ *
  * The figures themselves are carried over unchanged from the approved
  * prototype, and `catalog.test.ts` pins them against it style by style.
  *
@@ -92,6 +100,12 @@ const styles: Array<Omit<Product, "id">> = [
       cream: { S: 2, M: 2, L: 2, XL: 1 },
     },
     photoKeys: ["shot-khoi-black", "shot-khoi-cream"],
+    details: [
+      "Vai rơi, thân rộng",
+      "Tay ngắn rộng, dài tới trên khuỷu",
+      "Cổ bo gân 2,5 cm",
+      "In lụa dải khói halftone chéo từ gấu lên ngực",
+    ],
   },
   {
     slug: "bui",
@@ -109,6 +123,13 @@ const styles: Array<Omit<Product, "id">> = [
       grey: { S: 0, M: 0, L: 0, XL: 1 },
     },
     photoKeys: ["shot-bui-black", "shot-bui-grey"],
+    details: [
+      "Mũ hai lớp đứng quanh cổ",
+      "Dây rút dẹt, đầu kim loại",
+      "Túi kangaroo",
+      "Bo tay và gấu bản rộng",
+      "In \"Bản đồ mòn\" ở ngực trên",
+    ],
   },
   {
     slug: "nguoi",
@@ -123,6 +144,12 @@ const styles: Array<Omit<Product, "id">> = [
     dropNo: 5,
     stock: { black: { S: 1, M: 2, L: 1, XL: 1 } },
     photoKeys: ["shot-nguoi-black"],
+    details: [
+      "Mũ hai lớp đứng quanh cổ",
+      "Dây rút dẹt, đầu kim loại",
+      "Túi kangaroo",
+      "In \"Dư nhiệt\" ngang ngực trên",
+    ],
   },
   {
     slug: "nang",
@@ -141,6 +168,12 @@ const styles: Array<Omit<Product, "id">> = [
       moss: { S: 1, M: 1, L: 1, XL: 0 },
     },
     photoKeys: ["shot-nang-white", "shot-nang-cream", "shot-nang-moss"],
+    details: [
+      "Vai tra đúng đường vai",
+      "Tay ngắn tới giữa bắp tay",
+      "Cổ bo gân 1,5 cm",
+      "In \"Mảng nắng\" ở ngực",
+    ],
   },
   {
     slug: "suong",
@@ -158,6 +191,14 @@ const styles: Array<Omit<Product, "id">> = [
       moss: { S: 0, M: 0, L: 1, XL: 0 },
     },
     photoKeys: ["shot-suong-black", "shot-suong-moss"],
+    details: [
+      "Khoá kéo toàn thân dưới nẹp bấm",
+      "Cổ đứng, mũ gắn liền",
+      "Hai túi khoá kéo",
+      "Đai dán chỉnh cổ tay",
+      "Gấu dây rút có khoá chặn",
+      "In \"Lớp sương\" ở vai và ngực",
+    ],
   },
   {
     slug: "muoi",
@@ -175,6 +216,12 @@ const styles: Array<Omit<Product, "id">> = [
       grey: { S: 0, M: 0, L: 0, XL: 0 },
     },
     photoKeys: ["shot-muoi-black", "shot-muoi-grey"],
+    details: [
+      "Cạp chun bọc, có dây rút",
+      "Túi hai bên sườn",
+      "Ống thuôn, bo gấu",
+      "In \"Kết tinh\" dọc ống trái",
+    ],
   },
   {
     slug: "than",
@@ -192,6 +239,13 @@ const styles: Array<Omit<Product, "id">> = [
       navy: { S: 0, M: 1, L: 1, XL: 1 },
     },
     photoKeys: ["shot-than-black", "shot-than-navy"],
+    details: [
+      "Chần ngang, mỗi đường cách 5 cm",
+      "Cổ, tay và gấu bo gân",
+      "Khoá kéo toàn thân",
+      "Hai túi mổ xéo",
+      "In \"Mạch than\" ở ngực trái",
+    ],
   },
   {
     slug: "cat",
@@ -210,6 +264,12 @@ const styles: Array<Omit<Product, "id">> = [
       brown: { S: 1, M: 1, L: 1, XL: 0 },
     },
     photoKeys: ["shot-cat-cream", "shot-cat-white", "shot-cat-brown"],
+    details: [
+      "Vai rơi sâu, thân rộng và dài",
+      "Tay rộng, dài tới khuỷu",
+      "Cổ bo gân 2 cm",
+      "In \"Vân xói\" ở thân trên",
+    ],
   },
   {
     slug: "gio",
@@ -227,6 +287,13 @@ const styles: Array<Omit<Product, "id">> = [
       navy: { S: 1, M: 1, L: 1, XL: 0 },
     },
     photoKeys: ["shot-gio-white", "shot-gio-navy"],
+    details: [
+      "Cổ đức, nẹp cúc cùng màu",
+      "Túi ốp ngực trái",
+      "Tay dài, măng séc một cúc",
+      "Gấu lượn",
+      "In \"Luồng cắt\" ở thân phải",
+    ],
   },
   {
     slug: "da",
@@ -244,6 +311,12 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 1, M: 1, L: 1, XL: 0 },
     },
     photoKeys: ["shot-da-moss", "shot-da-black"],
+    details: [
+      "Đỉa quần, khoá kéo và cúc",
+      "Túi chéo phía trước",
+      "Túi hộp có nắp hai bên đùi",
+      "In \"Mặt cắt\" ở ống phải",
+    ],
   },
 
   // ── Drop 04 — closed, sold out ───────────────────────────────────────
@@ -261,6 +334,7 @@ const styles: Array<Omit<Product, "id">> = [
     soldOutAt: "2026-06-17T18:15:00+07:00",
     stock: { moss: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["reu"],
+    details: [],
   },
   {
     slug: "tro",
@@ -279,6 +353,7 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 0, M: 0, L: 0, XL: 0 },
     },
     photoKeys: ["tro", "than"],
+    details: [],
   },
   {
     slug: "song",
@@ -294,6 +369,7 @@ const styles: Array<Omit<Product, "id">> = [
     soldOutAt: "2026-06-06T14:20:00+07:00",
     stock: { white: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["song"],
+    details: [],
   },
   {
     slug: "vo",
@@ -312,6 +388,7 @@ const styles: Array<Omit<Product, "id">> = [
       cream: { S: 0, M: 0, L: 0, XL: 0 },
     },
     photoKeys: ["vo", "kho"],
+    details: [],
   },
   {
     slug: "mua",
@@ -327,6 +404,7 @@ const styles: Array<Omit<Product, "id">> = [
     soldOutAt: "2026-06-12T09:40:00+07:00",
     stock: { black: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["mua"],
+    details: [],
   },
   {
     slug: "kho",
@@ -345,6 +423,7 @@ const styles: Array<Omit<Product, "id">> = [
       moss: { S: 0, M: 0, L: 0, XL: 0 },
     },
     photoKeys: ["kho", "reu"],
+    details: [],
   },
 
   // ── Drop 03 — closed, sold out ───────────────────────────────────────
@@ -367,6 +446,7 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 0, M: 0, L: 0, XL: 0 },
     },
     photoKeys: ["dat", "than"],
+    details: [],
   },
   {
     slug: "lua",
@@ -385,6 +465,7 @@ const styles: Array<Omit<Product, "id">> = [
       white: { S: 0, M: 0, L: 0, XL: 0 },
     },
     photoKeys: ["lua", "song"],
+    details: [],
   },
   {
     slug: "bao",
@@ -400,6 +481,7 @@ const styles: Array<Omit<Product, "id">> = [
     soldOutAt: "2026-03-11T13:05:00+07:00",
     stock: { grey: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["bui"],
+    details: [],
   },
   {
     slug: "men",
@@ -415,6 +497,7 @@ const styles: Array<Omit<Product, "id">> = [
     soldOutAt: "2026-03-18T08:45:00+07:00",
     stock: { cream: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["nang"],
+    details: [],
   },
   {
     slug: "voi",
@@ -433,6 +516,7 @@ const styles: Array<Omit<Product, "id">> = [
       grey: { S: 0, M: 0, L: 0, XL: 0 },
     },
     photoKeys: ["suong", "vo"],
+    details: [],
   },
 
   // ── Fixed styles (slice B5) — no issue, no cut ──────────────────────────
@@ -461,6 +545,7 @@ const styles: Array<Omit<Product, "id">> = [
       grey: { S: 6, M: 9, L: 7, XL: 4 },
     },
     photoKeys: ["flat-tee-white", "flat-tee-black", "flat-tee-grey"],
+    details: [],
   },
   {
     slug: "ao-thun-tay-dai",
@@ -478,6 +563,7 @@ const styles: Array<Omit<Product, "id">> = [
       white: { S: 6, M: 7, L: 5, XL: 3 },
     },
     photoKeys: ["flat-longsleeve-black", "flat-longsleeve-white"],
+    details: [],
   },
   {
     slug: "hoodie-tron",
@@ -496,6 +582,7 @@ const styles: Array<Omit<Product, "id">> = [
       cream: { S: 3, M: 0, L: 2, XL: 2 },
     },
     photoKeys: ["flat-hoodie-grey", "flat-hoodie-black", "flat-hoodie-cream"],
+    details: [],
   },
   {
     slug: "ao-khoac-du",
@@ -513,6 +600,7 @@ const styles: Array<Omit<Product, "id">> = [
       navy: { S: 3, M: 4, L: 3, XL: 3 },
     },
     photoKeys: ["flat-jacket-black", "flat-jacket-navy"],
+    details: [],
   },
   {
     slug: "gile-phao",
@@ -527,6 +615,7 @@ const styles: Array<Omit<Product, "id">> = [
     dropNo: null,
     stock: { black: { S: 3, M: 5, L: 5, XL: 2 } },
     photoKeys: ["flat-vest-black"],
+    details: [],
   },
   {
     slug: "so-mi-oxford",
@@ -544,6 +633,7 @@ const styles: Array<Omit<Product, "id">> = [
       navy: { S: 3, M: 5, L: 4, XL: 3 },
     },
     photoKeys: ["flat-shirt-white", "flat-shirt-navy"],
+    details: [],
   },
   {
     slug: "quan-kaki",
@@ -561,6 +651,7 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 4, M: 7, L: 6, XL: 3 },
     },
     photoKeys: ["flat-trousers-cream", "flat-trousers-black"],
+    details: [],
   },
   {
     slug: "quan-short-ni",
@@ -578,6 +669,7 @@ const styles: Array<Omit<Product, "id">> = [
       black: { S: 6, M: 9, L: 7, XL: 0 },
     },
     photoKeys: ["flat-shorts-grey", "flat-shorts-black"],
+    details: [],
   },
 ];
 

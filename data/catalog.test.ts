@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
 import { CATALOG, DROPS, CURRENT_DROP_NO } from "./catalog";
 import { COLORS } from "./colors";
@@ -341,5 +344,53 @@ describe("the hour a style ran out", () => {
       );
       expect(atClose).toHaveLength(1);
     }
+  });
+});
+
+/**
+ * The construction lines (backend slice B6) are the Feed mock's, word for
+ * word: `ISSUE_05[].details` in `prototype/explore/shared/data.js`, which took
+ * them from the garment briefs Số 05's photos were made from
+ * (`tasks/anh-san-pham-prompt.md`).
+ *
+ * Read out of the mock's own source rather than retyped here, the way
+ * `lib/flats.test.ts` reads the board: the mock is an IIFE that reads
+ * `window.location`, so it cannot be imported, but its `ISSUE_05` is a plain
+ * literal and can be lifted out as written. A line edited in either file,
+ * one accent included, turns this red.
+ */
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const FEED_DATA = readFileSync(join(ROOT, "prototype/explore/shared/data.js"), "utf8");
+
+function feedIssue05(): Array<{ slug: string; details: string[] }> {
+  const start = "const ISSUE_05 = [";
+  const end = "\n  ];";
+  const from = FEED_DATA.indexOf(start);
+  expect(from, "the mock no longer has ISSUE_05").toBeGreaterThan(-1);
+  const to = FEED_DATA.indexOf(end, from);
+  expect(to, "the mock's ISSUE_05 no longer ends where it did").toBeGreaterThan(from);
+  return new Function(`${FEED_DATA.slice(from, to + end.length)}\nreturn ISSUE_05;`)() as Array<{
+    slug: string;
+    details: string[];
+  }>;
+}
+
+describe("the construction lines (backend slice B6)", () => {
+  const mock = feedIssue05();
+
+  it("are the mock's for Số 05 — the same ten styles, every line in its order, character for character", () => {
+    const open = CATALOG.filter((p) => p.dropNo === CURRENT_DROP_NO);
+    expect(mock.map((m) => `p-${m.slug}`)).toEqual(open.map((p) => p.id));
+    for (const m of mock) {
+      const p = CATALOG.find((x) => x.id === `p-${m.slug}`)!;
+      expect(m.details.length, `${m.slug} has no lines in the mock`).toBeGreaterThan(0);
+      expect(p.details, p.slug).toEqual(m.details);
+    }
+  });
+
+  it("are empty for every other style — Số 03 and 04 and the eight fixed ones", () => {
+    const others = CATALOG.filter((p) => p.dropNo !== CURRENT_DROP_NO);
+    expect(others).toHaveLength(19);
+    for (const p of others) expect(p.details, p.slug).toEqual([]);
   });
 });

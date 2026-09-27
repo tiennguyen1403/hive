@@ -14,8 +14,8 @@
  *     computed in `lib/`, because a stored copy is a copy that goes stale
  *
  * Vietnamese survives in exactly one place: fields whose value is shown to a
- * shopper as-is (`name`, `kind`, `material`, a colour's `label`). Everything
- * else is English.
+ * shopper as-is (`name`, `kind`, `material`, `details`, a colour's `label`).
+ * Everything else is English.
  */
 
 // ─────────────────────────────────────────────────────────────── branded ids
@@ -164,6 +164,21 @@ export interface Product {
    * photograph exists yet. The first colour's photo is the style's cover.
    */
   photoKeys: string[];
+  /**
+   * How the garment is made, one line each and shown as-is, in the order
+   * they are printed: "Vai rơi, thân rộng", "Cổ bo gân 2,5 cm", where the
+   * print sits (backend slice B6, for the Feed screens — the wide card on the
+   * home page lists them, the product page has a "Chi tiết" section).
+   *
+   * Each line comes from the garment brief the style's photos were made from
+   * (`tasks/anh-san-pham-prompt.md`), as the Feed mock prints it
+   * (`prototype/explore/shared/data.js`): a fact about the cut, not copy
+   * written to sell it. The mock prints them for Số 05 alone, so only Số 05
+   * has any; every other style carries an empty list — written out, never
+   * absent — and so does every style the back office creates, since its form
+   * has no field for them.
+   */
+  details: string[];
 }
 
 // ─────────────────────────────────────────────────────────────────── the drop

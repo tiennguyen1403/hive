@@ -151,6 +151,28 @@ function readStock(value: unknown, colors: readonly ColorKey[], path: string): S
   return stock;
 }
 
+/**
+ * A style's construction lines (slice B6): a list of non-empty strings, kept
+ * in the order they arrived, which is the order they are printed.
+ *
+ * A style without the key comes from a database that slice B6's migration
+ * has not reached yet: the shop's code goes out before its database moves
+ * (`tasks/plan.md`, the order for putting slice B5 online), and in between
+ * this reads as no lines — what a style the back office created has anyway —
+ * rather than taking the whole catalogue down. Anything else that is not a
+ * list of lines, `null` included, is refused by name: the column is
+ * `not null`, so no version of `catalog_snapshot()` writes one.
+ */
+function readDetails(source: Record<string, unknown>, path: string): string[] {
+  if (source.details === undefined) return [];
+  return list(source.details, `${path}.details`).map((line, index) => {
+    if (typeof line !== "string" || line === "") {
+      return fail(`${path}.details[${index}]`, "must be a non-empty string");
+    }
+    return line;
+  });
+}
+
 function readProduct(value: unknown, path: string): Product {
   const source = record(value, path);
 
@@ -194,6 +216,7 @@ function readProduct(value: unknown, path: string): Product {
     dropNo,
     stock: readStock(source.stock ?? fail(`${path}.stock`, "is missing"), colors, `${path}.stock`),
     photoKeys,
+    details: readDetails(source, path),
   };
 
   // Absent rather than `undefined`: `soldOutAt` is only ever set on a style

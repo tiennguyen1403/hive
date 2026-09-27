@@ -30,6 +30,12 @@ const snapshot = () => ({
         black: { S: 3, M: 4, L: 2, XL: 1 },
         cream: { S: 2, M: 2, L: 2, XL: 1 },
       },
+      details: [
+        "Vai rơi, thân rộng",
+        "Tay ngắn rộng, dài tới trên khuỷu",
+        "Cổ bo gân 2,5 cm",
+        "In lụa dải khói halftone chéo từ gấu lên ngực",
+      ] as unknown,
     },
     {
       id: "p-bao",
@@ -46,6 +52,7 @@ const snapshot = () => ({
       colors: ["grey"],
       photoKeys: ["bui"],
       stock: { grey: { S: 0, M: 0, L: 0, XL: 0 } },
+      details: [] as unknown,
     },
   ],
   drops: [
@@ -129,7 +136,29 @@ describe("a well-formed snapshot", () => {
         cream: { S: 2, M: 2, L: 2, XL: 1 },
       },
       photoKeys: ["shot-khoi-black", "shot-khoi-cream"],
+      details: [
+        "Vai rơi, thân rộng",
+        "Tay ngắn rộng, dài tới trên khuỷu",
+        "Cổ bo gân 2,5 cm",
+        "In lụa dải khói halftone chéo từ gấu lên ngực",
+      ],
     });
+  });
+
+  it("reads a style's construction lines in their order, and none as an empty list (slice B6)", () => {
+    expect(input.products[0]!.details).toEqual([
+      "Vai rơi, thân rộng",
+      "Tay ngắn rộng, dài tới trên khuỷu",
+      "Cổ bo gân 2,5 cm",
+      "In lụa dải khói halftone chéo từ gấu lên ngực",
+    ]);
+    expect(input.products[1]!.details).toEqual([]);
+  });
+
+  it("reads a style without the key — a database the slice B6 migration has not reached — as no lines", () => {
+    const doc = snapshot();
+    delete (doc.products[0] as { details?: unknown }).details;
+    expect(parseCatalogSnapshot(doc).products[0]!.details).toEqual([]);
   });
 
   it("reads a fixed style (slice B5): no issue and no cut, both null", () => {
@@ -352,6 +381,37 @@ describe("a snapshot that is wrong", () => {
         }),
       ),
     ).toThrow("products[0].dropNo must be an integer");
+  });
+
+  it("refuses construction lines that are not a list of lines (slice B6)", () => {
+    expect(() =>
+      parseCatalogSnapshot(
+        broken((doc) => {
+          doc.products[0].details = "Vai rơi, thân rộng";
+        }),
+      ),
+    ).toThrow("products[0].details must be an array");
+    expect(() =>
+      parseCatalogSnapshot(
+        broken((doc) => {
+          doc.products[0].details = null;
+        }),
+      ),
+    ).toThrow("products[0].details must be an array");
+    expect(() =>
+      parseCatalogSnapshot(
+        broken((doc) => {
+          doc.products[0].details = ["Vai rơi, thân rộng", ""];
+        }),
+      ),
+    ).toThrow("products[0].details[1] must be a non-empty string");
+    expect(() =>
+      parseCatalogSnapshot(
+        broken((doc) => {
+          doc.products[1].details = [42];
+        }),
+      ),
+    ).toThrow("products[1].details[0] must be a non-empty string");
   });
 
   it("refuses a PERCENT promotion with no percent", () => {

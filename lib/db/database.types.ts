@@ -320,6 +320,7 @@ export type Database = {
       products: {
         Row: {
           cut_units: number | null
+          details: string[]
           drop_no: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
@@ -334,6 +335,7 @@ export type Database = {
         }
         Insert: {
           cut_units?: number | null
+          details?: string[]
           drop_no?: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
@@ -348,6 +350,7 @@ export type Database = {
         }
         Update: {
           cut_units?: number | null
+          details?: string[]
           drop_no?: number | null
           family?: Database["public"]["Enums"]["product_family"]
           fit?: Database["public"]["Enums"]["product_fit"]
@@ -690,6 +693,7 @@ export type Database = {
       seed_products: {
         Row: {
           cut_units: number | null
+          details: string[]
           drop_no: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
@@ -704,6 +708,7 @@ export type Database = {
         }
         Insert: {
           cut_units?: number | null
+          details?: string[]
           drop_no?: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
@@ -718,6 +723,7 @@ export type Database = {
         }
         Update: {
           cut_units?: number | null
+          details?: string[]
           drop_no?: number | null
           family?: Database["public"]["Enums"]["product_family"]
           fit?: Database["public"]["Enums"]["product_fit"]

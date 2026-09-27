@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { ORDERS } from "@/data/orders";
 import {
   SEED_PATH,
@@ -108,6 +109,50 @@ describe("the generator itself", () => {
       fixtureOrders(),
     );
     expect(quoted).toContain("'KH''ÓI'");
+  });
+
+  // Slice B6: `seed_products.details`, the style's construction lines.
+  describe("the construction lines", () => {
+    const rows = rowsIn(sql, "seed_products");
+    /** A style's row, without the comma that separates it from the next. */
+    const rowOf = (id: string) => rows.find((r) => r.startsWith(`  ('${id}'`))!.replace(/,$/, "");
+
+    it("are the last column of seed_products", () => {
+      const start = sql.indexOf("insert into public.seed_products (");
+      const header = sql.slice(start, sql.indexOf("\n", start));
+      expect(header).toBe(
+        "insert into public.seed_products (id, slug, name, kind, family, material, fit, " +
+          "price_vnd, cut_units, drop_no, sold_out_at, position, details) values",
+      );
+    });
+
+    it("are written as a text[] of the fixture's lines, in their order", () => {
+      const lines = FIXTURE_CATALOG.byId.get("p-khoi" as never)!.details;
+      expect(lines).toHaveLength(4);
+      expect(rowOf("p-khoi").endsWith(`, array[${lines.map((l) => `'${l}'`).join(", ")}]::text[])`)).toBe(true);
+      // A double quote inside a line is just a character of the literal.
+      expect(rowOf("p-bui")).toContain(`'In "Bản đồ mòn" ở ngực trên'`);
+    });
+
+    it("are an empty text[] for a style with none", () => {
+      expect(rowOf("p-reu").endsWith(", array[]::text[])")).toBe(true);
+      expect(rowOf("p-ao-thun-tron").endsWith(", array[]::text[])")).toBe(true);
+      const withLines = rows.filter((r) => !r.replace(/,$/, "").endsWith(", array[]::text[])"));
+      expect(withLines).toHaveLength(10);
+    });
+
+    it("escape a quote in a line instead of ending the literal", () => {
+      const input = fixtureInput();
+      const quoted = renderSeedSql(
+        {
+          ...input,
+          products: [{ ...input.products[0]!, details: ["Cổ bo gân 2,5 cm", "Túi 'kangaroo'"] }, ...input.products.slice(1)],
+        },
+        fixtureCustomers(),
+        fixtureOrders(),
+      );
+      expect(quoted).toContain("array['Cổ bo gân 2,5 cm', 'Túi ''kangaroo''']::text[]");
+    });
   });
 });
 
