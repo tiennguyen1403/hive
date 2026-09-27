@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   RECENT_SEARCH_CAP,
+  forgetSearch,
   parseSearches,
   rememberSearch,
   serializeSearches,
@@ -40,6 +41,18 @@ describe("the recent-search list", () => {
     expect(list).toHaveLength(RECENT_SEARCH_CAP);
     expect(list[0]).toBe(`t${RECENT_SEARCH_CAP + 3}`);
     expect(list).not.toContain("t1");
+  });
+});
+
+describe("taking a term off the list", () => {
+  it("removes the one entry, whatever spelling the chip carries", () => {
+    expect(forgetSearch(["khói", "hoodie", "cargo"], "hoodie")).toEqual(["khói", "cargo"]);
+    expect(forgetSearch(["khói", "hoodie"], "KHOI ")).toEqual(["hoodie"]);
+  });
+
+  it("hands the same list back when the term is not on it", () => {
+    const list = ["hoodie"];
+    expect(forgetSearch(list, "cargo")).toBe(list);
   });
 });
 

@@ -324,7 +324,16 @@ function createVeil(
     el.classList.toggle("feed", feed);
     discRef.current?.setAttribute("fill", feed ? MONO.light.disc : HONEY);
     beeRef.current?.setAttribute("fill", feed ? MONO.light.bee : INK);
-    const bars = [...document.querySelectorAll<HTMLElement>('[data-ui="feed"] .top')];
+    // A Feed screen's bar is the top bar, or on the phone the screen's own (slice 1b): the search field, the
+    // product page's controls, a pushed screen's back arrow. Only a bar pinned at the top counts — the search
+    // field stands in the page from 900px, where the top bar is the bar.
+    const bars = [...document.querySelectorAll<HTMLElement>('[data-ui="feed"] :is(.top, .sbar, .pbar, .mbar)')].filter(
+      (b) => {
+        const r = b.getBoundingClientRect();
+        const pos = window.getComputedStyle(b).position;
+        return r.height > 0 && r.top <= 1 && (pos === "sticky" || pos === "fixed");
+      },
+    );
     const bottom = Math.max(0, ...bars.map((b) => b.getBoundingClientRect().bottom));
     if (bottom > 0) el.style.top = `${Math.round(bottom) + 1}px`;
     else el.style.removeProperty("top");

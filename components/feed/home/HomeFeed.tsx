@@ -106,13 +106,16 @@ function StoryOpen({ issue }: { issue: Drop }) {
   );
 }
 
-/** Between two issues: the one that just closed, its photo, and the way back to its styles. */
+/**
+ * Between two issues: the one that just closed, its photo, and the way back to its styles — the shop's grid on its
+ * line, as the mock leads to `products.html?dong=so-05`.
+ */
 function StoryClosed({ issue }: { issue: Drop }) {
   const catalog = useCatalog();
   const f = issueFacts(catalog, issue);
   const pic = storyPicture(catalog, issue.no);
   return (
-    <a className="story story-past" href={`/?line=${issue.no}#cua-hang`}>
+    <Link className="story story-past" href={`/products?line=${issue.no}`}>
       {pic && <StoryImage pic={pic} />}
       <div className="story-panel">
         <div className="story-top">
@@ -138,7 +141,7 @@ function StoryClosed({ issue }: { issue: Drop }) {
           </div>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 
@@ -191,7 +194,7 @@ function StoryFixed({ lead, count }: { lead: { product: Product; color: Product[
   );
 }
 
-/** The fixed line's rail: its styles, and the Cửa hàng tab on the line. */
+/** The fixed line's rail: its styles, and the shop's grid on the line (`products.html?dong=co-dinh` in the mock). */
 function FixedRail({ idSuffix = "" }: { idSuffix?: string }) {
   const catalog = useCatalog();
   const fixed = catalog.products.filter((p) => isFixed(p));
@@ -200,13 +203,13 @@ function FixedRail({ idSuffix = "" }: { idSuffix?: string }) {
     <Rail
       id={`rail-fixed${idSuffix}`}
       title="Cố định"
-      more={{ href: "/?line=fixed#cua-hang", label: "Xem tất cả" }}
+      more={{ href: "/products?line=fixed", label: "Xem tất cả" }}
       items={fixed}
     />
   );
 }
 
-/** The issue that just closed, as a rail: its run, what sold, the way back to its styles. */
+/** The issue that just closed, as a rail: its run, what sold, the way back to its styles on the shop's grid. */
 function PastRail({ issue }: { issue: Drop }) {
   const catalog = useCatalog();
   const f = issueFacts(catalog, issue);
@@ -226,7 +229,7 @@ function PastRail({ issue }: { issue: Drop }) {
           </b>
         </>
       }
-      more={{ href: `/?line=${issue.no}#cua-hang`, label: "Xem lại" }}
+      more={{ href: `/products?line=${issue.no}`, label: "Xem lại" }}
       items={styles}
     />
   );

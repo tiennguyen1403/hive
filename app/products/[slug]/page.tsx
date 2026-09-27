@@ -1,26 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { ProductView } from "@/components/product/ProductView";
-import { ProductCard } from "@/components/product/ProductCard";
-import { ShopFrame } from "@/components/shop/ShopFrame";
-import { FAMILY_LABELS, type Product } from "@/data/types";
-import { legacySlugTarget, type Catalog } from "@/lib/catalog";
+import { FeedFrame } from "@/components/feed/FeedFrame";
+import { ProductPage } from "@/components/feed/product/ProductPage";
+import { legacySlugTarget } from "@/lib/catalog";
+import { demoNowMs } from "@/lib/clock";
 import { loadCatalog } from "@/lib/db/catalog";
-import { dropBandLabel, dropState, getDrop, issueHref } from "@/lib/drop";
-import { RELATED_ROW, productsInDrop, sameFamilyOnSale } from "@/lib/inventory";
-import { LEX, issueNo, styleName } from "@/lib/lexicon";
 
-/** "Cùng tầm giá" — half as much again, or half as much. */
-const NEAR_PRICE = 0.5;
-
-// There is no `generateStaticParams` here any more. It used to pre-render all
-// twenty-one styles, which was free while the catalogue was a fixture in the
-// bundle; since slice B0b it would mean querying Postgres during `next build`
-// and then serving stock figures frozen at deploy time. A style's remaining
-// count is the one number on this page that must not be stale, so the page is
-// rendered per request (`lib/db/catalog.ts` calls `connection()`), and an
-// unknown slug still gets `notFound()` rather than an empty shell.
+// There is no `generateStaticParams` here. It used to pre-render all twenty-one
+// styles, which was free while the catalogue was a fixture in the bundle;
+// since slice B0b it would mean querying Postgres during `next build` and then
+// serving stock figures frozen at deploy time. A style's remaining count is
+// the one number on this page that must not be stale, so the page is rendered
+// per request (`lib/db/catalog.ts` calls `connection()`), and an unknown slug
+// still gets `notFound()` rather than an empty shell.
 //
 // SLICE B5: an issue's style is published as `s05-khoi` (a name can come back
 // in a later issue), so the address a style had before — `/products/khoi` —
@@ -30,33 +22,37 @@ const NEAR_PRICE = 0.5;
 // (`node_modules/next/dist/docs/01-app/02-guides/redirecting.md`), and a moved
 // address is permanent. It throws, so nothing after it runs.
 
-export async function generateMetadata(
-  props: PageProps<"/products/[slug]">,
-): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/products/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
   const catalog = await loadCatalog();
   const p = catalog.bySlug.get(slug);
   // An old address is redirected by the page below; its title is never shown.
   if (!p) return { title: "Không tìm thấy" };
-  // "S05 – KHÓI": the style under the name the shop shows it by, its issue
-  // in front (v3 slice 11) — a shopper who kept three tabs open is choosing
-  // between them by this line. A fixed style's name alone.
+  // The name as the Feed page prints it — "KHÓI", without its issue's code
+  // (round v4, conflict #3 the user settled for the Feed) — as the mock titles it.
   return {
-    title: styleName(p.name, p.dropNo),
+    title: p.name,
     description: `${p.kind} · ${p.material}`,
   };
 }
 
 /**
- * One style.
+ * One style, round v4 "Feed" (slice 1b): the approved mock's
+ * `prototype/explore/feed/product.html` — the story frame of the chosen
+ * colour, the buying block (a buy bar on the phone in place of the tab bar, a
+ * sticky column from 900px), "Chi tiết", "Thông số", "Giao hàng và đổi trả",
+ * and the rest of its line as a rail (`ProductPage`).
  *
- * `params` is a promise in Next 16 — reading it synchronously is gone, not
- * deprecated. An unknown slug calls `notFound()` rather than rendering an
- * empty shell, so a mistyped or stale link gets a 404 and not a page that
- * looks broken.
+ * The footer is the light one (the page carries the delivery and payment
+ * facts itself) without "Đổi trả 7 ngày": the page's own "Đổi trả · 7 ngày"
+ * row is that link (the mock's `data-foot-skip`).
+ *
+ * `?color=<key>` opens the page on a colour — the link from Yêu thích and the
+ * notifications. `params` and `searchParams` are promises in Next 16.
  */
-export default async function ProductPage(props: PageProps<"/products/[slug]">) {
+export default async function ProductRoute(props: PageProps<"/products/[slug]">) {
   const { slug } = await props.params;
+  const sp = await props.searchParams;
   const catalog = await loadCatalog();
   const product = catalog.bySlug.get(slug);
   if (!product) {
@@ -64,115 +60,11 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
     if (moved) permanentRedirect(`/products/${moved.slug}`);
     notFound();
   }
-
-  // A fixed style (slice B5) belongs to no issue: no window, no clock, no
-  // "Cùng số" row — the page draws the style and nothing about an issue.
-  // Its lower row is "Cùng loại" (v3 slice 11): the family on sale, both
-  // kinds, the nearest in price first (`sameFamilyOnSale`).
-  const dropNo = product.dropNo;
-  if (dropNo === null) {
-    const family = FAMILY_LABELS[product.family].toLocaleLowerCase("vi");
-    const same = sameFamilyOnSale(catalog, product);
-    return (
-      <ShopFrame activeFamily={product.family}>
-        <div className="wrap3">
-          <ProductView product={product} issue={null} />
-
-          {same.length > 0 && (
-            <section className="sec" aria-labelledby="h-rel">
-              <div className="hd">
-                <h2 id="h-rel">Cùng loại</h2>
-                <Link className="more" href={`/products?family=${product.family}`}>
-                  Xem tất cả {family}
-                </Link>
-              </div>
-              <div className="grid3 four">
-                {same.map((p) => (
-                  /* Both kinds in one row, so each card says what it is where
-                     a listing card prints its size run, and an issue's style
-                     wears its plate. */
-                  <ProductCard key={p.id} product={p} kindCount plate />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      </ShopFrame>
-    );
-  }
-
-  // Every style in the fixtures belongs to an issue the fixtures also list,
-  // so this cannot fail today; the page still refuses to invent a window for
-  // a style whose issue record is missing rather than drawing a dead clock.
-  const drop = getDrop(catalog, dropNo);
-  if (!drop) notFound();
-
-  const state = dropState(drop);
-  const no = issueNo(dropNo);
-  const related = relatedTo(catalog, product, dropNo);
+  const asked = Array.isArray(sp.color) ? sp.color[0] : sp.color;
 
   return (
-    <ShopFrame activeFamily={product.family}>
-      <div className="wrap3">
-        <ProductView
-          product={product}
-          issue={{ drop, state, initialLabel: dropBandLabel(drop, state) }}
-        />
-
-        {related.length > 0 && (
-          <section className="sec" aria-labelledby="h-rel">
-            <div className="hd">
-              <h2 id="h-rel">
-                Cùng {LEX.tl} {no}
-              </h2>
-              {/* The whole issue, on its own page (v3 slice 11). */}
-              <Link className="more" href={issueHref(dropNo)}>
-                Xem cả {productsInDrop(catalog, dropNo).length} mẫu
-              </Link>
-            </div>
-            <div className="grid3 four">
-              {related.map((p) => (
-                /* The row is a mixture, so each card says what it IS where a
-                   listing card would print its size run. */
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  kindCount
-                  closed={state !== "OPEN"}
-                />
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
-    </ShopFrame>
+    <FeedFrame page="product" tabbar={false} buybar foot="lite" footSkip={["/returns"]} now={demoNowMs()}>
+      <ProductPage slug={product.slug} {...(asked ? { asked } : {})} />
+    </FeedFrame>
   );
-}
-
-/**
- * The four styles under "Cùng số 05".
- *
- * Same family first, then whatever is within half again of this price, then
- * the rest of the issue to fill the row — the closest thing to a
- * recommendation the fixtures can honestly supply. There is no browsing
- * history, no "customers also bought" and no editorial pairing in this build,
- * and inventing one would be inventing evidence (DESIGN.md §9 rule 1).
- *
- * The third pass is what keeps the row a row: KHÓI at 390.000₫ has two
- * t-shirts near it and nothing else inside the price window, and a row of
- * two under a heading that promises four reads as a page that failed to
- * load. Catalog order inside each pass, so it does not reshuffle between two
- * renders of the same issue.
- */
-function relatedTo(catalog: Catalog, product: Product, dropNo: number): Product[] {
-  const rest = productsInDrop(catalog, dropNo).filter((p) => p.id !== product.id);
-  const near = (p: Product) =>
-    p.priceVnd >= product.priceVnd * (1 - NEAR_PRICE) &&
-    p.priceVnd <= product.priceVnd * (1 + NEAR_PRICE);
-
-  const sameFamily = rest.filter((p) => p.family === product.family);
-  const nearPrice = rest.filter((p) => p.family !== product.family && near(p));
-  const others = rest.filter((p) => p.family !== product.family && !near(p));
-
-  return [...sameFamily, ...nearPrice, ...others].slice(0, RELATED_ROW);
 }

@@ -16,10 +16,16 @@
    heart, ĐÃ HẾT stamp, text link), the feed (story, cards, rails, the next
    issue, the closed issues), the footer, the shop grid, the calendar, the
    sheets as native <dialog>s (quick add, added, size guide), the reveal on
-   scroll, the tablet column, the desktop web app and the 900–1199 band. The
-   product page (`.pbar`, `.gal`, `.pinfo`…), the pushed screens' bar
-   (`.mbar`) and the account menu wait for their slices; the mock's `.vh` is
-   the app's `.sr-only`; its logo rules (`.mark`, `.word`) are `.logo`, the
+   scroll, the tablet column, the desktop web app and the 900–1199 band.
+
+   PORTED AT SLICE 1b, for `/products/[slug]` and the pushed screens: the
+   pushed screens' bar (`.mbar`), the product page (`.pbar`, `.gal`, `.frame`,
+   `.prog`, `.gal-btn`, `.pinfo`…, `.buybar`, `.sect`, `.details`, `.facts`,
+   `.crumbs`) with its desktop grid, and the wide card's details list. The
+   mock's `.p-product` (the body's room for the buy bar) is the frame's
+   `.has-buybar`, and its `.p-product .pdp` is `.pdp`. The account menu and
+   the checkout's top bar wait for their slices; the mock's `.vh` is the
+   app's `.sr-only`; its logo rules (`.mark`, `.word`) are `.logo`, the
    black-and-white lockup (QĐ-33). A rule is ported whole, with the
    selectors it groups.
 
@@ -180,6 +186,15 @@ html:has([data-ui="feed"]) {
 @media (max-width: 899.98px) {
   [data-ui="feed"] .top:not([data-top="brand"]) { display: none; }
 }
+/* A pushed screen's own bar on the phone: back or close, and a title (slice 1b: the closed issues). */
+[data-ui="feed"] .mbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 2px; height: var(--f-bar); padding: 0 12px 0 4px;
+  background: var(--f-bg); box-shadow: 0 1px 0 var(--f-line);
+}
+[data-ui="feed"] .mbar-title { min-width: 0; font-size: 17px; font-weight: 680; line-height: 1.2; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+[data-ui="feed"] .mbar-acts { display: flex; align-items: center; margin-left: auto; }
+[data-ui="feed"] .mbar-acts:empty { display: none; }
 [data-ui="feed"] .tabs.links .tab[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--f-blue); }
 
 /* ── bottom tab bar (phone) ── */
@@ -647,6 +662,85 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
 [data-ui="feed"] .sort-opt[aria-checked="true"] { font-weight: 700; }
 [data-ui="feed"] .sort-opt[aria-checked="true"] .i { visibility: visible; }
 
+/* ── product page (phone), slice 1b ── */
+/* The page keeps room under it for the buy bar, which stands where the tab bar would (the mock's `.p-product`). */
+[data-ui="feed"].feed-frame.has-buybar { padding-bottom: calc(76px + var(--f-sb)); }
+[data-ui="feed"] .pbar {
+  position: fixed; z-index: 45; top: 0; left: 0; right: 0;
+  display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 4px;
+  height: 64px; padding: 12px 10px 0;
+  transition: background-color .2s, box-shadow .2s;
+}
+[data-ui="feed"] .pbar .ib { background: rgba(252, 252, 253, .92); }
+[data-ui="feed"] .pbar-title { opacity: 0; font-size: 22px; line-height: 1.1; padding-left: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; transition: opacity .2s; }
+[data-ui="feed"] .pbar.solid { background: var(--f-bg); box-shadow: 0 1px 0 var(--f-line); }
+[data-ui="feed"] .pbar.solid .ib { background: transparent; }
+[data-ui="feed"] .pbar.solid .pbar-title { opacity: 1; }
+[data-ui="feed"] .pbar .badge { top: 3px; right: -1px; }
+/* The mock pops any heart (`[data-fav].pop`); the card's is `.fav.pop` above, the bar's is this one. */
+[data-ui="feed"] .pbar-fav.pop .i { animation: f-pop .42s var(--f-spring); }
+
+[data-ui="feed"] .gal { position: relative; background: var(--f-bg2); }
+[data-ui="feed"] .gal-track {
+  display: flex; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
+  scrollbar-width: none; cursor: pointer;
+}
+[data-ui="feed"] .gal-track::-webkit-scrollbar { display: none; }
+[data-ui="feed"] .frame { position: relative; flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; }
+[data-ui="feed"] .frame img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+[data-ui="feed"] .frame.flat { background: var(--f-plate2); }
+[data-ui="feed"] .prog {
+  position: absolute; z-index: 2; top: 0; left: 0; right: 0; display: flex; gap: 4px;
+  padding: 8px 12px 40px; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, .34), rgba(0, 0, 0, 0));
+}
+[data-ui="feed"] .prog i { flex: 1; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .55); overflow: hidden; }
+[data-ui="feed"] .prog i::after { content: ""; display: block; height: 100%; background: var(--f-blue); transform: scaleX(0); transform-origin: left center; transition: transform .38s var(--f-out); }
+[data-ui="feed"] .prog i.on::after { transform: scaleX(1); }
+[data-ui="feed"] .gal .plate { position: absolute; }
+[data-ui="feed"] .gal.one .gal-track { cursor: default; }
+[data-ui="feed"] .gal-btn { display: none; }
+
+[data-ui="feed"] .pinfo { padding: 18px var(--f-g) 8px; }
+[data-ui="feed"] .pinfo-tags { display: flex; gap: 8px; align-items: center; }
+[data-ui="feed"] .pname { margin-top: 12px; font-size: 52px; line-height: 1.02; padding-top: 4px; }
+[data-ui="feed"] .pkind { margin-top: 6px; font-size: 15px; color: var(--f-ink2); }
+[data-ui="feed"] .pprice { margin-top: 12px; font-size: 22px; font-weight: 700; }
+[data-ui="feed"] .pstock { margin-top: 8px; font-size: 14px; }
+[data-ui="feed"] .pstock.is-low b { height: 28px; padding: 0 11px 0 8px; font-size: 14px; }
+[data-ui="feed"] .pstock.is-low b .i { width: 17px; height: 17px; }
+[data-ui="feed"] .pblock { margin-top: 22px; }
+[data-ui="feed"] .pblock .sh-label { margin-bottom: 12px; }
+[data-ui="feed"] .padd { display: none; }
+[data-ui="feed"] .size-hint { display: none; }
+[data-ui="feed"] .need .size-hint { display: block; margin-top: 10px; font-size: 14px; font-weight: 600; }
+[data-ui="feed"] .need .size:not(:has(input:disabled)) { box-shadow: inset 0 0 0 2px var(--f-ink); }
+
+[data-ui="feed"] .buybar {
+  position: fixed; z-index: 40; left: 0; right: 0; bottom: 0;
+  padding: 12px var(--f-g) calc(12px + var(--f-sb)); background: var(--f-bg); box-shadow: var(--f-lift);
+}
+
+[data-ui="feed"] .sect { border-top: 8px solid var(--f-bg2); padding: 24px var(--f-g) 26px; margin-top: 24px; }
+[data-ui="feed"] .sect + .sect { margin-top: 0; }
+[data-ui="feed"] .sect-title { font-size: 20px; font-weight: 700; line-height: 1.25; margin-bottom: 12px; }
+[data-ui="feed"] .details { display: grid; gap: 8px; }
+[data-ui="feed"] .details li { position: relative; padding-left: 18px; font-size: 15px; line-height: 1.45; }
+[data-ui="feed"] .details li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 6px; height: 6px; border-radius: 50%; background: var(--f-ink); }
+[data-ui="feed"] .facts { display: grid; }
+[data-ui="feed"] .facts div { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-top: 1px solid var(--f-line); font-size: 15px; }
+[data-ui="feed"] .facts div:first-child { border-top: 0; padding-top: 0; }
+[data-ui="feed"] .facts dt { color: var(--f-ink2); }
+[data-ui="feed"] .facts dd { font-weight: 620; text-align: right; }
+/* A fact that leads on (the return window to its page): the whole row is the link, the value ends in a quiet arrow. */
+[data-ui="feed"] .facts .facts-go { position: relative; }
+[data-ui="feed"] .facts-go a { display: inline-flex; align-items: center; gap: 2px; min-height: 44px; margin: -11px 0; }
+[data-ui="feed"] .facts-go a::after { content: ""; position: absolute; inset: 0; }
+[data-ui="feed"] .facts-go a .i { width: 16px; height: 16px; color: var(--f-ink2); margin-right: -2px; }
+[data-ui="feed"] .sect.rail-sect { padding-left: 0; padding-right: 0; }
+[data-ui="feed"] .sect.rail-sect .rail { margin-top: 0; }
+[data-ui="feed"] .crumbs { display: none; }
+
 /* ── reveal on scroll (motion only) ── */
 @media (prefers-reduced-motion: no-preference) {
   [data-ui="feed"] .rv { transition: opacity .6s var(--f-out), transform .6s var(--f-out); }
@@ -663,8 +757,8 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
 /* ── desktop: a web app ── */
 @media (min-width: 900px) {
   html:has([data-ui="feed"]) { scroll-padding-top: 80px; scroll-padding-bottom: 12px; }
-  [data-ui="feed"].feed-frame.has-tabbar { padding-bottom: 0; }
-  [data-ui="feed"] .tabbar { display: none; }
+  [data-ui="feed"].feed-frame.has-tabbar, [data-ui="feed"].feed-frame.has-buybar { padding-bottom: 0; }
+  [data-ui="feed"] .tabbar, [data-ui="feed"] .buybar, [data-ui="feed"] .pbar, [data-ui="feed"] .mbar { display: none; }
   [data-ui="feed"] .only-desk { display: grid; }
 
   [data-ui="feed"] .top-in { grid-template-columns: 1fr auto 1fr; grid-template-areas: "brand tabs acts"; height: 64px; padding: 0 var(--f-wg); }
@@ -723,6 +817,7 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
   [data-ui="feed"] .card.wide .pill { background: var(--f-bg); }
   [data-ui="feed"] .card.wide .pill:hover { background: var(--f-white); box-shadow: inset 0 0 0 1.5px var(--f-ink); }
   [data-ui="feed"] .card.wide .card-extra { display: grid; grid-column: 1 / -1; gap: 18px; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--f-line2); }
+  [data-ui="feed"] .card.wide .details li { font-size: 14px; }
   [data-ui="feed"] .card-colors { font-size: 14px; color: var(--f-ink2); }
   [data-ui="feed"] .card-colors b { color: var(--f-ink); font-weight: 640; }
 
@@ -819,6 +914,50 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
   [data-ui="feed"] dialog.sheet.drop .sh-head { display: none; }
   [data-ui="feed"] dialog.sheet.drop .sort-opt:first-child { border-top: 0; }
 
+  /* Product (slice 1b): the story frame left, as wide as a whole 4:5 photo can be while it fits under the top bar
+     and the crumbs (and never past 58% of the page); the buying block sticky on the right. The buy column takes what
+     the frame leaves, up to 640; on a short window where frame, gap and 640 fall short of the page, the whole block
+     (crumbs, frame, column, sections, rail) is centred instead of leaving a band. The mock's `--frame-w` is written
+     out in the one rule that reads it, so the zone declares no token for it. */
+  [data-ui="feed"] .pdp {
+    max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg);
+    display: grid; grid-template-columns: min(max(360px, calc((100vh - 150px) * .8)), 58%) minmax(0, 640px); column-gap: 64px; align-items: start;
+    justify-content: center;
+    grid-template-areas: "crumbs crumbs" "gal info" "sects info" "rail rail";
+  }
+  [data-ui="feed"] .crumbs { grid-area: crumbs; display: flex; align-items: center; gap: 8px; padding: 14px 0 16px; font-size: 14px; color: var(--f-ink2); }
+  [data-ui="feed"] .gal { grid-area: gal; }
+  [data-ui="feed"] .psects { grid-area: sects; }
+  [data-ui="feed"] .crumbs a { display: inline-flex; align-items: center; min-height: 32px; color: var(--f-ink); font-weight: 600; }
+  [data-ui="feed"] .crumbs a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  [data-ui="feed"] .prog { padding: 12px 14px 48px; }
+  [data-ui="feed"] .gal-btn {
+    position: absolute; z-index: 3; top: 50%; display: grid; place-items: center;
+    width: 48px; height: 48px; margin-top: -24px; border-radius: var(--f-r-pill);
+    background: rgba(252, 252, 253, .92); color: var(--f-ink);
+    transition: opacity .2s, background-color .15s, transform .15s var(--f-out);
+  }
+  [data-ui="feed"] .gal-btn .i { width: 22px; height: 22px; }
+  [data-ui="feed"] .gal-prev { left: 16px; }
+  [data-ui="feed"] .gal-next { right: 16px; }
+  [data-ui="feed"] .gal-btn:hover { background: var(--f-white); }
+  [data-ui="feed"] .gal-btn:active { transform: scale(.94); }
+  [data-ui="feed"] .gal-btn:disabled { opacity: 0; pointer-events: none; }
+  [data-ui="feed"] .gal .plate { font-size: 56px; padding: 19px 26px 12px; }
+  /* The buy column sticks inside its own cell, which spans the frame and the sections, so it lets go before the rail. */
+  [data-ui="feed"] .pinfo-col { grid-area: info; align-self: stretch; }
+  [data-ui="feed"] .pinfo { position: sticky; top: 88px; padding: 4px 0 0; }
+  [data-ui="feed"] .pname { font-size: 84px; margin-top: 16px; }
+  [data-ui="feed"] .pkind { font-size: 16px; }
+  [data-ui="feed"] .pprice { font-size: 24px; margin-top: 14px; }
+  [data-ui="feed"] .padd { display: block; margin-top: 24px; }
+  [data-ui="feed"] .padd .btn { height: 56px; font-size: 17px; }
+  [data-ui="feed"] .psects .sect { padding: 32px 0 8px; border-top: 1px solid var(--f-line); margin-top: 40px; }
+  [data-ui="feed"] .psects .sect + .sect { margin-top: 32px; }
+  [data-ui="feed"] .psects .sect-title { font-size: 26px; margin-bottom: 16px; }
+  [data-ui="feed"] .pdp .rail-sect { grid-area: rail; border-top: 0; margin-top: 72px; padding: 0; }
+  [data-ui="feed"] .pdp .rail-sect .rail-head, [data-ui="feed"] .pdp .rail-sect .rail-track { padding-left: 0; padding-right: 0; scroll-padding: 0; }
+
   /* One composition of the feed per width (see `.card` above). Last in the block, so the phone's copy
      stays hidden whatever display its own rules give it. */
   [data-ui="feed"] .feed-ph { display: none; }
@@ -857,6 +996,7 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
   [data-ui="feed"] .sort-opt:hover { background: var(--f-bg2); }
   [data-ui="feed"] .link:hover { text-decoration-thickness: 2.5px; }
   [data-ui="feed"] .closed-row:hover .closed-no { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+  [data-ui="feed"] .facts-go:hover a { text-decoration: underline; text-underline-offset: 3px; }
   [data-ui="feed"] .story:hover .story-go { background: var(--f-blue2); }
   [data-ui="feed"] .card-media, [data-ui="feed"] .gcard-media, [data-ui="feed"] .mini-media { overflow: hidden; }
 }

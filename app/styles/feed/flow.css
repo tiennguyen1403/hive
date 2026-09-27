@@ -10,11 +10,75 @@
    parts, checked, focused, off), with the card's hover. A rule is ported
    whole, with the selectors it groups (`.pick`, `.promo-field`, `.co-pair`,
    `.co-promo`), so the slice that builds the checkout finds it in place.
-   NOT YET: search, the cart, the rest of the checkout (`.co*`, `.pick`
-   itself, the promo row, the order bar), the picker sheet, the order
-   confirmation and the toast — whose name meets v3's unscoped `.toast`
+   PORTED AT SLICE 1b, for `/search`: the search bar and field (`.sbar`,
+   `.sform`, `.sclear`, `.scancel`), the sections and their chips (`.ssec`,
+   `.schip`, the recent searches' `.rchip`), the results' head and the empty
+   result (`.sres-head`, `.snone`), with their desktop and hover rules. The
+   mock's `html:not([data-mouse]) .sform:has(input:focus-visible)` ring is the
+   zone's rule plus its `html[data-pointer]` off switch; its overlays reach
+   46, as every ported overlay does; its `.srch .grid` is `.srch .shop-grid`.
+   NOT YET: the cart, the rest of the checkout (`.co*`, `.pick` itself, the
+   promo row, the order bar), the picker sheet, the order confirmation, the
+   empty states and the toast — whose name meets v3's unscoped `.toast`
    (`styles/sheet.css`), which would land on a Feed toast too
    (`scope.test.ts` refuses the name until that is settled). */
+
+/* ── search ── */
+[data-ui="feed"] .sbar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 6px 8px var(--f-g); background: var(--f-bg); box-shadow: 0 1px 0 var(--f-line);
+}
+[data-ui="feed"] .sform {
+  position: relative; flex: 1; min-width: 0;
+  display: flex; align-items: center; height: 44px; padding: 0 4px 0 14px;
+  border-radius: var(--f-r-pill); background: var(--f-bg2);
+  transition: background-color .15s, box-shadow .15s;
+}
+[data-ui="feed"] .sform > .i { width: 20px; height: 20px; color: var(--f-ink2); }
+[data-ui="feed"] .sform input {
+  flex: 1; min-width: 0; height: 100%; padding: 0 6px 0 10px; border: 0; background: transparent;
+  font: inherit; font-size: 16px; color: var(--f-ink);
+}
+[data-ui="feed"] .sform input:focus { outline: none; }
+[data-ui="feed"] .sform input::placeholder { color: var(--f-ink2); }
+[data-ui="feed"] .sform input::-webkit-search-cancel-button { display: none; }
+[data-ui="feed"] .sform:focus-within { background: var(--f-white); box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+[data-ui="feed"] .sform:has(input:focus-visible) { outline: 2px solid var(--f-blue); outline-offset: 2px; }
+html[data-pointer] [data-ui="feed"] .sform:has(input:focus-visible) { outline: none; }
+[data-ui="feed"] .sclear { position: relative; display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--f-r-pill); color: var(--f-ink2); }
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46. */
+[data-ui="feed"] .sclear::after { content: ""; position: absolute; inset: -5px; }
+[data-ui="feed"] .sclear .i { width: 18px; height: 18px; }
+[data-ui="feed"] .scancel { position: relative; display: flex; align-items: center; height: 44px; padding: 0 10px; font-size: 15px; font-weight: 620; }
+
+[data-ui="feed"] .ssec { padding: 22px var(--f-g) 2px; }
+[data-ui="feed"] .ssec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+[data-ui="feed"] .ssec-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+[data-ui="feed"] .ssec-head .ssec-title { margin-bottom: 0; }
+[data-ui="feed"] .schips { display: flex; flex-wrap: wrap; gap: 8px; }
+[data-ui="feed"] .schip {
+  position: relative; display: inline-flex; align-items: center; height: 36px; padding: 0 16px;
+  border-radius: var(--f-r-pill); box-shadow: inset 0 0 0 1.5px var(--f-line2); font-size: 14px; font-weight: 560;
+  transition: background-color .15s, box-shadow .15s;
+}
+/* The mock's overlays are -4px (36 → 44); the project's reach 46. */
+[data-ui="feed"] .schip::after { content: ""; position: absolute; inset: -5px 0; }
+[data-ui="feed"] .rchip { display: inline-flex; align-items: center; height: 36px; border-radius: var(--f-r-pill); background: var(--f-bg2); }
+[data-ui="feed"] .rchip-go { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 100%; padding: 0 2px 0 12px; font-size: 14px; font-weight: 560; }
+[data-ui="feed"] .rchip-go::after { content: ""; position: absolute; inset: -5px 0; }
+[data-ui="feed"] .rchip-go .i { width: 16px; height: 16px; color: var(--f-ink2); }
+[data-ui="feed"] .rchip-x { position: relative; display: grid; place-items: center; width: 32px; height: 36px; border-radius: var(--f-r-pill); color: var(--f-ink2); }
+[data-ui="feed"] .rchip-x::after { content: ""; position: absolute; inset: -5px -6px; }
+[data-ui="feed"] .rchip-x .i { width: 16px; height: 16px; }
+[data-ui="feed"] .srch .rail { margin-top: 30px; }
+[data-ui="feed"] .sres-head { padding: 16px var(--f-g) 12px; }
+[data-ui="feed"] .sres-head .count { font-weight: 520; color: var(--f-ink2); }
+[data-ui="feed"] .sres-head .count b { color: var(--f-ink); font-weight: 700; }
+[data-ui="feed"] .snone { padding: 32px var(--f-g) 0; }
+[data-ui="feed"] .snone-line { font-size: 18px; font-weight: 700; line-height: 1.35; }
+[data-ui="feed"] .snone-act { padding: 22px var(--f-g) 8px; }
+[data-ui="feed"] .snone-act .btn { width: auto; display: inline-flex; padding: 0 24px; }
 
 /* ── the form field ── */
 [data-ui="feed"] .field { display: block; }
@@ -58,5 +122,27 @@ html[data-pointer] [data-ui="feed"] .rcard:has(input:focus) { outline: none; }
 [data-ui="feed"] .rcard.is-off .rcard-ic { background: var(--f-bg3); color: var(--f-ink2); }
 
 @media (hover: hover) and (pointer: fine) {
+  [data-ui="feed"] .schip:hover { background: var(--f-bg2); box-shadow: none; }
+  [data-ui="feed"] .rchip:hover { background: var(--f-bg3); }
   [data-ui="feed"] .rcard:not(.is-off):not(:has(input:checked)):hover { box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+}
+
+/* ── desktop: search ── */
+@media (min-width: 900px) {
+  [data-ui="feed"] .srch { max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg); }
+  [data-ui="feed"] .sbar { position: static; padding: 36px 0 6px; box-shadow: none; background: none; }
+  [data-ui="feed"] .sform { max-width: 760px; height: 60px; padding-left: 22px; }
+  [data-ui="feed"] .sform > .i { width: 24px; height: 24px; }
+  [data-ui="feed"] .sform input { font-size: 20px; }
+  [data-ui="feed"] .scancel { display: none; }
+  [data-ui="feed"] .ssec { padding: 26px 0 2px; }
+  [data-ui="feed"] .srch .rail { margin-top: 56px; }
+  [data-ui="feed"] .srch .rail-head, [data-ui="feed"] .srch .rail-track { padding-left: 0; padding-right: 0; scroll-padding: 0; }
+  [data-ui="feed"] .sres-head { padding: 22px 0 16px; }
+  [data-ui="feed"] .sres-head .count { font-size: 15px; }
+  [data-ui="feed"] .srch .shop-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 40px; }
+  [data-ui="feed"] .snone { padding: 44px 0 0; }
+  [data-ui="feed"] .snone-line { font-size: 26px; }
+  [data-ui="feed"] .snone .ssec { padding-left: 0; }
+  [data-ui="feed"] .snone-act { padding: 26px 0 8px; }
 }

@@ -88,15 +88,17 @@ export function StockLine({ facts, className }: { facts: StockFacts | null; clas
 /**
  * The heart: saves the style on this device (`lib/wishlist.ts`, as every
  * screen does until slice 3 moves it into the account). A filled heart while
- * it is saved; it pops when a style goes in.
+ * it is saved; it pops when a style goes in. On a card it sits on the
+ * picture (`.fav`); on the product page's phone bar it is one of the bar's
+ * round buttons (`bar`).
  */
-export function FavButton({ product }: { product: Product }) {
+export function FavButton({ product, bar = false }: { product: Product; bar?: boolean }) {
   const wish = useWishlist();
   const [pops, setPops] = useState(0);
   const saved = wish.ready && wish.has(product.id);
   return (
     <button
-      className={cx("fav", pops > 0 && "pop")}
+      className={cx(bar ? "ib pbar-fav" : "fav", pops > 0 && "pop")}
       type="button"
       aria-pressed={saved}
       aria-label={`Yêu thích ${product.name}`}
@@ -173,6 +175,14 @@ export function FeedCard({ product: s, kind = "look", wide = false, flip = false
         )}
         {wide && (
           <div className="card-extra">
+            {/* How the garment is made (`Product.details`, slice B6), as the mock's wide card lists it. */}
+            {s.details.length > 0 && (
+              <ul className="details">
+                {s.details.map((d) => (
+                  <li key={d}>{d}</li>
+                ))}
+              </ul>
+            )}
             <p className="card-colors">
               Màu <b>{s.colors.map((c) => COLORS[c].label).join(", ")}</b>
             </p>

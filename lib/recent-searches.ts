@@ -54,6 +54,18 @@ export function rememberSearch(
   return [trimmed, ...without].slice(0, RECENT_SEARCH_CAP);
 }
 
+/**
+ * Take one term off the list — the "×" on its chip (the Feed search, round
+ * v4 slice 1b). Matched on the folded form, as `rememberSearch` matches, so
+ * the chip removes the entry whatever spelling it carries. A term that is
+ * not on the list hands the same array back, so there is nothing to write.
+ */
+export function forgetSearch(list: RecentSearches, term: string): RecentSearches {
+  const key = fold(term.trim());
+  const next = list.filter((t) => fold(t) !== key);
+  return next.length === list.length ? list : next;
+}
+
 // ─────────────────────────────────────────────────────────────────── storage
 export function serializeSearches(list: RecentSearches): string {
   return JSON.stringify({ v: SCHEMA_VERSION, terms: list });

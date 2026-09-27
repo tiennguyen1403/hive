@@ -54,15 +54,20 @@ export function isAdminPath(pathname: string): boolean {
 
 /**
  * The routes already rebuilt in the round v4 "Feed" design (QĐ-32): the home
- * page since slice 1a. Each later slice adds its routes here. The veil takes
- * the logo's black-and-white colours (QĐ-33) when it covers one of them or
- * leads to one, and keeps the v3 honey only between two v3 screens.
+ * page since slice 1a; since slice 1b the shop `/products`, every style's
+ * page `/products/<slug>`, `/search`, the closed issues `/so` and each issue
+ * `/so/<no>`. Each later slice adds its routes here. The veil takes the
+ * logo's black-and-white colours (QĐ-33) when it covers one of them or leads
+ * to one, and keeps the v3 honey only between two v3 screens.
  */
-const FEED_PATHS: readonly string[] = ["/"];
+const FEED_PATHS: readonly string[] = ["/", "/products", "/search", "/so"];
+
+/** Routes whose every page below them is a Feed screen: `/products/s05-khoi`, `/so/4`. */
+const FEED_TREES: readonly string[] = ["/products/", "/so/"];
 
 export function isFeedPath(pathname: string): boolean {
   const trimmed = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-  return FEED_PATHS.includes(trimmed);
+  return FEED_PATHS.includes(trimmed) || FEED_TREES.some((t) => trimmed.startsWith(t) && trimmed.length > t.length);
 }
 
 function samePage(a: string, b: string): boolean {

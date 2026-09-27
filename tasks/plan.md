@@ -2399,3 +2399,29 @@ Người dùng cho phép, phiên chính dừng nó để agent dựng và chụp
   4. kiểm: 10 mẫu có dòng, tổng 45 dòng;
   5. nếu tài khoản mẫu mất liên kết thì `ENV_FILE=.env.hosted.local npm run seed:users`.
 - **Còn mở:** ô nhập chi tiết trong form quản trị; dòng chi tiết cho Số 03/04 và Cố định (mock không có).
+
+**Lát 1b ĐẠT (27/09/2026, `ui-implementer`, phiên chính duyệt độc lập).** Brief `tasks/briefs/v4-lat-1b.md`.
+- **Đã giao:**
+  - `/products` Cửa hàng;
+  - `/products/[slug]` trang story (cột mua dính, "Size của tôi", sheet Bảng size áo và quần, Chi tiết, Thông số, Giao hàng
+    và đổi trả, rail Cùng Số);
+  - `/search`;
+  - `/so/[no]` (Số đang mở chuyển tới tab Cửa hàng, Số sắp mở tới Sắp mở);
+  - route mới `/so` cho các Số đã đóng;
+  - `lib/pants-chart.ts` (số của mock);
+  - nối lại link `/#rules` và `/?drop=N`.
+- **Kiểm:** 1640/1640 test, build sạch. Phiên chính so ảnh trang sản phẩm 390 và 1280 với mock: khớp.
+- **Người dùng nhận 4 xung đột mới:**
+  1. tìm kiếm ra cả mẫu Số vừa đóng, ghi "Đã đóng";
+  2. bỏ tìm bằng "s05";
+  3. nút đứng một mình rộng vừa chữ;
+  4. nhãn mới "Tạm hết" (Cố định hết kệ), "Số 06 chưa mở", chip "SẮP MỞ".
+- Tiêu đề tab mang tên trần, thuộc #3.
+- **Phiên chính sửa theo mock:** khoảng số dùng gạch nối thường, vẫn không ngắt dòng (NBSP/WJ), vì mock và người dùng không
+  dùng gạch dài. Rail "Cùng Cố định".
+- **Còn mở:**
+  - "Hình in" đang suy từ dòng `In "X"` của `details` và khớp 10 giá trị của mock; lát backend sau có thể thêm trường
+    `print`;
+  - nút "Ghi nhớ size" của v3 mất cùng trang v3, lát 3 đưa "Size của tôi" vào Hồ sơ;
+  - mã v3 mồ côi dọn ở lát cuối;
+  - `tools/layout-sweep.js` thêm `/so`, `/search`, `/products/s05-da`.

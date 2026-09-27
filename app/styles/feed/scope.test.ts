@@ -77,8 +77,8 @@ for (const r of rules(globals)) {
 }
 
 describe("the Feed stylesheets stay inside the zone", () => {
-  it("finds the three files and their rules", () => {
-    expect(feedFiles.sort()).toEqual(["feed.css", "flow.css", "system.css"]);
+  it("finds the four files and their rules", () => {
+    expect(feedFiles.sort()).toEqual(["feed.css", "flow.css", "more.css", "system.css"]);
     expect(feedRules.length).toBeGreaterThan(80);
   });
 
@@ -125,8 +125,10 @@ describe("the Feed stylesheets stay inside the zone", () => {
   it("reads no token the zone does not declare", () => {
     // `--f-sw` is not a token: the sheet writes it on <html> while one is
     // open (the classic scrollbar's width, as the mock's `--sw`), and only
-    // the rule on <body> reads it, with a fallback.
-    const RUNTIME = new Set(["--f-sw"]);
+    // the rule on <body> reads it, with a fallback. Nor is `--f-n` (slice 1b):
+    // a closed issue's plate carries its name's letter count inline (the
+    // mock's `--n`), and the one rule that sizes the name reads it, with a fallback.
+    const RUNTIME = new Set(["--f-sw", "--f-n"]);
     const missing = new Set<string>();
     for (const r of feedRules) {
       for (const m of r.body.matchAll(/var\((--f-[\w-]+)/g)) {
@@ -183,7 +185,7 @@ describe("the Feed stylesheets stay inside the zone", () => {
 
   it("loads after every v3 file, from globals.css", () => {
     const imports = [...globals.matchAll(/@import "\.\/styles\/([\w/.-]+)"/g)].map((m) => m[1]);
-    expect(imports.slice(-4)).toEqual(["desktop.css", "feed/feed.css", "feed/flow.css", "feed/system.css"]);
+    expect(imports.slice(-5)).toEqual(["desktop.css", "feed/feed.css", "feed/flow.css", "feed/more.css", "feed/system.css"]);
   });
 });
 

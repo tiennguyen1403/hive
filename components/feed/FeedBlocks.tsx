@@ -210,7 +210,10 @@ export function SoonCard({ drop, lead = false, idSuffix = "" }: { drop: Drop; le
   );
 }
 
-/** "Đã đóng": one row per closed issue, newest first, each to its own page (`feed.js`: `closedRows`). */
+/**
+ * "Đã đóng": one row per closed issue, newest first, each to its own page, and
+ * "Xem tất cả" to the archive of them (`home.js`: `closed`; `feed.js`: `closedRows`).
+ */
 export function ClosedList({ drops }: { drops: readonly Drop[] }) {
   const catalog = useCatalog();
   const { ref, shown } = useReveal<HTMLElement>();
@@ -221,6 +224,9 @@ export function ClosedList({ drops }: { drops: readonly Drop[] }) {
         <h2 className="closed-title disp" id="closed-title">
           Đã đóng
         </h2>
+        <Link className="link" href="/so">
+          Xem tất cả
+        </Link>
       </div>
       {drops.map((d) => {
         const f = issueFacts(catalog, d);

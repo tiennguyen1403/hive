@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   RECENT_SEARCH_STORAGE_KEY,
+  forgetSearch,
   parseSearches,
   rememberSearch,
   serializeSearches,
@@ -54,6 +55,14 @@ export function recordSearch(term: string, hits: number): void {
 
 export function clearSearches(): void {
   write([]);
+}
+
+/** One chip's "×" (the Feed search, round v4 slice 1b). A term not on the list writes nothing. */
+export function forgetRecent(term: string): void {
+  const list = readSearches();
+  const next = forgetSearch(list, term);
+  if (next === list) return;
+  write(next);
 }
 
 /**

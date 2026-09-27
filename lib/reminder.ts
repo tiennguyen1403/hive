@@ -143,7 +143,8 @@ export function reminderNotice(
         // three ways.
         text: `Số ${no} mở lúc ${clockDayLabel(drop.opensAt)} — bạn đã đặt nhắc`,
         linkText: `xem số ${no}`,
-        href: `/?drop=${drop.no}`,
+        // The home page's Sắp mở tab, where the next issue comes first (round v4: the Feed home).
+        href: "/#sap-mo",
       };
     }
   }

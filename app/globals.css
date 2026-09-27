@@ -106,7 +106,8 @@
 @import "./styles/desktop.css";
 /* ── Round v4 "Feed" (QĐ-32), one folder, every rule under the Feed zone ──
    Each file mirrors the mock stylesheet of the same name
-   (`prototype/explore/feed/feed.css`, `flow.css`) and keeps its rules in the
+   (`prototype/explore/feed/feed.css`, `flow.css`, `more.css` since slice 1b)
+   and keeps its rules in the
    mock's order, so the cascade among Feed rules is the mock's: every
    selector gains the same `[data-ui="feed"]` (0,1,0), which leaves their
    order of specificity as the mock had it. No Feed rule can reach an element
@@ -120,6 +121,7 @@
    the round ends. */
 @import "./styles/feed/feed.css";
 @import "./styles/feed/flow.css";
+@import "./styles/feed/more.css";
 @import "./styles/feed/system.css";
 
 /* =========================================================================

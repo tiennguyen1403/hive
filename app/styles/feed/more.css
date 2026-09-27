@@ -1,0 +1,179 @@
+/* Round v4 "Feed" (QĐ-32) — the rules of `prototype/explore/feed/more.css`
+   the app has ported so far, in the mock's order, under the Feed zone
+   `[data-ui="feed"]`, tokens renamed `--x` → `--f-x`. The translations are
+   the ones `feed.css` beside this file lists; its reduced-motion block
+   covers these rules too, as the mock's does. Every class the mock writes
+   here starts with `b-`, so it never meets the chrome's.
+
+   PORTED AT SLICE 1b, for the closed issues `/so` and `/so/<no>`: the page
+   title (`.b-head`, `.b-title`) and the phone bar's late title
+   (`.mbar.title-late`, `.title-on`), the colour chips of a style without a
+   photo (`.b-chips`), the archive (`.b-now`, `.b-arc`, `.b-issue`…), one
+   closed issue (`.b-hero`, `.b-tiles`, `.b-tile`…, the live block
+   `.b-next`, `.b-state-cd` and the neighbours `.b-pn`), with the tablet
+   column, the desktop rules, the 900–1199 band and the hover rules they
+   need. The mock's open and upcoming heroes (`.b-hero-cd`, `.b-hero .btn`)
+   are not ported: an issue that is not closed leads to the home page
+   instead. The other screens of this file (Yêu thích, Thông báo, Tra cứu
+   đơn, Hỏi đáp, Bảng size, Liên hệ, 404) wait for their slices.
+
+   The plate's name is sized by its letter count, which the element carries
+   inline as `--f-n` (the mock's `--n`), the one custom property no zone
+   declares beside the sheet's `--f-sw` (`scope.test.ts`). */
+
+/* ── page frame ── */
+/* The page title; on a pushed screen the phone bar shows it once it has scrolled away. */
+[data-ui="feed"] .b-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 18px var(--f-g) 14px; }
+[data-ui="feed"] .b-title { font-size: 44px; line-height: 1.04; }
+[data-ui="feed"] .b-head .link { min-height: 44px; margin: -10px 0; }
+[data-ui="feed"] .mbar.title-late .mbar-title { opacity: 0; transition: opacity .2s; }
+[data-ui="feed"] .mbar.title-on .mbar-title { opacity: 1; }
+
+[data-ui="feed"] .b-chips { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+[data-ui="feed"] .b-chip { display: inline-block; width: 12px; height: 12px; border-radius: var(--f-r-pill); box-shadow: inset 0 0 0 1px rgba(17, 18, 20, .22); }
+
+/* The live block's clock (the mock files it with the order lookup's, which shares it). */
+[data-ui="feed"] .b-state-cd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+[data-ui="feed"] .b-state-cd .cd-label { color: var(--f-ink2); }
+[data-ui="feed"] .b-state-cd .cd-big { font-size: 30px; }
+
+/* ── the closed issues ── */
+[data-ui="feed"] .b-now {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 14px var(--f-g) 0; padding: 12px 16px;
+  background: var(--f-bg2); font-size: 14px; color: var(--f-ink2); min-height: 56px;
+}
+[data-ui="feed"] .b-now-no { font-size: 22px; line-height: 1; color: var(--f-ink); }
+[data-ui="feed"] .b-now .cd-big { font-size: 20px; color: var(--f-ink); }
+[data-ui="feed"] .b-now > .i { margin-left: auto; width: 20px; height: 20px; color: var(--f-ink); }
+[data-ui="feed"] .b-arc { padding-top: 8px; }
+[data-ui="feed"] .b-issue { position: relative; padding: 26px var(--f-g) 28px; border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .b-issue:first-child { border-top: 0; }
+[data-ui="feed"] .b-issue-no { font-size: 96px; line-height: .86; letter-spacing: -.01em; padding-top: .18em; }
+[data-ui="feed"] .b-issue-no a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+[data-ui="feed"] .b-issue-meta { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 14px; font-size: 14px; color: var(--f-ink2); }
+[data-ui="feed"] .b-issue-meta b { color: var(--f-ink); font-weight: 680; }
+[data-ui="feed"] .b-names { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; margin-top: 16px; }
+[data-ui="feed"] .b-name { display: inline-flex; align-items: center; gap: 6px; }
+[data-ui="feed"] .b-name .disp { font-size: 30px; line-height: 1.08; }
+[data-ui="feed"] .b-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; font-size: 15px; font-weight: 650; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+[data-ui="feed"] .b-go .i { width: 18px; height: 18px; transition: transform .2s var(--f-out); }
+/* An issue with photos of its own, once closed: one of them, dark like the open issue's story. */
+[data-ui="feed"] .b-issue.is-photo { padding: 0; border-top: 0; background: var(--f-ink); color: var(--f-white); }
+[data-ui="feed"] .b-issue.is-photo + .b-issue { border-top: 0; }
+[data-ui="feed"] .b-issue-media img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: 50% 22%; }
+[data-ui="feed"] .b-issue-body { padding: 22px var(--f-g) 28px; }
+[data-ui="feed"] .is-photo .b-issue-meta { color: rgba(255, 255, 255, .8); }
+[data-ui="feed"] .is-photo .b-issue-meta b { color: var(--f-white); }
+[data-ui="feed"] .is-photo .b-names .disp { color: var(--f-white); }
+
+/* ── one closed issue ── */
+[data-ui="feed"] .b-hero { padding: 22px var(--f-g) 8px; }
+[data-ui="feed"] .b-hero .chip-tag, [data-ui="feed"] .b-hero .chip-live, [data-ui="feed"] .b-hero .chip-line { margin-bottom: 14px; }
+[data-ui="feed"] .b-hero-no { font-size: 112px; line-height: .86; letter-spacing: -.01em; padding-top: .2em; }
+[data-ui="feed"] .b-hero-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 16px; font-size: 15px; color: var(--f-ink2); }
+[data-ui="feed"] .b-hero-meta b { color: var(--f-ink); font-weight: 700; }
+[data-ui="feed"] .b-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2px; row-gap: 26px; margin-top: 22px; }
+[data-ui="feed"] .b-tile { position: relative; min-width: 0; }
+[data-ui="feed"] .b-tile-link { display: block; }
+[data-ui="feed"] .b-tile-media { position: relative; background: var(--f-bg2); }
+[data-ui="feed"] .b-tile-media img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: 50% 30%; }
+/* The name is the picture: sized to the plate, as large as its letter count allows. */
+[data-ui="feed"] .b-tile-plate {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between; aspect-ratio: 4 / 5;
+  padding: 12px 12px 8px; background: var(--f-bg2); overflow: hidden; container-type: inline-size;
+}
+[data-ui="feed"] .b-tile-kind { font-size: 12px; font-weight: 620; color: var(--f-ink2); line-height: 1.3; }
+/* On the plate: the kind on the left, the colours it came in on the right. */
+[data-ui="feed"] .b-tile-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+[data-ui="feed"] .b-tile-top .b-chip { width: 16px; height: 16px; }
+[data-ui="feed"] .b-tile-big { font-size: min(62cqi, calc((100cqi - 24px) / var(--f-n, 4) / .62)); line-height: 1; white-space: nowrap; padding-top: .12em; letter-spacing: -.01em; }
+[data-ui="feed"] .b-tiles.is-odd .b-tile:first-child .b-tile-big { font-size: min(40cqi, calc((100cqi - 24px) / var(--f-n, 4) / .62)); }
+/* An odd count on the phone: the first style takes the row, so no plate stands alone at the end. */
+[data-ui="feed"] .b-tiles.is-odd .b-tile:first-child { grid-column: 1 / -1; }
+[data-ui="feed"] .b-tiles.is-odd .b-tile:first-child .b-tile-plate { aspect-ratio: 8 / 5; }
+[data-ui="feed"] .b-tiles.is-odd .b-tile:first-child .b-tile-media img { aspect-ratio: 8 / 5; }
+[data-ui="feed"] .b-tile-body { padding: 10px 12px 0; }
+[data-ui="feed"] .b-tile-name { font-size: 24px; line-height: 1.06; }
+[data-ui="feed"] .b-tile-meta { margin-top: 3px; font-size: 13px; color: var(--f-ink2); line-height: 1.3; }
+[data-ui="feed"] .b-tile-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; }
+[data-ui="feed"] .b-tile-price { font-size: 14px; font-weight: 680; }
+[data-ui="feed"] .b-tile-sold { font-size: 13px; font-weight: 600; color: var(--f-ink2); }
+[data-ui="feed"] .b-tile-sold b { color: var(--f-ink); font-weight: 700; }
+[data-ui="feed"] .b-next { margin-top: 44px; border-top: 8px solid var(--f-bg2); }
+[data-ui="feed"] .b-next-now { padding: 24px var(--f-g) 8px; }
+[data-ui="feed"] .b-next-now .sect-title { margin-bottom: 6px; }
+[data-ui="feed"] .b-next-now .btn { margin-top: 16px; }
+[data-ui="feed"] .b-next-now .remind { margin-top: 16px; }
+[data-ui="feed"] .b-pn { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2px; margin-top: 22px; }
+[data-ui="feed"] .b-pn.n-1 { grid-template-columns: minmax(0, 1fr); }
+[data-ui="feed"] .b-pn a { position: relative; display: grid; gap: 4px; padding: 16px var(--f-g) 18px; background: var(--f-bg2); min-height: 88px; }
+[data-ui="feed"] .b-pn a.is-next { text-align: right; justify-items: end; }
+[data-ui="feed"] .b-pn small { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--f-ink2); }
+[data-ui="feed"] .b-pn small .i { width: 16px; height: 16px; }
+[data-ui="feed"] .b-pn .disp { font-size: 30px; line-height: 1.04; }
+
+/* ── tablet: the phone layout in a calmer column ── */
+@media (min-width: 600px) and (max-width: 899.98px) {
+  [data-ui="feed"] .b-page { max-width: 600px; margin-left: auto; margin-right: auto; }
+}
+
+/* ── desktop ── */
+@media (min-width: 900px) {
+  [data-ui="feed"] .b-wrap { max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg); }
+  [data-ui="feed"] .b-head { padding: 36px 0 24px; align-items: flex-end; }
+  [data-ui="feed"] .b-title { font-size: 64px; }
+  [data-ui="feed"] .b-head .link { margin: 0 0 6px; }
+
+  /* the closed issues: one wide row per issue */
+  [data-ui="feed"] .b-now { margin: 0 0 8px; padding: 14px 20px; }
+  [data-ui="feed"] .b-arc { padding-top: 16px; }
+  [data-ui="feed"] .b-issue { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: 56px; align-items: start; padding: 40px 0 44px; }
+  [data-ui="feed"] .b-issue-no { font-size: 168px; }
+  [data-ui="feed"] .b-issue-side { grid-column: 2; }
+  [data-ui="feed"] .b-issue-meta { font-size: 15px; }
+  [data-ui="feed"] .b-names { margin-top: 0; gap: 0 26px; }
+  [data-ui="feed"] .b-name .disp { font-size: 72px; line-height: 1.06; }
+  [data-ui="feed"] .b-issue-side .b-go { margin-top: 22px; }
+  [data-ui="feed"] .b-issue.is-photo { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: 0; align-items: stretch; margin: 8px 0 12px; }
+  [data-ui="feed"] .b-issue-media { align-self: stretch; }
+  [data-ui="feed"] .b-issue-media img { height: 100%; aspect-ratio: 4 / 5; }
+  [data-ui="feed"] .b-issue-body { display: flex; flex-direction: column; justify-content: space-between; gap: 40px; padding: 44px 52px 48px; }
+  [data-ui="feed"] .is-photo .b-names { margin-top: 0; gap: 0 20px; }
+  [data-ui="feed"] .is-photo .b-name .disp { font-size: 52px; }
+
+  /* one closed issue */
+  [data-ui="feed"] .b-hero { padding: 40px 0 8px; }
+  [data-ui="feed"] .b-hero-no { font-size: 200px; }
+  [data-ui="feed"] .b-hero-meta { gap: 4px 20px; margin-top: 18px; font-size: 18px; }
+  [data-ui="feed"] .b-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 4px; row-gap: 40px; margin-top: 36px; }
+  [data-ui="feed"] .b-tiles.n-6, [data-ui="feed"] .b-tiles.n-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  [data-ui="feed"] .b-tiles.n-5, [data-ui="feed"] .b-tiles.n-10 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  [data-ui="feed"] .b-tiles.is-odd .b-tile:first-child { grid-column: auto; }
+  [data-ui="feed"] .b-tiles.is-odd .b-tile:first-child .b-tile-plate, [data-ui="feed"] .b-tiles.is-odd .b-tile:first-child .b-tile-media img { aspect-ratio: 4 / 5; }
+  [data-ui="feed"] .b-tile-plate { padding: 16px 16px 10px; }
+  [data-ui="feed"] .b-tile-body { padding: 12px 14px 0; }
+  [data-ui="feed"] .b-tile-name { font-size: 28px; }
+  [data-ui="feed"] .b-next { display: grid; grid-template-columns: minmax(0, 2fr); gap: 4px; margin-top: 72px; border-top: 0; }
+  [data-ui="feed"] .b-next.pn-1 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  [data-ui="feed"] .b-next.pn-2 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); }
+  [data-ui="feed"] .b-next .b-pn { display: contents; }
+  [data-ui="feed"] .b-next-now { padding: 32px 36px 36px; background: var(--f-bg2); }
+  [data-ui="feed"] .b-next-now .btn, [data-ui="feed"] .b-next-now .remind { width: auto; display: inline-flex; padding: 0 28px; }
+  [data-ui="feed"] .b-pn a { padding: 32px 36px; align-content: space-between; }
+  [data-ui="feed"] .b-pn .disp { font-size: 56px; }
+}
+
+@media (min-width: 900px) and (max-width: 1199.98px) {
+  [data-ui="feed"] .b-hero-no { font-size: 160px; }
+}
+
+/* Pointer hover, where there is one. */
+@media (hover: hover) and (pointer: fine) {
+  [data-ui="feed"] .b-issue:hover .b-go .i { transform: translateX(4px); }
+  [data-ui="feed"] .b-pn a:hover { background: var(--f-bg3); }
+  [data-ui="feed"] .b-tile-link:hover .b-tile-media img { transform: scale(1.03); }
+  [data-ui="feed"] .b-tile-media { overflow: hidden; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .b-tile-media img { transition: transform .7s var(--f-out); }
+}

@@ -31,12 +31,16 @@ export default async function HomePage(props: PageProps<"/">) {
   const now = new Date(nowMs);
 
   // `?drop=N` is in browser histories and printed links from before the Feed round: a closed issue has had
-  // a page of its own since v3 slice 4, an issue that never existed is a 404, and any other issue is this page.
+  // a page of its own since v3 slice 4, an issue that never existed is a 404; since slice 1b an issue that
+  // sells opens the Cửa hàng tab on its line and one announced opens Sắp mở — where `/so/N` sends them too.
   const asked = Number(Array.isArray(sp.drop) ? sp.drop[0] : sp.drop);
   if (Number.isFinite(asked)) {
     const one = catalog.dropByNo.get(asked);
     if (!one) notFound();
-    if (dropState(one, now) === "CLOSED") redirect(`/so/${one.no}`);
+    const state = dropState(one, now);
+    if (state === "CLOSED") redirect(`/so/${one.no}`);
+    if (state === "OPEN") redirect(`/?line=${one.no}#cua-hang`);
+    redirect("/#sap-mo");
   }
 
   const moment = homeMoment(catalog, now);

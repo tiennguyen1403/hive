@@ -17,6 +17,7 @@ import {
   lineIssue,
   storyPicture,
 } from "./feed-home";
+import { FEED_DASH, FEED_TIGHT_DASH } from "./feed-range";
 
 const C = FIXTURE_CATALOG;
 const at = (iso: string) => new Date(iso);
@@ -141,10 +142,11 @@ describe("the clock", () => {
 describe("an issue's figures", () => {
   it("counts what the mock prints for Số 05 and Số 04", () => {
     const five = issueFacts(C, C.dropByNo.get(5)!);
-    expect(five).toMatchObject({ styles: 10, cut: 181, left: 73, sold: 108, run: "11/09 - 25/09" });
+    // The run is a Feed range: the mock's hyphen, held by no-break spaces and a word joiner (`lib/feed-range.ts`).
+    expect(five).toMatchObject({ styles: 10, cut: 181, left: 73, sold: 108, run: `11/09${FEED_DASH}25/09` });
     expect(five.names).toBe("KHÓI, BỤI, NGUỘI, NẮNG, SƯƠNG, MUỐI, THAN, CÁT, GIÓ, ĐÁ");
     const four = issueFacts(C, C.dropByNo.get(4)!);
-    expect(four).toMatchObject({ styles: 6, cut: 200, sold: 200, run: "05/06 - 19/06" });
+    expect(four).toMatchObject({ styles: 6, cut: 200, sold: 200, run: `05/06${FEED_DASH}19/06` });
     expect(four.names).toBe("RÊU, TRO, SÓNG, VỎ, MƯA, KHÔ");
   });
 });
@@ -152,7 +154,7 @@ describe("an issue's figures", () => {
 describe("the footer", () => {
   it("prints delivery from lib/shipping in the mock's words", () => {
     expect(footDelivery()).toEqual([
-      { label: "Giao tiêu chuẩn, 2–4 ngày", value: "30.000₫" },
+      { label: `Giao tiêu chuẩn, 2${FEED_TIGHT_DASH}4 ngày`, value: "30.000₫" },
       { label: "Giao nhanh nội thành TP.HCM, 24 giờ", value: "45.000₫" },
       { label: "Miễn phí giao từ", value: "1.000.000₫" },
     ]);

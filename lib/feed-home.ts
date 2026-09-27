@@ -3,6 +3,7 @@ import type { Catalog } from "./catalog";
 import { clockLabel, dayMonth, weekdayLabel } from "./datetime";
 import { dropState, timeLeft } from "./drop";
 import { firstColor, photoKeyOf } from "./feed";
+import { feedDayRange, feedTight } from "./feed-range";
 import { dropSummary, isFixed, onHandByColor, productsInDrop } from "./inventory";
 import { vnd } from "./money";
 import { PAYMENT_LABEL } from "./order-labels";
@@ -165,7 +166,11 @@ export interface IssueFacts {
   cut: number;
   sold: number;
   left: number;
-  /** "05/06 - 19/06", as the mock writes a run. */
+  /**
+   * "05/06 - 19/06": the run with the mock's hyphen, the two days never
+   * parted (`feedDayRange`, `lib/feed-range.ts`: no-break spaces and a word
+   * joiner, the no-break rule the user kept on 27/09).
+   */
   run: string;
   /** "RÊU, TRO, SÓNG, VỎ, MƯA, KHÔ". */
   names: string;
@@ -179,7 +184,7 @@ export function issueFacts(catalog: Catalog, drop: Drop): IssueFacts {
     cut: s.cutUnits,
     sold: s.soldUnits,
     left: s.onHand,
-    run: `${dayMonth(drop.opensAt)} - ${dayMonth(drop.closesAt)}`,
+    run: feedDayRange(drop.opensAt, drop.closesAt),
     names: productsInDrop(catalog, drop.no)
       .map((p) => p.name)
       .join(", "),
@@ -197,13 +202,15 @@ export interface FootFact {
 /**
  * "Giao hàng": each service with its days and fee, then the free-delivery
  * line — `lib/shipping.ts`'s figures in the mock's words. Express is the
- * same-city courier of province 29, TP.HCM.
+ * same-city courier of province 29, TP.HCM. The days are a Feed range, "2-4
+ * ngày" with the mock's hyphen held tight (`feedTight`); the v3 label itself
+ * keeps its en dash, since a handover stores it as the order's carrier.
  */
 export function footDelivery(): FootFact[] {
   const rows = DELIVERY_OPTIONS.map((o) => {
     const [name = o.label, days = ""] = o.label.split(" · ");
     const where = o.method === "EXPRESS" ? " TP.HCM" : "";
-    return { label: `${name}${where}, ${days}`, value: vnd(o.feeVnd) };
+    return { label: `${name}${where}, ${feedTight(days)}`, value: vnd(o.feeVnd) };
   });
   return [...rows, { label: "Miễn phí giao từ", value: vnd(FREE_SHIPPING_FROM_VND) }];
 }

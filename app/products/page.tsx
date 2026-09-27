@@ -1,38 +1,41 @@
 import type { Metadata } from "next";
-import { Listing } from "@/components/product/Listing";
-import { ShopFrame } from "@/components/shop/ShopFrame";
-import { parseListingQuery } from "@/lib/catalog-query";
+import { FeedFrame } from "@/components/feed/FeedFrame";
+import { ProductsShop } from "@/components/feed/ProductsShop";
+import { demoNowMs } from "@/lib/clock";
 import { loadCatalog } from "@/lib/db/catalog";
-import { productsOnSale } from "@/lib/inventory";
+import { parseShopState, shopLines } from "@/lib/feed";
+import { homeMoment, lineIssue } from "@/lib/feed-home";
 
-/** "Tất cả mẫu" — the layout's template adds "· HIVE". */
-export const metadata: Metadata = { title: "Tất cả mẫu" };
+/** "Cửa hàng" — the layout's template adds "· HIVE". */
+export const metadata: Metadata = { title: "Cửa hàng" };
 
 /**
- * Every style on sale, in one grid (v3 slice 11).
+ * The shop, round v4 "Feed" (slice 1b): the approved mock's
+ * `prototype/explore/feed/products.html` — "Cửa hàng", the line switch, the
+ * family chips, the count and the sort (a sheet on the phone, a menu from the
+ * chip on a desktop), the grid, and the empty grid's way to another line.
  *
- * The open issue's styles — its sold-out ones too, the issue is still the
- * one selling — and every fixed style, in catalogue order (`productsOnSale`).
- * Between two issues it is the fixed styles alone. The tabs, the chips, the
- * rail and "Hiện N / N mẫu" all count this pool; an issue's style wears its
- * plate on the photo, because here it stands among styles of both kinds.
+ * Its lines follow the shop's moment, as the home page's Cửa hàng tab does
+ * (`homeMoment`, `shopLines`): while an issue sells, "Tất cả", the issue (the
+ * line a visit opens on) and the fixed line; once it has closed, the fixed
+ * line first and the issue after it, shown closed. The server reads the clock
+ * once and hands the instant down (`FeedFrame`'s `now`), so the lines, the
+ * cards' stock lines and every state agree on both sides of hydration.
  *
- * The issue itself has its own page, `/so/5`, the listing this address was
- * until this slice — the nav's plate and every "xem cả số" lead there.
- *
- * `await props.searchParams` is not optional in Next 16: it is a promise
- * now, and reading it synchronously is gone.
+ * The grid's state is in the query — `?line=`, `?family=`, `?sort=` — as on
+ * the home tab (QĐ-8). `searchParams` is a promise in Next 16.
  */
 export default async function ProductsPage(props: PageProps<"/products">) {
-  const query = parseListingQuery(await props.searchParams);
+  const sp = await props.searchParams;
   const catalog = await loadCatalog();
-  const pool = productsOnSale(catalog);
+  const nowMs = demoNowMs();
+  const moment = homeMoment(catalog, new Date(nowMs));
+  const lines = shopLines(lineIssue(moment), moment.kind === "open", true);
+  const state = parseShopState(sp, lines);
 
   return (
-    // One family chosen narrows the bar to that word. The plate is never
-    // lit here: it leads to the issue's own page.
-    <ShopFrame activeFamily={query.families.length === 1 ? query.families[0] : undefined}>
-      <Listing catalog={catalog} query={query} path="/products" pool={pool} issue={null} />
-    </ShopFrame>
+    <FeedFrame page="products" now={nowMs}>
+      <ProductsShop lines={lines} initial={state} />
+    </FeedFrame>
   );
 }

@@ -124,9 +124,14 @@ describe("isAdminPath", () => {
 });
 
 describe("isFeedPath", () => {
-  it("is the home page since v4 slice 1a, and no v3 screen", () => {
-    expect(isFeedPath("/")).toBe(true);
-    for (const p of ["/products", "/products/s05-khoi", "/cart", "/account", "/so/5", "/admin"]) {
+  it("is the home page since v4 slice 1a, the shop, the style pages, search and the issues since 1b", () => {
+    for (const p of ["/", "/products", "/products/", "/products/s05-khoi", "/search", "/so", "/so/5", "/so/4/"]) {
+      expect(isFeedPath(p), p).toBe(true);
+    }
+  });
+
+  it("is no v3 screen, and nothing that merely starts with a Feed route's name", () => {
+    for (const p of ["/cart", "/account", "/account/wishlist", "/admin", "/admin/products", "/solo", "/productsx", "/sign-in"]) {
       expect(isFeedPath(p), p).toBe(false);
     }
   });

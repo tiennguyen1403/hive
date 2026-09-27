@@ -57,7 +57,8 @@ describe("reminderNotice · the two-hour window", () => {
     expect(notice?.state).toBe("UPCOMING");
     // Same instant, same words as the cover and the footer calendar print.
     expect(notice?.text).toBe("Số 06 mở lúc 20:00 thứ Sáu 02/10 — bạn đã đặt nhắc");
-    expect(notice?.href).toBe("/?drop=6");
+    // The home page's Sắp mở tab since round v4 slice 1b (the main session's decision after slice 1a).
+    expect(notice?.href).toBe("/#sap-mo");
   });
 
   it("still stands one minute before the drop opens", () => {

@@ -109,7 +109,8 @@ function CalRow({ drop, lineNo }: { drop: Drop; lineNo: number | undefined }) {
     );
   }
 
-  // Closed. The issue the shop's issue line shows opens there; an older one has its own page and its names here.
+  // Closed. The issue the shop's issue line shows opens the shop's grid on it (`products.html?dong=so-05` in the
+  // mock); an older one has its own page and its names here.
   const here = drop.no === lineNo;
   return (
     <article ref={ref} className={cx("cal-row rv", shown && "in")} aria-labelledby={`cal-${drop.no}`}>
@@ -126,10 +127,10 @@ function CalRow({ drop, lineNo }: { drop: Drop; lineNo: number | undefined }) {
         {!here && f.names && <p className="cal-names">{f.names}</p>}
         {f.styles > 0 &&
           (here ? (
-            <a className="pill cal-go" href={`/?line=${drop.no}#cua-hang`}>
+            <Link className="pill cal-go" href={`/products?line=${drop.no}`}>
               Xem lại {f.styles} mẫu
               <FeedIcon name="arrow-right" />
-            </a>
+            </Link>
           ) : (
             <Link className="pill cal-go" href={issueHref(drop.no)}>
               Xem lại {f.styles} mẫu

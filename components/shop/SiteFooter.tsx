@@ -82,7 +82,8 @@ export function SiteFooter() {
               )}
               {cal.upcoming && (
                 <li>
-                  <Link href={`/?drop=${cal.upcoming.no}`}>
+                  {/* The home page's Sắp mở tab, where the next issue comes first (round v4: the Feed home). */}
+                  <Link href="/#sap-mo">
                     <b>{issueLabel(cal.upcoming.no)} · sắp mở</b>
                     {/* The weekday, not just the date: a calendar row is
                         read to plan around, and "02/10" makes a shopper
@@ -175,7 +176,8 @@ export function SiteFooter() {
                 <Link href="/about">Giới thiệu</Link>
               </li>
               <li>
-                <Link href="/#rules">Bốn quy tắc</Link>
+                {/* The Feed home has no rules block; the answers are on the help page until the v3 frame goes. */}
+                <Link href="/faq">Bốn quy tắc</Link>
               </li>
             </ul>
             <NeedWrite title="Kênh liên hệ và mạng xã hội.">

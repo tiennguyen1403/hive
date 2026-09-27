@@ -13,8 +13,10 @@ import { cx } from "../useReveal";
  * link to, opens Sắp mở, where the next issue comes first.
  *
  * The Cửa hàng tab's grid state lives here too, because links elsewhere on
- * the page open that tab on a given line ("Xem tất cả", "Xem lại 10 mẫu",
- * "Xem Cố định"), and because it belongs in the URL (QĐ-8, rule 17 the user
+ * the page open that tab on a given line (the open issue's story, "Xem 8
+ * mẫu", "Xem Cố định"; since slice 1b the rails' "Xem tất cả" and "Xem lại"
+ * lead to `/products` instead, as the mock's lead to `products.html`), and
+ * because it belongs in the URL (QĐ-8, rule 17 the user
  * kept): `?line=`, `?family=`, written with `history.replaceState`, which
  * Next's router follows without a round trip.
  */

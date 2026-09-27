@@ -9,6 +9,7 @@ import type { Order } from "@/data/types";
 import { FOOT_HELP, footDelivery, footPayments } from "@/lib/feed-home";
 import { FEED_ZONE, feedFontClass } from "./FeedScope";
 import { FeedLogo } from "./FeedLogo";
+import { FeedMbar, type FeedMbarProps } from "./FeedMbar";
 import { FeedIcon, type FeedIconName } from "./icon/FeedIcon";
 import { NowProvider } from "./now";
 import { QuickAddProvider } from "./QuickAdd";
@@ -17,12 +18,17 @@ import { cx } from "./useReveal";
 /**
  * Which screen a Feed frame holds: it decides the tab bar's lit tab, the top
  * bar's filled icon, and whether the phone shows the brand bar (a tab root)
- * or leaves the top to the screen's own bar (later slices).
+ * or leaves the top to the screen's own bar — the search field (`.sbar`),
+ * the product page's controls over its photo (`.pbar`), a pushed screen's
+ * back arrow and title (`mbar`, the closed issues).
  */
 export type FeedPage =
   | "home"
   | "products"
+  | "product"
   | "search"
+  | "archive"
+  | "issue"
   | "cart"
   | "favorites"
   | "account"
@@ -33,6 +39,9 @@ export type FeedPage =
 const TAB_OF: Record<FeedPage, "home" | "search" | "fav" | "cart" | "me" | null> = {
   home: "home",
   products: "home",
+  product: null,
+  archive: "home",
+  issue: "home",
   search: "search",
   cart: "cart",
   favorites: "fav",
@@ -54,6 +63,13 @@ export interface FeedShellProps {
   footSkip?: readonly string[];
   /** The phone's bottom tab bar; screens with a bar of their own at the bottom turn it off. */
   tabbar?: boolean;
+  /**
+   * The screen brings a buy bar fixed to the phone's bottom edge in place of
+   * the tab bar (the product page): the frame keeps room under the page for it.
+   */
+  buybar?: boolean;
+  /** A pushed screen's bar on the phone: the back arrow and its title (`FeedMbar`). */
+  mbar?: FeedMbarProps;
   /** The signed-in account's orders, from the server: the bell's unread count reads them. */
   orders: Order[];
   /** The render instant (`NowProvider`). */
@@ -75,24 +91,37 @@ export interface FeedShellProps {
  * (`QuickAddProvider`), inside the zone, so its <dialog>s inherit the zone's
  * tokens and type in the top layer too.
  */
-export function FeedShell({ page, mid, foot = "full", footSkip = [], tabbar = true, orders, now, children }: FeedShellProps) {
+export function FeedShell({
+  page,
+  mid,
+  foot = "full",
+  footSkip = [],
+  tabbar = true,
+  buybar = false,
+  mbar,
+  orders,
+  now,
+  children,
+}: FeedShellProps) {
   return (
     <div
       {...FEED_ZONE}
-      className={cx(feedFontClass, "feed-frame", tabbar && "has-tabbar")}
+      className={cx(feedFontClass, "feed-frame", tabbar && "has-tabbar", buybar && "has-buybar")}
       suppressHydrationWarning
     >
       <NowProvider now={now}>
         <QuickAddProvider>
           <FeedTop page={page} mid={mid} tabbar={tabbar} orders={orders} />
+          {mbar && <FeedMbar {...mbar} />}
           <main id="main">{children}</main>
           {foot !== "none" && <FeedFooter lite={foot === "lite"} skip={footSkip} />}
           {tabbar && <FeedTabbar page={page} />}
         </QuickAddProvider>
       </NowProvider>
-      {/* Without script nothing would ever reveal the cards that wait for it. */}
+      {/* Without script nothing would ever reveal the cards that wait for it, nor bring back a bar title that
+          waits for the page's own to scroll away. */}
       <noscript>
-        <style>{"[data-ui=feed] .rv{opacity:1;transform:none}"}</style>
+        <style>{"[data-ui=feed] .rv{opacity:1;transform:none}[data-ui=feed] .mbar.title-late .mbar-title{opacity:1}"}</style>
       </noscript>
     </div>
   );
