@@ -15,11 +15,14 @@ import {
   cartUnits,
   parseCart,
   removeLine,
+  restoreLine,
   serializeCart,
   setLineQty,
+  swapLine,
   type Cart,
   type CartLine,
 } from "@/lib/cart";
+import type { ColorKey, Size } from "@/data/types";
 import {
   CART_PROMO_STORAGE_KEY,
   normalisePromoCode,
@@ -40,6 +43,10 @@ interface CartApi {
   add: (line: CartLine) => void;
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
+  /** "Hoàn tác" after a removal: the line back in its place, as it was (`restoreLine`). */
+  restore: (line: CartLine, at: number) => void;
+  /** "Chọn size khác": the line takes another colour and size in its own place (`swapLine`). */
+  swap: (key: string, color: ColorKey, size: Size) => void;
   clear: () => void;
   /**
    * The discount code typed on the cart screen, as a CODE and nothing more.
@@ -132,6 +139,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [catalog],
   );
   const remove = useCallback((key: string) => setCart((c) => removeLine(c, key)), []);
+  const restore = useCallback((line: CartLine, at: number) => setCart((c) => restoreLine(c, line, at)), []);
+  const swap = useCallback(
+    (key: string, color: ColorKey, size: Size) => setCart((c) => swapLine(catalog, c, key, color, size)),
+    [catalog],
+  );
   // An order that has been placed takes its discount with it. Leaving the
   // code behind would apply it again to the next basket, which is not what
   // a one-order code means.
@@ -151,11 +163,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       add,
       setQty,
       remove,
+      restore,
+      swap,
       clear,
       promoCode,
       setPromoCode,
     }),
-    [cart, ready, add, setQty, remove, clear, promoCode, setPromoCode],
+    [cart, ready, add, setQty, remove, restore, swap, clear, promoCode, setPromoCode],
   );
 
   return <CartCtx.Provider value={value}>{children}</CartCtx.Provider>;

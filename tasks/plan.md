@@ -2441,3 +2441,21 @@ Người dùng cho phép, phiên chính dừng nó để agent dựng và chụp
     khách đang xem.
 - **Còn mở:** `refundNote` lệch từ trước (đơn chuyển khoản đã trả bị huỷ ghi "Không có gì để hoàn"), gộp vào lát backend đổi
   trả.
+
+**Lát 2 ĐẠT (27/09/2026, `ui-implementer`, phiên chính duyệt độc lập).** Brief `tasks/briefs/v4-lat-2.md`.
+- **Đã giao:**
+  - `/cart`: đổi size bằng sheet, Xoá kèm Hoàn tác, bộ đếm dừng ở mức tồn;
+  - `/checkout`: bộ chọn tỉnh và phường có ô tìm, lỗi theo từng ô bằng chữ mock, điền sẵn từ tài khoản, giao nhanh tự tắt
+    ngoài TP.HCM;
+  - `/order-confirmed[/code]`: tiêu đề tích cùng hàng; khối chuyển khoản cho cả đơn thẻ; COD chỉ một dòng;
+  - không còn báo "Đã thêm" khi giỏ đã giữ hết hàng; size đó ghi "Đã có trong giỏ".
+- **Kiểm:** 1712/1712 test, build sạch. Đặt thật ba đơn chuyển khoản, COD, thẻ. Phiên chính so ảnh giỏ và màn đặt hàng xong
+  với mock: khớp.
+- **Người dùng quyết:**
+  - bỏ ô đồng ý điều kiện như Feed;
+  - **email tuỳ chọn** như Feed, làm ở B8 trước khi push;
+  - bỏ bốn tính năng v3 mock không có: Giữ lại sau, mã ở giỏ, Lưu địa chỉ khi thanh toán, QR tra cứu;
+  - các lệch nhỏ **"phải hoàn toàn giống với mock"**. Nội dung chuyển khoản `DH2432`, giao nhanh trước khi chọn tỉnh, lỗi
+    sau lần bấm đầu, hoàn tác trả cả dòng hết size đều đã theo mock.
+- Trạng thái mock không vẽ giữ chữ ngắn nhất: "Đang tải…", "Không tải được", "Đang đặt hàng…", "Chưa có đơn nào vừa đặt",
+  "Mã đang tạm dừng", "Mã chưa tới ngày dùng được".

@@ -130,8 +130,14 @@ describe("isFeedPath", () => {
     }
   });
 
+  it("is the buying flow since slice 2: the basket, the checkout and the receipt", () => {
+    for (const p of ["/cart", "/checkout", "/order-confirmed", "/order-confirmed/DH-1507", "/cart/"]) {
+      expect(isFeedPath(p), p).toBe(true);
+    }
+  });
+
   it("is no v3 screen, and nothing that merely starts with a Feed route's name", () => {
-    for (const p of ["/cart", "/account", "/account/wishlist", "/admin", "/admin/products", "/solo", "/productsx", "/sign-in"]) {
+    for (const p of ["/account", "/account/wishlist", "/admin", "/admin/products", "/solo", "/productsx", "/sign-in", "/carts", "/checkouts"]) {
       expect(isFeedPath(p), p).toBe(false);
     }
   });

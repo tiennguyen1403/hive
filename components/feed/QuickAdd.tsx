@@ -9,6 +9,7 @@ import { usePrefs } from "@/components/shop/prefs";
 import { COLORS } from "@/data/colors";
 import { sizeChart } from "@/data/size-chart";
 import type { ColorKey, Product, Size } from "@/data/types";
+import { addableOf, qtyInCart, type Cart } from "@/lib/cart";
 import { FIT_LABELS } from "@/lib/catalog-query";
 import { demoNow } from "@/lib/clock";
 import {
@@ -16,13 +17,13 @@ import {
   firstColor,
   pictureAlt,
   pictureOf,
-  sizeNote,
+  sizeOption,
   sizeRowLabel,
   sizesIn,
   startSize,
   swatchNote,
 } from "@/lib/feed";
-import { isFixed, onHandByColor, onHandOf } from "@/lib/inventory";
+import { isFixed, onHandByColor } from "@/lib/inventory";
 import { vnd } from "@/lib/money";
 import { chartNumber, heightRange, isShorts, pantsChart } from "@/lib/pants-chart";
 import { FeedIcon } from "./icon/FeedIcon";
@@ -34,7 +35,17 @@ export interface QuickAddPreset {
   size?: Size | null;
   /** Each choice made in the sheet, as it is made: the product page keeps its own colour and size in step. */
   onPick?: (pick: { color: ColorKey; size: Size | null }) => void;
+  /**
+   * The basket's "Chọn size khác" (slice 2): the sheet swaps a line whose size
+   * has gone instead of adding one. It does not start on the remembered size,
+   * its button reads "Đổi sang …", and `done` gets the colour and size chosen
+   * once the sheet has closed.
+   */
+  swap?: { done: (color: ColorKey, size: Size) => void };
 }
+
+/** How many of each size of one colour the basket holds already. */
+const heldIn = (cart: Cart, p: Product, color: ColorKey) => (size: Size) => qtyInCart(cart, { productId: p.id, color, size });
 
 interface QuickAddApi {
   /**
@@ -63,22 +74,30 @@ interface Choice {
   size: Size | null;
   opener: HTMLElement | null;
   onPick: QuickAddPreset["onPick"] | null;
+  /** The remembered size this sheet may start on and calls "Size của tôi"; none while swapping. */
+  mine: Size | null;
+  swap: QuickAddPreset["swap"] | null;
 }
 
 /**
  * The quick add, once per Feed screen (`feed.js`: `openBuy`, `addToCart`,
  * `openGuide`): the size sheet any card's "Chọn size" or "+" opens — and the
- * product page's buy bar, on the phone — the "Đã thêm vào giỏ" sheet after
- * it, and the size guide above it.
+ * product page's buy bar, on the phone, and the basket's "Chọn size khác" —
+ * the "Đã thêm vào giỏ" sheet after it, and the size guide above it.
  *
  * It starts on the colour the card shows and on the device's remembered size
  * (`prefs.size`, "Size của tôi") when that colour still has it — until slice
  * 3 moves the size into the account. The line goes into the basket through
  * the one cart there is (`CartContext`, `lib/cart.ts`).
+ *
+ * Slice 2: the basket is counted. A size whose every piece left is in the
+ * basket already cannot be added again — `addToCart` would clamp the extra
+ * away — so it is drawn as a size that cannot be bought, noted "Đã có trong
+ * giỏ", and "Đã thêm vào giỏ" never follows a press that added nothing.
  */
 export function QuickAddProvider({ children }: { children: React.ReactNode }) {
   const catalog = useCatalog();
-  const { add: addLine } = useCart();
+  const { add: addLine, cart } = useCart();
   const { prefs, ready: prefsReady } = usePrefs();
   const mine = prefsReady ? prefs.size : null;
 
@@ -92,7 +111,7 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
   const [guideFor, setGuideFor] = useState<{ product: Product; size: Size | null } | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
   const guideBack = useRef<HTMLElement | null>(null);
-  // What to do once the size sheet has played out: open the added sheet.
+  // What to do once the size sheet has played out: open the added sheet, or swap the basket's line.
   const next = useRef<(() => void) | null>(null);
 
   const open = useCallback(
@@ -103,24 +122,29 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
         preset.color && product.colors.includes(preset.color) && onHandByColor(product, preset.color) > 0
           ? preset.color
           : firstColor(product);
+      // A swap keeps the line's own choice to make: no remembered size (`openBuy`: `p.swap ? null : mySize(s)`).
+      const own = preset.swap ? null : mine;
       const size =
-        preset.size && onHandOf(product, color, preset.size) > 0 ? preset.size : startSize(product, color, mine);
-      setBuy({ product, color, size, opener, onPick: preset.onPick ?? null });
+        preset.size && addableOf(product, cart, color, preset.size) > 0
+          ? preset.size
+          : startSize(product, color, own, heldIn(cart, product, color));
+      setBuy({ product, color, size, opener, onPick: preset.onPick ?? null, mine: own, swap: preset.swap ?? null });
       setBuyOpen(true);
     },
-    [catalog, mine],
+    [catalog, mine, cart],
   );
 
   const add = useCallback(
     (product: Product, color: ColorKey, size: Size, opener: HTMLElement | null) => {
-      if (onHandOf(product, color, size) === 0) return;
+      // Nothing would go in: the basket holds every piece of it already. No "Đã thêm".
+      if (addableOf(product, cart, color, size) <= 0) return;
       addLine({ productId: product.id, size, color, qty: 1 });
       bumpBag();
       setAdded({ product, color, size, opener });
       setAtBag(window.matchMedia("(min-width: 900px)").matches);
       setAddedOpen(true);
     },
-    [addLine],
+    [addLine, cart],
   );
 
   const guide = useCallback((product: Product, size: Size | null, opener: HTMLElement | null) => {
@@ -139,14 +163,17 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
 
   function pickColor(color: ColorKey) {
     if (!buy) return;
-    const keep = buy.size && onHandOf(buy.product, color, buy.size) > 0 ? buy.size : startSize(buy.product, color, mine);
+    const keep =
+      buy.size && addableOf(buy.product, cart, color, buy.size) > 0
+        ? buy.size
+        : startSize(buy.product, color, buy.mine, heldIn(cart, buy.product, color));
     pick(color, keep);
   }
 
   function addNow() {
-    if (!buy?.size || onHandOf(buy.product, buy.color, buy.size) === 0) return;
-    const { product, color, size, opener } = buy;
-    next.current = () => add(product, color, size, opener);
+    if (!buy?.size || addableOf(buy.product, cart, buy.color, buy.size) <= 0) return;
+    const { product, color, size, opener, swap } = buy;
+    next.current = swap ? () => swap.done(color, size) : () => add(product, color, size, opener);
     setBuyOpen(false);
   }
 
@@ -157,7 +184,8 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const p = buy?.product;
-  const ready = !!buy && !!buy.size && onHandOf(buy.product, buy.color, buy.size) > 0;
+  const ready = !!buy && !!buy.size && addableOf(buy.product, cart, buy.color, buy.size) > 0;
+  const held = buy ? heldIn(cart, buy.product, buy.color) : () => 0;
 
   return (
     <Ctx.Provider value={api}>
@@ -203,7 +231,7 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
             </div>
             <div className="sh-block">
               <div className="sh-label">
-                <span className="sh-label-t">{sizeRowLabel(buy.size, mine)}</span>{" "}
+                <span className="sh-label-t">{sizeRowLabel(buy.size, buy.mine)}</span>{" "}
                 <button className="link" type="button" onClick={(e) => guide(p, buy.size, e.currentTarget)}>
                   <FeedIcon name="ruler" />
                   Bảng size
@@ -211,32 +239,34 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
               </div>
               <div className="sizes" role="radiogroup" aria-label="Size">
                 {sizesIn(p, buy.color).map(({ size, n }) => {
-                  const note = sizeNote(n);
+                  const opt = sizeOption(n, held(size));
                   return (
                     <label className="size" key={size}>
                       <input
                         type="radio"
                         name="buy-size"
                         value={size}
-                        disabled={n === 0}
-                        checked={size === buy.size && n > 0}
+                        disabled={!opt.open}
+                        checked={size === buy.size && opt.open}
                         onChange={() => pick(buy.color, size)}
                       />
                       <span className="sz">{size}</span>
-                      {note && <small>{note}</small>}
+                      {opt.note && <small>{opt.note}</small>}
                     </label>
                   );
                 })}
               </div>
             </div>
             <button className="btn btn-blue sh-cta" type="button" disabled={!ready} onClick={addNow}>
-              {ready ? (
+              {!ready || !buy.size ? (
+                "Chọn size"
+              ) : buy.swap ? (
+                `Đổi sang ${COLORS[buy.color].label.toLocaleLowerCase("vi")}, size ${buy.size}`
+              ) : (
                 <>
                   <FeedIcon name="bag" />
                   Thêm vào giỏ <span className="price">· {vnd(p.priceVnd)}</span>
                 </>
-              ) : (
-                "Chọn size"
               )}
             </button>
           </div>

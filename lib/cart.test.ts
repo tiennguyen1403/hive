@@ -1,15 +1,19 @@
 import { describe, it, expect } from "vitest";
 import {
   addToCart,
+  addableOf,
   cartUnits,
   cartSubtotalVnd,
   hasBlockingIssue,
   lineKey,
   parseCart,
+  qtyInCart,
   removeLine,
   resolveCart,
+  restoreLine,
   serializeCart,
   setLineQty,
+  swapLine,
   type Cart,
 } from "./cart";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
@@ -136,6 +140,92 @@ describe("removeLine", () => {
     const left = removeLine(cart, lineKey(cart[0]!));
     expect(left).toHaveLength(1);
     expect(left[0]!.color).toBe("cream");
+  });
+});
+
+describe("qtyInCart and addableOf · what can still go in (v4 slice 2)", () => {
+  const khoi = FIXTURE_CATALOG.byId.get(KHOI)!;
+
+  it("counts the pieces of exactly that choice the basket holds", () => {
+    const cart: Cart = [line("p-khoi", "black", "M", 3), line("p-khoi", "cream", "M", 1)];
+    expect(qtyInCart(cart, line("p-khoi", "black", "M", 1))).toBe(3);
+    expect(qtyInCart(cart, line("p-khoi", "black", "L", 1))).toBe(0);
+  });
+
+  it("is what is left less what the basket holds, and zero once it holds every piece", () => {
+    // KHÓI đen M has 4 on hand.
+    expect(addableOf(khoi, [], "black", "M")).toBe(4);
+    expect(addableOf(khoi, [line("p-khoi", "black", "M", 3)], "black", "M")).toBe(1);
+    expect(addableOf(khoi, [line("p-khoi", "black", "M", 4)], "black", "M")).toBe(0);
+    // A line that asks for more than is left (another shopper bought meanwhile) never makes it negative.
+    expect(addableOf(khoi, [line("p-khoi", "black", "M", 6)], "black", "M")).toBe(0);
+    // Another colour of the same size is its own count.
+    expect(addableOf(khoi, [line("p-khoi", "black", "M", 4)], "cream", "M")).toBe(2);
+  });
+
+  it("agrees with addToCart: adding where nothing is addable leaves the basket as it was", () => {
+    const full: Cart = [line("p-khoi", "black", "M", 4)];
+    expect(addableOf(khoi, full, "black", "M")).toBe(0);
+    expect(addToCart(FIXTURE_CATALOG, full, line("p-khoi", "black", "M", 1))).toEqual(full);
+  });
+});
+
+describe("restoreLine · Hoàn tác after Xoá", () => {
+  const cart: Cart = [line("p-khoi", "black", "M", 2), line("p-nguoi", "black", "L", 1), line("p-bui", "black", "L", 1)];
+
+  it("puts the removed line back in its own place, quantity and all", () => {
+    const removed = cart[1]!;
+    const after = removeLine(cart, lineKey(removed));
+    expect(restoreLine(after, removed, 1)).toEqual(cart);
+    expect(restoreLine(removeLine(cart, lineKey(cart[0]!)), cart[0]!, 0)).toEqual(cart);
+    expect(restoreLine(removeLine(cart, lineKey(cart[2]!)), cart[2]!, 2)).toEqual(cart);
+  });
+
+  it("gives back a line whose size has gone since, as it was", () => {
+    const gone = line("p-bui", "black", "S", 1);
+    expect(restoreLine([], gone, 0)).toEqual([gone]);
+  });
+
+  it("clamps the place to the basket it goes back into", () => {
+    const removed = cart[2]!;
+    expect(restoreLine([], removed, 5)).toEqual([removed]);
+  });
+
+  it("leaves the basket alone when the line is in it again already", () => {
+    expect(restoreLine(cart, line("p-khoi", "black", "M", 1), 0)).toBe(cart);
+  });
+});
+
+describe("swapLine · Chọn size khác on a line whose size has gone", () => {
+  it("changes the size in the line's own place, keeping the quantity", () => {
+    const cart: Cart = [line("p-nguoi", "black", "L", 1), line("p-bui", "black", "S", 1), line("p-khoi", "black", "M", 1)];
+    const next = swapLine(FIXTURE_CATALOG, cart, lineKey(cart[1]!), "black", "L");
+    expect(next).toEqual([line("p-nguoi", "black", "L", 1), line("p-bui", "black", "L", 1), line("p-khoi", "black", "M", 1)]);
+  });
+
+  it("can take another colour too", () => {
+    const cart: Cart = [line("p-bui", "black", "S", 1)];
+    expect(swapLine(FIXTURE_CATALOG, cart, lineKey(cart[0]!), "grey", "XL")).toEqual([line("p-bui", "grey", "XL", 1)]);
+  });
+
+  it("merges into a line of the new choice, as far as its pieces go", () => {
+    // KHÓI đen M has 4: a gone line of 2 swapped onto a line of 3 holds 4.
+    const gone = { ...line("p-khoi", "black", "S", 2) };
+    const cart: Cart = [line("p-khoi", "black", "M", 3), gone];
+    expect(swapLine(FIXTURE_CATALOG, cart, lineKey(gone), "black", "M")).toEqual([line("p-khoi", "black", "M", 4)]);
+  });
+
+  it("clamps the quantity to what the new choice has", () => {
+    // BỤI đen L has 1.
+    const cart: Cart = [line("p-bui", "black", "S", 3)];
+    expect(swapLine(FIXTURE_CATALOG, cart, lineKey(cart[0]!), "black", "L")).toEqual([line("p-bui", "black", "L", 1)]);
+  });
+
+  it("changes nothing for a choice with nothing left, the same choice, or a line that is not there", () => {
+    const cart: Cart = [line("p-bui", "black", "S", 1)];
+    expect(swapLine(FIXTURE_CATALOG, cart, lineKey(cart[0]!), "black", "M")).toBe(cart);
+    expect(swapLine(FIXTURE_CATALOG, cart, lineKey(cart[0]!), "black", "S")).toBe(cart);
+    expect(swapLine(FIXTURE_CATALOG, cart, "p-khong-co:black:M", "black", "L")).toBe(cart);
   });
 });
 

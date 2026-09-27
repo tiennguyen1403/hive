@@ -19,6 +19,7 @@ import {
   shopList,
   shopQuery,
   sizeNote,
+  sizeOption,
   sizeRowLabel,
   sizesIn,
   startSize,
@@ -149,6 +150,23 @@ describe("the quick add", () => {
     expect(startSize(style("khoi"), "black", "M")).toBe("M");
     expect(startSize(style("suong"), "black", "S")).toBeNull();
     expect(startSize(style("khoi"), "black", null)).toBeNull();
+  });
+
+  it("does not start on a remembered size the basket already holds every piece of (v4 slice 2)", () => {
+    // SƯƠNG đen M has 1 left.
+    expect(startSize(style("suong"), "black", "M", () => 0)).toBe("M");
+    expect(startSize(style("suong"), "black", "M", (z) => (z === "M" ? 1 : 0))).toBeNull();
+    // KHÓI đen M has 4: three in the basket leave one to add.
+    expect(startSize(style("khoi"), "black", "M", () => 3)).toBe("M");
+  });
+
+  it("closes a size once the basket holds every piece left, and says so (v4 slice 2)", () => {
+    expect(sizeOption(0, 0)).toEqual({ open: false, note: "Hết" });
+    expect(sizeOption(1, 1)).toEqual({ open: false, note: "Đã có trong giỏ" });
+    expect(sizeOption(2, 3)).toEqual({ open: false, note: "Đã có trong giỏ" });
+    // Room for one more: open, with the shelf's own note.
+    expect(sizeOption(2, 1)).toEqual({ open: true, note: "Còn 2" });
+    expect(sizeOption(9, 0)).toEqual({ open: true, note: null });
   });
 
   it("calls the row “Size của tôi” while the remembered size is the one chosen", () => {

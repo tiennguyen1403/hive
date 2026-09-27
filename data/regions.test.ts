@@ -4,6 +4,7 @@ import {
   allWards,
   findWard,
   compareByName,
+  feedAddressLine,
   formatAddressLine,
   provinceLabel,
   wardLabel,
@@ -154,6 +155,24 @@ describe("formatAddressLine", () => {
         provinceCode: "29",
       }),
     ).toBe("24 Nguyễn Thị Minh Khai, TP. Hồ Chí Minh");
+  });
+});
+
+describe("feedAddressLine (v4 slice 2)", () => {
+  it("names the province alone, as the Feed screens pick and print it", () => {
+    const ward = wardsIn("02")[0]!;
+    expect(feedAddressLine({ line: "5 Lý Thái Tổ", wardCode: ward.code, provinceCode: "02" })).toBe(
+      `5 Lý Thái Tổ, ${wardLabel(ward)}, Bắc Ninh`,
+    );
+    expect(feedAddressLine({ line: "12 Nguyễn Huệ", wardCode: "70101063", provinceCode: "29" })).toBe(
+      "12 Nguyễn Huệ, Phường Sài Gòn, TP. Hồ Chí Minh",
+    );
+  });
+
+  it("shortens rather than leaking an id when part is unknown", () => {
+    expect(feedAddressLine({ line: "12 Nguyễn Huệ", wardCode: "nope", provinceCode: "29" })).toBe(
+      "12 Nguyễn Huệ, TP. Hồ Chí Minh",
+    );
   });
 });
 

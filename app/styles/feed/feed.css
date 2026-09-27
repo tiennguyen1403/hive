@@ -29,6 +29,13 @@
    black-and-white lockup (QĐ-33). A rule is ported whole, with the
    selectors it groups.
 
+   PORTED AT SLICE 2, for the buying flow (`/cart`, `/checkout`,
+   `/order-confirmed`): the success header's check (`.ok-lead`, `.ok-mark`),
+   the checkout's top bar (`.top-title`, `.top-back`), the room the order bar
+   and the pay bar keep under the page (the mock's `.p-checkout` and
+   `.p-cart.has-paybar`, asked of the frame with `:has()`), and
+   `.btn.only-desk`. The screens' own rules are in `flow.css`.
+
    Renamed as they came in, because the name was taken:
    · `.grid` (the shop grid) → `.shop-grid`: a Tailwind utility's name
      (`lib/classnames.test.ts`);
@@ -122,6 +129,17 @@ html:has([data-ui="feed"]) {
   display: inline-block; flex: none; width: 24px; height: 24px;
   vertical-align: baseline;
 }
+/* A success header (slice 2, `FeedOkTitle`): the check sits on the title's first line. Mona Sans's capitals are .73em
+   tall; the check's circle fills 81.25% of its box, so a .935em box draws it a hair taller than the capitals and the
+   -.103em shift centres it on them. Everything is in em from the baseline: the check follows the title at any size,
+   and the marks above the capitals (Ã, Ặ, Ử) never move it. */
+[data-ui="feed"] .ok-lead { white-space: nowrap; }
+/* A title that wraps hangs its later lines under the words, not under the check. (The mock's `:is(h1, h2, p)`,
+   written out: the zone's checks read a selector list comma by comma.) */
+[data-ui="feed"] h1:has(> .ok-lead:first-child),
+[data-ui="feed"] h2:has(> .ok-lead:first-child),
+[data-ui="feed"] p:has(> .ok-lead:first-child) { padding-left: 1.135em; text-indent: -1.135em; }
+[data-ui="feed"] .ok-mark { width: .935em; height: .935em; margin-right: .2em; vertical-align: -.103em; color: var(--f-blue); }
 
 /* ── the logo: the black-and-white lockup (QĐ-33, `FeedLogo`) where the mock sets its
    italic word and H tile, which are not used; its height from the bar it stands in ── */
@@ -183,6 +201,11 @@ html:has([data-ui="feed"]) {
   pointer-events: none;
 }
 [data-ui="feed"] .tabs.links { display: none; }
+/* The checkout's top bar from 900px (slice 2): its name in the middle, the way back to the basket on the right. */
+[data-ui="feed"] .top-title { grid-area: tabs; justify-self: center; font-size: 16px; font-weight: 650; }
+[data-ui="feed"] .top-back { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: var(--f-r-pill); font-size: 15px; font-weight: 620; }
+[data-ui="feed"] .top-back .i { width: 22px; height: 22px; }
+[data-ui="feed"] .top-back .badge { position: static; box-shadow: none; }
 @media (max-width: 899.98px) {
   [data-ui="feed"] .top:not([data-top="brand"]) { display: none; }
 }
@@ -665,6 +688,11 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
 /* ── product page (phone), slice 1b ── */
 /* The page keeps room under it for the buy bar, which stands where the tab bar would (the mock's `.p-product`). */
 [data-ui="feed"].feed-frame.has-buybar { padding-bottom: calc(76px + var(--f-sb)); }
+/* Slice 2: the checkout's order bar in the same place (the mock's `.p-checkout`, which drops the room once the page
+   has nothing to pay for, `.is-empty`: here, once the bar is gone), and the basket's pay bar on top of the tab bar
+   (`.p-cart.has-paybar`). The mock toggles a class on <body>; the frame asks whether the bar is there. */
+[data-ui="feed"].feed-frame:has(.orderbar) { padding-bottom: calc(76px + var(--f-sb)); }
+[data-ui="feed"].feed-frame.has-tabbar:has(.paybar) { padding-bottom: calc(var(--f-tabbar) + 76px + var(--f-sb)); }
 [data-ui="feed"] .pbar {
   position: fixed; z-index: 45; top: 0; left: 0; right: 0;
   display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 4px;
@@ -758,8 +786,12 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
 @media (min-width: 900px) {
   html:has([data-ui="feed"]) { scroll-padding-top: 80px; scroll-padding-bottom: 12px; }
   [data-ui="feed"].feed-frame.has-tabbar, [data-ui="feed"].feed-frame.has-buybar { padding-bottom: 0; }
+  [data-ui="feed"].feed-frame:has(.orderbar), [data-ui="feed"].feed-frame.has-tabbar:has(.paybar) { padding-bottom: 0; }
   [data-ui="feed"] .tabbar, [data-ui="feed"] .buybar, [data-ui="feed"] .pbar, [data-ui="feed"] .mbar { display: none; }
   [data-ui="feed"] .only-desk { display: grid; }
+  /* A button shown from 900px only (slice 2: the summary's "Thanh toán", "Đặt hàng") is a flex box, as the mock's
+     `.btn.only-desk`; below 900px `flow.css` hides it, since `.btn` comes after `.only-desk` in this file. */
+  [data-ui="feed"] .btn.only-desk { display: flex; }
 
   [data-ui="feed"] .top-in { grid-template-columns: 1fr auto 1fr; grid-template-areas: "brand tabs acts"; height: 64px; padding: 0 var(--f-wg); }
   [data-ui="feed"] .brand { height: 64px; padding: 0; }

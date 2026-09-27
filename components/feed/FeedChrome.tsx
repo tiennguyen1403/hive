@@ -11,6 +11,7 @@ import { FEED_ZONE, feedFontClass } from "./FeedScope";
 import { FeedLogo } from "./FeedLogo";
 import { FeedMbar, type FeedMbarProps } from "./FeedMbar";
 import { FeedIcon, type FeedIconName } from "./icon/FeedIcon";
+import { FeedToastProvider } from "./FeedToast";
 import { NowProvider } from "./now";
 import { QuickAddProvider } from "./QuickAdd";
 import { cx } from "./useReveal";
@@ -20,7 +21,9 @@ import { cx } from "./useReveal";
  * bar's filled icon, and whether the phone shows the brand bar (a tab root)
  * or leaves the top to the screen's own bar — the search field (`.sbar`),
  * the product page's controls over its photo (`.pbar`), a pushed screen's
- * back arrow and title (`mbar`, the closed issues).
+ * back arrow and title (`mbar`: the closed issues, the checkout, the receipt).
+ * The checkout's top bar from 900px is its own (`feed.js`: `PAGE ===
+ * "checkout"`): its name in the middle and the way back to the basket.
  */
 export type FeedPage =
   | "home"
@@ -30,6 +33,8 @@ export type FeedPage =
   | "archive"
   | "issue"
   | "cart"
+  | "checkout"
+  | "confirm"
   | "favorites"
   | "account"
   | "notifications"
@@ -44,6 +49,8 @@ const TAB_OF: Record<FeedPage, "home" | "search" | "fav" | "cart" | "me" | null>
   issue: "home",
   search: "search",
   cart: "cart",
+  checkout: null,
+  confirm: null,
   favorites: "fav",
   account: "me",
   notifications: "me",
@@ -110,13 +117,15 @@ export function FeedShell({
       suppressHydrationWarning
     >
       <NowProvider now={now}>
-        <QuickAddProvider>
-          <FeedTop page={page} mid={mid} tabbar={tabbar} orders={orders} />
-          {mbar && <FeedMbar {...mbar} />}
-          <main id="main">{children}</main>
-          {foot !== "none" && <FeedFooter lite={foot === "lite"} skip={footSkip} />}
-          {tabbar && <FeedTabbar page={page} />}
-        </QuickAddProvider>
+        <FeedToastProvider>
+          <QuickAddProvider>
+            <FeedTop page={page} mid={mid} tabbar={tabbar} orders={orders} />
+            {mbar && <FeedMbar {...mbar} />}
+            <main id="main">{children}</main>
+            {foot !== "none" && <FeedFooter lite={foot === "lite"} skip={footSkip} />}
+            {tabbar && <FeedTabbar page={page} />}
+          </QuickAddProvider>
+        </FeedToastProvider>
       </NowProvider>
       {/* Without script nothing would ever reveal the cards that wait for it, nor bring back a bar title that
           waits for the page's own to scroll away. */}
@@ -153,6 +162,29 @@ function FeedTop({
   const bell = notifReady ? unread : 0;
   const tab = TAB_OF[page];
   const icon = (name: FeedIconName, on: boolean) => <FeedIcon name={on ? (`${name}-fill` as FeedIconName) : name} />;
+  const cartLabel = cart ? `Giỏ, ${cart} món` : "Giỏ, đang trống";
+
+  // The checkout's own bar: its name where the tabs would be, and the basket to go back to — no shop icons to wander
+  // off by while paying (`feed.js`: `PAGE === "checkout"`).
+  if (page === "checkout") {
+    return (
+      <header className="top" data-top={page}>
+        <div className="top-in">
+          <Link className="brand" href="/" aria-label="HIVE, trang chủ">
+            <FeedLogo className="logo" />
+          </Link>
+          <p className="top-title">Thanh toán</p>
+          <div className="acts">
+            <Link className="top-back" href="/cart" data-cart-link="" aria-label={cartLabel}>
+              <FeedIcon name="bag" />
+              <span>Giỏ</span>
+              {cart > 0 && <span className="badge">{badge(cart)}</span>}
+            </Link>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="top" data-top={ROOTS.includes(page) ? "brand" : page}>
@@ -191,7 +223,7 @@ function FeedTop({
             className={cx("ib", tabbar && "only-desk")}
             href="/cart"
             data-cart-link=""
-            aria-label={cart ? `Giỏ, ${cart} món` : "Giỏ, đang trống"}
+            aria-label={cartLabel}
             aria-current={page === "cart" ? "page" : undefined}
           >
             {icon("bag", page === "cart")}

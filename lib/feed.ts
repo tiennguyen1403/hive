@@ -174,6 +174,21 @@ export function sizeNote(n: number): string | null {
   return n <= 2 ? `Còn ${n}` : null;
 }
 
+/**
+ * One size pill of the size sheet and the product page, once the basket is
+ * counted (round v4 slice 2): whether one more piece can go in, and its note.
+ * `n` is what is left of the size, `held` how many the basket holds already.
+ * A size the basket already holds every piece of cannot be added again: it is
+ * drawn the way the mock draws a size that cannot be bought (struck through),
+ * and its note says why — "Đã có trong giỏ". Otherwise the note is
+ * `sizeNote`'s: "Hết", "Còn 1", "Còn 2", or nothing.
+ */
+export function sizeOption(n: number, held: number): { open: boolean; note: string | null } {
+  if (n === 0) return { open: false, note: "Hết" };
+  if (held >= n) return { open: false, note: "Đã có trong giỏ" };
+  return { open: true, note: sizeNote(n) };
+}
+
 /** Under a colour: "Còn 4" or "Hết" for an issue's style; nothing for a fixed one. */
 export function swatchNote(p: Product, color: ColorKey): string | null {
   if (isFixed(p)) return null;
@@ -181,9 +196,18 @@ export function swatchNote(p: Product, color: ColorKey): string | null {
   return n ? `Còn ${n}` : "Hết";
 }
 
-/** The size a quick add starts on: the remembered one, when this colour still has it. */
-export function startSize(p: Product, color: ColorKey, remembered: Size | null): Size | null {
-  return remembered && onHandOf(p, color, remembered) > 0 ? remembered : null;
+/**
+ * The size a quick add starts on: the remembered one, when this colour still
+ * has a piece of it the basket does not hold already (`held`, the basket's
+ * count of a size; none by default).
+ */
+export function startSize(
+  p: Product,
+  color: ColorKey,
+  remembered: Size | null,
+  held: (size: Size) => number = () => 0,
+): Size | null {
+  return remembered && onHandOf(p, color, remembered) > held(remembered) ? remembered : null;
 }
 
 /** "Size của tôi" while the chosen size is the remembered one, "Size" otherwise. */

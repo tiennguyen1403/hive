@@ -96,6 +96,56 @@ export function cartUnits(cart: Cart): number {
   return cart.reduce((n, l) => n + l.qty, 0);
 }
 
+/** How many of exactly this choice the basket holds already. */
+export function qtyInCart(cart: Cart, l: Pick<CartLine, "productId" | "size" | "color">): number {
+  const key = lineKey(l);
+  return cart.find((x) => lineKey(x) === key)?.qty ?? 0;
+}
+
+/**
+ * How many more of a choice can go in: what is left of it, less what the
+ * basket holds already (round v4 slice 2). Zero once the basket holds every
+ * piece left of that size — `addToCart` would clamp the extra away, so the
+ * size sheet and the product page offer that size no more, and nothing claims
+ * a piece was added when none was.
+ */
+export function addableOf(p: Product, cart: Cart, color: ColorKey, size: Size): number {
+  return Math.max(0, onHandOf(p, color, size) - qtyInCart(cart, { productId: p.id, color, size }));
+}
+
+/**
+ * "Hoàn tác" after "Xoá": the line goes back where it was, as it was — with
+ * its quantity, even when that choice has sold out since, because the undo
+ * gives back the basket the shopper had, problem and all (the Feed mock's
+ * cart restores it the same way). A line that is in the basket again by now
+ * (another tab put it back) is left as it stands.
+ */
+export function restoreLine(cart: Cart, line: CartLine, at: number): Cart {
+  const key = lineKey(line);
+  if (cart.some((l) => lineKey(l) === key)) return cart;
+  const i = Math.max(0, Math.min(at, cart.length));
+  return [...cart.slice(0, i), { ...line }, ...cart.slice(i)];
+}
+
+/**
+ * "Chọn size khác" on a line whose size has gone: the line takes the new
+ * colour and size in its own place in the basket, keeping its quantity as far
+ * as the new choice has pieces. A line of that choice already in the basket
+ * is merged into it (the Feed mock's cart, `swap.done`). Nothing changes when
+ * the new choice has nothing left.
+ */
+export function swapLine(catalog: Catalog, cart: Cart, key: string, color: ColorKey, size: Size): Cart {
+  const old = cart.find((l) => lineKey(l) === key);
+  if (!old) return cart;
+  const next: Pick<CartLine, "productId" | "size" | "color"> = { productId: old.productId, color, size };
+  const nextKey = lineKey(next);
+  if (nextKey === key) return cart;
+  const stock = availableFor(catalog, next);
+  if (stock <= 0) return cart;
+  const qty = Math.min(stock, old.qty + qtyInCart(cart, next));
+  return cart.filter((l) => lineKey(l) !== nextKey).map((l) => (lineKey(l) === key ? { ...next, qty } : l));
+}
+
 // ──────────────────────────────────────────────────── joined to the catalog
 /**
  * Why a line cannot be bought right now. Three cases, because the cart says

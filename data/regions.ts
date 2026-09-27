@@ -152,3 +152,15 @@ export function formatAddressLine(a: {
     .filter(Boolean)
     .join(", ");
 }
+
+/**
+ * The same line as the Feed screens write it (round v4 slice 2): the province
+ * by its name alone — "…, Phường Hòa Bình, Bắc Ninh", not "…, Tỉnh Bắc Ninh" —
+ * as the Feed mock's checkout picks it and its confirmation prints it. A city
+ * reads the same either way ("TP. Hồ Chí Minh").
+ */
+export function feedAddressLine(a: { line: string; wardCode: string; provinceCode: string }): string {
+  const p = findProvince(a.provinceCode);
+  const w = findWard(a.provinceCode, a.wardCode);
+  return [a.line, w && wardLabel(w), p?.name].filter(Boolean).join(", ");
+}

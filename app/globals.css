@@ -361,6 +361,7 @@
      --f-ink on --f-select (selected text) 12.6:1
      --f-ink on --f-plate 16.4:1 · --f-ink2 on --f-plate 5.6:1 (the fixed lead, slice 1a)
      --f-on-ink2 on --f-ink 13.5:1 (a chosen size's note, slice 1a)
+     --f-ink2 on --f-bg4 5.0:1 (an inactive button on the grey summary, slice 2)
    ========================================================================= */
 [data-ui="feed"] {
   /* colour: one accent, blue; red only for errors */
@@ -380,6 +381,7 @@
   --f-plate: #f4efe6; /* the flat drawings' own plate: the fixed line's lead frame, a wide fixed card (slice 1a) */
   --f-plate2: #f2eee8; /* behind a flat drawing in a rail or the shop grid (slice 1a) */
   --f-on-ink2: #d9dbe0; /* the small line under a chosen size, on ink (slice 1a) */
+  --f-bg4: #e2e4e8; /* on the grey summary from 900px: the free-delivery bar's track, an inactive button (slice 2) */
   /* not in the mock: the text selection, a light tint of the blue under ink (12.6:1) —
      the project's rule for browser surfaces, kept in Feed's colours (user, 27/09/2026) */
   --f-select: color-mix(in srgb, var(--f-blue) 24%, var(--f-white));

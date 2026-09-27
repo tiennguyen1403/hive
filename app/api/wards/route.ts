@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { provincesByName, wardsInByName } from "@/data/regions";
+import { provincesByName, wardsIn, wardsInByName } from "@/data/regions";
 
 /**
  * The commune list for one province.
@@ -28,8 +28,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // `?order=official` (round v4 slice 2): the list in the official order, as
+  // the Feed checkout's picker shows it — the list its search field narrows.
+  // Without it, by name, as the v3 dropdowns show it.
+  const official = request.nextUrl.searchParams.get("order") === "official";
+
   return Response.json(
-    { wards: wardsInByName(code) },
+    { wards: official ? wardsIn(code) : wardsInByName(code) },
     // The administrative map changed once in 2025 and will change again, but
     // not between two page loads. A long cache with a revalidation window is
     // right for a list that is effectively static.

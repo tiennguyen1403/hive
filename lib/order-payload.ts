@@ -8,6 +8,7 @@ import {
 } from "@/data/types";
 import { normalisePhone, validateCheckout, type CheckoutDraft } from "./checkout-form";
 import { LEX } from "./lexicon";
+import { MAX_NOTE_LENGTH } from "./order-rules";
 import { normalisePromoCode } from "./promotions";
 
 /**
@@ -30,8 +31,9 @@ import { normalisePromoCode } from "./promotions";
 /** Pieces per order. `place_order()` restates it as `max_units`. */
 export const MAX_UNITS_PER_ORDER = 20;
 
-/** The note column's own limit (`check (length(note) <= 500)`). */
-export const MAX_NOTE_LENGTH = 500;
+// The note's limit and which failures move the catalogue live in `order-rules.ts` since v4 slice 2, where the
+// checkout screen can read them without this module's commune list.
+export { MAX_NOTE_LENGTH, failureMovesCatalog } from "./order-rules";
 
 /** One line of the basket, as checkout sends it. */
 export interface PlaceOrderLine {
@@ -144,16 +146,6 @@ export function cancelFailureMessage(failure: OrderFailure): string {
     default:
       return "Chưa huỷ được đơn. Thử lại sau ít phút.";
   }
-}
-
-/**
- * Whether the screen should read the catalogue again after this failure:
- * the stock, the issue's window or the code's uses moved under the basket,
- * and the cart and the summary have to show what is true now. A visitor
- * refused for going too fast (`RATE_LIMITED`) moved nothing.
- */
-export function failureMovesCatalog(failure: OrderFailure | "RATE_LIMITED"): boolean {
-  return failure === "OUT_OF_STOCK" || failure === "DROP_CLOSED" || failure === "PROMO_INVALID";
 }
 
 // ─────────────────────────────────────────────────────────── the request

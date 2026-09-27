@@ -8,7 +8,8 @@ import { useCatalog } from "@/components/shop/CatalogContext";
 import { usePrefs } from "@/components/shop/prefs";
 import { COLORS } from "@/data/colors";
 import type { ColorKey, Product, Size } from "@/data/types";
-import { PICTURE, pictureAlt, pictureOf, sizeNote, sizeRowLabel, sizesIn, startSize, swatchNote } from "@/lib/feed";
+import { addableOf, qtyInCart } from "@/lib/cart";
+import { PICTURE, pictureAlt, pictureOf, sizeOption, sizeRowLabel, sizesIn, startSize, swatchNote } from "@/lib/feed";
 import {
   buyLabel,
   buyState,
@@ -22,7 +23,7 @@ import {
   type FactRow,
   type MainStock,
 } from "@/lib/feed-product";
-import { isFixed, onHandOf } from "@/lib/inventory";
+import { isFixed } from "@/lib/inventory";
 import { vnd } from "@/lib/money";
 import { backOrFollow } from "../back";
 import { Rail } from "../FeedBlocks";
@@ -60,6 +61,11 @@ const desktop = () => window.matchMedia("(min-width: 900px)").matches;
  * size lets it go. The colour is the address's (`?color=`) when the style
  * comes in it. Until slice 3 the heart saves on this device, and the
  * remembered size is this device's.
+ *
+ * Slice 2: the basket is counted. A size whose every piece left is in the
+ * basket already is struck through like a size that cannot be bought, noted
+ * "Đã có trong giỏ", and cannot be chosen; a chosen size that fills up that
+ * way lets go, and the button asks for a size again.
  */
 export function ProductPage({ slug, asked }: { slug: string; asked?: string }) {
   const catalog = useCatalog();
@@ -72,6 +78,7 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
   const catalog = useCatalog();
   const now = useNow();
   const quick = useQuickAdd();
+  const { cart } = useCart();
   const { prefs, ready: prefsReady } = usePrefs();
   const mine = prefsReady ? prefs.size : null;
 
@@ -101,17 +108,24 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
   const many = kinds.length > 1;
   const last = kinds.length - 1;
 
-  /** The remembered size, where this colour still has it and the style sells (`myPick`). */
-  const myPick = (c: ColorKey): Size | null => (selling ? startSize(p, c, mine) : null);
+  /** How many of each size of a colour the basket holds already (slice 2). */
+  const held = (c: ColorKey) => (z: Size) => qtyInCart(cart, { productId: p.id, color: c, size: z });
+
+  /** The remembered size, where this colour still has a piece of it to add and the style sells (`myPick`). */
+  const myPick = (c: ColorKey): Size | null => (selling ? startSize(p, c, mine, held(c)) : null);
 
   // Once storage has answered: the page starts on Size của tôi, unless a size has been chosen already.
   const preselected = useRef(false);
   useEffect(() => {
     if (!prefsReady || preselected.current) return;
     preselected.current = true;
-    const want = selling ? startSize(p, color, prefs.size) : null;
+    const want = selling ? startSize(p, color, prefs.size, (z) => qtyInCart(cart, { productId: p.id, color, size: z })) : null;
     if (want) setSize((s) => s ?? want);
-  }, [prefsReady, prefs.size, p, color, selling]);
+  }, [prefsReady, prefs.size, p, color, selling, cart]);
+
+  // The size in play: the one chosen, while one more piece of it can still go in. Once the basket holds every piece
+  // left (slice 2), the size can no longer be added and the page asks for a size again.
+  const chosen = size !== null && addableOf(p, cart, color, size) > 0 ? size : null;
 
   // A new colour's frames start at its first photo, at once — the swipe would glide past the old colour.
   useLayoutEffect(() => {
@@ -142,11 +156,11 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
   function chooseColor(c: ColorKey) {
     if (!p.colors.includes(c)) return;
     setColor(c);
-    setSize((s) => (s && onHandOf(p, c, s) > 0 ? s : myPick(c)));
+    setSize((s) => (s && addableOf(p, cart, c, s) > 0 ? s : myPick(c)));
   }
 
   function chooseSize(z: Size) {
-    setSize(onHandOf(p, color, z) > 0 ? z : null);
+    setSize(addableOf(p, cart, color, z) > 0 ? z : null);
     setNeed(false);
   }
 
@@ -179,13 +193,13 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
     go(to);
   }
 
-  const ready = selling && size !== null && onHandOf(p, color, size) > 0;
+  const ready = selling && chosen !== null;
 
   function onCta(e: React.MouseEvent<HTMLButtonElement>) {
     if (!selling) return;
     const btn = e.currentTarget;
-    if (ready && size) {
-      quick.add(p, color, size, btn);
+    if (ready && chosen) {
+      quick.add(p, color, chosen, btn);
       return;
     }
     if (desktop()) {
@@ -209,7 +223,7 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
     }
     quick.open(p, btn, {
       color,
-      size,
+      size: chosen,
       onPick: (pick) => {
         setColor(pick.color);
         setSize(pick.size);
@@ -344,27 +358,27 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
             {!over && (
               <div ref={sizeBlock} className={cx("pblock", need && "need")}>
                 <div className="sh-label">
-                  <span className="sh-label-t">{sizeRowLabel(size, mine)}</span>{" "}
-                  <button className="link" type="button" onClick={(e) => quick.guide(p, size, e.currentTarget)}>
+                  <span className="sh-label-t">{sizeRowLabel(chosen, mine)}</span>{" "}
+                  <button className="link" type="button" onClick={(e) => quick.guide(p, chosen, e.currentTarget)}>
                     <FeedIcon name="ruler" />
                     Bảng size
                   </button>
                 </div>
                 <div ref={sizesRow} className="sizes" role="radiogroup" aria-label="Size">
                   {sizesIn(p, color).map(({ size: z, n }) => {
-                    const note = sizeNote(n);
+                    const opt = sizeOption(n, held(color)(z));
                     return (
                       <label className="size" key={z}>
                         <input
                           type="radio"
                           name="p-size"
                           value={z}
-                          disabled={n === 0}
-                          checked={z === size && n > 0}
+                          disabled={!opt.open}
+                          checked={z === chosen}
                           onChange={() => chooseSize(z)}
                         />
                         <span className="sz">{z}</span>
-                        {note && <small>{note}</small>}
+                        {opt.note && <small>{opt.note}</small>}
                       </label>
                     );
                   })}

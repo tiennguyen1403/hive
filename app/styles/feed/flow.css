@@ -1,15 +1,13 @@
-/* Round v4 "Feed" (QĐ-32) — the rules of `prototype/explore/feed/flow.css`
-   the app has ported so far, in the mock's order, under the Feed zone
-   `[data-ui="feed"]`, tokens renamed `--x` → `--f-x`. The translations are
-   the ones `feed.css` beside this file lists; its reduced-motion block
-   covers these rules too, as the mock's does.
+/* Round v4 "Feed" (QĐ-32) — the rules of `prototype/explore/feed/flow.css`,
+   in the mock's order, under the Feed zone `[data-ui="feed"]`, tokens
+   renamed `--x` → `--f-x`. The translations are the ones `feed.css` beside
+   this file lists; its reduced-motion block covers these rules too, as the
+   mock's does.
 
    PORTED AT SLICE 0, for the kit page `/system`: the form field (`.field`,
    `.lbl`, `.opt`, the input and textarea, their focus, the error line `.err`
    and `.is-error`) and the selection card (`.rcards`, `.rcard` and its
-   parts, checked, focused, off), with the card's hover. A rule is ported
-   whole, with the selectors it groups (`.pick`, `.promo-field`, `.co-pair`,
-   `.co-promo`), so the slice that builds the checkout finds it in place.
+   parts, checked, focused, off), with the card's hover.
    PORTED AT SLICE 1b, for `/search`: the search bar and field (`.sbar`,
    `.sform`, `.sclear`, `.scancel`), the sections and their chips (`.ssec`,
    `.schip`, the recent searches' `.rchip`), the results' head and the empty
@@ -17,11 +15,27 @@
    mock's `html:not([data-mouse]) .sform:has(input:focus-visible)` ring is the
    zone's rule plus its `html[data-pointer]` off switch; its overlays reach
    46, as every ported overlay does; its `.srch .grid` is `.srch .shop-grid`.
-   NOT YET: the cart, the rest of the checkout (`.co*`, `.pick` itself, the
-   promo row, the order bar), the picker sheet, the order confirmation, the
-   empty states and the toast — whose name meets v3's unscoped `.toast`
-   (`styles/sheet.css`), which would land on a Feed toast too
-   (`scope.test.ts` refuses the name until that is settled). */
+   PORTED AT SLICE 2, for `/cart`, `/checkout` and `/order-confirmed`: the
+   rest of the file — the empty states, the basket (`.cline`, `.step`,
+   `.csum`, `.free`, `.paybar`), the checkout (`.co*`, `.co-pair`, `.pick`,
+   the code's row `.promo*`, the summary's items, `.orderbar`), the picker
+   sheet (`dialog.sheet.picker`, `.pick-search`, `.pick-list`, `.pick-opt`),
+   the order confirmed (`.ok-*`, `.paycard`, `.copyrow`, `.copy`,
+   `.qr-slot`, `.hold`, `.track-list`, `.okship`, `.oksum`), the toast, and
+   their hover and desktop rules. Translated on the way in:
+   · the mock's `.toast` / `.toast-act` are `.snack` / `.snack-act`: v3
+     styles a bare `.toast` (`styles/sheet.css`) that would land on it too
+     (`scope.test.ts`);
+   · the toast's `--toast-b`, which each page sets on <body> (`.p-cart
+     .has-paybar`, `.p-checkout`, `.p-confirm`), is asked of the frame with
+     `:has()` — is the pay bar there, the order bar, a tab bar at all;
+   · `.paybar, .orderbar { display: none !important }` from 900px needs no
+     `!important` here: nothing else sets their display;
+   · `#E2E4E8` (the summary's bar and inactive button from 900px) is the
+     token `--f-bg4`;
+   · every overlay under a control shorter than 44 reaches 46, the rule the
+     user kept, where the mock's reach 44 (the basket's name link, whose box
+     is the line of type it sits on, reaches past 44 as well). */
 
 /* ── search ── */
 [data-ui="feed"] .sbar {
@@ -80,9 +94,94 @@ html[data-pointer] [data-ui="feed"] .sform:has(input:focus-visible) { outline: n
 [data-ui="feed"] .snone-act { padding: 22px var(--f-g) 8px; }
 [data-ui="feed"] .snone-act .btn { width: auto; display: inline-flex; padding: 0 24px; }
 
-/* ── the form field ── */
+/* ── empty states (cart, checkout) ── */
+[data-ui="feed"] .empty-state { display: grid; justify-items: center; gap: 14px; padding: 56px var(--f-g) 40px; text-align: center; }
+[data-ui="feed"] .empty-ic { display: grid; place-items: center; width: 88px; height: 88px; border-radius: var(--f-r-pill); background: var(--f-bg2); }
+[data-ui="feed"] .empty-ic .i { width: 40px; height: 40px; }
+[data-ui="feed"] .empty-title { font-size: 22px; font-weight: 700; }
+[data-ui="feed"] .empty-state .btn { width: auto; padding: 0 28px; margin-top: 4px; }
+
+/* ── cart ── */
+[data-ui="feed"] .cart-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 16px var(--f-g) 4px; }
+[data-ui="feed"] .cart-head .page-title { margin-bottom: 0; }
+[data-ui="feed"] .cart-count { font-size: 14px; font-weight: 620; color: var(--f-ink2); }
+[data-ui="feed"] .cart-lines { padding: 0 var(--f-g); }
+[data-ui="feed"] .cline { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 14px; padding: 16px 0; border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .cline:first-child { border-top: 0; }
+[data-ui="feed"] .cline-img { display: block; align-self: start; border-radius: var(--f-r-thumb); overflow: hidden; background: var(--f-bg2); }
+[data-ui="feed"] .cline-img.flat { background: var(--f-plate2); }
+[data-ui="feed"] .cline-img img { width: 88px; height: 110px; object-fit: cover; }
+[data-ui="feed"] .cline.is-gone .cline-img img, [data-ui="feed"] .cline.is-closed .cline-img img { filter: grayscale(1); opacity: .6; }
+[data-ui="feed"] .cline-body { min-width: 0; }
+[data-ui="feed"] .cline-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+[data-ui="feed"] .cline-name { min-width: 0; font-size: 24px; line-height: 1.06; overflow-wrap: anywhere; }
+[data-ui="feed"] .cline-name a { position: relative; }
+/* The mock's overlay is -5px -8px round the name's own line box (about 25 + 10); the project's reaches 46. */
+[data-ui="feed"] .cline-name a::after { content: ""; position: absolute; inset: -11px -8px; }
+[data-ui="feed"] .cline-price { font-size: 15px; font-weight: 700; white-space: nowrap; }
+[data-ui="feed"] .has-problem .cline-price { color: var(--f-ink2); font-weight: 560; text-decoration: line-through; text-decoration-thickness: 1px; }
+[data-ui="feed"] .cline-meta { margin-top: 4px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .cline-err { display: flex; gap: 6px; margin-top: 10px; font-size: 13px; font-weight: 620; line-height: 1.35; color: var(--f-err); }
+[data-ui="feed"] .cline-err .i { flex: none; width: 18px; height: 18px; margin-top: -1px; }
+[data-ui="feed"] .cline-acts { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 12px; }
+[data-ui="feed"] .cline-left { font-size: 12px; font-weight: 620; color: var(--f-ink2); }
+[data-ui="feed"] .cline-rm {
+  position: relative; display: inline-flex; align-items: center; gap: 4px; height: 36px; margin-left: auto; padding: 0 6px;
+  font-size: 13px; font-weight: 620; color: var(--f-ink2); border-radius: var(--f-r-pill);
+}
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46. */
+[data-ui="feed"] .cline-rm::after { content: ""; position: absolute; inset: -5px 0; }
+[data-ui="feed"] .cline-rm .i { width: 18px; height: 18px; }
+[data-ui="feed"] .pill-err { background: var(--f-ink); color: var(--f-white); }
+
+[data-ui="feed"] .step { display: inline-flex; align-items: center; height: 36px; border-radius: var(--f-r-pill); box-shadow: inset 0 0 0 1.5px var(--f-line2); }
+[data-ui="feed"] .step button { position: relative; display: grid; place-items: center; width: 44px; height: 36px; border-radius: var(--f-r-pill); }
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46. */
+[data-ui="feed"] .step button::after { content: ""; position: absolute; inset: -5px 0; }
+[data-ui="feed"] .step button .i { width: 16px; height: 16px; }
+[data-ui="feed"] .step button:disabled { color: rgba(17, 18, 20, .26); }
+[data-ui="feed"] .step output { min-width: 22px; text-align: center; font-size: 15px; font-weight: 700; }
+
+[data-ui="feed"] .csum { margin-top: 10px; border-top: 8px solid var(--f-bg2); padding: 22px var(--f-g) 8px; }
+[data-ui="feed"] .csum-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+[data-ui="feed"] .free { margin-top: 14px; }
+[data-ui="feed"] .free p { font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .free b { color: var(--f-ink); font-weight: 700; }
+[data-ui="feed"] .free-bar { margin-top: 8px; height: 4px; border-radius: var(--f-r-pill); background: var(--f-bg2); overflow: hidden; }
+[data-ui="feed"] .free-bar i { display: block; height: 100%; background: var(--f-blue); transform-origin: left center; }
+[data-ui="feed"] .csum-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--f-line2); font-size: 16px; font-weight: 700; }
+[data-ui="feed"] .csum-total b { font-size: 22px; font-weight: 750; }
+
+[data-ui="feed"] .paybar {
+  position: fixed; z-index: 39; left: 0; right: 0; bottom: calc(var(--f-tabbar) + var(--f-sb));
+  padding: 10px var(--f-g); background: var(--f-bg); box-shadow: var(--f-lift);
+}
+/* The summary's own "Thanh toán" and the checkout's "Đặt hàng" are the desktop's; the phone has the bars (the mock's
+   `.only-desk` carries `!important`; `.btn` comes after `.only-desk` in feed.css, so the phone hides it here). */
+@media (max-width: 899.98px) {
+  [data-ui="feed"] .btn.only-desk { display: none; }
+}
+
+/* ── checkout ── */
+[data-ui="feed"] .co { display: grid; grid-template-areas: "contact" "address" "delivery" "payment" "side" "note"; }
+[data-ui="feed"] .co [data-area="contact"] { grid-area: contact; }
+[data-ui="feed"] .co [data-area="address"] { grid-area: address; }
+[data-ui="feed"] .co [data-area="delivery"] { grid-area: delivery; }
+[data-ui="feed"] .co [data-area="payment"] { grid-area: payment; }
+[data-ui="feed"] .co [data-area="side"] { grid-area: side; min-width: 0; }
+[data-ui="feed"] .co [data-area="note"] { grid-area: note; }
+[data-ui="feed"] .co-sec { padding: 22px var(--f-g) 24px; border-top: 8px solid var(--f-bg2); }
+[data-ui="feed"] .co > .co-sec:first-child { border-top: 0; }
+[data-ui="feed"] .co-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; margin-bottom: 14px; }
+[data-ui="feed"] .co-sec .sect-title { margin-bottom: 0; }
+[data-ui="feed"] .co-promo .sect-title { margin-bottom: 14px; }
+[data-ui="feed"] .co-sec-head .link { min-height: 44px; margin: -8px 0; }
+
+/* the form field */
 [data-ui="feed"] .field { display: block; }
 [data-ui="feed"] .field + .field, [data-ui="feed"] .co-pair + .field, [data-ui="feed"] .field + .co-pair { margin-top: 16px; }
+[data-ui="feed"] .co-pair { display: grid; gap: 16px; }
+[data-ui="feed"] .co-pair .field + .field { margin-top: 0; }
 [data-ui="feed"] .lbl { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 640; }
 [data-ui="feed"] .opt { font-weight: 500; color: var(--f-ink2); }
 [data-ui="feed"] .field input, [data-ui="feed"] .field textarea, [data-ui="feed"] .pick, [data-ui="feed"] .promo-field input {
@@ -93,12 +192,16 @@ html[data-pointer] [data-ui="feed"] .sform:has(input:focus-visible) { outline: n
 [data-ui="feed"] .field textarea { height: auto; min-height: 96px; padding: 14px 20px; border-radius: 20px; line-height: 1.45; resize: vertical; }
 [data-ui="feed"] .field input::placeholder, [data-ui="feed"] .field textarea::placeholder, [data-ui="feed"] .promo-field input::placeholder { color: var(--f-ink2); }
 [data-ui="feed"] .field input:focus, [data-ui="feed"] .field textarea:focus, [data-ui="feed"] .promo-field input:focus { background: var(--f-white); box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+[data-ui="feed"] .pick { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
+[data-ui="feed"] .pick-v { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-ui="feed"] .pick-v.is-empty { color: var(--f-ink2); }
+[data-ui="feed"] .pick .i { width: 20px; height: 20px; color: var(--f-ink2); }
 [data-ui="feed"] .err { display: flex; gap: 6px; margin-top: 8px; padding-left: 4px; font-size: 13px; font-weight: 620; line-height: 1.35; color: var(--f-err); }
 [data-ui="feed"] .err .i { flex: none; width: 18px; height: 18px; margin-top: -1px; }
 [data-ui="feed"] .is-error input, [data-ui="feed"] .is-error .pick, [data-ui="feed"] .is-error textarea, [data-ui="feed"] .co-promo.is-error .promo-field input { background: var(--f-white); box-shadow: inset 0 0 0 1.5px var(--f-err); }
 [data-ui="feed"] .field.is-error input:focus, [data-ui="feed"] .field.is-error textarea:focus, [data-ui="feed"] .co-promo.is-error .promo-field input:focus { box-shadow: inset 0 0 0 2px var(--f-err); }
 
-/* ── the selection card (delivery, payment): a native radio under the whole card ── */
+/* the selection card (delivery, payment): a native radio under the whole card */
 [data-ui="feed"] .rcards { display: grid; gap: 10px; }
 [data-ui="feed"] .rcard {
   position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 12px;
@@ -121,14 +224,148 @@ html[data-pointer] [data-ui="feed"] .rcard:has(input:focus) { outline: none; }
 [data-ui="feed"] .rcard.is-off .rcard-note { color: var(--f-ink); font-weight: 600; }
 [data-ui="feed"] .rcard.is-off .rcard-ic { background: var(--f-bg3); color: var(--f-ink2); }
 
+/* the code */
+[data-ui="feed"] .promo { display: flex; gap: 8px; }
+[data-ui="feed"] .promo-field { flex: 1; min-width: 0; }
+[data-ui="feed"] .promo-field input { letter-spacing: .03em; }
+[data-ui="feed"] .promo-go { height: 52px; padding: 0 22px; }
+[data-ui="feed"] .promo-ok { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 6px 0 16px; border-radius: var(--f-r-pill); background: var(--f-bg2); }
+[data-ui="feed"] .promo-ok > .i { width: 22px; height: 22px; color: var(--f-blue); }
+[data-ui="feed"] .promo-code { font-weight: 750; letter-spacing: .04em; }
+[data-ui="feed"] .promo-ok .link { min-height: 44px; margin-left: auto; padding: 0 10px; }
+
+/* the summary */
+[data-ui="feed"] .co-count { font-size: 14px; font-weight: 620; color: var(--f-ink2); }
+[data-ui="feed"] .co-items { display: grid; gap: 12px; margin-bottom: 16px; }
+[data-ui="feed"] .co-item { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+[data-ui="feed"] .co-thumb { display: block; width: 48px; height: 60px; border-radius: 8px; overflow: hidden; background: var(--f-bg2); }
+[data-ui="feed"] .co-thumb.flat { background: var(--f-plate2); }
+[data-ui="feed"] .co-thumb img { width: 100%; height: 100%; object-fit: cover; }
+[data-ui="feed"] .co-item-main { display: grid; gap: 3px; min-width: 0; }
+[data-ui="feed"] .co-item-name { font-size: 18px; line-height: 1.06; }
+[data-ui="feed"] .co-item-meta { font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .co-item-price { font-size: 14px; font-weight: 700; white-space: nowrap; }
+[data-ui="feed"] .co-lines { padding-top: 12px; border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .co-lines div:first-child { padding-top: 0; }
+
+[data-ui="feed"] .orderbar {
+  position: fixed; z-index: 40; left: 0; right: 0; bottom: 0;
+  padding: 12px var(--f-g) calc(12px + var(--f-sb)); background: var(--f-bg); box-shadow: var(--f-lift);
+}
+
+/* ── picker sheet (tỉnh / thành, phường / xã) ── */
+[data-ui="feed"] dialog.sheet.picker .sheet-panel { display: flex; flex-direction: column; height: min(680px, calc(100dvh - 40px)); overflow: hidden; padding-bottom: 0; }
+[data-ui="feed"] dialog.sheet.picker .sh-head { flex: none; }
+[data-ui="feed"] .pick-search {
+  flex: none; display: flex; align-items: center; gap: 8px; height: 48px; margin-bottom: 6px; padding: 0 16px;
+  border-radius: var(--f-r-pill); background: var(--f-bg2); transition: background-color .15s, box-shadow .15s;
+}
+[data-ui="feed"] .pick-search .i { width: 20px; height: 20px; color: var(--f-ink2); }
+[data-ui="feed"] .pick-search input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; font: inherit; font-size: 16px; color: var(--f-ink); }
+[data-ui="feed"] .pick-search input:focus { outline: none; }
+[data-ui="feed"] .pick-search input::placeholder { color: var(--f-ink2); }
+[data-ui="feed"] .pick-search input::-webkit-search-cancel-button { display: none; }
+[data-ui="feed"] .pick-search:focus-within { background: var(--f-white); box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+[data-ui="feed"] .pick-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 calc(var(--f-g) * -1); padding: 0 var(--f-g) calc(16px + var(--f-sb)); }
+[data-ui="feed"] .pick-opt {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 50px; padding: 0 6px;
+  border-top: 1px solid var(--f-line); font-size: 16px; cursor: pointer;
+}
+[data-ui="feed"] .pick-opt:first-child { border-top: 0; }
+[data-ui="feed"] .pick-opt .i { width: 20px; height: 20px; color: var(--f-blue); visibility: hidden; }
+[data-ui="feed"] .pick-opt[aria-selected="true"] { font-weight: 700; }
+[data-ui="feed"] .pick-opt[aria-selected="true"] .i { visibility: visible; }
+[data-ui="feed"] .pick-opt:focus-visible { outline-offset: -2px; border-radius: 10px; }
+[data-ui="feed"] .pick-empty { padding: 20px 6px; font-size: 15px; color: var(--f-ink2); }
+
+/* ── order confirmed ── */
+[data-ui="feed"] .ok-hero { display: grid; justify-items: start; gap: 6px; padding: 28px var(--f-g) 24px; }
+[data-ui="feed"] .ok-title { font-size: 52px; line-height: 1.04; }
+[data-ui="feed"] .ok-code { font-size: 16px; color: var(--f-ink2); }
+[data-ui="feed"] .ok-code b { color: var(--f-ink); font-weight: 700; letter-spacing: .02em; }
+[data-ui="feed"] .ok-next { margin-top: 2px; font-size: 15px; font-weight: 620; }
+[data-ui="feed"] .paycard, [data-ui="feed"] .hold, [data-ui="feed"] .track, [data-ui="feed"] .okship, [data-ui="feed"] .oksum { padding: 22px var(--f-g) 24px; border-top: 8px solid var(--f-bg2); }
+[data-ui="feed"] .paycard .sect-title, [data-ui="feed"] .hold .sect-title, [data-ui="feed"] .track .sect-title, [data-ui="feed"] .okship .sect-title { margin-bottom: 10px; }
+[data-ui="feed"] .copyrow { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 56px; border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .paycard .sect-title + .copyrow { border-top: 0; }
+[data-ui="feed"] .copy-k { font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .copy-v { font-size: 18px; font-weight: 750; letter-spacing: .01em; overflow-wrap: anywhere; }
+[data-ui="feed"] .copyrow.is-pending .copy-v { padding: 8px 0; font-size: 14px; font-weight: 560; line-height: 1.4; }
+[data-ui="feed"] .copy {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px;
+  border-radius: var(--f-r-pill); background: var(--f-bg2); font-size: 14px; font-weight: 640; white-space: nowrap;
+  transition: background-color .15s, color .15s;
+}
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46. */
+[data-ui="feed"] .copy::after { content: ""; position: absolute; inset: -5px 0; }
+[data-ui="feed"] .copy .i { width: 16px; height: 16px; }
+[data-ui="feed"] .copy.done { background: var(--f-ink); color: var(--f-white); }
+[data-ui="feed"] .qr-slot {
+  display: grid; place-content: center; gap: 4px; width: 184px; aspect-ratio: 1; margin-top: 14px; padding: 18px;
+  border-radius: 12px; box-shadow: inset 0 0 0 1.5px var(--f-line2); background: repeating-linear-gradient(135deg, transparent 0 10px, rgba(17, 18, 20, .035) 10px 11px);
+  text-align: center;
+}
+[data-ui="feed"] .qr-slot b { font-size: 14px; font-weight: 700; }
+[data-ui="feed"] .qr-slot span { font-size: 13px; line-height: 1.4; color: var(--f-ink2); }
+[data-ui="feed"] .hold-cd .cd-big { font-size: 46px; }
+[data-ui="feed"] .hold-until { margin-top: 6px; font-size: 14px; color: var(--f-ink2); }
+[data-ui="feed"] .hold-until b { color: var(--f-ink); font-weight: 650; }
+[data-ui="feed"] .hold-note { margin-top: 10px; font-size: 14px; font-weight: 560; }
+[data-ui="feed"] .track-list { display: grid; }
+[data-ui="feed"] .track-list li { position: relative; display: flex; align-items: center; gap: 12px; min-height: 40px; font-size: 15px; color: var(--f-ink2); }
+[data-ui="feed"] .track-list li + li::before { content: ""; position: absolute; left: 11px; top: -8px; width: 2px; height: 16px; background: var(--f-line2); }
+[data-ui="feed"] .track-dot { position: relative; z-index: 1; display: grid; place-items: center; width: 24px; height: 24px; border-radius: var(--f-r-pill); background: var(--f-bg); box-shadow: inset 0 0 0 2px var(--f-line2); }
+[data-ui="feed"] .track-dot .i { width: 14px; height: 14px; }
+[data-ui="feed"] .track-list .is-done { color: var(--f-ink); }
+[data-ui="feed"] .track-list .is-done .track-dot { background: var(--f-ink); color: var(--f-white); box-shadow: none; }
+[data-ui="feed"] .track-list .is-now { color: var(--f-ink); font-weight: 700; }
+[data-ui="feed"] .track-list .is-now .track-dot { box-shadow: inset 0 0 0 2px var(--f-blue); }
+[data-ui="feed"] .track-list .is-now .track-dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--f-blue); }
+[data-ui="feed"] .track-list .is-now::before { background: var(--f-ink); }
+[data-ui="feed"] .okship .facts dd { max-width: 62%; }
+[data-ui="feed"] .ok-acts { display: grid; gap: 10px; padding: 18px var(--f-g) 8px; }
+
+/* ── toast (the mock's `.toast`), one at a time, never traps ── */
+[data-ui="feed"] .snack {
+  position: fixed; z-index: 60; left: 0; right: 0; bottom: calc(var(--f-tabbar) + var(--f-sb) + 12px);
+  width: max-content; max-width: calc(100vw - 32px); margin: 0 auto;
+  display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 8px 6px 18px;
+  border-radius: var(--f-r-pill); background: var(--f-ink); color: var(--f-white); font-size: 14px; font-weight: 560;
+  box-shadow: 0 12px 32px rgba(17, 18, 20, .24);
+  opacity: 0; transform: translateY(12px); pointer-events: none;
+  transition: opacity .2s, transform .34s var(--f-spring);
+}
+[data-ui="feed"] .snack.on { opacity: 1; transform: none; pointer-events: auto; }
+[data-ui="feed"] .snack-act { position: relative; flex: none; height: 36px; padding: 0 12px; white-space: nowrap; border-radius: var(--f-r-pill); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46. */
+[data-ui="feed"] .snack-act::after { content: ""; position: absolute; inset: -5px 0; }
+/* Above the pay bar and the tab bar (the mock's `.p-cart.has-paybar`), above the order bar (`.p-checkout`), and low
+   where the page has no bar at the bottom at all (`.p-confirm`, `.p-checkout.is-empty`). */
+[data-ui="feed"].feed-frame.has-tabbar:has(.paybar) .snack { bottom: calc(var(--f-tabbar) + 76px + var(--f-sb) + 12px); }
+[data-ui="feed"].feed-frame:has(.orderbar) .snack { bottom: calc(76px + var(--f-sb) + 12px); }
+[data-ui="feed"].feed-frame:not(.has-tabbar):not(.has-buybar):not(:has(.orderbar)) .snack { bottom: 24px; }
+
 @media (hover: hover) and (pointer: fine) {
   [data-ui="feed"] .schip:hover { background: var(--f-bg2); box-shadow: none; }
   [data-ui="feed"] .rchip:hover { background: var(--f-bg3); }
+  [data-ui="feed"] .cline-rm:hover { color: var(--f-ink); }
+  [data-ui="feed"] .step button:not(:disabled):hover { background: var(--f-bg2); }
   [data-ui="feed"] .rcard:not(.is-off):not(:has(input:checked)):hover { box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+  [data-ui="feed"] .copy:not(.done):hover { background: var(--f-bg3); }
+  [data-ui="feed"] .pick-opt:hover { background: var(--f-bg2); }
+  [data-ui="feed"] .pick:not(:disabled):hover { box-shadow: inset 0 0 0 1.5px var(--f-line2); }
+  [data-ui="feed"] .top-back:hover { background: var(--f-bg2); }
 }
 
-/* ── desktop: search ── */
+/* ── desktop ── */
 @media (min-width: 900px) {
+  [data-ui="feed"] .snack,
+  [data-ui="feed"].feed-frame.has-tabbar:has(.paybar) .snack,
+  [data-ui="feed"].feed-frame:has(.orderbar) .snack,
+  [data-ui="feed"].feed-frame:not(.has-tabbar):not(.has-buybar):not(:has(.orderbar)) .snack { bottom: 28px; }
+  [data-ui="feed"] .paybar, [data-ui="feed"] .orderbar { display: none; }
+
+  /* search */
   [data-ui="feed"] .srch { max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg); }
   [data-ui="feed"] .sbar { position: static; padding: 36px 0 6px; box-shadow: none; background: none; }
   [data-ui="feed"] .sform { max-width: 760px; height: 60px; padding-left: 22px; }
@@ -145,4 +382,68 @@ html[data-pointer] [data-ui="feed"] .rcard:has(input:focus) { outline: none; }
   [data-ui="feed"] .snone-line { font-size: 26px; }
   [data-ui="feed"] .snone .ssec { padding-left: 0; }
   [data-ui="feed"] .snone-act { padding: 26px 0 8px; }
+
+  /* cart */
+  [data-ui="feed"] .cartp { max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg); }
+  [data-ui="feed"] .cart-head { padding: 32px 0 22px; align-items: flex-end; }
+  [data-ui="feed"] .cart-head .page-title { font-size: 72px; }
+  [data-ui="feed"] .cart-count { font-size: 16px; padding-bottom: 10px; }
+  [data-ui="feed"] .cart-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); column-gap: 56px; align-items: start; }
+  [data-ui="feed"] .cart-lines { padding: 0; border-top: 1px solid var(--f-line); }
+  [data-ui="feed"] .cline { grid-template-columns: 120px minmax(0, 1fr); gap: 22px; padding: 22px 0; }
+  [data-ui="feed"] .cline:first-child { border-top: 0; }
+  [data-ui="feed"] .cline-img img { width: 120px; height: 150px; }
+  [data-ui="feed"] .cline-name { font-size: 32px; }
+  [data-ui="feed"] .cline-price { font-size: 17px; }
+  [data-ui="feed"] .cline-meta { font-size: 14px; }
+  [data-ui="feed"] .csum { position: sticky; top: 88px; margin-top: 0; border-top: 0; padding: 28px; background: var(--f-bg2); }
+  [data-ui="feed"] .csum .free-bar { background: var(--f-bg4); }
+  [data-ui="feed"] .csum-pay { margin-top: 22px; }
+  [data-ui="feed"] .csum .btn:disabled { background: var(--f-bg4); }
+  [data-ui="feed"] .empty-state { padding: 72px 0 32px; }
+
+  /* checkout */
+  [data-ui="feed"] .cop { max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg); }
+  [data-ui="feed"] .co {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 56px; align-items: start; padding-top: 36px;
+    grid-template-areas: "contact side" "address side" "delivery side" "payment side" "note side";
+  }
+  [data-ui="feed"] .co-sec { padding: 30px 0 34px; border-top: 1px solid var(--f-line); }
+  [data-ui="feed"] .co > .co-sec:first-child { padding-top: 0; }
+  [data-ui="feed"] .co-sec .sect-title { font-size: 24px; }
+  [data-ui="feed"] .co-pair { grid-template-columns: 1fr 1fr; }
+  [data-ui="feed"] .co-side { position: sticky; top: 88px; padding: 6px 28px 28px; background: var(--f-bg2); }
+  [data-ui="feed"] .co-side .co-sec { padding: 22px 0 0; border-top: 0; }
+  [data-ui="feed"] .co-side .co-sum { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--f-line2); }
+  [data-ui="feed"] .co-side .sect-title { font-size: 20px; }
+  [data-ui="feed"] .co-side .promo-field input, [data-ui="feed"] .co-side .promo-ok { background: var(--f-bg); }
+  [data-ui="feed"] .co-side .promo-field input { box-shadow: inset 0 0 0 1.5px var(--f-line2); }
+  [data-ui="feed"] .co-side .promo-go { background: var(--f-bg); box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+  [data-ui="feed"] .co-side .co-thumb { background: var(--f-bg); }
+  [data-ui="feed"] .co-place { margin-top: 22px; height: 56px; font-size: 17px; }
+  [data-ui="feed"] .co [data-area="note"] { padding-bottom: 0; }
+
+  /* order confirmed */
+  [data-ui="feed"] .okp { max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg); }
+  [data-ui="feed"] .ok-hero { padding: 44px 0 30px; }
+  [data-ui="feed"] .ok-title { font-size: 80px; }
+  [data-ui="feed"] .ok-code { font-size: 18px; }
+  [data-ui="feed"] .ok-next { font-size: 17px; }
+  [data-ui="feed"] .ok-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 56px; align-items: start; }
+  [data-ui="feed"] .paycard, [data-ui="feed"] .hold, [data-ui="feed"] .track, [data-ui="feed"] .okship { padding: 30px 0 34px; border-top: 1px solid var(--f-line); }
+  [data-ui="feed"] .paycard .sect-title, [data-ui="feed"] .hold .sect-title, [data-ui="feed"] .track .sect-title, [data-ui="feed"] .okship .sect-title { font-size: 24px; margin-bottom: 14px; }
+  [data-ui="feed"] .paycard { display: grid; grid-template-columns: minmax(0, 1fr) 184px; column-gap: 32px; align-content: start; }
+  [data-ui="feed"] .paycard > .sect-title { grid-column: 1 / -1; }
+  [data-ui="feed"] .paycard > .copyrow { grid-column: 1; }
+  [data-ui="feed"] .paycard > .qr-slot { grid-column: 2; grid-row: 2 / span 3; align-self: start; margin-top: 0; }
+  [data-ui="feed"] .copyrow { grid-template-columns: 110px minmax(0, 1fr) auto; }
+  [data-ui="feed"] .copy-v { font-size: 20px; }
+  [data-ui="feed"] .hold-cd .cd-big { font-size: 60px; }
+  [data-ui="feed"] .track-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  [data-ui="feed"] .track-list li { flex-direction: column; align-items: flex-start; gap: 10px; min-height: 0; font-size: 14px; }
+  [data-ui="feed"] .track-list li + li::before { left: calc(-100% + 30px); width: calc(100% - 36px); top: 11px; height: 2px; }
+  [data-ui="feed"] .ok-side { position: sticky; top: 88px; }
+  [data-ui="feed"] .oksum { padding: 24px 28px 28px; border-top: 0; background: var(--f-bg2); }
+  [data-ui="feed"] .oksum .co-thumb { background: var(--f-bg); }
+  [data-ui="feed"] .ok-acts { padding: 18px 0 0; }
 }
