@@ -350,6 +350,31 @@ export type OrderStatus =
 
 export type OrderState = OrderStatus["state"];
 
+/**
+ * When the order passed each step of its journey that has a moment of its
+ * own — paid, handed to the courier, delivered — as far as the shop recorded
+ * it. Backend slice B10, for the Feed order page, whose steps carry a time
+ * under every one already passed (`stepModel` in
+ * `prototype/explore/feed/account.js`).
+ *
+ * `status` keeps only the moment of the state the order is IN, so an order on
+ * its way would forget when it was paid; this keeps them all, the current
+ * one included. A step not passed has no moment, and neither does COD's
+ * payment: it pays at the door. The sample orders in `data/orders.ts` carry
+ * the steps they passed by one rule taken from the Feed mock's own orders,
+ * written beside them. The placing is `placedAt`, a cancellation
+ * `status.cancelledAt`.
+ *
+ * Optional on `Order`, and absent rather than `{}` when there is none, like
+ * `promo`: an order read from a database from before B10 simply has none, and
+ * a reader falls back to the status's own moment.
+ */
+export interface OrderMoments {
+  paidAt?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
+}
+
 export interface OrderLine {
   productId: ProductId;
   size: Size;
@@ -394,6 +419,8 @@ export interface Order {
   note: string;
   placedAt: string;
   promo?: PromoCode;
+  /** Every step's recorded moment (slice B10); absent when none was. See `OrderMoments`. */
+  moments?: OrderMoments;
 }
 
 // ──────────────────────────────────────────────────────────────── promotions

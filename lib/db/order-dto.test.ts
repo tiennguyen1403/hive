@@ -183,6 +183,57 @@ describe("toOrder — the optional and the empty", () => {
   });
 });
 
+describe("toOrder — the moments of the steps passed (slice B10)", () => {
+  const delivered = { state: "DELIVERED", deliveredAt: "2026-09-16T10:02:00+07:00" } as const;
+
+  it("reads every moment the order recorded, beside a status that keeps only its own", () => {
+    const moments = {
+      paidAt: "2026-09-11T21:52:00+07:00",
+      shippedAt: "2026-09-13T08:20:00+07:00",
+      deliveredAt: "2026-09-16T10:02:00+07:00",
+    };
+    const got = toOrder(json(delivered, { moments }));
+    expect(got).toEqual(expected(delivered, { moments }));
+    expect(got.status).toEqual(delivered);
+  });
+
+  it("keeps only the moments that were recorded — a sample order knows its own state's", () => {
+    const got = toOrder(json(delivered, { moments: { deliveredAt: "2026-09-16T10:02:00+07:00" } }));
+    expect(got.moments).toEqual({ deliveredAt: "2026-09-16T10:02:00+07:00" });
+    expect(Object.keys(got.moments!)).toEqual(["deliveredAt"]);
+  });
+
+  it("reads a missing key, null or {} as no moments at all — a database from before B10", () => {
+    const before = json(delivered);
+    expect("moments" in before).toBe(false);
+    for (const wire of [before, json(delivered, { moments: null }), json(delivered, { moments: {} })]) {
+      const got = toOrder(wire);
+      expect("moments" in got).toBe(false);
+      expect(got).toEqual(expected(delivered));
+    }
+  });
+
+  it("reads a moment written as null as not recorded", () => {
+    const got = toOrder(
+      json(delivered, { moments: { paidAt: null, shippedAt: null, deliveredAt: "2026-09-16T10:02:00+07:00" } }),
+    );
+    expect(got.moments).toEqual({ deliveredAt: "2026-09-16T10:02:00+07:00" });
+  });
+
+  it("takes only the three moments it knows, whatever else the object carries", () => {
+    const got = toOrder(json(delivered, { moments: { dueAt: "2026-09-12T09:40:00+07:00", placedAt: "x" } }));
+    expect("moments" in got).toBe(false);
+  });
+
+  it("names the moment that is not an instant", () => {
+    expect(() => toOrder(json(delivered, { moments: { paidAt: "2026-09-11T14:52:00Z" } }))).toThrow(
+      "order DH-2432.moments.paidAt must be an ISO instant ending in +07:00",
+    );
+    expect(() => toOrder(json(delivered, { moments: { shippedAt: 7 } }))).toThrow("order DH-2432.moments.shippedAt");
+    expect(() => toOrder(json(delivered, { moments: "hôm qua" }))).toThrow("order DH-2432.moments must be an object");
+  });
+});
+
 describe("toOrder — refuses what order_json() would never write, and says where", () => {
   const good = () => json({ state: "RECEIVED" });
 

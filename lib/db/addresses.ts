@@ -21,6 +21,7 @@ import { getSession } from "./session";
  * (`add_address`, `update_address`, `remove_address`, `set_default_address`):
  * "exactly one default" is a partial unique index, and clearing the old flag
  * and setting the new one is two statements that must not be interrupted.
+ * "Hoàn tác" after a removal is a fifth, `restore_address` (slice B10).
  */
 
 /** Newest last: `position` is the order the book was built in. */
@@ -92,10 +93,27 @@ export async function updateAddress(id: string, draft: AddressDraft): Promise<bo
   return !error && data === true;
 }
 
+/**
+ * Since slice B10 the database keeps what it removed aside, the account's last
+ * removal only, for `restoreAddress`.
+ */
 export async function removeAddress(id: string): Promise<boolean> {
   const supabase = await getSupabase();
   const { data, error } = await supabase.rpc("remove_address", { p_id: id });
   return !error && data === true;
+}
+
+/**
+ * "Hoàn tác" (slice B10): the account's last removal, if it is `id`, back in
+ * the book as it was — its id, its place, its fields, its default role. Only
+ * the id crosses; the rest is the row `remove_address` kept aside. The id it
+ * went back under, or null when there is nothing of this account's to put back.
+ */
+export async function restoreAddress(id: string): Promise<AddressId | null> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc("restore_address", { p_id: id });
+  if (error || typeof data !== "string" || data === "") return null;
+  return data as AddressId;
 }
 
 export async function setDefaultAddress(id: string): Promise<boolean> {

@@ -9,6 +9,7 @@ import {
   type DeliveryMethod,
   type Order,
   type OrderLine,
+  type OrderMoments,
   type OrderState,
   type OrderStatus,
   type PaymentMethod,
@@ -185,6 +186,30 @@ function readStatus(value: unknown, path: string): OrderStatus {
   }
 }
 
+/** The three moments `order_json()` writes under `moments`, in journey order. */
+const MOMENT_KEYS = ["paidAt", "shippedAt", "deliveredAt"] as const satisfies readonly (keyof OrderMoments)[];
+
+/**
+ * `moments` (slice B10): when the order was paid, handed over and delivered,
+ * each only if the shop recorded it. `order_json()` leaves out a moment
+ * nobody recorded, so an order with none writes `{}`.
+ *
+ * The key itself may be missing — a database the B10 migration has not reached
+ * yet — and that reads as no moments, like `{}` and `null`: the new code has
+ * to run on the old database for as long as a deploy takes. Only the three
+ * known keys are taken; one present must be an instant.
+ */
+function readMoments(value: unknown, path: string): OrderMoments | undefined {
+  if (value === undefined || value === null) return undefined;
+  const source = record(value, path);
+  const moments: OrderMoments = {};
+  for (const key of MOMENT_KEYS) {
+    if (source[key] === undefined || source[key] === null) continue;
+    moments[key] = instant(source, key, path);
+  }
+  return Object.keys(moments).length > 0 ? moments : undefined;
+}
+
 /** One order, from `order_json()`. Throws, naming the field, on anything else. */
 export function toOrder(value: unknown): Order {
   const source = record(value, "order");
@@ -199,6 +224,7 @@ export function toOrder(value: unknown): Order {
 
   const shipTo = record(source.shipTo, `${path}.shipTo`);
   const promo = source.promo;
+  const moments = readMoments(source.moments, `${path}.moments`);
 
   return {
     code: orderCode(code),
@@ -225,6 +251,8 @@ export function toOrder(value: unknown): Order {
     ...(promo === null || promo === undefined
       ? {}
       : { promo: promoCode(text(source, "promo", path)) }),
+    // Absent when none was recorded, as `promo` is when there is no code.
+    ...(moments ? { moments } : {}),
   };
 }
 

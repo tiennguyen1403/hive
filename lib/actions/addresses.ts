@@ -9,7 +9,7 @@ import { normalisePhone } from "@/lib/checkout-form";
 import * as book from "@/lib/db/addresses";
 import { takeRate } from "@/lib/db/rate-limit";
 import { requireSession } from "@/lib/db/session";
-import { feedAddressErrors, type AddressField, type AddressResult } from "@/lib/feed-account";
+import { feedAddressErrors, readAddressId, type AddressField, type AddressResult } from "@/lib/feed-account";
 import type { ActionState } from "./state";
 
 /**
@@ -148,7 +148,8 @@ export async function makeDefault(form: FormData): Promise<void> {
 /**
  * The same four writes for the Feed's "Địa chỉ" (`prototype/explore/feed/
  * addresses.js`): the sheet adds and edits, the cards set the default and
- * delete, and "Hoàn tác" puts a deleted address back. Unlike the v3 forms
+ * delete — and a fifth since slice B10, "Hoàn tác", which puts a deleted
+ * address back where it was. Unlike the v3 forms
  * above, each one ANSWERS — the sheet closes and the toast says what was done
  * ("Đã thêm địa chỉ", "Đã xoá Nhà"), or a toast says what was not, in the
  * fewest words: nothing in the address book fails silently any more (the
@@ -168,11 +169,9 @@ const NOT_SAVED = "Chưa lưu được địa chỉ";
 const NOT_REMOVED = "Chưa xoá được địa chỉ";
 const NOT_DEFAULT = "Chưa đặt được mặc định";
 const NOT_FOUND = "Không tìm thấy địa chỉ này";
+const NOT_RESTORED = "Chưa hoàn tác được";
 
-/**
- * "Lưu địa chỉ": a new address (`id` null) or an edit — and "Hoàn tác" after
- * a delete, which adds the deleted address back with the role it had.
- */
+/** "Lưu địa chỉ": a new address (`id` null) or an edit. */
 export async function saveFeedAddress(input: unknown): Promise<AddressResult> {
   await requireSession("/account/addresses");
 
@@ -222,7 +221,7 @@ export async function saveFeedAddress(input: unknown): Promise<AddressResult> {
   return { ok: true, id: String(made) };
 }
 
-/** "Xoá". The address it removed stays on the page, which holds it for "Hoàn tác". */
+/** "Xoá". The database keeps the address aside for "Hoàn tác" (`restoreFeedAddress`). */
 export async function removeFeedAddress(id: unknown): Promise<AddressResult> {
   await requireSession("/account/addresses");
   const pace = await takeRate("account");
@@ -231,6 +230,28 @@ export async function removeFeedAddress(id: unknown): Promise<AddressResult> {
   if (!key || !(await book.removeAddress(key))) return { ok: false, message: NOT_REMOVED };
   refreshAddressScreens();
   return { ok: true, id: key };
+}
+
+/**
+ * "Hoàn tác" after "Xoá" (slice B10): the address just removed, back exactly
+ * where it was — its place in the book, its id, and the default role if it
+ * had it, which the address that took the role over gives back — as the
+ * mock's `saveAddresses(before)` does. The browser sends which address and
+ * nothing else: the database kept the row when it removed it, so nothing the
+ * owner could not have typed decides where it lands (`restore_address`). An
+ * id that is not one is refused before a token is spent; one that is not this
+ * account's last removal is refused by the database, in the same words.
+ */
+export async function restoreFeedAddress(id: unknown): Promise<AddressResult> {
+  await requireSession("/account/addresses");
+  const key = readAddressId(id);
+  if (!key) return { ok: false, message: NOT_RESTORED };
+  const pace = await takeRate("account");
+  if (!pace.ok) return { ok: false, message: pace.message };
+  const back = await book.restoreAddress(key);
+  if (!back) return { ok: false, message: NOT_RESTORED };
+  refreshAddressScreens();
+  return { ok: true, id: String(back) };
 }
 
 /** "Đặt mặc định". */

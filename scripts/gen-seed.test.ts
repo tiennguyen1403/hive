@@ -197,6 +197,48 @@ describe("the sample orders in the seed", () => {
     const numbers = orderRows.map((row) => Number(codeOf(row)!.slice(3)));
     expect(Math.max(...numbers)).toBe(2431);
   });
+
+  // Slice B10: state, due_at, paid_at, shipped_at, tracking_code, delivered_at, cancelled_at, cancel_reason.
+  describe("the steps each order passed", () => {
+    const row = (code: string) => orderRows.find((r) => codeOf(r) === code)!;
+    const at = (iso: string) => `'${iso}'::timestamptz`;
+
+    it("writes a delivered order's payment and hand-over beside its delivery", () => {
+      // The mock's DH-1496. No tracking code was ever recorded for a delivered sample order.
+      expect(row("DH-2416")).toContain(
+        `'DELIVERED', null, ${at("2026-09-11T21:52:00+07:00")}, ${at("2026-09-13T08:20:00+07:00")}, null, ` +
+          `${at("2026-09-16T10:02:00+07:00")}, null, null`,
+      );
+    });
+
+    it("writes no payment for a COD order, which pays at the door", () => {
+      expect(row("DH-2415")).toContain(
+        `'DELIVERED', null, null, ${at("2026-09-13T08:25:00+07:00")}, null, ${at("2026-09-15T16:45:00+07:00")}, null, null`,
+      );
+    });
+
+    it("writes an order on its way with its payment and its own hand-over and tracking code", () => {
+      expect(row("DH-2422")).toContain(
+        `'SHIPPING', null, ${at("2026-09-14T10:33:00+07:00")}, ${at("2026-09-18T07:15:00+07:00")}, 'VD-8842-1907', null, null, null`,
+      );
+    });
+
+    it("leaves a waiting or cancelled order as it was", () => {
+      expect(row("DH-2430")).toContain(`'AWAITING_TRANSFER', ${at("2026-09-21T19:50:00+07:00")}, null, null, null, null, null, null`);
+      expect(row("DH-2310")).toContain(
+        `'CANCELLED', null, null, null, null, null, ${at("2026-06-07T08:15:00+07:00")}, 'quá hạn chuyển khoản'`,
+      );
+    });
+
+    it("refuses a moment its own status contradicts", () => {
+      const doctored = ORDERS.map((o) =>
+        o.code === "DH-2416" ? { ...o, moments: { ...o.moments, deliveredAt: "2026-09-17T10:02:00+07:00" } } : o,
+      );
+      expect(() => renderSeedSql(fixtureInput(), fixtureCustomers(), doctored, fixtureStates())).toThrow(
+        "DH-2416: moments.deliveredAt 2026-09-17T10:02:00+07:00 is not its status's 2026-09-16T10:02:00+07:00",
+      );
+    });
+  });
 });
 
 /**

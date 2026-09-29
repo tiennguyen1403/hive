@@ -207,6 +207,94 @@ describe("order status carries what that state needs", () => {
   });
 });
 
+/**
+ * Slice B10: the steps each sample order passed — paid, handed over,
+ * delivered — so the Feed order page stamps every one, as the mock stamps
+ * DH-1496. The rule and where its numbers come from are written beside the
+ * fixture (`data/orders.ts`); these restate the numbers on purpose.
+ */
+describe("the steps each sample order passed (`moments`)", () => {
+  const ANCHOR = Date.parse("2026-09-20T18:50:00+07:00");
+  const TWINS = ["DH-2416", "DH-2210"];
+
+  it("gives every step an order passed its moment, the status's own included, and no other", () => {
+    for (const o of ORDERS) {
+      const s = o.status;
+      const paysAhead = o.payment !== "COD";
+      const paid = paysAhead ? { paidAt: expect.any(String) } : {};
+      switch (s.state) {
+        case "PAID":
+          expect(o.moments, o.code).toEqual({ paidAt: s.paidAt });
+          break;
+        case "SHIPPING":
+          expect(o.moments, o.code).toEqual({ ...paid, shippedAt: s.shippedAt });
+          break;
+        case "DELIVERED":
+          expect(o.moments, o.code).toEqual({ ...paid, shippedAt: expect.any(String), deliveredAt: s.deliveredAt });
+          break;
+        default:
+          // Waiting, taken, or cancelled: no step the page stamps was passed.
+          expect(o.moments, o.code).toBeUndefined();
+      }
+    }
+  });
+
+  it("never pays a COD order ahead: it pays at the door", () => {
+    for (const o of ORDERS.filter((x) => x.payment === "COD")) {
+      expect(o.moments?.paidAt, o.code).toBeUndefined();
+    }
+  });
+
+  it("keeps them in order — placed, paid, handed over, delivered — and none after the anchor", () => {
+    for (const o of ORDERS) {
+      const chain = [o.placedAt, o.moments?.paidAt, o.moments?.shippedAt, o.moments?.deliveredAt]
+        .filter((at): at is string => at !== undefined)
+        .map(Date.parse);
+      for (let i = 1; i < chain.length; i++) {
+        expect(chain[i], `${o.code}: step ${i} before the one ahead of it`).toBeGreaterThanOrEqual(chain[i - 1]!);
+      }
+      for (const at of chain) expect(at, `${o.code} after the anchor`).toBeLessThanOrEqual(ANCHOR);
+    }
+  });
+
+  it("gives the two orders the Feed mock also has the mock's own times", () => {
+    const moments = (code: string) => ORDERS.find((o) => o.code === code)!.moments;
+    // DH-1496: placed 21:40 11/09, paid 21:52, handed over 08:20 13/09, delivered 10:02 16/09.
+    expect(moments("DH-2416")).toEqual({
+      paidAt: "2026-09-11T21:52:00+07:00",
+      shippedAt: "2026-09-13T08:20:00+07:00",
+      deliveredAt: "2026-09-16T10:02:00+07:00",
+    });
+    // DH-1210: placed 20:30 09/03, paid 20:41, handed over 09:00 11/03, delivered 10:05 14/03.
+    expect(moments("DH-2210")).toEqual({
+      paidAt: "2026-03-09T20:41:00+07:00",
+      shippedAt: "2026-03-11T09:00:00+07:00",
+      deliveredAt: "2026-03-14T10:05:00+07:00",
+    });
+  });
+
+  it("times every other one by the mock's rule: paid 13 minutes after placing, handed over at 08:25 two days on", () => {
+    const day = (iso: string) => Date.parse(iso.slice(0, 10));
+    let paid = 0;
+    let handed = 0;
+    for (const o of ORDERS.filter((x) => !TWINS.includes(x.code))) {
+      const m = o.moments;
+      // A PAID order's payment and a SHIPPING order's hand-over are their status's own.
+      if (m?.paidAt && o.status.state !== "PAID") {
+        expect(Date.parse(m.paidAt) - Date.parse(o.placedAt), o.code).toBe(13 * 60_000);
+        paid += 1;
+      }
+      if (m?.shippedAt && o.status.state === "DELIVERED") {
+        expect(m.shippedAt.slice(11), o.code).toBe("08:25:00+07:00");
+        expect(day(m.shippedAt) - day(o.placedAt), o.code).toBe(2 * 86_400_000);
+        handed += 1;
+      }
+    }
+    // Bar the two twins: nine transfer or card orders on their way or delivered, ten delivered.
+    expect([paid, handed]).toEqual([9, 10]);
+  });
+});
+
 describe("the fields slice B2 added to every order", () => {
   it("sends the confirmation to the customer's own address", () => {
     for (const o of ORDERS) {

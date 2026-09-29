@@ -192,6 +192,34 @@ styles carry no `saved_at`: the fixture has no moment for them.
 refusal, "Bỏ lưu" then "Hoàn tác", a reminder dropping out once its issue has
 opened, the profile's two fields, and the reset.
 
+## Each step's moment, and "Hoàn tác" in the address book (slice B10)
+
+`order_json()` (v3, `20260930090000_step_moments_address_undo.sql`) carries a
+new key, `moments`: `{ paidAt, shippedAt, deliveredAt }`, each only when the
+`orders` row holds it (`{}` when none), so the Feed order page can print a time
+under every step already passed. `status` keeps its shape. All four readers
+(`my_orders`, `track_order`, `receipt_order`, `admin_orders`) go through it.
+`lib/db/order-dto.ts` reads a missing key as no moments, so the app runs on a
+database from before B10. The sample orders carry the steps they passed:
+`data/orders.ts` authors them by one rule taken from the Feed mock's own
+orders (written beside `passedMoments`), and the seed writes them into
+`seed_orders.paid_at` and `shipped_at`.
+
+"Hoàn tác" after "Xoá" puts the address back as it was — its id, its place, its
+fields, its default role:
+
+| Function | Who may call it | What it does |
+|---|---|---|
+| `remove_address(id)` | `authenticated` | as before (the caller's own address; a removed default passes to the earliest left), and keeps the address it removed in `removed_addresses` — one row per account, the last removal |
+| `restore_address(id)` | `authenticated` | the caller's last removal, if it is `id` and at most ten minutes old (`20260930110000_address_undo_window.sql`), back in the book: same id and place (an address added since that took the place moves one down), the default again if it was (the heir lets go), or if the book is empty; answers the id, the id again when it is back already, `null` when there is nothing of the caller's to put back — an older removal is forgotten, not put back |
+
+Both are `security definer` and take the owner from `auth.uid()`; the browser
+sends only the id. `removed_addresses` has row level security on and no policy
+at all: no API role reads or writes it, and the reset empties it for every
+account, so nothing a shopper deleted outlives the day.
+`lib/db/address-undo.dbtest.ts` and `lib/db/order-moments.dbtest.ts` check all
+of it.
+
 ## Resetting
 
 `select public.reset_demo(public.demo_anchor());` rebuilds the catalogue from
@@ -201,10 +229,12 @@ its saved styles, reminders and settings too (slice B9: the first account gets
 the mock's four styles, Số 06, L/M; all eight get the four switches on). An
 account somebody made themselves keeps its address book, saved styles,
 reminders and settings, except a saved style or reminder pointing at a style,
-colour or issue the reset did not bring back. The reset replaces every order
+colour or issue the reset did not bring back. Every account's last removed
+address is forgotten (slice B10). The reset replaces every order
 with the twenty-four sample orders, setting `order_seq` so the next order is
-`DH-2432` again, and starts the log again: one event per
-moment the sample records, then one `DEMO_RESET`. Stock and codes'
+`DH-2432` again, and starts the log again: one event for the state each
+sample order is in, then one `DEMO_RESET` (the earlier steps the sample
+carries since slice B10 have moments but no event). Stock and codes'
 `used_count` come from the seed, which already accounts for the sample orders.
 Every order gets a fresh `access_key`, so a guest's receipt cookie from before
 a reset opens nothing after it.

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { ADDRESS_LABELS, type AddressLabel } from "@/data/types";
-import { makeFeedDefault, removeFeedAddress, saveFeedAddress } from "@/lib/actions/addresses";
+import { makeFeedDefault, removeFeedAddress, restoreFeedAddress, saveFeedAddress } from "@/lib/actions/addresses";
 import {
   defaultFirst,
   feedAddressErrors,
@@ -74,9 +74,10 @@ const spaced = (digits: string) => (digits ? formatPhone(digits).replace(/ /g, 
  * both searchable), each field saying what is wrong under itself in the
  * mock's words. Every write answers with a toast — "Đã thêm địa chỉ", "Đã lưu
  * địa chỉ", "Nhà là địa chỉ mặc định", "Đã xoá Nhà" with "Hoàn tác", which
- * adds that address back with the role it had — or, when the server refuses,
- * one short sentence saying so. The page re-reads the book in the same
- * response as each write (`revalidatePath`).
+ * puts that very address back where it was in the book, with the role it had
+ * (slice B10: the database kept it aside, so only its id is sent) — or, when
+ * the server refuses, one short sentence saying so. The page re-reads the
+ * book in the same response as each write (`revalidatePath`).
  */
 export function AddressesView({ book, provinces, seed, open }: AddressesViewProps) {
   const toast = useFeedToast();
@@ -230,18 +231,10 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
     });
   }
 
+  /** "Hoàn tác": the address just removed, back in its place and its role (`addresses.js`: `saveAddresses(before)`). */
   function restore(a: BookEntry) {
     startWrite(async () => {
-      const r = await saveFeedAddress({
-        id: null,
-        label: a.label,
-        recipient: a.recipient,
-        phone: a.phone,
-        provinceCode: a.provinceCode,
-        wardCode: a.wardCode,
-        street: a.street,
-        isDefault: a.isDefault,
-      } satisfies AddressInput);
+      const r = await restoreFeedAddress(a.id);
       startWrite(() => {
         if (!r.ok) {
           toast(r.message ?? NOT_SAVED);

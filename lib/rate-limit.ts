@@ -79,8 +79,9 @@ const DAY = 86_400;
  *   sign_in       `signIn`, `demoSignIn`, `demoAdminSignIn`
  *   sign_up       `signUp`
  *   password      `changePassword`
- *   account       the four address-book writes, `cancelOrderAction`, and
- *                 since slice B9 Hồ sơ's `updateProfileAction`
+ *   account       the four address-book writes, `cancelOrderAction`, since
+ *                 slice B9 Hồ sơ's `updateProfileAction`, and since B10 the
+ *                 address book's "Hoàn tác" (`restoreFeedAddress`)
  *   keep          the six keep writes of `lib/actions/my-state.ts` (a heart,
  *                 its undo, "Nhắc tôi", a size, a switch), and only those:
  *                 taps come many at a time, and sharing `account`'s thirty

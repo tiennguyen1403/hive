@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   addDaysIso,
   addHoursIso,
+  addMinutesIso,
   clockDayLabel,
   clockLabel,
   dateTimeLabel,
@@ -203,6 +204,21 @@ describe("addHoursIso", () => {
 
   it("hands back what it was given rather than inventing a time", () => {
     expect(addHoursIso("không phải giờ", 12)).toBe("không phải giờ");
+  });
+});
+
+describe("addMinutesIso", () => {
+  it("adds whole minutes exactly — no fraction of an hour rounds one away", () => {
+    expect(addMinutesIso("2026-09-11T21:40:00+07:00", 12)).toBe("2026-09-11T21:52:00+07:00");
+    expect(addMinutesIso("2026-09-15T08:36:00+07:00", 13)).toBe("2026-09-15T08:49:00+07:00");
+  });
+
+  it("crosses days, as a hand-over a day and a half later does", () => {
+    expect(addMinutesIso("2026-09-11T21:40:00+07:00", 34 * 60 + 40)).toBe("2026-09-13T08:20:00+07:00");
+  });
+
+  it("hands back what it was given rather than inventing a time", () => {
+    expect(addMinutesIso("không phải giờ", 13)).toBe("không phải giờ");
   });
 });
 

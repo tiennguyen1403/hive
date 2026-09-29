@@ -28,6 +28,7 @@ import {
   pathWithQuery,
   paymentTitle,
   deliveryTitle,
+  readAddressId,
   resultLabel,
   returnUntil,
   stepStamp,
@@ -267,6 +268,82 @@ describe("one order: returns, cancelling, the four steps", () => {
   });
 });
 
+describe("one order: a time under every step passed (slice B10, stepModel)", () => {
+  // The mock's DH-1496: placed 21:40 11/09, paid 21:52, shipped 08:20 13/09, delivered 10:02 16/09.
+  const PAID = "2026-09-11T21:52:00+07:00";
+  const SHIPPED = "2026-09-13T08:20:00+07:00";
+  const DELIVERED = "2026-09-16T10:02:00+07:00";
+  const placed = { placedAt: "2026-09-11T21:40:00+07:00" };
+
+  it("stamps placing, paying, shipping and delivering on a delivered order that recorded them", () => {
+    const o = order({ state: "DELIVERED", deliveredAt: DELIVERED }, "BANK_TRANSFER", {
+      ...placed,
+      moments: { paidAt: PAID, shippedAt: SHIPPED, deliveredAt: DELIVERED },
+    });
+    expect(orderSteps(o)).toEqual([
+      { label: "Đặt hàng", at: "2026-09-11T21:40:00+07:00", state: "done" },
+      { label: "Thanh toán", at: PAID, state: "done" },
+      { label: "Gửi hàng", at: SHIPPED, state: "done" },
+      { label: "Đã giao", at: DELIVERED, state: "done" },
+    ]);
+  });
+
+  it("keeps the payment's time on an order on its way, and waits on delivery", () => {
+    const o = order({ state: "SHIPPING", shippedAt: SHIPPED, trackingCode: "VD-8831-0413" }, "CARD", {
+      ...placed,
+      moments: { paidAt: PAID, shippedAt: SHIPPED },
+    });
+    expect(orderSteps(o).map((s) => [s.label, s.at, s.state])).toEqual([
+      ["Đặt hàng", "2026-09-11T21:40:00+07:00", "done"],
+      ["Thanh toán", PAID, "done"],
+      ["Gửi hàng", SHIPPED, "done"],
+      ["Đã giao", null, "now"],
+    ]);
+  });
+
+  it("stamps only what the order recorded: one that recorded only its arrival shows that and its placing", () => {
+    const o = order({ state: "DELIVERED", deliveredAt: DELIVERED }, "BANK_TRANSFER", {
+      ...placed,
+      moments: { deliveredAt: DELIVERED },
+    });
+    expect(orderSteps(o).map((s) => s.at)).toEqual(["2026-09-11T21:40:00+07:00", null, null, DELIVERED]);
+    expect(orderSteps(o).every((s) => s.state === "done")).toBe(true);
+  });
+
+  it("reads an order with no moments, from a database before B10, by its status's own moment", () => {
+    const shipping = order({ state: "SHIPPING", shippedAt: SHIPPED, trackingCode: "VD-1" }, "BANK_TRANSFER", placed);
+    expect(orderSteps(shipping).map((s) => s.at)).toEqual(["2026-09-11T21:40:00+07:00", null, SHIPPED, null]);
+    const paid = order({ state: "PAID", paidAt: PAID }, "BANK_TRANSFER", placed);
+    expect(orderSteps(paid).map((s) => s.at)).toEqual(["2026-09-11T21:40:00+07:00", PAID, null, null]);
+  });
+
+  it("puts no time under COD's Xác nhận: the shop's call is not recorded, and a payment is not a confirmation", () => {
+    const o = order({ state: "DELIVERED", deliveredAt: DELIVERED }, "COD", {
+      ...placed,
+      moments: { shippedAt: SHIPPED, deliveredAt: DELIVERED },
+    });
+    expect(orderSteps(o).map((s) => [s.label, s.at, s.state])).toEqual([
+      ["Đặt hàng", "2026-09-11T21:40:00+07:00", "done"],
+      ["Xác nhận", null, "done"],
+      ["Gửi hàng", SHIPPED, "done"],
+      ["Đã giao", DELIVERED, "done"],
+    ]);
+    const paidCod = order({ state: "PAID", paidAt: PAID }, "COD", { ...placed, moments: { paidAt: PAID } });
+    expect(orderSteps(paidCod)[1]).toEqual({ label: "Xác nhận", at: null, state: "now" });
+  });
+
+  it("stamps nothing but the placing on a transfer still awaited", () => {
+    const o = order({ state: "AWAITING_TRANSFER", dueAt: "2026-09-12T09:40:00+07:00" }, "BANK_TRANSFER", placed);
+    expect(orderSteps(o).map((s) => s.at)).toEqual(["2026-09-11T21:40:00+07:00", null, null, null]);
+  });
+
+  it("draws a cancelled order the same way, paid before or not", () => {
+    const o = reu({ state: "CANCELLED", cancelledAt: "2026-06-07T08:15:00+07:00", reason: "Khác" });
+    const paidFirst = { ...o, moments: { paidAt: "2026-06-06T20:30:00+07:00" } };
+    expect(orderSteps(paidFirst)).toEqual(orderSteps(o));
+  });
+});
+
 describe("Mua lại: what can be bought again today (buyAgain)", () => {
   it("takes the lines still sold, in a colour and size with anything left", () => {
     const o = order({ state: "DELIVERED", deliveredAt: PLACED });
@@ -339,6 +416,14 @@ describe("the address sheet (addresses.js check)", () => {
       { id: "c", isDefault: true },
     ];
     expect(defaultFirst(list).map((a) => a.id)).toEqual(["c", "a", "b"]);
+  });
+
+  it("takes an address's id as the book writes one, and nothing else (Hoàn tác, slice B10)", () => {
+    expect(readAddressId("0b6f5a4e-1d2c-4b3a-9f8e-7d6c5b4a3f21")).toBe("0b6f5a4e-1d2c-4b3a-9f8e-7d6c5b4a3f21");
+    expect(readAddressId("0B6F5A4E-1D2C-4B3A-9F8E-7D6C5B4A3F21")).toBe("0b6f5a4e-1d2c-4b3a-9f8e-7d6c5b4a3f21");
+    for (const bad of ["", "a-minhanh-1", "0b6f5a4e1d2c4b3a9f8e7d6c5b4a3f21", " 0b6f5a4e-1d2c-4b3a-9f8e-7d6c5b4a3f21", 7, null, undefined, {}]) {
+      expect(readAddressId(bad), String(bad)).toBeNull();
+    }
   });
 });
 

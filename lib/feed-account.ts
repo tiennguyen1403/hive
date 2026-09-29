@@ -268,14 +268,32 @@ export interface OrderStep {
 }
 
 /**
+ * When the order was paid, handed over and delivered, as far as it records:
+ * the status's own moment for the state it is in, and `moments` (slice B10)
+ * for the ones before it. An order without `moments` — read from a database
+ * the B10 migration has not reached — still knows the one its status carries.
+ */
+function stepMoments(o: Order): { paidAt: string | null; shippedAt: string | null; deliveredAt: string | null } {
+  const s = o.status;
+  const m = o.moments;
+  return {
+    paidAt: s.state === "PAID" ? s.paidAt : (m?.paidAt ?? null),
+    shippedAt: s.state === "SHIPPING" ? s.shippedAt : (m?.shippedAt ?? null),
+    deliveredAt: s.state === "DELIVERED" ? s.deliveredAt : (m?.deliveredAt ?? null),
+  };
+}
+
+/**
  * Đặt hàng, Thanh toán (Xác nhận for COD), Gửi hàng, Đã giao (`stepModel`);
  * a cancelled order: Đặt hàng, Đã huỷ, then two steps it never reached. The
  * first step not done is the one now: a COD order before the shop's call is
  * on "Xác nhận".
  *
- * The app keeps each order's current state with its own moment, not every
- * moment before it, so a step shows its time when the order records it: the
- * placing, and the step the order is at (paid, shipped, delivered, cancelled).
+ * Every step already passed carries its time, as the mock's do, wherever the
+ * order recorded one (`stepMoments`); a moment nobody recorded is left out,
+ * never guessed. COD's "Xác nhận" has none at all: the order is RECEIVED the
+ * moment it is placed, and the shop's call is not recorded; a payment the
+ * shop marked is not a confirmation, so it is not printed there either.
  */
 export function orderSteps(o: Order): OrderStep[] {
   const s = o.status;
@@ -288,16 +306,17 @@ export function orderSteps(o: Order): OrderStep[] {
     ];
   }
   const cod = o.payment === "COD";
+  const moment = stepMoments(o);
   const shipped = s.state === "SHIPPING" || s.state === "DELIVERED";
   const steps: { label: string; at: string | null; done: boolean }[] = [
     { label: "Đặt hàng", at: o.placedAt, done: true },
     {
       label: cod ? "Xác nhận" : "Thanh toán",
-      at: s.state === "PAID" ? s.paidAt : null,
+      at: cod ? null : moment.paidAt,
       done: cod ? shipped : s.state === "PAID" || shipped,
     },
-    { label: "Gửi hàng", at: s.state === "SHIPPING" ? s.shippedAt : null, done: shipped },
-    { label: "Đã giao", at: s.state === "DELIVERED" ? s.deliveredAt : null, done: s.state === "DELIVERED" },
+    { label: "Gửi hàng", at: moment.shippedAt, done: shipped },
+    { label: "Đã giao", at: moment.deliveredAt, done: s.state === "DELIVERED" },
   ];
   let now = false;
   return steps.map(({ label, at, done }) => {
@@ -420,6 +439,18 @@ export function firstWrongAddress(errors: Partial<Record<AddressField, string>>)
 /** The default address first, the rest in the book's order (`render`). */
 export function defaultFirst<T extends { isDefault: boolean }>(list: readonly T[]): T[] {
   return [...list].sort((a, b) => Number(b.isDefault) - Number(a.isDefault));
+}
+
+/** The shape of `addresses.id`: a uuid, as `gen_random_uuid()` writes one. */
+const ADDRESS_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * An address's id as the browser sent it back — "Hoàn tác" names the address
+ * it removed (slice B10) — or null for anything that cannot be one, so a
+ * request carrying junk is answered without asking the database.
+ */
+export function readAddressId(value: unknown): string | null {
+  return typeof value === "string" && ADDRESS_ID.test(value) ? value.toLowerCase() : null;
 }
 
 // ─────────────────────────────────────────────────────────── the guest lookup

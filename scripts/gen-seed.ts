@@ -30,6 +30,7 @@ import {
   type CustomerId,
   type MyState,
   type Order,
+  type OrderMoments,
   type OrderStatus,
 } from "@/data/types";
 import type { CatalogInput } from "@/lib/catalog";
@@ -82,48 +83,37 @@ function phone10(raw: string, who: string): string {
 }
 
 /**
- * `OrderStatus` flattened into the columns of `orders`, in their table order:
- * state, due_at, paid_at, shipped_at, tracking_code, delivered_at,
- * cancelled_at, cancel_reason.
+ * `OrderStatus` and the steps the order passed (`moments`, slice B10)
+ * flattened into the columns of `orders`, in their table order: state,
+ * due_at, paid_at, shipped_at, tracking_code, delivered_at, cancelled_at,
+ * cancel_reason.
  *
  * The union says which fields a state carries and the table's check
- * constraint says the same thing in SQL; everything a state does not carry
- * is written as `null`, never as a guess.
+ * constraint says the same thing in SQL. `moments` adds the steps before the
+ * current one — a delivered order's payment and hand-over — and a moment the
+ * status carries too must be the same instant, or the fixture contradicts
+ * itself and the seed stops here. Everything neither carries is written as
+ * `null`, never as a guess.
  */
-function statusCells(status: OrderStatus): string[] {
+function orderCells(code: string, status: OrderStatus, moments: OrderMoments | undefined): string[] {
   const none = "null";
-  switch (status.state) {
-    case "AWAITING_TRANSFER":
-      return [str(status.state), ts(status.dueAt), none, none, none, none, none, none];
-    case "RECEIVED":
-      return [str(status.state), none, none, none, none, none, none, none];
-    case "PAID":
-      return [str(status.state), none, ts(status.paidAt), none, none, none, none, none];
-    case "SHIPPING":
-      return [
-        str(status.state),
-        none,
-        none,
-        ts(status.shippedAt),
-        str(status.trackingCode),
-        none,
-        none,
-        none,
-      ];
-    case "DELIVERED":
-      return [str(status.state), none, none, none, none, ts(status.deliveredAt), none, none];
-    case "CANCELLED":
-      return [
-        str(status.state),
-        none,
-        none,
-        none,
-        none,
-        none,
-        ts(status.cancelledAt),
-        str(status.reason),
-      ];
-  }
+  const step = (key: keyof OrderMoments, own: string | undefined): string => {
+    const said = moments?.[key];
+    if (own !== undefined && said !== undefined && said !== own) {
+      throw new Error(`${code}: moments.${key} ${said} is not its status's ${own}`);
+    }
+    return tsOrNull(own ?? said);
+  };
+  return [
+    str(status.state),
+    status.state === "AWAITING_TRANSFER" ? ts(status.dueAt) : none,
+    step("paidAt", status.state === "PAID" ? status.paidAt : undefined),
+    step("shippedAt", status.state === "SHIPPING" ? status.shippedAt : undefined),
+    status.state === "SHIPPING" ? str(status.trackingCode) : none,
+    step("deliveredAt", status.state === "DELIVERED" ? status.deliveredAt : undefined),
+    status.state === "CANCELLED" ? ts(status.cancelledAt) : none,
+    status.state === "CANCELLED" ? str(status.reason) : none,
+  ];
 }
 
 /**
@@ -521,7 +511,7 @@ export function renderSeedSql(
         num(o.discountVnd),
         strOrNull(o.promo),
         ts(o.placedAt),
-        ...statusCells(o.status),
+        ...orderCells(o.code, o.status, o.moments),
       ]),
     ),
   );

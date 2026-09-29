@@ -1,12 +1,14 @@
 import { byId } from "./catalog";
 import { customerById } from "./customers";
 import { promoByCode } from "./promotions";
+import { addDaysIso, addMinutesIso } from "@/lib/datetime";
 import { promoDiscountVnd } from "@/lib/orders";
 import {
   type ColorKey,
   type CustomerId,
   type Order,
   type OrderLine,
+  type OrderMoments,
   type OrderStatus,
   type PaymentMethod,
   type Size,
@@ -26,7 +28,9 @@ import {
  *
  * Nothing derived is typed in. Line prices come from the catalog and the
  * discount comes from the promotion, both at construction time, so a fixture
- * cannot quietly disagree with the rules checkout will apply.
+ * cannot quietly disagree with the rules checkout will apply. Since slice B10
+ * the steps each order passed are made the same way, by the one rule written
+ * beside `passedMoments` below.
  */
 
 /** One flat rate across the country in the mock. */
@@ -39,6 +43,78 @@ const SHIPPING_VND = 30_000;
  * order line points at the id.
  */
 type LineSpec = [stem: string, size: Size, color: ColorKey, qty: number];
+
+// ─────────────────────────────────────────────── the steps an order passed
+/**
+ * WHEN EACH SAMPLE ORDER WAS PAID AND HANDED OVER (backend slice B10). The
+ * Feed order page prints a time under every step already passed, as the mock
+ * does for DH-1496, and this sample was first written with its current
+ * state's moment only. The earlier ones are authored here — the orders are
+ * demo data like everything else in this file (main session, 30/09/2026) — by
+ * ONE rule read off the Feed mock's own orders
+ * (`prototype/explore/shared/data.js`, ORDERS), so no order's times are typed
+ * in one by one:
+ *
+ *   · PAID 13 MINUTES AFTER IT WAS PLACED: a transfer, or a card order (a
+ *     card pays by transfer since slice B7). The mock's four transfers were
+ *     paid 11, 12, 15 and 72 minutes after placing (DH-1210, DH-1496,
+ *     DH-1502, DH-1507): the median, 13½, written to the minute as every
+ *     instant here is. COD pays at the door, so it has no paid step at all.
+ *   · HANDED OVER AT 08:25 ON THE SECOND CALENDAR DAY AFTER IT WAS PLACED.
+ *     The mock's six hand-overs came 2, 3, 4, 2, 2 and 2 days after placing
+ *     (DH-1507, DH-1502, DH-1499, DH-1496, DH-1402, DH-1210), median 2, at
+ *     08:30, 09:10, 07:15, 08:20, 08:00 and 09:00, median 08:25.
+ *
+ * Two sample orders are the mock's own under another number, and keep the
+ * mock's offsets from placing instead (`MOCK_TWINS`).
+ *
+ * Only a step the order has passed gets a moment, and a moment its status
+ * already carries is the status's own: a PAID order's payment, a SHIPPING
+ * order's hand-over, a DELIVERED order's delivery. Nothing already written
+ * moves — not a placing, not a status. `data/orders.test.ts` pins the rule
+ * and that every order's steps fall in order, and before the anchor.
+ */
+const PAID_AFTER_MINUTES = 13;
+const HANDED_OVER_DAYS_AFTER = 2;
+const HANDED_OVER_AT = "08:25";
+
+/** The mock's orders this sample also has: minutes from placing to the payment and to the hand-over. */
+const MOCK_TWINS: Readonly<Record<string, { paid: number; handedOver: number }>> = {
+  // DH-1496: placed 21:40 11/09, paid 21:52, handed over 08:20 13/09.
+  "DH-2416": { paid: 12, handedOver: 34 * 60 + 40 },
+  // DH-1210: placed 20:30 09/03, paid 20:41, handed over 09:00 11/03.
+  "DH-2210": { paid: 11, handedOver: 36 * 60 + 30 },
+};
+
+function passedMoments(
+  code: string,
+  placedAt: string,
+  status: OrderStatus,
+  payment: PaymentMethod,
+): OrderMoments | undefined {
+  const twin = MOCK_TWINS[code];
+  const paidAt = () => addMinutesIso(placedAt, twin ? twin.paid : PAID_AFTER_MINUTES);
+  const handedOverAt = () =>
+    twin
+      ? addMinutesIso(placedAt, twin.handedOver)
+      : `${addDaysIso(placedAt, HANDED_OVER_DAYS_AFTER).slice(0, 10)}T${HANDED_OVER_AT}:00+07:00`;
+  const paysAhead = payment !== "COD";
+  switch (status.state) {
+    case "PAID":
+      return { paidAt: status.paidAt };
+    case "SHIPPING":
+      return { ...(paysAhead ? { paidAt: paidAt() } : {}), shippedAt: status.shippedAt };
+    case "DELIVERED":
+      return {
+        ...(paysAhead ? { paidAt: paidAt() } : {}),
+        shippedAt: handedOverAt(),
+        deliveredAt: status.deliveredAt,
+      };
+    default:
+      // Waiting for money, taken and not yet called, or cancelled: no step the page stamps.
+      return undefined;
+  }
+}
 
 function order(
   code: string,
@@ -67,6 +143,7 @@ function order(
   const subtotal = lines.reduce((n, l) => n + l.unitPriceVnd * l.qty, 0);
   const promotion = promo ? promoByCode.get(promoCode(promo)) : undefined;
   if (promo && !promotion) throw new Error(`${code}: no promotion "${promo}"`);
+  const moments = passedMoments(code, placedAt, status, payment);
 
   return {
     code: orderCode(code),
@@ -96,6 +173,7 @@ function order(
     note: "",
     placedAt,
     ...(promo ? { promo: promoCode(promo) } : {}),
+    ...(moments ? { moments } : {}),
   };
 }
 

@@ -251,6 +251,17 @@ export function addHoursIso(iso: string, hours: number): string {
   return toVnIso(new Date(t + hours * 3_600_000));
 }
 
+/**
+ * Same instant, `minutes` later. Whole minutes are added as whole
+ * milliseconds, so none is lost the way `addHoursIso(iso, 13 / 60)` could
+ * lose one: that fraction is not exact, and the clock is written to the minute.
+ */
+export function addMinutesIso(iso: string, minutes: number): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return iso;
+  return toVnIso(new Date(t + minutes * 60_000));
+}
+
 /** Same instant, `days` later. Used for delivery estimates, never for state. */
 export function addDaysIso(iso: string, days: number): string {
   const t = Date.parse(iso);

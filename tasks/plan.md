@@ -2576,6 +2576,30 @@ xong trong khoảng 35 giây (trạng thái commit trên GitHub; Vercel MCP bị
     hiện tại), và Hoàn tác xoá địa chỉ trả về đúng chỗ cũ;
   - nút X ở trang đăng nhập và "Đăng xuất" tạm về `/`, lát 3b đổi sang `/account` khi Tôi thành Feed.
 - Phiên chính sửa `tools/layout-sweep.js`: bước lớp nổi địa chỉ nay mở sheet `?add=1` rồi bộ chọn tỉnh.
+
+**Lát B10 ĐẠT (30/09/2026, `backend-implementer`, phiên chính duyệt).** Brief `tasks/briefs/backend-b10.md`.
+- **Migration:**
+  - `20260930090000_step_moments_address_undo.sql`:
+    - `order_json` v3 thêm khoá `moments` (`paidAt`, `shippedAt`, `deliveredAt`), `status` giữ nguyên hình;
+    - bảng `removed_addresses` (RLS không policy, API không đọc được);
+    - `remove_address` v2 (`security definer`, vẫn lọc `auth.uid()`);
+    - `restore_address`.
+  - `20260930110000_address_undo_window.sql`: chỉ hoàn tác trong 10 phút; `reset_demo` v9 xoá bản lưu tạm của mọi tài khoản.
+- **UI:** hành trình đơn ghi giờ dưới mọi bước đã qua (`lib/feed-account.ts`). COD không có mốc "Xác nhận". Hoàn tác xoá địa
+  chỉ trả đúng id, vị trí và vai mặc định.
+- **Phiên chính quyết sau duyệt:** đơn mẫu có đủ giờ các bước (DESIGN.md §9 luật 1 nói về số suy ra trên màn, còn đây là dữ
+  liệu mẫu tự soạn).
+  - DH-2416 và DH-2210 giữ độ lệch của bản sao trong mock, DH-1496 và DH-1210.
+  - Các đơn khác theo một luật lấy trung vị từ đơn của mock: trả sau 13 phút; bàn giao 08:25, ngày lịch thứ hai sau ngày
+    đặt.
+  - Không giá trị cũ nào đổi, seed chỉ điền ô đang `null`.
+- **Kiểm:** 1838/1838 test, 267/267 test DB, typecheck sạch (phiên chính chạy lại). Build sạch. Phiên chính diff
+  `order_json`, `reset_demo` và `restore_address` với bản trước: chỉ khác đúng phần đã nêu. DH-2416 hiện 21:40, 21:52, 08:20,
+  10:02.
+- **Còn mở:**
+  - màn quản trị, `/track` và `/account/orders/[code]/tracking` (v3) chưa dùng `moments`;
+  - nhật ký reset chỉ ghi sự kiện của trạng thái hiện tại;
+  - `tasks/backend.md` §9 thêm B9, B10.
 - **Mã v3 mồ côi (dọn cuối đợt):**
   - `SignInScreen`, `SignUpScreen`, `ForgotPasswordScreen`, `OrdersScreen`, `OrderDetailScreen`, `CancelOrderSheet`,
     `AddressesScreen`, `AddressFormScreen`;

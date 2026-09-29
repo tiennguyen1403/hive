@@ -576,6 +576,56 @@ export type Database = {
           },
         ]
       }
+      removed_addresses: {
+        Row: {
+          address_id: string
+          label: string
+          line: string
+          phone: string
+          position: number
+          profile_id: string
+          province_code: string
+          recipient: string
+          removed_at: string
+          ward_code: string
+          was_default: boolean
+        }
+        Insert: {
+          address_id: string
+          label: string
+          line: string
+          phone: string
+          position: number
+          profile_id: string
+          province_code: string
+          recipient: string
+          removed_at?: string
+          ward_code: string
+          was_default: boolean
+        }
+        Update: {
+          address_id?: string
+          label?: string
+          line?: string
+          phone?: string
+          position?: number
+          profile_id?: string
+          province_code?: string
+          recipient?: string
+          removed_at?: string
+          ward_code?: string
+          was_default?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "removed_addresses_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seed_account_settings: {
         Row: {
           handle: string
@@ -1274,6 +1324,7 @@ export type Database = {
       receipt_order: { Args: { p_code: string; p_key: string }; Returns: Json }
       remove_address: { Args: { p_id: string }; Returns: boolean }
       reset_demo: { Args: { p_anchor?: string }; Returns: undefined }
+      restore_address: { Args: { p_id: string }; Returns: string }
       restore_favorite: { Args: { p_product_id: string }; Returns: Json }
       save_favorite: {
         Args: { p_color?: string; p_product_id: string }
