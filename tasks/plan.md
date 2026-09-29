@@ -2550,3 +2550,35 @@ xong trong khoảng 35 giây (trạng thái commit trên GitHub; Vercel MCP bị
 - **Còn mở:**
   - `tasks/backend.md` §9 thêm B9 và bucket `keep`; §10 dòng "yêu thích là tiện ích thiết bị" nay sai;
   - yêu thích hoặc nhắc trỏ tới mẫu hay Số do quản trị thêm sẽ mất sau lần reset.
+
+**Lát 3a ĐẠT (29/09/2026, `ui-implementer`, phiên chính duyệt độc lập).** Brief `tasks/briefs/v4-lat-3a.md`.
+- **Đã giao:**
+  - `/sign-in`, `/sign-up`, `/forgot-password` theo Feed; ô "Tài khoản thử" trên form đăng nhập;
+  - `/account/orders`: lọc `phase` / `group` trên URL; `?tab=` cũ đọc sang `phase`;
+  - `/account/orders/[code]`: hành trình, khối việc theo trạng thái, sheet huỷ, Mua lại, dòng chép;
+  - `/account/addresses`: sheet thêm/sửa với bộ chọn của thanh toán, đặt mặc định, xoá kèm Hoàn tác. Lỗi thao tác nay báo bằng
+    toast, xong mục tồn "vài thao tác địa chỉ lỗi im lặng";
+  - khung tài khoản có menu máy tính (`components/feed/account/`, `app/styles/feed/account.css`).
+  - Trang v3 còn lại chuyển vào route group `app/account/(v3)/`; URL không đổi.
+  - Trang chưa đăng nhập vẽ lời mời tại chỗ.
+- **Kiểm:** 1811/1811 test, typecheck sạch (phiên chính chạy lại). Build sạch. Sweep 91 lượt không có phát hiện mới. Vùng chạm
+  ≥ 44 ở mọi lớp nổi. Đo kích thước so với mock: lệch ≤ 1px. Phiên chính so ảnh Đăng nhập 1280, Đơn hàng 390, chi tiết đơn
+  1280 và 390, sheet địa chỉ lỗi 390 với mock: khớp.
+- **Người dùng nhận 5 xung đột (29/09):**
+  1. "Email này đã có tài khoản" (bỏ QĐ-15; giới hạn `sign_up` 3 lần/giờ làm việc dò email rất chậm);
+  2. mật khẩu chỉ cần 8 ký tự;
+  3. nút Google tắt vẫn có icon;
+  4. "VD: DH-1499" giữ nguyên văn mock;
+  5. công tắc lúc tắt nền `#D5D7DC`, tương phản ~1,4:1.
+- **Phiên chính quyết:**
+  - trang "Không tìm thấy đơn" vẽ như mock nhưng **giữ HTTP 404 thật**, theo nguyên tắc giữ luật vô hình; làm ở 3b;
+  - thêm **B10** trước 3b: `order_json` đưa đủ mốc giờ từng bước (mock ghi giờ dưới mỗi bước; app mới có giờ của trạng thái
+    hiện tại), và Hoàn tác xoá địa chỉ trả về đúng chỗ cũ;
+  - nút X ở trang đăng nhập và "Đăng xuất" tạm về `/`, lát 3b đổi sang `/account` khi Tôi thành Feed.
+- Phiên chính sửa `tools/layout-sweep.js`: bước lớp nổi địa chỉ nay mở sheet `?add=1` rồi bộ chọn tỉnh.
+- **Mã v3 mồ côi (dọn cuối đợt):**
+  - `SignInScreen`, `SignUpScreen`, `ForgotPasswordScreen`, `OrdersScreen`, `OrderDetailScreen`, `CancelOrderSheet`,
+    `AddressesScreen`, `AddressFormScreen`;
+  - `rowsForTab`, `ordersForTab`;
+  - action địa chỉ v3, `validateSignUp`;
+  - `.authcard3`, `.divider3`.

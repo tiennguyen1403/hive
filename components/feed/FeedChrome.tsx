@@ -24,6 +24,9 @@ import { cx } from "./useReveal";
  * back arrow and title (`mbar`: the closed issues, the checkout, the receipt).
  * The checkout's top bar from 900px is its own (`feed.js`: `PAGE ===
  * "checkout"`): its name in the middle and the way back to the basket.
+ * Slice 3a adds the account's pushed screens — the orders, one order, the
+ * address book — and the sign-in page: each lights Tôi, and on the phone
+ * each has its own bar.
  */
 export type FeedPage =
   | "home"
@@ -37,6 +40,10 @@ export type FeedPage =
   | "confirm"
   | "favorites"
   | "account"
+  | "orders"
+  | "order"
+  | "addresses"
+  | "sign-in"
   | "notifications"
   | "other";
 
@@ -53,6 +60,10 @@ const TAB_OF: Record<FeedPage, "home" | "search" | "fav" | "cart" | "me" | null>
   confirm: null,
   favorites: "fav",
   account: "me",
+  orders: "me",
+  order: "me",
+  addresses: "me",
+  "sign-in": "me",
   notifications: "me",
   other: null,
 };
@@ -77,6 +88,12 @@ export interface FeedShellProps {
   buybar?: boolean;
   /** A pushed screen's bar on the phone: the back arrow and its title (`FeedMbar`). */
   mbar?: FeedMbarProps;
+  /**
+   * A class on the page's <main>, where the mock gives its own: the account
+   * pages' `acc-layout` (the menu beside the page from 900px), the sign-in
+   * page's `si-wrap` (the form beside a photo).
+   */
+  mainClass?: string;
   /** The signed-in account's orders, from the server: the bell's unread count reads them. */
   orders: Order[];
   /** The render instant (`NowProvider`). */
@@ -106,6 +123,7 @@ export function FeedShell({
   tabbar = true,
   buybar = false,
   mbar,
+  mainClass,
   orders,
   now,
   children,
@@ -121,7 +139,9 @@ export function FeedShell({
           <QuickAddProvider>
             <FeedTop page={page} mid={mid} tabbar={tabbar} orders={orders} />
             {mbar && <FeedMbar {...mbar} />}
-            <main id="main">{children}</main>
+            <main id="main" className={mainClass}>
+              {children}
+            </main>
             {foot !== "none" && <FeedFooter lite={foot === "lite"} skip={footSkip} />}
             {tabbar && <FeedTabbar page={page} />}
           </QuickAddProvider>

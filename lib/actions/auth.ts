@@ -3,12 +3,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { CUSTOMERS } from "@/data/customers";
-import { validateChangePassword, validateSignUp, type SignUpDraft } from "@/lib/account-form";
+import { validateChangePassword } from "@/lib/account-form";
 import { takeRate } from "@/lib/db/rate-limit";
 import { getSupabase, supabaseEnv } from "@/lib/db/server";
 import { getSession } from "@/lib/db/session";
 import { DEMO_ACCOUNT_PASSWORD_LOCKED, isDemoEmail } from "@/lib/demo-accounts";
 import { DEMO_ADMIN } from "@/lib/demo-admin";
+import { EMAIL_TAKEN, SIGN_IN_WRONG, signErrors } from "@/lib/feed-sign-in";
 import { safeNext, type ActionState } from "./state";
 
 /**
@@ -21,7 +22,9 @@ import { safeNext, type ActionState } from "./state";
  * (`node_modules/next/dist/docs/01-app/01-getting-started/07-mutating-data.md`)
  * — so nothing here trusts a hidden field, a disabled button or a validator
  * that ran in the browser. Each action re-reads the form, re-runs the rules
- * from `lib/account-form.ts`, and asks who is signed in for itself.
+ * the form ran (`lib/feed-sign-in.ts` for signing in and up since round v4
+ * slice 3a, `lib/account-form.ts` for a new password), and asks who is signed
+ * in for itself.
  *
  * The browser never talks to Supabase (QĐ-25): the client is built here, on
  * the server, and the only thing that crosses back is an `ActionState`.
@@ -40,16 +43,19 @@ import { safeNext, type ActionState } from "./state";
  */
 
 /**
- * ONE sentence, whatever went wrong (QĐ-15).
- *
+ * ONE sentence for a refused sign-in, whichever of the two was wrong (QĐ-15):
  * "Không có tài khoản với email này" and "sai mật khẩu" are two answers, and
  * the difference between them is a way to find out which addresses are
- * registered. The v2 screen was allowed to name the field because every
- * account was a published fixture; there is a real user table now.
+ * registered. The words are the Feed mock's (round v4 slice 3a), shown above
+ * the form (`lib/feed-sign-in.ts`).
  */
-const SIGN_IN_FAILED = "Email hoặc mật khẩu chưa đúng.";
+const SIGN_IN_FAILED = SIGN_IN_WRONG;
 
-/** Same reasoning on the way in: never confirm that an address is taken. */
+/**
+ * A sign-up the auth server refused for a reason other than a taken address,
+ * or that came back without a session. The app's own words, kept (the mock
+ * draws no such state).
+ */
 const SIGN_UP_FAILED = "Không tạo được tài khoản với email này.";
 
 const field = (form: FormData, name: string): string => {
@@ -57,13 +63,23 @@ const field = (form: FormData, name: string): string => {
   return typeof value === "string" ? value : "";
 };
 
+/** The mock's field errors, as an `ActionState` — or nothing when every field passes. */
+function fieldErrors(errors: Record<string, string | undefined>): ActionState | null {
+  const out: Record<string, string> = {};
+  for (const [key, message] of Object.entries(errors)) if (message) out[key] = message;
+  return Object.keys(out).length > 0 ? { errors: out } : null;
+}
+
 // ──────────────────────────────────────────────────────────────── sign in
 export async function signIn(_prev: ActionState, form: FormData): Promise<ActionState> {
   const email = field(form, "email").trim().toLowerCase();
   const password = field(form, "password");
   const next = safeNext(field(form, "next"));
 
-  if (!email || !password) return { errors: { form: SIGN_IN_FAILED } };
+  // The form checks itself before it sends (`signErrors`); a request that did
+  // not gets the same answers here.
+  const wrong = fieldErrors(signErrors("in", { email, password }));
+  if (wrong) return wrong;
 
   const pace = await takeRate("sign_in");
   if (!pace.ok) return { errors: { form: pace.message } };
@@ -129,48 +145,55 @@ export async function demoAdminSignIn(_prev: ActionState, form: FormData): Promi
 }
 
 // ──────────────────────────────────────────────────────────────── sign up
+/**
+ * "Tạo tài khoản" (round v4 slice 3a): a name, an email, a password — the
+ * Feed mock's form, checked by the mock's rules (`signErrors("up")`): a name
+ * of two characters, an address of the usual shape, a password of eight. The
+ * v3 rule "có cả chữ và số" is gone, as the mock asks for the length alone;
+ * Supabase Auth still refuses anything under eight
+ * (`supabase/config.toml`, `minimum_password_length`). The v3 form's "báo khi
+ * mở Số mới" box is gone with its screen, so nothing else is read.
+ *
+ * An address that already has an account is SAID, under its field — "Email
+ * này đã có tài khoản", the mock's words — where QĐ-15 used to keep it quiet
+ * (a conflict with the old rule, reported for the user to confirm). With
+ * confirmations off, GoTrue refuses it as `user_already_exists` (measured on
+ * the local stack, 29/09/2026); with them on it would answer a user without
+ * identities, which reads the same here.
+ *
+ * Signed up, the shopper lands where they were headed (`next`), as after
+ * signing in.
+ */
 export async function signUp(_prev: ActionState, form: FormData): Promise<ActionState> {
-  const draft: SignUpDraft = {
-    name: field(form, "name"),
-    email: field(form, "email"),
-    // The v3 form does not ask for one — "Số điện thoại lấy từ đơn đầu tiên"
-    // — so the rule that wants a number cannot block this submit. The screen
-    // drops the same key for the same reason.
-    phone: "",
-    password: field(form, "password"),
-    wantsDropAlerts: field(form, "wantsDropAlerts") === "on",
-    // Nothing to agree to yet: there is no terms page in this build and the
-    // approved form shows no checkbox for one.
-    agreed: true,
-  };
+  const name = field(form, "name").trim();
+  const email = field(form, "email").trim().toLowerCase();
+  const password = field(form, "password");
+  const next = safeNext(field(form, "next"));
 
-  const errors: Record<string, string> = {};
-  const found = validateSignUp(draft);
-  for (const [key, message] of Object.entries(found)) {
-    if (key !== "phone" && message) errors[key] = message;
-  }
-  if (Object.keys(errors).length > 0) return { errors };
+  const wrong = fieldErrors(signErrors("up", { name, email, password }));
+  if (wrong) return wrong;
 
   const pace = await takeRate("sign_up");
   if (!pace.ok) return { errors: { form: pace.message } };
 
   const supabase = await getSupabase();
   const { data, error } = await supabase.auth.signUp({
-    email: draft.email.trim().toLowerCase(),
-    password: draft.password,
+    email,
+    password,
     // Read by the `handle_new_user()` trigger, which writes `public.profiles`.
     // No handle: a real sign-up is not one of the eight demo accounts.
-    options: { data: { name: draft.name.trim(), phone: "" } },
+    options: { data: { name, phone: "" } },
   });
 
+  const taken =
+    error?.code === "user_already_exists" ||
+    (!error && data.user !== null && Array.isArray(data.user.identities) && data.user.identities.length === 0);
+  if (taken) return { errors: { email: EMAIL_TAKEN } };
+
   // Confirmations are off, so a successful sign-up comes back with a session.
-  // No session means either a real failure or an address that already exists —
-  // Supabase answers the second case with a user carrying no identities rather
-  // than with an error, precisely so the caller cannot tell them apart. Nor
-  // does this.
   if (error || !data.session) return { errors: { form: SIGN_UP_FAILED } };
 
-  redirect("/account");
+  redirect(next);
 }
 
 // ─────────────────────────────────────────────────────────────── sign out

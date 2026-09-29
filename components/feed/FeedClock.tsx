@@ -9,8 +9,12 @@ interface FeedClockProps {
   until: string;
   /** The render instant (`useNowMs`), so the server and the hydrating client print the same first second. */
   now: number;
-  /** A `<p>` where it stands alone (the story), a `<span>` inside a line. */
-  tag?: "p" | "span";
+  /** A `<p>` where it stands alone (the story), a `<span>` inside a line, a `<b>` where the line sets it bold (an order's hold on its ticket). */
+  tag?: "p" | "span" | "b";
+  /** The clock's face: the big display countdown unless the line sets it in its own type (`num`, the ticket's). */
+  className?: string;
+  /** What the clock counts, for a screen reader: "Thời gian giữ hàng còn lại". */
+  label?: string;
 }
 
 /**
@@ -23,7 +27,7 @@ interface FeedClockProps {
  * slept comes back right, not behind. At the deadline it stays at zero; the
  * page's state turns over on the next load, never under the shopper's thumb.
  */
-export function FeedClock({ until, now, tag = "p" }: FeedClockProps) {
+export function FeedClock({ until, now, tag = "p", className = "cd-big", label }: FeedClockProps) {
   const [text, setText] = useState(() => countdownText(until, now));
 
   useEffect(() => {
@@ -42,7 +46,7 @@ export function FeedClock({ until, now, tag = "p" }: FeedClockProps) {
 
   const Tag = tag;
   return (
-    <Tag className="cd-big" role="timer">
+    <Tag className={className} role="timer" aria-label={label}>
       {text.split(/(\d)/).filter(Boolean).map((part, i) =>
         /^\d$/.test(part) ? (
           <span key={i} className="dg">

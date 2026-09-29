@@ -136,8 +136,37 @@ describe("isFeedPath", () => {
     }
   });
 
+  it("is signing in, the orders and the address book since slice 3a", () => {
+    for (const p of [
+      "/sign-in",
+      "/sign-up",
+      "/forgot-password",
+      "/account/orders",
+      "/account/orders/DH-2430",
+      "/account/orders/DH-2430/tracking",
+      "/account/addresses",
+      "/account/addresses/new",
+    ]) {
+      expect(isFeedPath(p), p).toBe(true);
+    }
+  });
+
   it("is no v3 screen, and nothing that merely starts with a Feed route's name", () => {
-    for (const p of ["/account", "/account/wishlist", "/admin", "/admin/products", "/solo", "/productsx", "/sign-in", "/carts", "/checkouts"]) {
+    for (const p of [
+      "/account",
+      "/account/wishlist",
+      "/account/profile",
+      "/account/password",
+      "/account/notifications",
+      "/account/ordersx",
+      "/admin",
+      "/admin/products",
+      "/solo",
+      "/productsx",
+      "/sign-inx",
+      "/carts",
+      "/checkouts",
+    ]) {
       expect(isFeedPath(p), p).toBe(false);
     }
   });

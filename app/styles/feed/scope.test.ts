@@ -77,8 +77,9 @@ for (const r of rules(globals)) {
 }
 
 describe("the Feed stylesheets stay inside the zone", () => {
-  it("finds the four files and their rules", () => {
-    expect(feedFiles.sort()).toEqual(["feed.css", "flow.css", "more.css", "system.css"]);
+  it("finds the five files and their rules", () => {
+    // `account.css` since slice 3a, the mock's stylesheet of the same name.
+    expect(feedFiles.sort()).toEqual(["account.css", "feed.css", "flow.css", "more.css", "system.css"]);
     expect(feedRules.length).toBeGreaterThan(80);
   });
 
@@ -183,9 +184,16 @@ describe("the Feed stylesheets stay inside the zone", () => {
     expect(zoneTokens.get("--f-select")).toBe("color-mix(in srgb, var(--f-blue) 24%, var(--f-white))");
   });
 
-  it("loads after every v3 file, from globals.css", () => {
+  it("loads after every v3 file, from globals.css, in the order the mock's account pages load them", () => {
     const imports = [...globals.matchAll(/@import "\.\/styles\/([\w/.-]+)"/g)].map((m) => m[1]);
-    expect(imports.slice(-5)).toEqual(["desktop.css", "feed/feed.css", "feed/flow.css", "feed/more.css", "feed/system.css"]);
+    expect(imports.slice(-6)).toEqual([
+      "desktop.css",
+      "feed/feed.css",
+      "feed/flow.css",
+      "feed/account.css",
+      "feed/more.css",
+      "feed/system.css",
+    ]);
   });
 });
 

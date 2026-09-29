@@ -2,12 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { findProvince, findWard } from "@/data/regions";
 import { ADDRESS_LABELS, type AddressLabel } from "@/data/types";
 import { validateAddressForm, type AddressDraft } from "@/lib/account-form";
 import { normalisePhone } from "@/lib/checkout-form";
 import * as book from "@/lib/db/addresses";
 import { takeRate } from "@/lib/db/rate-limit";
 import { requireSession } from "@/lib/db/session";
+import { feedAddressErrors, type AddressField, type AddressResult } from "@/lib/feed-account";
 import type { ActionState } from "./state";
 
 /**
@@ -140,4 +142,104 @@ export async function makeDefault(form: FormData): Promise<void> {
   const id = field(form, "id");
   if (id) await book.setDefaultAddress(id);
   refreshAddressScreens();
+}
+
+// ──────────────────────────────────────────── the Feed's address book (round v4 slice 3a)
+/**
+ * The same four writes for the Feed's "Địa chỉ" (`prototype/explore/feed/
+ * addresses.js`): the sheet adds and edits, the cards set the default and
+ * delete, and "Hoàn tác" puts a deleted address back. Unlike the v3 forms
+ * above, each one ANSWERS — the sheet closes and the toast says what was done
+ * ("Đã thêm địa chỉ", "Đã xoá Nhà"), or a toast says what was not, in the
+ * fewest words: nothing in the address book fails silently any more (the
+ * open item "vài thao tác địa chỉ lỗi im lặng", `tasks/plan.md`).
+ *
+ * Each checks the session and spends a token of the visitor's `account`
+ * limit, as the v3 writes do; the arguments arrive from the browser and are
+ * re-read as `unknown`. The sheet's fields are judged by the mock's rules
+ * (`feedAddressErrors`), then by what only the server knows: that the commune
+ * belongs to the province.
+ */
+
+const text = (v: unknown): string => (typeof v === "string" ? v : "");
+
+/** A short sentence for a write the database refused or could not make. */
+const NOT_SAVED = "Chưa lưu được địa chỉ";
+const NOT_REMOVED = "Chưa xoá được địa chỉ";
+const NOT_DEFAULT = "Chưa đặt được mặc định";
+const NOT_FOUND = "Không tìm thấy địa chỉ này";
+
+/**
+ * "Lưu địa chỉ": a new address (`id` null) or an edit — and "Hoàn tác" after
+ * a delete, which adds the deleted address back with the role it had.
+ */
+export async function saveFeedAddress(input: unknown): Promise<AddressResult> {
+  await requireSession("/account/addresses");
+
+  const raw = (typeof input === "object" && input !== null ? input : {}) as Record<string, unknown>;
+  const recipient = text(raw.recipient).trim();
+  const phoneTyped = text(raw.phone).trim();
+  const provinceCode = text(raw.provinceCode);
+  const wardCode = text(raw.wardCode);
+  const street = text(raw.street).trim();
+
+  const errors: Partial<Record<AddressField, string>> = feedAddressErrors({
+    recipient,
+    phone: phoneTyped,
+    provinceCode,
+    wardCode,
+    street,
+  });
+  // What only the server can check: the codes are real, and the commune is the province's.
+  if (!errors.province && provinceCode && !findProvince(provinceCode)) errors.province = "Chọn tỉnh / thành";
+  if (!errors.province && !errors.ward && wardCode && !findWard(provinceCode, wardCode)) errors.ward = "Chọn phường / xã";
+  if (Object.keys(errors).length > 0) return { ok: false, errors };
+
+  const pace = await takeRate("account");
+  if (!pace.ok) return { ok: false, message: pace.message };
+
+  const draft: AddressDraft = {
+    recipient,
+    // Stored as ten digits, however it was typed — the column will only take that shape.
+    phone: normalisePhone(phoneTyped),
+    provinceCode,
+    wardCode,
+    line: street,
+    label: labelOf(text(raw.label)),
+    isDefault: raw.isDefault === true,
+  };
+
+  const id = text(raw.id);
+  if (id) {
+    const done = await book.updateAddress(id, draft);
+    if (!done) return { ok: false, message: NOT_FOUND };
+    refreshAddressScreens();
+    return { ok: true, id };
+  }
+  const made = await book.addAddress(draft);
+  if (!made) return { ok: false, message: NOT_SAVED };
+  refreshAddressScreens();
+  return { ok: true, id: String(made) };
+}
+
+/** "Xoá". The address it removed stays on the page, which holds it for "Hoàn tác". */
+export async function removeFeedAddress(id: unknown): Promise<AddressResult> {
+  await requireSession("/account/addresses");
+  const pace = await takeRate("account");
+  if (!pace.ok) return { ok: false, message: pace.message };
+  const key = text(id);
+  if (!key || !(await book.removeAddress(key))) return { ok: false, message: NOT_REMOVED };
+  refreshAddressScreens();
+  return { ok: true, id: key };
+}
+
+/** "Đặt mặc định". */
+export async function makeFeedDefault(id: unknown): Promise<AddressResult> {
+  await requireSession("/account/addresses");
+  const pace = await takeRate("account");
+  if (!pace.ok) return { ok: false, message: pace.message };
+  const key = text(id);
+  if (!key || !(await book.setDefaultAddress(key))) return { ok: false, message: NOT_DEFAULT };
+  refreshAddressScreens();
+  return { ok: true, id: key };
 }

@@ -5,7 +5,14 @@ import { listMyOrders } from "@/lib/db/orders";
 import { loadMe } from "@/lib/db/profiles";
 
 /**
- * The frame every account screen sits in, assembled once.
+ * The frame every v3 account screen sits in, assembled once.
+ *
+ * Since round v4 slice 3a this layout sits in the route group `(v3)`, which
+ * keeps the URLs as they were: `/account`, `/account/profile`,
+ * `/account/wishlist`, `/account/password` and `/account/notifications` stay
+ * in the v3 frame until their own slice, while the orders and the address
+ * book — Feed screens now — draw their own frame (`FeedFrame`, the account
+ * menu beside them from 900px) outside it.
  *
  * Until slice B1 each screen wrapped itself in `<ShopFrame><AccountGuard>`,
  * and the guard was a Client Component that read `localStorage`, waited a

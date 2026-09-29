@@ -1,0 +1,282 @@
+/* Round v4 "Feed" (QĐ-32) — the rules of `prototype/explore/feed/account.css`
+   the app has ported so far, in the mock's order, under the Feed zone
+   `[data-ui="feed"]`, tokens renamed `--x` → `--f-x`. The translations are
+   the ones `feed.css` beside this file lists; its reduced-motion block covers
+   these rules too, as the mock's does. Loaded after `flow.css` and before
+   `more.css`, the order in which the mock's account pages load them.
+
+   PORTED AT SLICE 3a, for `/sign-in`, `/sign-up`, `/forgot-password`,
+   `/account/orders`, `/account/orders/<code>` and `/account/addresses`: the
+   page frame (`.acc-main`, `.acc-h1`, `.acc-sec*`), the state (`.st-chip`,
+   the story bars `.osteps`), the pieces as tiles (`.tile*`), the order
+   ticket and the orders' two filters (`.ticket*`, `.of`, `.og-list`), the
+   signed-out card and the guest lookup (`.out-card`, `.out-title`,
+   `.out-acts`, `.lookup*`), the order page (`.od*`, `.cancel-line`, `.nf*`),
+   the address book and its sheet (`.ad*`, `.chip-ink`, `.lbl-chip*`,
+   `.toggle-row`, `.switch`, `.sheet-form`) and the sign-in page (`.si*`),
+   with their hover and desktop rules. Tôi (`.me-*`, `.now*`, `.soon-card*`,
+   `.bento`, `.bt*`, `.out-perks`, `.out-home`…), the return flow (`.rt-*`,
+   `.rq-*`) and Hồ sơ (`.pf-*`) wait for their slices, as do the rules only
+   they use (`.on-dark` variants, `.osteps.is-mini`, `.od-act.is-dark`,
+   `.od-act-title`, `.si-row`, `.btn-light`). The phone bar's late title is
+   already in `more.css`, which the mock writes twice.
+
+   Translated on the way in:
+   · the hex literals are tokens: `#FBEAE8` (the refusal line's ground)
+     `--f-err-bg`, `#D5D7DC` (a switch while off) `--f-switch`, `#E4E6EA`
+     `--f-bg3`, `#F2EEE8` `--f-plate2`, `#fff` `--f-white`; the rgba
+     literals stay as the mock writes them;
+   · the overlay under a label chip reaches 46, the project's rule the user
+     kept (the mock's reaches 44);
+   · a label chip's and a switch's ring stays off while the pointer drives
+     (`html[data-pointer]`), the project's promise for every ring, which the
+     mock's `.rcard` rule already keeps.
+
+   Not in the mock, and marked where it stands: "Tài khoản thử", the demo's
+   published accounts above the sign-in form (`.si-demo*`, the user's choice
+   on 29/09/2026). */
+
+/* ── page frame ── */
+[data-ui="feed"] .acc-main { padding: 0 var(--f-g) 8px; }
+[data-ui="feed"] .acc-h1 { font-size: 44px; line-height: 1.04; padding-top: 18px; margin-bottom: 18px; }
+[data-ui="feed"] .acc-sec { margin-top: 30px; }
+[data-ui="feed"] .acc-sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+[data-ui="feed"] .acc-sec-title { font-size: 20px; font-weight: 700; line-height: 1.25; }
+[data-ui="feed"] .acc-sec-head .link { min-height: 44px; margin: -12px 0; }
+
+/* ── status: chip, segmented progress ── */
+[data-ui="feed"] .st-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px 0 9px; border-radius: var(--f-r-pill);
+  background: var(--f-bg2); color: var(--f-ink); font-size: 13px; font-weight: 640; line-height: 1; white-space: nowrap;
+}
+[data-ui="feed"] .st-chip .i { width: 16px; height: 16px; }
+[data-ui="feed"] .st-chip.is-act { background: var(--f-blue); color: var(--f-white); }
+
+/* The order's four steps, drawn like Feed's story bars: done, now (half), to come. */
+[data-ui="feed"] .osteps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+[data-ui="feed"] .ostep-bar { height: 4px; border-radius: 4px; background: rgba(17, 18, 20, .12); overflow: hidden; }
+[data-ui="feed"] .ostep-bar i { display: block; height: 100%; background: var(--f-blue); transform-origin: left center; transform: scaleX(0); }
+[data-ui="feed"] .ostep.is-done .ostep-bar i { transform: scaleX(1); }
+[data-ui="feed"] .ostep.is-now .ostep-bar i { transform: scaleX(.5); }
+[data-ui="feed"] .ostep.is-off .ostep-bar { background: repeating-linear-gradient(135deg, rgba(17, 18, 20, .14) 0 4px, transparent 4px 7px); }
+[data-ui="feed"] .ostep-label { margin-top: 8px; font-size: 12px; font-weight: 640; line-height: 1.3; color: var(--f-ink2); }
+[data-ui="feed"] .ostep.is-done .ostep-label, [data-ui="feed"] .ostep.is-now .ostep-label { color: var(--f-ink); }
+[data-ui="feed"] .ostep-at { font-size: 12px; line-height: 1.35; color: var(--f-ink2); }
+
+/* ── item tiles: photo, flat drawing, or type ── */
+[data-ui="feed"] .tile {
+  position: relative; flex: none; display: block; width: 44px; aspect-ratio: 4 / 5; border-radius: 8px; overflow: hidden;
+  background: var(--f-bg2);
+}
+[data-ui="feed"] .tile img { width: 100%; height: 100%; object-fit: cover; }
+[data-ui="feed"] .tile.flat { background: var(--f-plate2); }
+[data-ui="feed"] .tile-qty {
+  position: absolute; right: 3px; bottom: 3px; min-width: 20px; height: 18px; padding: 0 5px; border-radius: var(--f-r-pill);
+  background: var(--f-ink); color: var(--f-white); font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
+}
+/* A closed issue's style has no photo: its name in the display face, and its colour as a chip. */
+[data-ui="feed"] .tile.type { display: grid; align-content: end; padding: 6px; }
+[data-ui="feed"] .tile-name { font-stretch: 75%; font-weight: 900; font-size: 15px; line-height: 1.06; text-transform: uppercase; overflow-wrap: anywhere; }
+[data-ui="feed"] .tile-dot { position: absolute; top: 6px; left: 6px; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 1.5px var(--f-bg); }
+[data-ui="feed"] .tile.lg { width: 76px; border-radius: var(--f-r-thumb); }
+[data-ui="feed"] .tile.lg .tile-name { font-size: 22px; }
+[data-ui="feed"] .tile.lg.type { padding: 9px; }
+[data-ui="feed"] .tile.lg .tile-dot { width: 14px; height: 14px; top: 9px; left: 9px; }
+[data-ui="feed"] .tiles { display: flex; gap: 6px; flex-wrap: wrap; }
+/* A closed issue's style beside its own name: the colour, as a swatch (light colours get an edge). */
+[data-ui="feed"] .tile.swatch-tile { box-shadow: inset 0 0 0 1px rgba(17, 18, 20, .12); }
+
+/* ── order ticket (lists) ── */
+[data-ui="feed"] .ticket {
+  position: relative; border-radius: var(--f-r-card); background: var(--f-bg);
+  box-shadow: inset 0 0 0 1.5px var(--f-line);
+  transition: box-shadow .15s, background-color .15s;
+}
+[data-ui="feed"] .ticket-a { display: grid; gap: 12px; padding: 16px; border-radius: var(--f-r-card); color: inherit; }
+[data-ui="feed"] .ticket-a:focus-visible { outline-offset: 0; }
+[data-ui="feed"] .ticket-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; }
+[data-ui="feed"] .ticket-grp { grid-column: 1 / -1; margin-bottom: 4px; font-size: 13px; font-weight: 640; color: var(--f-ink2); }
+[data-ui="feed"] .ticket-code { font-size: 26px; line-height: 1.06; }
+[data-ui="feed"] .ticket-total { font-size: 15px; font-weight: 700; white-space: nowrap; }
+[data-ui="feed"] .ticket-mid { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+[data-ui="feed"] .ticket-note { font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .ticket-note b { color: var(--f-ink); font-weight: 700; }
+[data-ui="feed"] .ticket-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+[data-ui="feed"] .ticket-date { font-size: 13px; color: var(--f-ink2); white-space: nowrap; }
+[data-ui="feed"] .ticket.is-cancelled .tile img { filter: grayscale(1); opacity: .7; }
+
+/* Orders: one list, newest first, under two filters (the phase as a segmented control, the group as chips). */
+[data-ui="feed"] .of { margin: -4px calc(var(--f-g) * -1) 6px; }
+[data-ui="feed"] .of .seg { margin: 0 var(--f-g); }
+[data-ui="feed"] .of .chips { padding-bottom: 14px; }
+[data-ui="feed"] .og-list { display: grid; gap: 10px; }
+[data-ui="feed"] .of-empty { grid-column: 1 / -1; }
+
+/* ── signed out ── */
+[data-ui="feed"] .out-card { margin-top: 18px; padding: 24px 20px 22px; border-radius: var(--f-r-card); background: var(--f-ink); color: var(--f-white); }
+[data-ui="feed"] .out-title { font-size: 40px; line-height: 1.06; }
+[data-ui="feed"] .out-acts { display: grid; gap: 10px; margin-top: 20px; }
+[data-ui="feed"] .out-card .btn-line { background: transparent; color: var(--f-white); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .7); }
+[data-ui="feed"] .lookup { margin-top: 26px; }
+[data-ui="feed"] .lookup .acc-sec-title { margin-bottom: 14px; }
+[data-ui="feed"] .lookup-form { display: grid; gap: 12px; }
+[data-ui="feed"] .lookup-form .btn { margin-top: 4px; }
+
+/* ── order detail ── */
+[data-ui="feed"] .od-hero { padding-top: 16px; }
+[data-ui="feed"] .od-code { font-size: 56px; line-height: 1.02; }
+[data-ui="feed"] .od-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 10px; }
+[data-ui="feed"] .od-steps { margin-top: 22px; }
+[data-ui="feed"] .od-act { margin-top: 24px; padding: 18px; border-radius: var(--f-r-card); background: var(--f-bg2); }
+[data-ui="feed"] .od-act-line { margin-top: 6px; font-size: 14px; line-height: 1.45; color: var(--f-ink2); }
+[data-ui="feed"] .od-act-line b { color: var(--f-ink); font-weight: 680; }
+[data-ui="feed"] .od-act .btn { margin-top: 14px; }
+[data-ui="feed"] .od-act .copyrow { border-top-color: rgba(17, 18, 20, .1); }
+[data-ui="feed"] .od-hold { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+[data-ui="feed"] .od-hold .cd-big { font-size: 46px; }
+[data-ui="feed"] .od-pay { margin-top: 14px; }
+[data-ui="feed"] .od-pay .qr-slot { width: 160px; margin-top: 12px; }
+[data-ui="feed"] .od-cancel { margin-top: 12px; }
+[data-ui="feed"] .od-cancel .btn { margin-top: 0; }
+[data-ui="feed"] .od-items { display: grid; gap: 12px; }
+[data-ui="feed"] .od-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; }
+[data-ui="feed"] .od-item-name { font-size: 20px; line-height: 1.06; }
+[data-ui="feed"] .od-item-meta { margin-top: 3px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .od-item-price { font-size: 14px; font-weight: 700; white-space: nowrap; }
+[data-ui="feed"] .od-item-a { color: inherit; border-radius: 12px; }
+[data-ui="feed"] .od-item-a:focus-visible { outline-offset: 4px; }
+[data-ui="feed"] .od-facts dd { max-width: 64%; }
+[data-ui="feed"] .od-act .copy { background: var(--f-bg); }
+[data-ui="feed"] .od-act .copyrow:first-child { border-top: 0; }
+[data-ui="feed"] .od-act .qr-slot { background-color: var(--f-bg); }
+[data-ui="feed"] .od-btns { display: grid; gap: 10px; margin-top: 22px; }
+[data-ui="feed"] .od-why { display: flex; align-items: flex-start; gap: 8px; margin-top: 18px; font-size: 15px; font-weight: 600; line-height: 1.4; }
+[data-ui="feed"] .od-why .i { flex: none; width: 20px; height: 20px; margin-top: 1px; }
+[data-ui="feed"] .cancel-line { padding: 0 0 18px; font-size: 15px; line-height: 1.45; }
+[data-ui="feed"] .od-again { margin-top: 18px; }
+[data-ui="feed"] .nf { padding: 44px 0 20px; }
+[data-ui="feed"] .nf-title { font-size: 40px; line-height: 1.06; }
+[data-ui="feed"] .nf-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+[data-ui="feed"] .nf-acts .btn { width: auto; padding: 0 24px; }
+
+/* ── addresses ── */
+[data-ui="feed"] .ad-list { display: grid; gap: 10px; margin-top: 14px; }
+[data-ui="feed"] .ad {
+  position: relative; padding: 16px 16px 12px; border-radius: var(--f-r-card); background: var(--f-bg);
+  box-shadow: inset 0 0 0 1.5px var(--f-line);
+}
+[data-ui="feed"] .ad.is-default { box-shadow: inset 0 0 0 2px var(--f-ink); }
+[data-ui="feed"] .ad-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+[data-ui="feed"] .ad-label { font-size: 28px; line-height: 1.06; }
+[data-ui="feed"] .ad-who { margin-top: 8px; font-size: 14px; font-weight: 620; }
+[data-ui="feed"] .ad-where { margin-top: 2px; font-size: 14px; line-height: 1.45; color: var(--f-ink2); }
+[data-ui="feed"] .ad-acts { display: flex; flex-wrap: wrap; gap: 6px 8px; margin-top: 12px; }
+[data-ui="feed"] .ad-acts .pill { height: 36px; }
+[data-ui="feed"] .ad-add { margin-top: 12px; }
+[data-ui="feed"] .chip-ink { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 12px 0 9px; border-radius: var(--f-r-pill); background: var(--f-ink); color: var(--f-white); font-size: 13px; font-weight: 640; }
+[data-ui="feed"] .chip-ink .i { width: 15px; height: 15px; }
+[data-ui="feed"] .lbl-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+[data-ui="feed"] .lbl-chip { position: relative; display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: var(--f-r-pill); background: var(--f-bg2); font-size: 14px; font-weight: 600; cursor: pointer; }
+[data-ui="feed"] .lbl-chip input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46. */
+[data-ui="feed"] .lbl-chip::after { content: ""; position: absolute; inset: -5px 0; }
+[data-ui="feed"] .lbl-chip:has(input:checked) { background: var(--f-ink); color: var(--f-white); }
+[data-ui="feed"] .lbl-chip:has(input:focus-visible) { outline: 2px solid var(--f-blue); outline-offset: 2px; }
+[data-ui="feed"] .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 52px; margin-top: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+[data-ui="feed"] .switch { position: relative; flex: none; width: 52px; height: 32px; border-radius: var(--f-r-pill); background: var(--f-switch); transition: background-color .2s; }
+[data-ui="feed"] .switch::before { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: var(--f-white); box-shadow: 0 1px 3px rgba(17, 18, 20, .2); transition: transform .25s var(--f-spring); }
+[data-ui="feed"] .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+[data-ui="feed"] .switch:has(input:checked) { background: var(--f-blue); }
+[data-ui="feed"] .switch:has(input:checked)::before { transform: translateX(20px); }
+[data-ui="feed"] .switch:has(input:focus-visible) { outline: 2px solid var(--f-blue); outline-offset: 2px; }
+html[data-pointer] [data-ui="feed"] .lbl-chip:has(input:focus), html[data-pointer] [data-ui="feed"] .switch:has(input:focus) { outline: none; }
+[data-ui="feed"] .sheet-form { display: grid; gap: 16px; }
+[data-ui="feed"] .sheet-form .field + .field, [data-ui="feed"] .sheet-form .co-pair + .field, [data-ui="feed"] .sheet-form .field + .co-pair { margin-top: 0; }
+[data-ui="feed"] .sheet-form .btn { margin-top: 4px; }
+
+/* ── sign-in ── */
+[data-ui="feed"] .si { padding: 8px var(--f-g) 28px; }
+[data-ui="feed"] .si-title { font-size: 52px; line-height: 1.04; padding-top: 12px; }
+[data-ui="feed"] .si-form { display: grid; gap: 16px; margin-top: 22px; }
+[data-ui="feed"] .si-form .field + .field { margin-top: 0; }
+[data-ui="feed"] .si-pass { position: relative; display: block; }
+[data-ui="feed"] .si-pass input { padding-right: 56px; }
+[data-ui="feed"] .si-eye { position: absolute; right: 4px; top: 4px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--f-r-pill); color: var(--f-ink2); }
+[data-ui="feed"] .si-eye .i { width: 20px; height: 20px; }
+[data-ui="feed"] .si-forgot { justify-self: end; margin-top: -6px; }
+[data-ui="feed"] .si-or { display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .si-or::before, [data-ui="feed"] .si-or::after { content: ""; flex: 1; height: 1px; background: var(--f-line2); }
+[data-ui="feed"] .si-google { gap: 10px; }
+[data-ui="feed"] .si-google .tag-soon { font-size: 12px; font-weight: 640; padding: 4px 8px; border-radius: var(--f-r-pill); background: var(--f-bg3); color: var(--f-ink2); }
+[data-ui="feed"] .si-switch { margin-top: 12px; }
+[data-ui="feed"] .si-formerr { display: flex; gap: 8px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--f-err-bg); color: var(--f-err); font-size: 14px; font-weight: 620; line-height: 1.4; }
+[data-ui="feed"] .si-formerr .i { flex: none; width: 20px; height: 20px; }
+[data-ui="feed"] .si-sent { display: grid; justify-items: start; gap: 10px; margin-top: 22px; }
+[data-ui="feed"] .si-sent-line { font-size: 16px; line-height: 1.45; }
+[data-ui="feed"] .si-sent-line b { font-weight: 700; }
+[data-ui="feed"] .si-art { display: none; }
+
+/* Not in the mock (the user's choice, 29/09/2026): "Tài khoản thử", the demo's published accounts, above the sign-in
+   form — on Feed's grey, rounded as a selection card; the two shortcuts are the outlined pill button, stacked on the
+   phone and at their own width side by side from 900px, as the mock sets a pair of buttons (`.out-acts`). */
+[data-ui="feed"] .si-demo { margin-top: 22px; padding: 16px 18px 18px; border-radius: var(--f-r-card); background: var(--f-bg2); }
+[data-ui="feed"] .si-demo-title { font-size: 15px; font-weight: 700; line-height: 1.3; }
+[data-ui="feed"] .si-demo-lines { margin-top: 6px; font-size: 14px; line-height: 1.5; color: var(--f-ink2); overflow-wrap: anywhere; }
+[data-ui="feed"] .si-demo-lines b { color: var(--f-ink); font-weight: 650; }
+[data-ui="feed"] .si-demo-acts { display: grid; gap: 10px; margin-top: 14px; }
+
+/* ── hover ── */
+@media (hover: hover) and (pointer: fine) {
+  [data-ui="feed"] .ticket:hover { box-shadow: inset 0 0 0 1.5px var(--f-ink); }
+  [data-ui="feed"] .od-item-a:hover .od-item-name { text-decoration: underline; text-underline-offset: 3px; }
+  [data-ui="feed"] .ad-acts .pill:hover { background: var(--f-bg3); }
+  [data-ui="feed"] .lbl-chip:not(:has(input:checked)):hover { background: var(--f-bg3); }
+}
+
+/* ── desktop ── */
+@media (min-width: 900px) {
+  [data-ui="feed"] .acc-main { padding: 0 0 8px; }
+
+  /* Signed out, every page but Tôi: the way in as a banner, the page's message beside the two buttons at their own
+     width (Đăng nhập first). */
+  [data-ui="feed"] .out-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 40px; margin-top: 0; padding: 24px 28px; }
+  [data-ui="feed"] .out-card .out-title { flex: 1 1 280px; min-width: 0; font-size: 34px; }
+  [data-ui="feed"] .out-card .out-acts { display: flex; flex: none; gap: 10px; margin-top: 0; }
+  [data-ui="feed"] .out-card .out-acts .btn { width: auto; padding: 0 26px; }
+
+  /* The guest lookup in one row: each input as wide as what it holds, the button level with the inputs. */
+  [data-ui="feed"] .lookup { margin-top: 36px; }
+  [data-ui="feed"] .lookup-form { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+  [data-ui="feed"] .lookup-form .field + .field { margin-top: 0; }
+  [data-ui="feed"] .lookup-form [data-f$="-code"] { width: 168px; }
+  [data-ui="feed"] .lookup-form [data-f$="-phone"] { width: 216px; }
+  [data-ui="feed"] .lookup-form .btn { width: auto; padding: 0 28px; margin-top: calc(13px * 1.45 + 6px); }
+  [data-ui="feed"] .acc-h1 { font-size: 64px; padding-top: 0; margin-bottom: 24px; }
+  [data-ui="feed"] .acc-sec { margin-top: 40px; }
+  [data-ui="feed"] .acc-sec-title { font-size: 24px; }
+  [data-ui="feed"] .of { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: -8px 0 18px; }
+  [data-ui="feed"] .of .seg { margin: 0; flex: none; width: 440px; }
+  [data-ui="feed"] .of .chips { padding: 0; overflow: visible; flex-wrap: wrap; }
+  [data-ui="feed"] .og-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  [data-ui="feed"] .ticket-a { padding: 18px 20px; }
+  [data-ui="feed"] .od { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 48px; align-items: start; }
+  [data-ui="feed"] .od-hero { padding-top: 0; grid-column: 1 / -1; }
+  [data-ui="feed"] .od-code { font-size: 80px; }
+  [data-ui="feed"] .od-left { min-width: 0; }
+  [data-ui="feed"] .od-right { position: sticky; top: 100px; }
+  [data-ui="feed"] .od-act { margin-top: 28px; padding: 22px; }
+  [data-ui="feed"] .od-btns { display: flex; flex-wrap: wrap; }
+  [data-ui="feed"] .od-btns .btn, [data-ui="feed"] .od-again .btn { width: auto; padding: 0 26px; }
+  [data-ui="feed"] .od-act .btn { width: auto; padding: 0 26px; }
+  [data-ui="feed"] .od-right .acc-sec:first-child { margin-top: 28px; }
+  [data-ui="feed"] .ad-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  [data-ui="feed"] .ad-add { width: auto; display: inline-flex; padding: 0 26px; }
+  [data-ui="feed"] .si-wrap { max-width: var(--f-max); margin: 0 auto; padding: 36px var(--f-wg) 0; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); column-gap: 72px; align-items: start; }
+  [data-ui="feed"] .si-art { display: block; position: sticky; top: 100px; }
+  [data-ui="feed"] .si-art img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+  [data-ui="feed"] .si { padding: 0 0 20px; max-width: 440px; }
+  [data-ui="feed"] .si-title { font-size: 72px; padding-top: 0; }
+  /* Not in the mock: the demo box's two shortcuts side by side, at their own width. */
+  [data-ui="feed"] .si-demo-acts { display: flex; flex-wrap: wrap; }
+  [data-ui="feed"] .si-demo-acts .btn { width: auto; padding: 0 22px; }
+}

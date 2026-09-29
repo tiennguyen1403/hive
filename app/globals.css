@@ -106,8 +106,9 @@
 @import "./styles/desktop.css";
 /* ── Round v4 "Feed" (QĐ-32), one folder, every rule under the Feed zone ──
    Each file mirrors the mock stylesheet of the same name
-   (`prototype/explore/feed/feed.css`, `flow.css`, `more.css` since slice 1b)
-   and keeps its rules in the
+   (`prototype/explore/feed/feed.css`, `flow.css`, `more.css` since slice 1b,
+   `account.css` since slice 3a, between `flow.css` and `more.css` as the
+   mock's account pages load them) and keeps its rules in the
    mock's order, so the cascade among Feed rules is the mock's: every
    selector gains the same `[data-ui="feed"]` (0,1,0), which leaves their
    order of specificity as the mock had it. No Feed rule can reach an element
@@ -121,6 +122,7 @@
    the round ends. */
 @import "./styles/feed/feed.css";
 @import "./styles/feed/flow.css";
+@import "./styles/feed/account.css";
 @import "./styles/feed/more.css";
 @import "./styles/feed/system.css";
 
@@ -362,6 +364,7 @@
      --f-ink on --f-plate 16.4:1 · --f-ink2 on --f-plate 5.6:1 (the fixed lead, slice 1a)
      --f-on-ink2 on --f-ink 13.5:1 (a chosen size's note, slice 1a)
      --f-ink2 on --f-bg4 5.0:1 (an inactive button on the grey summary, slice 2)
+     --f-err on --f-err-bg 4.8:1 (a refused sign-in's line, slice 3a)
    ========================================================================= */
 [data-ui="feed"] {
   /* colour: one accent, blue; red only for errors */
@@ -382,6 +385,8 @@
   --f-plate2: #f2eee8; /* behind a flat drawing in a rail or the shop grid (slice 1a) */
   --f-on-ink2: #d9dbe0; /* the small line under a chosen size, on ink (slice 1a) */
   --f-bg4: #e2e4e8; /* on the grey summary from 900px: the free-delivery bar's track, an inactive button (slice 2) */
+  --f-err-bg: #fbeae8; /* behind the line a refused sign-in writes above the form (slice 3a) */
+  --f-switch: #d5d7dc; /* a switch's track while it is off (slice 3a) */
   /* not in the mock: the text selection, a light tint of the blue under ink (12.6:1) —
      the project's rule for browser surfaces, kept in Feed's colours (user, 27/09/2026) */
   --f-select: color-mix(in srgb, var(--f-blue) 24%, var(--f-white));

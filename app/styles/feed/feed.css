@@ -36,6 +36,12 @@
    `.p-cart.has-paybar`, asked of the frame with `:has()`), and
    `.btn.only-desk`. The screens' own rules are in `flow.css`.
 
+   PORTED AT SLICE 3a, for the account's pages and signing in: the account
+   menu (`.acc-nav`, and from 900px `.acc-layout`, `.acc-menu`, `.acc-item`,
+   `.acc-out`, `.acc-main`) with its hover. The mock's <main> is
+   `.acc-layout`; the frame's <main> takes the class (`FeedShell`'s
+   `mainClass`). The screens' own rules are in `account.css`.
+
    Renamed as they came in, because the name was taken:
    · `.grid` (the shop grid) → `.shop-grid`: a Tailwind utility's name
      (`lib/classnames.test.ts`);
@@ -218,6 +224,9 @@ html:has([data-ui="feed"]) {
 [data-ui="feed"] .mbar-title { min-width: 0; font-size: 17px; font-weight: 680; line-height: 1.2; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 [data-ui="feed"] .mbar-acts { display: flex; align-items: center; margin-left: auto; }
 [data-ui="feed"] .mbar-acts:empty { display: none; }
+
+/* The account menu lives in a left column on desktop; the phone reaches the same pages from Tôi (slice 3a). */
+[data-ui="feed"] .acc-nav { display: none; }
 [data-ui="feed"] .tabs.links .tab[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--f-blue); }
 
 /* ── bottom tab bar (phone) ── */
@@ -1014,6 +1023,28 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
 @keyframes f-pop-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes f-pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px) scale(.98); } }
 
+/* Desktop: the account pages sit in a left menu plus content, inside Feed's top nav (slice 3a). The mock's <main>
+   is `.acc-layout`; here the frame's <main> takes the class (`FeedShell`'s `mainClass`), and it is already the row
+   that grows. */
+@media (min-width: 900px) {
+  [data-ui="feed"] .acc-layout {
+    max-width: var(--f-max); margin: 0 auto; padding: 36px var(--f-wg) 0;
+    display: grid; grid-template-columns: 220px minmax(0, 1fr); column-gap: 64px; align-items: start;
+  }
+  [data-ui="feed"] .acc-nav { display: block; position: sticky; top: 100px; }
+  [data-ui="feed"] .acc-menu { display: grid; gap: 2px; }
+  [data-ui="feed"] .acc-item {
+    position: relative; display: flex; align-items: center; gap: 12px; width: 100%; height: 44px; padding: 0 14px;
+    border-radius: var(--f-r-pill); color: var(--f-ink2); font-size: 15px; font-weight: 560; text-align: left;
+    transition: background-color .15s, color .15s;
+  }
+  [data-ui="feed"] .acc-item .i { width: 22px; height: 22px; }
+  [data-ui="feed"] .acc-item[aria-current="page"] { background: var(--f-bg2); color: var(--f-ink); font-weight: 680; }
+  [data-ui="feed"] .acc-out { margin-top: 14px; }
+  [data-ui="feed"] .acc-out::before { content: ""; position: absolute; left: 14px; right: 14px; top: -8px; height: 1px; background: var(--f-line); }
+  [data-ui="feed"] .acc-main { min-width: 0; }
+}
+
 /* Pointer hover, where there is one. */
 @media (hover: hover) and (pointer: fine) {
   [data-ui="feed"] .pill:hover, [data-ui="feed"] .chip:not([aria-pressed="true"]):hover, [data-ui="feed"] .sh-x:hover { background: var(--f-bg3); }
@@ -1027,6 +1058,7 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
   [data-ui="feed"] .swatch:has(input:checked):hover .swatch-img { box-shadow: 0 0 0 2px var(--f-bg), 0 0 0 4px var(--f-ink); }
   [data-ui="feed"] .sort-opt:hover { background: var(--f-bg2); }
   [data-ui="feed"] .link:hover { text-decoration-thickness: 2.5px; }
+  [data-ui="feed"] .acc-item:not([aria-current="page"]):hover { background: var(--f-bg2); color: var(--f-ink); }
   [data-ui="feed"] .closed-row:hover .closed-no { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
   [data-ui="feed"] .facts-go:hover a { text-decoration: underline; text-underline-offset: 3px; }
   [data-ui="feed"] .story:hover .story-go { background: var(--f-blue2); }

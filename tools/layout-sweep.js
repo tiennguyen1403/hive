@@ -400,16 +400,18 @@ async (page) => {
   }
 
 
-  // Overlays: a menu that is shut measures like a page that has none.
+  // Overlays: a menu that is shut measures like a page that has none. Since v4
+  // slice 3a the address form is a sheet on /account/addresses (`?add=1` opens
+  // it), and the province picker opens over the sheet.
   for (const width of WIDTHS) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 800 });
-    const entry = { route: "/account/addresses/new#province", width, name: `account-addresses-new-province-${width}` };
+    const entry = { route: "/account/addresses?add=1#province", width, name: `account-addresses-add-province-${width}` };
     try {
-      const response = await page.goto(ORIGIN + "/account/addresses/new", { waitUntil: "load" });
+      const response = await page.goto(ORIGIN + "/account/addresses?add=1", { waitUntil: "load" });
       entry.status = response ? response.status() : null;
-      entry.landedOn = "/account/addresses/new";
-      await page.locator(".field3", { hasText: "Tỉnh / thành" }).first().locator("button.selbtn").click();
-      await page.waitForTimeout(400);
+      entry.landedOn = "/account/addresses?add=1";
+      await page.locator("#f-province").click();
+      await page.waitForTimeout(450);
       await page.screenshot({ path: `${SHOTS}/${entry.name}.png`, fullPage: false });
       entry.findings = await probe(width);
     } catch (e) {
