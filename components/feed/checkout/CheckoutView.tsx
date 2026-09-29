@@ -125,9 +125,9 @@ type WardStatus = "loading" | "error";
  * the form and the code to `placeOrderAction`, which prices the order and
  * takes the pieces off the shelf; the receipt follows.
  *
- * Two things the mock does not have are the app's: the e-mail is asked for
- * (`place_order()` refuses an order without one), and there is no box to
- * tick — pressing "Đặt hàng" is the agreement the server's check reads.
+ * As in the mock, the e-mail is "tuỳ chọn" — checked for its shape only when
+ * one is typed, stored as none when not — and there is no box to tick, nor
+ * any agreement sent for one (slice B8).
  */
 export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
   const router = useRouter();
@@ -321,8 +321,6 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
       note: note.trim(),
       delivery,
       payment,
-      // No box to tick in the Feed: pressing "Đặt hàng" is the agreement the server's check reads.
-      agreed: true,
     };
     const payload = {
       lines: lines.map((l) => ({ productId: l.line.productId, color: l.line.color, size: l.line.size, qty: l.line.qty })),
@@ -409,7 +407,7 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
               {...inputAria("phone")}
             />
           </Field>
-          <Field id="email" label="Email" error={errors.email}>
+          <Field id="email" label="Email" opt="tuỳ chọn" error={errors.email}>
             <input
               id="f-email"
               name="email"
@@ -649,11 +647,28 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
   );
 }
 
+interface FieldProps {
+  id: FeedField;
+  label: string;
+  /** Beside the label, as the mock marks a field it does not require: "tuỳ chọn". */
+  opt?: string;
+  error: string | undefined;
+  children: React.ReactNode;
+}
+
 /** A labelled field with its error under it (`checkout.js`: `field`). */
-function Field({ id, label, error, children }: { id: FeedField; label: string; error: string | undefined; children: React.ReactNode }) {
+function Field({ id, label, opt, error, children }: FieldProps) {
   return (
     <label className={cx("field", error && "is-error")} data-f={id}>
-      <span className="lbl">{label}</span>
+      <span className="lbl">
+        {label}
+        {opt && (
+          <>
+            {" "}
+            <span className="opt">{opt}</span>
+          </>
+        )}
+      </span>
       {children}
       {error && (
         <span className="err" id={`e-${id}`}>

@@ -329,8 +329,14 @@ export interface Order {
    * in their own book, not something a courier reads.
    */
   shipTo: Omit<Address, "id" | "isDefault" | "label">;
-  /** Where the confirmation goes. */
-  email: string;
+  /**
+   * Where a confirmation would go: the e-mail typed at checkout, or null when
+   * none was. Optional since slice B8, as the Feed checkout has it
+   * ("tuỳ chọn"); no e-mail is sent yet (QĐ-35). Null rather than "" — the
+   * column stores none as NULL — so a reader cannot print an empty line by
+   * mistaking "" for an address.
+   */
+  email: string | null;
   /** What was typed for the courier at checkout, or "". */
   note: string;
   placedAt: string;

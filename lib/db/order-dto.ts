@@ -83,6 +83,21 @@ function textOrEmpty(source: Record<string, unknown>, key: string, path: string)
   return value;
 }
 
+/**
+ * A string, or null for none — never "". `order_json()` writes the column as
+ * it is, and the column holds NULL for an order placed without an e-mail
+ * (slice B8), so the key is always there: an absent one is a renamed field,
+ * not a missing e-mail.
+ */
+function textOrNull(source: Record<string, unknown>, key: string, path: string): string | null {
+  const value = source[key];
+  if (value === null) return null;
+  if (typeof value !== "string" || value === "") {
+    return fail(`${path}.${key}`, "must be a non-empty string or null");
+  }
+  return value;
+}
+
 function amount(source: Record<string, unknown>, key: string, path: string): number {
   const value = source[key];
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
@@ -202,7 +217,8 @@ export function toOrder(value: unknown): Order {
       provinceCode: text(shipTo, "provinceCode", `${path}.shipTo`),
       wardCode: text(shipTo, "wardCode", `${path}.shipTo`),
     },
-    email: text(source, "email", path),
+    // Null when the shopper gave none: optional at checkout since slice B8.
+    email: textOrNull(source, "email", path),
     note: textOrEmpty(source, "note", path),
     placedAt: instant(source, "placedAt", path),
     // `null` and absent mean the same thing: no code on this order.

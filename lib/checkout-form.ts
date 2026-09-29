@@ -12,6 +12,7 @@ import { isDeliveryAvailable, type DeliveryMethod } from "./shipping";
 export interface CheckoutDraft {
   recipient: string;
   phone: string;
+  /** Optional since slice B8, as the Feed checkout has it: "" is none. */
   email: string;
   provinceCode: string;
   wardCode: string;
@@ -20,7 +21,13 @@ export interface CheckoutDraft {
   note: string;
   delivery: DeliveryMethod;
   payment: PaymentMethod;
-  agreed: boolean;
+  /**
+   * The v3 checkout's terms box. Read by nothing since slice B8: the Feed
+   * checkout has no box, and a check that asked for it would record an
+   * agreement nobody gave. Kept, optional, so the v3 screen still compiles
+   * until the round's last slice removes it.
+   */
+  agreed?: boolean;
 }
 
 export type FieldName = keyof CheckoutDraft;
@@ -70,8 +77,8 @@ export function validateCheckout(d: CheckoutDraft): CheckoutErrors {
   if (!d.recipient.trim()) e.recipient = "Cần tên người nhận.";
   if (!d.phone.trim()) e.phone = "Cần số điện thoại để người giao gọi.";
   else if (!normalisePhone(d.phone)) e.phone = "Số điện thoại chưa đúng — 10 số, bắt đầu bằng 0.";
-  if (!d.email.trim()) e.email = "Cần email để gửi xác nhận đơn.";
-  else if (!looksLikeEmail(d.email)) e.email = "Email chưa đúng định dạng.";
+  // Optional (slice B8): none is fine, one that is typed has to look like one.
+  if (d.email.trim() && !looksLikeEmail(d.email)) e.email = "Email chưa đúng định dạng.";
 
   if (!d.provinceCode) e.provinceCode = "Chọn tỉnh / thành phố.";
   if (!d.wardCode) e.wardCode = "Chọn phường / xã.";
@@ -86,8 +93,6 @@ export function validateCheckout(d: CheckoutDraft): CheckoutErrors {
   if (!isDeliveryAvailable(d.delivery, d.provinceCode || undefined)) {
     e.delivery = "Giao nhanh chỉ có ở nội thành TP. Hồ Chí Minh.";
   }
-
-  if (!d.agreed) e.agreed = "Cần đồng ý điều khoản mua hàng trước khi đặt.";
 
   return e;
 }

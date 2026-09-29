@@ -167,6 +167,20 @@ describe("toOrder — the optional and the empty", () => {
       "c-minhanh",
     );
   });
+
+  it("reads an order placed with no email as null — the field is optional since slice B8", () => {
+    const got = toOrder(json({ state: "RECEIVED" }, { email: null }));
+    expect(got).toEqual(expected({ state: "RECEIVED" }, { email: null }));
+    expect(got.email).toBeNull();
+  });
+
+  it("refuses an email order_json() would not write: empty, not words, or no key at all", () => {
+    for (const email of ["", 7, {}, undefined]) {
+      expect(() => toOrder(json({ state: "RECEIVED" }, { email }))).toThrow(
+        "order DH-2432.email must be a non-empty string or null",
+      );
+    }
+  });
 });
 
 describe("toOrder — refuses what order_json() would never write, and says where", () => {
@@ -277,6 +291,12 @@ describe("toAdminOrders — the back office's list (slice B3a)", () => {
     expect(got[0]!.owner).toBeNull();
     expect(got[1]!.owner?.handle).toBeNull();
     expect(got[1]!.owner?.id).toBe(owner.id);
+  });
+
+  it("reads a guest's order that carries no email either (slice B8)", () => {
+    const [got] = toAdminOrders([{ order: json({ state: "RECEIVED" }, { email: null }), owner: null }]);
+    expect(got!.email).toBeNull();
+    expect(got!.owner).toBeNull();
   });
 
   it("names the field when an account is not one", () => {

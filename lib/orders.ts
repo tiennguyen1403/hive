@@ -106,12 +106,17 @@ export function transferDeadlineIso(placedAtIso: string): string {
 }
 
 /**
- * What goes in the bank's memo field, which will not take a dash.
+ * What goes in the bank's memo field, which will not take a dash: the order
+ * code without it, `DH2432`.
  *
- * The shopper is shown the order code as it reads everywhere else —
- * `DH-1494`, dash and all. The dashless form belongs to the OTHER side of the
- * transfer: when the back office matches a bank line against an order, the
- * statement it reads will have had the dash stripped by the bank.
+ * It is what the shopper is shown to type. The Feed confirmation's transfer
+ * block prints it on its "Nội dung" row, beside a copy button, exactly as the
+ * mock does (`prototype/explore/feed/confirmed.js`: `memo: "DH1507"` for
+ * `DH-1507`; `order.js`: the code with its dash dropped). Everywhere else the
+ * code keeps its dash — the receipt's title, the order lists, the lookup —
+ * and the back office matches a bank line against an order by this same
+ * dashless form (`lib/order-notes.ts`), since the memo is what the bank
+ * statement carries.
  */
 export function transferReference(code: string): string {
   return code.replace(/-/g, "");

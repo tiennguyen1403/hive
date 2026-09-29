@@ -119,10 +119,10 @@ const looksLikeEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
 /**
  * What is wrong with the form, field by field, in the mock's words
  * (`checkout.js`: `rules`). The rules are the app's: a phone number is read the
- * way `normalisePhone` reads one (spaces, dots, dashes, +84), and the e-mail
- * is REQUIRED — the mock marks it "tuỳ chọn", but `place_order()` refuses an
- * order without one, so the field asks for it ("Nhập email") rather than
- * letting the order fail after the press.
+ * way `normalisePhone` reads one (spaces, dots, dashes, +84). The e-mail is
+ * "tuỳ chọn", as in the mock: none is fine, and one that is typed must look
+ * like an address ("Email chưa đúng"). `place_order()` stores none as NULL
+ * since slice B8.
  */
 export function feedFormErrors(c: FeedContact): Partial<Record<FeedField, string>> {
   const e: Partial<Record<FeedField, string>> = {};
@@ -131,8 +131,7 @@ export function feedFormErrors(c: FeedContact): Partial<Record<FeedField, string
   if (!phone) e.phone = "Nhập số điện thoại";
   else if (!phoneDigits(phone)) e.phone = "Số điện thoại gồm 10 số, bắt đầu bằng 0";
   const email = c.email.trim();
-  if (!email) e.email = "Nhập email";
-  else if (!looksLikeEmail(email)) e.email = "Email chưa đúng";
+  if (email && !looksLikeEmail(email)) e.email = "Email chưa đúng";
   if (!c.provinceCode) e.province = "Chọn tỉnh / thành";
   else if (!c.wardCode) e.ward = "Chọn phường / xã";
   if (!c.street.trim()) e.street = "Nhập số nhà, đường";

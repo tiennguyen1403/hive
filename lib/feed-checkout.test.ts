@@ -76,10 +76,10 @@ describe("feedFormErrors (checkout.js rules)", () => {
 
   it("names every missing field in the mock's words, the ward only once a province is chosen", () => {
     const blank: FeedContact = { name: "", phone: "", email: "", provinceCode: "", wardCode: "", street: "" };
+    // No e-mail among them: the field is "tuỳ chọn" (slice B8).
     expect(feedFormErrors(blank)).toEqual({
       name: "Nhập họ và tên",
       phone: "Nhập số điện thoại",
-      email: "Nhập email",
       province: "Chọn tỉnh / thành",
       street: "Nhập số nhà, đường",
     });
@@ -96,9 +96,11 @@ describe("feedFormErrors (checkout.js rules)", () => {
     expect(feedFormErrors({ ...GOOD, phone: "0938.571.204" }).phone).toBeUndefined();
   });
 
-  it("asks for an e-mail, and one that looks like one (place_order refuses an order without)", () => {
+  it("takes no e-mail, as the mock does (slice B8), but refuses one that is typed and is not one", () => {
+    expect(feedFormErrors({ ...GOOD, email: "" })).toEqual({});
+    expect(feedFormErrors({ ...GOOD, email: "  " })).toEqual({});
     expect(feedFormErrors({ ...GOOD, email: "khoa@" }).email).toBe("Email chưa đúng");
-    expect(feedFormErrors({ ...GOOD, email: "  " }).email).toBe("Nhập email");
+    expect(feedFormErrors({ ...GOOD, email: " khoa@example.com " }).email).toBeUndefined();
   });
 
   it("finds the first wrong field in the page's order", () => {

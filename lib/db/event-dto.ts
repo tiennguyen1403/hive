@@ -72,7 +72,10 @@ interface EventBase {
   /** ISO with `+07:00`, to the second — `lib/datetime.ts` reads the text. */
   at: string;
   actorRole: ActorRole;
-  /** The email of whoever acted; "" for the system. */
+  /**
+   * The email of whoever acted; "" for the system, and for a guest who placed
+   * an order without one (slice B8) — the role still says "customer".
+   */
   actor: string;
 }
 

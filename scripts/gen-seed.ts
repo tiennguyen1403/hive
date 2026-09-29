@@ -45,7 +45,7 @@ const tsOrNull = (iso: string | null | undefined): string =>
 /** SQL `true` / `false` — Postgres accepts the bare words. */
 const bool = (value: boolean): string => (value ? "true" : "false");
 
-/** A string that may be absent (`Order.promo`). */
+/** A string that may be absent (`Order.promo`, `Order.email` since slice B8). */
 const strOrNull = (value: string | null | undefined): string =>
   value === null || value === undefined ? "null" : str(value);
 
@@ -394,7 +394,10 @@ export function renderSeedSql(
       orders.map((o) => [
         str(o.code),
         str(o.customerId),
-        str(o.email),
+        // Every sample order has one; `seed_orders.email` stays `not null`, so
+        // a fixture that ever dropped one would stop `db reset` rather than
+        // slip through (`20260927140000_optional_email.sql`).
+        strOrNull(o.email),
         str(o.shipTo.recipient),
         str(phone10(o.shipTo.phone, o.code)),
         str(o.shipTo.line),

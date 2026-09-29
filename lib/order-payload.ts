@@ -51,7 +51,8 @@ export interface PlaceOrderInput {
   lines: PlaceOrderLine[];
   recipient: string;
   phone: string;
-  email: string;
+  /** Null when none was typed — optional since slice B8; the column stores it so. */
+  email: string | null;
   provinceCode: string;
   wardCode: string;
   line: string;
@@ -216,6 +217,9 @@ export function readPlaceOrderPayload(raw: unknown): PayloadCheck {
     return { ok: false, message: placeFailureMessage("BAD_INPUT") };
   }
 
+  // No `agreed` (slice B8): the Feed checkout has no box to tick, and a check
+  // for one would record an agreement nobody gave. The e-mail is optional, and
+  // like the note and the code, anything but a string reads as none.
   const draft: CheckoutDraft = {
     recipient: text(d.recipient),
     phone: text(d.phone),
@@ -226,7 +230,6 @@ export function readPlaceOrderPayload(raw: unknown): PayloadCheck {
     note: text(d.note),
     delivery,
     payment,
-    agreed: d.agreed === true,
   };
 
   const errors = validateCheckout(draft);
@@ -247,7 +250,8 @@ export function readPlaceOrderPayload(raw: unknown): PayloadCheck {
       recipient: draft.recipient.trim(),
       // Ten digits, however it was typed — the only form the column takes.
       phone: normalisePhone(draft.phone),
-      email: draft.email.trim(),
+      // None typed is none: `place_order()` stores it as NULL.
+      email: draft.email.trim() || null,
       provinceCode: draft.provinceCode,
       wardCode: draft.wardCode,
       line: draft.line.trim(),

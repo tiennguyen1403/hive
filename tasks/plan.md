@@ -2459,3 +2459,27 @@ Người dùng cho phép, phiên chính dừng nó để agent dựng và chụp
     sau lần bấm đầu, hoàn tác trả cả dòng hết size đều đã theo mock.
 - Trạng thái mock không vẽ giữ chữ ngắn nhất: "Đang tải…", "Không tải được", "Đang đặt hàng…", "Chưa có đơn nào vừa đặt",
   "Mã đang tạm dừng", "Mã chưa tới ngày dùng được".
+
+**Lát B8 ĐẠT (29/09/2026, `backend-implementer`, phiên chính duyệt).** Brief `tasks/briefs/backend-b8.md`. Agent dừng giữa chừng
+vì hết hạn mức tuần (27/09), chạy tiếp ngày 29/09.
+- **Đã làm:**
+  - migration `20260927140000_optional_email.sql`: `orders.email` nhận NULL; `place_order` v6. Phiên chính diff thân hàm với
+    v5: chỉ khác bốn chỗ về email. Để trống thì lưu NULL; có nhập thì vẫn kiểm dạng như cũ;
+  - khách vãng lai không email: `ORDER_PLACED` ghi `actor = ''`, role vẫn `customer`, theo quy ước "người không gọi tên được"
+    của nhật ký. Không ghi số điện thoại vào bảng chỉ-thêm;
+  - server không còn đòi `agreed`; `CheckoutDraft.agreed` thành tuỳ chọn để màn v3 mồ côi vẫn biên dịch;
+  - `Order.email: string | null`; DTO nhận null, từ chối `""`;
+  - thanh toán Feed: nhãn "Email tuỳ chọn" đúng thẻ của mock, bỏ lỗi "Nhập email", giữ "Email chưa đúng", không gửi `agreed`;
+  - chú giải `transferReference` khớp nội dung khách thấy, `DH2432` không gạch;
+  - `seed_orders.email` giữ `not null`, vì đơn mẫu nào cũng có email.
+- **Kiểm:** 1719/1719 test, 221/221 test DB, typecheck sạch; phiên chính chạy lại cả ba. Build sạch (agent). Trên 3200, khách
+  chưa đăng nhập đặt hai đơn không email (390 và 1280). Màn đặt hàng xong, tra cứu và quản trị (danh sách, chi tiết, khách
+  hàng, nhật ký, CSV) đều không có dòng rỗng hay chữ null. Không màn nào in email của đơn, nên chỗ duy nhất vỡ khi gặp null là
+  DTO, đã sửa.
+- **Deploy:** như B6 và B7, đẩy code trước, rồi `db push` ngay khi Vercel READY. Trong khoảng giữa, hàm cũ trên hosted từ chối
+  đơn không email. B8 không cần nạp lại seed. Kiểm: `orders.email` có `is_nullable = YES`.
+- **Còn mở:**
+  - bảng Đơn hàng quản trị tràn ngang ở 1280 khi tên khách dài. Lỗi có từ trước: ngay với dữ liệu mẫu, bảng đã rộng hơn thẻ
+    10px. Để vòng mock quản trị;
+  - khi có gửi mail (QĐ-35), nút "Gửi lại xác nhận" phải ẩn với đơn không email;
+  - câu lỗi tra cứu "Kiểm lại mã trong email hoặc màn xác nhận." (`lib/lookup.ts`) còn nhắc email: sửa ở lát 4.

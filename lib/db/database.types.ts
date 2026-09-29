@@ -196,7 +196,7 @@ export type Database = {
           delivery: Database["public"]["Enums"]["delivery_method"]
           discount_vnd: number
           due_at: string | null
-          email: string
+          email: string | null
           line: string
           note: string
           paid_at: string | null
@@ -225,7 +225,7 @@ export type Database = {
           delivery: Database["public"]["Enums"]["delivery_method"]
           discount_vnd: number
           due_at?: string | null
-          email: string
+          email?: string | null
           line: string
           note?: string
           paid_at?: string | null
@@ -254,7 +254,7 @@ export type Database = {
           delivery?: Database["public"]["Enums"]["delivery_method"]
           discount_vnd?: number
           due_at?: string | null
-          email?: string
+          email?: string | null
           line?: string
           note?: string
           paid_at?: string | null

@@ -9,7 +9,11 @@ import {
   readPlaceOrderPayload,
 } from "./order-payload";
 
-/** What checkout sends for one KHÓI in black, to a real ward in TP. HCM. */
+/**
+ * What checkout sends for one KHÓI in black, to a real ward in TP. HCM. No
+ * `agreed`: the Feed checkout has no box to tick, and since slice B8 the server
+ * asks for none.
+ */
 function payload(over: Record<string, unknown> = {}, draft: Record<string, unknown> = {}) {
   return {
     lines: [{ productId: "p-khoi", color: "black", size: "M", qty: 1 }],
@@ -23,7 +27,6 @@ function payload(over: Record<string, unknown> = {}, draft: Record<string, unkno
       note: " gọi trước 10 phút ",
       delivery: "STANDARD",
       payment: "BANK_TRANSFER",
-      agreed: true,
       ...draft,
     },
     promoCode: " dot05 ",
@@ -141,19 +144,31 @@ describe("readPlaceOrderPayload — the form, re-checked with the form's own rul
     ).toBe("Giao nhanh chỉ có ở nội thành TP. Hồ Chí Minh.");
   });
 
-  it("refuses an order whose terms were not agreed to", () => {
-    expect(refuse(payload({}, { agreed: false }))).toBe(
-      "Cần đồng ý điều khoản mua hàng trước khi đặt.",
-    );
-    // `true`, not truthy: a string "false" is not agreement.
-    expect(refuse(payload({}, { agreed: "false" }))).toBe(
-      "Cần đồng ý điều khoản mua hàng trước khi đặt.",
-    );
+  it("no longer asks for agreement (slice B8): whatever `agreed` says, or none, the order goes through", () => {
+    for (const agreed of [undefined, false, "false", true]) {
+      const got = readPlaceOrderPayload(payload({}, { agreed }));
+      expect(got.ok, String(agreed)).toBe(true);
+      // Nothing about it reaches place_order(): it records no consent.
+      expect(got.ok && Object.keys(got.input)).not.toContain("agreed");
+    }
   });
 
   it("refuses a delivery or payment method that does not exist", () => {
     expect(refuse(payload({}, { delivery: "DRONE" }))).toBe(placeFailureMessage("BAD_INPUT"));
     expect(refuse(payload({}, { payment: "CRYPTO" }))).toBe(placeFailureMessage("BAD_INPUT"));
+  });
+
+  it("sends no email when none was typed — optional since slice B8, stored as null", () => {
+    for (const email of [undefined, null, "", "   ", 42]) {
+      const got = readPlaceOrderPayload(payload({}, { email }));
+      expect(got.ok, String(email)).toBe(true);
+      expect(got.ok && got.input.email, String(email)).toBeNull();
+    }
+  });
+
+  it("refuses an email that is typed but is not one, in the form's words", () => {
+    expect(refuse(payload({}, { email: "a@b" }))).toBe("Email chưa đúng định dạng.");
+    expect(refuse(payload({}, { email: "khong-phai-email" }))).toBe("Email chưa đúng định dạng.");
   });
 
   it(`keeps the note inside the column's ${MAX_NOTE_LENGTH} characters`, () => {

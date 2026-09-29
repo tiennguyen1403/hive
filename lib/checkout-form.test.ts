@@ -8,7 +8,10 @@ import {
   type CheckoutDraft,
 } from "./checkout-form";
 
-/** A draft that passes, so each test can spoil exactly one thing. */
+/**
+ * A draft that passes, so each test can spoil exactly one thing. No `agreed`:
+ * since slice B8 nothing asks for it.
+ */
 const GOOD: CheckoutDraft = {
   recipient: "Nguyễn Văn A",
   phone: "0912345678",
@@ -19,7 +22,6 @@ const GOOD: CheckoutDraft = {
   note: "",
   delivery: "STANDARD",
   payment: "BANK_TRANSFER",
-  agreed: true,
 };
 
 describe("normalisePhone", () => {
@@ -59,10 +61,15 @@ describe("validateCheckout · who is receiving", () => {
     expect(validateCheckout({ ...GOOD, phone: "+84912345678" }).phone).toBeUndefined();
   });
 
-  it("needs an email that could receive the confirmation", () => {
-    expect(validateCheckout({ ...GOOD, email: "" }).email).toBeTruthy();
-    expect(validateCheckout({ ...GOOD, email: "a@b" }).email).toBeTruthy();
-    expect(validateCheckout({ ...GOOD, email: "không phải mail" }).email).toBeTruthy();
+  it("takes a draft with no email: the field is optional (slice B8, as the Feed mock has it)", () => {
+    expect(validateCheckout({ ...GOOD, email: "" })).toEqual({});
+    expect(validateCheckout({ ...GOOD, email: "   " })).toEqual({});
+  });
+
+  it("refuses an email that is typed but is not one", () => {
+    expect(validateCheckout({ ...GOOD, email: "a@b" }).email).toBe("Email chưa đúng định dạng.");
+    expect(validateCheckout({ ...GOOD, email: "không phải mail" }).email).toBe("Email chưa đúng định dạng.");
+    expect(validateCheckout({ ...GOOD, email: " a@example.com " }).email).toBeUndefined();
   });
 });
 
@@ -108,8 +115,10 @@ describe("validateCheckout · how it is sent and paid", () => {
     expect(validateCheckout({ ...GOOD, delivery: "EXPRESS" }).delivery).toBeUndefined();
   });
 
-  it("will not place an order without the terms ticked", () => {
-    expect(validateCheckout({ ...GOOD, agreed: false }).agreed).toBeTruthy();
+  it("asks for no terms box (slice B8): ticked, unticked or absent, the draft passes", () => {
+    expect(validateCheckout({ ...GOOD, agreed: false })).toEqual({});
+    expect(validateCheckout({ ...GOOD, agreed: true })).toEqual({});
+    expect(validateCheckout(GOOD)).toEqual({});
   });
 });
 
@@ -124,6 +133,11 @@ describe("isAddressComplete", () => {
 
   it("does not wait on the terms tickbox, which belongs to the next step", () => {
     expect(isAddressComplete({ ...GOOD, agreed: false })).toBe(true);
+  });
+
+  it("does not wait on an email either, which is optional", () => {
+    expect(isAddressComplete({ ...GOOD, email: "" })).toBe(true);
+    expect(isAddressComplete({ ...GOOD, email: "a@b" })).toBe(false);
   });
 });
 
