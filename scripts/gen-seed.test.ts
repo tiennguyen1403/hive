@@ -7,11 +7,13 @@ import {
   fixtureCustomers,
   fixtureInput,
   fixtureOrders,
+  fixtureStates,
   renderSeedSql,
 } from "./gen-seed";
 
 /** The one call every assertion below compares against. */
-const render = () => renderSeedSql(fixtureInput(), fixtureCustomers(), fixtureOrders());
+const render = () =>
+  renderSeedSql(fixtureInput(), fixtureCustomers(), fixtureOrders(), fixtureStates());
 
 /** The rows of one `insert`, as the lines of text between the header and `;`. */
 function rowsIn(sql: string, table: string): string[] {
@@ -107,6 +109,7 @@ describe("the generator itself", () => {
       },
       fixtureCustomers(),
       fixtureOrders(),
+      fixtureStates(),
     );
     expect(quoted).toContain("'KH''ÓI'");
   });
@@ -150,6 +153,7 @@ describe("the generator itself", () => {
         },
         fixtureCustomers(),
         fixtureOrders(),
+        fixtureStates(),
       );
       expect(quoted).toContain("array['Cổ bo gân 2,5 cm', 'Túi ''kangaroo''']::text[]");
     });
@@ -192,5 +196,82 @@ describe("the sample orders in the seed", () => {
   it("ends on DH-2431, the number the database carries on from", () => {
     const numbers = orderRows.map((row) => Number(codeOf(row)!.slice(3)));
     expect(Math.max(...numbers)).toBe(2431);
+  });
+});
+
+/**
+ * Slice B9: what the demo accounts keep — the first one's four saved styles,
+ * its reminder and its sizes — written into three mirrors, and nothing written
+ * the fixture does not hold.
+ */
+describe("what the demo accounts keep, in the seed", () => {
+  const sql = render();
+
+  it("writes the first account's four saved styles, newest first, each in its colour", () => {
+    expect(rowsIn(sql, "seed_favorites")).toEqual([
+      "  ('c-minhanh', 0, 'p-bui', 'black'),",
+      "  ('c-minhanh', 1, 'p-than', 'navy'),",
+      "  ('c-minhanh', 2, 'p-muoi', 'grey'),",
+      "  ('c-minhanh', 3, 'p-hoodie-tron', 'grey')",
+    ]);
+  });
+
+  it("writes its reminder for Số 06 and nobody else's", () => {
+    expect(rowsIn(sql, "seed_reminders")).toEqual(["  ('c-minhanh', 6)"]);
+  });
+
+  it("writes its sizes and all four switches on — one settings row, for it alone", () => {
+    expect(rowsIn(sql, "seed_account_settings")).toEqual([
+      "  ('c-minhanh', 'L', 'M', true, true, true, true)",
+    ]);
+  });
+
+  it("empties the three mirrors with the rest before filling them", () => {
+    const head = sql.slice(0, sql.indexOf(";\n") + 1);
+    for (const table of ["seed_favorites", "seed_reminders", "seed_account_settings"]) {
+      expect(head).toContain(`public.${table},`);
+    }
+  });
+
+  /** The fixture with the first account's state replaced by `patch`. */
+  const withState = (patch: object) => {
+    const states = new Map(fixtureStates());
+    const first = states.get("c-minhanh" as never)!;
+    states.set("c-minhanh" as never, { ...first, ...patch });
+    return () => renderSeedSql(fixtureInput(), fixtureCustomers(), fixtureOrders(), states);
+  };
+
+  it("refuses a saved style the catalogue does not have", () => {
+    const run = withState({ favorites: [{ productId: "p-khong-co", color: "black", savedAt: null }] });
+    expect(run).toThrow(/p-khong-co\) is not in the catalogue/);
+  });
+
+  it("refuses a colour the style is not made in", () => {
+    const run = withState({ favorites: [{ productId: "p-bui", color: "navy", savedAt: null }] });
+    expect(run).toThrow(/has no colour navy/);
+  });
+
+  it("refuses the same style saved twice", () => {
+    const bui = { productId: "p-bui", color: "black", savedAt: null };
+    expect(withState({ favorites: [bui, bui] })).toThrow(/is saved twice/);
+  });
+
+  it("refuses a moment on a saved style — the mirror has nowhere to put one", () => {
+    const run = withState({
+      favorites: [{ productId: "p-bui", color: "black", savedAt: "2026-09-18T12:00:00+07:00" }],
+    });
+    expect(run).toThrow(/carries a moment/);
+  });
+
+  it("refuses a reminder for an issue the fixture does not have", () => {
+    expect(withState({ reminders: [9] })).toThrow(/issue 9, which the fixture does not have/);
+  });
+
+  it("refuses a state kept by somebody who is not a demo account", () => {
+    const states = new Map(fixtureStates());
+    states.set("c-nobody" as never, states.get("c-minhanh" as never)!);
+    expect(() =>
+      renderSeedSql(fixtureInput(), fixtureCustomers(), fixtureOrders(), states),
+    ).toThrow(/c-nobody: keeps a state but is not a demo account/);
   });
 });

@@ -17,8 +17,10 @@ import type { Database } from "./database.types";
  *   (d) two callers racing for the last token: exactly one gets it;
  *   (e) `tidy_rate_hits()` forgets exactly the windows over two days old and
  *       the buckets it is told to;
- *   (f) the eleven buckets of `lib/rate-limit.ts` are the eleven the table
- *       and the function accept, and bad arguments are `BAD_INPUT`;
+ *   (f) the twelve buckets of `lib/rate-limit.ts` are the twelve the table
+ *       and the function accept (`keep` since slice B9,
+ *       `20260929120000_account_state.sql`), and bad arguments are
+ *       `BAD_INPUT`;
  *   (g) nobody holding the publishable key — signed in or not — calls either
  *       function or reads, writes the table.
  *
@@ -314,7 +316,7 @@ describe("(e) tidy_rate_hits()", () => {
 });
 
 // ───────────────────────────────────────── (f) the buckets, the arguments
-describe("(f) the eleven buckets, and arguments that are not", () => {
+describe("(f) the twelve buckets, and arguments that are not", () => {
   it("accepts every bucket of lib/rate-limit.ts with its own rule", async () => {
     const s = subject();
     for (const bucket of RATE_BUCKETS) {

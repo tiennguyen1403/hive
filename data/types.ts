@@ -257,6 +257,59 @@ export interface Customer {
   joinedAt: string;
 }
 
+// ─────────────────────────────────────────────────── what an account keeps
+// Slice B9. Four things the signed-in shopper keeps — saved styles, issue
+// reminders, "Size của tôi" and the notification switches — which lived in
+// `localStorage` until the Feed round moved them onto the account
+// (`supabase/migrations/20260929120000_account_state.sql`). `getMyState()`
+// (`lib/db/my-state.ts`) reads all four at once, and every write answers with
+// the whole of it again.
+
+/**
+ * The four switches under "Nhận thông báo về", by the Feed mock's own keys
+ * (`notifications.js`, PREFS): an order moving, a new issue, a saved style
+ * running low, a code about to expire. All four start on.
+ */
+export const NOTIFY_KEYS = ["order", "drop", "wishlist", "promo"] as const;
+export type NotifyKey = (typeof NOTIFY_KEYS)[number];
+export type NotifySwitches = Record<NotifyKey, boolean>;
+
+/** "Size của tôi" has two: one for tops (áo) and one for trousers (quần). */
+export const SIZE_SLOTS = ["top", "bottom"] as const;
+export type SizeSlot = (typeof SIZE_SLOTS)[number];
+
+/**
+ * Null is "not set" — the honest default, since a shop that guesses a size is
+ * a shop that adds the wrong one to a cart.
+ */
+export type MySizes = Record<SizeSlot, Size | null>;
+
+/**
+ * One saved style: which one, in which of its colours, and when.
+ *
+ * `savedAt` is null when the moment is unknown: the styles the demo seed puts
+ * on the first demo account were never saved by anybody at any recorded
+ * instant (the mock lists them without one), in the same way `WishEntry.at`
+ * in `lib/wishlist.ts` is absent on an entry older than the stamp.
+ */
+export interface Favorite {
+  productId: ProductId;
+  color: ColorKey;
+  savedAt: string | null;
+}
+
+export interface MyState {
+  /** Newest first, as the list reads. */
+  favorites: Favorite[];
+  /**
+   * The issues this account asked to be told about, ascending — only those
+   * that have not opened yet; an issue that has opened drops out by itself.
+   */
+  reminders: number[];
+  sizes: MySizes;
+  notify: NotifySwitches;
+}
+
 // ──────────────────────────────────────────────────────────────────── orders
 export type PaymentMethod = "BANK_TRANSFER" | "CARD" | "COD";
 

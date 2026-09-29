@@ -26,16 +26,18 @@ import { createHmac } from "node:crypto";
  * a demo that is fine: the point is a ceiling on sustained abuse, not a smooth
  * rate.
  *
- * The numbers are the brief's (B4b §2.5) and are deliberately NOT environment
- * variables: a limit that a deploy can switch off is a limit nobody can rely
- * on. `lib/rate-limit.test.ts` restates the table by hand.
+ * The numbers are the brief's (B4b §2.5, and `keep` from the review of slice
+ * B9) and are deliberately NOT environment variables: a limit that a deploy
+ * can switch off is a limit nobody can rely on. `lib/rate-limit.test.ts`
+ * restates the table by hand.
  */
 
 /**
- * The eleven buckets. `public.rate_hits.bucket` checks the same eleven, and
+ * The twelve buckets. `public.rate_hits.bucket` checks the same twelve, and
  * `take_rate()` refuses any other name as `BAD_INPUT` — three lists that must
  * agree, which `lib/db/rate-limit.dbtest.ts` proves by calling `take_rate()`
- * with every name here.
+ * with every name here. `keep` joined at slice B9
+ * (`20260929120000_account_state.sql`).
  */
 export const RATE_BUCKETS = [
   "order_place",
@@ -44,6 +46,7 @@ export const RATE_BUCKETS = [
   "sign_up",
   "password",
   "account",
+  "keep",
   "admin",
   "admin_create",
   "upload",
@@ -68,7 +71,7 @@ const HOUR = 3_600;
 const DAY = 86_400;
 
 /**
- * B4b §2.5, row for row. Where each one is taken:
+ * B4b §2.5, row for row, and `keep` since slice B9. Where each one is taken:
  *
  *   order_place   `placeOrderAction`, one per order
  *   order_units   `placeOrderAction`, one per PIECE — the cost is the order's
@@ -76,7 +79,13 @@ const DAY = 86_400;
  *   sign_in       `signIn`, `demoSignIn`, `demoAdminSignIn`
  *   sign_up       `signUp`
  *   password      `changePassword`
- *   account       the four address-book writes and `cancelOrderAction`
+ *   account       the four address-book writes, `cancelOrderAction`, and
+ *                 since slice B9 Hồ sơ's `updateProfileAction`
+ *   keep          the six keep writes of `lib/actions/my-state.ts` (a heart,
+ *                 its undo, "Nhắc tôi", a size, a switch), and only those:
+ *                 taps come many at a time, and sharing `account`'s thirty
+ *                 would let a run of hearts — or a few shoppers behind one
+ *                 NAT — lock the address book too
  *   admin         every action of `lib/actions/admin.ts` and `catalog-admin.ts`
  *   admin_create  `createProduct`, `addDrop`, `addTeaser`, `addPromo`
  *   upload        `uploadProductPhoto`, per visitor…
@@ -91,6 +100,7 @@ export const RATE_RULES: Readonly<Record<RateBucket, RateRule>> = {
   sign_up: { limit: 3, windowSeconds: HOUR, per: "visitor" },
   password: { limit: 5, windowSeconds: 10 * MINUTE, per: "visitor" },
   account: { limit: 30, windowSeconds: 10 * MINUTE, per: "visitor" },
+  keep: { limit: 120, windowSeconds: 10 * MINUTE, per: "visitor" },
   admin: { limit: 120, windowSeconds: 10 * MINUTE, per: "visitor" },
   admin_create: { limit: 20, windowSeconds: HOUR, per: "visitor" },
   upload: { limit: 40, windowSeconds: HOUR, per: "visitor" },

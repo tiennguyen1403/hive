@@ -9,7 +9,8 @@
 -- supabase/config.toml). It fills the seed_* mirrors, then reset_demo()
 -- rebuilds the live tables from them. The eight demo accounts only reach
 -- `profiles` once `npm run seed:users` has created them in auth.users, and
--- the sample orders only reach an account after that.
+-- the sample orders, the saved styles, the reminders and the sizes only
+-- reach an account after that.
 
 truncate table
   public.seed_order_lines,
@@ -20,6 +21,9 @@ truncate table
   public.seed_teasers,
   public.seed_promotions,
   public.seed_drops,
+  public.seed_favorites,
+  public.seed_reminders,
+  public.seed_account_settings,
   public.seed_addresses,
   public.seed_customers;
 
@@ -371,6 +375,18 @@ insert into public.seed_addresses (handle, position, recipient, phone, line, pro
   ('c-baodang', 0, 'Đặng Quốc Bảo', '0869502714', '31 Đại lộ Bình Dương', '29', '71101038', 'Nhà', true),
   ('c-tubui', 0, 'Bùi Thanh Tú', '0794116380', '207 Nguyễn Văn Cừ', '33', '81519001', 'Nhà', true),
   ('c-linhhoang', 0, 'Hoàng Mỹ Linh', '0385907264', '6 Lê Đại Hành', '01', '10111023', 'Nhà', true);
+
+insert into public.seed_favorites (handle, position, product_id, color) values
+  ('c-minhanh', 0, 'p-bui', 'black'),
+  ('c-minhanh', 1, 'p-than', 'navy'),
+  ('c-minhanh', 2, 'p-muoi', 'grey'),
+  ('c-minhanh', 3, 'p-hoodie-tron', 'grey');
+
+insert into public.seed_reminders (handle, drop_no) values
+  ('c-minhanh', 6);
+
+insert into public.seed_account_settings (handle, size_top, size_bottom, notify_order, notify_drop, notify_wishlist, notify_promo) values
+  ('c-minhanh', 'L', 'M', true, true, true, true);
 
 insert into public.seed_orders (code, customer_handle, email, recipient, phone, line, province_code, ward_code, note, delivery, payment, shipping_fee_vnd, cod_fee_vnd, discount_vnd, promo_code, placed_at, state, due_at, paid_at, shipped_at, tracking_code, delivered_at, cancelled_at, cancel_reason) values
   ('DH-2210', 'c-minhanh', 'minhanh@email.com', 'Trần Minh Anh', '0912345678', '24 Nguyễn Thị Minh Khai', '29', '70101063', '', 'STANDARD', 'BANK_TRANSFER', 30000, 0, 0, null, '2026-03-09T20:30:00+07:00'::timestamptz, 'DELIVERED', null, null, null, null, '2026-03-14T10:05:00+07:00'::timestamptz, null, null),

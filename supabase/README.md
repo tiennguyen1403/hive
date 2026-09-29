@@ -21,7 +21,8 @@ and only the admin API can make one. `db reset` fills the `seed_*` mirrors and
 calls `reset_demo(demo_anchor())`, which quietly skips every demo account that
 does not exist yet — and files the twenty-four sample orders under nobody;
 `seed:users` creates the accounts and calls `reset_demo(demo_anchor())` again,
-which is when their profiles, addresses and sample orders appear under them.
+which is when their profiles, addresses, sample orders and — for the first
+one — saved styles, reminder and sizes appear under them.
 
 Both are idempotent. `npm run seed:users` twice prints `0 created, 9 already
 there (of 9)` the second time.
@@ -161,13 +162,48 @@ cells, a promotion, products.
 refusals, the events, `sold_out_at` both ways, and a reset back to the
 fixture after all of it.
 
+## What an account keeps (slice B9)
+
+Saved styles (`favorites`), issue reminders (`reminders`), "Size của tôi" and
+the four notification switches (`account_settings`) belong to the account
+(`20260929120000_account_state.sql`). An account reads its own rows through
+"read own" policies and writes them only through the functions below, which
+take the owner from `auth.uid()`; no role the API hands out may insert, update
+or delete a row directly, `anon` reaches nothing, and the manager reads none of
+it. All are granted to `authenticated` only.
+
+| Function | What it does |
+|---|---|
+| `my_state()` | `{ favorites, reminders, sizes, notify }` for the caller, or `null` signed out: saved styles newest first (only styles the caller can see, by `catalog_snapshot()`'s rule), reminders of issues still to open, the two sizes, the four switches (a missing row reads as no size, all on) |
+| `save_favorite(product_id, color?)` | one row per style; the colour must be one of the style's (`product_colors` is referenced), none takes the first with anything left; saving what is saved changes nothing |
+| `unsave_favorite(product_id)` | stamps `removed_at` and answers `{ removed, state }` — the row is kept so undoing needs nothing from the browser |
+| `restore_favorite(product_id)` | clears the stamp: the style is back in its place (`seq` decides the order, higher is newer); `NOT_FOUND` with nothing to undo |
+| `set_reminder(drop_no, on)` | on only while the issue has not opened (`NOT_UPCOMING`), off at any time |
+| `set_my_size(slot, size?)` | `top` or `bottom`; no size forgets it |
+| `set_my_notify(key, on)` | `order`, `drop`, `wishlist`, `promo` |
+| `update_my_profile(name, phone)` | name trimmed, 2–60 characters; phone digits, spaces and dots, stored as ten digits starting with 0 — the only way a shopper changes `profiles`, so the e-mail and the handle do not move |
+
+Each write answers with `my_state()` after the change (`update_my_profile`
+with `{ name, phone }`), and refuses with `SIGNED_OUT`, `BAD_INPUT`,
+`NOT_UPCOMING` or `NOT_FOUND` (`P0001`). The first demo account's four saved
+styles carry no `saved_at`: the fixture has no moment for them.
+
+`lib/db/my-state.dbtest.ts` checks row level security both ways, every
+refusal, "Bỏ lưu" then "Hoàn tác", a reminder dropping out once its issue has
+opened, the profile's two fields, and the reset.
+
 ## Resetting
 
 `select public.reset_demo(public.demo_anchor());` rebuilds the catalogue from
 the `seed_*` mirrors, puts every demo account's profile and address book back
-to the fixture — including deleting whatever that account added by hand —
-replaces every order with the twenty-four sample orders, setting `order_seq`
-so the next order is `DH-2432` again, and starts the log again: one event per
+to the fixture — including deleting whatever that account added by hand — and
+its saved styles, reminders and settings too (slice B9: the first account gets
+the mock's four styles, Số 06, L/M; all eight get the four switches on). An
+account somebody made themselves keeps its address book, saved styles,
+reminders and settings, except a saved style or reminder pointing at a style,
+colour or issue the reset did not bring back. The reset replaces every order
+with the twenty-four sample orders, setting `order_seq` so the next order is
+`DH-2432` again, and starts the log again: one event per
 moment the sample records, then one `DEMO_RESET`. Stock and codes'
 `used_count` come from the seed, which already accounts for the sample orders.
 Every order gets a fresh `access_key`, so a guest's receipt cookie from before

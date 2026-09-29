@@ -2483,3 +2483,70 @@ vì hết hạn mức tuần (27/09), chạy tiếp ngày 29/09.
     10px. Để vòng mock quản trị;
   - khi có gửi mail (QĐ-35), nút "Gửi lại xác nhận" phải ẩn với đơn không email;
   - câu lỗi tra cứu "Kiểm lại mã trong email hoặc màn xác nhận." (`lib/lookup.ts`) còn nhắc email: sửa ở lát 4.
+
+**29/09, lát 0–2 và B6–B8 LÊN ONLINE.** Người dùng chọn push ngay; phiên chính push `f9c560e..e6b128c` (6 commit). Vercel dựng
+xong trong khoảng 35 giây (trạng thái commit trên GitHub; Vercel MCP bị 403 với team `tiennguyen1403s-projects`).
+- Người dùng gõ `db push --linked --dry-run`, thấy đúng 3 migration, rồi `db push --linked --yes`, rồi nạp seed bằng
+  `db query --linked -f supabase/seed.sql`.
+- Câu kiểm gộp dài bị ngắt dòng khi chép và tới máy chủ bị cụt. Phiên chính chạy thay (chỉ đọc) và được: 10 mẫu có chi tiết,
+  45 dòng, `email_nullable = YES`, `place_order_v6 = true`, 24/24 đơn còn gắn tài khoản. Lần sau đưa câu kiểm vào tệp, hoặc
+  phiên chính tự chạy.
+- Kiểm trên demo:
+  - `/products/s05-khoi` có đủ 4 dòng chi tiết;
+  - playwright với cấu hình riêng chỉ mở origin demo: khách chưa đăng nhập đặt **DH-2432** không email, chuyển khoản;
+  - màn đặt hàng xong và tra cứu đúng, không có null;
+  - 0 lỗi console, 0 request ra ngoài.
+  - Đơn thử tự huỷ sau 12 giờ, lần reset kế tiếp sẽ xoá.
+- Tới lát 3–4, demo trộn hai giao diện: phần mua theo Feed; tài khoản, tra cứu, Hỏi đáp và quản trị vẫn là v3.
+
+**Lát 3: kế hoạch (29/09/2026).** Người dùng: "okay giúp mình tiếp tục đi". Ba lượt, chạy **lần lượt**, vì chung bản dựng
+`.next`, cơ sở dữ liệu cục bộ và máy 3200:
+1. **B9** (`tasks/briefs/backend-b9.md`): yêu thích, nhắc mở bán, Size của tôi (áo, quần), bốn công tắc thông báo lưu theo
+   tài khoản; sửa tên và số điện thoại; một lần đọc gộp cho layout gốc; `c-minhanh` có sẵn dữ liệu như khách mẫu của mock.
+2. **3a** (`tasks/briefs/v4-lat-3a.md`): Đăng nhập, Tạo tài khoản, Quên mật khẩu; Đơn hàng có lọc; chi tiết đơn; Địa chỉ;
+   khung tài khoản có menu trên máy tính.
+3. **3b:** Tôi, Hồ sơ, Yêu thích; tim, Nhắc tôi, size nhớ trên mọi trang chuyển sang tài khoản. Brief viết sau khi có chữ ký
+   action của B9.
+
+- **Người dùng chọn (29/09):** trang Đăng nhập giữ ô "Tài khoản thử" trên form (email khách mẫu, email quản trị, mật khẩu, hai
+  nút "Đăng nhập thử" và "Vào quản trị thử"), theo kiểu Feed.
+- **Phiên chính quyết (báo người dùng cùng xung đột khi xong lát):**
+  - Quên mật khẩu (QĐ-35): form như mock. Bấm xong ghi thật: "Chưa gửi được liên kết đặt lại mật khẩu tới {email}. Tính năng
+    này đang chuẩn bị." Không dấu tích, không "Gửi lại".
+  - "Đổi trả tới dd/mm" tạm trỏ `/returns` cho tới luồng đổi trả (QĐ-34).
+  - Trang tài khoản lúc chưa đăng nhập vẽ lời mời tại chỗ, như mock, thay vì chuyển sang `/sign-in`.
+  - Bỏ ô "báo khi mở Số mới" ở form tạo tài khoản, theo tiền lệ lát 2: bỏ tính năng v3 mà Feed không có.
+  - Nhắc mở bán không lưu kênh. Chỉ có "Trong app" (QĐ-35), nên thẻ Nhắc ghi "qua app".
+  - Danh sách yêu thích, nhắc và size trên trình duyệt không nhập vào tài khoản.
+  - Email ở Hồ sơ chỉ đọc (QĐ-35).
+- **Xung đột đã biết, làm theo mock rồi hỏi người dùng:**
+  - "Email này đã có tài khoản" trái QĐ-15 (không tiết lộ email đã đăng ký);
+  - mật khẩu chỉ cần 8 ký tự, bỏ luật "có cả chữ và số" của v3.
+
+**Lát B9 ĐẠT (29/09/2026, `backend-implementer`, phiên chính duyệt).** Brief `tasks/briefs/backend-b9.md`.
+- **Migration** `20260929120000_account_state.sql`:
+  - Bảng `favorites`, `reminders`, `account_settings` cùng ba bảng mirror `seed_*`. RLS chỉ đọc dòng của mình; ghi qua 7 hàm
+    `security definer`; `anon` không được gì.
+  - Hàm đọc `my_state()`.
+  - `reset_demo` v7: giữ yêu thích và nhắc của mọi tài khoản qua lần dựng lại catalogue, rồi trả tài khoản mẫu về seed.
+  - Đóng đường UPDATE thẳng vào `profiles`, để email và handle chỉ đọc ngay ở tầng DB.
+  - Thêm bucket tần suất `keep`.
+- **Yêu thích:** bỏ lưu đóng dấu `removed_at` chứ không xoá dòng, nên Hoàn tác về đúng chỗ cũ mà không phải tin dữ liệu trình
+  duyệt gửi lên. Lưu lại một mẫu đã bỏ thì nó lên đầu danh sách. Chỉ lưu được mẫu mà catalogue cho người đó thấy.
+- **Mã:**
+  - `getMyState()` trả `MyState` (`favorites` mới nhất trước, `reminders` các Số còn sắp mở, `sizes` top/bottom, `notify`
+    bốn khoá), hoặc `null` khi chưa đăng nhập;
+  - 6 action ở `lib/actions/my-state.ts`, mỗi cái trả `KeepResult` với `state` mới. `unsaveFavoriteAction` trả thêm
+    `removed`;
+  - `updateProfileAction` ở `lib/actions/profile.ts`, chữ lỗi của mock, tên tối đa 60 ký tự;
+  - `c-minhanh` có BỤI đen, THAN navy, MUỐI xám, HOODIE TRƠN xám, nhắc Số 06, áo L, quần M.
+- **Phiên chính sửa sau duyệt:** sáu action giữ-trạng-thái dùng bucket riêng `keep` (120 lượt / 10 phút / người xem), không
+  chung `account` (30 lượt) với sổ địa chỉ. Bấm tim nhiều, hoặc nhiều người chung một IP, sẽ không làm sổ địa chỉ bị chặn.
+  `updateProfileAction` vẫn ở `account`.
+- **Kiểm:** 1764/1764 test, 247/247 test DB, typecheck sạch (phiên chính chạy lại). Build sạch. Phiên chính diff `take_rate`
+  với bản B4b: chỉ thêm `'keep'`. Màn `/account` trùng từng pixel với bản `e6b128c`.
+- **Deploy:** B9 riêng thì code hay DB trước đều được. Từ lát 3b, **DB phải lên trước code**: `db push`, nạp lại seed, rồi
+  push code.
+- **Còn mở:**
+  - `tasks/backend.md` §9 thêm B9 và bucket `keep`; §10 dòng "yêu thích là tiện ích thiết bị" nay sai;
+  - yêu thích hoặc nhắc trỏ tới mẫu hay Số do quản trị thêm sẽ mất sau lần reset.

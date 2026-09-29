@@ -17,9 +17,9 @@ import {
  * pieces around them: whose request it is, what that visitor is called in the
  * counter table, and what the screen says when the answer is "not now".
  *
- * The table below is the brief's §2.5, restated on purpose rather than read
- * from the module: a number changed in `lib/rate-limit.ts` has to change here
- * too, by hand, or this fails.
+ * The table below is the brief's §2.5 — plus `keep`, from the review of slice
+ * B9 — restated on purpose rather than read from the module: a number changed
+ * in `lib/rate-limit.ts` has to change here too, by hand, or this fails.
  */
 const TABLE: Record<RateBucket, { limit: number; windowSeconds: number; per: "visitor" | "everyone" }> = {
   order_place: { limit: 5, windowSeconds: 10 * 60, per: "visitor" },
@@ -28,6 +28,7 @@ const TABLE: Record<RateBucket, { limit: number; windowSeconds: number; per: "vi
   sign_up: { limit: 3, windowSeconds: 3600, per: "visitor" },
   password: { limit: 5, windowSeconds: 10 * 60, per: "visitor" },
   account: { limit: 30, windowSeconds: 10 * 60, per: "visitor" },
+  keep: { limit: 120, windowSeconds: 10 * 60, per: "visitor" },
   admin: { limit: 120, windowSeconds: 10 * 60, per: "visitor" },
   admin_create: { limit: 20, windowSeconds: 3600, per: "visitor" },
   upload: { limit: 40, windowSeconds: 3600, per: "visitor" },
@@ -36,10 +37,10 @@ const TABLE: Record<RateBucket, { limit: number; windowSeconds: number; per: "vi
 };
 
 describe("RATE_RULES", () => {
-  it("has exactly the eleven buckets of the brief, no more", () => {
+  it("has exactly the twelve buckets — B4b's eleven and B9's `keep` — no more", () => {
     expect([...RATE_BUCKETS].sort()).toEqual(Object.keys(TABLE).sort());
     expect(Object.keys(RATE_RULES).sort()).toEqual(Object.keys(TABLE).sort());
-    expect(RATE_BUCKETS).toHaveLength(11);
+    expect(RATE_BUCKETS).toHaveLength(12);
   });
 
   it("matches the table, bucket by bucket", () => {

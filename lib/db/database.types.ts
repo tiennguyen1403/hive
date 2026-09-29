@@ -34,6 +34,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_settings: {
+        Row: {
+          notify_drop: boolean
+          notify_order: boolean
+          notify_promo: boolean
+          notify_wishlist: boolean
+          profile_id: string
+          size_bottom: Database["public"]["Enums"]["garment_size"] | null
+          size_top: Database["public"]["Enums"]["garment_size"] | null
+        }
+        Insert: {
+          notify_drop?: boolean
+          notify_order?: boolean
+          notify_promo?: boolean
+          notify_wishlist?: boolean
+          profile_id: string
+          size_bottom?: Database["public"]["Enums"]["garment_size"] | null
+          size_top?: Database["public"]["Enums"]["garment_size"] | null
+        }
+        Update: {
+          notify_drop?: boolean
+          notify_order?: boolean
+          notify_promo?: boolean
+          notify_wishlist?: boolean
+          profile_id?: string
+          size_bottom?: Database["public"]["Enums"]["garment_size"] | null
+          size_top?: Database["public"]["Enums"]["garment_size"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_settings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       addresses: {
         Row: {
           id: string
@@ -137,6 +175,48 @@ export type Database = {
           promo_code?: string | null
         }
         Relationships: []
+      }
+      favorites: {
+        Row: {
+          color: Database["public"]["Enums"]["color_key"]
+          product_id: string
+          profile_id: string
+          removed_at: string | null
+          saved_at: string | null
+          seq: number
+        }
+        Insert: {
+          color: Database["public"]["Enums"]["color_key"]
+          product_id: string
+          profile_id: string
+          removed_at?: string | null
+          saved_at?: string | null
+          seq?: number
+        }
+        Update: {
+          color?: Database["public"]["Enums"]["color_key"]
+          product_id?: string
+          profile_id?: string
+          removed_at?: string | null
+          saved_at?: string | null
+          seq?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_product_id_color_fkey"
+            columns: ["product_id", "color"]
+            isOneToOne: false
+            referencedRelation: "product_colors"
+            referencedColumns: ["product_id", "color"]
+          },
+          {
+            foreignKeyName: "favorites_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_lines: {
         Row: {
@@ -466,6 +546,74 @@ export type Database = {
         }
         Relationships: []
       }
+      reminders: {
+        Row: {
+          drop_no: number
+          profile_id: string
+        }
+        Insert: {
+          drop_no: number
+          profile_id: string
+        }
+        Update: {
+          drop_no?: number
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_drop_no_fkey"
+            columns: ["drop_no"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["no"]
+          },
+          {
+            foreignKeyName: "reminders_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seed_account_settings: {
+        Row: {
+          handle: string
+          notify_drop: boolean
+          notify_order: boolean
+          notify_promo: boolean
+          notify_wishlist: boolean
+          size_bottom: Database["public"]["Enums"]["garment_size"] | null
+          size_top: Database["public"]["Enums"]["garment_size"] | null
+        }
+        Insert: {
+          handle: string
+          notify_drop: boolean
+          notify_order: boolean
+          notify_promo: boolean
+          notify_wishlist: boolean
+          size_bottom?: Database["public"]["Enums"]["garment_size"] | null
+          size_top?: Database["public"]["Enums"]["garment_size"] | null
+        }
+        Update: {
+          handle?: string
+          notify_drop?: boolean
+          notify_order?: boolean
+          notify_promo?: boolean
+          notify_wishlist?: boolean
+          size_bottom?: Database["public"]["Enums"]["garment_size"] | null
+          size_top?: Database["public"]["Enums"]["garment_size"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seed_account_settings_handle_fkey"
+            columns: ["handle"]
+            isOneToOne: true
+            referencedRelation: "seed_customers"
+            referencedColumns: ["handle"]
+          },
+        ]
+      }
       seed_addresses: {
         Row: {
           handle: string
@@ -551,6 +699,35 @@ export type Database = {
           opens_at?: string
         }
         Relationships: []
+      }
+      seed_favorites: {
+        Row: {
+          color: Database["public"]["Enums"]["color_key"]
+          handle: string
+          position: number
+          product_id: string
+        }
+        Insert: {
+          color: Database["public"]["Enums"]["color_key"]
+          handle: string
+          position: number
+          product_id: string
+        }
+        Update: {
+          color?: Database["public"]["Enums"]["color_key"]
+          handle?: string
+          position?: number
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seed_favorites_handle_fkey"
+            columns: ["handle"]
+            isOneToOne: false
+            referencedRelation: "seed_customers"
+            referencedColumns: ["handle"]
+          },
+        ]
       }
       seed_order_lines: {
         Row: {
@@ -782,6 +959,29 @@ export type Database = {
           used_count?: number
         }
         Relationships: []
+      }
+      seed_reminders: {
+        Row: {
+          drop_no: number
+          handle: string
+        }
+        Insert: {
+          drop_no: number
+          handle: string
+        }
+        Update: {
+          drop_no?: number
+          handle?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seed_reminders_handle_fkey"
+            columns: ["handle"]
+            isOneToOne: false
+            referencedRelation: "seed_customers"
+            referencedColumns: ["handle"]
+          },
+        ]
       }
       seed_stock_cells: {
         Row: {
@@ -1065,6 +1265,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       json_count: { Args: { p_value: Json }; Returns: number }
       my_orders: { Args: never; Returns: Json }
+      my_state: { Args: never; Returns: Json }
       order_json: { Args: { p_code: string }; Returns: Json }
       parse_vn_iso: { Args: { p_text: string }; Returns: string }
       photo_key_ok: { Args: { p_key: string }; Returns: boolean }
@@ -1073,7 +1274,18 @@ export type Database = {
       receipt_order: { Args: { p_code: string; p_key: string }; Returns: Json }
       remove_address: { Args: { p_id: string }; Returns: boolean }
       reset_demo: { Args: { p_anchor?: string }; Returns: undefined }
+      restore_favorite: { Args: { p_product_id: string }; Returns: Json }
+      save_favorite: {
+        Args: { p_color?: string; p_product_id: string }
+        Returns: Json
+      }
       set_default_address: { Args: { p_id: string }; Returns: boolean }
+      set_my_notify: { Args: { p_key: string; p_on: boolean }; Returns: Json }
+      set_my_size: { Args: { p_size?: string; p_slot: string }; Returns: Json }
+      set_reminder: {
+        Args: { p_drop_no: number; p_on: boolean }
+        Returns: Json
+      }
       sync_sold_out: {
         Args: { p_now: string; p_product_ids: string[] }
         Returns: undefined
@@ -1094,6 +1306,7 @@ export type Database = {
         Returns: number
       }
       track_order: { Args: { p_code: string; p_phone: string }; Returns: Json }
+      unsave_favorite: { Args: { p_product_id: string }; Returns: Json }
       update_address: {
         Args: {
           p_default: boolean
@@ -1106,6 +1319,10 @@ export type Database = {
           p_ward_code: string
         }
         Returns: boolean
+      }
+      update_my_profile: {
+        Args: { p_name: string; p_phone: string }
+        Returns: Json
       }
       vn_iso: { Args: { p_at: string }; Returns: string }
     }

@@ -20,10 +20,18 @@
 import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { CUSTOMERS } from "@/data/customers";
+import { CUSTOMERS, CUSTOMER_STATES } from "@/data/customers";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { ORDERS } from "@/data/orders";
-import { SIZES, type Customer, type Order, type OrderStatus } from "@/data/types";
+import {
+  NOTIFY_KEYS,
+  SIZES,
+  type Customer,
+  type CustomerId,
+  type MyState,
+  type Order,
+  type OrderStatus,
+} from "@/data/types";
 import type { CatalogInput } from "@/lib/catalog";
 import { normalisePhone } from "@/lib/checkout-form";
 
@@ -130,6 +138,77 @@ function insert(table: string, columns: string[], rows: string[][]): string {
   return `insert into public.${table} (${columns.join(", ")}) values\n${body};\n`;
 }
 
+/**
+ * The three mirrors of what the demo accounts keep (slice B9), as rows: in the
+ * fixture's customer order, and each account's saved styles in its own order
+ * — `position` 0 is the newest, which `reset_demo()` draws last so it ends up
+ * on top.
+ *
+ * Checked before anything is written, each failure naming its entry:
+ *
+ *   · the handle is one of the demo accounts;
+ *   · a saved style is in the catalogue, in one of its own colours, once, and
+ *     without a moment — the mirror has no column for one, because the mock
+ *     never recorded one and the seed does not invent it;
+ *   · a reminder names an issue the fixture has, once.
+ *
+ * An account with an entry gets its settings row with the sizes and all four
+ * switches written out rather than left to the column defaults: it is what
+ * `reset_demo()` copies back, so the seed says what a reset restores.
+ */
+function stateRows(
+  input: CatalogInput,
+  customers: Customer[],
+  states: ReadonlyMap<CustomerId, MyState>,
+): { favorites: string[][]; reminders: string[][]; settings: string[][] } {
+  const known = new Set<string>(customers.map((c) => c.id));
+  for (const handle of states.keys()) {
+    if (!known.has(handle)) throw new Error(`${handle}: keeps a state but is not a demo account`);
+  }
+
+  const favorites: string[][] = [];
+  const reminders: string[][] = [];
+  const settings: string[][] = [];
+
+  for (const customer of customers) {
+    const state = states.get(customer.id);
+    if (!state) continue;
+
+    const saved = new Set<string>();
+    state.favorites.forEach((f, index) => {
+      const where = `${customer.id}: saved style ${index} (${f.productId})`;
+      const product = input.products.find((p) => p.id === f.productId);
+      if (!product) throw new Error(`${where} is not in the catalogue`);
+      if (!product.colors.includes(f.color)) throw new Error(`${where} has no colour ${f.color}`);
+      if (saved.has(f.productId)) throw new Error(`${where} is saved twice`);
+      if (f.savedAt !== null) throw new Error(`${where} carries a moment the seed cannot hold`);
+      saved.add(f.productId);
+      favorites.push([str(customer.id), num(index), str(f.productId), str(f.color)]);
+    });
+
+    const asked = new Set<number>();
+    for (const no of state.reminders) {
+      if (!input.drops.some((d) => d.no === no)) {
+        throw new Error(`${customer.id}: a reminder for issue ${no}, which the fixture does not have`);
+      }
+      if (asked.has(no)) throw new Error(`${customer.id}: a reminder for issue ${no} twice`);
+      asked.add(no);
+      reminders.push([str(customer.id), num(no)]);
+    }
+
+    settings.push([
+      str(customer.id),
+      strOrNull(state.sizes.top),
+      strOrNull(state.sizes.bottom),
+      // notify_order, notify_drop, notify_wishlist, notify_promo — the order
+      // of NOTIFY_KEYS, which is the order of the columns.
+      ...NOTIFY_KEYS.map((key) => bool(state.notify[key])),
+    ]);
+  }
+
+  return { favorites, reminders, settings };
+}
+
 // ────────────────────────────────────────────────────────────────── the SQL
 /**
  * The seed script for one catalogue.
@@ -142,6 +221,7 @@ export function renderSeedSql(
   input: CatalogInput,
   customers: Customer[],
   orders: Order[],
+  states: ReadonlyMap<CustomerId, MyState>,
 ): string {
   const parts: string[] = [];
 
@@ -158,7 +238,8 @@ export function renderSeedSql(
       "-- supabase/config.toml). It fills the seed_* mirrors, then reset_demo()",
       "-- rebuilds the live tables from them. The eight demo accounts only reach",
       "-- `profiles` once `npm run seed:users` has created them in auth.users, and",
-      "-- the sample orders only reach an account after that.",
+      "-- the sample orders, the saved styles, the reminders and the sizes only",
+      "-- reach an account after that.",
       "",
       "truncate table",
       "  public.seed_order_lines,",
@@ -169,6 +250,9 @@ export function renderSeedSql(
       "  public.seed_teasers,",
       "  public.seed_promotions,",
       "  public.seed_drops,",
+      "  public.seed_favorites,",
+      "  public.seed_reminders,",
+      "  public.seed_account_settings,",
       "  public.seed_addresses,",
       "  public.seed_customers;",
       "",
@@ -358,6 +442,32 @@ export function renderSeedSql(
     ),
   );
 
+  // ── what the demo accounts keep (slice B9, data/customers.ts#CUSTOMER_STATES)
+  // Keyed by handle like the addresses. A mistake here would not be a wrong
+  // row but a failed reset — `favorites` references `product_colors` and
+  // `reminders` references `drops` — so the fixture is checked against the
+  // catalogue it is seeded beside, and the error names the entry.
+  const keeps = stateRows(input, customers, states);
+  parts.push(
+    insert("seed_favorites", ["handle", "position", "product_id", "color"], keeps.favorites),
+  );
+  parts.push(insert("seed_reminders", ["handle", "drop_no"], keeps.reminders));
+  parts.push(
+    insert(
+      "seed_account_settings",
+      [
+        "handle",
+        "size_top",
+        "size_bottom",
+        "notify_order",
+        "notify_drop",
+        "notify_wishlist",
+        "notify_promo",
+      ],
+      keeps.settings,
+    ),
+  );
+
   // ── the twenty-four sample orders (data/orders.ts)
   // Owned by a handle, like the addresses: `reset_demo()` hands each one to
   // the demo account carrying that handle once the account exists. The
@@ -487,6 +597,24 @@ export function fixtureOrders(): Order[] {
   return ORDERS.map((o) => ({ ...o, lines: [...o.lines] }));
 }
 
+/**
+ * What the demo accounts keep (slice B9), exactly as `data/customers.ts` has
+ * it — a copy, for the same reason as the three above.
+ */
+export function fixtureStates(): ReadonlyMap<CustomerId, MyState> {
+  return new Map(
+    [...CUSTOMER_STATES].map(([handle, state]) => [
+      handle,
+      {
+        favorites: state.favorites.map((f) => ({ ...f })),
+        reminders: [...state.reminders],
+        sizes: { ...state.sizes },
+        notify: { ...state.notify },
+      },
+    ]),
+  );
+}
+
 /** Where the generated file goes, relative to this script. */
 export const SEED_PATH = resolve(dirname(fileURLToPath(import.meta.url)), "../supabase/seed.sql");
 
@@ -494,7 +622,7 @@ export const SEED_PATH = resolve(dirname(fileURLToPath(import.meta.url)), "../su
 if (process.argv[1] !== undefined && pathToFileURL(process.argv[1]).href === import.meta.url) {
   writeFileSync(
     SEED_PATH,
-    renderSeedSql(fixtureInput(), fixtureCustomers(), fixtureOrders()),
+    renderSeedSql(fixtureInput(), fixtureCustomers(), fixtureOrders(), fixtureStates()),
     "utf8",
   );
   process.stdout.write(`wrote ${SEED_PATH}\n`);

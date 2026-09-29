@@ -2,8 +2,11 @@ import {
   type Address,
   type AddressLabel,
   type Customer,
+  type CustomerId,
+  type MyState,
   addressId,
   customerId,
+  productId,
 } from "./types";
 
 /**
@@ -134,3 +137,40 @@ export const CUSTOMERS: Customer[] = [
 ];
 
 export const customerById = new Map(CUSTOMERS.map((c) => [c.id, c]));
+
+/**
+ * What the demo accounts keep (slice B9): saved styles, issue reminders,
+ * "Size của tôi" and the four notification switches — exactly the `MyState`
+ * `getMyState()` answers for the account after a reset, and what
+ * `reset_demo()` puts back through `seed_favorites`, `seed_reminders` and
+ * `seed_account_settings` (written from here by `scripts/gen-seed.ts`).
+ *
+ * Only the first account has anything: it stands for the Feed mock's demo
+ * shopper (`prototype/explore/shared/data.js` — `FAVORITES`, `REMINDERS`,
+ * `ACCOUNT.sizes`), so it starts with BỤI đen, THAN navy, MUỐI xám and
+ * HOODIE TRƠN xám saved, newest first; a reminder for Số 06; áo L and quần M;
+ * and the four switches on, which is where the mock's `prefs()` starts too.
+ * The mock's reminder also names its channels; none is kept (QĐ-35: the
+ * in-app line is the only channel there is). No saved style carries a moment:
+ * the mock recorded none, and a date written here would be one nobody saved
+ * anything on.
+ *
+ * The other seven keep nothing — no saved style, no reminder, no size, every
+ * switch on — which is what an account without an entry here means.
+ */
+export const CUSTOMER_STATES: ReadonlyMap<CustomerId, MyState> = new Map<CustomerId, MyState>([
+  [
+    customerId("c-minhanh"),
+    {
+      favorites: [
+        { productId: productId("p-bui"), color: "black", savedAt: null },
+        { productId: productId("p-than"), color: "navy", savedAt: null },
+        { productId: productId("p-muoi"), color: "grey", savedAt: null },
+        { productId: productId("p-hoodie-tron"), color: "grey", savedAt: null },
+      ],
+      reminders: [6],
+      sizes: { top: "L", bottom: "M" },
+      notify: { order: true, drop: true, wishlist: true, promo: true },
+    },
+  ],
+]);
