@@ -232,10 +232,11 @@ Front view.
 ĐÁ — cargo trousers. Colour: moss green (#4A5240), a dark muted olive.
 320 gsm cotton twill with a visible diagonal weave, sturdy.
 Regular straight leg: belt loops, button and zip fly, slanted front pockets, one bellowed cargo pocket with a flap on the outside of each thigh, plain hem, full length.
+Front design — "Mặt cắt": on the wearer's right upper leg (viewer's left), a roughly 18–20 × 29 cm asymmetrical vertical rock-section print starts below the slanted hand pocket, crosses the front of that leg's cargo pocket and ends above the knee. Six or seven angular mineral planes interlock around narrow negative-fabric fissures; varied fine geological striation hatching, abrasion grain and a few small chips break from the lower edge. Use matte stone-bone, pale ash-grey and charcoal inks with one tiny honey-amber (#EBA400) notch near the top. Preserve the cargo flap, gussets and seams beneath the print; the other leg remains plain. Not actual broken fabric, rocks attached, crystal cubes, a city map, side stripe, text or logo.
 Shown from the front on an invisible lower-body mannequin, legs straight and slightly apart, the waistband slightly open.
 ```
 
-Đổi màu: `black` → `da-black.png`
+Đổi màu: `black` → `da-black.png`; vải kaki đen mềm #1C1C1C, giữ đúng phom túi và hình Mặt cắt trên ống phải người mặc; dùng mực xương khoáng/xám đá sáng để rõ trên nền đen, giữ một dấu vàng mật ong nhỏ và các khoảng âm đen.
 
 ### Số 04 — đã đóng, đã hết (6 mẫu, 9 ảnh)
 
