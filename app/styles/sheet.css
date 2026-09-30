@@ -67,57 +67,6 @@
   border-radius: 99px;
   background: var(--hair);
 }
-/* The head: the photo, the name, what it is, the price, and the way out.
-   An ink rule under it, because this is the sheet's own masthead. */
-.sheetwrap .shead {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--ink);
-}
-.sheetwrap .shead img {
-  width: 56px;
-  height: 70px;
-  flex: none;
-  object-fit: cover;
-  border-radius: var(--r-sm);
-  background: var(--plate);
-}
-.sheetwrap .shead h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: var(--fw-display);
-  font-size: var(--fs-h3);
-  letter-spacing: var(--ls-display);
-}
-.sheetwrap .shead .muted {
-  font-size: var(--fs-sm);
-  color: var(--ink2);
-}
-.sheetwrap .shead .p {
-  font-variant-numeric: tabular-nums;
-}
-.sheetwrap .shead .x {
-  margin-left: auto;
-  width: 44px;
-  height: 44px;
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: var(--r);
-  background: none;
-  color: var(--ink);
-  cursor: pointer;
-}
-.sheetwrap .shead .x:hover {
-  background: var(--plate);
-}
-.sheetwrap .sact {
-  margin-top: 16px;
-}
 /* On a pointer the sheet is a box in the middle of the screen: there is no
    thumb at the bottom edge to reach for, and 520px is the measure the mock
    gives it. The grab handle goes with the gesture it stood for. */
@@ -150,14 +99,14 @@
 }
 
 /* ── the dropdown menu, v3 ───────────────────────────────────────────────
-   `prototype/v3/v3-pages.css`, `.menu3`. The shop's own menu: the sort
-   control opens it, and it is the FOURTH layer portalled to `<body>`, so the
+   `prototype/v3/v3-pages.css`, `.menu3`. The back office's menu: `Select`
+   opens it, and it is the FOURTH layer portalled to `<body>`, so the
    rule DESIGN.md §6 records applies again — every selector starts at
    `.menu3`, and the panel declares its own font, size, line height and ink.
 
-   `position:fixed` is not a preference: the phone's control row is a scroll
-   container, and `overflow-x:auto` silently clips the vertical axis too, so
-   an absolutely-positioned panel would be swallowed whole.
+   `position:fixed` is not a preference: a select can stand inside a scroll
+   container (a sheet's body scrolls), and `overflow:auto` silently clips the
+   other axis too, so an absolutely-positioned panel would be swallowed whole.
 
    No shadow. The v3 world draws a 1px ink border instead — the same line the
    section heads and the size tables are ruled with. */
@@ -304,10 +253,10 @@
    it ties with nothing in the files that load after this one.
 
    It starts at the bar's bottom edge and never covers the bar: 56px and the
-   1px rule on the phone, 64 and 1 from 900px (`.nav3` in nav.css and
-   desktop.css). In the stack it sits over the sticky buy bar and the search
-   suggestions (30) and under the bar (40), the sheet (50), the menu (55) and
-   the toast (80).
+   1px rule on the phone, 64 and 1 from 900px, the v3 bar's measure; over a
+   Feed screen the component measures the Feed bar and writes the top itself.
+   In the stack it sits under the sheet (50), the menu (55) and the toast
+   (80).
 
    At rest it is transparent, hidden and lets the pointer through, which is
    what the server renders. The component paints the opacity, the mark's

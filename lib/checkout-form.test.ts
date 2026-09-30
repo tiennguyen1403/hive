@@ -1,12 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  EMPTY_DRAFT,
-  checkoutStep,
-  isAddressComplete,
-  normalisePhone,
-  validateCheckout,
-  type CheckoutDraft,
-} from "./checkout-form";
+import { normalisePhone, validateCheckout, type CheckoutDraft } from "./checkout-form";
 
 /**
  * A draft that passes, so each test can spoil exactly one thing. No `agreed`:
@@ -119,39 +112,5 @@ describe("validateCheckout · how it is sent and paid", () => {
     expect(validateCheckout({ ...GOOD, agreed: false })).toEqual({});
     expect(validateCheckout({ ...GOOD, agreed: true })).toEqual({});
     expect(validateCheckout(GOOD)).toEqual({});
-  });
-});
-
-describe("isAddressComplete", () => {
-  it("is false on an empty draft", () => {
-    expect(isAddressComplete(EMPTY_DRAFT)).toBe(false);
-  });
-
-  it("is true once the recipient and the address are filled in", () => {
-    expect(isAddressComplete(GOOD)).toBe(true);
-  });
-
-  it("does not wait on the terms tickbox, which belongs to the next step", () => {
-    expect(isAddressComplete({ ...GOOD, agreed: false })).toBe(true);
-  });
-
-  it("does not wait on an email either, which is optional", () => {
-    expect(isAddressComplete({ ...GOOD, email: "" })).toBe(true);
-    expect(isAddressComplete({ ...GOOD, email: "a@b" })).toBe(false);
-  });
-});
-
-describe("checkoutStep", () => {
-  it("starts on the address step", () => {
-    // Step 0 is the cart, and they have left it to get here.
-    expect(checkoutStep(EMPTY_DRAFT)).toBe(1);
-  });
-
-  it("moves to payment once the address is complete", () => {
-    expect(checkoutStep(GOOD)).toBe(2);
-  });
-
-  it("falls back when the address is emptied again", () => {
-    expect(checkoutStep({ ...GOOD, line: "" })).toBe(1);
   });
 });

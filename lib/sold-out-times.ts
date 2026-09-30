@@ -93,15 +93,3 @@ export function soldOutTimes(
     };
   });
 }
-
-/**
- * Whether anything on the table has an hour at all.
- *
- * The screen counts the rows that do NOT (it names the number in its note),
- * so this is the archive page's question asked the other way round — kept
- * because the back office asks it that way at slice 5 ("Hết hàng · MUỐI ·
- * hết 19/09"), and pinned by the test either way.
- */
-export function anySoldOutTime(rows: SoldOutRow[]): boolean {
-  return rows.some((r) => r.soldOutAt !== undefined);
-}

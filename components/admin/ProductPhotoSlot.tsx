@@ -146,7 +146,7 @@ export function ProductPhotoSlot({
     );
     // No glyph on "Khung cắt": the one place on this form where the system's
     // "every button names its action with a glyph" gives way to the mock, as
-    // on the cart's "Đưa vào giỏ" (LaterList). Measured at 1280, the scissors
+    // the v3 cart's "Đưa vào giỏ" did. Measured at 1280, the scissors
     // took the button to 110px and pushed "Mượn tạm" onto a line of its own;
     // the mock keeps the three moves on one line, and the label names the move.
     actions = (

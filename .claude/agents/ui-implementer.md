@@ -23,7 +23,7 @@ You turn an approved mock screen into working Next.js code. The main session (a 
 - **Write only inside** `app/`, `components/`, `lib/`, `data/` and the tests beside them. Never edit `prototype/`, `DESIGN.md`, `PRODUCT.md`, `tasks/`, `.impeccable/`, `.claude/`. If a doc needs changing, say so in the report; the main session edits docs.
 - **No backend, no network, no new dependency** unless the brief names it. `PRODUCT.md` fixes the deliverable: a mock UI on local fixtures, simulated auth and cart in the browser.
 - **Scope discipline.** Touch only what the brief requires. No cleanup of neighbouring code, no renames outside scope, no deleting files the brief does not name. The folder is a git repository (since 23/09/2026), but never commit, stash, reset or check out: the main session commits only with the user's permission. Read a file before overwriting it and never run destructive commands on it.
-- **Nothing invented.** No brand story, testimonials, partners, awards, page-view counts, "reasonable" numbers. A fact the fixtures cannot supply goes into a `NeedWrite` slot; every figure on screen is derived from `data/` through `lib/`, never typed by hand. This is rule 1 and 2 of `DESIGN.md` §9 and it has no exceptions.
+- **Nothing invented.** No brand story, testimonials, partners, awards, page-view counts, "reasonable" numbers. A fact the fixtures cannot supply goes into an empty slot — on Feed screens the `.b-slot` "Đang chuẩn bị" of round v4 slice 4b (the v3 `NeedWrite` component went at slice 5); every figure on screen is derived from `data/` through `lib/`, never typed by hand. This is rule 1 and 2 of `DESIGN.md` §9 and it has no exceptions.
 - **No dead buttons.** A control does what its label says or it is not rendered (`DESIGN.md` §9 rule 3). Simulated admin actions store in the browser, carry the "chế độ mô phỏng" label and honour the reset button, exactly as the mock does.
 
 ## Input contract
@@ -100,7 +100,7 @@ Stop and return early, with the question and what you already did, when:
 - the change needs an unlisted dependency, a doc change, a fixture the data cannot supply, or an edit outside your allowed folders;
 - a test fails and the fix would change behaviour the test protects.
 
-Name a hypothesis as a hypothesis. When a bug has no obvious cause, build the smallest probe (`app/hyd/page.tsx` is the hydration probe) and bisect; never state a cause you have not measured.
+Name a hypothesis as a hypothesis. When a bug has no obvious cause, build the smallest probe and bisect — for hydration, a throwaway route with a `mounted` flag and a counter (the 15-line `app/hyd/page.tsx` kept from 20/09 went at round v4 slice 5 and is in git history; delete yours before you report); never state a cause you have not measured.
 
 ## Report contract
 

@@ -100,8 +100,6 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-/* `.s .nav a:hover` REMOVED at v2 slice 1 with the rest of the Phase 3 bar;
-   `.nav3 .ib:hover` and `.nav3 .links a:hover` carry it now. */
 
 /* ─────────────────────────────────────────────────────────── real inputs
    The mock drew these as <div>s. They are `<input>` and `<textarea>` here,
@@ -163,37 +161,6 @@
     transform: translate(-50%, -50%);
     width: max(100%, 44px);
     height: 44px;
-  }
-}
-
-/* ─────────────────────────────────── the breadcrumb's touch target
-   Found by sweeping every control on every route at 390px, measuring the
-   HIT area rather than the box. The overlay is sized to the gap it has: a
-   target that overlaps its neighbour steals the neighbour's taps, which is
-   worse than being small.
-
-   The v2 controls this section also covered — the filter chip, the quantity
-   stepper's `.qty` clip, the cart line's title link, the wrapping chip row,
-   the tickbox row and the scrolling family tabs — went with their classes
-   at v3 slice 6. Each v3 replacement (`.chip3`, `.qty3`, `.card3`,
-   `.chips3.wrapped`, `.checks3`, `.tabs3`) carries its own target.
-
-   The breadcrumb is 17px of text, and unlike "Xoá" or "Huỷ" these are plain
-   `<a>`, so the text-link rule above does not reach them. The overlay takes
-   exactly the row's own padding — 13 above, 14 below — which is 44 around a
-   17px line and not one pixel more: above the row is the sticky nav, below
-   it the photo, and an overlay that reached into either would be taking a
-   tap that belongs to someone else. The trap this avoids is DESIGN.md §5's
-   third: the row being 44px tall does NOT mean the link inside it is, and
-   only the link is worth tapping. */
-@media (max-width: 460px) {
-  .s .crumbs a {
-    position: relative;
-  }
-  .s .crumbs a::after {
-    content: "";
-    position: absolute;
-    inset: -13px 0 -14px;
   }
 }
 

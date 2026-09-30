@@ -19,10 +19,10 @@ interface Field3Props {
 /**
  * A form row in the v3 grammar — `.field3` in `app/styles/checkout.css`.
  *
- * Its own component and not `<Field>`: that one owns `.field`, whose
- * 13px/18px padding is the v2 page gutter. Inside `.wrap3`, which already
- * carries the gutter, every row would be indented twice. Same contract
- * otherwise, and the two rules that matter are the same:
+ * Its own component and not `<Field>`: that one owned `.field`, whose
+ * 13px/18px padding was the v2 page gutter, and inside `.wrap3`, which
+ * already carried the gutter, every row would have been indented twice.
+ * Same contract otherwise, and the two rules that matter are the same:
  *
  * · the label is BOUND to the control, because a label that only looks like
  *   one is a label that only sighted mouse users get;

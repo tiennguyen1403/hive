@@ -13,13 +13,6 @@ describe("FeedLogo", () => {
     expect(NAV_LOCKUP.wordmark).toBe(wordmark);
   });
 
-  it("is the same drawing the v3 bar wears, so the two logos cannot drift apart", () => {
-    const nav = readFileSync(join("components", "shop", "NavLogo.tsx"), "utf8");
-    expect(nav).toContain(`viewBox="${NAV_LOCKUP.viewBox}"`);
-    expect(nav).toContain(NAV_LOCKUP.figure);
-    expect(nav).toContain(NAV_LOCKUP.wordmark);
-  });
-
   it("paints both tones from the black-and-white palette, never honey", () => {
     const src = readFileSync(join("components", "feed", "FeedLogo.tsx"), "utf8");
     expect(src).not.toMatch(/#[0-9a-fA-F]{6}/);

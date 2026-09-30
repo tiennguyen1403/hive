@@ -120,8 +120,6 @@ export const ADJUST_REASONS = [
   "Khác",
 ] as const;
 
-export type AdjustReason = (typeof ADJUST_REASONS)[number];
-
 /**
  * Every reason the database accepts for a change to the shelf: the sheet's
  * four, and "Sửa mẫu" — what the product form's own grid saves under

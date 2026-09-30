@@ -1,4 +1,3 @@
-import type { DropState } from "@/data/types";
 
 /**
  * One word for one concept, in one place.
@@ -95,8 +94,8 @@ export const ABOUT_LEAD =
 /**
  * The four rules `/about` states under its opening sentence, and the line
  * that says where they hold. The words the page has carried since v3
- * (`FourRules` in `components/shop/ClosedIssue.tsx`, which the v3 home page
- * printed too), kept as they were when the page moved into the Feed frame
+ * (the v3 component `FourRules`, which the v3 home page printed too), kept
+ * as they were when the page moved into the Feed frame
  * (round v4 slice 4b, QĐ-34); here as data so the Feed page lays them out
  * itself rather than wearing the v3 component. "Số" is capitalised where it
  * names an issue, as the Feed writes it; "Số còn lại là số thật" and "số đo"
@@ -190,27 +189,6 @@ export function stylePrefix(no: number): string {
  * Not in `LEX`, which is pinned to the shop's table in the v3 mock.
  */
 export const FIXED_WORD = "Cố định";
-
-/** What each state is called after the issue's name on the nav bar's plate. */
-const PLATE_STATE: Record<DropState, string> = {
-  OPEN: "đang bán",
-  UPCOMING: "sắp mở",
-  CLOSED: "đã đóng",
-};
-
-/**
- * `"Số 05, đang bán"` — the issue plate in the nav bar, named in full.
- *
- * The plate prints only `issueLabel()`, and since v3 slice 10 the bar draws
- * it only while the issue sells, so there this reads "…, đang bán": the
- * link's `aria-label` for a screen reader and its `title` for a pointer say
- * in words what the honey letters on the cloth say by colour. The other two
- * states keep their words, so the function answers for any issue it is
- * handed.
- */
-export function plateLabel(no: number, state: DropState): string {
-  return `${issueLabel(no)}, ${PLATE_STATE[state]}`;
-}
 
 /**
  * `"Áo thun oversize"` → `"áo thun oversize"` — a garment kind dropped into

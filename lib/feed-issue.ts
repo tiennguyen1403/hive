@@ -2,7 +2,6 @@ import type { ColorKey, Drop, Product } from "@/data/types";
 import type { Catalog } from "./catalog";
 import { dropState } from "./drop";
 import { firstColor, photoKeyOf } from "./feed";
-import { feedDayRange } from "./feed-range";
 import { productsInDrop } from "./inventory";
 import { lookbookUrl } from "./photos";
 
@@ -16,11 +15,6 @@ import { lookbookUrl } from "./photos";
 /** Every issue that has closed, the newest first. */
 export function closedIssues(catalog: Catalog, now: Date): Drop[] {
   return catalog.drops.filter((d) => dropState(d, now) === "CLOSED").sort((a, b) => b.no - a.no);
-}
-
-/** "11/09 - 25/09": an issue's run with the mock's hyphen, the two days never parted (`feedDayRange`, `lib/feed-range.ts`). */
-export function issueRun(drop: Drop): string {
-  return feedDayRange(drop.opensAt, drop.closesAt);
 }
 
 /**

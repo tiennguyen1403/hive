@@ -93,31 +93,3 @@ export function compactVnd(amount: number): string {
   if (n >= 1_000) return scale(1_000, "k");
   return `${sign}${n}₫`;
 }
-
-// ─────────────────────────────────────────────────────────── counting words
-// Inside a sentence a small number reads better as a word — "mười mẫu", not
-// "10 mẫu". Past twelve the word is longer than the digits and stops helping,
-// so the table stops there rather than pretending to be exhaustive.
-const WORDS: Record<number, string> = {
-  1: "một",
-  2: "hai",
-  3: "ba",
-  4: "bốn",
-  5: "năm",
-  6: "sáu",
-  7: "bảy",
-  8: "tám",
-  9: "chín",
-  10: "mười",
-  11: "mười một",
-  12: "mười hai",
-};
-
-export function countWord(n: number): string {
-  return WORDS[n] ?? String(n);
-}
-
-/** "mười mẫu" — used in running prose, never in a table cell. */
-export function styleCountLabel(n: number): string {
-  return `${countWord(n)} mẫu`;
-}

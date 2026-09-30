@@ -6,9 +6,7 @@ import {
   FREE_SHIPPING_FROM_VND,
   checkoutTotals,
   deliveryOption,
-  deliveryTitle,
   deliveryWindow,
-  deliveryWindowLabel,
   isDeliveryAvailable,
   shippingFeeVnd,
 } from "./shipping";
@@ -167,16 +165,6 @@ describe("checkoutTotals", () => {
 });
 
 describe("when the parcel is expected", () => {
-  const PLACED = "2026-09-20T18:50:00+07:00";
-
-  it("quotes the standard window the approved cart prints", () => {
-    expect(deliveryWindowLabel("STANDARD", PLACED)).toBe("22/09\u00A0–\u2060\u00A024/09");
-  });
-
-  it("quotes express as one day, not as a range of one", () => {
-    expect(deliveryWindowLabel("EXPRESS", PLACED)).toBe("21/09");
-  });
-
   it("counts from the order rather than from today", () => {
     // A receipt reopened next week still quotes the window that was
     // promised when it was paid.
@@ -194,9 +182,7 @@ describe("when the parcel is expected", () => {
     expect(deliveryOption("EXPRESS").label).toContain("24 giờ");
   });
 
-  it("prints a count and its unit held together, and keeps the label plain (v3 slice 13)", () => {
-    expect(deliveryTitle(deliveryOption("EXPRESS"))).toBe("Giao nhanh nội thành · 24\u00a0giờ");
-    expect(deliveryTitle(deliveryOption("STANDARD"))).toBe("Giao tiêu chuẩn · 2–4\u00a0ngày");
+  it("keeps the label plain (v3 slice 13)", () => {
     // The label is the carrier a handover stores: no layout characters in it.
     for (const o of DELIVERY_OPTIONS) expect(o.label).not.toMatch(/[\u00a0\u2060]/);
   });

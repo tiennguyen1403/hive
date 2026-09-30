@@ -3,11 +3,12 @@
    Feed zone `[data-ui="feed"]` and every token renamed `--x` → `--f-x`
    (the token block is in `app/globals.css`).
 
-   PORTED AT SLICE 0, for the kit page `/system`: the zone's ground and type
-   (the mock's `body` rule, and its `button` and `a` resets), the focus ring,
-   `.disp`, the icon box `.i`, the buttons `.btn`, the filter chips
-   `.chips` `.chip`, the sheet's panel and head (`.sheet-panel`, `.grab`,
-   `.sh-*`) and the sort list, with their hover and press rules.
+   PORTED AT SLICE 0, for the kit page `/system` (gone at slice 5): the
+   zone's ground and type (the mock's `body` rule, and its `button` and `a`
+   resets), the focus ring, `.disp`, the icon box `.i`, the buttons `.btn`,
+   the filter chips `.chips` `.chip`, the sheet's panel and head
+   (`.sheet-panel`, `.grab`, `.sh-*`) and the sort list, with their hover and
+   press rules.
 
    PORTED AT SLICE 1a, for the home page `/` and the frame every later Feed
    screen sits in (`components/feed/FeedFrame.tsx`): the page column (the

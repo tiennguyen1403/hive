@@ -10,7 +10,6 @@ import {
   issueLabel,
   issueNo,
   kindInSentence,
-  plateLabel,
   styleInList,
   styleName,
   stylePrefix,
@@ -147,25 +146,6 @@ describe("FIXED_WORD", () => {
   it("is the board's word for a style of no issue", () => {
     // `FIXED` in prototype/v3/line/line-mock.js, round 4 (approved 25/09).
     expect(FIXED_WORD).toBe("Cố định");
-  });
-});
-
-/**
- * The plate in the nav bar prints only "Số 05"; which state the issue is in
- * is carried by the plate's colour. Colour is never the only channel, so the
- * words go into the link's `aria-label` and `title` — one string per state.
- */
-describe("plateLabel", () => {
-  it("names an issue on sale", () => {
-    expect(plateLabel(5, "OPEN")).toBe("Số 05, đang bán");
-  });
-
-  it("names an issue that has not opened yet", () => {
-    expect(plateLabel(6, "UPCOMING")).toBe("Số 06, sắp mở");
-  });
-
-  it("names an issue that has shut", () => {
-    expect(plateLabel(5, "CLOSED")).toBe("Số 05, đã đóng");
   });
 });
 

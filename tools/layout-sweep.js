@@ -23,8 +23,9 @@ async (page) => {
   const SHOTS = ".playwright-cli/shots";
   const WIDTHS = [390, 1280];
 
-  // `/hyd` is the hydration probe and `/system` is the internal design-system
-  // spec; neither is a shopper-facing screen, so neither belongs in the sweep.
+  // Every screen a shopper or the back office reaches. The internal pages that
+  // were never in it — the hydration probe `/hyd` and the kit page `/system` —
+  // went at round v4 slice 5.
   const ROUTES = [
     "/",
     "/products",

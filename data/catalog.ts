@@ -1,6 +1,5 @@
 import {
   type Drop,
-  type Family,
   type Product,
   type Teaser,
   productId,

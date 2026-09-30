@@ -53,11 +53,6 @@ export function customerKey(customer: { id: string; handle: string | null }): st
   return customer.handle ?? customer.id;
 }
 
-/** Whether a URL's `key` names this account — by handle or by uuid. */
-export function isCustomerKey(customer: { id: string; handle: string | null }, key: string): boolean {
-  return key !== "" && (key === customer.id || key === customer.handle);
-}
-
 /** Every order this account placed — matched on the account, not on a name. */
 export function ordersOfCustomer(orders: AdminOrder[], customer: { id: string }): AdminOrder[] {
   return orders.filter((o) => o.owner?.id === customer.id);

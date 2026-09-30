@@ -24,27 +24,13 @@ export interface CheckoutDraft {
   /**
    * The v3 checkout's terms box. Read by nothing since slice B8: the Feed
    * checkout has no box, and a check that asked for it would record an
-   * agreement nobody gave. Kept, optional, so the v3 screen still compiles
-   * until the round's last slice removes it.
+   * agreement nobody gave.
    */
   agreed?: boolean;
 }
 
 export type FieldName = keyof CheckoutDraft;
 export type CheckoutErrors = Partial<Record<FieldName, string>>;
-
-export const EMPTY_DRAFT: CheckoutDraft = {
-  recipient: "",
-  phone: "",
-  email: "",
-  provinceCode: "",
-  wardCode: "",
-  line: "",
-  note: "",
-  delivery: "STANDARD",
-  payment: "BANK_TRANSFER",
-  agreed: false,
-};
 
 /**
  * A Vietnamese mobile number, in the one form the rest of the app stores.
@@ -95,29 +81,4 @@ export function validateCheckout(d: CheckoutDraft): CheckoutErrors {
   }
 
   return e;
-}
-
-/** Everything the courier needs, ignoring anything that belongs to payment. */
-export function isAddressComplete(d: CheckoutDraft): boolean {
-  const e = validateCheckout(d);
-  const addressFields: FieldName[] = [
-    "recipient",
-    "phone",
-    "email",
-    "provinceCode",
-    "wardCode",
-    "line",
-  ];
-  return addressFields.every((f) => e[f] === undefined);
-}
-
-/**
- * Which step of the bar is lit.
- *
- * Derived from how far the form has actually got, not set by hand. Step 0 is
- * the cart, which they left to arrive here, so checkout starts at 1 and
- * moves to 2 the moment the address is good enough to ship to.
- */
-export function checkoutStep(d: CheckoutDraft): number {
-  return isAddressComplete(d) ? 2 : 1;
 }

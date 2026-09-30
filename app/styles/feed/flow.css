@@ -4,10 +4,10 @@
    this file lists; its reduced-motion block covers these rules too, as the
    mock's does.
 
-   PORTED AT SLICE 0, for the kit page `/system`: the form field (`.field`,
-   `.lbl`, `.opt`, the input and textarea, their focus, the error line `.err`
-   and `.is-error`) and the selection card (`.rcards`, `.rcard` and its
-   parts, checked, focused, off), with the card's hover.
+   PORTED AT SLICE 0, for the kit page `/system` (gone at slice 5): the form
+   field (`.field`, `.lbl`, `.opt`, the input and textarea, their focus, the
+   error line `.err` and `.is-error`) and the selection card (`.rcards`,
+   `.rcard` and its parts, checked, focused, off), with the card's hover.
    PORTED AT SLICE 1b, for `/search`: the search bar and field (`.sbar`,
    `.sform`, `.sclear`, `.scancel`), the sections and their chips (`.ssec`,
    `.schip`, the recent searches' `.rchip`), the results' head and the empty

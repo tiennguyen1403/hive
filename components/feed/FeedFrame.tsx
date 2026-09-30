@@ -19,8 +19,7 @@ type FeedFrameProps = Omit<FeedShellProps, "orders" | "read" | "now"> & {
  * The frame of every Feed screen (round v4, from slice 1a): the zone, the top
  * bar, the screen, the footer, the phone's tab bar — the mock's chrome
  * contract (`prototype/explore/feed/feed.js`, the head of the file). Since
- * slice 4b every shop screen wears it; the v3 `ShopFrame` has no route left
- * and waits for the round's clean-up slice.
+ * slice 4b every shop screen wears it; the v3 `ShopFrame` went at slice 5.
  *
  * A Server Component, so a screen only wraps itself in it: it reads the two
  * things the account's inbox needs from the request — the signed-in

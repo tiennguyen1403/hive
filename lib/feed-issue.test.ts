@@ -6,9 +6,7 @@ import {
   closedNeighbours,
   issueHasPhotos,
   issueNow,
-  issueRun,
 } from "./feed-issue";
-import { FEED_DASH } from "./feed-range";
 
 const C = FIXTURE_CATALOG;
 /** The fixture's calendar: Số 05 sells 11/09 20:00 → 25/09 20:00, Số 06 opens 02/10 20:00. */
@@ -20,11 +18,6 @@ describe("the closed issues", () => {
   it("are every issue that has shut, the newest first", () => {
     expect(closedIssues(C, OPEN).map((d) => d.no)).toEqual([4, 3]);
     expect(closedIssues(C, BEFORE_06).map((d) => d.no)).toEqual([5, 4, 3]);
-  });
-
-  it("print their run as one unbroken range", () => {
-    const four = C.dropByNo.get(4)!;
-    expect(issueRun(four)).toBe(`05/06${FEED_DASH}19/06`);
   });
 });
 

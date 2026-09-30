@@ -38,9 +38,9 @@ interface SelectProps<T extends string> {
  *
  * TWO PARTS, both shared. The BUTTON keeps the input skin — it stands beside
  * Name, Price and Số nhà, so it has to look like the box next to it, not
- * like a filter chip. The PANEL is `Menu3`, the same menu the listing's sort
- * control opens (v3 slice 2): white ground, a 1px ink rule, no shadow, 40px
- * rows (44 on a phone), the chosen row in 600 with a honey tick. It used to
+ * like a filter chip. The PANEL is `Menu3`, the v3 menu (slice 2): white
+ * ground, a 1px ink rule, no shadow, 40px rows (44 on a phone), the chosen
+ * row in 600 with a honey tick. It used to
  * carry its own `.selm` skin from v2 — pale gold hover, honey-brown labels,
  * a drop shadow — which read as a leftover from another design the moment it
  * opened over a v3 form. That skin went with the rest of the v2 CSS at slice
@@ -132,7 +132,7 @@ export function Select<T extends string>({
             an empty text box tints its own placeholder.
 
             An ATTRIBUTE and not a class, after `.ph` was tried and measured:
-            `.s .ph` is the 4:5 photo frame in `cards.css`, so the span took
+            `.s .ph` was the 4:5 photo frame in `cards.css`, so the span took
             `aspect-ratio:4/5` and came out 226×283px — tall enough to cover
             the field below it and swallow its clicks. */}
         <span className="t" data-ph={chosen >= 0 ? undefined : ""}>

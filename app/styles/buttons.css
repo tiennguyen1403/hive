@@ -37,9 +37,7 @@
    every one of them is ("Về số 05", "Huỷ đơn này", "Bỏ qua").
 
    Flipped globally at slice 4, when the account screens started rendering
-   it. The two places that had already restated the v3 reading locally —
-   `.acts3` (checkout.css) and `.cover .cta` (home.css, in the cloth's own
-   ink) — still win on specificity and are unchanged. */
+   it. */
 .s .btn.quiet{ background:transparent; border-color:transparent; color:var(--ink);
   padding:0 4px; text-decoration:underline; text-underline-offset:4px;
   text-decoration-thickness:1px; }
@@ -50,7 +48,7 @@
    It used to mean "carry the phone's 18px page gutter as a margin", which
    was how a lone button sat inside a full-bleed column in v2. No component
    ever rendered it — greped before the change — and inside `.wrap3` the
-   page already supplies that gutter. It now means what `.btn3.wide` means
+   page already supplied that gutter. It now means what `.btn3.wide` means
    in the v3 mock: fill the column. A `<button>` shrinks to its text, so
    "Đặt hàng · 1.152.000₫" needs this said out loud; an `<a class="btn">` is
    already a block-level flex container and only needs the margin reset. */
@@ -58,10 +56,10 @@
 /* ── the ink button, ADDED at v3 slice 2 ─────────────────────────────────
    The v3 world's SECOND action: transparent ground, ink type, ink border —
    the product page's "Lưu" under the honey "Thêm vào giỏ". `.ghost` is the
-   v2 pair (honey border, honey type) and stays where it is still rendered.
+   v2 pair (honey border, honey type).
 
-   NOT called `.sec`, which is the name the mock uses: `.s .sec` is the home
-   page's section block (home.css) and would land a 48px top margin on every
+   NOT called `.sec`, which is the name the mock uses: `.s .sec` was the home
+   page's section block and would have landed a 48px top margin on every
    button carrying it. The mock hit the same wall and answered it with
    `.sec:not(.btn3)`; a different word is cheaper.
 
@@ -111,8 +109,8 @@
    badges in both places.
 
    A LIVE state is the woven label itself: black cloth, honey thread. It is
-   the same material as the issue cover and the issue plate in the nav, so
-   the shop has one badge rather than one per surface. Waiting and finished
+   the material the v3 issue cover and the nav's issue plate wore, so the
+   shop had one badge rather than one per surface. Waiting and finished
    states are unbleached cloth; alerts keep the red family; things on their
    way keep the blue. See `components/ui/Badge.tsx` for which word gets which
    tone. */
@@ -131,8 +129,3 @@
   text-transform:none; }
 .s .badge i{ width:6px; height:6px; border-radius:99px; background:currentColor; flex:none;
   font-style:normal; }
-
-/* The v2 filter chip (`.chips` / `.chip`) and the v2 step bar (`.steps`)
-   stood here until v3 slice 6. Both were replaced name and all — the chip
-   row is `.chips3` / `.chip3` in listing.css, the step bar is `.steps3` in
-   checkout.css — so nothing rendered either of them any more. */

@@ -8,7 +8,6 @@ import { ExportCsvButton } from "@/components/admin/ExportCsvButton";
 import { SearchBox } from "@/components/admin/AdminOrdersScreen";
 import { useAdminToast } from "@/components/admin/AdminToast";
 import { ActionMenu, Stabs, TableFoot } from "@/components/admin/Table3";
-import { Badge } from "@/components/ui/Badge";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import {
   customerKey,

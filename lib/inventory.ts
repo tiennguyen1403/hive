@@ -1,14 +1,6 @@
 import type { Catalog } from "./catalog";
 import { dropState } from "./drop";
-import {
-  FAMILIES,
-  FAMILY_LABELS,
-  SIZES,
-  type ColorKey,
-  type Family,
-  type Product,
-  type Size,
-} from "@/data/types";
+import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
 
 /**
  * Everything about how much is left is DERIVED here, never stored.
@@ -187,54 +179,6 @@ export function productsOnSale(
   });
 }
 
-/** How many cards the home page's "Đang bán" holds: three rows on a phone, two on a monitor. */
-export const SHOWCASE = 6;
-
-/**
- * The six under "Đang bán" on the home page (v3 slice 11).
- *
- * Styles on sale that belong to no issue — the open issue's own stand above,
- * under "Trong số này" — and never one with an empty shelf, which is a card
- * with nothing to add. One per family first, in `FAMILIES` order, each the
- * family's first by position, so six cards show six kinds of garment; then
- * the rest by position until there are six.
- */
-export function showcaseOnSale(
-  catalog: Catalog,
-  now?: Date,
-  products: readonly Product[] = catalog.products,
-): Product[] {
-  const pool = productsOnSale(catalog, now, products).filter((p) => isFixed(p) && !isSoldOut(p));
-  const firsts = FAMILIES.flatMap((family) => {
-    const lead = pool.find((p) => p.family === family);
-    return lead ? [lead] : [];
-  });
-  const rest = pool.filter((p) => !firsts.includes(p));
-  return [...firsts, ...rest].slice(0, SHOWCASE);
-}
-
-/** How many cards a product page's lower row holds: two phone rows, one desktop row. */
-export const RELATED_ROW = 4;
-
-/**
- * "Cùng loại", the row under a fixed style (v3 slice 11): the other styles
- * on sale in its family, of either kind, the nearest in price first. Ties
- * keep catalogue order (the sort is stable). Empty when the style is the
- * only one of its family on sale — the page then draws no row.
- */
-export function sameFamilyOnSale(
-  catalog: Catalog,
-  product: Product,
-  now?: Date,
-  limit: number = RELATED_ROW,
-): Product[] {
-  const gap = (p: Product) => Math.abs(p.priceVnd - product.priceVnd);
-  return productsOnSale(catalog, now)
-    .filter((p) => p.family === product.family && p.id !== product.id)
-    .sort((a, b) => gap(a) - gap(b))
-    .slice(0, limit);
-}
-
 export function dropSummary(
   catalog: Catalog,
   no: number,
@@ -250,144 +194,6 @@ export function dropSummary(
 }
 
 /**
- * The styles behind the home page's "Sắp hết" strip.
- *
- * Scarcest first, because the strip is a decision compressed into one row
- * and the one with two left is the one worth a tap. A style with nothing
- * left is not "sắp hết" — it is gone, and `isLowStock` already excludes it.
- *
- * Ties break on the name so the row does not reshuffle between two renders
- * of the same numbers.
- */
-export function lowStockIn(
-  catalog: Catalog,
-  no: number,
-  products: readonly Product[] = catalog.products,
-): Product[] {
-  return productsInDrop(catalog, no, products)
-    .filter((p) => isLowStock(p))
-    .sort((a, b) => onHand(a) - onHand(b) || a.name.localeCompare(b.name, "vi"));
-}
-
-/**
- * One tile per garment family the drop actually contains.
- *
- * In `FAMILIES` order rather than catalog order, so the row does not
- * reshuffle as the drop sells down, and families with nothing in this drop
- * are left out instead of being drawn with a zero — a tile leading to an
- * empty grid is worse than no tile (the same rule `familiesIn` follows).
- *
- * `lead` is the first style of that family in the drop; its photo is what
- * the tile shows. No photography of a CATEGORY exists — PRODUCT.md records
- * that none of this imagery is real — so standing one garment in for the
- * group is the most the fixtures can honestly supply.
- */
-export interface FamilyGroup {
-  family: Family;
-  styles: number;
-  lead: Product;
-  /** "oversize, cơ bản và tay lỡ" — what tells the styles inside it apart. */
-  kinds: string;
-  /** The cheapest of them, for the row's "từ 390.000₫". */
-  fromVnd: number;
-}
-
-export function familyGroupsIn(catalog: Catalog, no: number): FamilyGroup[] {
-  return familyGroupsOf(productsInDrop(catalog, no));
-}
-
-/**
- * The same rows over any list of styles (v3 slice 11): the home page's
- * "Theo loại" counts everything on sale — the open issue's styles and the
- * fixed ones together, or the fixed ones alone between two issues — and each
- * row's photo is the first of its family in that list.
- */
-export function familyGroupsOf(ps: readonly Product[]): FamilyGroup[] {
-  return FAMILIES.flatMap((family) => {
-    const inFamily = ps.filter((p) => p.family === family);
-    const lead = inFamily[0];
-    return lead
-      ? [
-          {
-            family,
-            styles: inFamily.length,
-            lead,
-            kinds: familyKindsLabel(inFamily),
-            fromVnd: Math.min(...inFamily.map((p) => p.priceVnd)),
-          },
-        ]
-      : [];
-  });
-}
-
-/**
- * The word for a style whose `kind` is nothing but its family's name.
- *
- * "Áo hoodie" inside a row already titled Hoodie has nothing left to say
- * once the family name comes off, so the row names what the OTHERS are not:
- * the plain one. Vietnamese picks a different word per garment — a tee is
- * "cơ bản", a hoodie is "trơn" — so it is a table and not one adjective.
- */
-const PLAIN_KIND: Partial<Record<Family, string>> = {
-  TEE: "cơ bản",
-  HOODIE: "trơn",
-};
-
-const PLAIN_KIND_FALLBACK = "trơn";
-
-/**
- * "oversize, cơ bản và tay lỡ" — the second line of a family row.
- *
- * Derived, never written: the row is a promise about what is inside it, and
- * a hand-typed list goes stale the first time an issue carries a different
- * cut. Each style's `kind` loses the part the row's own title already says
- * ("Áo thun oversize" under Áo thun → "oversize"), and a kind that is only
- * the family name falls back to `PLAIN_KIND` above.
- *
- * A family with ONE kind is the exception: stripping "Áo sơ mi" off "Áo sơ
- * mi dệt" leaves "dệt", which names nothing on its own. There the kind
- * itself is printed, minus the garment word that opens it — "sơ mi dệt".
- * Unless nothing is left once the family name comes off: a lone "Áo hoodie"
- * is still the plain one, "trơn", as it would be in a list of several (v3
- * slice 11 — HOODIE TRƠN is the only hoodie on sale between two issues).
- */
-export function familyKindsLabel(products: Product[]): string {
-  const first = products[0];
-  if (!first) return "";
-
-  const kinds = [...new Set(products.map((p) => p.kind))];
-  if (kinds.length === 1) {
-    if (stripPrefix(first.kind, FAMILY_LABELS[first.family]) === "") {
-      return PLAIN_KIND[first.family] ?? PLAIN_KIND_FALLBACK;
-    }
-    const [garment] = FAMILY_LABELS[first.family].split(" ");
-    return stripPrefix(first.kind, garment ?? "").toLowerCase();
-  }
-
-  const tails: string[] = [];
-  for (const p of products) {
-    const tail = stripPrefix(p.kind, FAMILY_LABELS[p.family]).toLowerCase();
-    const word = tail === "" ? (PLAIN_KIND[p.family] ?? PLAIN_KIND_FALLBACK) : tail;
-    if (!tails.includes(word)) tails.push(word);
-  }
-  return joinWords(tails);
-}
-
-/** The text with `prefix` taken off the front, if it is on the front. */
-function stripPrefix(text: string, prefix: string): string {
-  if (prefix === "") return text;
-  return text.toLowerCase().startsWith(prefix.toLowerCase())
-    ? text.slice(prefix.length).trim()
-    : text;
-}
-
-/** `["a", "b", "c"]` → `"a, b và c"`. A list read aloud, not a CSV. */
-function joinWords(words: string[]): string {
-  if (words.length <= 1) return words[0] ?? "";
-  return `${words.slice(0, -1).join(", ")} và ${words[words.length - 1]}`;
-}
-
-/**
  * Price times units sold. Simulated, like everything else here — an admin
  * screen showing this must say so.
  */
@@ -400,9 +206,4 @@ export function dropRevenueVnd(
     (n, p) => n + p.priceVnd * soldUnits(p),
     0,
   );
-}
-
-/** How many photo sets the open drop still needs: one per colourway. */
-export function photoSetsNeeded(catalog: Catalog, no: number): number {
-  return productsInDrop(catalog, no).reduce((n, p) => n + p.colors.length, 0);
 }

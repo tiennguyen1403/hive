@@ -23,8 +23,8 @@ interface FeedIconProps {
 }
 
 /**
- * A Phosphor glyph for the Feed screens (round v4, QĐ-32). The v3 screens and
- * the back office keep Iconsax through `components/icon/`.
+ * A Phosphor glyph for the Feed screens (round v4, QĐ-32). The back office
+ * keeps Iconsax through `components/icon/`.
  *
  * Drawn the way the mock draws it (`icon()` in `prototype/explore/feed/feed.js`):
  * a square box, 24px unless the surface sizes it, the glyph filling the box

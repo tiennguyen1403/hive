@@ -3,8 +3,7 @@ import { MONO } from "@/lib/brand/palette";
 /**
  * The nav lockup as `prototype/name/logo/hive-lockup-nav.svg` draws it: mark
  * M2 and wordmark W3 (QĐ-29, QĐ-30), the letters at 62.5% of the mark's
- * height — the bar's own proportion, the same geometry `NavLogo` wears.
- * `FeedLogo.test.ts` holds it to the file.
+ * height — the bar's own proportion. `FeedLogo.test.ts` holds it to the file.
  */
 export const NAV_LOCKUP = {
   viewBox: "-500 -500 2364.99 1000",
@@ -29,17 +28,15 @@ interface FeedLogoProps {
 }
 
 /**
- * The HIVE lockup for the Feed screens, in black and white (QĐ-33): the same
- * drawing as the v3 bar's `NavLogo` (`components/shop/NavLogo.tsx`, which the
- * v3 screens keep until their slice), without the honey, so the Feed's blue
- * stays the one accent. The mock's italic "HIVE" and H tile are not used.
+ * The HIVE lockup for the Feed screens, in black and white (QĐ-33): the
+ * drawing of the nav lockup without the honey, so the Feed's blue stays the
+ * one accent. The mock's italic "HIVE" and H tile are not used.
  *
  * The colours are the logo's own (`MONO` in `lib/brand/palette.ts`), not
  * tokens: a logo does not follow a theme.
  *
- * `aria-hidden` and no `<title>`: the link around it carries the name, as it
- * does for `NavLogo` ("HIVE, trang chủ"); a second name inside would be read
- * out twice.
+ * `aria-hidden` and no `<title>`: the link around it carries the name; a
+ * second name inside would be read out twice.
  */
 export function FeedLogo({ tone = "light", className }: FeedLogoProps) {
   const c = MONO[tone];

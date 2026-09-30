@@ -179,14 +179,6 @@ export function pathWithQuery(path: string, sp: RawParams): string {
   return s ? `${path}?${s}` : path;
 }
 
-/** The filter as a query, the defaults left out: `phase=active&group=so-05`, or "". */
-export function ordersQuery(f: OrdersFilter): string {
-  const q = new URLSearchParams();
-  if (f.phase !== "all") q.set("phase", f.phase);
-  if (f.group !== "all") q.set("group", groupSlug(f.group));
-  return q.toString();
-}
-
 /** The orders the two filters leave, in the order they came. */
 export function filterOrders<T extends Order>(catalog: Catalog, orders: readonly T[], f: OrdersFilter): T[] {
   return orders.filter(
@@ -230,11 +222,6 @@ export function returnUntil(o: Pick<Order, "status">): string | null {
 export function canReturn(o: Pick<Order, "status">, now: Date): boolean {
   const until = returnUntil(o);
   return until !== null && now.getTime() < Date.parse(until);
-}
-
-/** Whether "Huỷ đơn" is offered: nobody has been paid yet (a transfer in its hold, a COD order before the call). */
-export function canCancelOrder(o: Order): boolean {
-  return o.status.state === "AWAITING_TRANSFER" || o.status.state === "RECEIVED";
 }
 
 /**

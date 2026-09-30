@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { anySoldOutTime, soldOutTimes } from "./sold-out-times";
+import { soldOutTimes } from "./sold-out-times";
 import { productsInDrop } from "./inventory";
 import { ORDERS } from "@/data/orders";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
@@ -139,7 +139,6 @@ describe("soldOutTimes", () => {
   it("reads the real fixtures and answers for every style of a closed issue", () => {
     const rows = soldOutTimes(STYLES_4, ORDERS, DROP_4.closesAt);
     expect(rows).toHaveLength(6);
-    expect(anySoldOutTime(rows)).toBe(true);
     expect(rows.every((r) => r.soldOutAt !== undefined)).toBe(true);
     // The sample holds three paid units of issue 04 against 200 cut, so none
     // of these came from the orders.

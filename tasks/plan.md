@@ -2825,3 +2825,52 @@ Hai lượt, chạy **lần lượt**:
   Câu kiểm ở scratchpad `hosted-check-lat5.sql`.
 - **Còn mở:** trên `/admin/orders/*` có cảnh báo (không phải lỗi) một chunk CSS và 3 font tải trước mà không dùng. Nhiều khả
   năng là Mona Sans, vì layout gốc tải trước nó cho cả quản trị. Có từ trước, đợi vòng quản trị.
+
+**30/09, migration B13 LÊN HOSTED** (người dùng chọn: DB ngay, code đợi lát 5). Người dùng gõ `db push --linked --dry-run`
+(thấy đúng `20260930190000_drop_track_order.sql`), rồi `--yes`. Phiên chính chạy `hosted-check-lat5.sql` (chỉ đọc):
+`track_order` đã mất, `lookup_order` còn và `anon` gọi được, `receipt_order` còn, tra sai số ra `PHONE_MISMATCH`, 24/24 đơn gắn
+tài khoản. Lỗ `anon` đọc địa chỉ đã đóng trên demo. Commit `8d46a85` chưa push, sẽ lên cùng lát 5.
+
+**Lát 5 ĐẠT (30/09/2026, `ui-implementer`, phiên chính duyệt độc lập).** Brief `tasks/briefs/v4-lat-5-don.md`. Không đổi hình,
+không đổi hành vi.
+- **Đã xoá:**
+  - 90 tệp: 5 route gồm `/system` và `/hyd`; 61 component v3; 19 tệp `lib` cùng test; `feed/system.css` và bốn tệp CSS v3 tỉa
+    xong thì rỗng (`cards`, `home`, `pages`, `desktop`);
+  - 106 export chết (61 trong brief, 45 kéo theo), component `FeedScope`, hai provider v3;
+  - 765 trên 1.303 nhánh rule CSS v3, 24 alias token, 2 `@keyframes`.
+- **Thêm:** `lib/device-storage.ts` (`RETIRED_KEYS`, `forgetRetiredKeys`, không bao giờ ném lỗi). Gọi một lần ở lượt mount của
+  `CartProvider`, cho cả `localStorage` và `sessionStorage`.
+- Font v3 để `preload: false`.
+- **Số trước → sau:**
+
+  | | Trước | Sau |
+  |---|---|---|
+  | Gói CSS chính, thô / gzip | 252.598 / 41.727 B | 183.358 / 30.924 B |
+  | CSS v3 | 16 tệp, 4.346 dòng | 12 tệp, 1.791 dòng |
+  | TS/TSX | 450 tệp, 81.542 dòng | 367 tệp, 65.101 dòng |
+  | Mục trong header `Link` | 15 (13 font) | 5 (3 font Mona Sans) |
+  | Test | 1983 | 1643 (bỏ 346, thêm 6) |
+  | Test DB | 296 | 296 |
+
+- **Kiểm:**
+  - typecheck, 1643/1643, 296/296 (phiên chính chạy lại); build sạch, 42 trang;
+  - **chốt an toàn CSS:** trên bản cũ, qua 120 trạng thái (mọi route sweep, 22 lớp nổi quản trị, các sheet Feed), 459 nhánh
+    khớp. Không nhánh nào bị xoá nằm trong tập đó. 487 rule còn lại giống HEAD tới từng khai báo;
+  - **so ảnh 120 cặp:** 63 trùng tuyệt đối. 57 cặp còn lại chỉ khác ở đồng hồ đếm, giờ đặt lại dữ liệu, giờ in phiếu và nhiễu
+    giải mã ảnh. Chụp cùng một bản dựng hai lần cũng ra đúng loại nhiễu này;
+  - sweep 109 lượt, phát hiện trước và sau bằng nhau (85);
+  - phiên chính xem ảnh after (quản trị có sheet huỷ và menu lý do mở, Tôi 390): trang thật, đủ font. Phiên chính tự đo:
+    `/system` và `/hyd` trả 404; trang Feed chỉ tải trước 3 font.
+- **Phiên chính sửa sau duyệt:**
+  - thêm `brand.notif.read`, khoá "đã đọc" của hộp thư v3. Script của phiên chính sót khoá này vì tên có hai dấu chấm. Kiểm HEAD
+    cũ: không sót khoá nào khác;
+  - bỏ 4 import thừa có từ trước: `orderUnits`, `Badge` ở `CustomersTable`, `Family`, `BEFORE_06`;
+  - chú giải `tools/layout-sweep.js`;
+  - `.claude/agents/ui-implementer.md` thôi nhắc `NeedWrite` và `app/hyd`. Memory cập nhật theo.
+- **Còn mở:**
+  - `<next-route-announcer>` của Next nằm ngoài vùng Feed nên dùng font của `html` (Be Vietnam Pro). Sau lần điều hướng phía
+    client đầu tiên, trang Feed tải một tệp font v3 (~13 KB). Hết khi vòng quản trị bỏ font v3;
+  - logic viết thẳng trong component, không test kiểm: điều kiện "Huỷ đơn" ở `OrderView`, query lọc ở `OrdersView`;
+  - để vòng quản trị: rule chỉ sống nhờ kiểu (`.btn.ghost`, `.btn.quiet`, `.badge.flat`, `.meter.ok i`, `.qrph …`), 12 token màu
+    `@theme` không alias nào đọc, `CheckoutDraft.agreed?`;
+  - DESIGN.md (documenter): số CSS mới, bảng §8, z-index §6, token, kho trên thiết bị, font.

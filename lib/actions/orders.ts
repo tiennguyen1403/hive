@@ -41,7 +41,7 @@ import {
 /**
  * "Đặt hàng".
  *
- * Called from `CheckoutScreen` as a function inside `startTransition`, with
+ * Called from `CheckoutView` as a function inside `startTransition`, with
  * the basket, the form and the code the screen applied. A guest's receipt key
  * goes into an httpOnly cookie here — the only place a cookie can be set —
  * so `/order-confirmed/<code>` opens again in this browser and nowhere else.
@@ -51,7 +51,7 @@ import {
  * `CatalogProvider`, which the cart and the saved list read) must learn it —
  * as must any page the router kept (`02-guides/server-actions.md`, "A single
  * response carries data and UI"). The response re-renders checkout against
- * the new stock; `CheckoutScreen` keeps drawing what was pressed until the
+ * the new stock; `CheckoutView` keeps drawing what was pressed until the
  * receipt takes over, so that re-render cannot flash "vừa hết" over an order
  * that went through.
  *

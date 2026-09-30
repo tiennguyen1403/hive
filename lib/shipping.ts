@@ -1,5 +1,5 @@
 import type { DeliveryMethod, PaymentMethod, Promotion } from "@/data/types";
-import { addDaysIso, shortRangeLabel } from "./datetime";
+import { addDaysIso } from "./datetime";
 import { promoDiscountVnd } from "./orders";
 
 /**
@@ -73,17 +73,6 @@ export interface DeliveryOption {
   leadDays: readonly [number, number];
 }
 
-/**
- * A delivery label as the checkout prints it: a count and the word after it
- * never part ("24 giờ", "2–4 ngày") — at 360 the choice broke "24" over
- * "giờ" (v3 slice 13). The label itself keeps ordinary spaces, because it
- * is also DATA: a handover stores it as the order's carrier, and
- * `isCarrier` (lib/admin-orders.ts) matches it character for character.
- */
-export function deliveryTitle(o: DeliveryOption): string {
-  return o.label.replace(/(\d) /g, "$1\u00a0");
-}
-
 export const DELIVERY_OPTIONS: DeliveryOption[] = [
   {
     method: "STANDARD",
@@ -105,15 +94,6 @@ export const DELIVERY_OPTIONS: DeliveryOption[] = [
   },
 ];
 
-/**
- * "Tiêu chuẩn" · "Nhanh nội thành" — the method named inside a row of a
- * receipt, where the full label ("Giao tiêu chuẩn · 2–4 ngày") would repeat
- * the delivery window printed beside it.
- */
-export function deliveryShortLabel(method: DeliveryMethod): string {
-  return method === "STANDARD" ? "Tiêu chuẩn" : "Nhanh nội thành";
-}
-
 export function deliveryOption(method: DeliveryMethod): DeliveryOption {
   const found = DELIVERY_OPTIONS.find((o) => o.method === method);
   if (!found) throw new Error(`no delivery option for ${method}`);
@@ -133,12 +113,6 @@ export function deliveryWindow(
 ): { fromIso: string; toIso: string } {
   const [first, last] = deliveryOption(method).leadDays;
   return { fromIso: addDaysIso(fromIso, first), toIso: addDaysIso(fromIso, last) };
-}
-
-/** `"22/09 – 24/09"`, or `"21/09"` for a one-day service. */
-export function deliveryWindowLabel(method: DeliveryMethod, fromIso: string): string {
-  const w = deliveryWindow(method, fromIso);
-  return shortRangeLabel(w.fromIso, w.toIso);
 }
 
 /**

@@ -6,7 +6,7 @@ import { clockLabel, dayMonth, dateTimeLabel, rangeLabel } from "./datetime";
 import { dropState } from "./drop";
 import { dropRevenueVnd, dropSummary } from "./inventory";
 import { styleInList, styleName } from "./lexicon";
-import { orderTotalVnd, orderUnits } from "./orders";
+import { orderTotalVnd } from "./orders";
 import { vnd } from "./money";
 import { STANDARD_FEE_VND } from "./shipping";
 import { demoNow } from "./clock";
@@ -215,10 +215,10 @@ export function promoState(p: Promotion, now: Date = demoNow()): PromoState {
   const t = now.getTime();
   if (t < Date.parse(p.startsAt)) return "UPCOMING";
   // Start-inclusive, end-EXCLUSIVE, the same rule as a shop door and the
-  // same one `dropState` and `isPromoLive` already apply. It was `>` here
+  // same one `dropState` and `checkPromoCode` already apply. It was `>` here
   // until v3 slice 5, and the off-by-one showed the moment "Kết thúc sớm"
   // moved a code's closing hour to now: checkout was refusing the code
-  // (`isPromoLive`, `>=`) while this table still said "Đang chạy".
+  // (`>=`) while this table still said "Đang chạy".
   if (t >= Date.parse(p.endsAt)) return "ENDED";
   if (p.usageLimit !== null && p.usedCount >= p.usageLimit) return "USED_UP";
   if (p.paused) return "PAUSED";

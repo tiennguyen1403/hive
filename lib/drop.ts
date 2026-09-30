@@ -1,5 +1,4 @@
 import type { Catalog } from "./catalog";
-import { closedAtLabel } from "./datetime";
 import type { Drop, DropState } from "@/data/types";
 import { demoNow } from "./clock";
 
@@ -25,12 +24,6 @@ export function dropState(drop: Drop, now: Date = demoNow()): DropState {
 
 export function getDrop(catalog: Catalog, no: number): Drop | undefined {
   return catalog.dropByNo.get(no);
-}
-
-export function currentDrop(catalog: Catalog): Drop {
-  const d = getDrop(catalog, catalog.currentDropNo);
-  if (!d) throw new Error(`no drop record for ${catalog.currentDropNo}`);
-  return d;
 }
 
 export interface TimeLeft {
@@ -121,58 +114,12 @@ export function featuredDrop(
 }
 
 /**
- * The line under the home page's grid, about the drop before this one.
- *
- * It used to read "Số 05 đã đóng · xem lại" unconditionally (L4). When the
- * page is showing the UPCOMING drop, the one before it is the drop selling
- * right now — so the page was announcing that the open shop had shut. The
- * state is derived here, from the clock, and the screen prints what it is
- * handed.
- */
-export interface PreviousDropNote {
-  drop: Drop;
-  state: DropState;
-  /** "đang mở" · "đã đóng" · "chưa mở". Shown as-is. */
-  status: string;
-  /** "đóng sau 5 ngày 1 giờ" while it is still running; "" once it is over. */
-  countdown: string;
-  /** "xem số 05" · "xem lại". Shown as-is. */
-  linkText: string;
-}
-
-export function previousDropNote(
-  previous: Drop | undefined,
-  now: Date = demoNow(),
-): PreviousDropNote | undefined {
-  if (!previous) return undefined;
-
-  const state = dropState(previous, now);
-  const no = String(previous.no).padStart(2, "0");
-
-  // "xem lại" only makes sense for something that is over. A drop that is
-  // still selling gets a link that says where it goes.
-  if (state === "CLOSED") {
-    return { drop: previous, state, status: "đã đóng", countdown: "", linkText: "xem lại" };
-  }
-  return {
-    drop: previous,
-    state,
-    status: state === "OPEN" ? "đang mở" : "chưa mở",
-    countdown:
-      state === "OPEN"
-        ? closesInLabel(previous.closesAt, now)
-        : opensInLabel(previous.opensAt, now),
-    linkText: `xem số ${no}`,
-  };
-}
-
-/**
- * The three drops the footer's calendar names: the one selling now, the one
- * about to open, and the last one that ran.
+ * Three drops: the one selling now, the one about to open, and the last one
+ * that ran.
  *
  * Any of the three can be absent — between the last drop of the year and the
- * next there is no open one — and the footer leaves that row out rather than
- * printing a drop that does not exist.
+ * next there is no open one — and a screen that reads one leaves it out
+ * rather than printing a drop that does not exist.
  */
 export interface DropCalendar {
   open: Drop | undefined;
@@ -196,45 +143,10 @@ export function dropCalendar(catalog: Catalog, now: Date = demoNow()): DropCalen
 
 // ─────────────────────────────────────────────── where an issue lives (v3 slice 11)
 /**
- * `/so/5` — an issue's own page, and the one address every "the whole issue"
- * link leads to: the nav's plate, the cover's button, "Xem cả 10 mẫu", the
- * product page's trail, the footer's calendar. While the issue sells it is
- * the issue's listing; once it closes, its record; before it opens the page
- * sends the shopper on to the teaser. `/products` is every style on sale,
- * both kinds, and belongs to no issue.
+ * `/so/5` — an issue's own page, the address every link to a whole issue
+ * leads to. Once the issue closes it is its record; while it sells, or before
+ * it opens, the page sends the shopper on (`app/so/[no]/page.tsx`).
  */
 export function issueHref(no: number): string {
   return `/so/${no}`;
-}
-
-/**
- * Where a screen's way back into the shop goes: the issue selling now, to
- * its own page — "Xem số 05", "Về số 05" — or, when no issue is selling,
- * every style on sale, "Xem tất cả mẫu". `issueNo` is the open issue for the
- * screens that name it, null when there is none.
- */
-export function wayToShop(
-  catalog: Catalog,
-  now: Date = demoNow(),
-): { href: string; issueNo: number | null } {
-  const open = dropCalendar(catalog, now).open;
-  return open ? { href: issueHref(open.no), issueNo: open.no } : { href: "/products", issueNo: null };
-}
-
-/**
- * The right-hand side of the drop band, for whichever state it is in.
- *
- * It lives here and not beside the component because BOTH sides need it: the
- * server renders the first frame with it, and the client ticks with it. A
- * copy exported from the `"use client"` module cannot be called from a
- * server component at all — the server throws rather than falling back.
- */
-export function dropBandLabel(
-  drop: Drop,
-  state: DropState,
-  now: Date = demoNow(),
-): string {
-  if (state === "UPCOMING") return opensInLabel(drop.opensAt, now);
-  if (state === "OPEN") return closesInLabel(drop.closesAt, now);
-  return closedAtLabel(drop.closesAt);
 }

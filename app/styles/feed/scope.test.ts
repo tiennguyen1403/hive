@@ -4,12 +4,11 @@ import { describe, expect, it } from "vitest";
 
 /**
  * The Feed zone (round v4, slice 0). Every Feed token and every Feed rule is
- * declared under `[data-ui="feed"]`, so that the v3 screens and the back
- * office — which never carry the attribute — do not change by a pixel until
- * their own slice. These checks are what keeps that true as slices 1 to 4
- * port the rest of the mock: a rule that forgets the zone, a Feed rule that
- * reads a v3 token, a token that takes a v3 name, a value that drifts from
- * the mock.
+ * declared under `[data-ui="feed"]`, so that the back office — which never
+ * carries the attribute — does not change by a pixel. These checks are what
+ * kept that true while slices 1 to 4 ported the rest of the mock, and keep
+ * it true: a rule that forgets the zone, a Feed rule that reads a v3 token,
+ * a token that takes a v3 name, a value that drifts from the mock.
  */
 
 const FEED_DIR = join("app", "styles", "feed");
@@ -77,9 +76,9 @@ for (const r of rules(globals)) {
 }
 
 describe("the Feed stylesheets stay inside the zone", () => {
-  it("finds the five files and their rules", () => {
+  it("finds the four files and their rules", () => {
     // `account.css` since slice 3a, the mock's stylesheet of the same name.
-    expect(feedFiles.sort()).toEqual(["account.css", "feed.css", "flow.css", "more.css", "system.css"]);
+    expect(feedFiles.sort()).toEqual(["account.css", "feed.css", "flow.css", "more.css"]);
     expect(feedRules.length).toBeGreaterThan(80);
   });
 
@@ -116,8 +115,7 @@ describe("the Feed stylesheets stay inside the zone", () => {
     for (const r of feedRules) {
       for (const m of r.body.matchAll(/var\((--[\w-]+)/g)) {
         const name = m[1]!;
-        const ok = name.startsWith("--f-") || (r.file === "system.css" && name.startsWith("--kit-"));
-        if (!ok) foreign.push(`${r.file}: ${r.selector} → ${name}`);
+        if (!name.startsWith("--f-")) foreign.push(`${r.file}: ${r.selector} → ${name}`);
       }
     }
     expect(foreign).toEqual([]);
@@ -186,14 +184,11 @@ describe("the Feed stylesheets stay inside the zone", () => {
 
   it("loads after every v3 file, from globals.css, in the order the mock's account pages load them", () => {
     const imports = [...globals.matchAll(/@import "\.\/styles\/([\w/.-]+)"/g)].map((m) => m[1]);
-    expect(imports.slice(-6)).toEqual([
-      "desktop.css",
-      "feed/feed.css",
-      "feed/flow.css",
-      "feed/account.css",
-      "feed/more.css",
-      "feed/system.css",
-    ]);
+    const feed = imports.filter((i) => i!.startsWith("feed/"));
+    expect(feed).toEqual(["feed/feed.css", "feed/flow.css", "feed/account.css", "feed/more.css"]);
+    // Every v3 file comes before them (since slice 5 the last is `interaction.css`).
+    expect(imports.length).toBeGreaterThan(feed.length);
+    expect(imports.slice(-feed.length)).toEqual(feed);
   });
 });
 

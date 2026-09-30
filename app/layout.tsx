@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, Unbounded } from "next/font/google";
 import { CartProvider } from "@/components/cart/CartContext";
-import { AddressBookProvider } from "@/components/account/AddressBookContext";
 import { MeProvider } from "@/components/account/MeContext";
 import { MyStateProvider } from "@/components/account/MyStateContext";
-import { WishlistProvider } from "@/components/account/WishlistContext";
 import { CatalogProvider } from "@/components/shop/CatalogContext";
 import { WaitVeil } from "@/components/shop/WaitVeil";
 import { catalogInput, loadCatalog } from "@/lib/db/catalog";
@@ -23,11 +21,18 @@ import "./globals.css";
 // number, headings, style names, the wordmark, order codes), Be Vietnam Pro
 // for everything a sentence is made of. 700 joins the sans because a v3
 // badge is 700 — v2 stopped at 600 and the weight would have been faked.
+//
+// `preload: false` on both (round v4 slice 5): only the back office still
+// sets text in them — every Feed screen runs on Mona Sans — so the back office
+// fetches the two when it needs them, with `display: swap`, and the Feed pages
+// stop preloading ten files they never draw. The variables stay on <html>, as
+// the back office's layers portalled to <body> need them too.
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ["vietnamese", "latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-be-vietnam",
   display: "swap",
+  preload: false,
 });
 
 // One weight, not the variable axis: nothing in the system sets a display
@@ -37,6 +42,7 @@ const unbounded = Unbounded({
   weight: ["800"],
   variable: "--font-unbounded",
   display: "swap",
+  preload: false,
 });
 
 // The head every page inherits (v3 slice 10, QĐ-31). The pictures are files
@@ -117,27 +123,22 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: POINTER_PROBE }} />
         {/* One of each, above the router, so a line added on the product
             page is already there when the cart route renders — no round
-            trip. Catalog is outermost because it is the only one that is not
-            the device's: the other three read storage, this one reads the
-            shop. The account then wraps the rest: what it keeps (the
-            optimistic writes of the Feed screens, `MyStateProvider`), then
-            the v3 screens' device lists and the basket, which are readable
-            signed out. */}
+            trip. Catalog is outermost: the basket reads the shop through it.
+            The account then wraps the rest: who is signed in, what the
+            account keeps (the optimistic writes of the Feed screens,
+            `MyStateProvider`), then the basket, which the device keeps and
+            which is readable signed out. */}
         <CatalogProvider input={catalogInput(catalog)}>
           <MeProvider me={me}>
             <MyStateProvider initial={myState}>
-              <AddressBookProvider>
-                <WishlistProvider>
-                  <CartProvider>{children}</CartProvider>
-                </WishlistProvider>
-              </AddressBookProvider>
+              <CartProvider>{children}</CartProvider>
             </MyStateProvider>
           </MeProvider>
         </CatalogProvider>
         {/* The wait veil (v3 slice 9): once, here, above the page boundary,
-            because it has to outlive the page it covers — `ShopFrame`
-            remounts with every page, and the veil plays its closing over the
-            NEW one. It needs none of the providers. On `/admin` it renders
+            because it has to outlive the page it covers — each page's frame
+            remounts with it, and the veil plays its closing over the NEW
+            one. It needs none of the providers. On `/admin` it renders
             nothing. */}
         <WaitVeil />
       </body>

@@ -1,14 +1,13 @@
-/* Text inputs, the system dropdown, the tickbox and the radio.
+/* Text inputs and the system dropdown.
    Lifted from `prototype/app.css` — the approved mock is the REFERENCE.
    Change anything here and you owe a screenshot comparison against
    http://127.0.0.1:4321. */
 
 /* 44 → 40px (user review 20/09). Level with the 40px `.btn` standing beside
-   it — the promo code box and the search bar both sit in such a row, and a
-   four-pixel step between the two reads as a mistake. The 44px touch floor is
-   NOT given up: on a form the label above is bound to the input, so the tap
-   target is label + gap + box ≈ 62px. Textareas (`.area`, 78px) and the
-   admin's 34px inputs are untouched. */
+   it: a four-pixel step between the two reads as a mistake. The 44px touch
+   floor is NOT given up: on a form the label above is bound to the input, so
+   the tap target is label + gap + box ≈ 62px. Textareas (`.area`, 78px) and
+   the admin's 34px inputs are untouched. */
 .s .inp{ width:100%; height:40px; border:1px solid var(--line); border-radius:var(--r);
   background:#fff; padding:0 12px; font-size:13px; color:var(--ink);
   display:flex; align-items:center; }
@@ -32,23 +31,9 @@
 .s .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .s .err{ font-size:11.5px; color:var(--hot); margin-top:5px; display:flex; gap:5px; align-items:center; }
 .s .inp.bad{ border-color:var(--hot); border-width:1.5px; }
-.s .box{ width:17px; height:17px; border:1px solid var(--line); border-radius:var(--r-sm);
-  flex:none; margin-top:1px; }
-.s .box.on{ background:var(--fill); border-color:var(--fill); position:relative; }
-.s .box.on::after{ content:""; position:absolute; left:5px; top:2px; width:4px; height:8px;
-  border:solid var(--fill-ink); border-width:0 2px 2px 0; transform:rotate(43deg); }
-.s .radio{ width:17px; height:17px; border:1px solid var(--line); border-radius:99px; flex:none;
-  margin-top:1px; }
-.s .radio.on{ border:5px solid var(--fill); }
 /* A box showing a value nobody may change here, like the code of a discount
    being edited (a renamed code would be a different code), reads as plate
    and not as a field waiting for input (v3 slice 7, from the B3b report).
    At 0,4,0 no other rule sets a ground or an ink on `.field3 .inp`, so
    nothing ties with it. */
 .s .field3 .inp[readonly]{ background:var(--plate); color:var(--ink2); }
-
-/* The v2 size row (`.szrow` / `.sz`) stood here until v3 slice 6. Picking a
-   size is `.szgrid3` / `.szc` (product.css) since slice 2 of v3, and the
-   placeholder colour (`.inp.ph2`) and the bare-input touch wrapper
-   (`.inptap`) went the same way: `Field3` labels every box, and `.inp` has
-   worn its own `::placeholder` rule since the v3 form landed. */

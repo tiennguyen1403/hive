@@ -1,62 +1,14 @@
 import type { Order, OrderStatus } from "@/data/types";
-import { clockLabel, dayMonth } from "./datetime";
 import { demoNow } from "./clock";
 
 /**
- * A shopper's own orders: how they are grouped, and how one reads as a
- * sequence of events.
+ * A shopper's own orders: the status one is in.
  *
  * WHICH orders a shopper may see is no longer decided here. Until slice B2
  * `visibleOrder()` filtered the fixtures by customer; the orders are rows in
  * Postgres now, and row level security answers that question before a single
  * order reaches the app (`lib/db/orders.ts`, QĐ-16).
  */
-
-export type OrderTabKey = "all" | "processing" | "delivered" | "cancelled";
-
-export interface OrderTab {
-  key: OrderTabKey;
-  /** Shown as-is. */
-  label: string;
-}
-
-export const ORDER_TABS: OrderTab[] = [
-  { key: "all", label: "Tất cả" },
-  { key: "processing", label: "Đang xử lý" },
-  { key: "delivered", label: "Đã giao" },
-  { key: "cancelled", label: "Đã huỷ" },
-];
-
-/** Everything between placing and arriving counts as still being handled. */
-const PROCESSING: string[] = ["AWAITING_TRANSFER", "PAID", "SHIPPING", "RECEIVED"];
-
-/**
- * Does a state belong under this tab?
- *
- * `RECEIVED` — taken, nobody paid yet — is still being handled, like a
- * transfer being waited on. Takes a string so the rows (`order-rows.ts`) and
- * the orders ask the same question through one definition; two would let the
- * tab and its count disagree.
- */
-export function inTab(tab: OrderTabKey, state: string): boolean {
-  switch (tab) {
-    case "all":
-      return true;
-    case "processing":
-      return PROCESSING.includes(state);
-    case "delivered":
-      return state === "DELIVERED";
-    case "cancelled":
-      return state === "CANCELLED";
-  }
-}
-
-export function ordersForTab(orders: Order[], tab: OrderTabKey): Order[] {
-  // Copy before sorting: the caller's list is usually the fixture itself.
-  return orders
-    .filter((o) => inTab(tab, o.status.state))
-    .sort((a, b) => Date.parse(b.placedAt) - Date.parse(a.placedAt));
-}
 
 // ───────────────────────────────────────────── the status, read off the clock
 /**
@@ -88,8 +40,8 @@ export const OVERDUE_REASON = "quá hạn chuyển khoản";
 
 /**
  * Why an order the shopper called off themselves is cancelled — the words
- * `cancel_order()` writes into `cancel_reason`, and the ones every screen
- * prints after "Đã huỷ —". Kept beside `OVERDUE_REASON` because the two are
+ * `cancel_order()` writes into `cancel_reason`, which the screens read to
+ * name the reason. Kept beside `OVERDUE_REASON` because the two are
  * the only reasons the shop itself writes, and `customer-orders.test.ts`
  * checks that the migration still spells both exactly this way.
  */
@@ -108,123 +60,4 @@ export function effectiveOrder<T extends Pick<Order, "status">>(o: T, now: Date 
   // with its owner — keeps it on the way through, and one that carries less —
   // the guest lookup's (slice B11), without where it goes — reads the same.
   return status === o.status ? o : { ...o, status };
-}
-
-// ──────────────────────────────────────────────────────────────── timeline
-export interface TimelineStep {
-  /** Shown as-is. Carries the state in words, never in colour alone. */
-  title: string;
-  detail?: string;
-  state: "done" | "now" | "todo";
-}
-
-/**
- * `"18/09 · 07:15"` — how every step of every timeline is stamped. Exported
- * so anything else that dates a milestone dates it the same way; two
- * timelines on the same screen in two date formats read as a bug.
- */
-export function eventStamp(iso: string): string {
-  return `${dayMonth(iso)} · ${clockLabel(iso)}`;
-}
-
-const at = eventStamp;
-
-/**
- * An order as a sequence of events, derived from its status.
- *
- * Exactly one step is ever "now" and nothing after it is done — the test
- * pins that, because a timeline with two current steps or a finished step
- * below an unfinished one is a timeline that is lying about something.
- *
- * A cancelled order does not show the steps it never reached. Drawing
- * "Đang giao" greyed out under a cancellation suggests it is still coming.
- */
-export function orderTimeline(o: Order): TimelineStep[] {
-  const placed: TimelineStep = {
-    title: "Đã nhận đơn",
-    detail: at(o.placedAt),
-    state: "done",
-  };
-
-  switch (o.status.state) {
-    case "AWAITING_TRANSFER":
-      return [
-        { ...placed, state: "now" },
-        { title: "Chờ chuyển khoản", detail: `hạn ${at(o.status.dueAt)}`, state: "todo" },
-        { title: "Đóng gói", state: "todo" },
-        { title: "Giao hàng", state: "todo" },
-      ];
-
-    // Taken, and nobody has paid or packed anything yet — a COD order, or a
-    // card order taken before slice B7 (a card pays by transfer since, and
-    // waits in AWAITING_TRANSFER). What is known is the order and the two
-    // steps still ahead of it, and nothing is claimed as done.
-    case "RECEIVED":
-      return [
-        { ...placed, state: "now" },
-        { title: "Đóng gói", state: "todo" },
-        { title: "Giao hàng", state: "todo" },
-      ];
-
-    case "PAID":
-      return [
-        placed,
-        { title: "Đã thanh toán", detail: at(o.status.paidAt), state: "now" },
-        { title: "Đóng gói", state: "todo" },
-        { title: "Giao hàng", state: "todo" },
-      ];
-
-    case "SHIPPING":
-      return [
-        placed,
-        { title: "Đã thanh toán", state: "done" },
-        { title: "Đã đóng gói", state: "done" },
-        {
-          title: "Đang trên đường giao",
-          detail: `${at(o.status.shippedAt)} · mã vận đơn ${o.status.trackingCode}`,
-          state: "now",
-        },
-        { title: "Giao thành công", state: "todo" },
-      ];
-
-    case "DELIVERED":
-      return [
-        placed,
-        { title: "Đã thanh toán", state: "done" },
-        { title: "Đã đóng gói", state: "done" },
-        { title: "Đã giao cho đơn vị vận chuyển", state: "done" },
-        { title: "Giao thành công", detail: at(o.status.deliveredAt), state: "now" },
-      ];
-
-    case "CANCELLED":
-      return [
-        placed,
-        { title: `Đã huỷ — ${o.status.reason}`, detail: at(o.status.cancelledAt), state: "now" },
-      ];
-  }
-}
-
-/**
- * What happens to the money on a cancelled order.
- *
- * The two reasons the shop writes itself settle it: the shopper can only call
- * off an order nobody has paid for (`cancel_order()` allows a transfer inside
- * its hold or a `RECEIVED` order, nothing else), and the clock only cancels a
- * transfer that never arrived. Neither can have anything to refund — a COD
- * order cancelled before delivery included, which the payment-method rule
- * below would get wrong. For any other reason the method decides, as it
- * always has.
- *
- * Saying "không có gì để hoàn" on an order somebody had paid for would be the
- * worst sentence on the site; saying "sẽ được hoàn" on one nobody paid for is
- * the second worst.
- */
-export const REFUND_NONE = "Không có gì để hoàn.";
-export const REFUND_TO_SOURCE = "Khoản đã thanh toán sẽ được hoàn về nguồn ban đầu.";
-
-export function refundNote(o: Order): string | null {
-  if (o.status.state !== "CANCELLED") return null;
-  const reason = o.status.reason;
-  if (reason === CUSTOMER_CANCEL_REASON || reason === OVERDUE_REASON) return REFUND_NONE;
-  return o.payment === "BANK_TRANSFER" ? REFUND_NONE : REFUND_TO_SOURCE;
 }

@@ -38,8 +38,8 @@ export function startWait(href: string): void {
  * object, the rule for WHEN is `shouldVeil` and the frames are
  * `showingFrame`/`closingFrame` (`lib/wait.ts`).
  *
- * Rendered ONCE, in the root layout, above the page boundary: `ShopFrame`
- * belongs to each page and remounts with it, and the veil has to outlive the
+ * Rendered ONCE, in the root layout, above the page boundary: a page's frame
+ * belongs to the page and remounts with it, and the veil has to outlive the
  * change to play its closing over the NEW page. On `/admin` it renders
  * nothing and listens to nothing.
  *
@@ -102,7 +102,7 @@ export function startWait(href: string): void {
  * Round v4 "Feed" (slice 1a): over a Feed screen, or on the way to one
  * (`isFeedPath`, `lib/wait.ts`), the mark is the logo in black and white and
  * the stitches are ink — no honey (QĐ-33) — and the veil starts under the
- * Feed bar. Between two v3 screens it is unchanged.
+ * Feed bar. Anywhere else it is the v3 veil, unchanged.
  */
 export function WaitVeil() {
   const pathname = usePathname();
@@ -239,10 +239,10 @@ export function WaitVeil() {
           />
         </g>
         {/* Mark M2, copied byte for byte from `prototype/name/logo/hive-mark.svg`
-            as `NavLogo` copies it. The logo's own colours, not tokens: a logo
-            does not follow a theme. Honey and ink as the server renders it;
-            over or towards a Feed screen the veil repaints it in black and
-            white (`dress` below, QĐ-33). */}
+            as `FeedLogo` copies the nav lockup. The logo's own colours, not
+            tokens: a logo does not follow a theme. Honey and ink as the
+            server renders it; over or towards a Feed screen the veil
+            repaints it in black and white (`dress` below, QĐ-33). */}
         <g transform="scale(.064)">
           <circle ref={discRef} r="500" fill={HONEY} />
           <path

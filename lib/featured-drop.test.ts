@@ -1,12 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  dropBandLabel,
-  dropCalendar,
-  featuredDrop,
-  issueHref,
-  previousDropNote,
-  wayToShop,
-} from "./drop";
+import { dropCalendar, featuredDrop, issueHref } from "./drop";
 import { DROPS } from "@/data/catalog";
 import { TEASERS } from "@/data/catalog";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
@@ -73,51 +66,7 @@ describe("the drop before the featured one", () => {
   });
 });
 
-describe("previousDropNote · L4", () => {
-  const drop5 = DROPS.find((d) => d.no === 5)!;
-  const drop4 = DROPS.find((d) => d.no === 4)!;
-
-  it("says the previous drop is OPEN when it still is, and counts it down", () => {
-    // The bug: featuring the upcoming drop 06 printed "Số 05 đã đóng · xem
-    // lại" while drop 05 was selling. Same instant, read off the clock.
-    const { previous } = featuredDrop(FIXTURE_CATALOG, 6, DURING_5);
-    const note = previousDropNote(previous, DURING_5)!;
-    expect(note.drop.no).toBe(5);
-    expect(note.state).toBe("OPEN");
-    expect(note.status).toBe("đang mở");
-    expect(note.countdown).toBe("đóng sau 5 ngày 10 giờ");
-    expect(note.linkText).toBe("xem số 05");
-  });
-
-  it("says 'đã đóng · xem lại' for a drop that really is over", () => {
-    const note = previousDropNote(drop4, DURING_5)!;
-    expect(note.state).toBe("CLOSED");
-    expect(note.status).toBe("đã đóng");
-    expect(note.countdown).toBe("");
-    expect(note.linkText).toBe("xem lại");
-  });
-
-  it("turns over on its own once the previous drop shuts", () => {
-    const note = previousDropNote(drop5, BETWEEN_5_AND_6)!;
-    expect(note.status).toBe("đã đóng");
-    expect(note.linkText).toBe("xem lại");
-  });
-
-  it("counts a previous drop that has not opened yet towards its opening", () => {
-    // Cannot happen with these fixtures — drops run in order — but the note
-    // must not print "đã đóng" for anything the clock has not closed.
-    const note = previousDropNote(drop5, new Date("2026-09-01T10:00:00+07:00"))!;
-    expect(note.state).toBe("UPCOMING");
-    expect(note.status).toBe("chưa mở");
-    expect(note.countdown).toBe("mở sau 10 ngày 10 giờ");
-  });
-
-  it("is absent when there is no drop before this one", () => {
-    expect(previousDropNote(undefined, DURING_5)).toBeUndefined();
-  });
-});
-
-describe("dropCalendar · the footer's three rows", () => {
+describe("dropCalendar · its three rows", () => {
   it("names the drop selling now, the next one, and the last one that ran", () => {
     const cal = dropCalendar(FIXTURE_CATALOG, DURING_5);
     expect(cal.open?.no).toBe(5);
@@ -175,49 +124,9 @@ describe("drop fixtures", () => {
   });
 });
 
-describe("dropBandLabel", () => {
-  const drop = DROPS.find((d) => d.no === 5)!;
-
-  it("counts down to the close while the drop is open", () => {
-    expect(dropBandLabel(drop, "OPEN", new Date("2026-09-25T14:18:00+07:00"))).toBe(
-      "đóng sau 5 giờ 42 phút",
-    );
-  });
-
-  it("counts down to the opening while the drop is still ahead", () => {
-    expect(dropBandLabel(drop, "UPCOMING", new Date("2026-09-09T06:00:00+07:00"))).toBe(
-      "mở sau 2 ngày 14 giờ",
-    );
-  });
-
-  it("prints the instant it shut once it is over, not a countdown", () => {
-    expect(dropBandLabel(drop, "CLOSED", new Date("2026-10-01T00:00:00+07:00"))).toBe(
-      "20:00 · 25/09",
-    );
-  });
-
-  it("is callable from a server component — it lives in lib, not beside the band", () => {
-    // Exporting it from the "use client" module made the home page throw
-    // "Attempted to call dropBandLabel() from the server". Nothing in this
-    // module may reach for the DOM.
-    expect(typeof dropBandLabel).toBe("function");
-  });
-});
-
 describe("issueHref · an issue's own page (v3 slice 11)", () => {
   it("is /so/N, the number as it is", () => {
     expect(issueHref(5)).toBe("/so/5");
     expect(issueHref(12)).toBe("/so/12");
-  });
-});
-
-describe("wayToShop · a screen's way back into the shop (v3 slice 11)", () => {
-  it("goes to the issue selling now, and names it", () => {
-    expect(wayToShop(FIXTURE_CATALOG, DURING_5)).toEqual({ href: "/so/5", issueNo: 5 });
-  });
-
-  it("goes to every style on sale when no issue is selling", () => {
-    expect(wayToShop(FIXTURE_CATALOG, BETWEEN_5_AND_6)).toEqual({ href: "/products", issueNo: null });
-    expect(wayToShop(FIXTURE_CATALOG, AFTER_EVERYTHING)).toEqual({ href: "/products", issueNo: null });
   });
 });

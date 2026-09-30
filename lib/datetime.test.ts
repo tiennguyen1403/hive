@@ -8,12 +8,10 @@ import {
   dateTimeLabel,
   dayMonth,
   dayMonthYear,
-  openingLabel,
   rangeLabel,
   dayFromIsoDay,
   dayInput,
   isoDayFromInput,
-  shortRangeLabel,
   sinceLabel,
   weekdayLabel,
 } from "./datetime";
@@ -102,12 +100,6 @@ describe("clockDayLabel", () => {
   });
 });
 
-describe("openingLabel", () => {
-  it("reads the way the upcoming-drop screen says it", () => {
-    expect(openingLabel("2026-10-02T20:00:00+07:00")).toBe("20:00 ngày 02/10");
-  });
-});
-
 describe("rangeLabel", () => {
   it("joins two dates for an estimated delivery window", () => {
     expect(rangeLabel("2026-09-21T00:00:00+07:00", "2026-09-23T00:00:00+07:00")).toBe(
@@ -140,52 +132,6 @@ describe("addDaysIso", () => {
 describe("dateTimeLabel", () => {
   it("reads the way the confirmation prints a deadline", () => {
     expect(dateTimeLabel("2026-09-21T06:50:00+07:00")).toBe("06:50 ngày 21/09");
-  });
-
-  it("is the same sentence the opening announcement uses", () => {
-    // One format, two callers. If they ever drift apart it should be a
-    // decision, not an accident of two copies of the same template.
-    expect(dateTimeLabel("2026-10-02T20:00:00+07:00")).toBe(
-      openingLabel("2026-10-02T20:00:00+07:00"),
-    );
-  });
-});
-
-describe("shortRangeLabel", () => {
-  it("holds the range together with NO-BREAK spaces around the dash", () => {
-    // Let a line break fall beside the dash and "22/09" ends one line while
-    // "– 24/09" starts the next, which reads as two dates rather than a
-    // window. Both range helpers are printed inside running sentences.
-    const r = shortRangeLabel("2026-09-22T18:50:00+07:00", "2026-09-24T18:50:00+07:00");
-    expect(r).not.toContain(" ");
-    expect(r).toContain("\u00A0–\u2060\u00A0");
-    // …and the joiner after the dash, because a no-break space that follows
-    // a dash still allows a break before it (UAX #14, LB12a): measured,
-    // "20/09 –" over "22/09" on the receipt at 390 (v3 slice 13).
-    expect([...r].map((c) => c.codePointAt(0)!.toString(16))).toEqual([
-      "32", "32", "2f", "30", "39", "a0", "2013", "2060", "a0", "32", "34", "2f", "30", "39",
-    ]);
-    expect(rangeLabel("2026-09-21T00:00:00+07:00", "2026-09-23T00:00:00+07:00")).toContain(
-      "\u00A0–\u2060\u00A0",
-    );
-  });
-
-  it("joins the two ends of a delivery window, no year", () => {
-    expect(
-      shortRangeLabel("2026-09-22T18:50:00+07:00", "2026-09-24T18:50:00+07:00"),
-    ).toBe("22/09\u00A0–\u2060\u00A024/09");
-  });
-
-  it("prints one date when the window is a single day", () => {
-    // Express is "trong 24 giờ". "21/09 – 21/09" reads as a range that is
-    // somehow both ends of nothing.
-    expect(
-      shortRangeLabel("2026-09-21T18:50:00+07:00", "2026-09-21T18:50:00+07:00"),
-    ).toBe("21/09");
-  });
-
-  it("says nothing rather than half a range", () => {
-    expect(shortRangeLabel("hôm nào đó", "2026-09-24T00:00:00+07:00")).toBe("");
   });
 });
 

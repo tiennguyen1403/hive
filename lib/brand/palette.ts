@@ -5,11 +5,11 @@
  *
  * They are the same values as the design tokens — `--brand`, `--ink` /
  * `--stage` and `--stage-ink` in `app/globals.css` — but a logo does not
- * follow a theme, so they are written out here the way `NavLogo` and
- * `WaitVeil` write them, not read from a stylesheet no image can see.
+ * follow a theme, so they are written out here, not read from a stylesheet
+ * no image can see.
  */
 
-/** The v3 logo's disc (the v3 bar, the wait veil between v3 screens); no longer in any picture since round v4. */
+/** The v3 logo's disc (the wait veil at rest, before it repaints itself for a Feed screen); no longer in any picture since round v4. */
 export const HONEY = "#eba400";
 /** The bee on the disc. */
 export const INK = "#171410";
@@ -32,7 +32,7 @@ export const WHITE = "#ffffff";
  * The favicon, the phone icons (`scripts/brand-assets.ts`), `FeedLogo`, the
  * wait veil over a Feed screen and — since round v4 slice 1a — the share
  * image (`LOCKUP_ON_DARK`, `lib/brand/lockup.ts`) draw from here. `HONEY`
- * stays for the v3 screens' own logo until their slices.
+ * stays for the wait veil's resting mark.
  */
 export const MONO = {
   light: { disc: INK, bee: WHITE, name: INK },

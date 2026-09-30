@@ -6,7 +6,6 @@ import type { AdminOrder } from "./admin-orders";
 import {
   customerKey,
   customerRows,
-  isCustomerKey,
   isShopper,
   ordersOfCustomer,
   type AdminCustomer,
@@ -62,13 +61,6 @@ describe("addressing an account", () => {
   it("uses the fixture handle when there is one, the uuid otherwise", () => {
     expect(customerKey(SHOPPERS[0]!)).toBe("c-minhanh");
     expect(customerKey(SIGNED_UP)).toBe(SIGNED_UP.id);
-  });
-
-  it("answers to either", () => {
-    expect(isCustomerKey(SHOPPERS[0]!, "c-minhanh")).toBe(true);
-    expect(isCustomerKey(SHOPPERS[0]!, SHOPPERS[0]!.id)).toBe(true);
-    expect(isCustomerKey(SHOPPERS[0]!, "c-namle")).toBe(false);
-    expect(isCustomerKey(SIGNED_UP, "")).toBe(false);
   });
 });
 

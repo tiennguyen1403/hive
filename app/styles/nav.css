@@ -1,20 +1,11 @@
-/* The wordmark, the icon scale, the nav bar and the issue band.
+/* The wordmark and the icon scale.
 
    Lifted from `prototype/app.css` — the approved mock is the REFERENCE.
    Change anything here and you owe a screenshot comparison against
-   http://127.0.0.1:4321.
+   http://127.0.0.1:4321. */
 
-   ONE rule is an addition rather than a port: the invisible touch-target
-   overlay on the bar's links, marked ADDED below. It changes no pixel that
-   renders; it exists because the ported design missed the 44px floor. */
-
-/* --------------------------------------------------------------- nav bar */
-/* Two bars have stood here and both are gone: `.s .nav` (Phase 3) and
-   `.nav2` (v2). `SiteNav` has rendered `.nav3` (below) on every route since
-   slice 0 of v3, and nothing references the old classes. `.s .wm` stays:
-   the admin sidebar, the footer's colophon and the delivery slip set the
-   wordmark in letters with it. The shop's own bar draws the logo in its
-   place since v3 slice 8 and keeps only the class (`.s .nav3 .wm` below). */
+/* `.s .wm`: the admin sidebar and the delivery slip set the wordmark in
+   letters with it. */
 .s .wm{ font-family:var(--font-display); font-weight:var(--fw-display); font-size:14px;
   letter-spacing:.14em; margin-right:auto; }
 /* Icons: Iconsax Linear. The paths already carry stroke=currentColor and
@@ -61,7 +52,6 @@
    equals the icon's width because `.ic` sets font-size to match. Missing
    variables fall back to 0. */
 .s .btn > .ic,
-.s .card3 .addbtn3 > .ic,
 .s .badge > .ic,
 .s .side a > .ic{
   margin-left:calc(var(--il, 0) * -1em);
@@ -74,108 +64,3 @@
 .s .ic.sm{ width:15px; height:15px; font-size:15px; }
 /* 12px: a mark inside a box — the tick in a checkbox, the +/- of a stepper. */
 .s .ic.mk{ width:12px; height:12px; font-size:12px; }
-
-/* ------------------------------------------------------------ nav bar, v3 */
-/* Sticky, 56px on the phone and 64px from 900px. Three groups, in the order
-   they are read and tabbed through: whose shop this is (the logo), what is
-   on sale (the issue plate, then the five families from 900px), and the
-   four things a shopper reaches for. Rebuilt at v3 slice 8 from the mock
-   approved on 24/09/2026 (`prototype/name/nav.html`).
-
-   The ISSUE PLATE (`.itag`) is the one piece of black cloth in the bar —
-   the same material as the cover, so the nav and the cover read as one
-   object. It is there only while an issue is on sale (v3 slice 10) and
-   prints only WHICH issue; the link's `aria-label` and `title` name it in
-   full (`plateLabel` in lib/lexicon.ts). The bar keeps no clock.
-
-   The bar sits on a soft shadow rather than a rule: `0 1px 0` for the
-   hairline and a wide, low-opacity drop underneath, so the page slides
-   under something rather than past a line. */
-.s .nav3{ position:sticky; top:0; z-index:40; background:var(--bg);
-  border-bottom:1px solid var(--hair);
-  box-shadow:0 1px 0 rgba(23,20,16,.04), 0 10px 24px -14px rgba(23,20,16,.28); }
-.s .nav3 .in{ display:flex; align-items:center; gap:10px; height:56px;
-  padding:0 8px 0 var(--gut); }
-/* The logo is an SVG (`NavLogo`), not letters. The link keeps the bar's 44px
-   height for the finger and never shrinks: a 360px phone has 1.5px to spare.
-   30px tall here and 32 from 900px; the width follows the viewBox (70.9 /
-   75.7px). */
-.s .nav3 .wm{ display:inline-flex; align-items:center; height:44px; margin-right:0;
-  flex:none; }
-.s .nav3 .wm svg{ display:block; height:30px; width:auto; }
-/* The plate: option F of the name round (`prototype/name/hive-2.html`) cut
-   from the issue's cloth, colourway B. A 1px honey rule inset 2px from the
-   edge, a bolt at each end, the issue in Unbounded 800. `--pl` is the plate
-   and `--pi` everything drawn on it (rule, bolts, letters); the hover swaps
-   only the plate.
-
-   ONE plate, two places (v3 slice 11): the card's plate on the photo of an
-   issue's style, `.card3 .sotag`, is this declaration set, and so is its
-   900px step in desktop.css. What is the bar's alone — a link that never
-   shrinks, carries a touch overlay and a hover — stays in the rule under
-   it; where the card's sits on its photo is in cards.css. */
-.s .nav3 .itag,
-.s .card3 .sotag{ --pl:var(--stage); --pi:var(--brand);
-  display:inline-flex; align-items:center; justify-content:center;
-  white-space:nowrap; height:28px; padding:0 17px;
-  border-radius:var(--r-plate);
-  background:
-    radial-gradient(circle at 8.5px 50%, var(--pi) 0 1.6px, transparent 2.1px),
-    radial-gradient(circle at calc(100% - 8.5px) 50%, var(--pi) 0 1.6px, transparent 2.1px),
-    var(--pl);
-  box-shadow:inset 0 0 0 2px var(--pl), inset 0 0 0 3px var(--pi);
-  color:var(--pi); font-family:var(--font-display); font-weight:var(--fw-display);
-  font-size:var(--fs-xs); line-height:1; letter-spacing:.1em; text-transform:uppercase; }
-.s .nav3 .itag{ flex:none; position:relative; border:0;
-  transition:background-color .12s ease; }
-/* 28px of plate, 46px of finger. */
-.s .nav3 .itag::after{ content:""; position:absolute; inset:-9px 0; }
-/* The blue "not yet" plate and the grey "shut" one went at v3 slice 10:
-   the bar draws no plate unless the issue is on sale. */
-.s .nav3 .itag:hover{ --pl:var(--stage-hair); }
-/* Browsing the whole issue: the same 2px honey rule the family links wear.
-   `::before`, because `::after` is the touch overlay. */
-.s .nav3 .itag.on::before{ content:""; position:absolute; left:3px; right:3px;
-  bottom:-6px; height:2px; background:var(--brand); }
-@media (prefers-reduced-motion:reduce){ .s .nav3 .itag{ transition:none; } }
-.s .nav3 .links{ display:none; }
-.s .nav3 .icons{ margin-left:auto; display:flex; align-items:center; flex:none; }
-/* 40 wide × 44 tall: the height is the floor; the width follows DESIGN.md §5's
-   nav exemption, because four 44px boxes would push the wordmark off a 360px
-   phone, and two touch targets that overlap are worse than one that is narrow. */
-.s .nav3 .ib{ position:relative; width:40px; height:44px; display:inline-flex;
-  align-items:center; justify-content:center; color:var(--ink); border-radius:var(--r);
-  flex:none; }
-.s .nav3 .ib:hover{ background:var(--plate); }
-/* The bar's four glyphs are drawn at 20px rather than the system's 18; the
-   button boxes stay 40×44 / 44×44. They stay Linear whatever the count. */
-.s .nav3 .ib .ic{ width:20px; height:20px; font-size:20px; }
-/* The count bubble: honey with ink digits, turned round from cloth and honey
-   on 24/09/2026, and set 1px further out than before so it covers the same
-   corner of the larger glyph. It is drawn only above zero — an empty bag
-   says so by having no bubble. */
-.s .nav3 .ib b{ position:absolute; top:4px; right:2px; min-width:16px; height:16px;
-  padding:0 4px; border-radius:99px; background:var(--brand); color:var(--ink);
-  font-size:var(--fs-xs); line-height:16px; font-weight:700; text-align:center;
-  font-family:var(--font-sans); font-variant-numeric:tabular-nums; }
-
-/* The v2 sub-bar (back arrow + screen title, `SubBar.tsx`) stood here until
-   v3 slice 6. It went with the component at slice 4; the rules outlived it
-   and were reaching the `.sub` SECONDARY LINE the account and admin rows
-   wear — a different thing with the same short name. Nothing of it was
-   visible (every property was already overridden where the two met), but a
-   bar's padding and hairline were one specificity accident away. */
-
-/* ------------------------------------------------------------------- band
-   One band is left: the reminder line on the home page (`ReminderBand`,
-   dressed by `.band.remind` in home.css). The ISSUE band that shared this
-   box — a drop number, a separator and a countdown — went at v3 slice 6
-   with `DropBand.tsx`, which nothing had rendered since the cover took the
-   job at slice 1. */
-.s .band{ margin:14px 18px 0; background:var(--band); border-radius:var(--r);
-  padding:10px 13px; display:flex; align-items:baseline; gap:9px; font-size:11.5px;
-  color:var(--band-ink); }
-
-/* The v2 tab bar (`.tabs`, and `.tabs.scroll` in listing.css) stood here
-   until v3 slice 6. The family tabs are `.tabs3` (listing.css) since slice
-   2 of v3 and nothing rendered the old name afterwards. */

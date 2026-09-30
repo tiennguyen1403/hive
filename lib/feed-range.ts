@@ -35,8 +35,8 @@ export function feedTightRange(from: string, to: string): string {
 
 /**
  * The same text with every range between two numbers set the Feed's way:
- * "2–4 ngày" (a label `lib/shipping.ts` writes for the v3 screens, and stores
- * as an order's carrier, so it is converted here rather than changed there)
+ * "2–4 ngày" (a label `lib/shipping.ts` writes, and stores as an order's
+ * carrier, so it is converted here rather than changed there)
  * becomes "2-4 ngày", tight. Anything else is left as it is.
  */
 export function feedTight(text: string): string {

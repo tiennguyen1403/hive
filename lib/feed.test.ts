@@ -37,7 +37,6 @@ const style = (stem: string): Product => {
 /** The fixture's four issues: Số 05 sells 11/09 20:00 → 25/09 20:00, Số 06 opens 02/10. */
 const OPEN = new Date("2026-09-21T19:02:00+07:00");
 const AFTER = new Date("2026-09-28T19:02:00+07:00");
-const BEFORE_06 = new Date("2026-09-30T19:02:00+07:00");
 
 describe("a style's state, asked of its own issue", () => {
   it("is live while its issue sells, over once it shuts; a fixed style is neither", () => {

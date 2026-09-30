@@ -5,7 +5,6 @@ import {
   FEED_STATE_LABEL,
   NO_FILTER,
   buyAgainLines,
-  canCancelOrder,
   canReturn,
   cancelReasonText,
   defaultFirst,
@@ -23,7 +22,6 @@ import {
   orderGroups,
   orderPhase,
   orderSteps,
-  ordersQuery,
   parseOrdersFilter,
   pathWithQuery,
   paymentTitle,
@@ -144,12 +142,6 @@ describe("the two filters (orders.js, ORDER_PHASES, orderGroups)", () => {
     expect(pathWithQuery("/account/addresses", { add: "1", x: ["a", "b"], y: undefined })).toBe("/account/addresses?add=1&x=a&x=b");
   });
 
-  it("writes the filter back with the defaults left out", () => {
-    expect(ordersQuery(NO_FILTER)).toBe("");
-    expect(ordersQuery({ phase: "active", group: 5 })).toBe("phase=active&group=so-05");
-    expect(ordersQuery({ phase: "all", group: "fixed" })).toBe("group=co-dinh");
-  });
-
   it("keeps the orders both filters allow", () => {
     const a = order({ state: "AWAITING_TRANSFER", dueAt: PLACED });
     const b = reu({ state: "CANCELLED", cancelledAt: PLACED, reason: "quá hạn chuyển khoản" });
@@ -205,13 +197,6 @@ describe("one order: returns, cancelling, the four steps", () => {
     expect(canReturn(o, new Date("2026-09-23T10:01:00+07:00"))).toBe(true);
     expect(canReturn(o, new Date("2026-09-23T10:02:00+07:00"))).toBe(false);
     expect(returnUntil(order({ state: "RECEIVED" }))).toBeNull();
-  });
-
-  it("offers Huỷ đơn only while nobody has been paid", () => {
-    expect(canCancelOrder(order({ state: "AWAITING_TRANSFER", dueAt: PLACED }))).toBe(true);
-    expect(canCancelOrder(order({ state: "RECEIVED" }, "COD"))).toBe(true);
-    expect(canCancelOrder(order({ state: "PAID", paidAt: PLACED }))).toBe(false);
-    expect(canCancelOrder(order({ state: "SHIPPING", shippedAt: PLACED, trackingCode: "x" }))).toBe(false);
   });
 
   it("lights the transfer's step while it is awaited", () => {

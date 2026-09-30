@@ -58,8 +58,7 @@ function vnIso(raw: string): string {
 /**
  * A nickname this build does not know is not a reason to lose an address:
  * everything a parcel needs is still there, and the label is the one field a
- * screen can supply a default for — the same one the form starts on. Same
- * rule `lib/address-book.ts#parseAddressBook` applies to stored entries.
+ * screen can supply a default for — the same one the form starts on.
  */
 function labelOf(raw: string): AddressLabel {
   return (ADDRESS_LABELS as readonly string[]).includes(raw) ? (raw as AddressLabel) : "Nhà";

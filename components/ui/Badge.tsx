@@ -6,8 +6,8 @@
  * once already and will again:
  *
  * · `ok`    a live state — đang bán, đã thanh toán, đã xác nhận, đã giao.
- *           Black cloth with honey thread: the same material as the issue
- *           cover and the stamp in the nav, so the shop has one badge.
+ *           Black cloth with honey thread: the material the v3 issue cover
+ *           and the nav's stamp wore, so the shop had one badge.
  * · `info`  something on its way — sắp mở, đang giao.
  * · `hot`   an alert worth a red — còn 2, hết lượt, sắp hết.
  * · `warn`  waiting on somebody — chờ chuyển khoản. Unbleached cloth.

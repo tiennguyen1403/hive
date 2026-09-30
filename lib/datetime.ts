@@ -54,11 +54,6 @@ export function dateTimeLabel(iso: string): string {
   return p ? `${p.hour}:${p.minute} ngày ${p.day}/${p.month}` : "";
 }
 
-/** `"20:00 ngày 02/10"` — how the upcoming-drop screen announces an opening. */
-export function openingLabel(iso: string): string {
-  return dateTimeLabel(iso);
-}
-
 // ────────────────────────────────────────── which day of the week that is
 /**
  * The seven days, as this language writes them.
@@ -109,37 +104,15 @@ export function clockDayLabel(iso: string): string {
   return `${p.hour}:${p.minute} ${weekdayLabel(iso)} ${p.day}/${p.month}`;
 }
 
-/** `"23:00 · 19/09"` — the closed band's right-hand side. */
-export function closedAtLabel(iso: string): string {
-  const p = partsOf(iso);
-  return p ? `${p.hour}:${p.minute} · ${p.day}/${p.month}` : "";
-}
-
-/**
- * `"22/09 – 24/09"`, or `"21/09"` when the window is a single day.
- *
- * The short form of a delivery window, for the rows that quote it inside a
- * sentence — the cart summary and the delivery choices. The year is left off
- * because those rows are read while choosing, and a window that closes four
- * days from now does not need one. The receipt keeps `rangeLabel` below,
- * which carries the year, because a receipt is read again months later.
- */
-export function shortRangeLabel(fromIso: string, toIso: string): string {
-  const a = dayMonth(fromIso);
-  const b = dayMonth(toIso);
-  if (!a || !b) return "";
-  return a === b ? a : `${a}${DASH}${b}`;
-}
-
 /**
  * ` – ` with NO-BREAK SPACES around it, and a WORD JOINER (U+2060) after
  * the dash.
  *
  * A window is one value. Let a line break fall on either side of the dash
  * and a shopper reads "22/09" at the end of one line and "– 24/09" at the
- * start of the next, which looks like two dates rather than a range. Both
- * of these strings are rendered inside running sentences, so the wrapping
- * is real and not hypothetical.
+ * start of the next, which looks like two dates rather than a range. The
+ * window is rendered inside running sentences, so the wrapping is real and
+ * not hypothetical.
  *
  * The no-break space alone did not hold the far side: UAX #14 (LB12a) lets
  * a line break before a no-break space that follows a dash, and the en

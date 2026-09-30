@@ -5,16 +5,10 @@ import {
   livePromotions,
   normalisePromoCode,
   parsePromoCode,
-  promoAppliedMessage,
-  promoOfferLabel,
-  promoTermsLabel,
-  promoWindowLabel,
   serializePromoCode,
 } from "./promotions";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
-import { promoCode } from "@/data/types";
 import { buildCatalog } from "./catalog";
-import { isPromoLive } from "./orders";
 import { checkoutTotals } from "./shipping";
 
 /** The fixture with one code paused by the shop (slice B3b). */
@@ -131,25 +125,6 @@ describe("what the applied code is worth", () => {
     expect(after.discountVnd).toBe(50_000);
     expect(after.totalVnd).toBe(790_000);
   });
-
-  it("says the amount in the toast the shopper reads", () => {
-    const promo = FIXTURE_CATALOG.promoByCode.get("CHAOBAN" as never)!;
-    expect(promoAppliedMessage(promo, BASKET, 30_000)).toBe(
-      "Mã CHAOBAN đã áp dụng · −50.000₫",
-    );
-  });
-
-  it("quotes free shipping as the fee it actually removes", () => {
-    const promo = FIXTURE_CATALOG.promoByCode.get("FREESHIP" as never)!;
-    expect(promoAppliedMessage(promo, 900_000, 30_000)).toBe(
-      "Mã FREESHIP đã áp dụng · −30.000₫",
-    );
-    // Over the free-delivery line there is no fee left to remove, and
-    // claiming a discount there would be a number the total does not show.
-    expect(promoAppliedMessage(promo, 1_200_000, 0)).toBe(
-      "Mã FREESHIP đã áp dụng · đơn này không giảm thêm",
-    );
-  });
 });
 
 describe("the code on the device", () => {
@@ -204,40 +179,5 @@ describe("the codes a shopper can use today", () => {
     for (const promo of livePromotions(paused, NOW)) {
       expect(checkPromoCode(paused, promo.code, 10_000_000, NOW).ok).toBe(true);
     }
-  });
-
-  it("treats a paused code as not live wherever the question is asked (isPromoLive)", () => {
-    const dot05 = FIXTURE_CATALOG.promoByCode.get(promoCode("DOT05"))!;
-    expect(isPromoLive(dot05, NOW)).toBe(true);
-    expect(isPromoLive({ ...dot05, paused: true }, NOW)).toBe(false);
-  });
-});
-
-describe("how a code reads on the account screen", () => {
-  it("spells out a percentage with its cap, an amount, and free delivery", () => {
-    expect(promoOfferLabel(FIXTURE_CATALOG.promoByCode.get(promoCode("DOT05"))!)).toBe(
-      "Giảm 10%, tối đa 150.000₫",
-    );
-    expect(promoOfferLabel(FIXTURE_CATALOG.promoByCode.get(promoCode("CHAOBAN"))!)).toBe("Giảm 50.000₫");
-    expect(promoOfferLabel(FIXTURE_CATALOG.promoByCode.get(promoCode("FREESHIP"))!)).toBe(
-      "Miễn phí giao tiêu chuẩn",
-    );
-  });
-
-  it("states the minimum and what is left of the quota", () => {
-    expect(promoTermsLabel(FIXTURE_CATALOG.promoByCode.get(promoCode("DOT05"))!)).toBe(
-      "Đơn từ 500.000₫ · còn 154 lượt",
-    );
-    expect(promoTermsLabel(FIXTURE_CATALOG.promoByCode.get(promoCode("CHAOBAN"))!)).toBe(
-      "Đơn từ 400.000₫ · không giới hạn lượt",
-    );
-    expect(promoTermsLabel(FIXTURE_CATALOG.promoByCode.get(promoCode("FREESHIP"))!)).toBe(
-      "Đơn từ 800.000₫ · còn 82 lượt",
-    );
-  });
-
-  it("dates the list by the last code to end, in +07:00 wall-clock time", () => {
-    expect(promoWindowLabel(livePromotions(FIXTURE_CATALOG, NOW))).toBe("tới 25/09");
-    expect(promoWindowLabel([])).toBe("");
   });
 });

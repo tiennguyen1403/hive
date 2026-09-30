@@ -1,19 +1,13 @@
-/* The back office, and six shop-facing blocks that were filed here with it.
+/* The back office, and one block from before it that was filed here.
 
    THE WHOLE v2 BACK OFFICE WENT AT v3 SLICE 6 — the `.s.adm` shell, the
    sidebar, the stat tiles, the chart, the v2 data table's skin, the product
    candidate cards, the visual lab (`.vlab`) and the spec page
    (`.s.specpage`), which went with the `/system` route itself. What is left
-   above the v3 block is what the SHOP renders and has always rendered from
-   this file: the details disclosure, the cart line's snag row and the slot
-   whose copy is not written yet. The FAQ accordion (`.qa`) went with
-   `components/shop/Faq.tsx` at slice 6 — the questions are `<details>`
-   inside `.faq3` (pages.css) since slice 4. The v2 password checklist
-   (`.s .rules`) went at v3 slice 13: the password screen draws `.checks3`
-   (pages.css) since slice 4, and the dead block was still reaching the only
-   `.rules` left, the home page's four rules, and greying their titles.
+   above the v3 block is the details disclosure, which the back office's own
+   `<details>` still wear.
 
-   They stay in this file rather than moving to one that fits them better:
+   It stays in this file rather than moving to one that fits it better:
    moving a rule moves it in SOURCE ORDER too, and `globals.css` records
    what that costs. A file this round does not have to reorder is a file
    whose specificity ties do not have to be re-measured.
@@ -24,21 +18,6 @@
 
 .s details{ margin-top:14px; font-size:11.5px; }
 .s details summary{ color:var(--link); cursor:pointer; font-weight:500; }
-
-/* a cart line with something wrong with it */
-.s .row.snag{ background:var(--hot-bg); }
-.s .row.snag .amt{ text-decoration:line-through; color:var(--ink2); }
-.s .fixes{ display:flex; gap:14px; margin-top:8px; }
-
-/* a slot whose copy is not written yet (named `.needwrite` because `.todo`
-   collides with the step bar's `.st.todo`) — it states what belongs here
-   rather than inventing something to fill the space */
-.s .needwrite{ margin:14px 18px 0; border:1px dashed var(--line); border-radius:var(--r);
-  background:var(--gold-50); padding:12px 14px; }
-.s .needwrite .lb{ display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700;
-  color:var(--warn); letter-spacing:.06em; }
-.s .needwrite .lb svg{ width:13px; height:13px; color:var(--warn); }
-.s .needwrite p{ margin:7px 0 0; font-size:12px; color:var(--ink2); line-height:1.55; }
 
 /* ============================================================================
    THE v3 ROUND — the back office
@@ -290,10 +269,9 @@
 /* The low-stock rows carry no rank and no bar: a photo, a name, what went. */
 .s.adm3 .rank3 .r.two{ grid-template-columns:36px 1fr auto; }
 .s.adm3 .rank3 .r .sub{ display:block; font-size:var(--fs-sm); color:var(--ink2); }
-/* The best sellers are ONE grid with each row a `subgrid` (the `.solds`
-   device, pages.css), so the columns line up across rows without the rows
-   knowing about each other (v3 slice 13). Each row used to size its own
-   `1fr 120px auto`: the count ("16 / 31 · 52%" against "14 / 14 · hết")
+/* The best sellers are ONE grid with each row a `subgrid`, so the columns
+   line up across rows without the rows knowing about each other (v3 slice
+   13). Each row used to size its own `1fr 120px auto`: the count ("16 / 31 · 52%" against "14 / 14 · hết")
    moved the name column row by row, the bars started at x 1029, 1033 and
    1040, and the name, prefixed with its issue since slice 11, broke into
    "S05 –" over "KHÓI" in the 59–69px left to it at 1280.
@@ -315,7 +293,6 @@
 /* One toolbar height: the search box is 44, so the chips beside it are too. */
 .s.adm3 .dt3 .bar .inp{ max-width:280px; height:44px; font-size:var(--fs-ui); }
 .s.adm3 .dt3 .bar .chip3, .s.adm3 .dt3 .bar .selbtn{ height:44px; }
-.s.adm3 .dt3 .bar .legend{ font-size:var(--fs-sm); color:var(--ink2); }
 /* The bulk bar REPLACES the tools bar rather than stacking under it, so the
    table never moves down the screen as rows are ticked. Black cloth, because
    this strip is about the selection and not about the page. */
@@ -533,7 +510,7 @@
   gap:12px; }
 .s.adm3 .slip .foot{ font-size:var(--fs-xs); color:var(--ink2); margin-top:8px; }
 @media print{
-  .s.adm3 .side, .s.adm3 .top, .s.adm3 .noprint, .toast{ display:none !important; }
+  .s.adm3 .side, .s.adm3 .top, .toast{ display:none !important; }
   .s.adm3{ min-width:0; background:#fff; }
   .s.adm3 .main{ padding:0; }
   .s.adm3 .slips{ grid-template-columns:1fr 1fr; gap:8mm; }

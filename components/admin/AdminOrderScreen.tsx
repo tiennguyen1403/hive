@@ -561,11 +561,11 @@ interface Milestone {
 /**
  * The order as five milestones — the back office's own reading of it.
  *
- * Not the shopper's timeline (`orderTimeline`): that one answers "where is
- * my parcel", this one answers "what is the shop late on". So the middle
- * step is "Chờ bàn giao" with the age on it, and it turns red at the shop's
- * own promise of one day (`HANDOVER_LATE_DAYS` counts the row's red in the
- * queue for the same reason).
+ * Not the shopper's steps (`orderSteps`, `lib/feed-account.ts`): those
+ * answer "where is my parcel", this one answers "what is the shop late on".
+ * So the middle step is "Chờ bàn giao" with the age on it, and it turns red
+ * at the shop's own promise of one day (`HANDOVER_LATE_DAYS` counts the row's
+ * red in the queue for the same reason).
  */
 function timelineOf(order: Order, now: Date, carrier?: string): Milestone[] {
   const placed: Milestone = {

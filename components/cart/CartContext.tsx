@@ -23,6 +23,7 @@ import {
   type CartLine,
 } from "@/lib/cart";
 import type { ColorKey, Size } from "@/data/types";
+import { forgetRetiredKeys } from "@/lib/device-storage";
 import {
   CART_PROMO_STORAGE_KEY,
   normalisePromoCode,
@@ -76,6 +77,10 @@ const CartCtx = createContext<CartApi | null>(null);
  * would produce different HTML on the two sides and React would throw the
  * whole tree away. Starting empty and filling in after mount costs one paint
  * and is the only version that is correct on both.
+ *
+ * The same mount forgets the keys the app has retired (round v4 slice 5,
+ * `lib/device-storage.ts`), from both storages: this provider sits in the
+ * root layout on every page and already reads storage once per visit.
  */
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const catalog = useCatalog();
@@ -84,6 +89,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    forgetRetiredKeys(() => window.localStorage);
+    forgetRetiredKeys(() => window.sessionStorage);
     try {
       setCart(parseCart(window.localStorage.getItem(CART_STORAGE_KEY)));
       setCode(parsePromoCode(window.localStorage.getItem(CART_PROMO_STORAGE_KEY)));

@@ -3,11 +3,9 @@ import {
   vnd,
   plainVnd,
   compactVnd,
-  countWord,
   moneyInitial,
   moneyInput,
   parseVnd,
-  styleCountLabel,
 } from "./money";
 import { dropState, timeLeft, closesInLabel } from "./drop";
 
@@ -66,24 +64,6 @@ describe("compactVnd", () => {
     // "1000k₫", and rounding after would print "1tr₫" for a figure that
     // has not reached one.
     expect(compactVnd(999_960)).toBe("999,9k₫");
-  });
-});
-
-describe("countWord", () => {
-  it("spells small numbers out, because they sit inside a sentence", () => {
-    expect(countWord(1)).toBe("một");
-    expect(countWord(10)).toBe("mười");
-    expect(countWord(12)).toBe("mười hai");
-  });
-
-  it("falls back to digits past the point where words help", () => {
-    expect(countWord(13)).toBe("13");
-    expect(countWord(181)).toBe("181");
-  });
-
-  it("reads naturally in the sentence it was written for", () => {
-    expect(styleCountLabel(10)).toBe("mười mẫu");
-    expect(styleCountLabel(13)).toBe("13 mẫu");
   });
 });
 

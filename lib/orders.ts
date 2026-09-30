@@ -1,6 +1,4 @@
 import type { Order, PaymentMethod, Promotion } from "@/data/types";
-import { demoNow } from "./clock";
-import { addHoursIso } from "./datetime";
 
 /**
  * Order arithmetic. The same rules the checkout screen shows the shopper and
@@ -64,17 +62,6 @@ export function promoDiscountVnd(
   }
 }
 
-/**
- * Whether a code can be used right now — window and usage cap, both, and not
- * paused by the shop (slice B3b: `place_order()` refuses a paused code).
- */
-export function isPromoLive(promo: Promotion, now: Date = demoNow()): boolean {
-  if (promo.paused) return false;
-  const t = now.getTime();
-  if (t < Date.parse(promo.startsAt) || t >= Date.parse(promo.endsAt)) return false;
-  return promo.usageLimit === null || promo.usedCount < promo.usageLimit;
-}
-
 // ───────────────────────────────────────────────── the bank-transfer hold
 /**
  * How long a bank transfer holds the goods.
@@ -104,11 +91,6 @@ export const TRANSFER_HOLD_HOURS = 12;
  */
 export function paysByTransfer(payment: PaymentMethod): boolean {
   return payment === "BANK_TRANSFER" || payment === "CARD";
-}
-
-/** When an unpaid transfer order cancels itself and the pieces go back. */
-export function transferDeadlineIso(placedAtIso: string): string {
-  return addHoursIso(placedAtIso, TRANSFER_HOLD_HOURS);
 }
 
 /**

@@ -26,10 +26,10 @@ import { Mona_Sans } from "next/font/google";
  *
  * Its own variable, `--font-mona`: `--font-sans` and `--font-display` stay the
  * v3 pair's. Defined in this module and applied by the Feed zone's root
- * (`FeedScope`), not by the root layout, so it is preloaded only on the
- * routes that render a Feed screen (same doc, "Using Multiple Fonts": "This
- * ensures the font is preloaded only when it's rendered") and the v3 screens
- * and the back office load nothing new.
+ * (`feedFontClass`, `FeedScope.tsx`), not by the root layout, so it is
+ * preloaded only on the routes that render a Feed screen (same doc, "Using
+ * Multiple Fonts": "This ensures the font is preloaded only when it's
+ * rendered") and the back office loads nothing new.
  */
 export const monaSans = Mona_Sans({
   subsets: ["latin", "latin-ext", "vietnamese"],

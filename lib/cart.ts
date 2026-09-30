@@ -232,20 +232,9 @@ export function cartSubtotalVnd(lines: ResolvedLine[]): number {
   return lines.reduce((n, l) => (l.issue ? n : n + l.lineTotalVnd), 0);
 }
 
-export function buyableUnits(lines: ResolvedLine[]): number {
-  return lines.reduce((n, l) => (l.issue ? n : n + l.line.qty), 0);
-}
-
 /** Any blocked line shuts checkout. The shopper resolves it, not us. */
 export function hasBlockingIssue(lines: ResolvedLine[]): boolean {
   return lines.some((l) => l.issue !== null);
-}
-
-/** Sizes of the same colourway that could be swapped to. Powers "Đổi sang size L". */
-export function swapSizesFor(catalog: Catalog, line: CartLine): Size[] {
-  const p = catalog.byId.get(line.productId);
-  if (!p) return [];
-  return SIZES.filter((s) => s !== line.size && onHandOf(p, line.color, s) > 0);
 }
 
 // ─────────────────────────────────────────────────────────────── persistence

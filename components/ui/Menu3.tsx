@@ -25,8 +25,8 @@ interface Menu3Props {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   /**
    * Floor for the panel's width. The form select passes its button's width so
-   * the menu lines up under the field it belongs to; the sort control leaves
-   * it out and keeps the 200px the CSS gives every menu.
+   * the menu lines up under the field it belongs to; left out, the panel
+   * keeps the 200px the CSS gives every menu.
    */
   minWidth?: number;
   /** Ties the panel to the button through `aria-controls`. */
@@ -34,7 +34,8 @@ interface Menu3Props {
 }
 
 /**
- * The shop's dropdown menu, v3 — `prototype/v3/v3-pages.css`, `.menu3`.
+ * The dropdown menu, v3 — `prototype/v3/v3-pages.css`, `.menu3`. `Select`
+ * opens it.
  *
  * A separate component from the v2 back office's `TableMenu` (deleted at v3
  * slice 6), and never a variant of it: that one was a filter panel with a
@@ -45,8 +46,8 @@ interface Menu3Props {
  * **Portalled to `<body>`, so it inherits nothing from `.s`** (DESIGN.md §6).
  * Every rule for it in `sheet.css` therefore starts at `.menu3`, and the
  * panel declares its own font, size, line height and ink. It has to be
- * `position:fixed`: the listing's control row is a scroll container, and
- * `overflow-x:auto` clips the vertical axis too.
+ * `position:fixed`: a select can stand inside a scroll container (a sheet's
+ * body scrolls), and `overflow` clips the other axis too.
  *
  * The tick is `<Tick>`, whose viewBox is cropped to the ink — at a full
  * 24×24 the same glyph renders about 5px wide and reads as a speck.
