@@ -400,6 +400,12 @@ async (page) => {
     "/admin/log?kind=order",
     "/admin/log?today=1",
     "/admin/log?q=zzz",
+    // round v5 slice 3: the customers and the codes, on Arc
+    "/admin/customers?group=loyal",
+    "/admin/customers?q=zzz",
+    "/admin/customers/c-namle",
+    "/admin/promotions?state=ENDED",
+    "/admin/promotions?state=PAUSED",
   ];
 
   const results = [];
@@ -572,15 +578,24 @@ async (page) => {
     ["/admin/promotions#rowmenu", "admin-promotions-row-menu-1280", async () => {
       await page.getByRole("button", { name: "Thao tác DOT05", exact: true }).click();
     }],
-    ["/admin/promotions#create", "admin-promotions-create-sheet-1280", async () => {
-      await page.locator(".top").getByRole("button", { name: "Tạo mã" }).click();
-      await page.waitForTimeout(350);
-      await page.getByRole("dialog").locator(".field3", { hasText: "Loại" }).first().locator("button.selbtn").click();
+    // round v5 slice 3: the same passes for the Arc screens
+    ["/admin/promotions#create-arc", "admin-promotions-create-drawer-1280", async () => {
+      await page.getByRole("button", { name: "Tạo mã" }).click();
+      await page.waitForTimeout(700);
+      await page.getByRole("dialog").getByRole("combobox", { name: "Loại" }).click();
     }],
-    ["/admin/promotions#edit", "admin-promotions-edit-sheet-1280", async () => {
+    ["/admin/promotions#edit-arc", "admin-promotions-edit-drawer-1280", async () => {
       await page.getByRole("button", { name: "Thao tác DOT05", exact: true }).click();
       await page.waitForTimeout(250);
       await page.getByRole("menuitem", { name: "Sửa", exact: true }).click();
+    }],
+    ["/admin/promotions#error-arc", "admin-promotions-create-error-1280", async () => {
+      await page.getByRole("button", { name: "Tạo mã" }).click();
+      await page.waitForTimeout(700);
+      await page.getByRole("dialog").getByRole("button", { name: "Lưu" }).click();
+    }],
+    ["/admin/customers#rowmenu", "admin-customers-row-menu-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác Trần Minh Anh", exact: true }).click();
     }],
     ["/admin/products/new#issue-menu", "admin-product-new-issue-menu-1280", async () => {
       await page.locator(".field3", { has: page.locator(".lbl", { hasText: /^Số$/ }) }).locator("button.selbtn").click();

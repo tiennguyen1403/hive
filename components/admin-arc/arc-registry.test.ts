@@ -150,7 +150,7 @@ describe("registry/foundation.css", () => {
   });
 });
 
-describe("registry/components (patches a re-install would drop, slice 2)", () => {
+describe("registry/components (patches a re-install would drop, slices 2 and 3)", () => {
   it("keeps the search field's clear button a pointer, as every other Arc button is", () => {
     const css = readFileSync(join(COMPONENTS, "search-field", "search-field.module.css"), "utf8");
     const pointer = rules(css).find(
@@ -164,6 +164,39 @@ describe("registry/components (patches a re-install would drop, slice 2)", () =>
     expect(source).toContain("formatTick = formatValue");
     expect(source).toContain("format={formatTick}");
     expect(source).toContain("`TB ${formatTick(");
+  });
+
+  it("gives the drawer's close button the dialog's keyboard ring (slice 3, QĐ-39)", () => {
+    const ring = (id: string) =>
+      rules(readFileSync(join(COMPONENTS, id, `${id}.module.css`), "utf8")).find(
+        (r) => r.selector === ".close:focus-visible",
+      );
+    const drawer = ring("drawer");
+    expect(drawer).toBeDefined();
+    expect(drawer!.body).toMatch(/outline\s*:\s*3px solid var\(--focus-ring\)/);
+    // The same ring as the dialog's own close button, so the two overlays agree.
+    expect(drawer!.body.replace(/\s+/g, "")).toBe(ring("dialog")!.body.replace(/\s+/g, ""));
+  });
+
+  it("rings the select's trigger with the zone's keyboard ring, keeping its accent border (slice 3, QĐ-39)", () => {
+    const css = readFileSync(join(COMPONENTS, "select", "select.module.css"), "utf8");
+    const focus = rules(css).find((r) => r.selector === ".trigger:focus-visible");
+    expect(focus).toBeDefined();
+    const body = focus!.body.replace(/\s+/g, " ");
+    expect(body).toMatch(/outline\s*:\s*2px solid var\(--focus-ring\)/);
+    expect(body).toMatch(/outline-offset\s*:\s*2px/);
+    expect(body).toMatch(/border-color\s*:\s*var\(--accent\)/);
+    // Arc shipped a 10% halo, `--accent-subtle`, too faint to find the field by.
+    expect(body).not.toContain("--accent-subtle");
+  });
+});
+
+describe("the app's pointer switch, beside Arc's buttons (slice 3)", () => {
+  it("marks the pointer only on a trusted pointerdown: Motion fakes one when Enter presses a button", () => {
+    const layout = readFileSync(join("app", "layout.tsx"), "utf8");
+    const listener = layout.match(/addEventListener\('pointerdown',[^\n]*/);
+    expect(listener).not.toBeNull();
+    expect(listener![0]).toContain("e.isTrusted");
   });
 });
 

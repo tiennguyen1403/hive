@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { CustomerScreen } from "@/components/admin/CustomerScreen";
+import { ArcCustomerScreen } from "@/components/admin-arc/ArcCustomerScreen";
 import { ordersOfCustomer } from "@/lib/admin-customers";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
@@ -16,6 +16,9 @@ export const metadata = { title: "Hồ sơ khách" };
  * `requireAdmin` first, then the profile and its address book from the
  * database; anything that names no shopper is a 404, decided here on the
  * server before a byte is rendered.
+ *
+ * Round v5 slice 3 draws it in the Arc frame (`ArcCustomerScreen`); the
+ * reads here are unchanged.
  */
 export default async function AdminCustomerDetailPage(props: PageProps<"/admin/customers/[id]">) {
   const { id } = await props.params;
@@ -26,5 +29,5 @@ export default async function AdminCustomerDetailPage(props: PageProps<"/admin/c
   if (!customer) notFound();
   const orders = ordersOfCustomer(await listAllOrders(), customer);
 
-  return <CustomerScreen customer={customer} orders={orders} nowIso={toVnIso(demoNow())} />;
+  return <ArcCustomerScreen customer={customer} orders={orders} nowIso={toVnIso(demoNow())} />;
 }

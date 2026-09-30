@@ -86,10 +86,17 @@ export const viewport: Viewport = {
 // bootstrap scripts, `window.__next_f` stays empty, and the whole app ships
 // as dead HTML that never hydrates. First-in-body still runs before any
 // content below it is parsed, which is all this needs.
+//
+// Only a TRUSTED pointerdown marks the pointer (round v5 slice 3). Motion,
+// under Arc's buttons, answers Enter on a focused button by dispatching a
+// synthetic `pointerdown` on it (`motion-dom`, press gesture, keyboard.mjs),
+// so a keyboard user who opened the code drawer with Enter lost the ring on
+// its first stop, and on the button focus came back to. Measured 01/10:
+// `isTrusted: false`. A real press by mouse, pen or finger is always trusted.
 const POINTER_PROBE = `
 var de = document.documentElement;
 de.setAttribute('data-pointer','');
-addEventListener('pointerdown', function(){ de.setAttribute('data-pointer',''); }, true);
+addEventListener('pointerdown', function(e){ if (e.isTrusted) de.setAttribute('data-pointer',''); }, true);
 addEventListener('keydown', function(e){ if (e.key === 'Tab') de.removeAttribute('data-pointer'); }, true);
 `;
 

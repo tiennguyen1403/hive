@@ -1,0 +1,60 @@
+/* The discount-code form in its Arc `Drawer` (round v5 slice 3). Arc's
+   drawer owns the panel, the header with its close button and the scrolling
+   body; this file lays out what goes inside it, on the 4px grid with Arc
+   tokens, and sets the panel's width. */
+
+/* 680px, v3's wide sheet (`AdminSheet wide`), where Arc's drawer is 30rem:
+   two columns of fields need the room (brief v5 slice 3, §3.4). The drawer
+   reads its width from `--drawer-size` on the panel (`drawer.module.css`),
+   and this class lands on that panel through `className`; the attribute
+   makes the rule outrank the drawer's own whatever order the two sheets
+   load in. It depends on Arc's internal name, so registry/PATCHES.md §4
+   lists it. */
+.drawer[data-side] {
+  --drawer-size: min(680px, calc(100vw - var(--space-4)));
+}
+
+.form {
+  display: grid;
+}
+
+/* Two columns, as v3's form: the fields a kind of code does not use are not
+   drawn, and the rest flow on. 16px between fields, as the order page's
+   forms (slice 1). */
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+}
+
+/* The code of a code being edited cannot change: the box reads as fixed, on
+   the muted ground Arc gives a control that is not taking input. The
+   attribute lifts the rule over Arc's own `.input`. */
+.readOnly[readonly] {
+  background: var(--surface-muted);
+}
+
+/* What the code will do, in one sentence, before it is saved. */
+.preview {
+  margin: var(--space-4) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.preview b {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+/* The way out, the copy, and the one primary button, at the right, as the
+   Arc dialogs set their actions (`ArcDialog.module.css`). */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}

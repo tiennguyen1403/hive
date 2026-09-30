@@ -3030,3 +3030,15 @@ Commit mỗi lát chỉ khi người dùng cho phép lần đó.
 - Nút xoá của `SearchField` được vá `cursor: pointer`.
 - Hàng đợi giữ luật v3: đơn đã nhận tiền vẫn ở lại, chờ bàn giao.
 - 1.740 test xanh; 8 trang v3 và phần khách không đổi.
+
+**01/10, lát 2 commit `4e7c926`** (người dùng cho phép; chưa push). Lát 3 (Khách hàng, hồ sơ khách, Mã giảm giá kèm form) đã
+giao agent theo `tasks/briefs/v5-lat-3.md`. Form mã giảm giá dùng Arc `Drawer`, vì v3 là tấm trượt bên phải.
+
+**01/10, lát 3 ĐẠT (phiên chính duyệt), chờ người dùng cho commit.** Khách hàng, hồ sơ khách và Mã giảm giá chạy trên Arc; form
+mã dùng `Drawer` 680px bên phải.
+- Lỗi của form gắn vào đúng ô (chữ v3).
+- Vá Arc: nút đóng `Drawer` có vòng focus; `Select` có vòng focus 2px `--focus-ring`.
+- `POINTER_PROBE` ở `app/layout.tsx` chỉ nhận `pointerdown` có `isTrusted`. Motion phát `pointerdown` giả khi nhấn Enter trên nút
+  Arc, làm tắt vòng focus bàn phím từ lát 0.
+- 1.751 test xanh; các trang v3 và phần khách không đổi.
+- Hai lần ghi DB lạ: một lần do script chọn nhầm, một lần người dùng bấm nhầm vào cửa sổ Chrome đang chạy thử. Dữ liệu đã đặt lại.

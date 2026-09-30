@@ -1,0 +1,49 @@
+/* One customer in the Arc frame (round v5 slice 3). The way back and the
+   heading strip are `ArcPage.module.css`; the panels, their hand-built table,
+   the address and the contact are the order page's (`ArcOrderScreen.module.css`,
+   slice 1); the figures are the overview's `ArcKpi` (slice 2). This file
+   places the regions, in the overview's values: 24px between regions (the
+   page's gap), 16px between the panels of a column. Arc tokens only. */
+
+/* Four equal columns of one height, as on the overview. */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+/* The orders on the left, who they are on the right, about 380px, as v3 set
+   them. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: start;
+  gap: var(--space-6);
+}
+
+.column {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* A panel with nothing to show says so in one quiet line (v3's words). */
+.none {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+/* The label, then why it applies: the badge centred on its line. */
+.tagLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
+}

@@ -23,7 +23,7 @@ import { HANDOVER_LATE_DAYS, orderItemsLabel } from "@/lib/admin-rows";
 import { timelineOf, timelineSteps } from "@/lib/admin-timeline";
 import type { Catalog } from "@/lib/catalog";
 import { effectiveOrder } from "@/lib/customer-orders";
-import { customerFacts, issueOf, type CustomerTag } from "@/lib/customer-tags";
+import { customerFacts, issueOf } from "@/lib/customer-tags";
 import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "@/lib/datetime";
 import type { AdminEvent } from "@/lib/db/event-dto";
 import { codFeeRow } from "@/lib/feed-order";
@@ -36,7 +36,7 @@ import { formatPhone } from "@/lib/phone";
 import { photoUrl } from "@/lib/photos";
 import { deliveryOption, EXPRESS_FEE_VND } from "@/lib/shipping";
 import { Avatar } from "@/registry/components/avatar/avatar";
-import { Badge, type BadgeTone } from "@/registry/components/badge/badge";
+import { Badge } from "@/registry/components/badge/badge";
 import { Breadcrumb } from "@/registry/components/breadcrumb/breadcrumb";
 import { Button } from "@/registry/components/button/button";
 import { DropdownMenu } from "@/registry/components/dropdown-menu/dropdown-menu";
@@ -46,7 +46,7 @@ import { ArcAddressForm } from "./ArcAddressForm";
 import { ArcButtonLink } from "./ArcButtonLink";
 import { ArcCancelOrderDialog } from "./ArcCancelOrderDialog";
 import { ArcHandoverForm } from "./ArcHandoverForm";
-import { monogramName, TONE } from "./ArcOrderCells";
+import { monogramName, TAG_TONE, TONE } from "./ArcOrderCells";
 import styles from "./ArcOrderScreen.module.css";
 import page from "./ArcPage.module.css";
 import { useArcToast } from "./useArcToast";
@@ -56,18 +56,6 @@ const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
 
 /** Which move is on its way to the server, so only its own button says so. */
 type Busy = "PAY" | "HANDOVER" | "DELIVER" | "CANCEL" | "NOTE" | "ADDRESS" | null;
-
-/**
- * The customer label's tone, the badge table's way (brief v5 slice 1, §3.2):
- * v3 drew "quay lại" in the `ok` green and "mới" in the `info` blue; the
- * streak label wore the pale honey, v3's `flat`, which slice 0 reads as
- * neutral.
- */
-const TAG_TONE: Record<CustomerTag["tone"], BadgeTone> = {
-  back: "success",
-  new: "info",
-  "": "neutral",
-};
 
 /**
  * One order, and everything the shop can do to it, in the Arc frame (round

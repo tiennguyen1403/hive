@@ -62,6 +62,22 @@ Không sửa: `empty-state` (không có chuỗi tiếng Anh; icon mặc định 
   (mục 3) và các dòng chú giải `HIVE patch`. `bar-chart.module.css` không đổi.
 - Cùng lát, phiên chính duyệt thêm một chỗ vá CSS cho `search-field` (mục 3), cài từ lát 0.
 
+## Lần cài 01/10/2026 (đợt v5, lát 3)
+
+- **CLI:** `shadcn` 4.21.0, gọi bằng `npx shadcn@latest`, với `components.json` đang có. Không `init`.
+- **Lệnh:**
+  ```
+  printf 'n\nn\nn\nn\n' | npx shadcn@latest add @uiarc/drawer --yes
+  ```
+  CLI hỏi ghi đè `foundation.css`, trả lời `n` như lát 1.
+- **1 item:** drawer. **CLI tạo 2 tệp** (`drawer.tsx`, `drawer.module.css` trong `registry/components/drawer/`), bỏ qua 3
+  tệp của `arc-foundation` (`foundation.css` vì trả lời `n`; hai `motion-tokens.ts` trùng bản gốc).
+- **Phụ thuộc:** không thêm (`@radix-ui/react-dialog`, `motion`, `lucide-react` đã có từ lát 0). `package.json` và
+  `package-lock.json` không đổi.
+- **Sau khi cài, `git status`** chỉ thêm `registry/components/drawer/`.
+- Vá: Việt hoá tên nút đóng (mục 2) và vòng focus bàn phím của nút đó (mục 3). Màn dự án dựa vào một biến nội bộ của
+  Drawer để đặt bề rộng (mục 4). Cùng lát, phiên chính yêu cầu vá vòng focus của `select` (mục 3), cài từ lát 0.
+
 ## 1. `registry/foundation.css`: khoanh vùng
 
 Arc đặt mọi luật ở `:root`, nên tệp là toàn cục: tiêu đề v3 mất Unbounded vì trùng tên `--font-display`, luật cuối xoá vòng
@@ -131,6 +147,7 @@ Mọi chuỗi tiếng Anh người dùng thấy hoặc máy đọc màn hình đ
 | | `aria-valuetext` khi không có dữ liệu "No data" (viết cứng) | "Chưa có dữ liệu" |
 | | tên thanh kéo `{nhãn}, explore by {loại}` (viết cứng) | `{nhãn}, xem theo {loại}` |
 | | định dạng số mặc định `Intl.NumberFormat("en-US")` | `Intl.NumberFormat("vi-VN")` |
+| `drawer/drawer.tsx` (lát 3) | tên nút đóng `aria-label="Close drawer"` (viết cứng) | "Đóng", như nút đóng của Dialog |
 
 Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không phải chữ: giữ nguyên. Không component nào dùng
 `toLocaleString` hay `Intl.NumberFormat`. Câu lỗi cho lập trình viên (`Render toast stack consumers inside …`) giữ nguyên.
@@ -149,18 +166,21 @@ Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không p
 | `bar-chart/bar-chart.tsx` (lát 2, phiên chính yêu cầu 30/09) | Prop `formatTick` (mặc định bằng `formatValue`): định dạng trục giá trị, tức nhãn các vạch và nhãn "TB …" cạnh chúng. Dòng đầu (lúc nghỉ và lúc rê chuột), câu tóm tắt, `aria-valuetext`, bảng cho máy đọc màn hình và câu `aria-live` vẫn dùng `formatValue` | Tổng quan cần số đủ ở dòng đầu ("1.018.286₫", `vnd`) nhưng số gọn ở trục hẹp 52px ("1tr₫", `compactVnd`). Arc chỉ có một `formatValue` cho cả hai chỗ; với `compactVnd`, dòng đầu 36px chỉ còn "1tr₫", làm tròn tới mức không còn nghĩa |
 | `search-field/search-field.module.css` (lát 2) | Thêm `.shell button { cursor: pointer; }` sau luật gốc của nút xoá | Nút xoá nội dung tìm giữ mũi tên của trình duyệt, trong khi mọi nút Arc khác có bàn tay; máy dò `tools/layout-sweep.js` coi mũi tên trên một nút là lỗi (`arrowCursor`, đo 30/09 ở `/admin/log?q=zzz`). Nút này cũng có trên `/admin/orders` khi đang tìm |
 | `input/input.tsx` (lát 1) | Prop `hideLabel` (mặc định `false`): nhãn mang class `.srOnly` có sẵn trong `input.module.css` thay cho `.label`, nên ẩn cho mắt mà máy đọc vẫn đọc. Không đổi CSS | Ô "Thêm ghi chú…" của panel "Ghi chú nội bộ" trên trang chi tiết đơn: tiêu đề panel đã gọi tên ô, như ô tìm trên thanh công cụ (`skill-accessibility.md`). Cùng cách `SearchField` `hideLabel` |
+| `select/select.module.css` (lát 3, phiên chính yêu cầu 01/10) | `.trigger:focus-visible`: `outline: 3px solid var(--accent-subtle); outline-offset: 0` thành `outline: 2px solid var(--focus-ring); outline-offset: 2px`. Giữ `border-color: var(--accent)` | QĐ-39. Quầng gốc là `--accent-subtle` (accent 10%), gần như không thấy trên nền trắng: đi bằng Tab vào "Loại" hay "Hình thức giao" chỉ còn viền 1px đổi màu, trong khi mọi điều khiển Arc khác có vòng 2–3px `--focus-ring`. Bấm chuột thì `--focus-ring` trong suốt như mọi vòng khác; viền accent vẫn đổi như Arc gốc |
+| `drawer/drawer.module.css` (lát 3) | Thêm `.close:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }`, đúng luật của nút đóng trong `dialog.module.css` | QĐ-39: giữ vòng focus bàn phím. Nút đóng của Drawer bản gốc không có luật `:focus-visible` nào (Arc dựa vào luật `outline: none !important` toàn cục mà dự án đã xoá, mục 1), nên đi bằng Tab thì Chrome vẽ vòng mặc định của nó, khác vòng 2–3px `--focus-ring` của mọi điều khiển Arc khác. Radix đưa focus vào nút này đầu tiên khi Drawer mở, nên vòng đó là thứ đầu tiên người dùng bàn phím thấy. Bấm chuột thì `--focus-ring` trong suốt như mọi vòng khác |
 
 Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, `iconOnly`, `hideLabel` của
 `SearchField` và của `Input`, `formatTick` của `BarChart`) đều có mặc định giữ hành vi gốc. Cài lại bản mới mà quên vá thì
 `npm run typecheck` đỏ ở `components/admin-arc/ArcOrdersScreen.tsx`, `components/admin-arc/ArcOrderScreen.tsx` và
-`components/admin-arc/ArcRevenueChart.tsx`, nơi dùng chúng. Chỗ vá CSS của `search-field` và prop `formatTick` còn có test riêng
-trong `components/admin-arc/arc-registry.test.ts`.
+`components/admin-arc/ArcRevenueChart.tsx`, nơi dùng chúng. Chỗ vá CSS của `search-field`, prop `formatTick`, vòng focus
+của nút đóng `drawer` và của `select` (lát 3) còn có test riêng trong `components/admin-arc/arc-registry.test.ts`.
 
 ## 4. Mã dự án dựa vào tên class nội bộ của Arc
 
 | Tệp | Dựa vào | Vì sao |
 |---|---|---|
 | `components/admin-arc/ArcButtonLink.tsx` | class `button`, biến thể (`primary`, `secondary`, `ghost`, `danger`) và cỡ (`sm`, `md`, `lg`) của `registry/components/button/button.module.css` | Arc `Button` bản free không có `href`; wrapper render `next/link` với đúng kiểu nút. Không vá Button. Bản mới đổi tên class thì link mất kiểu nút (build vẫn qua) |
+| `components/admin-arc/ArcPromoDrawer.module.css` (lát 3) | biến `--drawer-size` mà `.content` của `registry/components/drawer/drawer.module.css` đọc để đặt bề rộng panel, và thuộc tính `data-side` trên panel | Form mã giảm giá rộng 680px như `AdminSheet` bản `wide` của v3 (brief lát 3, §3.4), trong khi Drawer cố định `min(30rem, …)` và không có prop bề rộng. Class đi vào panel qua `className` (prop Radix có trong tài liệu); luật `.drawer[data-side]` đặt lại biến, thuộc tính giúp nó thắng luật gốc bất kể thứ tự nạp CSS. Không vá Drawer. Bản mới đổi tên biến thì form về 480px (build vẫn qua) |
 
 ## Cài lại bản mới
 

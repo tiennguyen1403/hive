@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { CustomersTable } from "@/components/admin/CustomersTable";
+import { ArcCustomersScreen } from "@/components/admin-arc/ArcCustomersScreen";
 import { queryOf } from "@/lib/admin-url";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
@@ -16,6 +16,9 @@ export const metadata = { title: "Khách hàng" };
  * in the database. `requireAdmin` first, as on every admin page. Dynamic,
  * because the label on each row is derived from their orders against the
  * clock — "mới trong số đang bán" only means something while one is open.
+ *
+ * Round v5 slice 3 draws it in the Arc frame (`ArcCustomersScreen`); the
+ * reads here are unchanged.
  */
 export default async function AdminCustomersPage(props: PageProps<"/admin/customers">) {
   await requireAdmin("/admin/customers");
@@ -23,7 +26,7 @@ export default async function AdminCustomersPage(props: PageProps<"/admin/custom
   const sp = await props.searchParams;
   const [customers, orders] = await Promise.all([listCustomers(), listAllOrders()]);
   return (
-    <CustomersTable
+    <ArcCustomersScreen
       customers={customers}
       orders={orders}
       nowIso={toVnIso(demoNow())}

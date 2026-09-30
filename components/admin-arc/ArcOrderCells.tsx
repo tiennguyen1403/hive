@@ -4,6 +4,7 @@ import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions
 import type { Order } from "@/data/types";
 import type { AdminOrder } from "@/lib/admin-orders";
 import { orderCustomer, orderNote } from "@/lib/admin-rows";
+import type { CustomerTag } from "@/lib/customer-tags";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { PAYMENT_LABEL, STATE_LABEL } from "@/lib/order-labels";
 import { formatPhone } from "@/lib/phone";
@@ -30,6 +31,19 @@ export const TONE: Record<V3BadgeTone, BadgeTone> = {
   // Not used by `STATE_LABEL`; the plain tones.
   "": "neutral",
   flat: "neutral",
+};
+
+/**
+ * The customer label's tone, the badge table's way (brief v5 slice 1, §3.2):
+ * v3 drew "quay lại" in the `ok` green and "mới" in the `info` blue; the
+ * streak label wore the pale honey, v3's `flat`, which slice 0 reads as
+ * neutral. The order's customer panel, the customer table and the customer's
+ * own page read it (slices 1 and 3).
+ */
+export const TAG_TONE: Record<CustomerTag["tone"], BadgeTone> = {
+  back: "success",
+  new: "info",
+  "": "neutral",
 };
 
 export function CodeCell({ code }: { code: string }) {

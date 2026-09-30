@@ -1,6 +1,6 @@
 /**
- * Every English string Arc's free components (installed 30/09/2026, round v5
- * slices 0 to 2) show a person or read to a screen reader, as it stood in
+ * Every English string Arc's free components (installed 30/09 and 01/10/2026,
+ * round v5 slices 0 to 3) show a person or read to a screen reader, as it stood in
  * the installed source, and the component file it was in. Each one was put
  * into Vietnamese in `registry/components/**` (registry/PATCHES.md).
  *
@@ -77,4 +77,6 @@ export const ARC_ENGLISH: ReadonlyArray<{ file: string; text: string }> = [
   { file: "bar-chart/bar-chart.tsx", text: "` Highest ${" },
   { file: "bar-chart/bar-chart.tsx", text: "` Lowest ${" },
   { file: "bar-chart/bar-chart.tsx", text: ", explore by ${" },
+  // Slice 3 (01/10/2026): drawer.
+  { file: "drawer/drawer.tsx", text: 'aria-label="Close drawer"' },
 ];

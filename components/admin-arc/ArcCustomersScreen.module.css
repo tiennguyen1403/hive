@@ -1,0 +1,13 @@
+/* The customer table in the Arc frame (round v5 slice 3). The heading strip
+   is the one every Arc page wears (`ArcPage.module.css`); the tabs, the
+   toolbar, the table's cells and the foot are the order book's
+   (`ArcOrdersScreen.module.css`, slice 0), in the same values. This file adds
+   what the customer table alone has. Arc tokens only. */
+
+/* The customer's name is the row's key: 500, on one line (brief v5 slice 3,
+   §3.2), beside the monogram. */
+.name {
+  color: var(--foreground);
+  font-weight: 500;
+  white-space: nowrap;
+}

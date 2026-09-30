@@ -1,0 +1,65 @@
+/* The discount codes in the Arc frame (round v5 slice 3). The heading strip
+   is `ArcPage.module.css`; the tabs, the table and its cells are the order
+   book's (`ArcOrdersScreen.module.css`, slice 0), in the same values. This
+   file adds what the code table alone has. Arc tokens only, on the 4px grid. */
+
+/* A code that is neither running nor about to (paused, over, used up) steps
+   back to the secondary ink, as a cancelled order does in the book and as
+   v3's `tr.paused` did. Its status badge still says which. */
+.book tr[data-inactive] td {
+  color: var(--text-secondary);
+}
+
+/* The code is the row's key: 500, on one line. */
+.code {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The row's menu, wrapped only so "Sửa" can find its trigger and hand focus
+   back to it when the drawer shuts. The wrapper draws nothing. */
+.menu {
+  display: contents;
+}
+
+/* ── the uses ──────────────────────────────────────────────────────────── */
+/* The bar takes what the count leaves; the count is a box of one width on
+   every row, flush right, so the bars start and end at the same x down the
+   column (v3's `.cellmeter`, v3 slice 13). */
+.uses {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 140px;
+}
+
+/* 4px on the muted ground; the spent share in the accent, and the whole
+   track in ink once the cap is reached, the one reading that means over (the
+   overview's sellers, slice 2). */
+.meter {
+  position: relative;
+  display: block;
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+}
+
+.meterFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+}
+
+.meter[data-full],
+.meter[data-full] .meterFill {
+  background: var(--foreground);
+}
+
+.usesCount {
+  min-width: 5.5em;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
