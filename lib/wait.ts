@@ -59,8 +59,10 @@ export function isAdminPath(pathname: string): boolean {
  * `/so/<no>`; since slice 2 the buying flow, `/cart`, `/checkout` and the
  * receipt `/order-confirmed[/<code>]`; since slice 3a signing in (`/sign-in`,
  * `/sign-up`, `/forgot-password`), the orders `/account/orders[/<code>]` and
- * the address book `/account/addresses` — while `/account` itself and its
- * other pages stay v3 until slice 3b. Each later slice adds its routes here.
+ * the address book `/account/addresses`; since slice 3b Tôi `/account`, Hồ sơ
+ * `/account/profile`, Yêu thích `/account/wishlist`, and `/account/password`,
+ * which leads to Hồ sơ now — while `/account/notifications` stays v3 until
+ * slice 4. Each later slice adds its routes here.
  * The veil takes the logo's black-and-white colours (QĐ-33) when it covers
  * one of them or leads to one, and keeps the v3 honey only between two v3
  * screens.
@@ -78,6 +80,10 @@ const FEED_PATHS: readonly string[] = [
   "/forgot-password",
   "/account/orders",
   "/account/addresses",
+  "/account",
+  "/account/profile",
+  "/account/wishlist",
+  "/account/password",
 ];
 
 /**

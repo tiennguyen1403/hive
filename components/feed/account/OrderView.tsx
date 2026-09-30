@@ -18,10 +18,8 @@ import {
   groupLabel,
   linePicture,
   orderGroups,
-  orderSteps,
   paymentTitle,
   returnUntil,
-  stepStamp,
 } from "@/lib/feed-account";
 import { feedSentence } from "@/lib/feed-checkout";
 import { confirmRows, confirmTransfer } from "@/lib/feed-order";
@@ -36,8 +34,7 @@ import { FeedSheet } from "../FeedSheet";
 import { useFeedToast } from "../FeedToast";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNow, useNowMs } from "../now";
-import { cx } from "../useReveal";
-import { Tile } from "./OrderBits";
+import { OrderSteps, Tile } from "./OrderBits";
 
 interface OrderViewProps {
   /** One of the account's orders, with the status the clock says it is in (read on the server). */
@@ -219,26 +216,7 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
 
       <div className="od-left">
         <div className="od-steps">
-          <ol className="osteps" aria-label="Hành trình">
-            {orderSteps(order).map((step) => (
-              <li
-                key={step.label}
-                className={cx(
-                  "ostep",
-                  step.state === "done" && "is-done",
-                  step.state === "now" && "is-now",
-                  step.state === "off" && "is-off",
-                )}
-                aria-current={step.state === "now" ? "step" : undefined}
-              >
-                <div className="ostep-bar" aria-hidden="true">
-                  <i />
-                </div>
-                <p className="ostep-label">{step.label}</p>
-                {step.at && <p className="ostep-at">{stepStamp(step.at)}</p>}
-              </li>
-            ))}
-          </ol>
+          <OrderSteps order={order} />
         </div>
         {act}
         <section className="acc-sec" aria-labelledby="h-items">

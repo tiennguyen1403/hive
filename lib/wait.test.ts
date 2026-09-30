@@ -151,13 +151,17 @@ describe("isFeedPath", () => {
     }
   });
 
+  it("is Tôi, Hồ sơ and Yêu thích since slice 3b, and the old password page that leads to Hồ sơ", () => {
+    for (const p of ["/account", "/account/", "/account/profile", "/account/wishlist", "/account/password"]) {
+      expect(isFeedPath(p), p).toBe(true);
+    }
+  });
+
   it("is no v3 screen, and nothing that merely starts with a Feed route's name", () => {
     for (const p of [
-      "/account",
-      "/account/wishlist",
-      "/account/profile",
-      "/account/password",
       "/account/notifications",
+      "/accounts",
+      "/account/profiles",
       "/account/ordersx",
       "/admin",
       "/admin/products",

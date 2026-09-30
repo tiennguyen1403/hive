@@ -1,15 +1,45 @@
 import Image from "next/image";
 import { COLORS } from "@/data/colors";
-import type { OrderLine, OrderState, Product } from "@/data/types";
-import { FEED_STATE_LABEL, linePicture, tileLabel } from "@/lib/feed-account";
+import type { Order, OrderLine, OrderState, Product } from "@/data/types";
+import { FEED_STATE_LABEL, linePicture, orderSteps, stepStamp, tileLabel } from "@/lib/feed-account";
 import { isFixed } from "@/lib/inventory";
 import { FeedIcon, type FeedIconName } from "../icon/FeedIcon";
 import { cx } from "../useReveal";
 
 /*
- * What the orders list and one order share (`account.js`): the state as a
- * chip, and a piece as a tile.
+ * What the orders list, one order and Tôi share (`account.js`): the state as a
+ * chip, the journey as story bars, and a piece as a tile.
  */
+
+/**
+ * The order's four steps as Feed's story bars (`steps`): done, now (half), to
+ * come, or off; each passed step with the time the order recorded for it.
+ * On one order's page, and on Tôi's card for the parcel on its way.
+ */
+export function OrderSteps({ order }: { order: Order }) {
+  return (
+    <ol className="osteps" aria-label="Hành trình">
+      {orderSteps(order).map((step) => (
+        <li
+          key={step.label}
+          className={cx(
+            "ostep",
+            step.state === "done" && "is-done",
+            step.state === "now" && "is-now",
+            step.state === "off" && "is-off",
+          )}
+          aria-current={step.state === "now" ? "step" : undefined}
+        >
+          <div className="ostep-bar" aria-hidden="true">
+            <i />
+          </div>
+          <p className="ostep-label">{step.label}</p>
+          {step.at && <p className="ostep-at">{stepStamp(step.at)}</p>}
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 /** Each state's glyph (`ST_ICON`). */
 const STATE_ICON: Readonly<Record<OrderState, FeedIconName>> = {

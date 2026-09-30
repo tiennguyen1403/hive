@@ -3,13 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useMyState } from "@/components/account/MyStateContext";
 import { useCart } from "@/components/cart/CartContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { usePrefs } from "@/components/shop/prefs";
 import { COLORS } from "@/data/colors";
 import type { ColorKey, Product, Size } from "@/data/types";
 import { addableOf, qtyInCart } from "@/lib/cart";
 import { PICTURE, pictureAlt, pictureOf, sizeOption, sizeRowLabel, sizesIn, startSize, swatchNote } from "@/lib/feed";
+import { mySizeOf } from "@/lib/feed-me";
 import {
   buyLabel,
   buyState,
@@ -55,12 +56,12 @@ const desktop = () => window.matchMedia("(min-width: 900px)").matches;
  * · "Chi tiết" (the construction lines), "Thông số", "Giao hàng và đổi trả",
  *   and the rest of the line as a rail.
  *
- * It starts on the remembered size (`prefs.size`, "Size của tôi") when that
- * size is left in the colour on screen — once storage has answered, and only
- * while nothing has been chosen — and a colour that has no piece of the chosen
- * size lets it go. The colour is the address's (`?color=`) when the style
- * comes in it. Until slice 3 the heart saves on this device, and the
- * remembered size is this device's.
+ * It starts on "Size của tôi" when that size is left in the colour on screen,
+ * and a colour that has no piece of the chosen size lets it go. The colour is
+ * the address's (`?color=`) when the style comes in it. Since slice 3b the
+ * size is the account's (quần for trousers, áo otherwise; none while signed
+ * out), read with the page, so the first HTML already has it chosen; and the
+ * heart saves the style on the account in the colour on screen.
  *
  * Slice 2: the basket is counted. A size whose every piece left is in the
  * basket already is struck through like a size that cannot be bought, noted
@@ -79,8 +80,8 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
   const now = useNow();
   const quick = useQuickAdd();
   const { cart } = useCart();
-  const { prefs, ready: prefsReady } = usePrefs();
-  const mine = prefsReady ? prefs.size : null;
+  const { state: kept } = useMyState();
+  const mine = mySizeOf(kept, p);
 
   const buy = buyState(catalog, p, now);
   const selling = buy.kind === "open";
@@ -92,7 +93,9 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
   const line = styleLine(catalog, p, now);
 
   const [color, setColor] = useState<ColorKey>(() => pageColor(p, asked));
-  const [size, setSize] = useState<Size | null>(null);
+  // Size của tôi from the first render when the colour has it (`product.js`: `myPick(color0)`). The basket is not
+  // known until it has loaded; a size it holds every piece of lets go below (`chosen`).
+  const [size, setSize] = useState<Size | null>(() => (selling ? startSize(p, pageColor(p, asked), mine) : null));
   const [frame, setFrame] = useState(0);
   const [need, setNeed] = useState(false);
   const [solid, setSolid] = useState(false);
@@ -113,15 +116,6 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
 
   /** The remembered size, where this colour still has a piece of it to add and the style sells (`myPick`). */
   const myPick = (c: ColorKey): Size | null => (selling ? startSize(p, c, mine, held(c)) : null);
-
-  // Once storage has answered: the page starts on Size của tôi, unless a size has been chosen already.
-  const preselected = useRef(false);
-  useEffect(() => {
-    if (!prefsReady || preselected.current) return;
-    preselected.current = true;
-    const want = selling ? startSize(p, color, prefs.size, (z) => qtyInCart(cart, { productId: p.id, color, size: z })) : null;
-    if (want) setSize((s) => s ?? want);
-  }, [prefsReady, prefs.size, p, color, selling, cart]);
 
   // The size in play: the one chosen, while one more piece of it can still go in. Once the basket holds every piece
   // left (slice 2), the size can no longer be added and the page asks for a size again.
@@ -251,7 +245,7 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
 
   return (
     <>
-      <PhoneBar product={p} solid={solid} />
+      <PhoneBar product={p} color={color} solid={solid} />
 
       <div className="pdp">
         <nav className="crumbs" aria-label="Đường dẫn">
@@ -437,7 +431,7 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
  * the photo has scrolled away and the bar has turned solid — the heart and
  * the bag with its count. Gone from 900px, where the top bar is.
  */
-function PhoneBar({ product: p, solid }: { product: Product; solid: boolean }) {
+function PhoneBar({ product: p, color, solid }: { product: Product; color: ColorKey; solid: boolean }) {
   const { units, ready } = useCart();
   const n = ready ? units : 0;
   return (
@@ -448,7 +442,7 @@ function PhoneBar({ product: p, solid }: { product: Product; solid: boolean }) {
       <p className="pbar-title disp" aria-hidden="true">
         {p.name}
       </p>
-      <FavButton product={p} bar />
+      <FavButton product={p} color={color} bar />
       <Link className="ib" href="/cart" data-cart-link="" aria-label={n ? `Giỏ, ${n} món` : "Giỏ, đang trống"}>
         <FeedIcon name="bag" />
         {n > 0 && <span className="badge">{n > 99 ? "99+" : n}</span>}

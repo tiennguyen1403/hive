@@ -3,10 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { useWishlist } from "@/components/account/WishlistContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { COLORS } from "@/data/colors";
-import type { Product } from "@/data/types";
+import type { ColorKey, Product } from "@/data/types";
 import {
   PICTURE,
   canBuy,
@@ -25,6 +24,7 @@ import { vnd } from "@/lib/money";
 import { FeedIcon } from "./icon/FeedIcon";
 import { useNow } from "./now";
 import { useQuickAdd } from "./QuickAdd";
+import { useKeep } from "./useKeep";
 import { cx, useReveal } from "./useReveal";
 
 /*
@@ -86,16 +86,19 @@ export function StockLine({ facts, className }: { facts: StockFacts | null; clas
 }
 
 /**
- * The heart: saves the style on this device (`lib/wishlist.ts`, as every
- * screen does until slice 3 moves it into the account). A filled heart while
- * it is saved; it pops when a style goes in. On a card it sits on the
- * picture (`.fav`); on the product page's phone bar it is one of the bar's
- * round buttons (`bar`).
+ * The heart (round v4 slice 3b): saves the style on the account, in the
+ * colour on screen — the card's, or the one chosen on the product page —
+ * through the optimistic write of `useKeep` (the Server Action answers with
+ * the account's list). A filled heart while it is saved, in any colour; it
+ * pops when a style goes in. Signed out it saves nothing and says so, with a
+ * way in (`feed.js`: `askSignIn`). On a card it sits on the picture
+ * (`.fav`); on the product page's phone bar it is one of the bar's round
+ * buttons (`bar`).
  */
-export function FavButton({ product, bar = false }: { product: Product; bar?: boolean }) {
-  const wish = useWishlist();
+export function FavButton({ product, color, bar = false }: { product: Product; color?: ColorKey; bar?: boolean }) {
+  const keep = useKeep();
   const [pops, setPops] = useState(0);
-  const saved = wish.ready && wish.has(product.id);
+  const saved = keep.isSaved(product.id);
   return (
     <button
       className={cx(bar ? "ib pbar-fav" : "fav", pops > 0 && "pop")}
@@ -104,8 +107,7 @@ export function FavButton({ product, bar = false }: { product: Product; bar?: bo
       aria-label={`Yêu thích ${product.name}`}
       onClick={(e) => {
         e.preventDefault();
-        if (!saved) setPops((n) => n + 1);
-        wish.toggle(product.id);
+        if (keep.toggleFavorite(product, color ?? firstColor(product)) === "saved") setPops((n) => n + 1);
       }}
     >
       <FeedIcon key={pops} name={saved ? "heart-fill" : "heart"} />
@@ -152,7 +154,7 @@ export function FeedCard({ product: s, kind = "look", wide = false, flip = false
           alt={pictureAlt(s, color, pic.look)}
         />
         {sold && <Stamp />}
-        <FavButton product={s} />
+        <FavButton product={s} color={color} />
       </div>
       <div className="card-body">
         <Name className="card-name disp">
@@ -238,7 +240,7 @@ export function GridCard({ product: s, showLine = false, soldCount = false, h = 
           <StockLine facts={stockFacts(catalog, s, now, { soldCount })} className="gcard-stock" />
         </div>
       </Link>
-      <FavButton product={s} />
+      <FavButton product={s} color={color} />
       {canBuy(catalog, s, now) && (
         <button className="gcard-add" type="button" aria-label={`Chọn size ${s.name}`} onClick={(e) => open(s, e.currentTarget)}>
           <FeedIcon name="plus" />

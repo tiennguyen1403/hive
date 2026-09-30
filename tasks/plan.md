@@ -2600,6 +2600,36 @@ xong trong khoảng 35 giây (trạng thái commit trên GitHub; Vercel MCP bị
   - màn quản trị, `/track` và `/account/orders/[code]/tracking` (v3) chưa dùng `moments`;
   - nhật ký reset chỉ ghi sự kiện của trạng thái hiện tại;
   - `tasks/backend.md` §9 thêm B9, B10.
+
+**Lát 3b ĐẠT (30/09/2026, `ui-implementer`, phiên chính duyệt độc lập).** Brief `tasks/briefs/v4-lat-3b.md`.
+- **Đã giao:**
+  - `/account` (Tôi): thẻ đơn cần khách, thẻ đơn đang đi có giờ từng bước, bốn ô Yêu thích / Nhắc / Size / Giao tới;
+  - Tôi khi chưa đăng nhập: điện thoại là thẻ tối kèm quyền lợi; máy tính hai cột, đăng nhập ngay tại chỗ;
+  - `/account/profile`: email chỉ đọc, Size của tôi, sheet Đổi mật khẩu;
+  - `/account/wishlist`: Yêu thích, thêm nhanh theo size, bỏ lưu có Hoàn tác;
+  - tim, Nhắc tôi, size nhớ trên mọi trang Feed lưu theo tài khoản: `MyStateProvider` ở layout gốc đọc `getMyState()`,
+    cập nhật lạc quan, chưa đăng nhập thì hiện toast mời đăng nhập của mock;
+  - số "Đã lưu" ở thanh v3 đọc từ tài khoản;
+  - "Không tìm thấy đơn" trả 404 thật;
+  - nút X và Đăng xuất về `/account`;
+  - `/account/password` chuyển về Hồ sơ.
+- **Kiểm:** 1871/1871 test, typecheck sạch (phiên chính chạy lại). Build sạch. Vùng chạm ≥ 44 (49 điều khiển), 0 tràn, 0 lỗi
+  console. Hình học so với mock lệch ≤ 1px. Phiên chính so ảnh với mock: Tôi 1280, Hồ sơ 390, Yêu thích 390.
+- **Người dùng quyết (30/09):**
+  - nhận bỏ luật "khác mật khẩu cũ";
+  - Tôi trên máy tính giữ ô "Tài khoản thử" và hai nút phải cùng một hàng. Từ 1280px ô nằm trong cột trái; từ 900 tới 1279px
+    cột trái quá hẹp, nên ô lên một hàng riêng phía trên hai cột, còn hai cột giữ đúng mock;
+  - push lát 3.
+- **Phiên chính quyết:** thẻ nhỏ trong rail không có tim (như mock); số trên chuông chuyển sang tài khoản ở lát 4, cùng hộp
+  thư.
+- **Mã v3 mồ côi (dọn cuối đợt):**
+  - `AccountHome`, `ProfileScreen`, `WishlistScreen`, `PasswordScreen`;
+  - trong `lib/account-form.ts`: `passwordChecks`, `validateChangePassword`;
+  - `WishlistContext` cùng `WishlistProvider` và `lib/wishlist.ts`;
+  - `components/product/ProductView.tsx`.
+  - `lib/prefs.ts` và `lib/reminder.ts` còn được `notif-center` đọc tới lát 4.
+- **Còn mở:** `getMyState()` trả `null` cả khi đọc hỏng, nên UI hiện tài khoản rỗng tới lần ghi sau; tách hai trường hợp ở
+  lát backend sau.
 - **Mã v3 mồ côi (dọn cuối đợt):**
   - `SignInScreen`, `SignUpScreen`, `ForgotPasswordScreen`, `OrdersScreen`, `OrderDetailScreen`, `CancelOrderSheet`,
     `AddressesScreen`, `AddressFormScreen`;

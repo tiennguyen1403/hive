@@ -18,7 +18,7 @@ export default async function SignUpPage(props: PageProps<"/sign-up">) {
       tabbar={false}
       foot="none"
       mainClass="si-wrap"
-      mbar={{ title: SIGN_TITLES.up, back: "/", label: "Đóng", close: true, watch: "[data-ui='feed'] .si-title" }}
+      mbar={{ title: SIGN_TITLES.up, back: "/account", label: "Đóng", close: true, watch: "[data-ui='feed'] .si-title" }}
     >
       <SignInView mode="up" next={nextParam(sp.next)} />
     </FeedFrame>

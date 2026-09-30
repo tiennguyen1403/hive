@@ -14,18 +14,32 @@
    `.out-acts`, `.lookup*`), the order page (`.od*`, `.cancel-line`, `.nf*`),
    the address book and its sheet (`.ad*`, `.chip-ink`, `.lbl-chip*`,
    `.toggle-row`, `.switch`, `.sheet-form`) and the sign-in page (`.si*`),
-   with their hover and desktop rules. Tôi (`.me-*`, `.now*`, `.soon-card*`,
-   `.bento`, `.bt*`, `.out-perks`, `.out-home`…), the return flow (`.rt-*`,
-   `.rq-*`) and Hồ sơ (`.pf-*`) wait for their slices, as do the rules only
-   they use (`.on-dark` variants, `.osteps.is-mini`, `.od-act.is-dark`,
-   `.od-act-title`, `.si-row`, `.btn-light`). The phone bar's late title is
-   already in `more.css`, which the mock writes twice.
+   with their hover and desktop rules.
+
+   PORTED AT SLICE 3b, for `/account` and `/account/profile`: Tôi (`.me-*`,
+   `.now*`, `.soon-card*`, `.none-card`, `.bento`, `.bt*`, `.me-rows`,
+   `.me-row*`, `.sign-out`), its signed-out columns (`.out-perks`,
+   `.out-home`, `.out-head`, `.out-in`, `.out-up`, `.out-side`, `.si-row`),
+   Hồ sơ (`.pf-*`, all but the e-mail's note `.pf-note`, which QĐ-35 leaves
+   out), and the rules only they use (`.on-dark .st-chip`, `.btn-light`), with
+   their hover and desktop rules. Still waiting: the return flow (`.rt-*`,
+   `.rq-*`) and the rules only it and the lookup page use (the `.on-dark`
+   story bars, `.osteps.is-mini`, `.od-act.is-dark`, `.od-act-title`). The
+   phone bar's late title is already in `more.css`, which the mock writes
+   twice.
 
    Translated on the way in:
    · the hex literals are tokens: `#FBEAE8` (the refusal line's ground)
      `--f-err-bg`, `#D5D7DC` (a switch while off) `--f-switch`, `#E4E6EA`
-     `--f-bg3`, `#F2EEE8` `--f-plate2`, `#fff` `--f-white`; the rgba
-     literals stay as the mock writes them;
+     `--f-bg3`, `#F2EEE8` `--f-plate2`, `#fff` `--f-white`, and at slice 3b
+     the three hovers `#E8EAED` `--f-bg5`, `#22242A` `--f-ink3`, `#E9ECFF`
+     `--f-blue-soft`; the rgba literals stay as the mock writes them;
+   · the mock's `.me-row .i-caret-right` is the caret's own class
+     (`FeedIcon className="i-caret-right"`): the app's icon carries no class
+     per glyph;
+   · Tôi signed out: the mock builds the phone's card or the two desktop
+     columns by the window's width (`me.js`); the app draws both once and
+     shows the one for the width here (marked below);
    · the overlay under a label chip reaches 46, the project's rule the user
      kept (the mock's reaches 44);
    · a label chip's and a switch's ring stays off while the pointer drives
@@ -51,6 +65,7 @@
 }
 [data-ui="feed"] .st-chip .i { width: 16px; height: 16px; }
 [data-ui="feed"] .st-chip.is-act { background: var(--f-blue); color: var(--f-white); }
+[data-ui="feed"] .on-dark .st-chip { background: rgba(255, 255, 255, .14); color: var(--f-white); }
 
 /* The order's four steps, drawn like Feed's story bars: done, now (half), to come. */
 [data-ui="feed"] .osteps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
@@ -115,12 +130,110 @@
 /* ── signed out ── */
 [data-ui="feed"] .out-card { margin-top: 18px; padding: 24px 20px 22px; border-radius: var(--f-r-card); background: var(--f-ink); color: var(--f-white); }
 [data-ui="feed"] .out-title { font-size: 40px; line-height: 1.06; }
+[data-ui="feed"] .out-perks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
+[data-ui="feed"] .out-perk {
+  display: grid; justify-items: start; gap: 10px; padding: 12px; border-radius: 12px; background: rgba(255, 255, 255, .08);
+  font-size: 13px; font-weight: 620; line-height: 1.3;
+}
+[data-ui="feed"] .out-perk .i { width: 22px; height: 22px; }
 [data-ui="feed"] .out-acts { display: grid; gap: 10px; margin-top: 20px; }
 [data-ui="feed"] .out-card .btn-line { background: transparent; color: var(--f-white); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .7); }
 [data-ui="feed"] .lookup { margin-top: 26px; }
 [data-ui="feed"] .lookup .acc-sec-title { margin-bottom: 14px; }
 [data-ui="feed"] .lookup-form { display: grid; gap: 12px; }
 [data-ui="feed"] .lookup-form .btn { margin-top: 4px; }
+/* Not in the mock, which builds one or the other (`me.js`): Tôi signed out keeps its desktop columns' sign-in form and
+   dark card aside below 900px, where the card with the perks and the lookup are the page. */
+@media (max-width: 899.98px) {
+  [data-ui="feed"] .out-home .out-in, [data-ui="feed"] .out-home .out-up { display: none; }
+}
+
+/* ── account (Tôi) ── */
+[data-ui="feed"] .me-id { padding-top: 22px; }
+[data-ui="feed"] .me-name { font-size: 46px; line-height: 1.04; overflow-wrap: anywhere; }
+[data-ui="feed"] .me-meta { margin-top: 8px; font-size: 14px; color: var(--f-ink2); }
+[data-ui="feed"] .me-edit { margin-top: 14px; }
+[data-ui="feed"] .now-when.is-first { margin-top: 14px; }
+
+/* The order that needs the shopper now: dark, with the time it has left, in the drop countdown's face. */
+[data-ui="feed"] .now { position: relative; margin-top: 22px; padding: 18px 18px 18px; border-radius: var(--f-r-card); background: var(--f-ink); color: var(--f-white); }
+[data-ui="feed"] .now-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+[data-ui="feed"] .now-code { font-size: 24px; line-height: 1; }
+[data-ui="feed"] .now-code a { display: inline-flex; align-items: center; min-height: 44px; margin: -8px 0; color: inherit; }
+[data-ui="feed"] .now-code a::after { content: ""; position: absolute; inset: 0; border-radius: var(--f-r-card); }
+[data-ui="feed"] .now-cd { margin-top: 16px; font-stretch: 75%; font-weight: 800; font-size: 60px; line-height: 1; white-space: nowrap; }
+[data-ui="feed"] .now-when { margin-top: 6px; font-size: 13px; color: rgba(255, 255, 255, .8); }
+[data-ui="feed"] .now-when b { color: var(--f-white); font-weight: 650; }
+[data-ui="feed"] .now-foot { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 14px 12px; margin-top: 18px; }
+[data-ui="feed"] .now-total { font-size: 18px; font-weight: 700; white-space: nowrap; }
+[data-ui="feed"] .now .tile { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .12); }
+[data-ui="feed"] .now-cta { position: relative; z-index: 2; width: auto; height: 48px; padding: 0 22px; }
+[data-ui="feed"] .btn-light { background: var(--f-white); color: var(--f-ink); }
+/* A quieter card for an order on its way, or a return window about to close. */
+[data-ui="feed"] .soon-card { position: relative; margin-top: 10px; padding: 16px; border-radius: var(--f-r-card); background: var(--f-bg2); }
+[data-ui="feed"] .soon-card .ticket-code { font-size: 22px; }
+[data-ui="feed"] .soon-card .ticket-code a { display: inline-flex; align-items: center; min-height: 44px; margin: -10px 0; }
+[data-ui="feed"] .soon-card .ticket-code a::after { content: ""; position: absolute; inset: 0; border-radius: var(--f-r-card); }
+[data-ui="feed"] .soon-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+[data-ui="feed"] .soon-card .osteps { margin-top: 14px; }
+[data-ui="feed"] .soon-card-line { margin-top: 10px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .soon-card-line b { color: var(--f-ink); font-weight: 680; }
+[data-ui="feed"] .soon-card .pill { position: relative; z-index: 2; background: var(--f-bg); }
+[data-ui="feed"] .soon-card-foot { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+[data-ui="feed"] .soon-card-foot .soon-card-line { margin-top: 0; }
+[data-ui="feed"] .soon-card-top .now-total { font-size: 15px; font-weight: 700; white-space: nowrap; }
+[data-ui="feed"] .soon-card .tile { background: var(--f-bg); }
+[data-ui="feed"] .none-card { margin-top: 12px; padding: 16px; border-radius: var(--f-r-card); background: var(--f-bg2); font-size: 14px; color: var(--f-ink2); }
+
+/* Tiles with the shopper's things in them: saved styles, reminder, size, address. */
+[data-ui="feed"] .bento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+[data-ui="feed"] .bt {
+  position: relative; display: grid; align-content: start; gap: 6px; min-height: 148px; padding: 14px; border-radius: var(--f-r-card);
+  background: var(--f-bg2); color: var(--f-ink); overflow: hidden;
+}
+[data-ui="feed"] .bt-fav-tile, [data-ui="feed"] .bt-addr { grid-column: 1 / -1; }
+[data-ui="feed"] .bt-addr { min-height: 0; }
+[data-ui="feed"] .bt-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 680; }
+[data-ui="feed"] .bt-label .i { width: 18px; height: 18px; }
+[data-ui="feed"] .bt-link::after { content: ""; position: absolute; inset: 0; border-radius: var(--f-r-card); }
+[data-ui="feed"] .bt-go { position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; color: var(--f-ink2); }
+[data-ui="feed"] .bt.is-dark { background: var(--f-ink); color: var(--f-white); }
+[data-ui="feed"] .bt.is-dark .bt-go { color: rgba(255, 255, 255, .7); }
+[data-ui="feed"] .bt-fav-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
+[data-ui="feed"] .bt-fav { position: relative; border-radius: var(--f-r-thumb); overflow: hidden; background: var(--f-bg); aspect-ratio: 4 / 5; }
+[data-ui="feed"] .bt-fav.flat { background: var(--f-plate2); }
+[data-ui="feed"] .bt-fav img { width: 100%; height: 100%; object-fit: cover; }
+[data-ui="feed"] .bt-fav.is-sold img { filter: grayscale(1); opacity: .75; }
+[data-ui="feed"] .bt-fav-stamp {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 4px 6px 3px;
+  background: var(--f-ink); color: var(--f-white); font-stretch: 75%; font-weight: 900; font-size: 12px; line-height: 1; white-space: nowrap;
+}
+[data-ui="feed"] .bt-fav-note { margin-top: 4px; }
+[data-ui="feed"] .bt-fav-note .stock { font-size: 13px; }
+[data-ui="feed"] .bt-date { display: flex; align-items: flex-end; gap: 8px; margin-top: 4px; }
+[data-ui="feed"] .bt-dd { font-stretch: 75%; font-weight: 900; font-size: 64px; line-height: .8; letter-spacing: -.02em; }
+[data-ui="feed"] .bt-mm { font-size: 18px; line-height: 1; padding-bottom: 2px; }
+[data-ui="feed"] .bt-sub { font-size: 13px; line-height: 1.35; color: var(--f-ink2); }
+[data-ui="feed"] .bt.is-dark .bt-sub { color: rgba(255, 255, 255, .78); }
+[data-ui="feed"] .bt-sizes { display: flex; gap: 14px; margin-top: 4px; }
+[data-ui="feed"] .bt-size { display: grid; justify-items: start; gap: 2px; }
+[data-ui="feed"] .bt-size .i { width: 20px; height: 20px; color: var(--f-ink2); }
+[data-ui="feed"] .bt-size b { font-stretch: 75%; font-weight: 900; font-size: 44px; line-height: .95; }
+[data-ui="feed"] .bt-size span { font-size: 12px; font-weight: 600; color: var(--f-ink2); }
+[data-ui="feed"] .bt-addr-name { font-size: 26px; line-height: 1.06; margin-top: 2px; }
+[data-ui="feed"] .bt-addr-line { font-size: 14px; line-height: 1.4; }
+
+[data-ui="feed"] .me-rows { display: grid; margin-top: 18px; }
+[data-ui="feed"] .me-row {
+  position: relative; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 4px;
+  border-top: 1px solid var(--f-line); font-size: 15px; font-weight: 600;
+}
+[data-ui="feed"] .me-row:first-child { border-top: 0; }
+[data-ui="feed"] .me-row .i { width: 22px; height: 22px; }
+[data-ui="feed"] .me-row .i-caret-right { margin-left: auto; width: 18px; height: 18px; color: var(--f-ink2); }
+[data-ui="feed"] .me-row-sub { margin-left: auto; font-size: 13px; font-weight: 500; color: var(--f-ink2); }
+[data-ui="feed"] .me-row-sub + .i-caret-right { margin-left: 6px; }
+[data-ui="feed"] .sign-out { margin-top: 22px; }
 
 /* ── order detail ── */
 [data-ui="feed"] .od-hero { padding-top: 16px; }
@@ -194,6 +307,25 @@ html[data-pointer] [data-ui="feed"] .lbl-chip:has(input:focus), html[data-pointe
 [data-ui="feed"] .sheet-form .field + .field, [data-ui="feed"] .sheet-form .co-pair + .field, [data-ui="feed"] .sheet-form .field + .co-pair { margin-top: 0; }
 [data-ui="feed"] .sheet-form .btn { margin-top: 4px; }
 
+/* ── profile ── */
+[data-ui="feed"] .pf-sec { margin-top: 26px; }
+[data-ui="feed"] .pf-sec:first-child { margin-top: 16px; }
+[data-ui="feed"] .pf-form { display: grid; gap: 16px; }
+[data-ui="feed"] .pf-form .field + .field { margin-top: 0; }
+[data-ui="feed"] .pf-size { display: grid; gap: 14px; }
+[data-ui="feed"] .pf-size-row { display: grid; gap: 8px; }
+[data-ui="feed"] .pf-size-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 680; }
+[data-ui="feed"] .pf-size-label .i { width: 20px; height: 20px; }
+[data-ui="feed"] .pf-size .sizes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+[data-ui="feed"] .pf-size-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; }
+[data-ui="feed"] .pf-clear { min-height: 44px; margin: -8px 0; font-size: 13px; }
+[data-ui="feed"] .pf-sec .acc-sec-title { margin-bottom: 14px; }
+[data-ui="feed"] .pf-size .size { height: 48px; }
+[data-ui="feed"] .pf-save { margin-top: 18px; }
+[data-ui="feed"] .pf-danger { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .pf-danger .me-row { border-top: 0; color: var(--f-ink2); cursor: default; }
+[data-ui="feed"] .pf-danger .me-row-sub { color: var(--f-ink2); }
+
 /* ── sign-in ── */
 [data-ui="feed"] .si { padding: 8px var(--f-g) 28px; }
 [data-ui="feed"] .si-title { font-size: 52px; line-height: 1.04; padding-top: 12px; }
@@ -229,6 +361,11 @@ html[data-pointer] [data-ui="feed"] .lbl-chip:has(input:focus), html[data-pointe
 @media (hover: hover) and (pointer: fine) {
   [data-ui="feed"] .ticket:hover { box-shadow: inset 0 0 0 1.5px var(--f-ink); }
   [data-ui="feed"] .od-item-a:hover .od-item-name { text-decoration: underline; text-underline-offset: 3px; }
+  [data-ui="feed"] .bt:hover { background: var(--f-bg5); }
+  [data-ui="feed"] .bt.is-dark:hover { background: var(--f-ink3); }
+  [data-ui="feed"] .me-row:hover { background: var(--f-bg2); }
+  [data-ui="feed"] .soon-card:hover { background: var(--f-bg5); }
+  [data-ui="feed"] .btn-light:hover { background: var(--f-blue-soft); }
   [data-ui="feed"] .ad-acts .pill:hover { background: var(--f-bg3); }
   [data-ui="feed"] .lbl-chip:not(:has(input:checked)):hover { background: var(--f-bg3); }
 }
@@ -251,9 +388,48 @@ html[data-pointer] [data-ui="feed"] .lbl-chip:has(input:focus), html[data-pointe
   [data-ui="feed"] .lookup-form [data-f$="-code"] { width: 168px; }
   [data-ui="feed"] .lookup-form [data-f$="-phone"] { width: 216px; }
   [data-ui="feed"] .lookup-form .btn { width: auto; padding: 0 28px; margin-top: calc(13px * 1.45 + 6px); }
+
+  /* Tôi, signed out: signing in on the left (the sign-in page's own form), the dark card and the lookup on the right. */
+  [data-ui="feed"] .out-home { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: clamp(40px, 5vw, 72px); align-items: start; }
+  [data-ui="feed"] .out-head { font-size: clamp(30px, 3.2vw, 40px); line-height: 1.06; }
+  [data-ui="feed"] .out-in { padding-top: 26px; }   /* its title level with the dark card's */
+  [data-ui="feed"] .out-in .si-form { max-width: 360px; margin-top: 22px; }
+  [data-ui="feed"] .si-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; margin-top: 2px; }
+  [data-ui="feed"] .si-row .btn { width: auto; padding: 0 28px; }
+  [data-ui="feed"] .si-row .si-forgot { margin: 0; }
+  [data-ui="feed"] .out-up { padding: 26px 26px 28px; border-radius: var(--f-r-card); background: var(--f-ink); color: var(--f-white); }
+  [data-ui="feed"] .out-up-go { width: fit-content; margin-top: 22px; padding: 0 26px; }
+  [data-ui="feed"] .out-side { container-type: inline-size; }
+  [data-ui="feed"] .out-side .lookup { margin-top: 36px; }
+  /* The column is narrower than the one-row lookup: the fields share a row while they fit, the button goes under them. */
+  [data-ui="feed"] .out-side .lookup-form .btn { margin-top: 4px; }
+  @container (min-width: 540px) { [data-ui="feed"] .out-side .lookup-form .btn { margin-top: calc(13px * 1.45 + 6px); } }
+  /* Not in the mock, which builds one or the other: the phone's card stands aside from 900px. ("Tài khoản thử" beside
+     the form: see the block after this one.) */
+  [data-ui="feed"] .out-home .out-card { display: none; }
   [data-ui="feed"] .acc-h1 { font-size: 64px; padding-top: 0; margin-bottom: 24px; }
   [data-ui="feed"] .acc-sec { margin-top: 40px; }
   [data-ui="feed"] .acc-sec-title { font-size: 24px; }
+  [data-ui="feed"] .me-id { padding-top: 0; }
+  [data-ui="feed"] .me-name { font-size: 72px; }
+  [data-ui="feed"] .me-meta { font-size: 15px; }
+  [data-ui="feed"] .me-now { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 16px; align-items: stretch; margin-top: 28px; }
+  [data-ui="feed"] .me-now .now, [data-ui="feed"] .me-now .soon-card { margin-top: 0; }
+  [data-ui="feed"] .me-now .soon-card { display: flex; flex-direction: column; }
+  [data-ui="feed"] .me-now .soon-card .soon-card-foot { margin-top: auto; padding-top: 16px; }
+  [data-ui="feed"] .me-now > :only-child { grid-column: 1 / -1; }
+  [data-ui="feed"] .now { padding: 24px; }
+  [data-ui="feed"] .now-cd { font-size: 76px; }
+  [data-ui="feed"] .now-cta { padding: 0 28px; }
+  [data-ui="feed"] .soon-card { padding: 22px; }
+  [data-ui="feed"] .bento { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 12px; }
+  [data-ui="feed"] .bt { min-height: 176px; padding: 18px; }
+  [data-ui="feed"] .bt-fav-tile { grid-column: span 6; }
+  [data-ui="feed"] .bt-rem, [data-ui="feed"] .bt-size-tile { grid-column: span 3; }
+  [data-ui="feed"] .bt-addr { grid-column: 1 / -1; min-height: 0; display: grid; grid-template-columns: 180px auto minmax(0, 1fr); align-items: baseline; column-gap: 20px; }
+  [data-ui="feed"] .bt-addr .bt-addr-name { margin-top: 0; }
+  [data-ui="feed"] .me-edit { display: none; }
+  [data-ui="feed"] .sign-out, [data-ui="feed"] .pf-out { display: none; }
   [data-ui="feed"] .of { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin: -8px 0 18px; }
   [data-ui="feed"] .of .seg { margin: 0; flex: none; width: 440px; }
   [data-ui="feed"] .of .chips { padding: 0; overflow: visible; flex-wrap: wrap; }
@@ -271,6 +447,8 @@ html[data-pointer] [data-ui="feed"] .lbl-chip:has(input:focus), html[data-pointe
   [data-ui="feed"] .od-right .acc-sec:first-child { margin-top: 28px; }
   [data-ui="feed"] .ad-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   [data-ui="feed"] .ad-add { width: auto; display: inline-flex; padding: 0 26px; }
+  [data-ui="feed"] .pf { max-width: 640px; }
+  [data-ui="feed"] .pf-save { width: auto; justify-self: start; padding: 0 30px; }
   [data-ui="feed"] .si-wrap { max-width: var(--f-max); margin: 0 auto; padding: 36px var(--f-wg) 0; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); column-gap: 72px; align-items: start; }
   [data-ui="feed"] .si-art { display: block; position: sticky; top: 100px; }
   [data-ui="feed"] .si-art img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
@@ -279,4 +457,23 @@ html[data-pointer] [data-ui="feed"] .lbl-chip:has(input:focus), html[data-pointe
   /* Not in the mock: the demo box's two shortcuts side by side, at their own width. */
   [data-ui="feed"] .si-demo-acts { display: flex; flex-wrap: wrap; }
   [data-ui="feed"] .si-demo-acts .btn { width: auto; padding: 0 22px; }
+}
+
+/* Not in the mock: "Tài khoản thử" (the user's choice) on Tôi from 900px, signed out, its two shortcuts on one row as
+   on `/sign-in` — a row that needs 376px of box. From 1280px the left column is wider than that (388–395px), and the
+   box fills it, under "Đã có tài khoản" and over the form, as on `/sign-in` (the rules above: a block, no cap).
+   Between 900 and 1279px the column is 224–380px, too narrow for the row at any padding, so the box takes a row of
+   its own above the two columns, as wide as its content, and the mock's two columns follow it with their titles
+   level. The section keeps its title, box and form together in the document (a subgrid places them); with no box
+   (no published password) the mock's own layout stands. */
+@media (min-width: 900px) and (max-width: 1279.98px) {
+  [data-ui="feed"] .out-home:has(.si-demo) { grid-template-rows: auto auto 1fr; }
+  [data-ui="feed"] .out-home:has(.si-demo) .out-in {
+    display: grid; grid-column: 1 / -1; grid-row: 1 / span 3; align-self: stretch;
+    grid-template-columns: subgrid; grid-template-rows: subgrid; align-items: start; padding-top: 0;
+  }
+  [data-ui="feed"] .out-home:has(.si-demo) .out-in .si-demo { grid-column: 1 / -1; grid-row: 1; justify-self: start; width: max-content; max-width: 100%; margin: 0 0 36px; }
+  [data-ui="feed"] .out-home:has(.si-demo) .out-in .out-head { grid-column: 1; grid-row: 2; padding-top: 26px; }   /* level with the dark card's */
+  [data-ui="feed"] .out-home:has(.si-demo) .out-in .si-form { grid-column: 1; grid-row: 3; }
+  [data-ui="feed"] .out-home:has(.si-demo) .out-side { grid-column: 2; grid-row: 2 / span 2; }
 }

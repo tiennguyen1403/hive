@@ -7,12 +7,11 @@ import type { Order } from "@/data/types";
 import { initialsOf } from "@/lib/initials";
 import { formatPhone } from "@/lib/phone";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { resolveWishlist } from "@/lib/wishlist";
+import { savedStyles } from "@/lib/feed-me";
 import { signOut } from "@/lib/actions/auth";
 import type { Me } from "@/lib/me";
+import { useMyState } from "./MyStateContext";
 import { useNotifCenter } from "./notif-center";
-import { useWishlist } from "./WishlistContext";
-import { demoNow } from "@/lib/clock";
 
 /** Which door this screen is behind. */
 export type RailKey =
@@ -56,7 +55,8 @@ function railKeyOf(path: string): RailKey | undefined {
  * Every number beside a door is COUNTED, not typed: orders and addresses
  * from Postgres — read on the server and passed in, because a Client
  * Component cannot read a database — unread notifications from
- * `lib/notifications.ts`, saved styles from the device list. A count that is
+ * `lib/notifications.ts`, saved styles from the account since round v4 slice
+ * 3b (`MyStateContext`, as the bar's count beside it). A count that is
  * written down is a count that goes wrong the first time somebody uses the
  * screen under it.
  *
@@ -75,12 +75,11 @@ export function AccountRail({
   addressCount?: number;
 }) {
   const catalog = useCatalog();
-  const { list, ready: wishReady } = useWishlist();
+  const { state: kept } = useMyState();
   const { unread, ready: notifReady } = useNotifCenter(catalog, me, orders);
   const active = railKeyOf(usePathname());
-  // `ready` is false for one paint here. Nothing beats a zero: "0 mẫu đã lưu"
-  // is a claim, and it would be wrong for that paint.
-  const saved = wishReady ? resolveWishlist(catalog, demoNow(), list).items.length : undefined;
+  // The account's saved styles the catalogue still has; nothing while the account could not be read.
+  const saved = kept ? savedStyles(catalog, kept.favorites).length : undefined;
 
   return (
     <aside className="acctrail3">

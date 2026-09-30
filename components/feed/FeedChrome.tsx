@@ -26,7 +26,8 @@ import { cx } from "./useReveal";
  * "checkout"`): its name in the middle and the way back to the basket.
  * Slice 3a adds the account's pushed screens — the orders, one order, the
  * address book — and the sign-in page: each lights Tôi, and on the phone
- * each has its own bar.
+ * each has its own bar. Slice 3b adds Hồ sơ, pushed from Tôi the same way;
+ * Tôi and Yêu thích are tab roots.
  */
 export type FeedPage =
   | "home"
@@ -43,6 +44,7 @@ export type FeedPage =
   | "orders"
   | "order"
   | "addresses"
+  | "profile"
   | "sign-in"
   | "notifications"
   | "other";
@@ -63,6 +65,7 @@ const TAB_OF: Record<FeedPage, "home" | "search" | "fav" | "cart" | "me" | null>
   orders: "me",
   order: "me",
   addresses: "me",
+  profile: "me",
   "sign-in": "me",
   notifications: "me",
   other: null,

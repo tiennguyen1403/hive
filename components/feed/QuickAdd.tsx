@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { useMyState } from "@/components/account/MyStateContext";
 import { useCart } from "@/components/cart/CartContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { usePrefs } from "@/components/shop/prefs";
 import { COLORS } from "@/data/colors";
 import { sizeChart } from "@/data/size-chart";
 import type { ColorKey, Product, Size } from "@/data/types";
@@ -23,6 +23,7 @@ import {
   startSize,
   swatchNote,
 } from "@/lib/feed";
+import { mySizeOf } from "@/lib/feed-me";
 import { isFixed, onHandByColor } from "@/lib/inventory";
 import { vnd } from "@/lib/money";
 import { chartNumber, heightRange, isShorts, pantsChart } from "@/lib/pants-chart";
@@ -85,10 +86,11 @@ interface Choice {
  * product page's buy bar, on the phone, and the basket's "Chọn size khác" —
  * the "Đã thêm vào giỏ" sheet after it, and the size guide above it.
  *
- * It starts on the colour the card shows and on the device's remembered size
- * (`prefs.size`, "Size của tôi") when that colour still has it — until slice
- * 3 moves the size into the account. The line goes into the basket through
- * the one cart there is (`CartContext`, `lib/cart.ts`).
+ * It starts on the colour the card shows and on "Size của tôi" when that
+ * colour still has it: since slice 3b the account's size (`MyStateContext`),
+ * quần for trousers and áo for everything else, and none while signed out
+ * (the mock's `mySize`). The line goes into the basket through the one cart
+ * there is (`CartContext`, `lib/cart.ts`).
  *
  * Slice 2: the basket is counted. A size whose every piece left is in the
  * basket already cannot be added again — `addToCart` would clamp the extra
@@ -98,8 +100,7 @@ interface Choice {
 export function QuickAddProvider({ children }: { children: React.ReactNode }) {
   const catalog = useCatalog();
   const { add: addLine, cart } = useCart();
-  const { prefs, ready: prefsReady } = usePrefs();
-  const mine = prefsReady ? prefs.size : null;
+  const { state: kept } = useMyState();
 
   const [buy, setBuy] = useState<Choice | null>(null);
   const [buyOpen, setBuyOpen] = useState(false);
@@ -123,7 +124,7 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
           ? preset.color
           : firstColor(product);
       // A swap keeps the line's own choice to make: no remembered size (`openBuy`: `p.swap ? null : mySize(s)`).
-      const own = preset.swap ? null : mine;
+      const own = preset.swap ? null : mySizeOf(kept, product);
       const size =
         preset.size && addableOf(product, cart, color, preset.size) > 0
           ? preset.size
@@ -131,7 +132,7 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
       setBuy({ product, color, size, opener, onPick: preset.onPick ?? null, mine: own, swap: preset.swap ?? null });
       setBuyOpen(true);
     },
-    [catalog, mine, cart],
+    [catalog, kept, cart],
   );
 
   const add = useCallback(

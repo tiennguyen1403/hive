@@ -14,8 +14,17 @@
    column, the desktop rules, the 900–1199 band and the hover rules they
    need. The mock's open and upcoming heroes (`.b-hero-cd`, `.b-hero .btn`)
    are not ported: an issue that is not closed leads to the home page
-   instead. The other screens of this file (Yêu thích, Thông báo, Tra cứu
-   đơn, Hỏi đáp, Bảng size, Liên hệ, 404) wait for their slices.
+   instead.
+
+   PORTED AT SLICE 3b, for Yêu thích `/account/wishlist`: the account page's
+   frame (`.acc-main.b-acc`, `.b-gatewrap`, `.b-count`), the empty list
+   (`.b-empty`), a style set in type (`.b-type`) and the watch list (`.b-fcs`,
+   `.b-fc*`, `.b-sz`), with the desktop and hover rules. The mock's `.motion`
+   rules (the size's press, the card sliding out) are asked of
+   `prefers-reduced-motion`, as in every Feed file; the two overlays reach 46
+   (the heart 36 → 46, the size 36 → 46 by 46), the project's rule, where the
+   mock's reach 44. The other screens of this file (Thông báo, Tra cứu đơn,
+   Hỏi đáp, Bảng size, Liên hệ, 404) wait for their slices.
 
    The plate's name is sized by its letter count, which the element carries
    inline as `--f-n` (the mock's `--n`), the one custom property no zone
@@ -28,9 +37,57 @@
 [data-ui="feed"] .b-head .link { min-height: 44px; margin: -10px 0; }
 [data-ui="feed"] .mbar.title-late .mbar-title { opacity: 0; transition: opacity .2s; }
 [data-ui="feed"] .mbar.title-on .mbar-title { opacity: 1; }
+[data-ui="feed"] .acc-main.b-acc { padding: 0; }
+[data-ui="feed"] .b-gatewrap { padding: 0 var(--f-g); }
+[data-ui="feed"] .b-count { font-size: 14px; font-weight: 620; color: var(--f-ink2); white-space: nowrap; }
 
+/* An empty list: the flow's empty state, a little closer to the title. */
+[data-ui="feed"] .b-empty { padding-top: 40px; }
+
+/* A style with no photo (Số 03 and 04): its name on a plate. */
+[data-ui="feed"] .b-type {
+  display: grid; place-items: center; overflow: hidden; background: var(--f-bg2); color: var(--f-ink);
+  font-stretch: 75%; font-weight: 900; text-transform: uppercase; line-height: 1; text-align: center;
+}
 [data-ui="feed"] .b-chips { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 [data-ui="feed"] .b-chip { display: inline-block; width: 12px; height: 12px; border-radius: var(--f-r-pill); box-shadow: inset 0 0 0 1px rgba(17, 18, 20, .22); }
+
+/* ── Yêu thích: a watch list ── */
+[data-ui="feed"] .b-fcs { display: grid; gap: 22px; padding: 8px var(--f-g) 0; }
+[data-ui="feed"] .b-fc { position: relative; display: grid; grid-template-columns: 136px minmax(0, 1fr); column-gap: 16px; align-items: start; }
+[data-ui="feed"] .b-fc-media { position: relative; display: block; background: var(--f-bg2); overflow: hidden; }
+[data-ui="feed"] .b-fc-media img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+[data-ui="feed"] .b-fc.is-flat .b-fc-media { background: var(--f-plate2); }
+[data-ui="feed"] .b-fc .plate { font-size: 18px; padding: 8px 10px 5px; }
+[data-ui="feed"] .b-fc-fav.fav { top: 6px; right: auto; left: 94px; width: 36px; height: 36px; }
+/* The mock's overlay is -4px (36 → 44); the project's reaches 46. */
+[data-ui="feed"] .b-fc-fav.fav::after { content: ""; position: absolute; inset: -5px; }
+[data-ui="feed"] .b-fc-fav .i { width: 20px; height: 20px; }
+[data-ui="feed"] .b-fc-body { display: grid; justify-items: start; min-width: 0; padding-top: 2px; }
+[data-ui="feed"] .b-fc-name { font-size: 30px; line-height: 1.04; overflow-wrap: anywhere; }
+[data-ui="feed"] .b-fc-name a { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; margin: -7px 0; }
+[data-ui="feed"] .b-fc-name a::after { content: ""; position: absolute; inset: 0 0 0 152px; z-index: 0; }
+[data-ui="feed"] .b-fc-meta { margin-top: 4px; font-size: 13px; color: var(--f-ink2); line-height: 1.35; }
+[data-ui="feed"] .b-fc-price { margin-top: 6px; font-size: 15px; font-weight: 680; }
+[data-ui="feed"] .b-fc-stock { margin-top: 6px; }
+[data-ui="feed"] .b-fc-sizes { position: relative; z-index: 1; display: flex; gap: 6px; margin-top: 12px; }
+[data-ui="feed"] .b-sz {
+  position: relative; display: grid; place-items: center; width: 42px; height: 36px; border-radius: var(--f-r-pill);
+  background: var(--f-bg); box-shadow: inset 0 0 0 1.5px var(--f-line2); font-size: 14px; font-weight: 680;
+  transition: box-shadow .15s, background-color .15s, transform .15s;
+}
+/* The mock's overlay is -4px -1px (36 → 44, 42 → 44); the project's reaches 46 both ways, inside the 6px gap. */
+[data-ui="feed"] .b-sz::after { content: ""; position: absolute; inset: -5px -2px; }
+[data-ui="feed"] .b-sz:disabled { background: var(--f-bg2); color: var(--f-ink2); box-shadow: none; }
+[data-ui="feed"] .b-sz:disabled::before { content: ""; position: absolute; left: 22%; right: 22%; top: 50%; height: 1.5px; background: rgba(91, 95, 102, .45); transform: rotate(-24deg); }
+@media (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .b-sz:not(:disabled):active { transform: scale(.94); }
+}
+[data-ui="feed"] .b-fc.is-sold .b-fc-name, [data-ui="feed"] .b-fc.is-closed .b-fc-name { color: var(--f-ink); }
+@media (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .b-fc.b-out { opacity: 0; transform: translateX(-12px); transition: opacity .2s var(--f-out), transform .2s var(--f-out); }
+}
+[data-ui="feed"] .b-fc .b-type { width: 100%; aspect-ratio: 4 / 5; font-size: 34px; }
 
 /* The live block's clock (the mock files it with the order lookup's, which shares it). */
 [data-ui="feed"] .b-state-cd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -121,8 +178,24 @@
 @media (min-width: 900px) {
   [data-ui="feed"] .b-wrap { max-width: var(--f-max); margin: 0 auto; padding: 0 var(--f-wg); }
   [data-ui="feed"] .b-head { padding: 36px 0 24px; align-items: flex-end; }
+  [data-ui="feed"] .acc-main .b-head { padding-top: 0; }
   [data-ui="feed"] .b-title { font-size: 64px; }
   [data-ui="feed"] .b-head .link { margin: 0 0 6px; }
+  [data-ui="feed"] .b-gatewrap { padding: 0; }
+  [data-ui="feed"] .b-count { font-size: 16px; padding-bottom: 10px; }
+  [data-ui="feed"] .b-empty { padding-top: 56px; }
+
+  /* Yêu thích: two across next to the account menu */
+  [data-ui="feed"] .b-fcs { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; row-gap: 40px; padding: 4px 0 0; }
+  [data-ui="feed"] .b-fc { grid-template-columns: 200px minmax(0, 1fr); column-gap: 22px; }
+  [data-ui="feed"] .b-fc-fav.fav { left: 156px; top: 8px; }
+  [data-ui="feed"] .b-fc-name { font-size: 44px; }
+  [data-ui="feed"] .b-fc-name a::after { inset: 0 0 0 222px; }
+  [data-ui="feed"] .b-fc-meta { font-size: 14px; }
+  [data-ui="feed"] .b-fc-price { font-size: 16px; margin-top: 8px; }
+  [data-ui="feed"] .b-fc-sizes { margin-top: 16px; }
+  [data-ui="feed"] .b-sz { width: 46px; height: 40px; }
+  [data-ui="feed"] .b-fc .plate { font-size: 24px; padding: 10px 13px 7px; }
 
   /* the closed issues: one wide row per issue */
   [data-ui="feed"] .b-now { margin: 0 0 8px; padding: 14px 20px; }
@@ -169,6 +242,7 @@
 
 /* Pointer hover, where there is one. */
 @media (hover: hover) and (pointer: fine) {
+  [data-ui="feed"] .b-sz:not(:disabled):hover { box-shadow: inset 0 0 0 1.5px var(--f-ink); }
   [data-ui="feed"] .b-issue:hover .b-go .i { transform: translateX(4px); }
   [data-ui="feed"] .b-pn a:hover { background: var(--f-bg3); }
   [data-ui="feed"] .b-tile-link:hover .b-tile-media img { transform: scale(1.03); }

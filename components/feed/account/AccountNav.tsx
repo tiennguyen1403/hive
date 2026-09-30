@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/lib/actions/auth";
 import { FeedIcon, type FeedIconName } from "../icon/FeedIcon";
+import { SIGNED_OUT_HOME } from "./SignOut";
 
 /** The account's pages, as the menu lists them. */
 export type AccountNavKey = "account" | "orders" | "favorites" | "notifications" | "addresses" | "profile";
@@ -26,7 +27,8 @@ const FILLED: ReadonlySet<FeedIconName> = new Set<FeedIconName>(["user", "packag
  * Signed out, the page itself offers the way in, so the menu does not.
  *
  * No state and no script: the links are links, and "Đăng xuất" is a form
- * posting the Server Action that signs out.
+ * posting the Server Action that signs out — landing on Tôi, signed out, as
+ * the mock's `signOut()` does (slice 3b; until then the home page).
  */
 export function AccountNav({ on, signedIn }: { on: AccountNavKey; signedIn: boolean }) {
   return (
@@ -44,6 +46,7 @@ export function AccountNav({ on, signedIn }: { on: AccountNavKey; signedIn: bool
       </nav>
       {signedIn && (
         <form action={signOut}>
+          <input type="hidden" name="next" value={SIGNED_OUT_HOME} />
           <button className="acc-item acc-out" type="submit">
             <FeedIcon name="sign-out" />
             <span>Đăng xuất</span>

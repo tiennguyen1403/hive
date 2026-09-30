@@ -3,12 +3,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { CUSTOMERS } from "@/data/customers";
-import { validateChangePassword } from "@/lib/account-form";
 import { takeRate } from "@/lib/db/rate-limit";
 import { getSupabase, supabaseEnv } from "@/lib/db/server";
 import { getSession } from "@/lib/db/session";
 import { DEMO_ACCOUNT_PASSWORD_LOCKED, isDemoEmail } from "@/lib/demo-accounts";
 import { DEMO_ADMIN } from "@/lib/demo-admin";
+import { PASSWORD_WRONG, passwordSheetErrors } from "@/lib/feed-me";
 import { EMAIL_TAKEN, SIGN_IN_WRONG, signErrors } from "@/lib/feed-sign-in";
 import { safeNext, type ActionState } from "./state";
 
@@ -23,8 +23,8 @@ import { safeNext, type ActionState } from "./state";
  * — so nothing here trusts a hidden field, a disabled button or a validator
  * that ran in the browser. Each action re-reads the form, re-runs the rules
  * the form ran (`lib/feed-sign-in.ts` for signing in and up since round v4
- * slice 3a, `lib/account-form.ts` for a new password), and asks who is signed
- * in for itself.
+ * slice 3a, `lib/feed-me.ts` for a new password since slice 3b), and asks who
+ * is signed in for itself.
  *
  * The browser never talks to Supabase (QĐ-25): the client is built here, on
  * the server, and the only thing that crosses back is an `ActionState`.
@@ -197,10 +197,17 @@ export async function signUp(_prev: ActionState, form: FormData): Promise<Action
 }
 
 // ─────────────────────────────────────────────────────────────── sign out
-export async function signOut(): Promise<void> {
+/**
+ * "Đăng xuất". A form may say where to land in a hidden `next` field — the
+ * Feed's account pages send `/account`, where the mock's `signOut()` lands
+ * (round v4 slice 3b: Tôi, signed out, with its way back in). Without one it
+ * lands on the home page, as before: the back office's bar and the v3 rail
+ * send none. Only a path of this app's own (`safeNext`).
+ */
+export async function signOut(form?: FormData): Promise<void> {
   const supabase = await getSupabase();
   await supabase.auth.signOut();
-  redirect("/");
+  redirect(safeNext(form ? field(form, "next") : "", "/"));
 }
 
 // ────────────────────────────────────────────────────────── change password
@@ -240,6 +247,20 @@ async function passwordIsCurrent(email: string, password: string): Promise<boole
   return !error;
 }
 
+/**
+ * "Đổi mật khẩu", Hồ sơ's sheet since round v4 slice 3b: the mock's three
+ * fields (`current`, `next`, `again`) and its rules and words
+ * (`lib/feed-me.ts#passwordSheetErrors`) — a new password of eight
+ * characters, typed twice. The v3 rules "có cả chữ và số" (the user accepted
+ * the eight-character rule on 29/09) and "khác mật khẩu cũ" (the mock does
+ * not ask it; a conflict with the old rule, reported) are gone. Supabase Auth
+ * still refuses anything under eight (`minimum_password_length`).
+ *
+ * What is about one field says so under it (the current password the auth
+ * server refused); what is about the whole account says so above the fields
+ * (`form`): a shared demo account's lock (B4b), the rate limit, a server that
+ * would not change it.
+ */
 export async function changePassword(
   _prev: ActionState,
   form: FormData,
@@ -247,35 +268,33 @@ export async function changePassword(
   const draft = {
     current: field(form, "current"),
     next: field(form, "next"),
-    confirm: field(form, "confirm"),
+    again: field(form, "again"),
   };
 
-  const found = validateChangePassword(draft);
-  const errors: Record<string, string> = {};
-  for (const [key, message] of Object.entries(found)) if (message) errors[key] = message;
-  if (Object.keys(errors).length > 0) return { errors };
+  const wrong = fieldErrors(passwordSheetErrors(draft));
+  if (wrong) return wrong;
 
   const session = await getSession();
-  if (!session) redirect("/sign-in?next=%2Faccount%2Fpassword");
+  if (!session) redirect("/sign-in?next=%2Faccount%2Fprofile");
 
   // Slice B4b: a shared demo account's password is printed on the sign-in
   // screen and has to keep opening it for the next visitor. Refused before
   // the current password is even tried, so no Auth call is made for it.
   if (isDemoEmail(session.email)) {
-    return { errors: { current: DEMO_ACCOUNT_PASSWORD_LOCKED } };
+    return { errors: { form: DEMO_ACCOUNT_PASSWORD_LOCKED } };
   }
 
   const pace = await takeRate("password");
-  if (!pace.ok) return { errors: { next: pace.message } };
+  if (!pace.ok) return { errors: { form: pace.message } };
 
   if (!(await passwordIsCurrent(session.email, draft.current))) {
-    return { errors: { current: "Mật khẩu hiện tại chưa đúng." } };
+    return { errors: { current: PASSWORD_WRONG } };
   }
 
   const supabase = await getSupabase();
   const { error } = await supabase.auth.updateUser({ password: draft.next });
   if (error) {
-    return { errors: { next: "Chưa đổi được mật khẩu. Thử lại sau ít phút." } };
+    return { errors: { form: "Chưa đổi được mật khẩu. Thử lại sau ít phút." } };
   }
 
   return { errors: {}, ok: true };

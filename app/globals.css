@@ -365,6 +365,9 @@
      --f-on-ink2 on --f-ink 13.5:1 (a chosen size's note, slice 1a)
      --f-ink2 on --f-bg4 5.0:1 (an inactive button on the grey summary, slice 2)
      --f-err on --f-err-bg 4.8:1 (a refused sign-in's line, slice 3a)
+     --f-ink on --f-bg5 15.5:1 · --f-ink2 on --f-bg5 5.3:1 (a Tôi tile under the pointer, slice 3b)
+     --f-white on --f-ink3 15.5:1 (a dark Tôi tile under the pointer, slice 3b)
+     --f-ink on --f-blue-soft 16.0:1 (the white button on ink under the pointer, slice 3b)
    ========================================================================= */
 [data-ui="feed"] {
   /* colour: one accent, blue; red only for errors */
@@ -387,6 +390,9 @@
   --f-bg4: #e2e4e8; /* on the grey summary from 900px: the free-delivery bar's track, an inactive button (slice 2) */
   --f-err-bg: #fbeae8; /* behind the line a refused sign-in writes above the form (slice 3a) */
   --f-switch: #d5d7dc; /* a switch's track while it is off (slice 3a) */
+  --f-bg5: #e8eaed; /* a grey Tôi tile, or the parcel's card, under the pointer (slice 3b) */
+  --f-ink3: #22242a; /* a dark Tôi tile under the pointer (slice 3b) */
+  --f-blue-soft: #e9ecff; /* the white button on ink under the pointer (slice 3b) */
   /* not in the mock: the text selection, a light tint of the blue under ink (12.6:1) —
      the project's rule for browser surfaces, kept in Feed's colours (user, 27/09/2026) */
   --f-select: color-mix(in srgb, var(--f-blue) 24%, var(--f-white));

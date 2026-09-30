@@ -3,10 +3,12 @@ import { Be_Vietnam_Pro, Unbounded } from "next/font/google";
 import { CartProvider } from "@/components/cart/CartContext";
 import { AddressBookProvider } from "@/components/account/AddressBookContext";
 import { MeProvider } from "@/components/account/MeContext";
+import { MyStateProvider } from "@/components/account/MyStateContext";
 import { WishlistProvider } from "@/components/account/WishlistContext";
 import { CatalogProvider } from "@/components/shop/CatalogContext";
 import { WaitVeil } from "@/components/shop/WaitVeil";
 import { catalogInput, loadCatalog } from "@/lib/db/catalog";
+import { getMyState } from "@/lib/db/my-state";
 import { loadMe } from "@/lib/db/profiles";
 import { SITE_DESCRIPTION, SITE_NAME, THEME_COLOR, siteOrigin } from "@/lib/site";
 import "./globals.css";
@@ -98,7 +100,12 @@ export default async function RootLayout({
   // for the answer already in hand. Null means nobody is signed in — which
   // the bar and the account screens are entitled to know before the first
   // paint rather than one commit later.
-  const [catalog, me] = await Promise.all([loadCatalog(), loadMe()]);
+  //
+  // What the account keeps (slice B9: saved styles, reminders, Size của tôi,
+  // the notification switches) comes in the same round since round v4 slice
+  // 3b, for the same reason: the heart on a card is filled in the first HTML,
+  // not one commit later. Null signed out.
+  const [catalog, me, myState] = await Promise.all([loadCatalog(), loadMe(), getMyState()]);
 
   return (
     <html
@@ -112,15 +119,19 @@ export default async function RootLayout({
             page is already there when the cart route renders — no round
             trip. Catalog is outermost because it is the only one that is not
             the device's: the other three read storage, this one reads the
-            shop. The account then wraps the last two, which are readable
-            signed out: a shortlist and a basket are not an account. */}
+            shop. The account then wraps the rest: what it keeps (the
+            optimistic writes of the Feed screens, `MyStateProvider`), then
+            the v3 screens' device lists and the basket, which are readable
+            signed out. */}
         <CatalogProvider input={catalogInput(catalog)}>
           <MeProvider me={me}>
-            <AddressBookProvider>
-              <WishlistProvider>
-                <CartProvider>{children}</CartProvider>
-              </WishlistProvider>
-            </AddressBookProvider>
+            <MyStateProvider initial={myState}>
+              <AddressBookProvider>
+                <WishlistProvider>
+                  <CartProvider>{children}</CartProvider>
+                </WishlistProvider>
+              </AddressBookProvider>
+            </MyStateProvider>
           </MeProvider>
         </CatalogProvider>
         {/* The wait veil (v3 slice 9): once, here, above the page boundary,

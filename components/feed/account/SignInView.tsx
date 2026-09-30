@@ -16,15 +16,12 @@ import {
   type SignField,
   type SignMode,
 } from "@/lib/feed-sign-in";
+import type { DemoAccounts } from "@/lib/demo-sign-in";
 import { FeedIcon } from "../icon/FeedIcon";
 import { cx } from "../useReveal";
 
-/** The published demo accounts, read from the environment by the page; none means no box. */
-export interface DemoAccounts {
-  email: string;
-  adminEmail: string;
-  password: string;
-}
+/** The published demo accounts, read from the environment by the page (`lib/demo-sign-in.ts`); none means no box. */
+export type { DemoAccounts };
 
 interface SignInViewProps {
   mode: SignMode;
@@ -88,10 +85,32 @@ export function SignInView({ mode, next, demo }: SignInViewProps) {
   );
 }
 
+/**
+ * Tôi's own way in from 900px, signed out (round v4 slice 3b): the very form
+ * of "Đăng nhập" (`account.js`: `signInForm`, shared with `sign-in.html` so
+ * the two never drift apart) — "Tài khoản thử" above it, as on the sign-in
+ * page (the user's choice, 29/09) — with the button and "Quên mật khẩu?" on
+ * one line (`row`) and nothing under it: "Tạo tài khoản" stands in the dark
+ * card beside. Signing in here comes back to Tôi.
+ */
+export function InlineSignIn({ next, demo }: { next: string; demo: DemoAccounts | null }) {
+  return <AccountForm mode="in" next={next} demo={demo} row extras={false} />;
+}
+
 type Values = Record<SignField, string>;
 
+interface AccountFormProps {
+  mode: "in" | "up";
+  next: string | undefined;
+  demo: DemoAccounts | null;
+  /** The button and "Quên mật khẩu?" on one line (Tôi from 900px) instead of the link above the button. */
+  row?: boolean;
+  /** "hoặc", Google and the way to the other mode, under the form (the sign-in page's; not Tôi's). */
+  extras?: boolean;
+}
+
 /** Đăng nhập and Tạo tài khoản: the fields, the refusal line, "hoặc", Google, and the way to the other mode. */
-function AccountForm({ mode, next, demo }: { mode: "in" | "up"; next: string | undefined; demo: DemoAccounts | null }) {
+function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFormProps) {
   const [state, dispatch, pending] = useActionState(mode === "up" ? signUp : signIn, IDLE);
   const [demoState, dispatchDemo, demoPending] = useActionState(demoSignIn, IDLE);
   const [adminState, dispatchAdmin, adminPending] = useActionState(demoAdminSignIn, IDLE);
@@ -147,6 +166,17 @@ function AccountForm({ mode, next, demo }: { mode: "in" | "up"; next: string | u
 
   const submitLabel =
     mode === "up" ? (pending ? "Đang tạo tài khoản…" : "Tạo tài khoản") : pending ? "Đang đăng nhập…" : "Đăng nhập";
+  const forgot =
+    mode === "in" ? (
+      <Link className="link si-forgot" href={signHref("forgot", next)}>
+        Quên mật khẩu?
+      </Link>
+    ) : null;
+  const submit = (
+    <button className="btn btn-blue" type="submit" disabled={busy}>
+      {submitLabel}
+    </button>
+  );
 
   return (
     <>
@@ -201,31 +231,38 @@ function AccountForm({ mode, next, demo }: { mode: "in" | "up"; next: string | u
           error={errors.password}
           onChange={(v) => set("password", v)}
         />
-        {mode === "in" && (
-          <Link className="link si-forgot" href={signHref("forgot", next)}>
-            Quên mật khẩu?
-          </Link>
+        {row ? (
+          <div className="si-row">
+            {submit}
+            {forgot}
+          </div>
+        ) : (
+          <>
+            {forgot}
+            {submit}
+          </>
         )}
-        <button className="btn btn-blue" type="submit" disabled={busy}>
-          {submitLabel}
-        </button>
       </form>
-      <p className="si-or">hoặc</p>
-      <button className="btn btn-line si-google" type="button" disabled aria-describedby="g-soon">
-        <FeedIcon name="google-logo" />
-        Tiếp tục với Google
-        <span className="tag-soon" id="g-soon">
-          Đang chuẩn bị
-        </span>
-      </button>
-      {mode === "up" ? (
-        <Link className="link si-switch" href={signHref("in", next)}>
-          Đã có tài khoản? Đăng nhập
-        </Link>
-      ) : (
-        <Link className="link si-switch" href={signHref("up", next)}>
-          Chưa có tài khoản? Tạo tài khoản
-        </Link>
+      {extras && (
+        <>
+          <p className="si-or">hoặc</p>
+          <button className="btn btn-line si-google" type="button" disabled aria-describedby="g-soon">
+            <FeedIcon name="google-logo" />
+            Tiếp tục với Google
+            <span className="tag-soon" id="g-soon">
+              Đang chuẩn bị
+            </span>
+          </button>
+          {mode === "up" ? (
+            <Link className="link si-switch" href={signHref("in", next)}>
+              Đã có tài khoản? Đăng nhập
+            </Link>
+          ) : (
+            <Link className="link si-switch" href={signHref("up", next)}>
+              Chưa có tài khoản? Tạo tài khoản
+            </Link>
+          )}
+        </>
       )}
     </>
   );

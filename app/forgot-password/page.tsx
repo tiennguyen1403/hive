@@ -19,7 +19,7 @@ export default async function ForgotPasswordPage(props: PageProps<"/forgot-passw
       tabbar={false}
       foot="none"
       mainClass="si-wrap"
-      mbar={{ title: SIGN_TITLES.forgot, back: "/", label: "Đóng", close: true, watch: "[data-ui='feed'] .si-title" }}
+      mbar={{ title: SIGN_TITLES.forgot, back: "/account", label: "Đóng", close: true, watch: "[data-ui='feed'] .si-title" }}
     >
       <SignInView mode="forgot" next={nextParam(sp.next)} />
     </FeedFrame>

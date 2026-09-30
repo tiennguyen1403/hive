@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Icon } from "@/components/icon/Icon";
 import { useCart } from "@/components/cart/CartContext";
 import { useMe } from "@/components/account/MeContext";
-import { useWishlist } from "@/components/account/WishlistContext";
+import { useMyState } from "@/components/account/MyStateContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { NavLogo } from "@/components/shop/NavLogo";
 import { FAMILY_SHORT_LABELS, type Family } from "@/data/types";
@@ -65,13 +65,16 @@ export interface SiteNavProps {
  * route would drag the whole tree out of the static shell for the sake of one
  * underline.
  *
- * The two counts are the one thing only the browser can fill in: the saved
- * list and the bag live on the device, so the server frame draws no bubble
- * and the numbers arrive once their providers are `ready`.
+ * The bag's count is the one thing only the browser can fill in: the bag
+ * lives on the device, so the server frame draws no bubble and the number
+ * arrives once its provider is `ready`. The saved styles' count is the
+ * account's since round v4 slice 3b (`MyStateContext`, read with the page),
+ * so it is there from the first paint — and signed out there is none: saving
+ * a style needs an account.
  */
 export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
   const { units, ready: cartReady } = useCart();
-  const { list, ready: wishReady } = useWishlist();
+  const { state: kept } = useMyState();
   const me = useMe();
   const catalog = useCatalog();
 
@@ -80,7 +83,7 @@ export function SiteNav({ activeFamily, activeDrop = false }: SiteNavProps) {
   const { drop, state } = featuredDrop(catalog, undefined);
   const onSale = state === "OPEN";
 
-  const wish = wishReady ? list.length : 0;
+  const wish = me && kept ? kept.favorites.length : 0;
   const cart = cartReady ? units : 0;
 
   return (

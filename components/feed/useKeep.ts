@@ -1,0 +1,160 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo } from "react";
+import { useMyState } from "@/components/account/MyStateContext";
+import { startWait } from "@/components/shop/WaitVeil";
+import type { ColorKey, Favorite, MyState, Product, ProductId, Size, SizeSlot } from "@/data/types";
+import {
+  restoreFavoriteAction,
+  saveFavoriteAction,
+  setMySizeAction,
+  setReminderAction,
+  unsaveFavoriteAction,
+} from "@/lib/actions/my-state";
+import {
+  hasReminder,
+  isSaved,
+  mySizeOf,
+  withFavorite,
+  withFavoriteBack,
+  withReminder,
+  withSize,
+  withoutFavorite,
+} from "@/lib/feed-me";
+import { signHref } from "@/lib/feed-sign-in";
+import { keepFailureMessage, type KeepRefusal, type KeepResult, type UnsaveResult } from "@/lib/my-state";
+import { useFeedToast } from "./FeedToast";
+
+/** What a heart press did: saved (the heart pops), taken off, or asked the shopper to sign in first. */
+export type HeartPress = "saved" | "removed" | "ask";
+
+export interface Keep {
+  state: MyState | null;
+  signedIn: boolean;
+  isSaved: (id: ProductId) => boolean;
+  hasReminder: (no: number) => boolean;
+  /** "Size của tôi" for this style: quần for trousers, áo otherwise; none while signed out. */
+  mySize: (p: Pick<Product, "family">) => Size | null;
+  /** The heart on a card, a rail's card or the product page: saves in `color`, or takes the style off. */
+  toggleFavorite: (p: Product, color: ColorKey) => HeartPress;
+  /** "Nhắc tôi" / "Đã bật nhắc". */
+  toggleReminder: (no: number) => void;
+  /** Hồ sơ's sizes: true once the account has it, false when it was refused (and the toast said why). */
+  setSize: (slot: SizeSlot, size: Size | null) => Promise<boolean>;
+  /** Yêu thích's filled heart: off the list, with no toast of its own on success. */
+  unsave: (id: ProductId) => Promise<UnsaveResult>;
+  /** "Hoàn tác": the style back where it stood. */
+  restore: (fav: Favorite, at: number) => Promise<KeepResult>;
+}
+
+/**
+ * The account's state for a Feed screen (round v4 slice 3b): the provider's
+ * optimistic writes (`MyStateContext`) with the Feed's words around them.
+ *
+ * Signed out, a press never reaches the server: the mock's invitation says
+ * what signing in is for, with a way in that comes back to this very page
+ * (`feed.js`: `askSignIn` — "Đăng nhập để lưu mẫu", "Đăng nhập để bật
+ * nhắc"). Signed in, a refusal takes the drawing back and says the action's
+ * own sentence; one that says the session has gone offers the way in too.
+ */
+export function useKeep(): Keep {
+  const { state, signedIn, keep } = useMyState();
+  const toast = useFeedToast();
+  const router = useRouter();
+
+  const askSignIn = useCallback(
+    (text: string) => {
+      const here = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      const href = signHref("in", here);
+      toast(text, {
+        label: "Đăng nhập",
+        run: () => {
+          startWait(href);
+          router.push(href);
+        },
+      });
+    },
+    [toast, router],
+  );
+
+  const refused = useCallback(
+    (r: KeepRefusal) => (r.reason === "SIGNED_OUT" ? askSignIn(r.message) : toast(r.message)),
+    [askSignIn, toast],
+  );
+
+  const toggleFavorite = useCallback(
+    (p: Product, color: ColorKey): HeartPress => {
+      if (!signedIn) {
+        askSignIn(keepFailureMessage("SIGNED_OUT", "favorites"));
+        return "ask";
+      }
+      const saved = isSaved(state, p.id);
+      const run = saved
+        ? keep("favorites", (s) => withoutFavorite(s, p.id), () => unsaveFavoriteAction(p.id))
+        : keep("favorites", (s) => withFavorite(s, p.id, color), () => saveFavoriteAction(p.id, color));
+      void run.then((r) => {
+        if (!r.ok) refused(r);
+      });
+      return saved ? "removed" : "saved";
+    },
+    [signedIn, state, keep, askSignIn, refused],
+  );
+
+  const toggleReminder = useCallback(
+    (no: number) => {
+      if (!signedIn) {
+        askSignIn(keepFailureMessage("SIGNED_OUT", "reminders"));
+        return;
+      }
+      const on = !hasReminder(state, no);
+      void keep("reminders", (s) => withReminder(s, no, on), () => setReminderAction(no, on)).then((r) => {
+        if (!r.ok) refused(r);
+      });
+    },
+    [signedIn, state, keep, askSignIn, refused],
+  );
+
+  const setSize = useCallback(
+    async (slot: SizeSlot, size: Size | null) => {
+      const r = await keep("sizes", (s) => withSize(s, slot, size), () => setMySizeAction(slot, size));
+      if (!r.ok) refused(r);
+      return r.ok;
+    },
+    [keep, refused],
+  );
+
+  const unsave = useCallback(
+    async (id: ProductId) => {
+      const r = await keep("favorites", (s) => withoutFavorite(s, id), () => unsaveFavoriteAction(id));
+      if (!r.ok) refused(r);
+      return r;
+    },
+    [keep, refused],
+  );
+
+  const restore = useCallback(
+    async (fav: Favorite, at: number) => {
+      const r = await keep("favorites", (s) => withFavoriteBack(s, fav, at), () => restoreFavoriteAction(fav.productId));
+      if (!r.ok) refused(r);
+      return r;
+    },
+    [keep, refused],
+  );
+
+  return useMemo<Keep>(
+    () => ({
+      state,
+      signedIn,
+      isSaved: (id) => isSaved(state, id),
+      hasReminder: (no) => hasReminder(state, no),
+      mySize: (p) => mySizeOf(state, p),
+      toggleFavorite,
+      toggleReminder,
+      setSize,
+      unsave,
+      restore,
+    }),
+    [state, signedIn, toggleFavorite, toggleReminder, setSize, unsave, restore],
+  );
+}

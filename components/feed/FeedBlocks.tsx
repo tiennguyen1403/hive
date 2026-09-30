@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useReminders, readReminders, writeReminders } from "@/components/shop/reminders";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Drop, Product, Teaser } from "@/data/types";
 import { teasersIn } from "@/lib/catalog";
@@ -11,11 +10,11 @@ import { issueHref } from "@/lib/drop";
 import { PICTURE, teaserPicture } from "@/lib/feed";
 import { TEASER_NOTE, dateParts, issueFacts } from "@/lib/feed-home";
 import { issueLabel, kindInSentence } from "@/lib/lexicon";
-import { hasReminder, toggleReminder } from "@/lib/reminder";
 import { MiniCard } from "./FeedCards";
 import { FeedClock } from "./FeedClock";
 import { FeedIcon } from "./icon/FeedIcon";
 import { useNowMs } from "./now";
+import { useKeep } from "./useKeep";
 import { cx, useReveal } from "./useReveal";
 
 /*
@@ -150,20 +149,16 @@ export function Teasers({ teasers }: { teasers: readonly Teaser[] }) {
 }
 
 /**
- * "Nhắc tôi" / "Đã bật nhắc": remembers the issue on this device
- * (`lib/reminder.ts`), where the notifications page reads it back — until
- * slice 3 keeps reminders in the account.
+ * "Nhắc tôi" / "Đã bật nhắc" (round v4 slice 3b): the reminder is kept on the
+ * account (`setReminderAction`), drawn at once and settled by the server's
+ * answer (`useKeep`). Signed out it turns nothing on and says so, with a way
+ * in: "Đăng nhập để bật nhắc" (`feed.js`: `askSignIn`).
  */
 export function RemindButton({ no }: { no: number }) {
-  const { list, ready } = useReminders();
-  const on = ready && hasReminder(list, no);
+  const keep = useKeep();
+  const on = keep.hasReminder(no);
   return (
-    <button
-      className="btn btn-blue remind"
-      type="button"
-      aria-pressed={on}
-      onClick={() => writeReminders(toggleReminder(readReminders(), no))}
-    >
+    <button className="btn btn-blue remind" type="button" aria-pressed={on} onClick={() => keep.toggleReminder(no)}>
       <FeedIcon name={on ? "bell-fill" : "bell"} />
       <span>{on ? "Đã bật nhắc" : "Nhắc tôi"}</span>
     </button>
