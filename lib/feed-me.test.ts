@@ -22,6 +22,7 @@ import {
   wishStock,
   withFavorite,
   withFavoriteBack,
+  withNotify,
   withReminder,
   withSize,
   withoutFavorite,
@@ -79,6 +80,12 @@ describe("the state drawn before the server answers", () => {
   it("sets and clears one size of the two", () => {
     expect(withSize(DEMO, "top", "XL").sizes).toEqual({ top: "XL", bottom: "M" });
     expect(withSize(DEMO, "bottom", null).sizes).toEqual({ top: "L", bottom: null });
+  });
+
+  it("turns one notification switch at a time, the others as they were (slice 4a)", () => {
+    expect(withNotify(DEMO, "wishlist", false).notify).toEqual({ order: true, drop: true, wishlist: false, promo: true });
+    expect(withNotify(withNotify(DEMO, "order", false), "order", true).notify).toEqual(DEMO.notify);
+    expect(withNotify(DEMO, "promo", false).favorites).toBe(DEMO.favorites);
   });
 
   it("starts empty for a signed-in account whose state could not be read", () => {

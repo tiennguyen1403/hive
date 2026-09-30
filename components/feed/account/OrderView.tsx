@@ -7,7 +7,7 @@ import { useCart } from "@/components/cart/CartContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { startWait } from "@/components/shop/WaitVeil";
 import { COLORS } from "@/data/colors";
-import type { Order } from "@/data/types";
+import type { Order, OrderLine } from "@/data/types";
 import { cancelOrderAction } from "@/lib/actions/orders";
 import { dayMonth } from "@/lib/datetime";
 import {
@@ -225,37 +225,7 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
               {units} món
             </h2>
           </div>
-          <ul className="od-items">
-            {order.lines.map((l, i) => {
-              const p = catalog.byId.get(l.productId);
-              const inner = (
-                <>
-                  <Tile line={l} product={p} size="lg" qty={false} named={false} />
-                  <div>
-                    <p className="od-item-name disp">{p?.name ?? "—"}</p>
-                    <p className="od-item-meta">
-                      {COLORS[l.color]?.label ?? l.color} · Size {l.size}
-                      {l.qty > 1 && ` · ×${l.qty}`}
-                    </p>
-                  </div>
-                  <p className="od-item-price">{vnd(l.unitPriceVnd * l.qty)}</p>
-                </>
-              );
-              const key = `${l.productId}:${l.color}:${l.size}:${i}`;
-              // The mock links the styles it draws; a style set in type (its frame only borrowed) is not a link.
-              return p && linePicture(p, l.color) ? (
-                <li key={key}>
-                  <Link className="od-item od-item-a" href={styleHref(p)}>
-                    {inner}
-                  </Link>
-                </li>
-              ) : (
-                <li key={key} className="od-item">
-                  {inner}
-                </li>
-              );
-            })}
-          </ul>
+          <OrderItems lines={order.lines} />
         </section>
       </div>
 
@@ -266,18 +236,7 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
               Tóm tắt
             </h2>
           </div>
-          <dl className="facts">
-            {confirmRows(order).map((r) => (
-              <div key={r.label}>
-                <dt>{r.label}</dt>
-                <dd>{r.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="csum-total">
-            <span>Tổng</span>
-            <b>{vnd(orderTotalVnd(order))}</b>
-          </div>
+          <OrderSums order={order} />
         </section>
         <section className="acc-sec" aria-labelledby="h-ship">
           <div className="acc-sec-head">
@@ -342,8 +301,74 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
   );
 }
 
+/**
+ * The pieces (`account.js`: `items`): each as a tile with its name, colour,
+ * size, count and price as sold. One order's page and the lookup (slice 4a)
+ * draw them alike.
+ */
+export function OrderItems({ lines }: { lines: readonly OrderLine[] }) {
+  const catalog = useCatalog();
+  return (
+    <ul className="od-items">
+      {lines.map((l, i) => {
+        const p = catalog.byId.get(l.productId);
+        const inner = (
+          <>
+            <Tile line={l} product={p} size="lg" qty={false} named={false} />
+            <div>
+              <p className="od-item-name disp">{p?.name ?? "—"}</p>
+              <p className="od-item-meta">
+                {COLORS[l.color]?.label ?? l.color} · Size {l.size}
+                {l.qty > 1 && ` · ×${l.qty}`}
+              </p>
+            </div>
+            <p className="od-item-price">{vnd(l.unitPriceVnd * l.qty)}</p>
+          </>
+        );
+        const key = `${l.productId}:${l.color}:${l.size}:${i}`;
+        // The mock links the styles it draws; a style set in type (its frame only borrowed) is not a link.
+        return p && linePicture(p, l.color) ? (
+          <li key={key}>
+            <Link className="od-item od-item-a" href={styleHref(p)}>
+              {inner}
+            </Link>
+          </li>
+        ) : (
+          <li key={key} className="od-item">
+            {inner}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** "Tóm tắt" as the order was priced, then "Tổng" (`account.js`: `totals`); one order's page and the lookup alike. */
+export function OrderSums({
+  order,
+}: {
+  order: Pick<Order, "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd" | "promo">;
+}) {
+  return (
+    <>
+      <dl className="facts">
+        {confirmRows(order).map((r) => (
+          <div key={r.label}>
+            <dt>{r.label}</dt>
+            <dd>{r.value}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="csum-total">
+        <span>Tổng</span>
+        <b>{vnd(orderTotalVnd(order))}</b>
+      </div>
+    </>
+  );
+}
+
 /** A value with its copy button (`order.js`: `copyRow`); where the clipboard cannot be reached, the value is selected. */
-function CopyRow({ k, shown, value }: { k: string; shown: string; value: string }) {
+export function CopyRow({ k, shown, value }: { k: string; shown: string; value: string }) {
   const target = useRef<HTMLElement>(null);
   return (
     <div className="copyrow">

@@ -3,6 +3,7 @@ import type {
   ColorKey,
   Favorite,
   MyState,
+  NotifyKey,
   Order,
   Product,
   ProductId,
@@ -95,6 +96,15 @@ export function withReminder(state: MyState, no: number, on: boolean): MyState {
 /** A size of "Size của tôi" chosen, or forgotten ("Bỏ chọn"). */
 export function withSize(state: MyState, slot: SizeSlot, size: Size | null): MyState {
   return { ...state, sizes: { ...state.sizes, [slot]: size } };
+}
+
+/**
+ * One of the four switches under "Nhận thông báo về" turned on or off (round
+ * v4 slice 4a, `notifications.js`: `data-pref`), drawn before
+ * `setNotifyAction` answers.
+ */
+export function withNotify(state: MyState, key: NotifyKey, on: boolean): MyState {
+  return { ...state, notify: { ...state.notify, [key]: on } };
 }
 
 // ─────────────────────────────────────────────────────────── Size của tôi

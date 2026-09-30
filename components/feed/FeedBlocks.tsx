@@ -154,11 +154,21 @@ export function Teasers({ teasers }: { teasers: readonly Teaser[] }) {
  * answer (`useKeep`). Signed out it turns nothing on and says so, with a way
  * in: "Đăng nhập để bật nhắc" (`feed.js`: `askSignIn`).
  */
-export function RemindButton({ no }: { no: number }) {
+export function RemindButton({ no, onToggle }: { no: number; onToggle?: (on: boolean) => void }) {
   const keep = useKeep();
   const on = keep.hasReminder(no);
+  // `onToggle` hears the state asked for before the press is drawn: Thông báo sends the focus to what replaces the
+  // button (slice 4a, `notifications.js`: `focusAfter`).
   return (
-    <button className="btn btn-blue remind" type="button" aria-pressed={on} onClick={() => keep.toggleReminder(no)}>
+    <button
+      className="btn btn-blue remind"
+      type="button"
+      aria-pressed={on}
+      onClick={() => {
+        if (keep.signedIn) onToggle?.(!on);
+        keep.toggleReminder(no);
+      }}
+    >
       <FeedIcon name={on ? "bell-fill" : "bell"} />
       <span>{on ? "Đã bật nhắc" : "Nhắc tôi"}</span>
     </button>

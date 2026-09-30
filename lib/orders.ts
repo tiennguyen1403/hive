@@ -8,11 +8,17 @@ import { addHoursIso } from "./datetime";
  * cannot disagree.
  */
 
-export function orderSubtotalVnd(o: Order): number {
+/*
+ * Each takes only the fields it reads (round v4 slice 4a), so the order the
+ * guest lookup hands out (`LookedUpOrder`, `lib/order-lookup.ts`) — which has
+ * no address, phone or owner — is summed by the same arithmetic.
+ */
+
+export function orderSubtotalVnd(o: Pick<Order, "lines">): number {
   return o.lines.reduce((n, l) => n + l.unitPriceVnd * l.qty, 0);
 }
 
-export function orderUnits(o: Order): number {
+export function orderUnits(o: Pick<Order, "lines">): number {
   return o.lines.reduce((n, l) => n + l.qty, 0);
 }
 
@@ -25,7 +31,7 @@ export function orderUnits(o: Order): number {
  * placed the order print one number. The sample orders keep it at 0
  * (`data/orders.ts` says why).
  */
-export function orderTotalVnd(o: Order): number {
+export function orderTotalVnd(o: Pick<Order, "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd">): number {
   return orderSubtotalVnd(o) + o.shippingFeeVnd + o.codFeeVnd - o.discountVnd;
 }
 

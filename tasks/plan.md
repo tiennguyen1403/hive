@@ -2697,6 +2697,30 @@ xong trong khoảng 35 giây (trạng thái commit trên GitHub; Vercel MCP bị
   hay người mua.
 - **Phiên chính quyết cho 4a:** mỗi Số một dòng "công bố", mốc là lúc công bố sớm nhất trong các hé lộ của Số đó. Tên liệt kê đủ
   mọi hé lộ.
+
+**Lát 4a ĐẠT (30/09/2026, `ui-implementer`, phiên chính duyệt độc lập).** Brief `tasks/briefs/v4-lat-4a.md`.
+- **Đã giao:**
+  - `/account/notifications`:
+    - hộp thư dựng từ dữ liệu thật (`lib/feed-inbox.ts`), đủ 5 loại dòng của mock, lọc theo 4 công tắc;
+    - đã đọc lưu trên thiết bị bằng cookie `inbox_read` (mã băm ngắn, tối đa 64, gắn tài khoản), nên số trên chuông có ngay
+      trong HTML đầu;
+    - nhắc chỉ còn kênh "Trong app";
+  - chuông trên mọi trang Feed đọc cùng danh sách;
+  - `/track` theo Feed qua `lookupOrderAction`: không tra lúc render; link tra một lần khi mount; hết lượt thì báo bằng toast;
+  - trang 404 toàn app theo `404.html`.
+  - Route group `(v3)` đã xoá.
+- **Phiên chính sửa sau duyệt:** hộp thư chỉ giữ dòng trong **30 ngày gần nhất** và **từ lúc tạo tài khoản**. Khách mẫu từ 21
+  dòng (về tận tháng 3) còn 10 dòng, gần mock.
+- **Kiểm:** 1946/1946 test, typecheck sạch (phiên chính chạy lại). Build sạch. Vùng chạm ≥ 44, 0 tràn, 0 lỗi console ngoài dòng
+  404 cố ý. Phiên chính so ảnh Thông báo 1280, Tra cứu 390 với mock: khớp, trừ nội dung thật và dòng Email đã bỏ.
+- **Xung đột chờ người dùng** (hỏi cùng 4b): cột giờ chữ số tỉ lệ (không `tabular-nums`); vòng focus dòng công tắc bo 12px; khối
+  xám nhấp nháy 1,1 giây lặp.
+- **Còn mở:**
+  - dòng "đang giao" của đơn đã giao thiếu "Mã vận đơn": đơn mẫu đã giao không lưu mã vận đơn;
+  - bật nhắc trong vòng 49 giờ trước giờ mở thì dòng nhắc mang mốc sớm hơn lúc bật: nhắc chưa lưu lúc bật;
+  - mã v3 mồ côi mới: `NotificationsScreen`, `notif-center`, `AccountLayout`, `AccountRail`, `TrackScreen`,
+    `lib/notifications.ts`, `lib/prefs.ts`, `lib/reminder.ts`, `trackOrder` / `track_order()`.
+- Phiên chính thêm `/track`, `/khong-co-trang-nay`, `/so/999` vào `tools/layout-sweep.js`.
 - **Mã v3 mồ côi (dọn cuối đợt):**
   - `SignInScreen`, `SignUpScreen`, `ForgotPasswordScreen`, `OrdersScreen`, `OrderDetailScreen`, `CancelOrderSheet`,
     `AddressesScreen`, `AddressFormScreen`;

@@ -61,8 +61,8 @@ export function isAdminPath(pathname: string): boolean {
  * `/sign-up`, `/forgot-password`), the orders `/account/orders[/<code>]` and
  * the address book `/account/addresses`; since slice 3b Tôi `/account`, Hồ sơ
  * `/account/profile`, Yêu thích `/account/wishlist`, and `/account/password`,
- * which leads to Hồ sơ now — while `/account/notifications` stays v3 until
- * slice 4. Each later slice adds its routes here.
+ * which leads to Hồ sơ now; since slice 4a Thông báo `/account/notifications`
+ * and the guest lookup `/track`. Each later slice adds its routes here.
  * The veil takes the logo's black-and-white colours (QĐ-33) when it covers
  * one of them or leads to one, and keeps the v3 honey only between two v3
  * screens.
@@ -84,6 +84,8 @@ const FEED_PATHS: readonly string[] = [
   "/account/profile",
   "/account/wishlist",
   "/account/password",
+  "/account/notifications",
+  "/track",
 ];
 
 /**

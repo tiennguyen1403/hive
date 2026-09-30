@@ -36,7 +36,12 @@ async (page) => {
     "/checkout",
     "/order-confirmed",
     // slice 3 of v3: the public lookup page, with a fixture order so the result state renders
+    // (since v4 slice 4a the screen looks the order up once on mount, so the form shows first)
     "/track?code=DH-2425&phone=0908221447",
+    "/track",
+    // v4 slice 4a: the app-wide 404, from an unknown path and from an issue that does not exist
+    "/khong-co-trang-nay",
+    "/so/999",
     "/so/4",
     "/so/5",
     "/sign-in",

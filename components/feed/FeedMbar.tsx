@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { backOrFollow } from "./back";
+import { FeedLogo } from "./FeedLogo";
 import { FeedIcon } from "./icon/FeedIcon";
+import { ReadAllButton } from "./inbox";
 import { cx } from "./useReveal";
 
 export interface FeedMbarProps {
@@ -27,6 +29,40 @@ export interface FeedMbarProps {
    * land on a checkout with nothing left to pay for.
    */
   hard?: boolean;
+  /**
+   * Thông báo's bar (slice 4a): "Đánh dấu đã đọc" on its right while anything
+   * on the page is unread (`notifications.js`: `acts`).
+   */
+  readAll?: boolean;
+}
+
+// ─────────────────────────────────────────── a screen that keeps the bar's title on (slice 4a)
+/*
+ * Tra cứu đơn keeps its title on the bar while an order stands where the form
+ * was: the page's own heading is then only for assistive tech, and the order's
+ * code is the heading on screen (`track.js`: `watchTitle(hero, has)`). The
+ * screen sits below the bar, in the page, so it says so through this store.
+ */
+let titleForced = false;
+const titleListeners = new Set<() => void>();
+
+function forceTitle(on: boolean): void {
+  if (titleForced === on) return;
+  titleForced = on;
+  for (const l of titleListeners) l();
+}
+
+function subscribeTitle(changed: () => void): () => void {
+  titleListeners.add(changed);
+  return () => titleListeners.delete(changed);
+}
+
+/** Keep the phone bar's title on while `on`, and let it go when the screen leaves. */
+export function useMbarTitle(on: boolean): void {
+  useEffect(() => {
+    forceTitle(on);
+  }, [on]);
+  useEffect(() => () => forceTitle(false), []);
 }
 
 /**
@@ -40,8 +76,9 @@ export interface FeedMbarProps {
  * so it never shows and then fades on hydration; the frame's `<noscript>`
  * rule shows it where no script will ever watch the big one.
  */
-export function FeedMbar({ title, back, watch, label, close = false, hard = false }: FeedMbarProps) {
+export function FeedMbar({ title, back, watch, label, close = false, hard = false, readAll = false }: FeedMbarProps) {
   const [on, setOn] = useState(false);
+  const forced = useSyncExternalStore(subscribeTitle, () => titleForced, () => false);
 
   useEffect(() => {
     if (!watch || typeof IntersectionObserver === "undefined") {
@@ -59,12 +96,27 @@ export function FeedMbar({ title, back, watch, label, close = false, hard = fals
   }, [watch]);
 
   return (
-    <div className={cx("mbar", watch && "title-late", on && "title-on")}>
+    <div className={cx("mbar", watch && "title-late", (on || forced) && "title-on")}>
       <Link className="ib" href={back} aria-label={label ?? "Quay lại"} {...(hard ? {} : { onClick: backOrFollow })}>
         <FeedIcon name={close ? "x" : "caret-left"} />
       </Link>
       {title !== undefined && <p className="mbar-title">{title}</p>}
-      <div className="mbar-acts" />
+      <div className="mbar-acts">{readAll && <ReadAllButton />}</div>
+    </div>
+  );
+}
+
+/**
+ * The 404's own bar on the phone (`404.html`: `.mbar.b-mbar`): the logo
+ * alone, like a tab root's, back to the home page — the black-and-white
+ * lockup (QĐ-33) where the mock sets its italic word.
+ */
+export function FeedBrandBar() {
+  return (
+    <div className="mbar b-mbar">
+      <Link className="brand" href="/" aria-label="HIVE, trang chủ">
+        <FeedLogo className="logo" />
+      </Link>
     </div>
   );
 }

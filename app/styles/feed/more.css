@@ -28,7 +28,27 @@
 
    The plate's name is sized by its letter count, which the element carries
    inline as `--f-n` (the mock's `--n`), the one custom property no zone
-   declares beside the sheet's `--f-sw` (`scope.test.ts`). */
+   declares beside the sheet's `--f-sw` (`scope.test.ts`).
+
+   PORTED AT SLICE 4a, for Thông báo `/account/notifications`, Tra cứu đơn
+   `/track` and the 404: the grouped section (`.b-sec`, `.b-quiet`), the
+   desktop-only switch (`.b-desk-only`), the 404's phone bar (`.b-mbar`), the
+   settings rows (`.b-set`, `.b-setrow`, `.b-switch`), the busy button and the
+   grey blocks (`.btn[aria-busy]`, `.b-skel`), the inbox (`.mbar-acts .link`,
+   `.b-ngroup*`, `.b-nrow`, `.b-n*`), the reminder card (`.b-rem*`), the
+   lookup (`.b-trk*`, `.b-head-quiet`, `.b-res*`) and the 404 (`.b-nf*`), with
+   their desktop, 900–1199 and hover rules. Translated on the way in:
+   · the two keyframes are `f-b-shimmer` and `f-b-fade`, the mock's names
+     behind the zone's prefix; the grey blocks' shimmer and the result's fade
+     are asked of `prefers-reduced-motion`, as every Feed file does;
+   · `#2A2C30` (an unread row's icon, a switch that is on, under the
+     pointer) is the token `--f-ink4`; `#E4E6EA` is `--f-bg3`; `#fff`
+     `--f-white`;
+   · `.b-desk-only` and `.b-head-quiet` do without the mock's `!important`,
+     as `.only-desk` does: nothing they meet sets `display` or `position`
+     with more weight, and they win on source order;
+   · the settings row's second line (`.b-setrow-label small`) is not ported:
+     it held the mock's Email channel, which QĐ-35 leaves out. */
 
 /* ── page frame ── */
 /* The page title; on a pushed screen the phone bar shows it once it has scrolled away. */
@@ -40,9 +60,53 @@
 [data-ui="feed"] .acc-main.b-acc { padding: 0; }
 [data-ui="feed"] .b-gatewrap { padding: 0 var(--f-g); }
 [data-ui="feed"] .b-count { font-size: 14px; font-weight: 620; color: var(--f-ink2); white-space: nowrap; }
+[data-ui="feed"] .b-sec { padding: 24px var(--f-g) 26px; border-top: 8px solid var(--f-bg2); }
+[data-ui="feed"] .b-sec > .sect-title { margin-bottom: 12px; }
+[data-ui="feed"] .b-quiet { font-size: 15px; font-weight: 600; color: var(--f-ink2); }
+
+@media (max-width: 899.98px) {
+  [data-ui="feed"] .b-desk-only { display: none; }
+}
+/* The 404 brings its own phone bar: the logo, like a tab root. */
+[data-ui="feed"] .b-mbar .brand { height: var(--f-bar); padding: 0 12px; }
+
+/* A settings row is one switch: the whole row toggles, the pill on the right shows the state. */
+[data-ui="feed"] .b-set { display: grid; }
+[data-ui="feed"] .b-setrow {
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 14px;
+  width: 100%; min-height: 60px; padding: 10px 0; border-top: 1px solid var(--f-line); text-align: left;
+}
+[data-ui="feed"] .b-setrow:first-child { border-top: 0; }
+[data-ui="feed"] .b-setrow > .i { width: 22px; height: 22px; }
+[data-ui="feed"] .b-setrow-label { min-width: 0; font-size: 15px; font-weight: 600; line-height: 1.3; }
+[data-ui="feed"] .b-switch {
+  position: relative; flex: none; width: 52px; height: 32px; border-radius: var(--f-r-pill);
+  background: var(--f-bg); box-shadow: inset 0 0 0 2px var(--f-ink2);
+  transition: background-color .2s var(--f-out), box-shadow .2s var(--f-out);
+}
+[data-ui="feed"] .b-switch::after {
+  content: ""; position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border-radius: var(--f-r-pill);
+  background: var(--f-ink2); transition: transform .32s var(--f-spring), background-color .2s var(--f-out);
+}
+[data-ui="feed"] [aria-checked="true"] > .b-switch { background: var(--f-ink); box-shadow: none; }
+[data-ui="feed"] [aria-checked="true"] > .b-switch::after { background: var(--f-white); transform: translateX(20px) scale(1.5); }
+[data-ui="feed"] .b-setrow:focus-visible { outline-offset: -2px; border-radius: 12px; }
 
 /* An empty list: the flow's empty state, a little closer to the title. */
 [data-ui="feed"] .b-empty { padding-top: 40px; }
+
+/* Busy: a button waiting on the shop, and the grey blocks that stand in for a result. */
+[data-ui="feed"] .btn[aria-busy="true"] { cursor: progress; }
+[data-ui="feed"] .b-skel { display: grid; gap: 12px; padding: 22px var(--f-g); }
+[data-ui="feed"] .b-skel i { display: block; height: 16px; border-radius: var(--f-r-pill); background: var(--f-bg2); }
+[data-ui="feed"] .b-skel i:nth-child(1) { width: 38%; height: 40px; }
+[data-ui="feed"] .b-skel i:nth-child(2) { width: 72%; }
+[data-ui="feed"] .b-skel i:nth-child(3) { width: 56%; }
+[data-ui="feed"] .b-skel i:nth-child(4) { width: 64%; }
+@media (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .b-skel i { animation: f-b-shimmer 1.1s ease-in-out infinite alternate; }
+}
+@keyframes f-b-shimmer { from { opacity: 1; } to { opacity: .45; } }
 
 /* A style with no photo (Số 03 and 04): its name on a plate. */
 [data-ui="feed"] .b-type {
@@ -89,10 +153,57 @@
 }
 [data-ui="feed"] .b-fc .b-type { width: 100%; aspect-ratio: 4 / 5; font-size: 34px; }
 
+/* ── Thông báo ── */
+[data-ui="feed"] .mbar-acts .link { min-height: 44px; padding: 0 6px; font-size: 14px; text-decoration: none; }
+[data-ui="feed"] .b-ngroup { padding-top: 6px; }
+[data-ui="feed"] .b-ngroup-title { padding: 14px var(--f-g) 4px; font-size: 13px; font-weight: 700; color: var(--f-ink2); }
+[data-ui="feed"] .b-nrow {
+  position: relative; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; column-gap: 14px; align-items: center;
+  min-height: 72px; padding: 12px var(--f-g); transition: background-color .15s;
+}
+[data-ui="feed"] .b-nic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--f-r-pill); background: var(--f-bg2); color: var(--f-ink); transition: background-color .2s, color .2s; }
+[data-ui="feed"] .b-nic .i { width: 22px; height: 22px; }
+[data-ui="feed"] .b-nmain { display: grid; gap: 2px; min-width: 0; }
+[data-ui="feed"] .b-ntitle { font-size: 15px; font-weight: 560; line-height: 1.3; }
+[data-ui="feed"] .b-nbody { font-size: 13px; line-height: 1.35; color: var(--f-ink2); }
+[data-ui="feed"] .b-ntime { align-self: start; padding-top: 2px; font-size: 13px; color: var(--f-ink2); white-space: nowrap; }
+/* Unread: the icon sits on ink and the title is bold; two cues that are not a colour. */
+[data-ui="feed"] .b-nrow.is-unread .b-nic { background: var(--f-ink); color: var(--f-white); }
+[data-ui="feed"] .b-nrow.is-unread .b-ntitle { font-weight: 720; }
+[data-ui="feed"] .b-nrow.is-unread .b-ntime { color: var(--f-ink); font-weight: 650; }
+[data-ui="feed"] .b-nrow:focus-visible { outline-offset: -2px; }
+
+[data-ui="feed"] .b-rem { background: var(--f-bg2); padding: 18px 18px 8px; }
+[data-ui="feed"] .b-rem-no { font-size: 30px; line-height: 1.06; }
+[data-ui="feed"] .b-rem-cd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+[data-ui="feed"] .b-rem-cd .cd-label { color: var(--f-ink2); }
+[data-ui="feed"] .b-rem-cd .cd-big { font-size: 26px; }
+[data-ui="feed"] .b-rem .b-set { margin-top: 14px; border-top: 1px solid var(--f-line2); }
+[data-ui="feed"] .b-rem .remind { margin: 16px 0 12px; }
+
+/* ── Tra cứu đơn ── */
+[data-ui="feed"] .b-trk-form { display: grid; gap: 16px; padding: 18px var(--f-g) 8px; }
+[data-ui="feed"] .b-trk-form .field + .field { margin-top: 0; }
+[data-ui="feed"] .b-trk-form .btn { margin-top: 4px; }
+[data-ui="feed"] .b-trk-alt { display: flex; align-items: center; gap: 6px; padding: 4px var(--f-g) 0; font-size: 14px; color: var(--f-ink2); }
+/* With a result the form folds away and the order's code is the heading on screen; the page's h1 stays for assistive
+   tech (on the phone the bar carries the title). */
+[data-ui="feed"] .b-trk.has-result .b-trk-side { display: none; }
+[data-ui="feed"] .b-head-quiet { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 899.98px) {
+  /* On the phone grey blocks hold the result's place under the form while the lookup runs. */
+  [data-ui="feed"] .b-trk.is-busy .b-trk-alt { display: none; }
+}
+@keyframes f-b-fade { from { opacity: 0; } to { opacity: 1; } }
+[data-ui="feed"] .b-res { padding: 0 var(--f-g) 8px; }
+[data-ui="feed"] .b-res-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0 4px; }
+[data-ui="feed"] .b-res-head .link { min-height: 44px; }
+
 /* The live block's clock (the mock files it with the order lookup's, which shares it). */
 [data-ui="feed"] .b-state-cd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 [data-ui="feed"] .b-state-cd .cd-label { color: var(--f-ink2); }
 [data-ui="feed"] .b-state-cd .cd-big { font-size: 30px; }
+[data-ui="feed"] .b-res-go { padding: 22px 0 4px; }
 
 /* ── the closed issues ── */
 [data-ui="feed"] .b-now {
@@ -169,6 +280,18 @@
 [data-ui="feed"] .b-pn small .i { width: 16px; height: 16px; }
 [data-ui="feed"] .b-pn .disp { font-size: 30px; line-height: 1.04; }
 
+/* ── 404 ── */
+[data-ui="feed"] .b-nf { padding: 28px var(--f-g) 8px; }
+[data-ui="feed"] .b-nf-title { font-size: 64px; line-height: 1.08; }
+[data-ui="feed"] .b-nf-links { display: grid; margin-top: 28px; }
+[data-ui="feed"] .b-nf-links a {
+  position: relative; display: flex; align-items: center; gap: 14px; min-height: 76px; border-top: 1px solid var(--f-line);
+}
+[data-ui="feed"] .b-nf-links a:last-child { border-bottom: 1px solid var(--f-line); }
+[data-ui="feed"] .b-nf-links .i { width: 26px; height: 26px; }
+[data-ui="feed"] .b-nf-links .disp { font-size: 34px; line-height: 1.04; }
+[data-ui="feed"] .b-nf-links .i-arrow-right { margin-left: auto; width: 22px; height: 22px; transition: transform .2s var(--f-out); }
+
 /* ── tablet: the phone layout in a calmer column ── */
 @media (min-width: 600px) and (max-width: 899.98px) {
   [data-ui="feed"] .b-page { max-width: 600px; margin-left: auto; margin-right: auto; }
@@ -183,6 +306,7 @@
   [data-ui="feed"] .b-head .link { margin: 0 0 6px; }
   [data-ui="feed"] .b-gatewrap { padding: 0; }
   [data-ui="feed"] .b-count { font-size: 16px; padding-bottom: 10px; }
+  [data-ui="feed"] .b-sec { padding: 28px 0 8px; border-top: 1px solid var(--f-line); }
   [data-ui="feed"] .b-empty { padding-top: 56px; }
 
   /* Yêu thích: two across next to the account menu */
@@ -196,6 +320,28 @@
   [data-ui="feed"] .b-fc-sizes { margin-top: 16px; }
   [data-ui="feed"] .b-sz { width: 46px; height: 40px; }
   [data-ui="feed"] .b-fc .plate { font-size: 24px; padding: 10px 13px 7px; }
+
+  /* Thông báo: the inbox, with the reminder and the settings beside it */
+  [data-ui="feed"] .b-notif { display: grid; grid-template-columns: minmax(0, 1fr) 340px; column-gap: 48px; align-items: start; }
+  [data-ui="feed"] .b-inbox { min-width: 0; }
+  [data-ui="feed"] .b-ngroup-title { padding: 18px 16px 6px; }
+  [data-ui="feed"] .b-nrow { padding: 12px 16px; }
+  [data-ui="feed"] .b-nside { position: sticky; top: 100px; display: grid; gap: 36px; }
+  [data-ui="feed"] .b-nside .b-sec { padding: 0; border-top: 0; }
+  [data-ui="feed"] .b-nside .sect-title { font-size: 20px; }
+
+  /* Tra cứu đơn: one column centred in the page, built as on the phone: the title and the form in 480px, the order in
+     720px with its code where the title stood. The wait shows on the button alone: the order takes the form's place
+     rather than landing below it, so no grey blocks stand there first. */
+  [data-ui="feed"] .p-track .b-head, [data-ui="feed"] .b-trk { max-width: 480px; margin-left: auto; margin-right: auto; }
+  [data-ui="feed"] .b-trk.has-result { max-width: 720px; }
+  [data-ui="feed"] .b-trk-form { padding: 0; }
+  [data-ui="feed"] .b-trk-alt { padding: 14px 0 0; }
+  [data-ui="feed"] .b-trk .b-skel { display: none; }
+  [data-ui="feed"] .b-res { padding: 0; }
+  [data-ui="feed"] .b-res-head { align-items: baseline; padding: 36px 0 6px; }
+  [data-ui="feed"] .b-res-go { padding: 24px 0 0; }
+  [data-ui="feed"] .b-res-go .btn { width: auto; display: inline-flex; padding: 0 28px; }
 
   /* the closed issues: one wide row per issue */
   [data-ui="feed"] .b-now { margin: 0 0 8px; padding: 14px 20px; }
@@ -234,16 +380,34 @@
   [data-ui="feed"] .b-next-now .btn, [data-ui="feed"] .b-next-now .remind { width: auto; display: inline-flex; padding: 0 28px; }
   [data-ui="feed"] .b-pn a { padding: 32px 36px; align-content: space-between; }
   [data-ui="feed"] .b-pn .disp { font-size: 56px; }
+
+  /* 404 */
+  [data-ui="feed"] .b-nf { padding: 56px 0 8px; }
+  [data-ui="feed"] .b-nf-title { font-size: 120px; }
+  [data-ui="feed"] .b-nf-links { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-top: 40px; }
+  [data-ui="feed"] .b-nf-links a, [data-ui="feed"] .b-nf-links a:last-child { flex-direction: column; align-items: flex-start; justify-content: space-between; min-height: 200px; padding: 24px 26px; border: 0; background: var(--f-bg2); }
+  [data-ui="feed"] .b-nf-links .disp { font-size: 48px; }
+  [data-ui="feed"] .b-nf-links .i-arrow-right { position: absolute; right: 26px; top: 26px; }
+}
+/* Only an order that has just arrived fades in; one opened from a link is simply there (the mock's `.motion` rule). */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .b-res.is-fresh { animation: f-b-fade .3s var(--f-out); }
 }
 
 @media (min-width: 900px) and (max-width: 1199.98px) {
+  [data-ui="feed"] .b-notif { grid-template-columns: minmax(0, 1fr) 300px; column-gap: 32px; }
   [data-ui="feed"] .b-hero-no { font-size: 160px; }
 }
 
 /* Pointer hover, where there is one. */
 @media (hover: hover) and (pointer: fine) {
+  [data-ui="feed"] .b-nrow:hover { background: var(--f-bg2); }
   [data-ui="feed"] .b-sz:not(:disabled):hover { box-shadow: inset 0 0 0 1.5px var(--f-ink); }
-  [data-ui="feed"] .b-issue:hover .b-go .i { transform: translateX(4px); }
+  [data-ui="feed"] .b-nrow.is-unread:hover .b-nic { background: var(--f-ink4); }
+  [data-ui="feed"] .b-setrow:hover .b-switch { box-shadow: inset 0 0 0 2px var(--f-ink); }
+  [data-ui="feed"] .b-setrow[aria-checked="true"]:hover .b-switch { box-shadow: none; background: var(--f-ink4); }
+  [data-ui="feed"] .b-issue:hover .b-go .i, [data-ui="feed"] .b-nf-links a:hover .i-arrow-right { transform: translateX(4px); }
+  [data-ui="feed"] .b-nf-links a:hover { background: var(--f-bg3); }
   [data-ui="feed"] .b-pn a:hover { background: var(--f-bg3); }
   [data-ui="feed"] .b-tile-link:hover .b-tile-media img { transform: scale(1.03); }
   [data-ui="feed"] .b-tile-media { overflow: hidden; }

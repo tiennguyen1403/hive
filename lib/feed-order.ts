@@ -114,7 +114,14 @@ export interface ConfirmTransfer {
   note: string;
 }
 
-export function confirmTransfer(o: Order): ConfirmTransfer | null {
+/*
+ * `confirmTransfer` and `confirmRows` take only the fields they read (round v4
+ * slice 4a): the guest lookup (`/track`) prints the same hold, memo and totals
+ * from an order that has no address, phone or owner (`LookedUpOrder`).
+ */
+export function confirmTransfer(
+  o: Pick<Order, "code" | "status" | "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd">,
+): ConfirmTransfer | null {
   if (o.status.state !== "AWAITING_TRANSFER") return null;
   return {
     amountVnd: orderTotalVnd(o),
@@ -140,7 +147,9 @@ export function confirmShipRows(o: Order, addressLine: string): FeedRow[] {
 }
 
 /** "Tóm tắt" above "Tổng", as the order was priced: the code's line only when it took something off. */
-export function confirmRows(o: Order): FeedRow[] {
+export function confirmRows(
+  o: Pick<Order, "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd" | "promo">,
+): FeedRow[] {
   const rows: FeedRow[] = [
     { label: "Tạm tính", value: vnd(orderSubtotalVnd(o)) },
     { label: "Giao hàng", value: o.shippingFeeVnd ? vnd(o.shippingFeeVnd) : "Miễn phí" },

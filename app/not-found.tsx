@@ -1,53 +1,45 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { ButtonLink } from "@/components/ui/Button";
-import { ShopFrame } from "@/components/shop/ShopFrame";
-import { loadCatalog } from "@/lib/db/catalog";
-import { closesInLabel, dropCalendar, issueHref } from "@/lib/drop";
-import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
+import { FeedFrame } from "@/components/feed/FeedFrame";
+import { FeedIcon, type FeedIconName } from "@/components/feed/icon/FeedIcon";
+
+export const metadata: Metadata = {
+  title: "Không tìm thấy",
+};
+
+/** The three ways back (`404.html`), each its glyph before and an arrow after. */
+const WAYS: readonly (readonly [string, FeedIconName, string])[] = [
+  ["/", "newspaper", "Bảng tin"],
+  ["/products", "storefront", "Cửa hàng"],
+  ["/track", "package", "Tra cứu đơn"],
+];
 
 /**
- * The 404.
+ * The 404, round v4 "Feed" (slice 4a): the approved mock's
+ * `prototype/explore/feed/404.html` for the whole app — every address that
+ * matches no route, and every `notFound()` without a page of its own (the
+ * order's "Không tìm thấy đơn" keeps its own, slice 3b). "Không tìm thấy",
+ * then Bảng tin, Cửa hàng and Tra cứu đơn as three large ways back; the light
+ * footer and the tab bar, nothing lit; on the phone a bar with the logo alone.
  *
- * On a drop model this page is reached routinely, not exceptionally: last
- * issue's links keep circulating long after the styles behind them are gone.
- * So it says where the shop is NOW instead of apologising — and both of its
- * answers are read off the clock, so neither can point at an issue that has
- * closed since the page was written.
+ * Next answers 404 and asks search engines to leave the page out by itself
+ * (`03-api-reference/04-functions/not-found.md`).
  */
-export default async function NotFound() {
-  const catalog = await loadCatalog();
-  const cal = dropCalendar(catalog);
-  const open = cal.open;
-  const closed = cal.closed;
-
+export default function NotFound() {
   return (
-    <ShopFrame>
-      <div className="wrap3 readpage">
-        <div className="nf">
-          <span className="num">404</span>
-          <h1>Trang này không có.</h1>
-          <p>
-            Liên kết có thể thuộc một {LEX.tl} đã đóng, hoặc gõ sai.
-            {open
-              ? ` ${issueLabel(open.no)} đang bán, ${closesInLabel(open.closesAt)}.`
-              : cal.upcoming
-                ? ` ${issueLabel(cal.upcoming.no)} sắp mở.`
-                : ""}
-          </p>
-          <div className="cta">
-            {open && (
-              <ButtonLink href={issueHref(open.no)}>
-                Xem {LEX.tl} {issueNo(open.no)}
-              </ButtonLink>
-            )}
-            {closed && (
-              <Link className="btn ink" href={`/so/${closed.no}`}>
-                Các {LEX.tl} đã đóng
-              </Link>
-            )}
-          </div>
-        </div>
+    <FeedFrame page="other" foot="lite" mainClass="b-wrap b-page" mbar="brand">
+      <div className="b-nf">
+        <h1 className="b-nf-title disp">Không tìm thấy</h1>
+        <nav className="b-nf-links" aria-label="Về lại">
+          {WAYS.map(([href, icon, label]) => (
+            <Link key={href} href={href}>
+              <FeedIcon name={icon} />
+              <span className="disp">{label}</span>
+              <FeedIcon name="arrow-right" className="i-arrow-right" />
+            </Link>
+          ))}
+        </nav>
       </div>
-    </ShopFrame>
+    </FeedFrame>
   );
 }

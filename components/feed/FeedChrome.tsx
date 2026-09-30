@@ -1,17 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useMe } from "@/components/account/MeContext";
-import { useNotifCenter } from "@/components/account/notif-center";
 import { useCart } from "@/components/cart/CartContext";
-import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Order } from "@/data/types";
 import { FOOT_HELP, footDelivery, footPayments } from "@/lib/feed-home";
 import { FEED_ZONE, feedFontClass } from "./FeedScope";
 import { FeedLogo } from "./FeedLogo";
-import { FeedMbar, type FeedMbarProps } from "./FeedMbar";
+import { FeedBrandBar, FeedMbar, type FeedMbarProps } from "./FeedMbar";
 import { FeedIcon, type FeedIconName } from "./icon/FeedIcon";
 import { FeedToastProvider } from "./FeedToast";
+import { InboxProvider, useInbox } from "./inbox";
 import { NowProvider } from "./now";
 import { QuickAddProvider } from "./QuickAdd";
 import { cx } from "./useReveal";
@@ -27,7 +25,9 @@ import { cx } from "./useReveal";
  * Slice 3a adds the account's pushed screens — the orders, one order, the
  * address book — and the sign-in page: each lights Tôi, and on the phone
  * each has its own bar. Slice 3b adds Hồ sơ, pushed from Tôi the same way;
- * Tôi and Yêu thích are tab roots.
+ * Tôi and Yêu thích are tab roots. Slice 4a adds Thông báo (its own bar; Tôi
+ * lit below, the bell lit above, not Tôi) and Tra cứu đơn (Tôi lit, as the
+ * mock's `TAB_OF` has `track: "me"`); the 404 is "other", nothing lit.
  */
 export type FeedPage =
   | "home"
@@ -47,6 +47,7 @@ export type FeedPage =
   | "profile"
   | "sign-in"
   | "notifications"
+  | "track"
   | "other";
 
 /** The five tab bar destinations and the pages each one lights (`feed.js`: `TAB_OF`). */
@@ -68,6 +69,7 @@ const TAB_OF: Record<FeedPage, "home" | "search" | "fav" | "cart" | "me" | null>
   profile: "me",
   "sign-in": "me",
   notifications: "me",
+  track: "me",
   other: null,
 };
 
@@ -89,16 +91,21 @@ export interface FeedShellProps {
    * the tab bar (the product page): the frame keeps room under the page for it.
    */
   buybar?: boolean;
-  /** A pushed screen's bar on the phone: the back arrow and its title (`FeedMbar`). */
-  mbar?: FeedMbarProps;
+  /**
+   * A pushed screen's bar on the phone: the back arrow and its title
+   * (`FeedMbar`) — or, for the 404, the logo alone (`"brand"`, `FeedBrandBar`).
+   */
+  mbar?: FeedMbarProps | "brand";
   /**
    * A class on the page's <main>, where the mock gives its own: the account
    * pages' `acc-layout` (the menu beside the page from 900px), the sign-in
    * page's `si-wrap` (the form beside a photo).
    */
   mainClass?: string;
-  /** The signed-in account's orders, from the server: the bell's unread count reads them. */
+  /** The signed-in account's orders, from the server: the inbox, and so the bell, reads them (`InboxProvider`). */
   orders: Order[];
+  /** The rows read on this device, as the server found them in the cookie (`INBOX_READ_COOKIE`). */
+  read: string;
   /** The render instant (`NowProvider`). */
   now: number;
   children: React.ReactNode;
@@ -116,7 +123,9 @@ export interface FeedShellProps {
  *
  * Every Feed control that opens a sheet finds the quick add here
  * (`QuickAddProvider`), inside the zone, so its <dialog>s inherit the zone's
- * tokens and type in the top layer too.
+ * tokens and type in the top layer too. The account's inbox is built here
+ * too, once (`InboxProvider`, slice 4a): the bell above and Thông báo below
+ * read the same rows.
  */
 export function FeedShell({
   page,
@@ -128,6 +137,7 @@ export function FeedShell({
   mbar,
   mainClass,
   orders,
+  read,
   now,
   children,
 }: FeedShellProps) {
@@ -138,17 +148,19 @@ export function FeedShell({
       suppressHydrationWarning
     >
       <NowProvider now={now}>
-        <FeedToastProvider>
-          <QuickAddProvider>
-            <FeedTop page={page} mid={mid} tabbar={tabbar} orders={orders} />
-            {mbar && <FeedMbar {...mbar} />}
-            <main id="main" className={mainClass}>
-              {children}
-            </main>
-            {foot !== "none" && <FeedFooter lite={foot === "lite"} skip={footSkip} />}
-            {tabbar && <FeedTabbar page={page} />}
-          </QuickAddProvider>
-        </FeedToastProvider>
+        <InboxProvider orders={orders} read={read}>
+          <FeedToastProvider>
+            <QuickAddProvider>
+              <FeedTop page={page} mid={mid} tabbar={tabbar} />
+              {mbar === "brand" ? <FeedBrandBar /> : mbar && <FeedMbar {...mbar} />}
+              <main id="main" className={mainClass}>
+                {children}
+              </main>
+              {foot !== "none" && <FeedFooter lite={foot === "lite"} skip={footSkip} />}
+              {tabbar && <FeedTabbar page={page} />}
+            </QuickAddProvider>
+          </FeedToastProvider>
+        </InboxProvider>
       </NowProvider>
       {/* Without script nothing would ever reveal the cards that wait for it, nor bring back a bar title that
           waits for the page's own to scroll away. */}
@@ -165,24 +177,13 @@ const badge = (n: number) => (n > 99 ? "99+" : String(n));
  * The top bar. On the phone the brand and the bell (the tab bar below carries
  * Giỏ with its count); from 900px the brand, the three shop tabs in the
  * middle and five icons — Tìm, Thông báo, Yêu thích, Giỏ with its count, Tôi.
+ * The bell counts the account's unread rows (`useInbox`, slice 4a); signed
+ * out it has no number (`feed.js`: `paintBell`).
  */
-function FeedTop({
-  page,
-  mid,
-  tabbar,
-  orders,
-}: {
-  page: FeedPage;
-  mid: React.ReactNode;
-  tabbar: boolean;
-  orders: Order[];
-}) {
+function FeedTop({ page, mid, tabbar }: { page: FeedPage; mid: React.ReactNode; tabbar: boolean }) {
   const { units, ready: cartReady } = useCart();
-  const me = useMe();
-  const catalog = useCatalog();
-  const { unread, ready: notifReady } = useNotifCenter(catalog, me, orders);
+  const { unread: bell } = useInbox();
   const cart = cartReady ? units : 0;
-  const bell = notifReady ? unread : 0;
   const tab = TAB_OF[page];
   const icon = (name: FeedIconName, on: boolean) => <FeedIcon name={on ? (`${name}-fill` as FeedIconName) : name} />;
   const cartLabel = cart ? `Giỏ, ${cart} món` : "Giỏ, đang trống";

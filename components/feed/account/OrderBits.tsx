@@ -14,9 +14,11 @@ import { cx } from "../useReveal";
 /**
  * The order's four steps as Feed's story bars (`steps`): done, now (half), to
  * come, or off; each passed step with the time the order recorded for it.
- * On one order's page, and on Tôi's card for the parcel on its way.
+ * On one order's page, on Tôi's card for the parcel on its way, and on the
+ * guest lookup's result (slice 4a), whose order has only these fields of
+ * its own to read (`LookedUpOrder`).
  */
-export function OrderSteps({ order }: { order: Order }) {
+export function OrderSteps({ order }: { order: Pick<Order, "status" | "placedAt" | "payment" | "moments"> }) {
   return (
     <ol className="osteps" aria-label="Hành trình">
       {orderSteps(order).map((step) => (

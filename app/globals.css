@@ -368,6 +368,7 @@
      --f-ink on --f-bg5 15.5:1 · --f-ink2 on --f-bg5 5.3:1 (a Tôi tile under the pointer, slice 3b)
      --f-white on --f-ink3 15.5:1 (a dark Tôi tile under the pointer, slice 3b)
      --f-ink on --f-blue-soft 16.0:1 (the white button on ink under the pointer, slice 3b)
+     --f-white on --f-ink4 14.0:1 (an unread row's icon under the pointer, slice 4a)
    ========================================================================= */
 [data-ui="feed"] {
   /* colour: one accent, blue; red only for errors */
@@ -393,6 +394,7 @@
   --f-bg5: #e8eaed; /* a grey Tôi tile, or the parcel's card, under the pointer (slice 3b) */
   --f-ink3: #22242a; /* a dark Tôi tile under the pointer (slice 3b) */
   --f-blue-soft: #e9ecff; /* the white button on ink under the pointer (slice 3b) */
+  --f-ink4: #2a2c30; /* an unread row's icon, and a switch that is on, under the pointer (slice 4a) */
   /* not in the mock: the text selection, a light tint of the blue under ink (12.6:1) —
      the project's rule for browser surfaces, kept in Feed's colours (user, 27/09/2026) */
   --f-select: color-mix(in srgb, var(--f-blue) 24%, var(--f-white));

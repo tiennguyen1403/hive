@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useMyState } from "@/components/account/MyStateContext";
 import { startWait } from "@/components/shop/WaitVeil";
-import type { ColorKey, Favorite, MyState, Product, ProductId, Size, SizeSlot } from "@/data/types";
+import type { ColorKey, Favorite, MyState, NotifyKey, Product, ProductId, Size, SizeSlot } from "@/data/types";
 import {
   restoreFavoriteAction,
   saveFavoriteAction,
   setMySizeAction,
+  setNotifyAction,
   setReminderAction,
   unsaveFavoriteAction,
 } from "@/lib/actions/my-state";
@@ -18,6 +19,7 @@ import {
   mySizeOf,
   withFavorite,
   withFavoriteBack,
+  withNotify,
   withReminder,
   withSize,
   withoutFavorite,
@@ -40,6 +42,14 @@ export interface Keep {
   toggleFavorite: (p: Product, color: ColorKey) => HeartPress;
   /** "Nhắc tôi" / "Đã bật nhắc". */
   toggleReminder: (no: number) => void;
+  /**
+   * The reminder on or off, as asked, whatever the screen drew last — for a
+   * "Hoàn tác" that runs after the state it was made from has moved on
+   * (Thông báo's "Trong app", slice 4a).
+   */
+  setReminder: (no: number, on: boolean) => void;
+  /** One of the four switches under "Nhận thông báo về" (Thông báo, slice 4a). */
+  setNotify: (key: NotifyKey, on: boolean) => void;
   /** Hồ sơ's sizes: true once the account has it, false when it was refused (and the toast said why). */
   setSize: (slot: SizeSlot, size: Size | null) => Promise<boolean>;
   /** Yêu thích's filled heart: off the list, with no toast of its own on success. */
@@ -101,18 +111,35 @@ export function useKeep(): Keep {
     [signedIn, state, keep, askSignIn, refused],
   );
 
-  const toggleReminder = useCallback(
-    (no: number) => {
+  const setReminder = useCallback(
+    (no: number, on: boolean) => {
       if (!signedIn) {
         askSignIn(keepFailureMessage("SIGNED_OUT", "reminders"));
         return;
       }
-      const on = !hasReminder(state, no);
       void keep("reminders", (s) => withReminder(s, no, on), () => setReminderAction(no, on)).then((r) => {
         if (!r.ok) refused(r);
       });
     },
-    [signedIn, state, keep, askSignIn, refused],
+    [signedIn, keep, askSignIn, refused],
+  );
+
+  const toggleReminder = useCallback(
+    (no: number) => setReminder(no, !hasReminder(state, no)),
+    [state, setReminder],
+  );
+
+  const setNotify = useCallback(
+    (key: NotifyKey, on: boolean) => {
+      if (!signedIn) {
+        askSignIn(keepFailureMessage("SIGNED_OUT", "notify"));
+        return;
+      }
+      void keep("notify", (s) => withNotify(s, key, on), () => setNotifyAction(key, on)).then((r) => {
+        if (!r.ok) refused(r);
+      });
+    },
+    [signedIn, keep, askSignIn, refused],
   );
 
   const setSize = useCallback(
@@ -151,10 +178,12 @@ export function useKeep(): Keep {
       mySize: (p) => mySizeOf(state, p),
       toggleFavorite,
       toggleReminder,
+      setReminder,
+      setNotify,
       setSize,
       unsave,
       restore,
     }),
-    [state, signedIn, toggleFavorite, toggleReminder, setSize, unsave, restore],
+    [state, signedIn, toggleFavorite, toggleReminder, setReminder, setNotify, setSize, unsave, restore],
   );
 }

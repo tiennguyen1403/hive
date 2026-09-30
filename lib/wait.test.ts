@@ -157,9 +157,18 @@ describe("isFeedPath", () => {
     }
   });
 
+  it("is Thông báo and the guest lookup since slice 4a", () => {
+    for (const p of ["/account/notifications", "/account/notifications/", "/track", "/track/"]) {
+      expect(isFeedPath(p), p).toBe(true);
+    }
+  });
+
   it("is no v3 screen, and nothing that merely starts with a Feed route's name", () => {
     for (const p of [
-      "/account/notifications",
+      "/faq",
+      "/about",
+      "/account/notificationsx",
+      "/tracking",
       "/accounts",
       "/account/profiles",
       "/account/ordersx",

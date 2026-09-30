@@ -215,13 +215,19 @@ export function newestFirst<T extends Pick<Order, "placedAt">>(orders: readonly 
 
 // ─────────────────────────────────────────────────────────── one order
 
+/*
+ * `returnUntil`, `canReturn` and `orderSteps` take only the fields they read
+ * (round v4 slice 4a), so the guest lookup's order (`LookedUpOrder`) reads
+ * with them too.
+ */
+
 /** The last moment to ask for a return: seven days from delivery (`returnUntil`, `RETURN_WINDOW_DAYS`). */
-export function returnUntil(o: Order): string | null {
+export function returnUntil(o: Pick<Order, "status">): string | null {
   return o.status.state === "DELIVERED" ? addDaysIso(o.status.deliveredAt, RETURN_WINDOW_DAYS) : null;
 }
 
 /** Whether the return window is still open (`canReturn`). */
-export function canReturn(o: Order, now: Date): boolean {
+export function canReturn(o: Pick<Order, "status">, now: Date): boolean {
   const until = returnUntil(o);
   return until !== null && now.getTime() < Date.parse(until);
 }
@@ -273,7 +279,11 @@ export interface OrderStep {
  * for the ones before it. An order without `moments` — read from a database
  * the B10 migration has not reached — still knows the one its status carries.
  */
-function stepMoments(o: Order): { paidAt: string | null; shippedAt: string | null; deliveredAt: string | null } {
+function stepMoments(o: Pick<Order, "status" | "moments">): {
+  paidAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+} {
   const s = o.status;
   const m = o.moments;
   return {
@@ -295,7 +305,7 @@ function stepMoments(o: Order): { paidAt: string | null; shippedAt: string | nul
  * moment it is placed, and the shop's call is not recorded; a payment the
  * shop marked is not a confirmation, so it is not printed there either.
  */
-export function orderSteps(o: Order): OrderStep[] {
+export function orderSteps(o: Pick<Order, "status" | "placedAt" | "payment" | "moments">): OrderStep[] {
   const s = o.status;
   if (s.state === "CANCELLED") {
     return [
