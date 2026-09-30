@@ -3019,3 +3019,14 @@ tiếp theo, lần lượt, không chạy song song (dùng chung `.next`, DB c�
    không còn chỗ dùng, cùng các ignore v3 của máy dò. Documenter viết lại DESIGN.md.
 
 Commit mỗi lát chỉ khi người dùng cho phép lần đó.
+
+**30/09, lát 1 ĐẠT và commit `d3b453c`** (người dùng cho phép; chưa push): chi tiết đơn, phiếu giao, dòng "Phụ phí COD",
+`--text-muted` 55%. Lát 2 (Tổng quan, Nhật ký) đã giao agent theo `tasks/briefs/v5-lat-2.md`.
+
+**30/09, lát 2 ĐẠT (phiên chính duyệt), chờ người dùng cho commit.** Tổng quan và Nhật ký chạy trên Arc.
+- `ArcKpi` là thẻ tự dựng, vì `MetricCard` chỉ nhận số và `stat-card` không có trong bản free.
+- Biểu đồ dùng Arc `BarChart`, vá thêm `formatTick`: dòng đầu in số đủ, trục in số gọn. Kỳ không có doanh thu thì không vẽ
+  biểu đồ (`hasSales`).
+- Nút xoá của `SearchField` được vá `cursor: pointer`.
+- Hàng đợi giữ luật v3: đơn đã nhận tiền vẫn ở lại, chờ bàn giao.
+- 1.740 test xanh; 8 trang v3 và phần khách không đổi.

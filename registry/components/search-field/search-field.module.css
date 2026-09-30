@@ -15,6 +15,9 @@
 .input::-webkit-search-cancel-button { display: none; }
 .clearSlot { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; }
 .shell button { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--text-muted); transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
+/* HIVE patch (registry/PATCHES.md): the clear button shows the hand, like every other Arc button; the project's layout sweep
+   reads an arrow on a button as a fault. */
+.shell button { cursor: pointer; }
 @media (hover: hover) and (pointer: fine) { .shell button:hover { background: var(--surface-muted); color: var(--foreground); } }
 .shell button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .shell, .shell > svg, .shell button { transition: none; } }

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   BOOKED_STATES,
   averageOrderVnd,
+  hasSales,
   needsAction,
   recentOrders,
   customerSplit,
@@ -142,6 +143,40 @@ describe("salesWindow", () => {
     expect(w.points.slice(0, 4).every((p) => p.vnd === 0)).toBe(true);
     expect(w.points[4]!.day).toBe("2026-09-11");
     expect(w.totalVnd).toBeGreaterThan(0);
+  });
+});
+
+describe("hasSales", () => {
+  // The overview draws its bars only for a window that took money (round v5
+  // slice 2): a window of zeros would put "0₫" and "1₫" on the chart's lines.
+  it("is false for a window with no orders at all", () => {
+    expect(hasSales(salesWindow(NOW, [], 14).points)).toBe(false);
+  });
+
+  it("is false when the window's orders booked nothing: cancelled, or still awaiting the transfer", () => {
+    const os = [
+      order("2026-09-18T09:00:00+07:00", cancelled("x"), 400_000),
+      order("2026-09-19T09:00:00+07:00", awaiting("x"), 900_000),
+    ];
+    expect(hasSales(salesWindow(NOW, os, 7).points)).toBe(false);
+  });
+
+  it("is false when the only sale is older than the window", () => {
+    const os = [order("2026-09-01T09:00:00+07:00", delivered("x"), 800_000)];
+    expect(hasSales(salesWindow(NOW, os, 7).points)).toBe(false);
+    expect(hasSales(salesWindow(NOW, os, 30).points)).toBe(true);
+  });
+
+  it("is true as soon as one day of the window took money", () => {
+    const os = [order("2026-09-20T09:00:00+07:00", paid("x"), 100_000)];
+    expect(hasSales(salesWindow(NOW, os, 7).points)).toBe(true);
+  });
+
+  it("agrees with the window's own peak, which is null exactly when nothing sold", () => {
+    for (const os of [[], ORDERS]) {
+      const w = salesWindow(NOW, os, 14);
+      expect(hasSales(w.points)).toBe(w.peak !== null);
+    }
   });
 });
 

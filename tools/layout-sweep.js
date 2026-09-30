@@ -394,6 +394,12 @@ async (page) => {
     "/admin/slips?codes=DH-9999",
     // slice 5 of v3: the activity log
     "/admin/log",
+    // round v5 slice 2: the overview's ranges and the log's filters, on Arc
+    "/admin?days=7",
+    "/admin?days=30",
+    "/admin/log?kind=order",
+    "/admin/log?today=1",
+    "/admin/log?q=zzz",
   ];
 
   const results = [];
@@ -505,7 +511,19 @@ async (page) => {
       await page.getByRole("button", { name: "Thao tác DH-2431" }).click();
     }],
     ["/admin#reset", "admin-reset-sheet-1280", async () => {
-      await page.locator(".simbar").getByRole("button", { name: "Đặt lại dữ liệu mẫu" }).click();
+      await page.locator("aside").getByRole("button", { name: "Đặt lại dữ liệu mẫu" }).click();
+    }],
+    // round v5 slice 2: the overview's day table, the log's filter menu at both steps
+    ["/admin#days", "admin-overview-day-table-1280", async () => {
+      await page.getByText("Xem dạng bảng").click();
+    }],
+    ["/admin/log#filter", "admin-log-filter-fields-1280", async () => {
+      await page.getByRole("button", { name: "Thêm bộ lọc" }).click();
+    }],
+    ["/admin/log#filter-values", "admin-log-filter-values-1280", async () => {
+      await page.getByRole("button", { name: "Thêm bộ lọc" }).click();
+      await page.waitForTimeout(400);
+      await page.getByRole("menuitem", { name: /Loại thao tác/ }).click();
     }],
     // slice B3b: the sheets and menus that now write to the database
 

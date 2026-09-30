@@ -62,8 +62,11 @@ export function ArcHandoverForm({
   const [error, setError] = useState(false);
   const ready = code.trim().length > 0;
 
+  // `id="handover"`, as v3's form had: the overview's "Đóng gói và bàn giao"
+  // opens `…?handover=1#handover`, and Next scrolls to that id. Without it the
+  // order opened at the overview's scroll offset, past the form (slice 2).
   return (
-    <section className={styles.handover} aria-labelledby={titleId}>
+    <section id="handover" className={styles.handover} aria-labelledby={titleId}>
       <div className={styles.panelHeading}>
         <h2 id={titleId} className={styles.panelTitle}>
           Bàn giao

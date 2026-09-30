@@ -1,0 +1,166 @@
+/* The activity log in the Arc frame (round v5 slice 2). Arc components own
+   their insides; the heading strip is the order page's (`ArcPage.module.css`)
+   and the toolbar is the order book's (`ArcOrdersScreen.module.css`, slice
+   0), in the same values. This file places them and styles the text of the
+   table's cells. Arc tokens only, on the 4px grid. */
+
+/* The toolbar, the table and the line under it: one block. */
+.list {
+  display: grid;
+  min-width: 0;
+}
+
+.list > * {
+  min-width: 0;
+}
+
+/* ── the toolbar ───────────────────────────────────────────────────────── */
+/* The search, "Thêm bộ lọc", the chip while a kind is on, and the span of
+   time at the far end. Each line is as tall as the chip's box (Arc's
+   `FilterToolbar`: a row of small controls, 12px above and below, a
+   hairline), as on the order book, so the line with the chip does not jump
+   when the chip arrives or goes.
+
+   The line wraps rather than squeeze the search: at 1280 a chip ("Loại thao
+   tác · Mã giảm giá" with its "Xoá hết") leaves the search about 250px, and
+   its placeholder was cut (measured 30/09). The span of time then takes a
+   second line of the same height, at the right; at 1440, and with no chip,
+   everything stays on one line. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-3);
+  min-height: calc(var(--control-height-sm) + var(--space-3) * 2 + 2px);
+}
+
+/* Never narrower than its whole placeholder, "Tìm mã đơn, mã giảm giá, mẫu":
+   about 204px of 14px Mona Sans, plus the field's own 84px (padding, the
+   glass, the clear button's slot), measured 30/09. */
+.search {
+  flex: 0 1 320px;
+  min-width: 288px;
+}
+
+.menuSlot {
+  display: flex;
+  flex: none;
+}
+
+.chips {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The toolbar's own line height, so on a line of its own it keeps the same
+   12px above and below as the line with the chip. */
+.spanSlot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: calc(var(--control-height-sm) + var(--space-3) * 2 + 2px);
+  margin-left: auto;
+}
+
+/* A segment's count, after its label (v3's chip counts). */
+.spanCount {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── the table's cells ─────────────────────────────────────────────────── */
+/* The columns keep the browser's automatic layout (`holdWidths={false}`), so
+   what a cell needs is what its content says: words break only between
+   words, and a value that is one thing (a moment, a hand) never breaks.
+   12px above and below, as v3's `.log3 td`: a row whose change runs to a
+   third line still clears its hairlines. */
+.table tbody td {
+  padding-block: var(--space-3);
+}
+
+.stack,
+.text,
+.link,
+.change {
+  overflow-wrap: normal;
+}
+
+.nowrap {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* What was done, and the quiet line under it. */
+.stack {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+}
+
+.action {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.line {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+/* What it was done to: a text link where it leads somewhere, in the zone's
+   link look (the book's order codes, slice 0), at the weight of the text
+   around it, as v3 set it. */
+.link {
+  color: var(--foreground);
+  text-decoration-line: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+/* The keyboard ring (QĐ-39); `--focus-ring` is transparent while the pointer drives. */
+.link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Before → after: the quiet ink, the state it went to in the heavier one. */
+.change {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.change b {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+/* ── nothing to show ───────────────────────────────────────────────────── */
+/* The empty state stands where the table stood, in the table's own frame,
+   so the page keeps its shape when a search finds nothing. */
+.empty {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
+
+/* ── the line under the table ──────────────────────────────────────────── */
+.foot {
+  margin: var(--space-4) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link {
+    transition: none;
+  }
+}

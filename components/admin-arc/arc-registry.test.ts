@@ -150,6 +150,23 @@ describe("registry/foundation.css", () => {
   });
 });
 
+describe("registry/components (patches a re-install would drop, slice 2)", () => {
+  it("keeps the search field's clear button a pointer, as every other Arc button is", () => {
+    const css = readFileSync(join(COMPONENTS, "search-field", "search-field.module.css"), "utf8");
+    const pointer = rules(css).find(
+      (r) => r.selector === ".shell button" && /cursor\s*:\s*pointer/.test(r.body),
+    );
+    expect(pointer).toBeDefined();
+  });
+
+  it("lets the bar chart format its value axis apart from its headline (formatTick)", () => {
+    const source = readFileSync(join(COMPONENTS, "bar-chart", "bar-chart.tsx"), "utf8");
+    expect(source).toContain("formatTick = formatValue");
+    expect(source).toContain("format={formatTick}");
+    expect(source).toContain("`TB ${formatTick(");
+  });
+});
+
 describe("registry/components (Vietnamese)", () => {
   const files = filesUnder(COMPONENTS).filter((f) => /\.tsx?$/.test(f));
 

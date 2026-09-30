@@ -46,6 +46,22 @@ vá hành vi). `input` được vá ở lát 1 (mục 3).
 
 Không sửa: `empty-state` (không có chuỗi tiếng Anh; icon mặc định `Folder` không phải chữ).
 
+## Lần cài 30/09/2026 (đợt v5, lát 2)
+
+- **CLI:** `shadcn` 4.21.0, gọi bằng `npx shadcn@latest`, với `components.json` đang có. Không `init`.
+- **Lệnh:**
+  ```
+  printf 'n\nn\nn\nn\n' | npx shadcn@latest add @uiarc/bar-chart --yes
+  ```
+  CLI hỏi ghi đè `foundation.css`, trả lời `n` như lát 1.
+- **1 item:** bar-chart. **CLI tạo 2 tệp** (`bar-chart.tsx`, `bar-chart.module.css` trong `registry/components/bar-chart/`),
+  bỏ qua 3 tệp của `arc-foundation` (`foundation.css` vì trả lời `n`; hai `motion-tokens.ts` trùng bản gốc).
+- **Phụ thuộc:** không thêm (`motion` đã có từ lát 0). `package.json` và `package-lock.json` không đổi.
+- **Sau khi cài, `git status`** chỉ thêm `registry/components/bar-chart/`.
+- Bản gốc tải ở `https://uiarc.dev/r/bar-chart.json`. `diff` với bản đã vá chỉ ra 6 dòng Việt hoá (mục 2), prop `formatTick`
+  (mục 3) và các dòng chú giải `HIVE patch`. `bar-chart.module.css` không đổi.
+- Cùng lát, phiên chính duyệt thêm một chỗ vá CSS cho `search-field` (mục 3), cài từ lát 0.
+
 ## 1. `registry/foundation.css`: khoanh vùng
 
 Arc đặt mọi luật ở `:root`, nên tệp là toàn cục: tiêu đề v3 mất Unbounded vì trùng tên `--font-display`, luật cuối xoá vòng
@@ -107,6 +123,14 @@ Mọi chuỗi tiếng Anh người dùng thấy hoặc máy đọc màn hình đ
 | | `emptyMessage` mặc định "No matches found" | "Không có mục nào khớp" |
 | | nút xoá lựa chọn "Clear selection" | "Bỏ chọn" |
 | | tên danh sách `{nhãn} options` | `Danh sách {nhãn}` |
+| `bar-chart/bar-chart.tsx` (lát 2) | `averageLabel` mặc định "Daily average" | "Trung bình mỗi ngày" |
+| | `valueLabel` mặc định "Total" | "Tổng" |
+| | `categoryLabel` mặc định "Day" | "Ngày" |
+| | nhãn đường trung bình `Avg {giá trị}` (viết cứng) | `TB {giá trị}` |
+| | câu tóm tắt của `role="img"`: ` Highest {ngày}, …`, ` Lowest {ngày}, …` (viết cứng) | ` Cao nhất {ngày}, …`, ` Thấp nhất {ngày}, …` |
+| | `aria-valuetext` khi không có dữ liệu "No data" (viết cứng) | "Chưa có dữ liệu" |
+| | tên thanh kéo `{nhãn}, explore by {loại}` (viết cứng) | `{nhãn}, xem theo {loại}` |
+| | định dạng số mặc định `Intl.NumberFormat("en-US")` | `Intl.NumberFormat("vi-VN")` |
 
 Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không phải chữ: giữ nguyên. Không component nào dùng
 `toLocaleString` hay `Intl.NumberFormat`. Câu lỗi cho lập trình viên (`Render toast stack consumers inside …`) giữ nguyên.
@@ -122,11 +146,15 @@ Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không p
 | `search-field/search-field.tsx` + `.module.css` | Prop `hideLabel`: nhãn ẩn cho mắt (class `.srOnly`), máy đọc vẫn đọc | Ô tìm nằm trên thanh công cụ; `skill-accessibility.md` cho phép khi ngữ cảnh đã gọi tên ô |
 | `sortable-data-table/sortable-data-table.tsx` | Prop `holdWidths` (mặc định `true`). `false`: bỏ bước đo rồi giữ bề rộng cột, nên bảng ở bố cục tự động thay cho `table-layout: fixed` ở đúng 100% thẻ. **Vá thêm ngoài danh sách của brief; phiên chính đã duyệt 30/09** | Đo 30/09 ở 1280: Arc giữ bảng đúng bằng thẻ và co mọi cột theo tỉ lệ. Cộng với `overflow-wrap: anywhere` của ô, mã đơn, số tiền và tên bị cắt giữa chữ ("DH-/2430", "400.00/0"); bật "Địa chỉ" thì gần như ô nào cũng vỡ. Ở bố cục tự động, cột theo nội dung, và bảng rộng hơn thẻ thì cuộn ngang trong thẻ, đúng ghi chú "bảng rộng thì cuộn ngang trong thẻ" của brief. Màn không sắp xếp nên việc giữ bề rộng cột (để dòng trượt khi sắp xếp) không còn tác dụng |
 | `sortable-data-table/sortable-data-table.tsx` + `.module.css` | Prop `density` (`"default"` mặc định, `"compact"`). `"compact"` gắn `data-density` lên bảng; CSS hạ đệm ngang của ô (kể cả nút sắp xếp và ô chọn) từ 16 xuống 12px (`--space-3`); cột đầu cạnh ô chọn giữ 8px. Chỉ từ 621px, nên bố cục gập của điện thoại giữ nguyên. **Phiên chính duyệt 30/09, để bảng đơn vừa khung 1280 mà vẫn giữ luật một dòng của v3** | Đo 30/09: cột mặc định của v3, với luật một dòng, cần khoảng 997px ở đệm 16px, trong khi thẻ ở 1280 chỉ có 959px. 12px là đệm ô của v3 |
+| `bar-chart/bar-chart.tsx` (lát 2, phiên chính yêu cầu 30/09) | Prop `formatTick` (mặc định bằng `formatValue`): định dạng trục giá trị, tức nhãn các vạch và nhãn "TB …" cạnh chúng. Dòng đầu (lúc nghỉ và lúc rê chuột), câu tóm tắt, `aria-valuetext`, bảng cho máy đọc màn hình và câu `aria-live` vẫn dùng `formatValue` | Tổng quan cần số đủ ở dòng đầu ("1.018.286₫", `vnd`) nhưng số gọn ở trục hẹp 52px ("1tr₫", `compactVnd`). Arc chỉ có một `formatValue` cho cả hai chỗ; với `compactVnd`, dòng đầu 36px chỉ còn "1tr₫", làm tròn tới mức không còn nghĩa |
+| `search-field/search-field.module.css` (lát 2) | Thêm `.shell button { cursor: pointer; }` sau luật gốc của nút xoá | Nút xoá nội dung tìm giữ mũi tên của trình duyệt, trong khi mọi nút Arc khác có bàn tay; máy dò `tools/layout-sweep.js` coi mũi tên trên một nút là lỗi (`arrowCursor`, đo 30/09 ở `/admin/log?q=zzz`). Nút này cũng có trên `/admin/orders` khi đang tìm |
 | `input/input.tsx` (lát 1) | Prop `hideLabel` (mặc định `false`): nhãn mang class `.srOnly` có sẵn trong `input.module.css` thay cho `.label`, nên ẩn cho mắt mà máy đọc vẫn đọc. Không đổi CSS | Ô "Thêm ghi chú…" của panel "Ghi chú nội bộ" trên trang chi tiết đơn: tiêu đề panel đã gọi tên ô, như ô tìm trên thanh công cụ (`skill-accessibility.md`). Cùng cách `SearchField` `hideLabel` |
 
 Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, `iconOnly`, `hideLabel` của
-`SearchField` và của `Input`) đều có mặc định giữ hành vi gốc. Cài lại bản mới mà quên vá thì `npm run typecheck` đỏ ở
-`components/admin-arc/ArcOrdersScreen.tsx` và `components/admin-arc/ArcOrderScreen.tsx`, nơi dùng chúng.
+`SearchField` và của `Input`, `formatTick` của `BarChart`) đều có mặc định giữ hành vi gốc. Cài lại bản mới mà quên vá thì
+`npm run typecheck` đỏ ở `components/admin-arc/ArcOrdersScreen.tsx`, `components/admin-arc/ArcOrderScreen.tsx` và
+`components/admin-arc/ArcRevenueChart.tsx`, nơi dùng chúng. Chỗ vá CSS của `search-field` và prop `formatTick` còn có test riêng
+trong `components/admin-arc/arc-registry.test.ts`.
 
 ## 4. Mã dự án dựa vào tên class nội bộ của Arc
 

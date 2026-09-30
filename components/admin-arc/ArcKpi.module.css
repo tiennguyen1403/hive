@@ -1,0 +1,87 @@
+/* One figure of the overview (round v5 slice 2, `ArcKpi.tsx`): a card on a
+   hairline, as the brief sets it (§3.2): 1px `--border`, the panel radius,
+   20px of padding. Arc tokens only. The row places four of them in equal
+   columns of one height (`ArcOverviewScreen.module.css`). */
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.label,
+.context {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.value {
+  margin: var(--space-1) 0 var(--space-2);
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.context {
+  font-variant-numeric: tabular-nums;
+  text-wrap: pretty;
+}
+
+/* "xử lý ngay": a link inside the sentence, in the zone's link look (the
+   order codes of the book, slice 0). It never breaks in two (v3 slice 13). */
+.context a {
+  color: var(--foreground);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration-line: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .context a:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+/* The keyboard ring (QĐ-39); `--focus-ring` is transparent while the pointer drives. */
+.context a:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* How much of the issue has sold: 4px, the sold share in the accent on the
+   muted ground, 8px under the line it pictures, as v3's `.meter`. */
+.meter {
+  position: relative;
+  display: block;
+  height: 4px;
+  margin-top: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .context a {
+    transition: none;
+  }
+}

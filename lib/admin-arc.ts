@@ -7,10 +7,12 @@
  * the `.s.adm3` frame, whose CSS reaches into them (tasks/plan.md, "Luật tích
  * hợp").
  *
- * One area per slice. Slice 0 moved the order book; slice 1 moves the rest of
- * "Đơn hàng": an order's own page and the delivery slips.
+ * One area per slice. Slice 0 moved the order book; slice 1 moved the rest of
+ * "Đơn hàng": an order's own page and the delivery slips; slice 2 moves the
+ * overview and the activity log. `/admin` is listed as a path, not as a tree:
+ * it matches the overview alone, never the screens below it.
  */
-export const ARC_ADMIN_PATHS: readonly string[] = ["/admin/orders", "/admin/slips"];
+export const ARC_ADMIN_PATHS: readonly string[] = ["/admin", "/admin/orders", "/admin/slips", "/admin/log"];
 
 /**
  * Routes whose every page below them is an Arc screen: `/admin/orders/DH-2430`

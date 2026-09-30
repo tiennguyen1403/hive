@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { ActivityLogScreen } from "@/components/admin/ActivityLogScreen";
+import { ArcLogScreen } from "@/components/admin-arc/ArcLogScreen";
 import { queryOf } from "@/lib/admin-url";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
@@ -19,6 +19,9 @@ export const metadata = { title: "Nhật ký thao tác" };
  * Dynamic: some rows are derived from the current instant — an unpaid order
  * past its deadline before the sweep has written it down, an issue that
  * opened on schedule — so a page rendered once would stop growing.
+ *
+ * Since round v5 slice 2 the screen is the Arc one (`ArcLogScreen`, in the
+ * Arc frame through `ARC_ADMIN_PATHS`); the reads are unchanged.
  */
 export default async function AdminLogPage(props: PageProps<"/admin/log">) {
   await requireAdmin("/admin/log");
@@ -26,7 +29,7 @@ export default async function AdminLogPage(props: PageProps<"/admin/log">) {
   const sp = await props.searchParams;
   const [events, orders] = await Promise.all([listEvents({ limit: 500 }), listAllOrders()]);
   return (
-    <ActivityLogScreen
+    <ArcLogScreen
       events={events}
       orders={orders}
       nowIso={toVnIso(demoNow())}

@@ -1,6 +1,6 @@
 /**
  * Every English string Arc's free components (installed 30/09/2026, round v5
- * slices 0 and 1) show a person or read to a screen reader, as it stood in
+ * slices 0 to 2) show a person or read to a screen reader, as it stood in
  * the installed source, and the component file it was in. Each one was put
  * into Vietnamese in `registry/components/**` (registry/PATCHES.md).
  *
@@ -67,4 +67,14 @@ export const ARC_ENGLISH: ReadonlyArray<{ file: string; text: string }> = [
   { file: "combobox/combobox.tsx", text: 'emptyMessage = "No matches found"' },
   { file: "combobox/combobox.tsx", text: 'aria-label="Clear selection"' },
   { file: "combobox/combobox.tsx", text: "} options`" },
+  // Slice 2 (30/09/2026): bar-chart.
+  { file: "bar-chart/bar-chart.tsx", text: 'Intl.NumberFormat("en-US"' },
+  { file: "bar-chart/bar-chart.tsx", text: 'averageLabel = "Daily average"' },
+  { file: "bar-chart/bar-chart.tsx", text: 'valueLabel = "Total"' },
+  { file: "bar-chart/bar-chart.tsx", text: 'categoryLabel = "Day"' },
+  { file: "bar-chart/bar-chart.tsx", text: "`Avg ${" },
+  { file: "bar-chart/bar-chart.tsx", text: '"No data"' },
+  { file: "bar-chart/bar-chart.tsx", text: "` Highest ${" },
+  { file: "bar-chart/bar-chart.tsx", text: "` Lowest ${" },
+  { file: "bar-chart/bar-chart.tsx", text: ", explore by ${" },
 ];

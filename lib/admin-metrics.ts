@@ -118,6 +118,17 @@ export function salesWindow(now: Date, orders: Order[], days: number): SalesWind
   };
 }
 
+/**
+ * Whether a window took any money: the overview draws its bars only then
+ * (round v5 slice 2). A window of zeros has nothing to scale against, and a
+ * chart would still divide its axis into fractions of a đồng and print "0₫"
+ * and "1₫" on its lines; the total line above says "chưa có đơn nào" instead,
+ * and the day table still lists every day.
+ */
+export function hasSales(points: readonly DayPoint[]): boolean {
+  return points.some((p) => p.vnd > 0);
+}
+
 /** Booked money divided by booked orders. Zero, never NaN, on an empty list. */
 export function averageOrderVnd(orders: Order[]): number {
   const booked = orders.filter((o) => BOOKED.has(o.status.state));

@@ -1,0 +1,88 @@
+/* The revenue panel's body (round v5 slice 2, `ArcRevenueChart.tsx`): the
+   total line, Arc's `BarChart`, and the day table folded under it. Arc owns
+   the chart's insides; this file places the rest, with Arc tokens on the 4px
+   grid. The table wears the order page's hand-built table (`.lines`,
+   `ArcOrderScreen.module.css`, slice 1). */
+
+.body {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-5);
+}
+
+/* v3's hero line: the money first, then the days it covers and the best one. */
+.total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.sum {
+  color: var(--foreground);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  line-height: var(--leading-body);
+}
+
+.detail {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+/* Arc's value gutter right of the plot is 52px, sized for short numbers. The
+   average's label in compact đồng runs past it ("TB 475,2k₫" at 30 days,
+   measured 30/09: 20px beyond the gutter, 4px from the panel's border), so
+   the chart stops 16px short of the panel's padding and the label lands in
+   the room that leaves. Nothing else in the panel lines up on that edge. */
+.chart {
+  min-width: 0;
+  padding-right: var(--space-4);
+}
+
+/* "Xem dạng bảng": a disclosure that reads as a text link, as in v3, in the
+   zone's link look (the book's order codes, slice 0). */
+.days > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: var(--leading-body);
+  text-decoration-line: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 0.2em;
+  list-style: none;
+  cursor: pointer;
+  transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+}
+
+.days > summary::-webkit-details-marker {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .days > summary:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+/* The keyboard ring (QĐ-39); `--focus-ring` is transparent while the pointer drives. */
+.days > summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.days > table {
+  margin-top: var(--space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .days > summary {
+    transition: none;
+  }
+}

@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { DashboardScreen } from "@/components/admin/DashboardScreen";
+import { ArcOverviewScreen } from "@/components/admin-arc/ArcOverviewScreen";
 import { windowDays } from "@/lib/admin-metrics";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
@@ -20,6 +20,9 @@ export const metadata = { title: "Tổng quan" };
  * prerendered and "the last 14 days" would mean the last 14 days before the
  * build. The instant travels down as a string so the screen, a client
  * component, draws exactly what the server sent on its first pass.
+ *
+ * Since round v5 slice 2 the screen is the Arc one (`ArcOverviewScreen`,
+ * in the Arc frame through `ARC_ADMIN_PATHS`); the reads are unchanged.
  */
 export default async function AdminOverviewPage(props: PageProps<"/admin">) {
   await requireAdmin("/admin");
@@ -27,5 +30,5 @@ export default async function AdminOverviewPage(props: PageProps<"/admin">) {
   const sp = await props.searchParams;
   const orders = await listAllOrders();
 
-  return <DashboardScreen orders={orders} nowIso={toVnIso(demoNow())} days={windowDays(sp.days)} />;
+  return <ArcOverviewScreen orders={orders} nowIso={toVnIso(demoNow())} days={windowDays(sp.days)} />;
 }
