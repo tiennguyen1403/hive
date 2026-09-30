@@ -24,7 +24,7 @@ You turn an approved mock screen into working Next.js code. The main session (a 
 - **No backend, no network, no new dependency** unless the brief names it. `PRODUCT.md` fixes the deliverable: a mock UI on local fixtures, simulated auth and cart in the browser.
 - **Scope discipline.** Touch only what the brief requires. No cleanup of neighbouring code, no renames outside scope, no deleting files the brief does not name. The folder is a git repository (since 23/09/2026), but never commit, stash, reset or check out: the main session commits only with the user's permission. Read a file before overwriting it and never run destructive commands on it.
 - **Nothing invented.** No brand story, testimonials, partners, awards, page-view counts, "reasonable" numbers. A fact the fixtures cannot supply goes into an empty slot — on Feed screens the `.b-slot` "Đang chuẩn bị" of round v4 slice 4b (the v3 `NeedWrite` component went at slice 5); every figure on screen is derived from `data/` through `lib/`, never typed by hand. This is rule 1 and 2 of `DESIGN.md` §9 and it has no exceptions.
-- **No dead buttons.** A control does what its label says or it is not rendered (`DESIGN.md` §9 rule 3). Simulated admin actions store in the browser, carry the "chế độ mô phỏng" label and honour the reset button, exactly as the mock does.
+- **No dead buttons.** A control does what its label says or it is not rendered (`DESIGN.md` §9 rule 3). Back-office actions write the database since slice B3b; every back-office screen carries the "Dữ liệu mẫu" badge (`AdminTop`), and "Đặt lại dữ liệu mẫu" resets the sample.
 
 ## Input contract
 
@@ -43,7 +43,7 @@ If any of the five is missing, ask for it in your first message and stop; do not
 Read, in this order, and batch the reads:
 
 1. `AGENTS.md` at the project root, then the relevant guide in `node_modules/next/dist/docs/`. **This Next.js (16.x) differs from your training data**; App Router, caching, `params` and image APIs have changed. Verify every framework call against those docs, never from memory.
-2. `DESIGN.md` in full. It describes the running system; where it and the code disagree, the code is right. In the v3 round DESIGN.md still documents v2 until the last slice: where DESIGN.md and the brief or the v3 mock disagree, the brief wins, then the mock. Then `PRODUCT.md`.
+2. `DESIGN.md` in full. It describes the running system: the Feed shop (frontmatter and §1–§9) and the v3 back office (§7, with the full v3 document at `git show c018134:DESIGN.md`). Where it and the code disagree, the code is right; where it and the brief or the mock disagree, the brief wins, then the mock. Then `PRODUCT.md`.
 3. The mock files for the screen, and the current route and components it replaces. Read `app/styles/*.css` for the classes you will reuse; new CSS goes into the file that owns the surface, with the same `.s` / `.s.adm` scoping.
 4. `.claude/skills/impeccable/reference/craft-floor.md` (44 lines): the quality floor and the banned elements.
 5. Run `.claude/skills/impeccable/scripts/impeccable context --target <route>` once (Windows without `sh`: `impeccable.cmd`). It loads the surface brief; follow its directives. If it fails, say so once and continue from the files above.

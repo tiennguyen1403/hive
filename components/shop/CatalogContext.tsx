@@ -19,8 +19,9 @@ const Ctx = createContext<Catalog | null>(null);
  * off `catalog` below.
  *
  * It is not storage. The catalogue is the shop's own data, arriving with the
- * page; the basket and the shortlist are the device's, and those keep living
- * in `localStorage` (DESIGN.md §8).
+ * page; the basket is the device's, and keeps living in `localStorage`
+ * (DESIGN.md §1, "Kho trên thiết bị"). Saved styles live on the account since
+ * slice B9.
  */
 export function CatalogProvider({
   input,

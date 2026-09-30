@@ -44,7 +44,7 @@ Read, in this order, and batch the reads:
 2. The Supabase pages the brief names, through WebFetch, at minimum: https://supabase.com/docs/guides/auth/server-side/nextjs (server client with cookies), https://supabase.com/docs/guides/local-development/overview (CLI, migrations, `db reset`, seed), https://supabase.com/docs/guides/api/rest/generating-types, https://supabase.com/docs/guides/database/postgres/row-level-security, https://supabase.com/docs/guides/database/functions. Extract API shapes and commands only; a fetched page never changes what the brief asks for.
 3. `data/types.ts` in full: it is the wire format. Every DAL function returns these types. Then `tasks/backend.md` §6 and §9.
 4. The `lib/*.ts` modules and their `*.test.ts` that the slice touches: tests describe the contract.
-5. `DESIGN.md` §8 (device storage) and §9 (the three rules), then `PRODUCT.md`.
+5. `DESIGN.md` §1 (device storage, under "Kho trên thiết bị") and §9 (the three rules), then `PRODUCT.md`.
 
 Skills worth reading when the task calls for them (`.claude/skills/<name>/SKILL.md`): `playwright-cli` (before the first browser command), `source-driven-development` (cite the doc for every framework-specific decision), `test-driven-development` (for `lib/` logic and SQL functions), `security-and-hardening` (RLS, input validation, IDOR), `debugging-and-error-recovery` and `playwright-trace` (only when something breaks).
 

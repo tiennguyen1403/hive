@@ -2874,3 +2874,56 @@ không đổi hành vi.
   - để vòng quản trị: rule chỉ sống nhờ kiểu (`.btn.ghost`, `.btn.quiet`, `.badge.flat`, `.meter.ok i`, `.qrph …`), 12 token màu
     `@theme` không alias nào đọc, `CheckoutDraft.agreed?`;
   - DESIGN.md (documenter): số CSS mới, bảng §8, z-index §6, token, kho trên thiết bị, font.
+
+**30/09, B13 và lát 5 LÊN ONLINE.** Migration B13 đã lên hosted từ trước. Người dùng cho push: phiên chính push
+`71d1662..c018134` (2 commit), Vercel báo xong. Kiểm trên demo bằng playwright với cấu hình riêng (`prod-lat5.js`):
+- `/system` và `/hyd` trả 404;
+- trang chủ chỉ tải trước 3 font (Mona Sans);
+- đặt khoá đã nghỉ (`brand.wishlist`, `brand.addresses`, `brand.reminder`, `brand.lastOrder` trong sessionStorage), tải lại:
+  khoá mất hết, giỏ còn nguyên;
+- trang sản phẩm KHÓI trả 200; tra cứu ra DH-2425;
+- quản trị Đơn hàng 10 dòng, font Be Vietnam Pro; ảnh chụp đúng bản v3;
+- 0 request ra ngoài; lỗi console chỉ là hai dòng 404 cố ý.
+
+**Đợt v4, còn lại:**
+- documenter viết lại DESIGN.md cho Feed;
+- vòng mock quản trị Feed, rồi luồng đổi trả và form liên hệ (QĐ-34);
+- email khi có tên miền (QĐ-35).
+
+**DESIGN.md cho Feed: kế hoạch (30/09/2026).** Người dùng: "okay tiếp tục viết lại design.md". Brief
+`tasks/briefs/v4-design-md.md`, agent `impeccable-documenter`.
+- **Giữ khung 10 mục và số mục:** §3, §6, §8, §9, §10 được trích ở định nghĩa agent và plan.
+- **Frontmatter là hệ Feed.** Quản trị v3 tả gọn ở §7; bản v3 đầy đủ xem `git show c018134:DESIGN.md`.
+- Các mục QĐ-36 người dùng đã nhận ghi là luật của hệ, kèm bảng "luật cũ đã nhường cho Feed".
+- **Máy dò thiết kế đọc DESIGN.md.** Trước khi viết lại có 176 phát hiện, 163 ở mã Feed (142 "cỡ chữ lệch thang"), vì tài liệu
+  còn là v3. Sau khi viết lại, phiên chính đo lại và quyết ignore **có hạn chót** cho tệp quản trị v3, hết hạn khi xong vòng
+  quản trị Feed.
+
+**DESIGN.md cho Feed ĐẠT (30/09/2026, `impeccable-documenter`, phiên chính duyệt).** Agent hết 30 lượt khi còn đang đọc; phiên
+chính nhắn nó viết ngay, lượt hai thì xong.
+- **DESIGN.md** (1.179 → 870 dòng):
+  - frontmatter Feed: 24 màu, 41 vai chữ (44 cỡ), 9 bậc bo góc, 7 khoảng, 21 thành phần;
+  - khung 10 mục giữ số mục;
+  - luật có tên: One Accent, Dark Block, Big Display, Proportional Figures;
+  - §9 giữ số ba quy tắc, thêm các luật vô hình và bảng 42 dòng "luật cũ đã nhường cho Feed";
+  - §7 tả gọn quản trị v3, chi tiết ở `git show c018134:DESIGN.md`.
+- **`.impeccable/design.json`** viết lại theo schema 2.
+- **Máy dò thiết kế** (`detect --json app components`): 176 → 12 phát hiện, mã Feed 0. Phiên chính thêm 5 ignore có lý do:
+  - lò xo `--f-spring` ở `feed.css` (QĐ-36 #8);
+  - bo 1–2px ở `admin.css`, `checkout.css` và màu `#7a6f5a` ở `interaction.css`: hệ v3 quản trị, **gỡ khi vòng quản trị Feed
+    thay tệp**.
+
+  Còn **0**.
+- **Phiên chính sửa sau duyệt:**
+  - "Mona Sans chỉ tải trước ở route Feed" sai: `/admin` cũng tải trước 3 tệp đó (đo header `Link`);
+  - nhãn quản trị là "Dữ liệu mẫu", không phải "dữ liệu mô phỏng";
+  - tên agent tự đặt "Ứng dụng drop" / "Xanh drop" đổi thành "Ứng dụng lướt" / "Xanh nhấn", theo chữ `idea` của `direction.json`;
+  - §7 thêm một dòng: chú giải trong mã quản trị trích §5/§6/§8 là số mục bản v3.
+- **Phiên chính đã kiểm với code:** token `--f-*`, bảng z-index, `min-width:1180px`, thanh bên 208px, tham chiếu SNKRS / CONFIRMED /
+  StockX / GOAT, các luật v3 trong bảng nhường (`translateY(1px)`, transition ≤ 0,5s, nút vô hiệu `--gold-50`, focus bo
+  `--r-sm`).
+- **Tài liệu khác sửa theo:**
+  - `backend-implementer.md`: kho thiết bị nay ở §1;
+  - `ui-implementer.md`: DESIGN.md tả Feed và quản trị v3; quản trị ghi DB từ B3b, nhãn "Dữ liệu mẫu";
+  - `PRODUCT.md`: hệ qua v2–v4; ID Unsplash ở `lib/photos.ts`;
+  - chú giải `components/shop/CatalogContext.tsx`.

@@ -236,6 +236,51 @@
         ],
         "createdAt": "2026-09-24T16:36:32.256Z",
         "reason": "False positive: hairline column dividers of the comparison grid and a joined segmented control whose buttons fill its height"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "*",
+        "files": [
+          "app/styles/feed/feed.css"
+        ],
+        "createdAt": "2026-09-30T11:17:24.680Z",
+        "reason": "QĐ-36 #8 (người dùng, 27/09/2026): lò xo --f-spring cubic-bezier(.2,.9,.2,1.05) là chuyển động đã chốt của Feed; DESIGN.md §6."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "2px",
+        "files": [
+          "app/styles/admin.css"
+        ],
+        "createdAt": "2026-09-30T11:17:24.726Z",
+        "reason": "Quản trị giữ hệ v3 tới vòng mock quản trị Feed (QĐ-32); DESIGN.md §7. Gỡ ignore này khi vòng quản trị thay tệp."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "1px",
+        "files": [
+          "app/styles/admin.css"
+        ],
+        "createdAt": "2026-09-30T11:17:24.776Z",
+        "reason": "Quản trị giữ hệ v3 tới vòng mock quản trị Feed (QĐ-32); DESIGN.md §7. Gỡ ignore này khi vòng quản trị thay tệp."
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "2px",
+        "files": [
+          "app/styles/checkout.css"
+        ],
+        "createdAt": "2026-09-30T11:17:24.824Z",
+        "reason": "Quản trị giữ hệ v3 tới vòng mock quản trị Feed (QĐ-32); DESIGN.md §7. Gỡ ignore này khi vòng quản trị thay tệp."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#7a6f5a",
+        "files": [
+          "app/styles/interaction.css"
+        ],
+        "createdAt": "2026-09-30T11:17:24.886Z",
+        "reason": "Quản trị giữ hệ v3 tới vòng mock quản trị Feed (QĐ-32); DESIGN.md §7. Gỡ ignore này khi vòng quản trị thay tệp."
       }
     ]
   }

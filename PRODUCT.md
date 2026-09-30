@@ -73,7 +73,8 @@ Thanh điều hướng của cửa hàng mang lockup không số, chữ cao 62,5
 
 Tất cả sinh bằng `scripts/brand-assets.ts`. Chân trang, thanh bên quản trị và phiếu giao hàng vẫn là chữ HIVE.
 
-Hệ thiết kế (màu, chữ, giọng) đã chốt qua các đợt v2–v3; nguồn sự thật là `DESIGN.md`, không lặp lại ở đây.
+Hệ thiết kế (màu, chữ, giọng) đã chốt qua các đợt v2–v4: phần khách theo Feed từ đợt v4, quản trị còn v3 tới vòng mock
+riêng. Nguồn sự thật là `DESIGN.md`, không lặp lại ở đây.
 
 **Quy trình đã được người dùng nêu rõ:** hướng thiết kế phải được họ duyệt
 **trước khi** viết code. Một câu mô tả thẩm mỹ là ràng buộc, không phải lời duyệt.
@@ -93,7 +94,7 @@ Hệ quả bắt buộc cho mọi công việc sau này:
   - Mỗi tệp mang XMP ghi nguồn gốc AI (IPTC `trainedAlgorithmicMedia`) và prompt.
   - Đây là ảnh của **thiết kế**, không phải ảnh chụp hàng đã may (ghi 26/09/2026).
 - Ảnh bìa trang chủ, các mẫu Số 03/04 và hai mẫu hé lộ Số 06 vẫn là **ảnh thay thế** từ Unsplash (ID ghi trong
-  `lib/photos.ts` và DESIGN.md §1). Không phải ảnh sản phẩm thật và không được trình bày như thật (ghi 23/09/2026; phạm vi
+  `lib/photos.ts`, `PHOTO_IDS`; bảng nguồn ở `git show c018134:DESIGN.md` §1). Không phải ảnh sản phẩm thật và không được trình bày như thật (ghi 23/09/2026; phạm vi
   thu hẹp 26/09/2026).
 - Tám mẫu cố định dùng **hình phẳng**: 17 PNG ở `public/flats/`, vẽ bằng `scripts/flats.ts` từ `lib/flats.ts`, mỗi tệp có ghi
   nguồn gốc. Đây là hình vẽ, không phải ảnh, và dùng tới khi có ảnh thật (ghi 25/09/2026).
