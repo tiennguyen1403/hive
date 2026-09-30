@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { CUSTOMERS } from "@/data/customers";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
+import type { Product } from "@/data/types";
 import { buildCatalog } from "@/lib/catalog";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
@@ -268,6 +269,14 @@ const terms = (over: Record<string, unknown> = {}) => ({
 
 let manager: Client;
 let minhanh: Client;
+
+/**
+ * The styles without `lastSoldAt` (slice B12): the database reads when each
+ * colour last sold off the orders and the fixture keeps no sales, so a
+ * comparison with the fixture leaves it out (`catalog-moments.dbtest.ts`
+ * checks it against the orders).
+ */
+const undated = (products: readonly Product[]): Product[] => products.map(({ lastSoldAt: _sold, ...p }) => p);
 
 beforeAll(async () => {
   manager = await signedIn(DEMO_ADMIN.email);
@@ -649,9 +658,11 @@ describe("admin_add_teaser", () => {
 
   it("adds a teaser last, and the catalogue — the home page's source — carries it", async () => {
     const before = await eventCount();
-    const { error } = await manager.rpc("admin_add_teaser", teaser());
+    const at = now();
+    const { error } = await manager.rpc("admin_add_teaser", teaser({ p_now: at }));
     expect(error).toBeNull();
     const teasers = (await snapshot()).teasers;
+    // Announced the moment it was added (slice B12).
     expect(teasers.at(-1)).toEqual({
       slug: "thu-6",
       name: "THỬ",
@@ -659,6 +670,7 @@ describe("admin_add_teaser", () => {
       family: "JACKET",
       dropNo: 6,
       photoKey: "suong",
+      announcedAt: at,
     });
     expect(teasers).toHaveLength(FIXTURE_CATALOG.teasers.length + 1);
     expect(await eventCount()).toBe(before + 1);
@@ -974,13 +986,13 @@ describe("reset_demo after the catalogue was worked on", () => {
 
     await resetTo(FIXTURE_ANCHOR);
     const catalog = await snapshot();
-    expect(catalog.products).toEqual([...FIXTURE_CATALOG.products]);
+    expect(undated(catalog.products)).toEqual([...FIXTURE_CATALOG.products]);
     expect(catalog.drops).toEqual([...FIXTURE_CATALOG.drops]);
     expect(catalog.teasers).toEqual([...FIXTURE_CATALOG.teasers]);
     expect(catalog.promotions).toEqual([...FIXTURE_CATALOG.promotions]);
     // The manager, who also sees the styles of issues that have not opened,
     // sees exactly the fixture too: SỎI is gone, not hidden.
-    expect((await snapshotAs(manager)).products).toEqual([...FIXTURE_CATALOG.products]);
+    expect(undated((await snapshotAs(manager)).products)).toEqual([...FIXTURE_CATALOG.products]);
 
     const catalogEvents = await service
       .from("events")

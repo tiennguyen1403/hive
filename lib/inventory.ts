@@ -76,6 +76,17 @@ export function isSoldOut(p: Product): boolean {
 }
 
 /**
+ * When a colour last sold (backend slice B12): the moment the most recent
+ * order still in force that took a piece of it was placed, as the catalogue
+ * carries it (`Product.lastSoldAt`) — or null for a colour nobody has bought,
+ * for a colour the catalogue did not date, and for a style read from a source
+ * that dates none (the fixture, a database before B12).
+ */
+export function lastSoldAtOf(p: Pick<Product, "lastSoldAt">, color: ColorKey): string | null {
+  return p.lastSoldAt?.[color] ?? null;
+}
+
+/**
  * Sizes with nothing left — in the chosen colour when one is given, otherwise
  * across the whole style. Scarcity is content, not a warning: the shopper is
  * told before reaching for the button, not after.

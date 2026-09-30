@@ -173,6 +173,35 @@ function readDetails(source: Record<string, unknown>, path: string): string[] {
   });
 }
 
+/**
+ * When each colour last sold (slice B12): `catalog_snapshot()` writes one key
+ * per colour the style comes in, an instant or null. Read into the same shape
+ * with every colour of the style spelled out — a colour the document leaves
+ * out is null, as the brief reads a missing key — and a colour the style does
+ * not come in refused by name, as `readStock` refuses one.
+ *
+ * `undefined` when the style carries no `lastSoldAt` at all, or null: a
+ * database the B12 migration has not reached. The product then has no field,
+ * and `lastSoldAtOf` reads every colour as null.
+ */
+function readLastSold(
+  source: Record<string, unknown>,
+  colors: readonly ColorKey[],
+  path: string,
+): Partial<Record<ColorKey, string | null>> | undefined {
+  if (source.lastSoldAt === undefined || source.lastSoldAt === null) return undefined;
+  const at = `${path}.lastSoldAt`;
+  const sold = record(source.lastSoldAt, at);
+  for (const key of Object.keys(sold)) {
+    if (!(colors as readonly string[]).includes(key)) fail(`${at}.${key}`, "is a colour the style does not come in");
+  }
+  const out: Partial<Record<ColorKey, string | null>> = {};
+  for (const color of colors) {
+    out[color] = sold[color] === undefined || sold[color] === null ? null : instant(sold, color, at);
+  }
+  return out;
+}
+
 function readProduct(value: unknown, path: string): Product {
   const source = record(value, path);
 
@@ -224,6 +253,10 @@ function readProduct(value: unknown, path: string): Product {
   const soldOutAt = optionalInstant(source, "soldOutAt", path);
   if (soldOutAt !== undefined) product.soldOutAt = soldOutAt;
 
+  // Absent, too, when the database wrote none (slice B12).
+  const lastSoldAt = readLastSold(source, colors, path);
+  if (lastSoldAt !== undefined) product.lastSoldAt = lastSoldAt;
+
   return product;
 }
 
@@ -246,6 +279,9 @@ function readTeaser(value: unknown, path: string): Teaser {
     family: member<Family>(FAMILIES, source, "family", path),
     dropNo: integer(source, "dropNo", path),
     photoKey: text(source, "photoKey", path),
+    // Slice B12. Null when none was recorded, and when the key is missing —
+    // a database the B12 migration has not reached.
+    announcedAt: optionalInstant(source, "announcedAt", path) ?? null,
   };
 }
 

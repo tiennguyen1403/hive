@@ -155,6 +155,21 @@ export interface Product {
    * issue's window; `catalog.test.ts` pins both.
    */
   soldOutAt?: string;
+  /**
+   * When each colour last sold (backend slice B12), for the Feed inbox's
+   * "BỤI đen còn 1 chiếc": per colour the style comes in, the moment the most
+   * recent order still in force that took a piece of it was placed — not a
+   * cancelled order, nor a transfer past its hold — or null for a colour
+   * nobody has bought. One instant per colour and nothing else about any
+   * order: no code, no quantity, no buyer.
+   *
+   * Read off the orders by the database every time the catalogue is read
+   * (`catalog_last_sold()`), never stored, so the fixture has none. Absent on
+   * a style from the fixture or from a database the B12 migration has not
+   * reached; a colour missing from it reads as null too. Read it with
+   * `lastSoldAtOf` (`lib/inventory.ts`).
+   */
+  lastSoldAt?: Partial<Record<ColorKey, string | null>>;
   stock: Stock;
   /**
    * The photo of each colour, in band order: a key `lib/photos.ts` turns into
@@ -213,6 +228,15 @@ export interface Teaser {
   family: Family;
   dropNo: number;
   photoKey: string;
+  /**
+   * When it was announced (backend slice B12), for the Feed inbox's "Số 06
+   * công bố: SỎI và NGÓI": the moment the back office added it, or for a
+   * sample teaser the fixture's own, authored by the mock's offset
+   * (`TEASER_LEAD_HOURS` in `data/catalog.ts`) and moved by every reset with
+   * the rest of the sample. Null when nobody recorded one — a teaser from a
+   * database the B12 migration has not reached.
+   */
+  announcedAt: string | null;
 }
 
 // ───────────────────────────────────────────────────────────────── customers

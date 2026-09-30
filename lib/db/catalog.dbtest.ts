@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
-import { SIZES } from "@/data/types";
+import { SIZES, type Product } from "@/data/types";
 import { buildCatalog } from "@/lib/catalog";
 import { parseCatalogSnapshot } from "./catalog-snapshot";
 import type { Database } from "./database.types";
@@ -79,6 +79,14 @@ async function resetToRealAnchor() {
 
 afterAll(resetToRealAnchor);
 
+/**
+ * The styles without `lastSoldAt` (slice B12): the database reads when each
+ * colour last sold off the orders, and the fixture keeps no sales of its own,
+ * so the two are compared without it — and it is checked against the orders
+ * in `catalog-moments.dbtest.ts`.
+ */
+const undated = (products: readonly Product[]): Product[] => products.map(({ lastSoldAt: _sold, ...p }) => p);
+
 describe("the catalogue in Postgres", () => {
   let catalog: Awaited<ReturnType<typeof snapshot>>;
 
@@ -101,7 +109,7 @@ describe("the catalogue in Postgres", () => {
   // and `currentDropNo` from exactly these, so comparing the inputs compares
   // everything, and a Map's diff is unreadable when it fails.
   it("gives back the fixture's styles, in the fixture's order", () => {
-    expect(catalog.products).toEqual([...FIXTURE_CATALOG.products]);
+    expect(undated(catalog.products)).toEqual([...FIXTURE_CATALOG.products]);
   });
 
   it("gives back the fixture's drops, teasers and promotions", () => {
@@ -186,6 +194,6 @@ describe("reset_demo", () => {
     expect(after.drops).toEqual(before.drops);
     expect(after.teasers).toEqual(before.teasers);
     expect(after.promotions).toEqual(before.promotions);
-    expect(after.products).toEqual([...FIXTURE_CATALOG.products]);
+    expect(undated(after.products)).toEqual([...FIXTURE_CATALOG.products]);
   });
 });

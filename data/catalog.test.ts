@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
-import { CATALOG, DROPS, CURRENT_DROP_NO } from "./catalog";
+import { CATALOG, DROPS, CURRENT_DROP_NO, TEASERS, TEASER_LEAD_HOURS } from "./catalog";
 import { COLORS } from "./colors";
 import { FIXTURE_CATALOG } from "./fixture-catalog";
 import { COLOR_KEYS, SIZES } from "./types";
@@ -392,5 +392,71 @@ describe("the construction lines (backend slice B6)", () => {
     const others = CATALOG.filter((p) => p.dropNo !== CURRENT_DROP_NO);
     expect(others).toHaveLength(19);
     for (const p of others) expect(p.details, p.slug).toEqual([]);
+  });
+});
+
+/**
+ * When the teasers were announced (backend slice B12): sample data authored by
+ * one rule, `TEASER_LEAD_HOURS` before the issue opens, taken from the Feed
+ * mock's own inbox. Read out of the mock rather than retyped, as the lines
+ * above are: its `NOTIFICATIONS` is a plain literal, and the opening is the
+ * issue's own line in `ISSUES`.
+ */
+function feedNotifications(): Array<{ kind: string; at: string; title: string; issue?: number }> {
+  const start = "const NOTIFICATIONS = [";
+  const end = "\n  ];";
+  const from = FEED_DATA.indexOf(start);
+  expect(from, "the mock no longer has NOTIFICATIONS").toBeGreaterThan(-1);
+  const to = FEED_DATA.indexOf(end, from);
+  expect(to, "the mock's NOTIFICATIONS no longer ends where it did").toBeGreaterThan(from);
+  return new Function(`${FEED_DATA.slice(from, to + end.length)}\nreturn NOTIFICATIONS;`)() as Array<{
+    kind: string;
+    at: string;
+    title: string;
+    issue?: number;
+  }>;
+}
+
+function feedOpening(no: number): string {
+  const line = new RegExp(`\{ no: ${no}, opensAt: "([^"]+)"`).exec(FEED_DATA);
+  expect(line, `the mock's ISSUES has no issue ${no}`).not.toBeNull();
+  return line![1]!;
+}
+
+const HOUR = 3_600_000;
+
+describe("the teasers' announcement (backend slice B12)", () => {
+  it("is the mock's own offset: Số 06 announced at 12:00 on 18/09 for 20:00 on 02/10", () => {
+    const told = feedNotifications().filter((n) => n.kind === "drop" && n.issue === 6 && n.title.startsWith("Số 06 công bố"));
+    expect(told).toHaveLength(1);
+    expect(told[0]!.at).toBe("2026-09-18T12:00:00+07:00");
+    expect(feedOpening(6)).toBe("2026-10-02T20:00:00+07:00");
+    expect((Date.parse(feedOpening(6)) - Date.parse(told[0]!.at)) / HOUR).toBe(TEASER_LEAD_HOURS);
+    expect(TEASER_LEAD_HOURS).toBe(14 * 24 + 8);
+  });
+
+  it("dates every sample teaser TEASER_LEAD_HOURS before its issue opens — Số 06's at the mock's own minute", () => {
+    expect(TEASERS.length).toBeGreaterThan(0);
+    for (const t of TEASERS) {
+      const drop = DROPS.find((d) => d.no === t.dropNo)!;
+      expect(t.announcedAt, t.slug).not.toBeNull();
+      expect((Date.parse(drop.opensAt) - Date.parse(t.announcedAt!)) / HOUR, t.slug).toBe(TEASER_LEAD_HOURS);
+      expect(t.announcedAt, t.slug).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+07:00$/);
+    }
+    expect(TEASERS.filter((t) => t.dropNo === 6).map((t) => t.announcedAt)).toEqual([
+      "2026-09-18T12:00:00+07:00",
+      "2026-09-18T12:00:00+07:00",
+    ]);
+  });
+
+  it("changes none of the fixture's other teaser fields", () => {
+    expect(TEASERS.map(({ announcedAt: _told, ...t }) => t)).toEqual([
+      { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong" },
+      { slug: "s06-ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi" },
+    ]);
+  });
+
+  it("dates no style's sales: lastSoldAt is read off the orders by the database, never kept in the fixture", () => {
+    expect(CATALOG.filter((p) => p.lastSoldAt !== undefined)).toEqual([]);
   });
 });

@@ -343,9 +343,9 @@ insert into public.seed_stock_cells (product_id, color, size, on_hand) values
   ('p-quan-short-ni', 'black', 'L', 7),
   ('p-quan-short-ni', 'black', 'XL', 0);
 
-insert into public.seed_teasers (slug, name, kind, family, drop_no, photo_key, position) values
-  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0),
-  ('s06-ngoi', 'NGÓI', 'Áo hoodie in', 'HOODIE', 6, 'nguoi', 1);
+insert into public.seed_teasers (slug, name, kind, family, drop_no, photo_key, position, announced_at) values
+  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0, '2026-09-18T12:00:00+07:00'::timestamptz),
+  ('s06-ngoi', 'NGÓI', 'Áo hoodie in', 'HOODIE', 6, 'nguoi', 1, '2026-09-18T12:00:00+07:00'::timestamptz);
 
 insert into public.seed_promotions (code, kind, percent, max_discount_vnd, amount_vnd, starts_at, ends_at, usage_limit, used_count, min_order_vnd, position, paused) values
   ('DOT05', 'PERCENT', 10, 150000, null, '2026-09-11T20:00:00+07:00'::timestamptz, '2026-09-25T20:00:00+07:00'::timestamptz, 200, 46, 500000, 0, false),

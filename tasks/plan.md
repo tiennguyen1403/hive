@@ -2683,6 +2683,20 @@ xong trong khoảng 35 giây (trạng thái commit trên GitHub; Vercel MCP bị
 - **Kiểm:** 1903/1903 test, 284/284 test DB, typecheck sạch (phiên chính chạy lại). Build sạch. Diff `take_rate` chỉ thêm
   `'lookup'`.
 - **Còn mở:** khách đã đăng nhập tra đơn của người khác, bấm "Xem trang đơn" thì ra 404, như mock.
+
+**Lát B12 ĐẠT (30/09/2026, `backend-implementer`, phiên chính duyệt).** Brief `tasks/briefs/backend-b12.md`.
+- **Migration** `20260930170000_last_sold_announced.sql`:
+  - `teasers.announced_at`;
+  - hàm `catalog_last_sold()` (definer): mốc đặt gần nhất cho mỗi màu, bỏ đơn huỷ và đơn chuyển khoản quá hạn, chỉ tính mẫu
+    mà catalogue cho người gọi thấy;
+  - `catalog_snapshot` v6 thêm `lastSoldAt` và `announcedAt`;
+  - `admin_add_teaser` ghi lúc thêm; `reset_demo` v10 dời mốc công bố.
+- **Mã:** `Product.lastSoldAt?` (đọc bằng `lastSoldAtOf`), `Teaser.announcedAt`. Hé lộ mẫu công bố trước giờ mở 14 ngày 8 giờ,
+  như mock (`TEASER_LEAD_HOURS`).
+- **Kiểm:** 1917/1917 test, 296/296 test DB, typecheck sạch (phiên chính chạy lại). Build sạch. JSON catalogue không lộ mã đơn
+  hay người mua.
+- **Phiên chính quyết cho 4a:** mỗi Số một dòng "công bố", mốc là lúc công bố sớm nhất trong các hé lộ của Số đó. Tên liệt kê đủ
+  mọi hé lộ.
 - **Mã v3 mồ côi (dọn cuối đợt):**
   - `SignInScreen`, `SignUpScreen`, `ForgotPasswordScreen`, `OrdersScreen`, `OrderDetailScreen`, `CancelOrderSheet`,
     `AddressesScreen`, `AddressFormScreen`;

@@ -190,6 +190,7 @@ describe("a well-formed snapshot", () => {
       { no: 3, opensAt: "2026-03-06T20:00:00+07:00", closesAt: "2026-03-20T20:00:00+07:00" },
       { no: 5, opensAt: "2026-09-11T20:00:00+07:00", closesAt: "2026-09-25T20:00:00+07:00" },
     ]);
+    // This document is an older database's: no `announcedAt`, which reads as null (slice B12).
     expect(input.teasers).toEqual([
       {
         slug: "soi",
@@ -198,6 +199,7 @@ describe("a well-formed snapshot", () => {
         family: "JACKET",
         dropNo: 6,
         photoKey: "suong",
+        announcedAt: null,
       },
     ]);
   });
@@ -427,5 +429,70 @@ describe("a snapshot that is wrong", () => {
   it("refuses a document that is not the four lists", () => {
     expect(() => parseCatalogSnapshot(null)).toThrow("snapshot must be an object");
     expect(() => parseCatalogSnapshot({ products: [] })).toThrow("drops must be an array");
+  });
+});
+
+/**
+ * Slice B12: when each colour last sold (`lastSoldAt`, beside `stock`) and
+ * when a teaser was announced (`announcedAt`). Both read as null when the
+ * database wrote none — a missing key included, which is what a database the
+ * B12 migration has not reached sends.
+ */
+describe("the two moments of slice B12", () => {
+  it("reads when each colour last sold, one key per colour, null for a colour nobody bought", () => {
+    const doc = snapshot();
+    Object.assign(doc.products[0]!, { lastSoldAt: { black: "2026-09-23T10:20:00+07:00", cream: null } });
+    const khoi = parseCatalogSnapshot(doc).products[0]!;
+    expect(khoi.lastSoldAt).toEqual({ black: "2026-09-23T10:20:00+07:00", cream: null });
+  });
+
+  it("reads a colour the document leaves out as null, and spells it out", () => {
+    const doc = snapshot();
+    Object.assign(doc.products[0]!, { lastSoldAt: { cream: "2026-09-26T20:28:00+07:00" } });
+    expect(parseCatalogSnapshot(doc).products[0]!.lastSoldAt).toEqual({
+      black: null,
+      cream: "2026-09-26T20:28:00+07:00",
+    });
+  });
+
+  it("leaves lastSoldAt off a style whose document has none, or null — a database before B12", () => {
+    const absent = parseCatalogSnapshot(snapshot()).products[0]!;
+    expect("lastSoldAt" in absent).toBe(false);
+    const doc = snapshot();
+    Object.assign(doc.products[0]!, { lastSoldAt: null });
+    expect("lastSoldAt" in parseCatalogSnapshot(doc).products[0]!).toBe(false);
+  });
+
+  it("refuses a colour the style does not come in, and a moment that is not an instant, by name", () => {
+    const stranger = snapshot();
+    Object.assign(stranger.products[0]!, { lastSoldAt: { black: null, cream: null, navy: null } });
+    expect(() => parseCatalogSnapshot(stranger)).toThrow(
+      "products[0].lastSoldAt.navy is a colour the style does not come in",
+    );
+    const utc = snapshot();
+    Object.assign(utc.products[0]!, { lastSoldAt: { black: "2026-09-23T03:20:00Z", cream: null } });
+    expect(() => parseCatalogSnapshot(utc)).toThrow(
+      "products[0].lastSoldAt.black must be an ISO instant ending in +07:00",
+    );
+    const list = snapshot();
+    Object.assign(list.products[0]!, { lastSoldAt: ["2026-09-23T10:20:00+07:00"] });
+    expect(() => parseCatalogSnapshot(list)).toThrow("products[0].lastSoldAt must be an object");
+  });
+
+  it("reads when a teaser was announced, and null when the document says null or nothing", () => {
+    const doc = snapshot();
+    doc.teasers.push({ ...doc.teasers[0]!, slug: "ngoi", name: "NGÓI" });
+    Object.assign(doc.teasers[0]!, { announcedAt: "2026-09-18T12:00:00+07:00" });
+    Object.assign(doc.teasers[1]!, { announcedAt: null });
+    const [soi, ngoi] = parseCatalogSnapshot(doc).teasers;
+    expect(soi!.announcedAt).toBe("2026-09-18T12:00:00+07:00");
+    expect(ngoi!.announcedAt).toBeNull();
+    expect(parseCatalogSnapshot(snapshot()).teasers[0]!.announcedAt).toBeNull();
+  });
+
+  it("refuses an announcement that is not an instant, by name", () => {
+    const doc = snapshot();
+    Object.assign(doc.teasers[0]!, { announcedAt: "18/09 12:00" });
+    expect(() => parseCatalogSnapshot(doc)).toThrow("teasers[0].announcedAt must be an ISO instant ending in +07:00");
   });
 });

@@ -5,6 +5,7 @@ import {
   type Teaser,
   productId,
 } from "./types";
+import { addHoursIso } from "@/lib/datetime";
 import { issueCode } from "@/lib/lexicon";
 
 /**
@@ -50,16 +51,38 @@ export const DROPS: Drop[] = [
 ];
 
 /**
+ * How long before an issue opens its teasers are announced (backend slice
+ * B12): fourteen days and eight hours.
+ *
+ * The one rule the sample's announcements are written by, taken from the Feed
+ * mock's own inbox — "Số 06 công bố: SỎI và NGÓI" at 12:00 on 18/09
+ * (`NOTIFICATIONS` in `prototype/explore/shared/data.js`) for an issue that
+ * opens at 20:00 on 02/10 — and held to it by `catalog.test.ts`, which reads
+ * the mock. Sample data authored by a stated rule, like the order moments of
+ * slice B10 (`data/orders.ts`), not a number a screen derives (DESIGN.md §9
+ * rule 1). A teaser the back office adds is announced when it is added.
+ */
+export const TEASER_LEAD_HOURS = 14 * 24 + 8;
+
+/** An issue's announcement: its opening, `TEASER_LEAD_HOURS` earlier. */
+function announcedFor(dropNo: number): string {
+  const drop = DROPS.find((d) => d.no === dropNo);
+  if (!drop) throw new Error(`a teaser for issue ${dropNo}, which DROPS does not have`);
+  return addHoursIso(drop.opensAt, -TEASER_LEAD_HOURS);
+}
+
+/**
  * Styles announced for a drop that has not opened.
  *
  * No price and no stock: "Giá và số lượng công bố đúng lúc mở" is what the
  * upcoming-drop screen promises, and the data has to keep that promise rather
  * than carry the numbers around invisibly. Their photos are borrowed frames
- * — see `lib/photos.ts`.
+ * — see `lib/photos.ts`. Both were announced together, when Số 06 was
+ * (`announcedFor`).
  */
 export const TEASERS: Teaser[] = [
-  { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong" },
-  { slug: "s06-ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi" },
+  { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong", announcedAt: announcedFor(6) },
+  { slug: "s06-ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi", announcedAt: announcedFor(6) },
 ];
 
 export function teasersIn(dropNo: number): Teaser[] {

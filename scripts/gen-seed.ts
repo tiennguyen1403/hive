@@ -323,10 +323,13 @@ export function renderSeedSql(
   );
   parts.push(insert("seed_stock_cells", ["product_id", "color", "size", "on_hand"], stockRows));
 
+  // `announced_at` (slice B12): when the teaser was announced, as the fixture
+  // authors it (`TEASER_LEAD_HOURS` in `data/catalog.ts`); `reset_demo()`
+  // moves it with every other instant.
   parts.push(
     insert(
       "seed_teasers",
-      ["slug", "name", "kind", "family", "drop_no", "photo_key", "position"],
+      ["slug", "name", "kind", "family", "drop_no", "photo_key", "position", "announced_at"],
       input.teasers.map((t, index) => [
         str(t.slug),
         str(t.name),
@@ -335,6 +338,7 @@ export function renderSeedSql(
         num(t.dropNo),
         str(t.photoKey),
         num(index),
+        tsOrNull(t.announcedAt),
       ]),
     ),
   );

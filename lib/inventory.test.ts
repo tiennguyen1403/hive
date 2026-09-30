@@ -12,6 +12,7 @@ import {
   isFixed,
   isIssueStyle,
   isRunningLow,
+  lastSoldAtOf,
   lowStockIn,
   onHand,
   productsInDrop,
@@ -466,5 +467,22 @@ describe("familyGroupsOf · 'Theo loại' over everything on sale", () => {
 
   it("is what familyGroupsIn draws for one issue", () => {
     expect(familyGroupsOf(productsInDrop(FIXTURE_CATALOG, 5))).toEqual(familyGroupsIn(FIXTURE_CATALOG, 5));
+  });
+});
+
+// Slice B12: when a colour last sold, as the catalogue carries it.
+describe("lastSoldAtOf", () => {
+  it("reads the colour's moment, and null for a colour nobody bought", () => {
+    const p = { lastSoldAt: { black: "2026-09-23T10:20:00+07:00", cream: null } };
+    expect(lastSoldAtOf(p, "black")).toBe("2026-09-23T10:20:00+07:00");
+    expect(lastSoldAtOf(p, "cream")).toBeNull();
+  });
+
+  it("reads null for a colour the catalogue did not date, and for a style that dates none", () => {
+    expect(lastSoldAtOf({ lastSoldAt: { black: "2026-09-23T10:20:00+07:00" } }, "moss")).toBeNull();
+    expect(lastSoldAtOf({}, "black")).toBeNull();
+    // The fixture dates no sales: they are read off the orders by the database.
+    const khoi = FIXTURE_CATALOG.byId.get("p-khoi" as never)!;
+    for (const color of khoi.colors) expect(lastSoldAtOf(khoi, color)).toBeNull();
   });
 });

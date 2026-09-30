@@ -1056,6 +1056,7 @@ export type Database = {
       }
       seed_teasers: {
         Row: {
+          announced_at: string | null
           drop_no: number
           family: Database["public"]["Enums"]["product_family"]
           kind: string
@@ -1065,6 +1066,7 @@ export type Database = {
           slug: string
         }
         Insert: {
+          announced_at?: string | null
           drop_no: number
           family: Database["public"]["Enums"]["product_family"]
           kind: string
@@ -1074,6 +1076,7 @@ export type Database = {
           slug: string
         }
         Update: {
+          announced_at?: string | null
           drop_no?: number
           family?: Database["public"]["Enums"]["product_family"]
           kind?: string
@@ -1115,6 +1118,7 @@ export type Database = {
       }
       teasers: {
         Row: {
+          announced_at: string | null
           drop_no: number
           family: Database["public"]["Enums"]["product_family"]
           kind: string
@@ -1124,6 +1128,7 @@ export type Database = {
           slug: string
         }
         Insert: {
+          announced_at?: string | null
           drop_no: number
           family: Database["public"]["Enums"]["product_family"]
           kind: string
@@ -1133,6 +1138,7 @@ export type Database = {
           slug: string
         }
         Update: {
+          announced_at?: string | null
           drop_no?: number
           family?: Database["public"]["Enums"]["product_family"]
           kind?: string
@@ -1299,6 +1305,14 @@ export type Database = {
       cancel_order: {
         Args: { p_code: string; p_now: string }
         Returns: undefined
+      }
+      catalog_last_sold: {
+        Args: never
+        Returns: {
+          color: Database["public"]["Enums"]["color_key"]
+          product_id: string
+          sold_at: string
+        }[]
       }
       catalog_snapshot: { Args: never; Returns: Json }
       demo_anchor: { Args: { p_at?: string }; Returns: string }

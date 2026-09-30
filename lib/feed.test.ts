@@ -117,7 +117,7 @@ describe("pictures", () => {
   });
 
   it("draws a teaser as its garment's flat silhouette, never another style's photo", () => {
-    const t = (family: Teaser["family"]): Teaser => ({ slug: "x", name: "X", kind: "Áo", family, dropNo: 6, photoKey: "suong" });
+    const t = (family: Teaser["family"]): Teaser => ({ slug: "x", name: "X", kind: "Áo", family, dropNo: 6, photoKey: "suong", announcedAt: null });
     expect(teaserPicture(t("JACKET"))).toBe("/flats/jacket-black.png");
     expect(teaserPicture(t("HOODIE"))).toBe("/flats/hoodie-black.png");
     expect(teaserPicture(t("PANTS"))).toBe("/flats/trousers-black.png");

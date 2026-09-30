@@ -166,6 +166,14 @@ const khoiBlackM = (qty = 1): LineIn => ({ productId: "p-khoi", color: "black", 
 /** The eight as the fixture has them — what the database must give back. */
 const FIXED_IN_FIXTURE: Product[] = FIXTURE_CATALOG.products.filter(isFixed);
 
+/**
+ * The styles without `lastSoldAt` (slice B12): the database reads when each
+ * colour last sold off the orders and the fixture keeps no sales, so a
+ * comparison with the fixture leaves it out (`catalog-moments.dbtest.ts`
+ * checks it against the orders).
+ */
+const undated = (products: readonly Product[]): Product[] => products.map(({ lastSoldAt: _sold, ...p }) => p);
+
 beforeAll(async () => {
   const client = fresh();
   const { error } = await client.auth.signInWithPassword({ email: DEMO_ADMIN.email, password: demoPassword! });
@@ -189,7 +197,7 @@ describe("catalog_snapshot and fixed styles", () => {
     expect(dropState(five, demoNow())).toBe("OPEN");
 
     const fixed = catalog.products.filter(isFixed);
-    expect(fixed).toEqual(FIXED_IN_FIXTURE);
+    expect(undated(fixed)).toEqual(FIXED_IN_FIXTURE);
     for (const p of fixed) {
       expect(p.dropNo).toBeNull();
       expect(p.cutUnits).toBeNull();
@@ -203,7 +211,7 @@ describe("catalog_snapshot and fixed styles", () => {
     await resetTo(toVnIso(new Date(Date.now() - 8 * 86_400_000)));
     const catalog = await snapshotAs(anon);
     expect(catalog.drops.map((d) => dropState(d, demoNow()))).not.toContain("OPEN");
-    expect(catalog.products.filter(isFixed)).toEqual(FIXED_IN_FIXTURE);
+    expect(undated(catalog.products.filter(isFixed))).toEqual(FIXED_IN_FIXTURE);
     // And the raw document says null, not a missing key.
     const { data } = await anon.rpc("catalog_snapshot");
     const tee = (data as { products: Array<Record<string, unknown>> }).products.find((p) => p.id === TEE)!;
@@ -477,8 +485,8 @@ describe("reset_demo and fixed styles", () => {
 
     await resetTo(FIXTURE_ANCHOR);
     const catalog = await snapshotAs(anon);
-    expect(catalog.products.filter(isFixed)).toEqual(FIXED_IN_FIXTURE);
+    expect(undated(catalog.products.filter(isFixed))).toEqual(FIXED_IN_FIXTURE);
     expect(catalog.byId.has("p-ao-mua" as never)).toBe(false);
-    expect(catalog.products).toEqual([...FIXTURE_CATALOG.products]);
+    expect(undated(catalog.products)).toEqual([...FIXTURE_CATALOG.products]);
   });
 });

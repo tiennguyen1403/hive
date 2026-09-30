@@ -114,6 +114,29 @@ describe("the generator itself", () => {
     expect(quoted).toContain("'KH''ÓI'");
   });
 
+  // Slice B12: `seed_teasers.announced_at`, when each sample teaser was announced.
+  it("writes each teaser's announcement last, as the fixture authors it", () => {
+    const start = sql.indexOf("insert into public.seed_teasers (");
+    expect(sql.slice(start, sql.indexOf("\n", start))).toBe(
+      "insert into public.seed_teasers (slug, name, kind, family, drop_no, photo_key, position, announced_at) values",
+    );
+    expect(rowsIn(sql, "seed_teasers")).toEqual([
+      "  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0, '2026-09-18T12:00:00+07:00'::timestamptz),",
+      "  ('s06-ngoi', 'NGÓI', 'Áo hoodie in', 'HOODIE', 6, 'nguoi', 1, '2026-09-18T12:00:00+07:00'::timestamptz)",
+    ]);
+  });
+
+  it("writes null for a teaser with no announcement, never a guess", () => {
+    const input = fixtureInput();
+    const unknown = renderSeedSql(
+      { ...input, teasers: [{ ...input.teasers[0]!, announcedAt: null }] },
+      fixtureCustomers(),
+      fixtureOrders(),
+      fixtureStates(),
+    );
+    expect(rowsIn(unknown, "seed_teasers")).toEqual(["  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0, null)"]);
+  });
+
   // Slice B6: `seed_products.details`, the style's construction lines.
   describe("the construction lines", () => {
     const rows = rowsIn(sql, "seed_products");
