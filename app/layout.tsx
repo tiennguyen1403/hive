@@ -3,6 +3,7 @@ import { Be_Vietnam_Pro, Unbounded } from "next/font/google";
 import { CartProvider } from "@/components/cart/CartContext";
 import { MeProvider } from "@/components/account/MeContext";
 import { MyStateProvider } from "@/components/account/MyStateContext";
+import { monaSans } from "@/components/feed/font";
 import { CatalogProvider } from "@/components/shop/CatalogContext";
 import { WaitVeil } from "@/components/shop/WaitVeil";
 import { catalogInput, loadCatalog } from "@/lib/db/catalog";
@@ -113,10 +114,14 @@ export default async function RootLayout({
   // not one commit later. Null signed out.
   const [catalog, me, myState] = await Promise.all([loadCatalog(), loadMe(), getMyState()]);
 
+  // `--font-mona` on <html> as well as on the Feed zone's root (round v5
+  // slice 0): the Arc back office sets both of its type roles in Mona Sans
+  // (QĐ-38), and its Dialog, Select, menus and toasts render straight into
+  // <body>, outside any zone root, so the variable has to exist at the top.
   return (
     <html
       lang="vi"
-      className={`${beVietnamPro.variable} ${unbounded.variable}`}
+      className={`${beVietnamPro.variable} ${unbounded.variable} ${monaSans.variable}`}
       suppressHydrationWarning
     >
       <body>

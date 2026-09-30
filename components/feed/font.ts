@@ -25,11 +25,12 @@ import { Mona_Sans } from "next/font/google";
  * alone still wrote the Arial face.
  *
  * Its own variable, `--font-mona`: `--font-sans` and `--font-display` stay the
- * v3 pair's. Defined in this module and applied by the Feed zone's root
- * (`feedFontClass`, `FeedScope.tsx`), not by the root layout, so it is
- * preloaded only on the routes that render a Feed screen (same doc, "Using
- * Multiple Fonts": "This ensures the font is preloaded only when it's
- * rendered") and the back office loads nothing new.
+ * v3 pair's. Applied by the Feed zone's root (`feedFontClass`,
+ * `FeedScope.tsx`) and, since round v5 slice 0, by the root layout's <html>
+ * too: the Arc back office sets its text in Mona Sans (QĐ-38), and its layers
+ * portalled to <body> can only read a variable defined at the top. DESIGN.md
+ * §3 records that every route, the back office included, already preloaded
+ * these three files.
  */
 export const monaSans = Mona_Sans({
   subsets: ["latin", "latin-ext", "vietnamese"],

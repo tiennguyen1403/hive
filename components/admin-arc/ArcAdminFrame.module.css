@@ -1,0 +1,28 @@
+/* The root of the Arc zone (round v5 slice 0). It carries `data-ui="admin"`,
+   which is what turns on the tokens of `registry/foundation.css`: every rule
+   there is scoped `:root:has([data-ui="admin"])`, so outside this element the
+   v3 back office and the shop do not change by a pixel.
+
+   Desktop only, like the v3 frame (`.s.adm3`): below 1180px the page scrolls
+   sideways rather than folding. */
+
+.frame {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  align-items: start;
+  min-width: 1180px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  letter-spacing: var(--tracking-body);
+  line-height: var(--leading-body);
+}
+
+/* The one page container (skill-composition.md): 32px of padding, the full
+   width of its column, and nothing inside it adds a second gutter. */
+.main {
+  min-width: 0;
+  padding: var(--space-8);
+}

@@ -1,0 +1,32 @@
+/* The body of the Arc back office's dialogs: fields, then one row of actions.
+   Arc's `DialogContent` owns the panel, the header and the body padding; this
+   file only lays out what goes inside it, on the 4px grid with Arc tokens. */
+
+.fields {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* A field and the line that names its problem stay one group. */
+.field {
+  display: grid;
+}
+
+/* The same line Arc's `Input` draws for `error`, for a `Select`, which has none. */
+.error {
+  margin: 0;
+  padding-top: var(--space-2);
+  color: var(--danger);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.fields + .actions {
+  margin-top: var(--space-6);
+}

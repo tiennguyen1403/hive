@@ -281,6 +281,12 @@
         ],
         "createdAt": "2026-09-30T11:17:24.886Z",
         "reason": "Quản trị giữ hệ v3 tới vòng mock quản trị Feed (QĐ-32); DESIGN.md §7. Gỡ ignore này khi vòng quản trị thay tệp."
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "var(--duration-spring)",
+        "createdAt": "2026-09-30T13:58:57.007Z",
+        "reason": "main session 30/09: Arc library internal motion (registry/components/dialog), kit adopted as-is by QĐ-37; gentle-settle spring token, not project-authored; revisit if the user rejects Arc motion at the slice-0 review"
       }
     ]
   }

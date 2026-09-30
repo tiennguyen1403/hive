@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { AdminOrdersScreen } from "@/components/admin/AdminOrdersScreen";
+import { ArcOrdersScreen } from "@/components/admin-arc/ArcOrdersScreen";
 import { queryOf } from "@/lib/admin-url";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
@@ -27,5 +27,8 @@ export default async function AdminOrdersPage(props: PageProps<"/admin/orders">)
   await connection();
   const sp = await props.searchParams;
   const orders = await listAllOrders();
-  return <AdminOrdersScreen orders={orders} nowIso={toVnIso(demoNow())} query={queryOf(sp)} />;
+  // The Arc screen since round v5 slice 0; the admin layout wraps it in the
+  // Arc frame (`ARC_ADMIN_PATHS`). The v3 `AdminOrdersScreen` stays in the
+  // tree until the clean-up slice, which also moves its `SearchBox`.
+  return <ArcOrdersScreen orders={orders} nowIso={toVnIso(demoNow())} query={queryOf(sp)} />;
 }

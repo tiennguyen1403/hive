@@ -2927,3 +2927,83 @@ chính nhắn nó viết ngay, lượt hai thì xong.
   - `ui-implementer.md`: DESIGN.md tả Feed và quản trị v3; quản trị ghi DB từ B3b, nhãn "Dữ liệu mẫu";
   - `PRODUCT.md`: hệ qua v2–v4; ID Unsplash ở `lib/photos.ts`;
   - chú giải `components/shop/CatalogContext.tsx`.
+
+## Đợt v5: quản trị theo Arc *(30/09/2026)*
+
+**Bối cảnh.** Phần khách đã theo Feed và đã lên demo. Kế hoạch cũ là một vòng mock quản trị theo Feed. Ngày 30/09 người dùng
+tìm thấy **Arc** (uiarc.dev, `kuratlielia/arc-library`, MIT) và muốn dùng nó cho quản trị thay vì làm lại theo Feed. Phiên
+chính cài thử 19 component trong một worktree tạm, build production rồi đo trong Chrome. Worktree đã xoá, repo không đổi. Kết
+quả:
+- **Đạt:**
+  - Arc dựng trên Next 16.3.5 và React 19.3, khớp phiên bản dự án;
+  - Arc dùng CSS Modules và biến CSS, không dùng tiện ích Tailwind (không đụng QĐ-23);
+  - TS 7 sạch, 1.643 test xanh, build qua.
+- **Bẫy cài đặt:** thiếu `components.json` thì `shadcn add` chạy `shadcn init`. Lệnh này:
+  - ghi đè `components/ui/Button.tsx`, vì Windows không phân biệt hoa thường;
+  - thêm `* { @apply outline-ring/50 }` vào `globals.css`;
+  - chèn Geist (chỉ bộ chữ latin) vào root layout.
+- **`foundation.css` là toàn cục:**
+  - `--font-display` trùng tên token dự án, nên tiêu đề v3 mất Unbounded;
+  - luật `outline: none !important` cho mọi `:focus` xoá vòng focus bàn phím, cả vòng xanh của Feed;
+  - CSS còn nằm lại khi chuyển trang phía client sang cửa hàng.
+- **CSS `.s.adm3` lấn vào component Arc** đặt trong khung v3: tiêu đề cột in hoa 11px, thêm padding, bảng cuộn ngang.
+- **Chưa Việt hoá:** khoảng 45 chuỗi tiếng Anh, lịch bắt đầu Chủ nhật, số in kiểu `en-US`.
+- **Bản free thiếu:** Button không làm link được; bảng chỉ sắp xếp phía trình duyệt; sidebar, Data grid và Settings là Pro.
+
+### QĐ-37: Quản trị dùng Arc, chỉ bản free *(30/09/2026)*
+- Arc thay cho vòng mock quản trị Feed. Không mua Pro, không dựng lại item Pro (khung và sidebar tự ghép từ phần free).
+- Làm thử một lát trước: nền tích hợp, khung quản trị và màn Đơn hàng. Màn đó đạt thì mới làm tiếp các màn khác.
+
+### QĐ-38: Màu xám trung tính của Arc, chữ Mona Sans *(30/09/2026)*
+- Giữ accent `neutral` mặc định của Arc, chỉ nền sáng (không bật chế độ tối).
+- Mona Sans rộng 100% cho cả hai vai chữ của Arc (`--font-display`, `--font-body`), thay Geist và Inter.
+
+### QĐ-39: Giữ vòng focus bàn phím *(30/09/2026)*
+- Đè luật "không focus ring" của Arc. Vòng hiện khi đi bằng bàn phím, tắt khi dùng chuột, theo công tắc `data-pointer`
+  sẵn có.
+
+### Luật tích hợp (phiên chính chốt từ phép đo 30/09)
+- **Cài:** `components.json` tối giản, chỉ khai báo registry `@uiarc`, viết tay trước khi cài. Cấm `shadcn init`. Sau mỗi lần
+  cài, `git status` chỉ được có `components.json`, `package*.json`, `registry/`, `lib/motion-tokens.ts`.
+- **Khoanh vùng:** mọi luật của `registry/foundation.css` viết dưới `:root:has([data-ui="admin"])`. Token nằm ở `:root` nên
+  Dialog, Select và menu (portal ra `body`) vẫn nhận; trang nào không có vùng Arc thì không đổi. Import ở layout quản trị,
+  không ở root layout.
+- **Chuyển khung theo đường dẫn:** `ARC_ADMIN_PATHS` quyết màn nào dùng khung Arc, các màn còn lại giữ khung v3 nguyên vẹn.
+  Không trộn component Arc vào khung `.s.adm3`.
+- **Vá Arc:** chỉ khi prop có sẵn không làm được. Vá nhỏ nhất, ghi từng chỗ ở `registry/PATCHES.md`, kèm test chặn chuỗi tiếng
+  Anh gốc quay lại khi cài lại bản mới.
+- **Máy tính trước:** giữ `min-width: 1180px` như khung v3; bản điện thoại cho quản trị để sau.
+
+### Lát
+- **Lát 0 (thử):** nền tích hợp, khung Arc, `/admin/orders`. Brief `tasks/briefs/v5-lat-0.md`. Người dùng xem kết quả rồi mới
+  quyết đi tiếp.
+- **Sau khi đạt, dự kiến:** Tổng quan; chi tiết đơn và phiếu giao; Mẫu (danh sách, form, ảnh); Các số; Khách hàng; Mã giảm
+  giá; Nhật ký. Cuối cùng là lát dọn: bỏ `admin.css`, font v3, Iconsax, khung v3, và các ignore v3 của máy dò thiết kế.
+  DESIGN.md do documenter viết lại khi xong đợt.
+
+**Lát 0 (thử) ĐẠT phiên chính duyệt (30/09/2026, ~22:00). Chờ người dùng xem, chưa commit.** Agent `ui-implementer` chạy ba
+lượt: dựng, sửa bảng, đệm gọn. Người dùng hai lần tự dừng server 3200, vì hệ thống quyền chặn agent dừng nó.
+- **Lượt 1 lộ lỗi:** bảng Arc giữ bề rộng cột bằng `table-layout: fixed`, nên với các cột của v3 chữ bị cắt giữa từ
+  ("DH-/2430"). Phiên chính duyệt hai chỗ vá mới cho `SortableDataTable`:
+  - `holdWidths={false}`: bảng tự dàn cột, rộng hơn thẻ thì cuộn ngang trong thẻ;
+  - `density="compact"`: đệm ngang ô 12px như v3, để bảng vừa khung 1280 mà vẫn giữ luật một dòng của v3.
+- **Thanh công cụ:** bỏ hộp `FilterToolbar` rỗng có chữ "Chưa lọc", vì cạnh ô tìm nó trông như ô nhập thứ hai. Nay là ô tìm,
+  `FilterMenu` "Thêm bộ lọc", chip chỉ hiện khi đang lọc, và "Cột" ở cuối.
+- **Kiểm, agent và phiên chính đo độc lập:**
+  - 1.697 test xanh, typecheck và build sạch;
+  - ở 1280 với bộ cột mặc định, bảng vừa thẻ (959/959), lề 32/32;
+  - Mona Sans ở `h1`, bảng, menu, Popover, Dialog và toast;
+  - vòng focus bàn phím 2px accent ở 52 điểm dừng, bấm chuột thì tắt;
+  - v3 `/admin` giữ Unbounded và khung `.s.adm3`;
+  - trang chủ giữ vòng xanh Feed, không nhận token Arc;
+  - 0 lỗi console;
+  - menu lọc khi đóng nằm trong vùng `inert`.
+- **Số đo cần biết:** JS nén của `/admin/orders` tăng 118 KB (+48%) so với v3. Chữ viết tắt ở Avatar `sm` cỡ 10px, dưới sàn
+  11px; đây là ruột Arc và chữ đã `aria-hidden`. Ở đúng 1180 trang cuộn ngang 15px, như khung v3.
+- **Chỗ vá Arc:** 7 prop hành vi, Việt hoá 10 tệp, khoanh vùng `foundation.css`. Chi tiết ở `registry/PATCHES.md`; test
+  `components/admin-arc/arc-registry.test.ts` chặn chuỗi tiếng Anh gốc quay lại.
+- **Ignore máy dò** (phiên chính): `bounce-easing` = `var(--duration-spring)`, chuyển động nội bộ của Arc Dialog.
+- **Để lát dọn:**
+  - `AdminOrdersScreen.tsx` còn xuất `SearchBox`;
+  - `LINKS` và `isOpen` đang chép sang `ArcSidebar`;
+  - DESIGN.md cần tả vùng Arc.

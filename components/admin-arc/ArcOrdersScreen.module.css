@@ -1,0 +1,232 @@
+/* The order book in the Arc frame (round v5 slice 0). Arc components own
+   their insides; this file only places them, on the 4px grid with Arc tokens,
+   and styles the text of the table's cells. */
+
+.page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.page > * {
+  min-width: 0;
+}
+
+/* ── the heading strip ─────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.heading {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.title {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+}
+
+.sub {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ── the status tabs ───────────────────────────────────────────────────── */
+.tabCount {
+  margin-left: var(--space-1);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── the toolbar, and the bulk bar that takes its place ────────────────── */
+/* One row: the search, "Thêm bộ lọc", the chips once a filter is on, and
+   "Cột" at the far end. The row is as tall as the chips' box in both states
+   (Arc's `FilterToolbar`: a row of small controls, 12px of padding above and
+   below, a hairline), so it does not jump when the first chip arrives or the
+   last one goes.
+
+   The bulk bar lies over the row, which keeps its box (and its state) while
+   hidden, so the table below never moves when rows are ticked. */
+.toolbarSlot {
+  position: relative;
+  margin-top: var(--space-4);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: calc(var(--control-height-sm) + var(--space-3) * 2 + 2px);
+}
+
+.toolbar[inert] {
+  visibility: hidden;
+}
+
+.search {
+  flex: 0 1 320px;
+  min-width: 0;
+}
+
+.menuSlot {
+  display: flex;
+  flex: none;
+}
+
+.chips {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.columnsSlot {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+}
+
+.columns {
+  display: grid;
+}
+
+.bulk {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+}
+
+.bulkCount {
+  margin: 0 var(--space-2) 0 0;
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── the table's cells ─────────────────────────────────────────────────── */
+/* A cancelled order is an ended one: its row steps back to the secondary ink,
+   as v3's `tr.paused` did. The status badge still says "Đã huỷ". */
+.book tr[data-cancelled] td {
+  color: var(--text-secondary);
+}
+
+/* The table keeps the browser's automatic layout (`holdWidths={false}`), so
+   what a cell needs is what its content says: words break only between
+   words, and a value that is one thing (a code, an amount, a moment, a phone
+   number) never breaks at all. When the columns need more room than the card
+   has, the table scrolls inside the card. */
+.text,
+.who,
+.stack {
+  overflow-wrap: normal;
+}
+
+.code {
+  white-space: nowrap;
+  color: var(--foreground);
+  font-weight: 500;
+  text-decoration-line: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .code:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.code:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* The avatar and the name sit 8px apart, as in v3. */
+.who {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* A value with the small lines under it: a name and its phone, a status and
+   its deadline. */
+.stack {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.line {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+/* An address reads as a line of a street, not a word per line: with the
+   compact cell's 12px either side the column is at least about 220px, and it
+   breaks only between words. */
+.address {
+  min-width: 196px;
+}
+
+/* Past the shop's own promise: said in words and in the status colour. */
+.late {
+  color: var(--danger);
+  font-size: var(--text-xs);
+}
+
+/* One moment, one phone number: never broken across lines. */
+.nowrap {
+  white-space: nowrap;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── the foot of the table ─────────────────────────────────────────────── */
+.foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.shown {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.pages {
+  margin-left: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code {
+    transition: none;
+  }
+}
