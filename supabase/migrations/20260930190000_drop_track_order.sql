@@ -1,0 +1,43 @@
+-- ───────────────────────────── the old order lookup, closed for good
+--
+-- Slice B13. `track_order(p_code, p_phone)` (`20260923170000_orders.sql`)
+-- is dropped.
+--
+-- WHY. It answered a code and the phone number on the order with the whole of
+-- `order_json()`: the recipient, the address the parcel goes to, their phone,
+-- e-mail and note. It was granted to `anon` and `authenticated`, and the
+-- `anon` key is the publishable one, sitting in any browser — so anybody could
+-- `POST /rest/v1/rpc/track_order` straight at the API, with no Server Action
+-- in between and therefore no limit on how often.
+--
+-- Slice B11 built the lookup the app uses instead, `lookup_order(code,
+-- phone)` (`20260930150000_order_lookup.sql`): it hands out only the ten keys
+-- the lookup screen prints — no address, name, phone, e-mail, note or
+-- courier — and the app spends one token of the visitor's `lookup` bucket (ten
+-- per ten minutes) before it asks. Since v4 slice 4a `/track` goes through
+-- `lookupOrderAction`, and nothing calls `track_order()` any more: not this
+-- code, and not the build running on the demo (`71d1662`). Left in place, it
+-- was the way round both of B11's safeguards.
+--
+-- NOTHING ELSE CHANGES. `lookup_order()`, `receipt_order()`, `order_json()`
+-- and who may call them stay as they are. Nothing in the database calls
+-- `track_order()`: no function body names it (`pg_proc.prosrc`, the migrations
+-- and `seed.sql`, all searched), and no view, policy or trigger depends on it
+-- (`pg_depend` — which does not see a call made inside a function body, hence
+-- the search). Its grants go with it. No `cascade`: under the default,
+-- `restrict`, the drop would fail rather than take along anything that came to
+-- depend on it.
+--
+-- The API forgets it on its own: Supabase's `pgrst_drop_watch` event trigger
+-- sends `NOTIFY pgrst, 'reload schema'` when a function is dropped, and from
+-- then on `rpc/track_order` answers PGRST202, HTTP 404.
+--
+-- Sources: https://www.postgresql.org/docs/17/sql-dropfunction.html
+-- ("RESTRICT — Refuse to drop the function if any objects depend on it. This
+-- is the default."; "The argument types to the function must be specified"),
+-- https://docs.postgrest.org/en/stable/references/schema_cache.html (reloading
+-- the schema cache with `NOTIFY pgrst, 'reload schema'`, and the event
+-- triggers that do it on DDL), https://docs.postgrest.org/en/stable/references/errors.html
+-- (PGRST202, 404: "the function may not exist in the database").
+
+drop function public.track_order(text, text);

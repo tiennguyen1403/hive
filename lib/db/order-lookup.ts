@@ -14,8 +14,9 @@ import { getSupabase } from "./server";
  * not match, NO_ORDER or PHONE_MISMATCH. The rules and the words are
  * `lib/order-lookup.ts`; the door is `lookup_order()`
  * (`supabase/migrations/20260930150000_order_lookup.sql`). The v3 lookup,
- * `trackOrder` in `lib/db/orders.ts`, is untouched and still answers the same
- * null for both.
+ * `trackOrder` over `track_order()`, answered the same null for both; slice
+ * B13 removed the two, because the function, granted to `anon`, handed the
+ * whole order to anybody calling the API directly, with no limit.
  *
  * ONE CALL IS ONE LOOKUP, and each spends a token of the visitor's `lookup`
  * limit (`RATE_RULES.lookup`: ten per ten minutes) before the database is
@@ -39,10 +40,10 @@ import { getSupabase } from "./server";
  * prefetch repeats.
  *
  * `lookup_order()` is asked with the visitor's own client (`getSupabase()`,
- * the publishable key): it is granted to `anon` and `authenticated`, as
- * `track_order()` is, and decides itself what leaves the database. The status
- * that comes back is the one the clock says (`effectiveOrder`): a transfer
- * past its hold reads as cancelled, as on every other screen.
+ * the publishable key): it is granted to `anon` and `authenticated`, and
+ * decides itself what leaves the database. The status that comes back is the
+ * one the clock says (`effectiveOrder`): a transfer past its hold reads as
+ * cancelled, as on every other screen.
  *
  * A miss is an answer. A database or network failure throws, and the action
  * turns it into a sentence, with the reason in the server log.

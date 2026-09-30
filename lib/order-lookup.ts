@@ -8,9 +8,11 @@ import { normaliseOrderCode, phoneDigits } from "./lookup";
  * a number; the order as the lookup hands it out; and what the action
  * answers, in the mock's words.
  *
- * The v3 lookup (`lib/lookup.ts`, `track_order()`) answers the same null
- * whichever of the two is wrong. This one SAYS which — "Không có đơn nào mang
- * mã này" under the code, "Số điện thoại không khớp với đơn" under the number
+ * The v3 lookup (`lib/lookup.ts`, over `track_order()`) answered the same
+ * null whichever of the two was wrong; slice B13 dropped that function, which,
+ * granted to `anon`, handed the whole order to anybody calling the API
+ * directly. This one SAYS which — "Không có đơn nào mang mã này" under the
+ * code, "Số điện thoại không khớp với đơn" under the number
  * (`prototype/explore/feed/track.js`, `lookup` in `shared/data.js`; the
  * user's choice of 30/09, for this screen only) — and a limit of ten lookups
  * per ten minutes per visitor (`RATE_RULES.lookup`) is what keeps that from

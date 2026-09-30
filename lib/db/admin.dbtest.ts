@@ -7,7 +7,7 @@ import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import { DEMO_ADMIN } from "@/lib/demo-admin";
 import type { Database, Json } from "./database.types";
-import { toOrder } from "./order-dto";
+import { toLookupAnswer, toOrder, toOrders } from "./order-dto";
 
 /**
  * What slice B3a claims, checked against Postgres.
@@ -75,6 +75,7 @@ async function signedIn(email: string): Promise<Client> {
 
 const MINHANH = CUSTOMERS[0]!; // c-minhanh: DH-2430 (transfer, waiting), DH-2422 (shipping)
 const NAMLE = CUSTOMERS[1]!;
+const HAPHAM = CUSTOMERS[2]!; // c-hapham: DH-2427 (paid)
 
 /** The app's clock, exactly as a Server Action sends it. */
 const now = () => toVnIso(demoNow());
@@ -302,13 +303,22 @@ describe("(b) admin_hand_over", () => {
     });
     expect(note).toMatchObject({ kind: "ORDER_NOTE", payload: { text: "Ghi chú khi bàn giao: gửi 2 kiện" } });
 
-    // The shopper's lookup reads the same courier back.
-    const tracked = await anon.rpc("track_order", { p_code: "DH-2427", p_phone: row.phone });
-    expect(toOrder(tracked.data).status).toMatchObject({
+    // The owner reads the same courier back, through the account (`my_orders()`).
+    const hapham = await signedIn(HAPHAM.email);
+    const own = toOrders((await hapham.rpc("my_orders")).data).find((o) => o.code === "DH-2427");
+    expect(own?.status).toMatchObject({
       state: "SHIPPING",
       trackingCode: "VNP-2427-01",
       carrier: "Giao tiêu chuẩn",
     });
+
+    // The public lookup — `lookup_order()`, since slice B13 dropped
+    // `track_order()` — reads the number back, and never the courier (B11).
+    const looked = toLookupAnswer((await anon.rpc("lookup_order", { p_code: "DH-2427", p_phone: row.phone })).data);
+    expect(looked.ok).toBe(true);
+    if (!looked.ok) return;
+    expect(looked.order.status).toMatchObject({ state: "SHIPPING", trackingCode: "VNP-2427-01" });
+    expect("carrier" in looked.order.status).toBe(false);
   });
 
   it("RECEIVED → SHIPPING only for COD, which is paid at the door", async () => {

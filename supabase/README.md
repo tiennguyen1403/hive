@@ -88,8 +88,11 @@ hands out may insert, update or delete a row directly:
 | `cancel_order(p_code, p_now)` | `authenticated` | the owner's unpaid order only (`RECEIVED`, or a transfer inside its hold); pieces back on the shelf; the code's use is not refunded |
 | `expire_transfers(p_now)` | `anon`, `authenticated` | cancels every transfer whose twelve hours ran out, at its deadline, and restocks; `GET /api/health` calls it daily |
 | `my_orders()`, `order_json(p_code)` | `authenticated` | the account's own orders, through row level security |
-| `track_order(p_code, p_phone)` | `anon`, `authenticated` | one order, for its code and the phone number on it; `null` for any miss |
 | `receipt_order(p_code, p_key)` | `anon`, `authenticated` | one order, for its code and the receipt key the app keeps in the httpOnly `guest_orders` cookie |
+
+The public lookup by code and phone number is `lookup_order()` since slice B11
+(see *The order lookup* below). Its predecessor, `track_order(p_code,
+p_phone)`, handed out the whole order and was dropped in slice B13.
 
 Every business instant is the app's (`p_now`, from `demoNow()` — the real
 clock since slice B3a), never Postgres' `now()` — but from anybody but the
@@ -197,8 +200,9 @@ opened, the profile's two fields, and the reset.
 `order_json()` (v3, `20260930090000_step_moments_address_undo.sql`) carries a
 new key, `moments`: `{ paidAt, shippedAt, deliveredAt }`, each only when the
 `orders` row holds it (`{}` when none), so the Feed order page can print a time
-under every step already passed. `status` keeps its shape. All four readers
-(`my_orders`, `track_order`, `receipt_order`, `admin_orders`) go through it.
+under every step already passed. `status` keeps its shape. The readers
+(`my_orders`, `receipt_order`, `admin_orders`) go through it; `lookup_order`
+(slice B11) hands out a cut-down copy of it.
 `lib/db/order-dto.ts` reads a missing key as no moments, so the app runs on a
 database from before B10. The sample orders carry the steps they passed:
 `data/orders.ts` authors them by one rule taken from the Feed mock's own
@@ -219,6 +223,41 @@ at all: no API role reads or writes it, and the reset empties it for every
 account, so nothing a shopper deleted outlives the day.
 `lib/db/address-undo.dbtest.ts` and `lib/db/order-moments.dbtest.ts` check all
 of it.
+
+## The order lookup (slices B11, B13)
+
+`/track` asks `lookup_order()` (`20260930150000_order_lookup.sql`) with the
+visitor's own client:
+
+| Function | Who may call it | What it does |
+|---|---|---|
+| `lookup_order(p_code, p_phone)` | `anon`, `authenticated` | `{ outcome: "NO_ORDER" }` when no order carries the code, `{ outcome: "PHONE_MISMATCH" }` when the number on it is another, else `{ outcome: "FOUND", order }` where `order` is `order_json()` cut down to the ten keys the lookup screen prints (`LOOKED_UP_KEYS`, `lib/order-lookup.ts`): no recipient, address, phone, e-mail, note or courier |
+
+The app spends one token of the visitor's `lookup` bucket (ten per ten
+minutes, `RATE_RULES.lookup`) through `take_rate` before it asks, in
+`lib/db/order-lookup.ts`; the page never looks up while it renders.
+`track_order(p_code, p_phone)`, the lookup before it, returned the whole
+`order_json()` to `anon` with no limit, and was dropped in slice B13
+(`20260930190000_drop_track_order.sql`): the API now answers `rpc/track_order`
+with PGRST202, HTTP 404. `lib/db/order-lookup.dbtest.ts` checks both.
+
+## What the catalogue dates (slice B12)
+
+`20260930170000_last_sold_announced.sql` gives the Feed inbox a real moment for
+its last two kinds of line:
+
+- `catalog_last_sold()` (`security definer`, `anon` and `authenticated`)
+  answers, for each colour of every style the caller may see, when the most
+  recent order still in force that took a piece of it was placed. Cancelled
+  orders and transfers past their hold do not count. Nothing is stored, and
+  nothing about any order leaves but the instant.
+- `teasers.announced_at`, and its mirror in `seed_teasers`: when a teaser was
+  announced. `admin_add_teaser` records its `p_now`. The sample teasers are
+  announced fourteen days and eight hours before their issue opens, as in the
+  mock, and `reset_demo` moves that with every other instant.
+
+`catalog_snapshot()` carries both, as `lastSoldAt` on each colour and
+`announcedAt` on each teaser, null when unknown.
 
 ## Resetting
 

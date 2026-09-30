@@ -23,9 +23,13 @@ import type { LookupFound, LookupMissed } from "@/lib/order-lookup";
  *
  * Every order the app reads arrives through one Postgres function — the
  * signed-in list (`my_orders()`), one order of the account's
- * (`order_json()`), a guest's receipt (`receipt_order()`) and the public
- * lookup (`track_order()`) all return the same JSON — so one mapper reads
- * them all, and the three doors cannot drift into three shapes.
+ * (`order_json()`) and a guest's receipt (`receipt_order()`) all return the
+ * same JSON — so one mapper reads them all, and the doors cannot drift into
+ * shapes of their own. The public lookup is the exception, on purpose:
+ * `lookup_order()` (slice B11) hands out a cut-down copy, read by
+ * `toLookupAnswer` below. The lookup before it, `track_order()`, returned the
+ * whole document and was dropped in slice B13 — granted to `anon`, it gave the
+ * address to anybody with the code and the phone, as often as they liked.
  *
  * The JSON arrives as `unknown`: PostgREST hands over whatever the function
  * produced, and a migration that renames a column produces a DIFFERENT

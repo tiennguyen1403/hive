@@ -6,7 +6,7 @@ import type { PaymentMethod } from "@/data/types";
 import { toVnIso } from "@/lib/datetime";
 import { DEMO_ADMIN } from "@/lib/demo-admin";
 import type { Database, Json } from "./database.types";
-import { toOrder, toOrders } from "./order-dto";
+import { toLookupAnswer, toOrder, toOrders } from "./order-dto";
 
 /**
  * What slice B10 claims about orders, checked against Postgres
@@ -19,8 +19,9 @@ import { toOrder, toOrders } from "./order-dto";
  *   · one on its way keeps when it was paid;
  *   · a transfer still awaited has none — its placing is `placedAt`;
  *   · a COD order handed over from RECEIVED has no payment to show;
- *   · the three doors — the account, the lookup, the receipt — hand out the
- *     same `moments`;
+ *   · the three doors — the account, the lookup (`lookup_order()`, since
+ *     slice B13 dropped `track_order()`), the receipt — hand out the same
+ *     `moments`;
  *   · the sample orders come back with every step `data/orders.ts` gives
  *     them (seeded into `paid_at` and `shipped_at`), DH-2416 with the mock's
  *     own DH-1496 times.
@@ -242,9 +243,11 @@ describe("order_json(): every step's moment, under `moments`", () => {
     await handOver(code, minutesAgo(0));
 
     const mine = toOrder(await wireOf(code)).moments;
-    const tracked = await anon.rpc("track_order", { p_code: code, p_phone: "0912345678" });
+    const looked = await anon.rpc("lookup_order", { p_code: code, p_phone: "0912345678" });
     const receipt = await anon.rpc("receipt_order", { p_code: code, p_key: accessKey });
-    expect(toOrder(tracked.data).moments).toEqual(mine);
+    const answer = toLookupAnswer(looked.data);
+    expect(answer.ok).toBe(true);
+    expect(answer.ok ? answer.order.moments : "no order").toEqual(mine);
     expect(toOrder(receipt.data).moments).toEqual(mine);
     expect(Object.keys(mine!).sort()).toEqual(["paidAt", "shippedAt"]);
   });

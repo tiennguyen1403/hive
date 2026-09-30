@@ -9,14 +9,16 @@ import { phoneDigits } from "@/lib/lookup";
 import { LOOKED_UP_KEYS, readLookup } from "@/lib/order-lookup";
 import { RATE_RULES, rateKeyOf, subjectOf } from "@/lib/rate-limit";
 import type { Database, Json } from "./database.types";
-import { toLookupAnswer, toOrder } from "./order-dto";
+import { toLookupAnswer } from "./order-dto";
 
 /**
  * What slice B11 claims about the Feed's order lookup, checked against
  * Postgres (`supabase/migrations/20260930150000_order_lookup.sql`):
  *
  *   (a) the right code and number find the order — with nothing of where it
- *       goes: no recipient, no address, no phone, no e-mail, no courier;
+ *       goes: no recipient, no address, no phone, no e-mail, no courier — and
+ *       the order is the document the guest's receipt hands out whole
+ *       (`receipt_order()`), cut down to its listed keys;
  *   (b) a code no order carries is NO_ORDER; a code with another number on
  *       it is PHONE_MISMATCH — for every sample order, a guest's COD order,
  *       and whoever asks, signed in or not;
@@ -28,9 +30,10 @@ import { toLookupAnswer, toOrder } from "./order-dto";
  *       sentence — one token per lookup, and another visitor is untouched;
  *   (e) `anon` may call the lookup and read no table it touches directly, nor
  *       spend a token itself;
- *   (f) `track_order()` answers exactly as it did: the whole order for the
- *       right pair, the same null for either miss — and the lookup's order is
- *       that same document, cut down to its listed keys.
+ *   (f) the old door is gone (slice B13, `20260930190000_drop_track_order.sql`):
+ *       `track_order()`, which handed the whole order to anybody holding the
+ *       publishable key, is no function at all to a visitor or a signed-in
+ *       shopper — PGRST202, HTTP 404 — while `lookup_order()` still answers.
  *
  * `lookupOrder` runs as it does in the app, against the local stack: the
  * visitor's client with the publishable key, the rate limit through the
@@ -154,6 +157,8 @@ const DH2425_PHONE = phoneDigits(DH2425.shipTo.phone);
 
 /** A guest's COD order placed here, for a RECEIVED order nobody's account holds. */
 let guestCode = "";
+/** Its receipt key, which opens the whole order through `receipt_order()`. */
+let guestKey = "";
 const GUEST = {
   recipient: "Khách Tra Cứu",
   phone: "0977123456",
@@ -189,7 +194,7 @@ beforeAll(async () => {
     p_now: toVnIso(demoNow()),
   });
   if (placed.error) throw new Error(`place_order refused: ${placed.error.message}`);
-  guestCode = (placed.data as { code: string }).code;
+  ({ code: guestCode, accessKey: guestKey } = placed.data as { code: string; accessKey: string });
 
   // The handover recorded a courier on DH-2425: the lookup must not print it.
   const courier = await admin.from("orders").update({ carrier: "Giao tiêu chuẩn" }).eq("code", "DH-2425");
@@ -247,6 +252,32 @@ describe("(a) the right code and number find the order — and nothing of where 
     expect(guest.ok && guest.order.status).toEqual({ state: "RECEIVED" });
     expect(guest.ok && guest.order.payment).toBe("COD");
     expect(guest.ok && guest.order.codFeeVnd).toBe(15_000);
+  });
+
+  // Until slice B13 the whole document came from `track_order()`, which is gone
+  // (f). The guest's receipt hands out the same `order_json()`, whole, to its key.
+  it("is the document the receipt hands out, cut down: its listed keys, less the courier", async () => {
+    const samples = [DH2425, ...ORDERS.slice(0, 6)];
+    const keys = await admin.from("orders").select("code, access_key").in("code", samples.map((o) => o.code));
+    if (keys.error) throw new Error(keys.error.message);
+    const keyOf = new Map(keys.data.map((row) => [row.code, row.access_key]));
+
+    for (const [code, phone, key] of [
+      [guestCode, GUEST.phone, guestKey],
+      ...samples.map((o) => [o.code, phoneDigits(o.shipTo.phone), keyOf.get(o.code) ?? ""] as const),
+    ] as const) {
+      const receipt = await anon.rpc("receipt_order", { p_code: code, p_key: key });
+      expect(receipt.error, code).toBeNull();
+      expect(receipt.data, code).not.toBeNull();
+      const whole = receipt.data as Record<string, unknown>;
+      const cut = (await anon.rpc("lookup_order", { p_code: code, p_phone: phone })).data as {
+        order: Record<string, unknown>;
+      };
+      const expected: Record<string, unknown> = {};
+      for (const k of LOOKED_UP_KEYS) expected[k] = whole[k] ?? null;
+      const { carrier: _courier, ...status } = expected.status as Record<string, unknown>;
+      expect(cut.order, code).toEqual({ ...expected, status });
+    }
   });
 });
 
@@ -446,45 +477,39 @@ describe("(e) a visitor with no session may call the lookup and read no table it
   });
 });
 
-// ───────────────────────────────────────────── (f) the old door, unchanged
-describe("(f) track_order() answers as it did", () => {
-  it("returns the whole order for the right pair — the address and the courier included", async () => {
-    const hit = await anon.rpc("track_order", { p_code: "DH-2425", p_phone: DH2425_PHONE });
-    expect(hit.error).toBeNull();
-    const order = toOrder(hit.data);
-    expect(order.code).toBe("DH-2425");
-    expect(order.shipTo).toEqual({ ...DH2425.shipTo, phone: DH2425_PHONE });
-    expect(order.email).toBe(DH2425.email);
-    expect(order.customerId).toBe(DH2425.customerId);
-    expect(order.status).toMatchObject({ state: "SHIPPING", carrier: "Giao tiêu chuẩn" });
+// ──────────────────────────────────── (f) the old door is gone (slice B13)
+describe("(f) track_order() is gone; lookup_order() still answers", () => {
+  /**
+   * The generated types no longer know the old name, so this client has none:
+   * it makes the call exactly as a stranger with the publishable key would,
+   * `POST /rest/v1/rpc/track_order`.
+   */
+  const untyped = () => createClient(url!, publishableKey!, noSession);
+
+  /** The right pair for DH-2425 — the one the old door would have opened. */
+  const RIGHT_PAIR = { p_code: "DH-2425", p_phone: DH2425_PHONE };
+
+  it("answers a visitor calling track_order() that there is no such function — PGRST202, 404 — and lookup_order() as before", async () => {
+    const gone = await untyped().rpc("track_order", RIGHT_PAIR);
+    expect(gone.data).toBeNull();
+    expect(gone.status).toBe(404);
+    expect(gone.error?.code).toBe("PGRST202");
+    // Nothing of the order leaks through the refusal either.
+    expect(JSON.stringify(gone.error)).not.toContain(DH2425.shipTo.line);
+
+    const open = await anon.rpc("lookup_order", RIGHT_PAIR);
+    expect(open.error).toBeNull();
+    expect(open.status).toBe(200);
+    expect((open.data as { outcome: string }).outcome).toBe("FOUND");
   });
 
-  it("answers the same null for a wrong number, a code that does not exist and an empty one", async () => {
-    for (const [code, phone] of [
-      ["DH-2425", NOBODYS],
-      ["DH-2425", ""],
-      ["DH-9999", DH2425_PHONE],
-    ]) {
-      const miss = await anon.rpc("track_order", { p_code: code!, p_phone: phone! });
-      expect(miss.error, `${code} / ${phone}`).toBeNull();
-      expect(miss.data, `${code} / ${phone}`).toBeNull();
-    }
-  });
-
-  it("is the same document the lookup cuts down: the lookup's order is its listed keys, less the courier", async () => {
-    for (const [code, phone] of [
-      ["DH-2425", DH2425_PHONE],
-      [guestCode, GUEST.phone],
-      ...ORDERS.slice(0, 6).map((o) => [o.code, phoneDigits(o.shipTo.phone)] as const),
-    ] as const) {
-      const whole = (await anon.rpc("track_order", { p_code: code, p_phone: phone })).data as Record<string, unknown>;
-      const cut = (await anon.rpc("lookup_order", { p_code: code, p_phone: phone })).data as {
-        order: Record<string, unknown>;
-      };
-      const expected: Record<string, unknown> = {};
-      for (const key of LOOKED_UP_KEYS) expected[key] = whole[key] ?? null;
-      const { carrier: _courier, ...status } = expected.status as Record<string, unknown>;
-      expect(cut.order, code).toEqual({ ...expected, status });
-    }
+  it("answers a signed-in shopper the same: the function is gone, not merely closed to anon", async () => {
+    const shopper = untyped();
+    const signIn = await shopper.auth.signInWithPassword({ email: CUSTOMERS[0]!.email, password: demoPassword! });
+    expect(signIn.error).toBeNull();
+    const gone = await shopper.rpc("track_order", RIGHT_PAIR);
+    expect(gone.status).toBe(404);
+    expect(gone.error?.code).toBe("PGRST202");
+    await shopper.auth.signOut();
   });
 });

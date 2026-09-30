@@ -11,7 +11,7 @@ import {
   rememberGuestOrder,
   serializeGuestOrders,
 } from "@/lib/guest-orders";
-import { isOrderCode, normaliseOrderCode, phoneDigits } from "@/lib/lookup";
+import { isOrderCode } from "@/lib/lookup";
 import { orderFailureOf, type OrderFailure, type PlaceOrderInput } from "@/lib/order-payload";
 import type { Json } from "./database.types";
 import { toOrder, toOrders } from "./order-dto";
@@ -31,17 +31,18 @@ import { getSession } from "./session";
  *   · the guest who placed it, through the receipt key kept in an httpOnly
  *     cookie (`receipt_order()`);
  *   · anybody holding the code AND the phone number on the order
- *     (`track_order()`, QĐ-16).
+ *     (`lookup_order()`, QĐ-16), read in `lib/db/order-lookup.ts`.
  *
- * All three return the same JSON and go through one mapper, `toOrder`.
+ * The first two return the same JSON and go through one mapper, `toOrder`.
  * Nothing here passes an owner id to the database: `auth.uid()` inside the
  * policies and the functions is the owner.
  *
- * Since slice B11 the Feed's lookup has a door of its own beside the third,
- * `lookup_order()` (`lib/db/order-lookup.ts`): it says which of the code and
- * the phone did not match, hands out only what that screen prints — nothing of
- * where the order goes — and costs the visitor one of ten lookups per ten
- * minutes. `trackOrder` below is unchanged and serves the v3 `/track` page.
+ * The third is slice B11's: it says which of the code and the phone did not
+ * match, hands out only what the lookup screen prints — nothing of where the
+ * order goes — and costs the visitor one of ten lookups per ten minutes. The
+ * door before it, `track_order()` and `trackOrder` here, went in slice B13:
+ * granted to `anon`, it handed the whole order, address included, to anybody
+ * calling the API directly, as often as they liked.
  *
  * Writes are the two functions `place_order()` and `cancel_order()`. Their
  * refusals come back as a typed `OrderError` whose `failure` is one of the
@@ -125,21 +126,6 @@ export async function loadReceipt(code: string): Promise<Order | null> {
   const supabase = await getSupabase();
   const { data, error } = await supabase.rpc("receipt_order", { p_code: code, p_key: key });
   if (error) readFailed("receipt_order", error);
-  return data === null ? null : toOrder(data);
-}
-
-/**
- * `/track`: a code and the phone number on the order, however both were
- * typed. A miss of either kind is the same null.
- */
-export async function trackOrder(code: string, phone: string): Promise<Order | null> {
-  const wanted = normaliseOrderCode(code);
-  const digits = phoneDigits(phone);
-  if (!isOrderCode(wanted) || !digits) return null;
-
-  const supabase = await getSupabase();
-  const { data, error } = await supabase.rpc("track_order", { p_code: wanted, p_phone: digits });
-  if (error) readFailed("track_order", error);
   return data === null ? null : toOrder(data);
 }
 

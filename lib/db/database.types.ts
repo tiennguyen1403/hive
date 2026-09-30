@@ -1371,7 +1371,6 @@ export type Database = {
         Args: { p_clear?: string[]; p_now?: string }
         Returns: number
       }
-      track_order: { Args: { p_code: string; p_phone: string }; Returns: Json }
       unsave_favorite: { Args: { p_product_id: string }; Returns: Json }
       update_address: {
         Args: {

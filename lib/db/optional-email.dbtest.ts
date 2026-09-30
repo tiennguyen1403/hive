@@ -6,7 +6,7 @@ import { toVnIso } from "@/lib/datetime";
 import { DEMO_ADMIN } from "@/lib/demo-admin";
 import { readPlaceOrderPayload } from "@/lib/order-payload";
 import type { Database, Json } from "./database.types";
-import { toAdminOrders, toOrder, toOrders } from "./order-dto";
+import { toAdminOrders, toLookupAnswer, toOrder, toOrders } from "./order-dto";
 
 /**
  * What slice B8 claims, checked against Postgres
@@ -24,8 +24,10 @@ import { toAdminOrders, toOrder, toOrders } from "./order-dto";
  *     Feed checkout — no box, no e-mail — goes through both of its layers,
  *     `readPlaceOrderPayload()` and `place_order()`;
  *   · every door an order is read through takes the null: the guest's
- *     receipt, the public lookup, the account's own list, the back office's
- *     book — each through the one mapper, `toOrder()`.
+ *     receipt, the account's own list, the back office's book — each through
+ *     the one mapper, `toOrder()` — and the public lookup, `lookup_order()`,
+ *     finds such an order all the same, carrying no e-mail of any kind (it
+ *     took over from `track_order()`, which slice B13 dropped).
  *
  * Instants the real clock cannot reach are named through the service role,
  * which `assert_now()` exempts on purpose; a signed-in caller acts on the
@@ -284,13 +286,17 @@ describe("every reader takes an order with no e-mail, on the real clock", () => 
     await setOnHand("p-khoi", "black", "M", 50);
   });
 
-  it("the receipt, the public lookup and the back office's book all read it, email null", async () => {
+  it("the receipt and the back office's book read it, email null, and the public lookup finds it", async () => {
     const placed = await placeAsGuest(basket(), now());
     expect((await receipt(placed)).email).toBeNull();
 
-    const tracked = await anon.rpc("track_order", { p_code: placed.code, p_phone: PHONE });
-    expect(tracked.error).toBeNull();
-    expect(toOrder(tracked.data).email).toBeNull();
+    // An order with no e-mail is still looked up by its code and number; the
+    // lookup hands out no e-mail key at all, null or otherwise (slice B11).
+    const looked = await anon.rpc("lookup_order", { p_code: placed.code, p_phone: PHONE });
+    expect(looked.error).toBeNull();
+    const answer = toLookupAnswer(looked.data);
+    expect(answer.ok && answer.order.code).toBe(placed.code);
+    expect(Object.keys((looked.data as { order: object }).order)).not.toContain("email");
 
     const book = await manager.rpc("admin_orders");
     expect(book.error).toBeNull();

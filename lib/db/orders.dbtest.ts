@@ -9,7 +9,7 @@ import { toVnIso } from "@/lib/datetime";
 import { orderSubtotalVnd, orderTotalVnd } from "@/lib/orders";
 import { checkoutTotals } from "@/lib/shipping";
 import type { Database, Json } from "./database.types";
-import { toOrder, toOrders } from "./order-dto";
+import { toLookupAnswer, toOrder, toOrders } from "./order-dto";
 
 /**
  * What slice B2 claims, checked against Postgres.
@@ -685,19 +685,22 @@ describe("(f) row level security and the two guest doors", () => {
     expect(update.error !== null || (update.count ?? 0) === 0).toBe(true);
   });
 
-  it("track_order(): the right number opens it, a wrong one or a wrong code does not", async () => {
-    const hit = await anon.rpc("track_order", { p_code: "DH-2425", p_phone: "0908221447" });
+  // The phone door is `lookup_order()` (slice B11); `track_order()`, the door B2
+  // built, was dropped in slice B13. The ways it misses are `order-lookup.dbtest.ts`'s.
+  it("lookup_order(): the right number opens it, a wrong one or a wrong code does not", async () => {
+    const hit = await anon.rpc("lookup_order", { p_code: "DH-2425", p_phone: "0908221447" });
     expect(hit.error).toBeNull();
-    expect(toOrder(hit.data).code).toBe("DH-2425");
+    const found = toLookupAnswer(hit.data);
+    expect(found.ok && found.order.code).toBe("DH-2425");
 
-    for (const [code, phone] of [
-      ["DH-2425", "0912345678"],
-      ["DH-2425", ""],
-      ["DH-9999", "0908221447"],
-    ]) {
-      const miss = await anon.rpc("track_order", { p_code: code!, p_phone: phone! });
+    for (const [code, phone, outcome] of [
+      ["DH-2425", "0912345678", "PHONE_MISMATCH"],
+      ["DH-2425", "", "PHONE_MISMATCH"],
+      ["DH-9999", "0908221447", "NO_ORDER"],
+    ] as const) {
+      const miss = await anon.rpc("lookup_order", { p_code: code, p_phone: phone });
       expect(miss.error).toBeNull();
-      expect(miss.data, `${code} / ${phone}`).toBeNull();
+      expect(miss.data, `${code} / ${phone}`).toEqual({ outcome });
     }
   });
 

@@ -17,11 +17,13 @@ import { styleName } from "./lexicon";
  * whichever of the two is wrong, so the screen never confirms that a code
  * exists.
  *
- * The matching itself happens in Postgres since slice B2
- * (`track_order()`, reached through `lib/db/orders.ts#trackOrder`): every
- * order is a row there, whoever placed it. What stays here is pure — reading
- * a code and a number the way people type them, and turning an `Order` into
- * what the screens print.
+ * The matching itself happens in Postgres since slice B2: every order is a
+ * row there, whoever placed it. It was `track_order()`, reached through
+ * `lib/db/orders.ts#trackOrder`, until slice B13 removed both — granted to
+ * `anon`, the function handed the whole order to anybody calling the API
+ * directly — and is `lookup_order()` now (`lib/db/order-lookup.ts`). What
+ * stays here is pure — reading a code and a number the way people type them,
+ * and turning an `Order` into what the screens print.
  */
 
 // ─────────────────────────────────────────────────────────── normalisation

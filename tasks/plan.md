@@ -2742,9 +2742,86 @@ xong trong khoảng 35 giây (trạng thái commit trên GitHub; Vercel MCP bị
 - **Mã v3 mồ côi mới:** `ShopFrame`, `SiteNav`, `SiteFooter`, `NeedWrite`, `ClosedIssue`; CSS `.prose`, `.prep`, `.faq3`,
   `.readpage`.
 - Phiên chính thêm `/faq`, `/faq?q=cod`, `/size-guide`, `/about`, `/contact`, `/returns` vào `tools/layout-sweep.js`.
+
+**30/09, lát 4 cùng B11 và B12 LÊN ONLINE. Toàn bộ phần khách đã theo Feed.** Deploy **DB trước**:
+- Người dùng gõ `db push --linked --dry-run` (thấy đúng 2 migration), rồi `--yes`, rồi nạp seed.
+- Phiên chính chạy câu kiểm chỉ đọc. Kết quả: `PHONE_MISMATCH` / `NO_ORDER`; bucket `lookup`; 2 hé lộ có mốc công bố, trước giờ
+  mở 14 ngày 8 giờ; 24 màu có mốc bán; 24/24 đơn còn gắn tài khoản.
+- Phiên chính push `465b5a6..71d1662` (4 commit). Vercel báo xong.
+- Kiểm trên demo:
+  - Hỏi đáp tìm "cod" mở 4 câu; `/returns` về `/faq#doi-tra`, mở 6 câu;
+  - Bảng size: 4 bảng, 1m75 ra "Hợp size L";
+  - Giới thiệu, Liên hệ đúng chữ; 404 trả 404; chân trang đủ 5 link;
+  - tra cứu: hai câu lỗi dưới đúng ô, tra đúng ra DH-2425 và không lộ địa chỉ;
+  - Thông báo: 10 dòng, 1 chưa đọc, 4 công tắc, kênh "Trong app".
+  - 0 request ra ngoài; lỗi console duy nhất là dòng 404 cố ý.
+- **Còn lại của đợt v4:**
+  - lát dọn mã v3 mồ côi, trang `/system`, CSS cũ và các kho `brand.*` trên thiết bị;
+  - documenter viết lại DESIGN.md cho Feed;
+  - vòng mock quản trị Feed, rồi luồng đổi trả và form liên hệ (QĐ-34);
+  - email khi có tên miền (QĐ-35).
+- **Còn mở nhỏ:**
+  - dòng "đang giao" của đơn đã giao thiếu mã vận đơn;
+  - nhắc chưa lưu lúc bật;
+  - `getMyState()` trả null khi đọc hỏng;
+  - bảng Đơn hàng quản trị tràn ở 1280;
+  - ẩn "Gửi lại xác nhận" với đơn không email khi có mail.
 - **Mã v3 mồ côi (dọn cuối đợt):**
   - `SignInScreen`, `SignUpScreen`, `ForgotPasswordScreen`, `OrdersScreen`, `OrderDetailScreen`, `CancelOrderSheet`,
     `AddressesScreen`, `AddressFormScreen`;
   - `rowsForTab`, `ordersForTab`;
   - action địa chỉ v3, `validateSignUp`;
   - `.authcard3`, `.divider3`.
+
+**Lát 5, dọn mã v3: kế hoạch (30/09/2026).** Người dùng: "oke tiếp tục dọn mã V3 đi". Phiên chính dò lại toàn cây bằng script
+đọc import, thay vì chỉ dựa vào các danh sách mồ côi ghi qua từng lát:
+- 66 tệp component không route nào chạm tới (~10.300 dòng);
+- 9 tệp `lib` chỉ test còn giữ (~3.100 dòng kể cả test);
+- khoảng 80 export chết trong tệp còn sống;
+- hơn 550 trên 1.211 rule CSS v3 không phần tử nào khớp. Gói CSS chặn hiển thị của mọi trang là 252 KB thô, 41,7 KB gzip;
+- layout gốc còn bọc `WishlistProvider` và `AddressBookProvider` (kho `brand.wishlist`, `brand.addresses`);
+- layout gốc tải trước 10 tệp font v3 (~101 KB) ở mọi trang Feed. Kiểm qua header `Link` trên demo.
+
+**Phát hiện bảo mật:** `track_order(text, text)` vẫn `grant … to anon, authenticated`. Ai có khoá công khai cũng gọi thẳng REST
+được, nhận nguyên `order_json` (có địa chỉ, người nhận), không giới hạn số lần tra. Như vậy hai lớp chặn của B11 bị vòng qua.
+Không code nào còn gọi hàm này, kể cả bản trên demo.
+
+Hai lượt, chạy **lần lượt**:
+1. **B13** (`tasks/briefs/backend-b13.md`, `backend-implementer`): migration gỡ `track_order()`; xoá `trackOrder`; sinh lại
+   `database.types.ts`; chuyển các dbtest còn gọi hàm cũ sang đường còn sống; test `anon` không gọi được nữa.
+2. **Lát 5** (`tasks/briefs/v4-lat-5-don.md`, `ui-implementer`): không đổi hình, không đổi hành vi.
+   - Xoá các tệp và export chết, `/system`, `/hyd`, hai provider v3.
+   - Tỉa CSS v3 theo luật "không mã v3 sống nào sinh ra class này". Chốt an toàn: không xoá rule nào đã khớp trên bản dựng
+     cũ, rồi so ảnh trước và sau.
+   - Font v3 để `preload: false`.
+   - Xoá các khoá `brand.*` đã nghỉ khỏi trình duyệt khách.
+
+- **Người dùng chốt (30/09):** xoá `/hyd`. Trước đây nó là mục "người dùng quyết". Git giữ bản cũ; cần chẩn đoán hydrate thì
+  dựng trang thăm dò tạm rồi xoá.
+- **Phiên chính quyết:**
+  - gỡ `track_order()` ngay trong đợt dọn, vì là lỗ bảo mật, không phải chỉ mã thừa;
+  - font v3 chỉ tắt tải trước, **không** chuyển sang layout quản trị. Lớp nổi quản trị portal ra `<body>`, nên biến font
+    phải ở `<html>`;
+  - xoá khoá đã nghỉ khỏi trình duyệt, vì `brand.addresses` giữ tên, số và địa chỉ khách mà app không còn hiện, cũng không
+    còn cho xoá;
+  - **không** tách CSS quản trị khỏi gói chung, **không** tỉa bộ icon Iconsax. Cả hai mất trọn ở vòng quản trị Feed. Làm bây
+    giờ là đổi cascade mà không đổi được gì cho khách.
+- `refundNote` (lệch từ B7, hẹn sửa ở lát backend đổi trả) là export chết và đi cùng lát này. Luồng đổi trả sẽ viết lại.
+
+**Lát B13 ĐẠT (30/09/2026, `backend-implementer`, phiên chính duyệt).** Brief `tasks/briefs/backend-b13.md`.
+- **Migration** `20260930190000_drop_track_order.sql`: `drop function public.track_order(text, text);` (mặc định
+  `restrict`). Trước khi gỡ, agent kiểm trên DB: không thân hàm, view, policy hay trigger nào gọi tới nó. PostgREST tự nạp lại
+  qua `pgrst_drop_watch`, nên `rpc/track_order` trả PGRST202, HTTP 404.
+- **Mã:**
+  - xoá `trackOrder`, sinh lại `database.types.ts` (diff đúng một dòng);
+  - chú giải năm tệp ghi "đã gỡ ở B13";
+  - năm dbtest chuyển sang `lookup_order`, `receipt_order`, `my_orders`. Test (f) mới: `anon` và khách đã đăng nhập đều
+    nhận 404 PGRST202; `lookup_order` vẫn 200. Agent tạo lại hàm cũ để thử, hai test mới đỏ, đúng như phải thế.
+- **Kiểm:** 1983/1983 test, 296/296 test DB, typecheck sạch (phiên chính chạy lại); build sạch (agent). REST cục bộ bằng khoá
+  anon: `track_order` 404, `lookup_order` 200.
+- **Phiên chính sửa sau duyệt:** `supabase/README.md` bỏ dòng `track_order`, thêm mục *The order lookup* (B11, B13) và
+  *What the catalogue dates* (B12). Hai mục này còn thiếu từ B11.
+- **Deploy:** DB trước, rồi code. Không cần nạp lại seed. Bản trên demo không gọi `track_order`, nên gỡ trước là bịt lỗ ngay.
+  Câu kiểm ở scratchpad `hosted-check-lat5.sql`.
+- **Còn mở:** trên `/admin/orders/*` có cảnh báo (không phải lỗi) một chunk CSS và 3 font tải trước mà không dùng. Nhiều khả
+  năng là Mona Sans, vì layout gốc tải trước nó cho cả quản trị. Có từ trước, đợi vòng quản trị.
