@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { ORDERS } from "@/data/orders";
 import type { Order } from "@/data/types";
-import { toAdminOrders, toOrder, toOrders } from "./order-dto";
+import { LOOKED_UP_KEYS } from "@/lib/order-lookup";
+import { toAdminOrders, toLookupAnswer, toOrder, toOrders } from "./order-dto";
 
 /**
  * JSON exactly as `order_json()` writes it (`supabase/migrations/…_orders.sql`):
@@ -355,5 +356,103 @@ describe("toAdminOrders — the back office's list (slice B3a)", () => {
       toAdminOrders([{ order: json({ state: "RECEIVED" }), owner: { ...owner, joinedAt: "hôm qua" } }]),
     ).toThrow("order DH-2432.owner.joinedAt");
     expect(() => toAdminOrders({})).toThrow("admin orders must be an array");
+  });
+});
+
+/**
+ * `lookup_order()` (slice B11): FOUND with the fields the lookup screen shows,
+ * or one of the two misses. The database half — that the function really
+ * sends only these, and says which of the two did not match — is
+ * `lib/db/order-lookup.dbtest.ts`.
+ */
+describe("toLookupAnswer — the guest lookup's answer (slice B11)", () => {
+  /** `order_json()`'s document, cut down to the keys the function lists. */
+  function found(status: Record<string, unknown>, over: Record<string, unknown> = {}) {
+    const full = json(status, over) as Record<string, unknown>;
+    const order: Record<string, unknown> = {};
+    for (const key of LOOKED_UP_KEYS) order[key] = full[key] ?? null;
+    return { outcome: "FOUND", order };
+  }
+
+  it("reads the two misses as they are", () => {
+    expect(toLookupAnswer({ outcome: "NO_ORDER" })).toEqual({ ok: false, reason: "NO_ORDER" });
+    expect(toLookupAnswer({ outcome: "PHONE_MISMATCH" })).toEqual({ ok: false, reason: "PHONE_MISMATCH" });
+  });
+
+  it("reads an order found: its code, steps, payment, pieces and money — and nothing else", () => {
+    const status = { state: "PAID", paidAt: "2026-09-20T19:13:00+07:00" } as const;
+    const moments = { paidAt: "2026-09-20T19:13:00+07:00" };
+    const got = toLookupAnswer(found(status, { moments }));
+    expect(got).toEqual({
+      ok: true,
+      order: {
+        code: "DH-2432",
+        placedAt: "2026-09-20T19:00:00+07:00",
+        status,
+        moments,
+        payment: "BANK_TRANSFER",
+        lines: [
+          { productId: "p-khoi", size: "M", color: "black", qty: 2, unitPriceVnd: 390_000 },
+          { productId: "p-nang", size: "L", color: "moss", qty: 1, unitPriceVnd: 450_000 },
+        ],
+        shippingFeeVnd: 30_000,
+        codFeeVnd: 0,
+        discountVnd: 78_000,
+        promo: "DOT05",
+      },
+    });
+  });
+
+  it("carries on no key the function should not have sent — a name, an address, an owner", () => {
+    const wire = found({ state: "RECEIVED" });
+    Object.assign(wire.order, {
+      shipTo: { recipient: "Khách Thử", phone: "0901234567", line: "1 Thử Nghiệm" },
+      recipient: "Khách Thử",
+      email: "khach@example.test",
+      note: "gọi trước",
+      customerId: "c-minhanh",
+      delivery: "EXPRESS",
+    });
+    const got = toLookupAnswer(wire);
+    expect(got.ok).toBe(true);
+    if (!got.ok) return;
+    expect(Object.keys(got.order).every((k) => (LOOKED_UP_KEYS as readonly string[]).includes(k))).toBe(true);
+    expect(JSON.stringify(got)).not.toMatch(/Khách Thử|Thử Nghiệm|example\.test|gọi trước|c-minhanh|EXPRESS/);
+  });
+
+  it("leaves the courier off a parcel on the road, and keeps its tracking code", () => {
+    const got = toLookupAnswer(
+      found({
+        state: "SHIPPING",
+        shippedAt: "2026-09-21T07:15:00+07:00",
+        trackingCode: "VNP-2430-01",
+        carrier: "Giao tiêu chuẩn",
+      }),
+    );
+    expect(got.ok && got.order.status).toEqual({
+      state: "SHIPPING",
+      shippedAt: "2026-09-21T07:15:00+07:00",
+      trackingCode: "VNP-2430-01",
+    });
+  });
+
+  it("leaves promo and moments off when there are none, as on an Order", () => {
+    const got = toLookupAnswer(found({ state: "RECEIVED" }, { promo: null, discountVnd: 0, moments: {} }));
+    expect(got.ok).toBe(true);
+    if (!got.ok) return;
+    expect("promo" in got.order).toBe(false);
+    expect("moments" in got.order).toBe(false);
+  });
+
+  it("names the field that is wrong, as toOrder does", () => {
+    expect(() => toLookupAnswer({ outcome: "LOST" })).toThrow("lookup.outcome must be one of");
+    expect(() => toLookupAnswer(null)).toThrow("lookup must be an object");
+    expect(() => toLookupAnswer({ outcome: "FOUND" })).toThrow("lookup.order must be an object");
+    expect(() => toLookupAnswer({ outcome: "FOUND", order: { ...found({ state: "RECEIVED" }).order, code: "2432" } })).toThrow(
+      "lookup.order.code",
+    );
+    expect(() => toLookupAnswer(found({ state: "AWAITING_TRANSFER" }))).toThrow("lookup DH-2432.status.dueAt");
+    expect(() => toLookupAnswer(found({ state: "RECEIVED" }, { lines: [] }))).toThrow("lookup DH-2432.lines");
+    expect(() => toLookupAnswer(found({ state: "RECEIVED" }, { codFeeVnd: -1 }))).toThrow("lookup DH-2432.codFeeVnd");
   });
 });

@@ -2630,6 +2630,59 @@ xong trong khoảng 35 giây (trạng thái commit trên GitHub; Vercel MCP bị
   - `lib/prefs.ts` và `lib/reminder.ts` còn được `notif-center` đọc tới lát 4.
 - **Còn mở:** `getMyState()` trả `null` cả khi đọc hỏng, nên UI hiện tài khoản rỗng tới lần ghi sau; tách hai trường hợp ở
   lát backend sau.
+
+**30/09, lát 3 cùng B9 và B10 LÊN ONLINE.** Deploy **DB trước**:
+- Người dùng gõ `db push --linked --dry-run` (thấy đúng 3 migration), rồi `db push --linked --yes`, rồi
+  `db query --linked -f supabase/seed.sql`.
+- Phiên chính chạy câu kiểm chỉ đọc từ tệp, không để người dùng chép dòng dài. Kết quả: `c-minhanh` 4 mẫu, 1 nhắc, L/M;
+  bảng và hàm mới có đủ; đơn mẫu có `moments`; bucket `keep` có; 24/24 đơn còn gắn tài khoản.
+- Phiên chính push `e6b128c..465b5a6` (4 commit). Vercel báo xong.
+- Kiểm trên demo bằng playwright với cấu hình riêng:
+  - chưa đăng nhập: Tôi 1280 có ô tài khoản thử, hai nút cùng hàng; bấm tim thì hiện "Đăng nhập để lưu mẫu";
+  - "Đăng nhập thử": Tôi đủ tên, 4 ảnh yêu thích, "Nhắc Số 06 … qua app", size L/M;
+  - DH-2416 đủ 4 mốc giờ; DH-9999 trả 404; THAN chọn sẵn "Size của tôi";
+  - lưu KHÓI, tải lại vẫn lưu; bỏ lưu, tải lại thì hết.
+  - 0 request ra ngoài; lỗi console duy nhất là dòng 404 cố ý.
+
+**Lát 4: kế hoạch (30/09/2026).** Người dùng: "okay tiếp tục lát 4 đi". Chạy lần lượt:
+1. **B11** (`tasks/briefs/backend-b11.md`):
+   - tra đơn trả rõ lý do: không có mã, hoặc số không khớp;
+   - chỉ trả những gì màn tra cứu hiện, không địa chỉ;
+   - bucket `lookup` 10 lượt / 10 phút.
+2. **B12** (`tasks/briefs/backend-b12.md`): mốc "bán gần nhất" của từng màu và mốc công bố Số, để hộp thư có giờ thật cho
+   "BỤI đen còn 1 chiếc" và "Số 06 công bố".
+3. **4a** (`tasks/briefs/v4-lat-4a.md`):
+   - Thông báo: hộp thư dựng từ dữ liệu, lọc theo 4 công tắc; đã đọc lưu trên thiết bị như mock;
+   - nhắc chỉ còn kênh "Trong app";
+   - chuông đọc theo tài khoản;
+   - Tra cứu đơn; 404.
+4. **4b** (`tasks/briefs/v4-lat-4b.md`): Hỏi đáp, Bảng size, chân trang, `/about`, `/contact`, đổi trả.
+
+- **Người dùng chọn (30/09):**
+  - tra cứu báo **hai câu riêng** như mock: "Không có đơn nào mang mã này" và "Số điện thoại không khớp với đơn". Bỏ luật một
+    câu chung của QĐ-16 cho riêng màn này; bù lại có giới hạn số lần tra;
+  - khối "Không thấy câu cần tìm? · Gửi tin nhắn" cuối Hỏi đáp **giữ như mock**, nút trỏ `/contact` hiện tại;
+  - đổi trả **theo mock**: `/returns` chuyển tới `/faq#doi-tra`, mọi link "Đổi trả" trỏ nhóm đó. Nội dung cũ "Điều kiện chi
+    tiết đang chuẩn bị" bỏ, vì luật đã chốt ngày 27/09. Điều này sửa QĐ-34 riêng cho `/returns`.
+- **Phiên chính quyết:** bốn câu Hỏi đáp hứa điều chưa có (yêu cầu đổi trả trên trang đơn, email đặt lại mật khẩu, đổi email,
+  nhắc qua email) thay bằng chữ thật, ghi ở brief 4b.
+
+**Lát B11 ĐẠT (30/09/2026, `backend-implementer`, phiên chính duyệt).** Brief `tasks/briefs/backend-b11.md`.
+- **Migration** `20260930150000_order_lookup.sql`:
+  - hàm `lookup_order(code, phone)` trả `NO_ORDER`, `PHONE_MISMATCH` hoặc `FOUND` kèm đúng 10 khoá. Không có địa chỉ, tên, số,
+    email, ghi chú hay hãng vận chuyển. Quyền như `track_order`;
+  - bucket `lookup`.
+- **Mã:**
+  - DTO `LookedUpOrder` (`lib/order-lookup.ts`);
+  - DAL `lookupOrder` trừ một lượt trước khi hỏi DB;
+  - `lookupOrderAction(code, phone)` trả `LookupResult` với chữ lỗi của mock. Lỗi nhập không trừ lượt.
+  - `track_order()` và `/track` v3 không đổi: 10/10 cặp ảnh trùng từng pixel.
+- **Phiên chính nhận đề xuất của agent:** trang `/track` **không tra lúc render**, vì docs Next cấm ghi DB khi render và prefetch
+  có thể render trang. Mở link có `code` và `phone` thì màn gọi action một lần khi mount. Kết quả hiện sau một nhịp thay vì
+  có ngay trong HTML đầu.
+- **Kiểm:** 1903/1903 test, 284/284 test DB, typecheck sạch (phiên chính chạy lại). Build sạch. Diff `take_rate` chỉ thêm
+  `'lookup'`.
+- **Còn mở:** khách đã đăng nhập tra đơn của người khác, bấm "Xem trang đơn" thì ra 404, như mock.
 - **Mã v3 mồ côi (dọn cuối đợt):**
   - `SignInScreen`, `SignUpScreen`, `ForgotPasswordScreen`, `OrdersScreen`, `OrderDetailScreen`, `CancelOrderSheet`,
     `AddressesScreen`, `AddressFormScreen`;

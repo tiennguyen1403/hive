@@ -16,6 +16,7 @@ import {
   type Size,
 } from "@/data/types";
 import type { AdminOrder, OrderOwner } from "@/lib/admin-orders";
+import type { LookupFound, LookupMissed } from "@/lib/order-lookup";
 
 /**
  * The border between `order_json()` and `data/types.ts`.
@@ -259,6 +260,61 @@ export function toOrder(value: unknown): Order {
 /** A list of them, from `my_orders()`, in the order it was returned. */
 export function toOrders(value: unknown): Order[] {
   return list(value, "orders").map(toOrder);
+}
+
+// ─────────────────────────────────────────────────── the guest lookup (B11)
+const OUTCOMES = ["FOUND", "NO_ORDER", "PHONE_MISMATCH"] as const;
+
+/**
+ * What `lookup_order()` answers (slice B11): the order, as far as the Feed's
+ * lookup screen shows it (`LookedUpOrder`), or which of the code and the
+ * phone did not match.
+ *
+ * The fields are `order_json()`'s own, listed by the function, so they are
+ * read with the same checks as `toOrder`'s. The order is BUILT key by key
+ * rather than passed on: a key the function should not have sent — a
+ * recipient, an address, an owner — would not reach the screen even if it
+ * came, and neither would the courier inside SHIPPING's status, which the
+ * lookup does not print.
+ */
+export function toLookupAnswer(value: unknown): LookupFound | LookupMissed {
+  const source = record(value, "lookup");
+  const outcome = member(OUTCOMES, source, "outcome", "lookup");
+  if (outcome !== "FOUND") return { ok: false, reason: outcome };
+
+  const order = record(source.order, "lookup.order");
+  const code = text(order, "code", "lookup.order");
+  if (!CODE.test(code)) fail("lookup.order.code", "must look like DH-2432");
+  const path = `lookup ${code}`;
+
+  const lines = list(order.lines, `${path}.lines`).map((line, i) =>
+    readLine(line, `${path}.lines[${i}]`),
+  );
+  if (lines.length === 0) fail(`${path}.lines`, "must hold at least one line");
+
+  const status = readStatus(order.status, `${path}.status`);
+  const moments = readMoments(order.moments, `${path}.moments`);
+  const promo = order.promo;
+
+  return {
+    ok: true,
+    order: {
+      code: orderCode(code),
+      placedAt: instant(order, "placedAt", path),
+      status:
+        status.state === "SHIPPING"
+          ? { state: "SHIPPING", shippedAt: status.shippedAt, trackingCode: status.trackingCode }
+          : status,
+      payment: member(PAYMENTS, order, "payment", path),
+      lines,
+      shippingFeeVnd: amount(order, "shippingFeeVnd", path),
+      codFeeVnd: amount(order, "codFeeVnd", path),
+      discountVnd: amount(order, "discountVnd", path),
+      // Absent when there is none, as on `Order`.
+      ...(promo === null || promo === undefined ? {} : { promo: promoCode(text(order, "promo", path)) }),
+      ...(moments ? { moments } : {}),
+    },
+  };
 }
 
 // ──────────────────────────────────────────────────── the back office's read

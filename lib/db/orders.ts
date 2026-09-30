@@ -37,6 +37,12 @@ import { getSession } from "./session";
  * Nothing here passes an owner id to the database: `auth.uid()` inside the
  * policies and the functions is the owner.
  *
+ * Since slice B11 the Feed's lookup has a door of its own beside the third,
+ * `lookup_order()` (`lib/db/order-lookup.ts`): it says which of the code and
+ * the phone did not match, hands out only what that screen prints — nothing of
+ * where the order goes — and costs the visitor one of ten lookups per ten
+ * minutes. `trackOrder` below is unchanged and serves the v3 `/track` page.
+ *
  * Writes are the two functions `place_order()` and `cancel_order()`. Their
  * refusals come back as a typed `OrderError` whose `failure` is one of the
  * seven codes the SQL raises (or `UNAVAILABLE`), for the Server Action to

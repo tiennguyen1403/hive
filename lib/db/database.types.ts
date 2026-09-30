@@ -1314,6 +1314,7 @@ export type Database = {
       expire_transfers: { Args: { p_now: string }; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       json_count: { Args: { p_value: Json }; Returns: number }
+      lookup_order: { Args: { p_code: string; p_phone: string }; Returns: Json }
       my_orders: { Args: never; Returns: Json }
       my_state: { Args: never; Returns: Json }
       order_json: { Args: { p_code: string }; Returns: Json }

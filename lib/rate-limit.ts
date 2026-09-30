@@ -26,22 +26,24 @@ import { createHmac } from "node:crypto";
  * a demo that is fine: the point is a ceiling on sustained abuse, not a smooth
  * rate.
  *
- * The numbers are the brief's (B4b §2.5, and `keep` from the review of slice
- * B9) and are deliberately NOT environment variables: a limit that a deploy
- * can switch off is a limit nobody can rely on. `lib/rate-limit.test.ts`
- * restates the table by hand.
+ * The numbers are the brief's (B4b §2.5, `keep` from the review of slice B9,
+ * `lookup` from the brief of slice B11) and are deliberately NOT environment
+ * variables: a limit that a deploy can switch off is a limit nobody can rely
+ * on. `lib/rate-limit.test.ts` restates the table by hand.
  */
 
 /**
- * The twelve buckets. `public.rate_hits.bucket` checks the same twelve, and
- * `take_rate()` refuses any other name as `BAD_INPUT` — three lists that must
- * agree, which `lib/db/rate-limit.dbtest.ts` proves by calling `take_rate()`
- * with every name here. `keep` joined at slice B9
- * (`20260929120000_account_state.sql`).
+ * The thirteen buckets. `public.rate_hits.bucket` checks the same thirteen,
+ * and `take_rate()` refuses any other name as `BAD_INPUT` — three lists that
+ * must agree, which `lib/db/rate-limit.dbtest.ts` proves by calling
+ * `take_rate()` with every name here. `keep` joined at slice B9
+ * (`20260929120000_account_state.sql`), `lookup` at slice B11
+ * (`20260930150000_order_lookup.sql`).
  */
 export const RATE_BUCKETS = [
   "order_place",
   "order_units",
+  "lookup",
   "sign_in",
   "sign_up",
   "password",
@@ -71,11 +73,18 @@ const HOUR = 3_600;
 const DAY = 86_400;
 
 /**
- * B4b §2.5, row for row, and `keep` since slice B9. Where each one is taken:
+ * B4b §2.5, row for row, `keep` since slice B9 and `lookup` since B11. Where
+ * each one is taken:
  *
  *   order_place   `placeOrderAction`, one per order
  *   order_units   `placeOrderAction`, one per PIECE — the cost is the order's
  *                 total quantity, so a visitor cannot buy the shelf empty
+ *   lookup        `lookupOrder` (`lib/db/order-lookup.ts`), one per lookup,
+ *                 whether the form asked or a link carrying the code and the
+ *                 phone did (both through `lookupOrderAction`): the Feed's
+ *                 lookup says WHICH of the two did not match, and this is
+ *                 what keeps that from being a way to find out, one code
+ *                 after another, which orders exist
  *   sign_in       `signIn`, `demoSignIn`, `demoAdminSignIn`
  *   sign_up       `signUp`
  *   password      `changePassword`
@@ -97,6 +106,7 @@ const DAY = 86_400;
 export const RATE_RULES: Readonly<Record<RateBucket, RateRule>> = {
   order_place: { limit: 5, windowSeconds: 10 * MINUTE, per: "visitor" },
   order_units: { limit: 60, windowSeconds: DAY, per: "visitor" },
+  lookup: { limit: 10, windowSeconds: 10 * MINUTE, per: "visitor" },
   sign_in: { limit: 10, windowSeconds: 5 * MINUTE, per: "visitor" },
   sign_up: { limit: 3, windowSeconds: HOUR, per: "visitor" },
   password: { limit: 5, windowSeconds: 10 * MINUTE, per: "visitor" },

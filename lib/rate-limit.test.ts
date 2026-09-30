@@ -18,12 +18,14 @@ import {
  * counter table, and what the screen says when the answer is "not now".
  *
  * The table below is the brief's §2.5 — plus `keep`, from the review of slice
- * B9 — restated on purpose rather than read from the module: a number changed
- * in `lib/rate-limit.ts` has to change here too, by hand, or this fails.
+ * B9, and `lookup`, from the brief of slice B11 — restated on purpose rather
+ * than read from the module: a number changed in `lib/rate-limit.ts` has to
+ * change here too, by hand, or this fails.
  */
 const TABLE: Record<RateBucket, { limit: number; windowSeconds: number; per: "visitor" | "everyone" }> = {
   order_place: { limit: 5, windowSeconds: 10 * 60, per: "visitor" },
   order_units: { limit: 60, windowSeconds: 24 * 3600, per: "visitor" },
+  lookup: { limit: 10, windowSeconds: 10 * 60, per: "visitor" },
   sign_in: { limit: 10, windowSeconds: 5 * 60, per: "visitor" },
   sign_up: { limit: 3, windowSeconds: 3600, per: "visitor" },
   password: { limit: 5, windowSeconds: 10 * 60, per: "visitor" },
@@ -37,10 +39,15 @@ const TABLE: Record<RateBucket, { limit: number; windowSeconds: number; per: "vi
 };
 
 describe("RATE_RULES", () => {
-  it("has exactly the twelve buckets — B4b's eleven and B9's `keep` — no more", () => {
+  it("has exactly the thirteen buckets — B4b's eleven, B9's `keep`, B11's `lookup` — no more", () => {
     expect([...RATE_BUCKETS].sort()).toEqual(Object.keys(TABLE).sort());
     expect(Object.keys(RATE_RULES).sort()).toEqual(Object.keys(TABLE).sort());
-    expect(RATE_BUCKETS).toHaveLength(12);
+    expect(RATE_BUCKETS).toHaveLength(13);
+  });
+
+  it("gives the lookup ten tries per ten minutes, per visitor, in the app's own sentence", () => {
+    expect(RATE_RULES.lookup).toEqual({ limit: 10, windowSeconds: 600, per: "visitor" });
+    expect(rateLimitMessage("lookup", 125)).toBe("Quá nhiều lượt liên tiếp. Thử lại sau 3 phút.");
   });
 
   it("matches the table, bucket by bucket", () => {

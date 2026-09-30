@@ -95,17 +95,18 @@ export const OVERDUE_REASON = "quá hạn chuyển khoản";
  */
 export const CUSTOMER_CANCEL_REASON = "khách huỷ";
 
-export function effectiveStatus(o: Order, now: Date = demoNow()): OrderStatus {
+export function effectiveStatus(o: Pick<Order, "status">, now: Date = demoNow()): OrderStatus {
   if (o.status.state !== "AWAITING_TRANSFER") return o.status;
   if (now.getTime() < Date.parse(o.status.dueAt)) return o.status;
   return { state: "CANCELLED", cancelledAt: o.status.dueAt, reason: OVERDUE_REASON };
 }
 
 /** The same order, with the status the clock says it is in. */
-export function effectiveOrder<T extends Order>(o: T, now: Date = demoNow()): T {
+export function effectiveOrder<T extends Pick<Order, "status">>(o: T, now: Date = demoNow()): T {
   const status = effectiveStatus(o, now);
   // Generic so an order that carries more than `Order` — the back office's,
-  // with its owner — keeps it on the way through.
+  // with its owner — keeps it on the way through, and one that carries less —
+  // the guest lookup's (slice B11), without where it goes — reads the same.
   return status === o.status ? o : { ...o, status };
 }
 
