@@ -225,15 +225,29 @@ export function footPayments(): FootFact[] {
 }
 
 /**
- * "Trợ giúp": the help pages that exist. "Bảng size" joins at slice 4, with
- * its route.
+ * "Trợ giúp": the mock's five help links, in its order (`feed.js`: `HELP`,
+ * `HELP_HREF`, `WORDS`). "Đổi trả 7 ngày" opens Hỏi đáp's return group: the
+ * Feed has no returns page of its own, and `/returns` leads there too (the
+ * user, 30/09). "Bảng size" since slice 4b, with its route.
  */
 export const FOOT_HELP: readonly { label: string; href: string }[] = [
   { label: "Hỏi đáp", href: "/faq" },
-  { label: `Đổi trả ${RETURN_WINDOW_DAYS} ngày`, href: "/returns" },
+  { label: `Đổi trả ${RETURN_WINDOW_DAYS} ngày`, href: "/faq#doi-tra" },
   { label: "Tra cứu đơn", href: "/track" },
+  { label: "Bảng size", href: "/size-guide" },
   { label: "Liên hệ", href: "/contact" },
 ];
+
+/**
+ * Whether a screen leaves a help link out of its footer because it already
+ * carries what the link leads to (the mock's `data-foot-skip`, `skipped`): an
+ * entry with a hash drops that one link (`/faq#doi-tra` on a style's page,
+ * which has its own "Đổi trả" row); an entry without one drops every link to
+ * that page (`/faq` on Hỏi đáp drops "Đổi trả 7 ngày" too).
+ */
+export function footSkipped(href: string, skip: readonly string[]): boolean {
+  return skip.some((x) => x === href || (!x.includes("#") && x === href.split(/[?#]/)[0]));
+}
 
 /** The words under the next issue's silhouettes (the mock's `FACTS.teaser`). */
 export const TEASER_NOTE = "Giá và số lượng công bố lúc mở.";

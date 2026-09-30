@@ -52,11 +52,12 @@ interface MeViewProps {
  * `me.js`. Who they are; "Đơn hàng" — the order that needs them now (a
  * transfer's hold ticking in the countdown's face, a card order's too, or a
  * COD order waiting for the call) beside the parcel on its way, else the
- * return window that closes soonest (to `/returns` until the request flow
- * exists, QĐ-34), else a quiet line; then four tiles with their own things in
- * them — the saved styles with their live stock, the reminder as a date
- * block, Size của tôi, the default address — and "Đăng xuất" on the phone
- * (from 900px the menu beside carries it, and "Sửa hồ sơ" is Hồ sơ's item).
+ * return window that closes soonest (to Hỏi đáp's return group until the
+ * request flow exists, QĐ-34, slice 4b), else a quiet line; then four tiles
+ * with their own things in them — the saved styles with their live stock,
+ * the reminder as a date block, Size của tôi, the default address — and
+ * "Đăng xuất" on the phone (from 900px the menu beside carries it, and "Sửa
+ * hồ sơ" is Hồ sơ's item).
  *
  * The saved styles, the reminder and the sizes are the account's as the
  * screen keeps them (`MyStateContext`), so a heart pressed a moment ago on
@@ -261,7 +262,7 @@ function MovingCard({ order: o }: { order: Order }) {
   );
 }
 
-/** Nothing running: the delivered order whose return window closes soonest (`returnCard`), to the returns page (QĐ-34). */
+/** Nothing running: the delivered order whose return window closes soonest (`returnCard`), to Hỏi đáp's return group (QĐ-34). */
 function ReturnCard({ order: o, until }: { order: Order; until: string }) {
   return (
     <article className="soon-card" aria-labelledby={`rt-${o.code}`}>
@@ -273,7 +274,7 @@ function ReturnCard({ order: o, until }: { order: Order; until: string }) {
       </div>
       <div className="soon-card-foot">
         <Pieces order={o} />
-        <Link className="pill" href="/returns">
+        <Link className="pill" href="/faq#doi-tra">
           <FeedIcon name="arrow-u-up-left" />
           Đổi trả tới {dayMonth(until)}
         </Link>

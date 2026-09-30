@@ -163,10 +163,19 @@ describe("isFeedPath", () => {
     }
   });
 
-  it("is no v3 screen, and nothing that merely starts with a Feed route's name", () => {
+  it("is Hỏi đáp, Bảng size, Giới thiệu and Liên hệ since slice 4b, and /returns that leads to Hỏi đáp", () => {
+    for (const p of ["/faq", "/faq/", "/size-guide", "/about", "/contact", "/returns"]) {
+      expect(isFeedPath(p), p).toBe(true);
+    }
+  });
+
+  it("is nothing that merely starts with a Feed route's name", () => {
     for (const p of [
-      "/faq",
-      "/about",
+      "/faqs",
+      "/about-us",
+      "/size-guides",
+      "/contacts",
+      "/returnsx",
       "/account/notificationsx",
       "/tracking",
       "/accounts",

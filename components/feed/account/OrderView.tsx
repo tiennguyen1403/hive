@@ -174,7 +174,7 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
     const until = returnUntil(order);
     const ret =
       until && canReturn(order, now) ? (
-        <Link className="btn btn-line" href="/returns">
+        <Link className="btn btn-line" href="/faq#doi-tra">
           <FeedIcon name="arrow-u-up-left" />
           Đổi trả tới {dayMonth(until)}
         </Link>

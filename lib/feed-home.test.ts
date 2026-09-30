@@ -12,6 +12,7 @@ import {
   fixedLead,
   footDelivery,
   footPayments,
+  footSkipped,
   homeMoment,
   issueFacts,
   lineIssue,
@@ -168,8 +169,26 @@ describe("the footer", () => {
     ]);
   });
 
-  it("links only the help pages that exist: no Bảng size until its route does", () => {
-    expect(FOOT_HELP.map((h) => h.label)).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Tra cứu đơn", "Liên hệ"]);
-    expect(FOOT_HELP.map((h) => h.href)).toEqual(["/faq", "/returns", "/track", "/contact"]);
+  it("links the mock's five help pages in its order, Đổi trả to Hỏi đáp's return group (slice 4b)", () => {
+    expect(FOOT_HELP.map((h) => h.label)).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Tra cứu đơn", "Bảng size", "Liên hệ"]);
+    expect(FOOT_HELP.map((h) => h.href)).toEqual(["/faq", "/faq#doi-tra", "/track", "/size-guide", "/contact"]);
+  });
+
+  it("leaves out what a screen already carries, as the mock's data-foot-skip does", () => {
+    const kept = (skip: string[]) => FOOT_HELP.filter((h) => !footSkipped(h.href, skip)).map((h) => h.label);
+    // Hỏi đáp: every link to the page goes, its return group included.
+    expect(kept(["/faq"])).toEqual(["Tra cứu đơn", "Bảng size", "Liên hệ"]);
+    // A style's page has its own "Đổi trả" row: only that one link goes.
+    expect(kept(["/faq#doi-tra"])).toEqual(["Hỏi đáp", "Tra cứu đơn", "Bảng size", "Liên hệ"]);
+    expect(kept(["/size-guide"])).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Tra cứu đơn", "Liên hệ"]);
+    expect(kept(["/track"])).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Bảng size", "Liên hệ"]);
+    expect(kept(["/contact"])).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Tra cứu đơn", "Bảng size"]);
+    expect(kept([])).toHaveLength(5);
+  });
+
+  it("reads a link's page without its query or hash, and nothing that merely starts with it", () => {
+    expect(footSkipped("/faq?q=cod", ["/faq"])).toBe(true);
+    expect(footSkipped("/faq", ["/faq#doi-tra"])).toBe(false);
+    expect(footSkipped("/faqs", ["/faq"])).toBe(false);
   });
 });

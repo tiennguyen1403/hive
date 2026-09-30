@@ -48,7 +48,22 @@
      as `.only-desk` does: nothing they meet sets `display` or `position`
      with more weight, and they win on source order;
    · the settings row's second line (`.b-setrow-label small`) is not ported:
-     it held the mock's Email channel, which QĐ-35 leaves out. */
+     it held the mock's Email channel, which QĐ-35 leaves out.
+
+   PORTED AT SLICE 4b, for Hỏi đáp `/faq`, Bảng size `/size-guide`, Liên hệ
+   `/contact` and Giới thiệu `/about`: the empty slot a shop fills later
+   (`.b-slot`), Hỏi đáp (`.b-help*`, `.b-cats`, `.b-qgroup*`, `.b-qa*`,
+   `mark.b-hit`), Bảng size (`.b-sg-cap`, `.b-hpick`, `.b-hres`, `.b-fits`,
+   `.b-fit*`, `.b-tips`, `.b-measure`, `.b-pants`) and Liên hệ's two columns
+   (`.b-contact`, `.b-cside`), with their desktop and hover rules. Liên hệ's
+   form and sent state (`.b-cform`, `.b-ochips`, `.b-sent*`) wait for the
+   form (QĐ-34). Translated on the way in:
+   · the answer's drop is `f-b-drop`, asked of `prefers-reduced-motion`;
+   · the mock's `.vh` caption is the app's `.sr-only`;
+   · `#fff` on a lit row is `--f-white`; the search mark's rgba stays as the
+     mock writes it.
+   Below them, one block the mock has no page for: Giới thiệu and Liên hệ keep
+   the words they had (QĐ-34) in Feed's type (`.b-read`, `.b-rules`). */
 
 /* ── page frame ── */
 /* The page title; on a pushed screen the phone bar shows it once it has scrolled away. */
@@ -94,6 +109,14 @@
 
 /* An empty list: the flow's empty state, a little closer to the title. */
 [data-ui="feed"] .b-empty { padding-top: 40px; }
+
+/* An empty slot the shop fills later (its phone and email), drawn like the checkout's QR slot. */
+[data-ui="feed"] .b-slot {
+  display: grid; gap: 4px; padding: 16px 18px; border-radius: 12px; box-shadow: inset 0 0 0 1.5px var(--f-line2);
+  background: repeating-linear-gradient(135deg, transparent 0 10px, rgba(17, 18, 20, .035) 10px 11px);
+}
+[data-ui="feed"] .b-slot b { font-size: 14px; font-weight: 700; }
+[data-ui="feed"] .b-slot span { font-size: 13px; color: var(--f-ink2); }
 
 /* Busy: a button waiting on the shop, and the grey blocks that stand in for a result. */
 [data-ui="feed"] .btn[aria-busy="true"] { cursor: progress; }
@@ -280,6 +303,87 @@
 [data-ui="feed"] .b-pn small .i { width: 16px; height: 16px; }
 [data-ui="feed"] .b-pn .disp { font-size: 30px; line-height: 1.04; }
 
+/* ── Hỏi đáp ── */
+[data-ui="feed"] .b-help-top { padding: 14px var(--f-g) 0; }
+[data-ui="feed"] .b-help-top .sform { height: 52px; }
+[data-ui="feed"] .b-cats { padding-top: 14px; padding-bottom: 4px; }
+[data-ui="feed"] .b-cats .chip { text-decoration: none; }
+[data-ui="feed"] .b-qgroup { padding: 24px var(--f-g) 4px; scroll-margin-top: calc(var(--f-bar) + 12px); }
+[data-ui="feed"] .b-qgroup-title { font-size: 30px; line-height: 1.06; margin-bottom: 8px; }
+[data-ui="feed"] .b-qa { border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .b-qa:first-of-type { border-top: 0; }
+[data-ui="feed"] .b-qa summary {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px;
+  min-height: 56px; padding: 10px 0; list-style: none; cursor: pointer;
+  font-size: 16px; font-weight: 620; line-height: 1.35;
+}
+[data-ui="feed"] .b-qa summary::-webkit-details-marker { display: none; }
+[data-ui="feed"] .b-qa summary .i { width: 20px; height: 20px; color: var(--f-ink2); transition: transform .28s var(--f-spring); }
+[data-ui="feed"] .b-qa[open] summary .i { transform: rotate(45deg); color: var(--f-ink); }
+[data-ui="feed"] .b-qa summary:focus-visible { outline-offset: -2px; border-radius: 12px; }
+[data-ui="feed"] .b-qa-a { padding: 0 36px 18px 0; font-size: 15px; line-height: 1.55; max-width: 62ch; }
+[data-ui="feed"] .b-qa-a b { font-weight: 680; }
+[data-ui="feed"] .b-qa-a .link { margin-top: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  [data-ui="feed"] .b-qa[open] .b-qa-a { animation: f-b-drop .3s var(--f-out); }
+}
+@keyframes f-b-drop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+[data-ui="feed"] mark.b-hit { background: rgba(24, 70, 240, .14); color: inherit; border-radius: 3px; padding: 0 1px; }
+[data-ui="feed"] .b-help-none { padding: 28px var(--f-g) 4px; }
+[data-ui="feed"] .b-help-none .snone-line { margin-bottom: 14px; }
+[data-ui="feed"] .b-help-none .btn { width: auto; display: inline-flex; padding: 0 24px; }
+[data-ui="feed"] .b-help-more { margin-top: 28px; padding: 24px var(--f-g) 26px; background: var(--f-bg2); }
+[data-ui="feed"] .b-help-more .sect-title { margin-bottom: 14px; }
+@media (max-width: 899.98px) {
+  [data-ui="feed"] .b-help.is-search .b-cats { display: none; }
+}
+
+/* ── Bảng size ── */
+[data-ui="feed"] .b-sg-cap { padding: 16px var(--f-g) 0; font-size: 14px; color: var(--f-ink2); }
+[data-ui="feed"] .b-hpick { padding: 18px 0 0; }
+[data-ui="feed"] .b-hpick .sh-label { padding: 0 var(--f-g); margin-bottom: 0; }
+[data-ui="feed"] .b-hpick .chips { padding-top: 10px; padding-bottom: 8px; }
+[data-ui="feed"] .b-hres { min-height: 26px; padding: 2px var(--f-g) 0; font-size: 16px; font-weight: 600; }
+[data-ui="feed"] .b-hres b { font-weight: 800; }
+[data-ui="feed"] .b-fits { display: grid; gap: 0; margin-top: 14px; }
+[data-ui="feed"] .b-fit { padding: 22px var(--f-g) 22px; border-top: 8px solid var(--f-bg2); }
+[data-ui="feed"] .b-fit-title { font-size: 30px; line-height: 1.06; }
+[data-ui="feed"] .b-fit-names { margin: 6px 0 14px; font-size: 13px; color: var(--f-ink2); line-height: 1.45; }
+[data-ui="feed"] .b-fit .fit-table tr.on td { background: var(--f-ink); color: var(--f-white); }
+[data-ui="feed"] .b-fit .fit-table td { transition: background-color .2s, color .2s; }
+[data-ui="feed"] .b-tips { padding: 22px var(--f-g) 8px; border-top: 8px solid var(--f-bg2); }
+[data-ui="feed"] .b-tips .sect-title { margin-bottom: 8px; }
+[data-ui="feed"] .b-tips p { font-size: 15px; line-height: 1.5; }
+/* One line under each pair of charts: how to measure a piece already worn. */
+[data-ui="feed"] .b-measure { display: flex; align-items: flex-start; gap: 10px; padding: 4px var(--f-g) 24px; font-size: 14px; line-height: 1.5; }
+[data-ui="feed"] .b-measure .i { flex: none; width: 20px; height: 20px; margin-top: 1px; color: var(--f-ink2); }
+/* Six columns on a phone: the trouser charts sit a little tighter than the tops'. */
+[data-ui="feed"] .b-fit .b-pants th, [data-ui="feed"] .b-fit .b-pants td { padding-left: 3px; padding-right: 3px; }
+[data-ui="feed"] .b-fit .b-pants th:first-child, [data-ui="feed"] .b-fit .b-pants td:first-child { padding-left: 8px; }
+[data-ui="feed"] .b-fit .b-pants th:last-child, [data-ui="feed"] .b-fit .b-pants td:last-child { padding-right: 8px; }
+[data-ui="feed"] .b-fit .b-pants td:last-child { white-space: nowrap; }
+
+/* ── Liên hệ: the page's two columns (its form waits, QĐ-34) ── */
+[data-ui="feed"] .b-cside { padding: 16px var(--f-g) 8px; }
+
+/* ── Giới thiệu, Liên hệ: no mock. The words the pages had (QĐ-34), in Feed's type: the text at an answer's
+   measure (`.b-qa-a`), the four rules as Hỏi đáp's rows, open. A link inside a sentence keeps the line's
+   height; its overlay reaches 46 over the text around it, which holds nothing to press. ── */
+[data-ui="feed"] .b-read { display: grid; gap: 16px; padding: 18px var(--f-g) 8px; }
+[data-ui="feed"] .b-read p { max-width: 62ch; font-size: 15px; line-height: 1.55; }
+[data-ui="feed"] .b-read p a {
+  position: relative; font-weight: 640; white-space: nowrap;
+  text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px;
+}
+[data-ui="feed"] .b-read p a::after { content: ""; position: absolute; inset: -14px -2px; }
+[data-ui="feed"] .b-rules { padding: 24px var(--f-g) 4px; }
+[data-ui="feed"] .b-rules .sect-title { margin-bottom: 2px; }
+[data-ui="feed"] .b-rules-sub { margin-bottom: 8px; font-size: 13px; color: var(--f-ink2); }
+[data-ui="feed"] .b-rule { padding: 14px 0 16px; border-top: 1px solid var(--f-line); }
+[data-ui="feed"] .b-rule:first-child { border-top: 0; }
+[data-ui="feed"] .b-rule dt { font-size: 16px; font-weight: 620; line-height: 1.35; }
+[data-ui="feed"] .b-rule dd { margin-top: 4px; max-width: 62ch; font-size: 15px; line-height: 1.55; }
+
 /* ── 404 ── */
 [data-ui="feed"] .b-nf { padding: 28px var(--f-g) 8px; }
 [data-ui="feed"] .b-nf-title { font-size: 64px; line-height: 1.08; }
@@ -381,6 +485,51 @@
   [data-ui="feed"] .b-pn a { padding: 32px 36px; align-content: space-between; }
   [data-ui="feed"] .b-pn .disp { font-size: 56px; }
 
+  /* Hỏi đáp */
+  [data-ui="feed"] .b-help-top { padding: 0; }
+  [data-ui="feed"] .b-help-top .sform { max-width: 720px; height: 60px; padding-left: 22px; margin-top: 18px; }
+  [data-ui="feed"] .b-help-top .sform > .i { width: 24px; height: 24px; }
+  [data-ui="feed"] .b-help-top .sform input { font-size: 19px; }
+  [data-ui="feed"] .b-help { display: grid; grid-template-columns: 200px minmax(0, 760px); column-gap: 64px; align-items: start; }
+  [data-ui="feed"] .b-cats { grid-row: 1 / span 2; position: sticky; top: 100px; display: grid; gap: 2px; padding: 34px 0 0; }
+  [data-ui="feed"] .b-cats .chip { justify-content: flex-start; height: 44px; padding: 0 16px; background: transparent; color: var(--f-ink2); font-size: 15px; font-weight: 560; }
+  [data-ui="feed"] .b-cats .chip:hover { background: var(--f-bg2); color: var(--f-ink); }
+  [data-ui="feed"] .b-help-body, [data-ui="feed"] .b-help-more { grid-column: 2; }
+  [data-ui="feed"] .b-qgroup { padding: 36px 0 4px; max-width: 760px; scroll-margin-top: 88px; }
+  [data-ui="feed"] .b-qgroup-title { font-size: 40px; margin-bottom: 10px; }
+  [data-ui="feed"] .b-qa summary { font-size: 17px; min-height: 60px; }
+  [data-ui="feed"] .b-qa-a { font-size: 16px; }
+  [data-ui="feed"] .b-help-none { padding: 36px 0 4px; }
+  [data-ui="feed"] .b-help-more { max-width: 760px; margin-top: 40px; padding: 32px 36px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  [data-ui="feed"] .b-help-more .sect-title { margin: 0; }
+  [data-ui="feed"] .b-help-more .btn { width: auto; padding: 0 28px; }
+
+  /* Bảng size */
+  [data-ui="feed"] .b-sg-cap { padding: 0; }
+  [data-ui="feed"] .b-hpick { padding-top: 22px; }
+  [data-ui="feed"] .b-hpick .sh-label { padding: 0; }
+  [data-ui="feed"] .b-hpick .chips { padding: 12px 0 8px; }
+  [data-ui="feed"] .b-hres { padding: 4px 0 0; font-size: 18px; }
+  [data-ui="feed"] .b-fits { grid-template-columns: 1fr 1fr; column-gap: 48px; margin-top: 20px; }
+  [data-ui="feed"] .b-fit { padding: 28px 0 8px; border-top: 1px solid var(--f-line); }
+  [data-ui="feed"] .b-fit-title { font-size: 44px; }
+  [data-ui="feed"] .b-fit .fit-table { font-size: 15px; }
+  [data-ui="feed"] .b-tips { padding: 32px 0 0; margin-top: 32px; border-top: 1px solid var(--f-line); max-width: 760px; }
+  [data-ui="feed"] .b-measure { grid-column: 1 / -1; padding: 16px 0 8px; font-size: 15px; }
+  [data-ui="feed"] .b-fits + .b-fits { margin-top: 32px; }
+  [data-ui="feed"] .b-fit .b-pants th, [data-ui="feed"] .b-fit .b-pants td { padding-left: 4px; padding-right: 4px; }
+
+  /* Liên hệ */
+  [data-ui="feed"] .b-contact { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); column-gap: 64px; align-items: start; }
+  [data-ui="feed"] .b-cside { position: sticky; top: 100px; padding: 0; display: grid; gap: 16px; }
+
+  /* Giới thiệu, Liên hệ (no mock): Hỏi đáp's column */
+  [data-ui="feed"] .b-read { padding: 0; max-width: 760px; }
+  [data-ui="feed"] .b-read p { font-size: 16px; }
+  [data-ui="feed"] .b-rules { padding: 36px 0 4px; max-width: 760px; }
+  [data-ui="feed"] .b-rule dt { font-size: 17px; }
+  [data-ui="feed"] .b-rule dd { font-size: 16px; }
+
   /* 404 */
   [data-ui="feed"] .b-nf { padding: 56px 0 8px; }
   [data-ui="feed"] .b-nf-title { font-size: 120px; }
@@ -409,6 +558,8 @@
   [data-ui="feed"] .b-issue:hover .b-go .i, [data-ui="feed"] .b-nf-links a:hover .i-arrow-right { transform: translateX(4px); }
   [data-ui="feed"] .b-nf-links a:hover { background: var(--f-bg3); }
   [data-ui="feed"] .b-pn a:hover { background: var(--f-bg3); }
+  [data-ui="feed"] .b-qa summary:hover { color: var(--f-ink); }
+  [data-ui="feed"] .b-qa summary:hover .i { color: var(--f-ink); }
   [data-ui="feed"] .b-tile-link:hover .b-tile-media img { transform: scale(1.03); }
   [data-ui="feed"] .b-tile-media { overflow: hidden; }
 }

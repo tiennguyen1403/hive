@@ -42,6 +42,13 @@ async (page) => {
     // v4 slice 4a: the app-wide 404, from an unknown path and from an issue that does not exist
     "/khong-co-trang-nay",
     "/so/999",
+    // v4 slice 4b: Hỏi đáp (plain and searching), the size guide, the two kept pages, and /returns, which leads to Hỏi đáp
+    "/faq",
+    "/faq?q=cod",
+    "/size-guide",
+    "/about",
+    "/contact",
+    "/returns",
     "/so/4",
     "/so/5",
     "/sign-in",

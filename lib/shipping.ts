@@ -36,9 +36,11 @@ export const COD_SURCHARGE_VND = 15_000;
  * page and the footer — so it is a term the shop is committed to rather
  * than a number invented for a policy page. It lives here with the other
  * terms so the page that states it and the notification that counts down
- * to it cannot drift apart. What is still unwritten is the CONDITIONS
- * (tags, who pays the return leg, discounted styles); `/returns` says so
- * in a `.prep` block rather than filling them in.
+ * to it cannot drift apart. The CONDITIONS the user settled on 27/09/2026
+ * (the reasons, which of them are the shop's fault, who pays the way back,
+ * where the refund goes) are in `lib/returns.ts`; Hỏi đáp's return group
+ * states them beside this window, and `/returns` leads there (round v4
+ * slice 4b).
  */
 export const RETURN_WINDOW_DAYS = 7;
 

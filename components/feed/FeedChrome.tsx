@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCart } from "@/components/cart/CartContext";
 import type { Order } from "@/data/types";
-import { FOOT_HELP, footDelivery, footPayments } from "@/lib/feed-home";
+import { FOOT_HELP, footDelivery, footPayments, footSkipped } from "@/lib/feed-home";
 import { FEED_ZONE, feedFontClass } from "./FeedScope";
 import { FeedLogo } from "./FeedLogo";
 import { FeedBrandBar, FeedMbar, type FeedMbarProps } from "./FeedMbar";
@@ -28,6 +28,9 @@ import { cx } from "./useReveal";
  * Tôi and Yêu thích are tab roots. Slice 4a adds Thông báo (its own bar; Tôi
  * lit below, the bell lit above, not Tôi) and Tra cứu đơn (Tôi lit, as the
  * mock's `TAB_OF` has `track: "me"`); the 404 is "other", nothing lit.
+ * Slice 4b adds Hỏi đáp, Bảng size and Liên hệ, which light Tôi as the mock's
+ * `help`, `size-guide` and `contact` do, and Giới thiệu, which the mock has no
+ * page for: nothing lit.
  */
 export type FeedPage =
   | "home"
@@ -48,6 +51,10 @@ export type FeedPage =
   | "sign-in"
   | "notifications"
   | "track"
+  | "help"
+  | "size-guide"
+  | "contact"
+  | "about"
   | "other";
 
 /** The five tab bar destinations and the pages each one lights (`feed.js`: `TAB_OF`). */
@@ -70,6 +77,10 @@ const TAB_OF: Record<FeedPage, "home" | "search" | "fav" | "cart" | "me" | null>
   "sign-in": "me",
   notifications: "me",
   track: "me",
+  help: "me",
+  "size-guide": "me",
+  contact: "me",
+  about: null,
   other: null,
 };
 
@@ -82,7 +93,12 @@ export interface FeedShellProps {
   mid?: React.ReactNode;
   /** The whole footer, the light one (help links only), or none. */
   foot?: "full" | "lite" | "none";
-  /** Help links the screen already carries (`/track` on the lookup page), left out of the footer. */
+  /**
+   * Help links the screen already carries, left out of the footer (the mock's
+   * `data-foot-skip`, `footSkipped`): `/track` on the lookup page; `/faq` on
+   * Hỏi đáp, which drops its return group's link too; `/faq#doi-tra` on a
+   * style's page, which drops that one link.
+   */
   footSkip?: readonly string[];
   /** The phone's bottom tab bar; screens with a bar of their own at the bottom turn it off. */
   tabbar?: boolean;
@@ -318,9 +334,10 @@ function FeedTabbar({ page }: { page: FeedPage }) {
 }
 
 /**
- * The footer: the logo, "Trợ giúp", and — unless `lite` — "Giao hàng" and
- * "Thanh toán", every figure from `lib/shipping.ts` (`feed.js`: `footer`).
- * The mock's "Bảng size" link waits for its route (slice 4).
+ * The footer: the logo, "Trợ giúp" — the mock's five help links, less the
+ * ones the screen already carries (`footSkipped`) — and, unless `lite`,
+ * "Giao hàng" and "Thanh toán", every figure from `lib/shipping.ts`
+ * (`feed.js`: `footer`).
  */
 export function FeedFooter({ lite = false, skip = [] }: { lite?: boolean; skip?: readonly string[] }) {
   return (
@@ -333,7 +350,7 @@ export function FeedFooter({ lite = false, skip = [] }: { lite?: boolean; skip?:
         <nav aria-labelledby="foot-help">
           <h2 id="foot-help">Trợ giúp</h2>
           <ul className="foot-links">
-            {FOOT_HELP.filter((h) => !skip.includes(h.href)).map((h) => (
+            {FOOT_HELP.filter((h) => !footSkipped(h.href, skip)).map((h) => (
               <li key={h.href}>
                 <Link href={h.href}>{h.label}</Link>
               </li>

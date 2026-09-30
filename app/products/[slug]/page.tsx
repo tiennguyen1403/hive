@@ -45,7 +45,7 @@ export async function generateMetadata(props: PageProps<"/products/[slug]">): Pr
  *
  * The footer is the light one (the page carries the delivery and payment
  * facts itself) without "Đổi trả 7 ngày": the page's own "Đổi trả · 7 ngày"
- * row is that link (the mock's `data-foot-skip`).
+ * row is that link, to Hỏi đáp's return group (the mock's `data-foot-skip`).
  *
  * `?color=<key>` opens the page on a colour — the link from Yêu thích and the
  * notifications. `params` and `searchParams` are promises in Next 16.
@@ -63,7 +63,7 @@ export default async function ProductRoute(props: PageProps<"/products/[slug]">)
   const asked = Array.isArray(sp.color) ? sp.color[0] : sp.color;
 
   return (
-    <FeedFrame page="product" tabbar={false} buybar foot="lite" footSkip={["/returns"]} now={demoNowMs()}>
+    <FeedFrame page="product" tabbar={false} buybar foot="lite" footSkip={["/faq#doi-tra"]} now={demoNowMs()}>
       <ProductPage slug={product.slug} {...(asked ? { asked } : {})} />
     </FeedFrame>
   );

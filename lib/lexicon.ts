@@ -77,15 +77,38 @@ export const HOME_COVER = {
  * when they settle it the change is this string and nothing else. It states
  * only rules this build really enforces — the window, the single cut, the
  * shelf running out. Everything else about the brand is still unwritten, and
- * `/about` says so in a `.prep` block instead of filling it in.
+ * `/about` says so in an empty slot marked "Đang chuẩn bị" (the Feed's way,
+ * since round v4 slice 4b) instead of filling it in.
  *
  * "mỗi mẫu TRONG SỐ" since v3 slice 11: a fixed style belongs to no issue and
  * is brought back when a size runs out, so the single cut is the rule of an
  * issue's styles, not of every style the shop sells.
+ *
+ * "Số" capitalised inside the sentence since round v4 slice 4b: the Feed
+ * writes it so wherever it names an issue ("Số mới", "Các Số đã đóng"), not
+ * the v3 lower case `LEX.tl`. `/about` is the only screen that reads it.
  */
 export const ABOUT_LEAD =
-  `HIVE bán streetwear unisex theo ${LEX.tl}: mỗi ${LEX.tl} mở đúng giờ, ` +
-  `mỗi mẫu trong ${LEX.tl} cắt đúng một lần, hết là hết.`;
+  `HIVE bán streetwear unisex theo ${LEX.t}: mỗi ${LEX.t} mở đúng giờ, ` +
+  `mỗi mẫu trong ${LEX.t} cắt đúng một lần, hết là hết.`;
+
+/**
+ * The four rules `/about` states under its opening sentence, and the line
+ * that says where they hold. The words the page has carried since v3
+ * (`FourRules` in `components/shop/ClosedIssue.tsx`, which the v3 home page
+ * printed too), kept as they were when the page moved into the Feed frame
+ * (round v4 slice 4b, QĐ-34); here as data so the Feed page lays them out
+ * itself rather than wearing the v3 component. "Số" is capitalised where it
+ * names an issue, as the Feed writes it; "Số còn lại là số thật" and "số đo"
+ * are a count and a measurement, not an issue, and keep their words.
+ */
+export const FOUR_RULES_SCOPE = `áp dụng cho mọi ${LEX.t}`;
+export const FOUR_RULES: readonly { title: string; body: string }[] = [
+  { title: "Cắt đúng một lần", body: `Mỗi mẫu cắt từ khổ vải đã đặt. Không may thêm giữa ${LEX.t}.` },
+  { title: "Có giờ mở, giờ đóng", body: "Mở theo lịch công bố trước. Đóng khi hết hàng hoặc hết giờ." },
+  { title: "Số còn lại là số thật", body: "Còn bao nhiêu chiếc hiện ngay trên lưới, không đợi bấm vào mới biết." },
+  { title: "Một dải size cho tất cả", body: "Không chia nam nữ. Chọn theo form và số đo." },
+];
 
 /**
  * `"Số 05"` — the issue, named the way every screen names it.

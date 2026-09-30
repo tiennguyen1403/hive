@@ -144,7 +144,7 @@ describe("Thông số", () => {
 });
 
 describe("Giao hàng và đổi trả", () => {
-  it("prints the shop's figures, the return window as the link to /returns", () => {
+  it("prints the shop's figures, the return window as the link to Hỏi đáp's return group", () => {
     const rows = shipRows();
     expect(rows.map((r) => r.label)).toEqual([
       `Giao tiêu chuẩn, 2${FEED_TIGHT_DASH}4 ngày`,
@@ -162,7 +162,7 @@ describe("Giao hàng và đổi trả", () => {
       "7 ngày",
       "Chuyển khoản, Thẻ, COD",
     ]);
-    expect(rows.filter((r) => r.href).map((r) => r.href)).toEqual(["/returns"]);
+    expect(rows.filter((r) => r.href).map((r) => r.href)).toEqual(["/faq#doi-tra"]);
   });
 });
 

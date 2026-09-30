@@ -90,7 +90,9 @@ html[data-pointer] [data-ui="feed"] .sform:has(input:focus-visible) { outline: n
 [data-ui="feed"] .sres-head .count { font-weight: 520; color: var(--f-ink2); }
 [data-ui="feed"] .sres-head .count b { color: var(--f-ink); font-weight: 700; }
 [data-ui="feed"] .snone { padding: 32px var(--f-g) 0; }
-[data-ui="feed"] .snone-line { font-size: 18px; font-weight: 700; line-height: 1.35; }
+/* Not in the mock: the line quotes whatever was typed, and a long string with no space in it must break inside
+   the page rather than widen it (Tìm and Hỏi đáp both print it; the main session's fix at slice 4b). */
+[data-ui="feed"] .snone-line { font-size: 18px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
 [data-ui="feed"] .snone-act { padding: 22px var(--f-g) 8px; }
 [data-ui="feed"] .snone-act .btn { width: auto; display: inline-flex; padding: 0 24px; }
 

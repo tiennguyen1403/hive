@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { CATALOG } from "@/data/catalog";
 import {
+  ABOUT_LEAD,
   FIXED_WORD,
+  FOUR_RULES,
+  FOUR_RULES_SCOPE,
   LEX,
   issueCode,
   issueLabel,
@@ -35,6 +38,19 @@ describe("the lexicon", () => {
     expect(issueLabel(5)).toBe("Số 05");
     expect(issueLabel(12)).toBe("Số 12");
     expect(issueNo(5)).toBe("05");
+  });
+
+  it("gives /about the words it has carried since v3, Số capitalised where it names an issue (round v4 slice 4b)", () => {
+    expect(ABOUT_LEAD).toBe(
+      "HIVE bán streetwear unisex theo Số: mỗi Số mở đúng giờ, mỗi mẫu trong Số cắt đúng một lần, hết là hết.",
+    );
+    expect(FOUR_RULES_SCOPE).toBe("áp dụng cho mọi Số");
+    expect(FOUR_RULES).toEqual([
+      { title: "Cắt đúng một lần", body: "Mỗi mẫu cắt từ khổ vải đã đặt. Không may thêm giữa Số." },
+      { title: "Có giờ mở, giờ đóng", body: "Mở theo lịch công bố trước. Đóng khi hết hàng hoặc hết giờ." },
+      { title: "Số còn lại là số thật", body: "Còn bao nhiêu chiếc hiện ngay trên lưới, không đợi bấm vào mới biết." },
+      { title: "Một dải size cho tất cả", body: "Không chia nam nữ. Chọn theo form và số đo." },
+    ]);
   });
 });
 

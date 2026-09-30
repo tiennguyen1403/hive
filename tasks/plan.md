@@ -2721,6 +2721,27 @@ xong trong khoảng 35 giây (trạng thái commit trên GitHub; Vercel MCP bị
   - mã v3 mồ côi mới: `NotificationsScreen`, `notif-center`, `AccountLayout`, `AccountRail`, `TrackScreen`,
     `lib/notifications.ts`, `lib/prefs.ts`, `lib/reminder.ts`, `trackOrder` / `track_order()`.
 - Phiên chính thêm `/track`, `/khong-co-trang-nay`, `/so/999` vào `tools/layout-sweep.js`.
+
+**Lát 4b ĐẠT (30/09/2026, `ui-implementer`, phiên chính duyệt độc lập).** Brief `tasks/briefs/v4-lat-4b.md`.
+- **Đã giao:**
+  - `/faq` Hỏi đáp theo Feed (tìm không dấu, đánh dấu chữ khớp, chip nhóm, `#doi-tra`). Bốn câu viết lại theo QĐ-34/35.
+    Luật đổi trả đã chốt lấy từ `lib/returns.ts`;
+  - `/size-guide` (route mới): chọn chiều cao thì đánh dấu dòng hợp ở cả bốn bảng;
+  - chân trang đủ 5 link, có "Bảng size";
+  - `/returns` chuyển 307 tới `/faq#doi-tra`, mọi link "Đổi trả" trỏ đó;
+  - `/about`, `/contact` khoác khung Feed; ô chưa có dùng `.b-slot` "Đang chuẩn bị".
+  - Không còn trang khách nào dùng `ShopFrame`.
+- **Phiên chính sửa sau duyệt:**
+  - `/contact` ghi đúng chữ mock "Số điện thoại và email cửa hàng";
+  - `/about` viết hoa "Số" khi gọi tên Số, như Feed;
+  - dòng "không có kết quả" ở `/faq` và `/search` gói chữ khi chuỗi dài không dấu cách. Mock tràn ngang ở đây; đây là sửa lỗi.
+- **Kiểm:** 1983/1983 test, typecheck sạch (phiên chính chạy lại). Build sạch. Hỏi đáp và Bảng size trùng từng hộp với mock ở
+  390 và 1280. Phiên chính so ảnh Hỏi đáp 1280 với mock: trùng.
+- **Người dùng nhận 4 xung đột của lát 4 (30/09):** cột giờ hộp thư không `tabular-nums`; vòng focus dòng công tắc bo 12px;
+  khối xám nhấp nháy 1,1 giây lặp; ô "Đang chuẩn bị" chỉ có nhãn, bỏ dòng giải thích `.prep`. Người dùng cho push lát 4.
+- **Mã v3 mồ côi mới:** `ShopFrame`, `SiteNav`, `SiteFooter`, `NeedWrite`, `ClosedIssue`; CSS `.prose`, `.prep`, `.faq3`,
+  `.readpage`.
+- Phiên chính thêm `/faq`, `/faq?q=cod`, `/size-guide`, `/about`, `/contact`, `/returns` vào `tools/layout-sweep.js`.
 - **Mã v3 mồ côi (dọn cuối đợt):**
   - `SignInScreen`, `SignUpScreen`, `ForgotPasswordScreen`, `OrdersScreen`, `OrderDetailScreen`, `CancelOrderSheet`,
     `AddressesScreen`, `AddressFormScreen`;

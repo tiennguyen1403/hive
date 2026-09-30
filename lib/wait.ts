@@ -62,7 +62,10 @@ export function isAdminPath(pathname: string): boolean {
  * the address book `/account/addresses`; since slice 3b Tôi `/account`, Hồ sơ
  * `/account/profile`, Yêu thích `/account/wishlist`, and `/account/password`,
  * which leads to Hồ sơ now; since slice 4a Thông báo `/account/notifications`
- * and the guest lookup `/track`. Each later slice adds its routes here.
+ * and the guest lookup `/track`; since slice 4b Hỏi đáp `/faq`, Bảng size
+ * `/size-guide`, Giới thiệu `/about`, Liên hệ `/contact`, and `/returns`,
+ * which leads to Hỏi đáp's return group now. With 4b every shop screen is a
+ * Feed screen; the back office has no veil.
  * The veil takes the logo's black-and-white colours (QĐ-33) when it covers
  * one of them or leads to one, and keeps the v3 honey only between two v3
  * screens.
@@ -86,6 +89,11 @@ const FEED_PATHS: readonly string[] = [
   "/account/password",
   "/account/notifications",
   "/track",
+  "/faq",
+  "/size-guide",
+  "/about",
+  "/contact",
+  "/returns",
 ];
 
 /**

@@ -144,14 +144,15 @@ export function specRows(p: Product): FactRow[] {
 /**
  * "Giao hàng và đổi trả": each service with its days and fee, the free
  * delivery line (the footer's rows, `footDelivery`), the COD surcharge, the
- * return window — itself the link to `/returns`, which is why this page's
- * footer leaves its own "Đổi trả 7 ngày" out — and the ways to pay.
+ * return window — itself the link to Hỏi đáp's return group (`/faq#doi-tra`,
+ * slice 4b), which is why this page's footer leaves its own "Đổi trả 7 ngày"
+ * out — and the ways to pay.
  */
 export function shipRows(): FactRow[] {
   return [
     ...footDelivery(),
     { label: "Phụ phí COD", value: vnd(COD_SURCHARGE_VND) },
-    { label: "Đổi trả", value: `${RETURN_WINDOW_DAYS} ngày`, href: "/returns" },
+    { label: "Đổi trả", value: `${RETURN_WINDOW_DAYS} ngày`, href: "/faq#doi-tra" },
     { label: "Thanh toán", value: [PAYMENT_LABEL.BANK_TRANSFER, PAYMENT_LABEL.CARD, PAYMENT_LABEL.COD].join(", ") },
   ];
 }
