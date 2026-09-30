@@ -10,6 +10,8 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   description?: string;
   error?: string;
+  /** HIVE patch (registry/PATCHES.md): hides the label from sight but keeps it for screen readers, for a field whose context names it (skill-accessibility.md), as `SearchField`'s `hideLabel`. */
+  hideLabel?: boolean;
 }
 
 /* Digits roll up when a number grows and down when it shrinks; `custom` hands the latest direction to digits already leaving. */
@@ -67,7 +69,7 @@ function MessageRow({ id, text, className, alert }: { id?: string; text: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, description, error, id, className, ...props }, ref,
+  { label, description, error, id, className, hideLabel = false, ...props }, ref,
 ) {
   const generatedId = useId();
   const controlId = id ?? generatedId;
@@ -75,7 +77,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const errorId = error ? `${controlId}-error` : undefined;
   const describedBy = [props["aria-describedby"], hintId, errorId].filter(Boolean).join(" ") || undefined;
   return <div className={styles.field}>
-    <label className={styles.label} htmlFor={controlId}>{label}</label>
+    <label className={hideLabel ? styles.srOnly : styles.label} htmlFor={controlId}>{label}</label>
     <input {...props} id={controlId} ref={ref} className={[styles.input, className].filter(Boolean).join(" ")} aria-invalid={error ? true : props["aria-invalid"]} aria-describedby={describedBy}/>
     <FieldMessage id={hintId} text={description} className={styles.description} />
     <FieldMessage id={errorId} text={error} className={styles.error} alert />

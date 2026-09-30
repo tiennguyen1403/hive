@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { AdminOrderScreen } from "@/components/admin/AdminOrderScreen";
+import { ArcOrderScreen } from "@/components/admin-arc/ArcOrderScreen";
 import { ordersOfCustomer } from "@/lib/admin-customers";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
@@ -35,8 +35,11 @@ export default async function AdminOrderDetailPage(props: PageProps<"/admin/orde
   const [events, book] = await Promise.all([orderEvents(String(order.code)), listAllOrders()]);
   const customerOrders = order.owner ? ordersOfCustomer(book, order.owner) : [];
 
+  // The Arc screen since round v5 slice 1; the admin layout wraps it in the
+  // Arc frame (`ARC_ADMIN_TREES`). The v3 `AdminOrderScreen` stays in the
+  // tree until the clean-up slice.
   return (
-    <AdminOrderScreen
+    <ArcOrderScreen
       order={order}
       events={events}
       customerOrders={customerOrders}

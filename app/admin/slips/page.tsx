@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { SlipScreen } from "@/components/admin/SlipScreen";
+import { ArcSlipScreen } from "@/components/admin-arc/ArcSlipScreen";
 import { demoNow } from "@/lib/clock";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { toVnIso } from "@/lib/datetime";
@@ -52,5 +52,7 @@ export default async function AdminSlipsPage(props: PageProps<"/admin/slips">) {
     if (reason) reasons[String(o.code)] = reason;
   }
 
-  return <SlipScreen orders={orders} editReasons={reasons} nowIso={toVnIso(now)} />;
+  // The Arc screen since round v5 slice 1 (`ARC_ADMIN_PATHS`); the v3
+  // `SlipScreen` stays in the tree until the clean-up slice.
+  return <ArcSlipScreen orders={orders} editReasons={reasons} nowIso={toVnIso(now)} />;
 }

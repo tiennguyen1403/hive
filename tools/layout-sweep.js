@@ -376,6 +376,8 @@ async (page) => {
     "/admin",
     "/admin/orders",
     "/admin/orders/DH-2429",
+    "/admin/orders/DH-2430",
+    "/admin/orders/DH-2418",
     "/admin/drops",
     "/admin/drops/05",
     "/admin/promotions",
@@ -388,6 +390,8 @@ async (page) => {
     "/admin/customers",
     "/admin/customers/c-minhanh",
     "/admin/slips?codes=DH-2429",
+    "/admin/slips?codes=DH-2429,DH-2428,DH-2423,DH-2426",
+    "/admin/slips?codes=DH-9999",
     // slice 5 of v3: the activity log
     "/admin/log",
   ];
@@ -474,13 +478,28 @@ async (page) => {
       await page.waitForTimeout(250);
       await page.getByRole("menuitem", { name: "Huỷ đơn" }).click();
       await page.waitForTimeout(350);
-      await page.locator(".field3", { hasText: "Lý do" }).first().locator("button.selbtn").click();
+      await page.getByRole("dialog").getByRole("combobox", { name: "Lý do" }).click();
     }],
     ["/admin/orders/DH-2429#handover", "admin-order-handover-1280", async () => {
-      await page.locator(".nextstep").getByRole("button", { name: "Bàn giao" }).click();
+      await page.getByRole("button", { name: "Bàn giao" }).click();
+    }],
+    ["/admin/orders/DH-2429#carrier", "admin-order-carrier-select-1280", async () => {
+      await page.getByRole("button", { name: "Bàn giao" }).click();
+      await page.waitForTimeout(300);
+      await page.getByRole("combobox", { name: "Hình thức giao" }).click();
     }],
     ["/admin/orders/DH-2431#address", "admin-order-address-form-1280", async () => {
-      await page.locator(".panel3 h2", { hasText: "Giao tới" }).getByRole("button", { name: "Sửa" }).click();
+      await page.getByRole("button", { name: "Sửa" }).click();
+    }],
+    ["/admin/orders/DH-2431#province", "admin-order-address-province-1280", async () => {
+      await page.getByRole("button", { name: "Sửa" }).click();
+      await page.waitForTimeout(300);
+      await page.getByRole("combobox", { name: "Tỉnh / thành" }).click();
+    }],
+    ["/admin/orders/DH-2431#ward", "admin-order-address-ward-1280", async () => {
+      await page.getByRole("button", { name: "Sửa" }).click();
+      await page.waitForTimeout(300);
+      await page.getByRole("combobox", { name: "Phường / xã" }).click();
     }],
     ["/admin/orders#rowmenu", "admin-orders-row-menu-1280", async () => {
       await page.getByRole("button", { name: "Thao tác DH-2431" }).click();

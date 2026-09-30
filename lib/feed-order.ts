@@ -146,6 +146,17 @@ export function confirmShipRows(o: Order, addressLine: string): FeedRow[] {
   ];
 }
 
+/**
+ * The COD surcharge an order was charged, as its summary prints it
+ * ("+15.000₫"), or null for an order that carries none: every transfer and
+ * card order, and the sample's COD orders, which were never charged it. The
+ * back office's order page prints the same line (round v5 slice 1), so its
+ * sums add up to a total that includes the surcharge (`orderTotalVnd`).
+ */
+export function codFeeRow(o: Pick<Order, "codFeeVnd">): FeedRow | null {
+  return o.codFeeVnd ? { label: "Phụ phí COD", value: `+${vnd(o.codFeeVnd)}` } : null;
+}
+
 /** "Tóm tắt" above "Tổng", as the order was priced: the code's line only when it took something off. */
 export function confirmRows(
   o: Pick<Order, "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd" | "promo">,
@@ -154,7 +165,8 @@ export function confirmRows(
     { label: "Tạm tính", value: vnd(orderSubtotalVnd(o)) },
     { label: "Giao hàng", value: o.shippingFeeVnd ? vnd(o.shippingFeeVnd) : "Miễn phí" },
   ];
-  if (o.codFeeVnd) rows.push({ label: "Phụ phí COD", value: `+${vnd(o.codFeeVnd)}` });
+  const cod = codFeeRow(o);
+  if (cod) rows.push(cod);
   if (o.discountVnd && o.promo) rows.push({ label: `Mã ${o.promo}`, value: `-${vnd(o.discountVnd)}` });
   return rows;
 }

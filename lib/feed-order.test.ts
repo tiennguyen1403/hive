@@ -3,6 +3,7 @@ import { FIXTURE_CATALOG as C } from "@/data/fixture-catalog";
 import { productId, type Order, type OrderStatus, type PaymentMethod } from "@/data/types";
 import {
   CONFIRM_STEPS,
+  codFeeRow,
   confirmFlow,
   confirmLines,
   confirmNext,
@@ -142,6 +143,13 @@ describe("delivery, the summary, the lines and the way on", () => {
     expect(confirmRows(coded).at(-1)).toEqual({ label: "Mã DOT05", value: "-150.000₫" });
     const free = order("BANK_TRANSFER", { state: "AWAITING_TRANSFER", dueAt: DUE }, { promo: "FREESHIP" as Order["promo"] });
     expect(confirmRows(free)).toHaveLength(2);
+  });
+
+  it("prints the COD surcharge as one line, and none for an order that carries none (the back office's too)", () => {
+    expect(codFeeRow({ codFeeVnd: 15_000 })).toEqual({ label: "Phụ phí COD", value: "+15.000₫" });
+    expect(codFeeRow({ codFeeVnd: 0 })).toBeNull();
+    // The summary's own line is this one.
+    expect(confirmRows(order("COD", { state: "RECEIVED" }))).toContainEqual(codFeeRow({ codFeeVnd: 15_000 }));
   });
 
   it("names each line bare, at the price it was sold for", () => {

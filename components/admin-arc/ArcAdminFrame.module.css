@@ -26,3 +26,25 @@
   min-width: 0;
   padding: var(--space-8);
 }
+
+/* On paper (slice 1, the delivery slips): the page alone, as the v3 frame
+   printed it (`app/styles/admin.css`, `@media print`). No sidebar and no
+   toast, no gutter, no desktop floor, a white sheet. The frame drops its grid
+   too: with the sidebar gone, the page would land in the sidebar's column. */
+@media print {
+  .frame {
+    display: block;
+    min-width: 0;
+    min-height: 0;
+    background: var(--background);
+  }
+
+  .frame > aside,
+  .toasts {
+    display: none;
+  }
+
+  .main {
+    padding: 0;
+  }
+}

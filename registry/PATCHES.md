@@ -25,7 +25,26 @@ có chú giải `HIVE patch` ngay trong mã (tasks/plan.md, "Đợt v5", "Luật
   `app/admin/layout.tsx` (mục 1).
 
 Không sửa: `badge`, `button`, `input`, `popover`, `segmented-control`, `motion-tokens.ts` (không có chuỗi tiếng Anh, không cần
-vá hành vi).
+vá hành vi). `input` được vá ở lát 1 (mục 3).
+
+## Lần cài 30/09/2026 (đợt v5, lát 1)
+
+- **CLI:** `shadcn` 4.21.0, gọi bằng `npx shadcn@latest`, với `components.json` đang có. Không `init`.
+- **Lệnh:**
+  ```
+  printf 'n\nn\nn\nn\n' | npx shadcn@latest add @uiarc/breadcrumb @uiarc/stepper @uiarc/combobox @uiarc/empty-state --yes
+  ```
+- **Vì sao có `printf 'n…'`:** mỗi item kéo theo `arc-foundation` (`registry/foundation.css`, `registry/motion-tokens.ts`,
+  `lib/motion-tokens.ts`). `foundation.css` đã vá (mục 1) nên khác bản gốc, và CLI hỏi "The file foundation.css already
+  exists. Would you like to overwrite?" **kể cả khi có `--yes`**. Không có gì trả lời thì CLI thoát mà không ghi tệp nào; trả
+  lời `n` thì nó bỏ qua `foundation.css` và chép phần còn lại. Hai tệp `motion-tokens.ts` trùng bản gốc nên CLI tự bỏ qua.
+  **Không bao giờ trả lời `y`** và không dùng `--overwrite` cho `arc-foundation`: bản vá khoanh vùng sẽ mất.
+- **4 item:** breadcrumb, stepper, combobox, empty-state. **CLI tạo 8 tệp** (`.tsx` + `.module.css` của mỗi item trong
+  `registry/components/<id>/`), bỏ qua 3 tệp của `arc-foundation`.
+- **Phụ thuộc:** không thêm (`motion`, `lucide-react` đã có từ lát 0). `package.json` và `package-lock.json` không đổi.
+- **Sau khi cài, `git status`** chỉ thêm `registry/components/{breadcrumb,combobox,empty-state,stepper}/`.
+
+Không sửa: `empty-state` (không có chuỗi tiếng Anh; icon mặc định `Folder` không phải chữ).
 
 ## 1. `registry/foundation.css`: khoanh vùng
 
@@ -40,11 +59,12 @@ focus bàn phím của cả app (kể cả vòng xanh của Feed), và CSS còn 
 | Thêm `html[data-pointer]:has([data-ui="admin"]) { --focus-ring: transparent; }` | Dùng chuột thì mọi vòng và quầng của Arc tắt, theo công tắc `data-pointer` chung của app (`app/layout.tsx`, `app/globals.css`) |
 | Khối sáng: `--font-display` và `--font-body` = `var(--font-mona)` (gốc Geist, Inter) | QĐ-38: Mona Sans rộng 100% cho cả hai vai. `--font-mona` do `app/layout.tsx` đặt trên `<html>` |
 | Thêm `:root:has([data-ui="admin"]) body { font-family: var(--font-body); color: var(--foreground); }` | Lớp portal ra `<body>` thừa kế chữ từ đây. Đã đo: không có luật này thì thân Dialog hiện Be Vietnam Pro (preflight của Tailwind đặt `--font-sans` v3 lên `<html>`) |
+| Khối sáng: `--text-muted: oklch(55% 0 0)` (gốc `var(--neutral-7)`, 59%). **Lát 1, phiên chính duyệt 30/09** | Luật 4,5:1 cho chữ là của chính Arc (`skill-accessibility.md`), mà 59% chỉ đạt khoảng 4,1:1 trên nền trắng và 3,9:1 trên `--surface-muted`. Chữ mờ này có ở nhãn và mô tả mốc chưa tới của Stepper, mô tả dưới Input, placeholder, tiêu đề cột của bảng. 55%: tính từ token 4,85:1 trên `--surface` và 4,55:1 trên `--surface-muted`; đo trên trang (màu vẽ ra sRGB 8 bit, 30/09) 4,88:1 và 4,60:1. Khối tối giữ nguyên (QĐ-38 không bật chế độ tối) |
 | Chú giải đầu tệp | Ghi lý do và trỏ về tệp này |
 
 Test: `components/admin-arc/arc-registry.test.ts` (mọi luật có `:has([data-ui="admin"])`, không còn `outline: none
 !important`, khối sáng có `--focus-ring` khác `transparent`, có luật `html[data-pointer]`, hai vai chữ trỏ `--font-mona`, có
-luật `body`).
+luật `body`, và từ lát 1 `--text-muted` đạt 4,5:1 trên `--surface` lẫn `--surface-muted`).
 
 ## 2. Việt hoá
 
@@ -78,6 +98,15 @@ Mọi chuỗi tiếng Anh người dùng thấy hoặc máy đọc màn hình đ
 | `toast-stack/toast-stack.tsx` | nhãn loại đọc trước câu: Success, Info, Warning, Error, In progress | "Xong", "Thông tin", "Cảnh báo", "Lỗi", "Đang xử lý" |
 | | "Dismiss notification" | "Đóng thông báo" |
 | | "Notifications" | "Thông báo" |
+| `breadcrumb/breadcrumb.tsx` (lát 1) | `ariaLabel` mặc định "Breadcrumb" | "Đường dẫn" |
+| `stepper/stepper.tsx` (lát 1) | trạng thái đọc sau mỗi bước: Completed, Not started, Error | "Đã xong", "Chưa bắt đầu", "Lỗi" |
+| | `label` mặc định "Progress" | "Tiến trình" |
+| | `completeLabel` mặc định "All steps complete" | "Đã xong mọi bước" |
+| | câu `aria-live`: `Step {n} of {m}: {nhãn}` | `Bước {n} trên {m}: {nhãn}` |
+| `combobox/combobox.tsx` (lát 1) | `placeholder` mặc định "Search or select…" | "Tìm hoặc chọn…" |
+| | `emptyMessage` mặc định "No matches found" | "Không có mục nào khớp" |
+| | nút xoá lựa chọn "Clear selection" | "Bỏ chọn" |
+| | tên danh sách `{nhãn} options` | `Danh sách {nhãn}` |
 
 Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không phải chữ: giữ nguyên. Không component nào dùng
 `toLocaleString` hay `Intl.NumberFormat`. Câu lỗi cho lập trình viên (`Render toast stack consumers inside …`) giữ nguyên.
@@ -93,9 +122,11 @@ Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không p
 | `search-field/search-field.tsx` + `.module.css` | Prop `hideLabel`: nhãn ẩn cho mắt (class `.srOnly`), máy đọc vẫn đọc | Ô tìm nằm trên thanh công cụ; `skill-accessibility.md` cho phép khi ngữ cảnh đã gọi tên ô |
 | `sortable-data-table/sortable-data-table.tsx` | Prop `holdWidths` (mặc định `true`). `false`: bỏ bước đo rồi giữ bề rộng cột, nên bảng ở bố cục tự động thay cho `table-layout: fixed` ở đúng 100% thẻ. **Vá thêm ngoài danh sách của brief; phiên chính đã duyệt 30/09** | Đo 30/09 ở 1280: Arc giữ bảng đúng bằng thẻ và co mọi cột theo tỉ lệ. Cộng với `overflow-wrap: anywhere` của ô, mã đơn, số tiền và tên bị cắt giữa chữ ("DH-/2430", "400.00/0"); bật "Địa chỉ" thì gần như ô nào cũng vỡ. Ở bố cục tự động, cột theo nội dung, và bảng rộng hơn thẻ thì cuộn ngang trong thẻ, đúng ghi chú "bảng rộng thì cuộn ngang trong thẻ" của brief. Màn không sắp xếp nên việc giữ bề rộng cột (để dòng trượt khi sắp xếp) không còn tác dụng |
 | `sortable-data-table/sortable-data-table.tsx` + `.module.css` | Prop `density` (`"default"` mặc định, `"compact"`). `"compact"` gắn `data-density` lên bảng; CSS hạ đệm ngang của ô (kể cả nút sắp xếp và ô chọn) từ 16 xuống 12px (`--space-3`); cột đầu cạnh ô chọn giữ 8px. Chỉ từ 621px, nên bố cục gập của điện thoại giữ nguyên. **Phiên chính duyệt 30/09, để bảng đơn vừa khung 1280 mà vẫn giữ luật một dòng của v3** | Đo 30/09: cột mặc định của v3, với luật một dòng, cần khoảng 997px ở đệm 16px, trong khi thẻ ở 1280 chỉ có 959px. 12px là đệm ô của v3 |
+| `input/input.tsx` (lát 1) | Prop `hideLabel` (mặc định `false`): nhãn mang class `.srOnly` có sẵn trong `input.module.css` thay cho `.label`, nên ẩn cho mắt mà máy đọc vẫn đọc. Không đổi CSS | Ô "Thêm ghi chú…" của panel "Ghi chú nội bộ" trên trang chi tiết đơn: tiêu đề panel đã gọi tên ô, như ô tìm trên thanh công cụ (`skill-accessibility.md`). Cùng cách `SearchField` `hideLabel` |
 
-Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, `iconOnly`, `hideLabel`) đều có mặc định giữ hành vi gốc. Cài lại bản mới mà quên vá thì `npm run typecheck` đỏ ở
-`components/admin-arc/ArcOrdersScreen.tsx`, nơi dùng chúng.
+Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, `iconOnly`, `hideLabel` của
+`SearchField` và của `Input`) đều có mặc định giữ hành vi gốc. Cài lại bản mới mà quên vá thì `npm run typecheck` đỏ ở
+`components/admin-arc/ArcOrdersScreen.tsx` và `components/admin-arc/ArcOrderScreen.tsx`, nơi dùng chúng.
 
 ## 4. Mã dự án dựa vào tên class nội bộ của Arc
 
@@ -105,7 +136,9 @@ Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`,
 
 ## Cài lại bản mới
 
-1. `npx shadcn@latest add @uiarc/<id> … --overwrite` (không bao giờ `init`). Kiểm `git status` như trên.
+1. `npx shadcn@latest add @uiarc/<id> … --overwrite` (không bao giờ `init`). Kiểm `git status` như trên. `--overwrite` ghi đè
+   cả `registry/foundation.css` (kéo theo qua `arc-foundation`): vá lại mục 1 ngay. Cài item **mới** thì không dùng
+   `--overwrite`, trả lời `n` cho câu hỏi ghi đè `foundation.css` (lần cài lát 1).
 2. Vá lại theo mục 1 đến 3; mọi chỗ vá cũ có chú giải `HIVE patch` để tìm bằng `git diff`.
 3. `npx vitest run components/admin-arc lib/admin-arc.test.ts` và `npm run typecheck` phải xanh. Chuỗi tiếng Anh mới xuất hiện
    thì thêm vào `arc-english-strings.ts` và dịch.

@@ -30,7 +30,7 @@ export function ArcAdminFrame({
       <ToastStackProvider>
         <ArcSidebar me={me} waiting={waiting} lastResetAt={lastResetAt} />
         <main className={styles.main}>{children}</main>
-        <ToastStack position="bottom-right" />
+        <ToastStack position="bottom-right" className={styles.toasts} />
       </ToastStackProvider>
     </div>
   );

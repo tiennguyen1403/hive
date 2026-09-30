@@ -59,6 +59,33 @@ function customProps(body: string): Map<string, string> {
   return out;
 }
 
+/** A token's value, following `var(--x)` through the same block. */
+function resolve(props: Map<string, string>, name: string): string {
+  let value = props.get(name) ?? "";
+  for (let hops = 0; hops < 5; hops++) {
+    const ref = value.match(/^var\((--[\w-]+)\)$/);
+    if (!ref) break;
+    value = props.get(ref[1]!) ?? "";
+  }
+  return value;
+}
+
+/**
+ * The relative luminance of a grey written `oklch(L% 0 0)`. With no chroma,
+ * OKLab's L maps to linear sRGB as L³ on every channel, so that is the
+ * luminance too.
+ */
+function greyLuminance(value: string): number {
+  const m = value.match(/^oklch\(\s*([\d.]+)%\s+0\s+0\s*\)$/);
+  if (!m) throw new Error(`not a grey in oklch: ${value}`);
+  return (Number(m[1]) / 100) ** 3;
+}
+
+/** WCAG's contrast ratio of two luminances. */
+function contrast(a: number, b: number): number {
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
 /** Every file under a folder, as paths. */
 function filesUnder(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -104,6 +131,15 @@ describe("registry/foundation.css", () => {
     const props = customProps(light!.body);
     expect(props.get("--font-display")).toBe("var(--font-mona)");
     expect(props.get("--font-body")).toBe("var(--font-mona)");
+  });
+
+  it("keeps the muted text at Arc's own 4.5:1 on both light grounds (slice 1)", () => {
+    // Arc ships `var(--neutral-7)`, 59%: about 4.1:1 on white (skill-accessibility.md asks 4.5:1).
+    const props = customProps(light!.body);
+    const muted = greyLuminance(resolve(props, "--text-muted"));
+    for (const ground of ["--surface", "--surface-muted"]) {
+      expect(contrast(muted, greyLuminance(resolve(props, ground))), ground).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it("gives the layers portalled to <body> the zone's face and ink", () => {

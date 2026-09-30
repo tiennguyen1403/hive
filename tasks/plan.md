@@ -3007,3 +3007,15 @@ lượt: dựng, sửa bảng, đệm gọn. Người dùng hai lần tự dừn
   - `AdminOrdersScreen.tsx` còn xuất `SearchBox`;
   - `LINKS` và `isOpen` đang chép sang `ArcSidebar`;
   - DESIGN.md cần tả vùng Arc.
+
+**30/09, người dùng duyệt lát 0:** "Hướng này ổn. tiếp tục triển khai". Commit trên máy `6733d29`, chưa push. Thứ tự các lát
+tiếp theo, lần lượt, không chạy song song (dùng chung `.next`, DB cục bộ và cổng 3200):
+1. **Lát 1:** chi tiết đơn và phiếu giao, để trọn khu Đơn hàng dùng Arc. Brief `tasks/briefs/v5-lat-1.md`, đã giao agent.
+2. **Lát 2:** Tổng quan và Nhật ký.
+3. **Lát 3:** Khách hàng và Mã giảm giá.
+4. **Lát 4:** Các số (danh sách, chi tiết, form Số, mẫu hé lộ).
+5. **Lát 5:** Mẫu (danh sách, tồn kho, form, ảnh).
+6. **Lát 6 (dọn):** mọi route quản trị dùng khung Arc; bỏ khung v3, `admin.css`, CSS v3 chỉ quản trị dùng, font v3 và Iconsax nếu
+   không còn chỗ dùng, cùng các ignore v3 của máy dò. Documenter viết lại DESIGN.md.
+
+Commit mỗi lát chỉ khi người dùng cho phép lần đó.

@@ -1,8 +1,8 @@
 /**
  * Every English string Arc's free components (installed 30/09/2026, round v5
- * slice 0) show a person or read to a screen reader, as it stood in the
- * installed source, and the component file it was in. Each one was put into
- * Vietnamese in `registry/components/**` (registry/PATCHES.md).
+ * slices 0 and 1) show a person or read to a screen reader, as it stood in
+ * the installed source, and the component file it was in. Each one was put
+ * into Vietnamese in `registry/components/**` (registry/PATCHES.md).
  *
  * `arc-registry.test.ts` fails when any of them is back, which is what a
  * re-install of an Arc item does: the file is overwritten with the English
@@ -55,4 +55,16 @@ export const ARC_ENGLISH: ReadonlyArray<{ file: string; text: string }> = [
   { file: "toast-stack/toast-stack.tsx", text: 'loading: "In progress"' },
   { file: "toast-stack/toast-stack.tsx", text: 'aria-label="Dismiss notification"' },
   { file: "toast-stack/toast-stack.tsx", text: 'label = "Notifications"' },
+  // Slice 1 (30/09/2026): breadcrumb, stepper, combobox. Empty state has none.
+  { file: "breadcrumb/breadcrumb.tsx", text: 'ariaLabel = "Breadcrumb"' },
+  { file: "stepper/stepper.tsx", text: 'complete: "Completed"' },
+  { file: "stepper/stepper.tsx", text: 'upcoming: "Not started"' },
+  { file: "stepper/stepper.tsx", text: 'error: "Error"' },
+  { file: "stepper/stepper.tsx", text: 'label = "Progress"' },
+  { file: "stepper/stepper.tsx", text: 'completeLabel = "All steps complete"' },
+  { file: "stepper/stepper.tsx", text: "`Step ${" },
+  { file: "combobox/combobox.tsx", text: 'placeholder = "Search or select…"' },
+  { file: "combobox/combobox.tsx", text: 'emptyMessage = "No matches found"' },
+  { file: "combobox/combobox.tsx", text: 'aria-label="Clear selection"' },
+  { file: "combobox/combobox.tsx", text: "} options`" },
 ];

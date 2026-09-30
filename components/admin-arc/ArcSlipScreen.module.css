@@ -1,0 +1,187 @@
+/* The delivery slips in the Arc frame (round v5 slice 1). A slip is a real
+   document on real paper: two to a sheet, each ruled off by a 1px line in the
+   ink colour, which prints where a hairline would vanish. Arc tokens only. */
+
+/* Two slips in a row share their top and their height (skill-design.md,
+   sibling cards); the room a shorter slip is given stays under its foot. */
+.slips {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.slip {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--foreground);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  break-inside: avoid;
+}
+
+/* The shop's lockup and the order's code, over a rule in the ink. */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--foreground);
+}
+
+.brand {
+  display: flex;
+  flex: none;
+}
+
+.logo {
+  display: block;
+  width: auto;
+  height: 24px;
+}
+
+.code {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Who it goes to, and the QR slot beside it. */
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 100px;
+  align-items: start;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.recipient {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.recipient p {
+  margin: 0;
+}
+
+.recipient strong {
+  font-weight: 500;
+}
+
+.label {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+/* The QR slot draws no code (v3's own rule): there is no encoder in this
+   build and no account behind one, so the square says it is waiting. */
+.qr {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.qrBox {
+  display: block;
+  width: 100px;
+  height: 100px;
+  border: 1px dashed var(--border-strong);
+  border-radius: calc(var(--radius-panel) - var(--space-4));
+  background: var(--surface-muted);
+}
+
+.qrText {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+/* What is in the parcel: name and kind, colour and size, the count. */
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.lines td {
+  padding: var(--space-1) 0;
+  vertical-align: top;
+}
+
+.lines td + td {
+  padding-left: var(--space-3);
+}
+
+.lines strong {
+  font-weight: 500;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.qty {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The sum is ruled off in the ink, as v3's slip ruled it. */
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--foreground);
+}
+
+.total strong {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cash on delivery changes how the parcel is handled: said in full, on the
+   muted ground, where the courier looks. Its corner is the slip's, less the
+   slip's padding. */
+.cod {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: calc(var(--radius-panel) - var(--space-4));
+  background: var(--surface-muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.foot {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Two slips to an A4 sheet, 8mm apart, as v3 printed them. */
+@media print {
+  .slips {
+    gap: 8mm;
+  }
+}

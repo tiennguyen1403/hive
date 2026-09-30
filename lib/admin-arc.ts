@@ -7,14 +7,24 @@
  * the `.s.adm3` frame, whose CSS reaches into them (tasks/plan.md, "Luật tích
  * hợp").
  *
- * One screen per slice. Slice 0 moves the order book only; an order's own
- * page (`/admin/orders/DH-2430`) and the slips stay v3, which is why the match
- * is exact rather than a prefix.
+ * One area per slice. Slice 0 moved the order book; slice 1 moves the rest of
+ * "Đơn hàng": an order's own page and the delivery slips.
  */
-export const ARC_ADMIN_PATHS: readonly string[] = ["/admin/orders"];
+export const ARC_ADMIN_PATHS: readonly string[] = ["/admin/orders", "/admin/slips"];
+
+/**
+ * Routes whose every page below them is an Arc screen: `/admin/orders/DH-2430`
+ * and any other order code. A tree matches only when something follows its
+ * slash, as `FEED_TREES` does in `lib/wait.ts`; the bare path belongs to
+ * `ARC_ADMIN_PATHS`.
+ */
+export const ARC_ADMIN_TREES: readonly string[] = ["/admin/orders/"];
 
 /** True when the Arc frame owns this path. A trailing slash is ignored. */
 export function isArcAdminPath(pathname: string): boolean {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
-  return ARC_ADMIN_PATHS.includes(path);
+  return (
+    ARC_ADMIN_PATHS.includes(path) ||
+    ARC_ADMIN_TREES.some((tree) => path.startsWith(tree) && path.length > tree.length)
+  );
 }

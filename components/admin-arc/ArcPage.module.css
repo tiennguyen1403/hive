@@ -1,0 +1,73 @@
+/* The top of an Arc back-office page that sits under another one (round v5
+   slice 1: an order, the slips): the way back, then the heading strip of the
+   order book (`ArcOrdersScreen.module.css`, slice 0) in its values. The `h1`
+   and the actions share one row; the line under the `h1` runs the full width
+   of the page, because an order's (when, who, which number, how it is paid,
+   which issue) folded beside four actions at 1280. Arc tokens only, on the
+   4px grid. */
+
+.page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.page > * {
+  min-width: 0;
+}
+
+.masthead {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.header {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.headRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* The code and its state: one line, the badge centred on the code. */
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+}
+
+.sub {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* On paper the page is the document alone: no way back, no heading strip. */
+@media print {
+  .masthead {
+    display: none;
+  }
+}

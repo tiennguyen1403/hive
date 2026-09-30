@@ -24,7 +24,9 @@
   --surface-muted: var(--neutral-2);
   --foreground: var(--neutral-11);
   --text-secondary: var(--neutral-8);
-  --text-muted: var(--neutral-7);
+  /* HIVE patch (round v5 slice 1): 55% instead of `var(--neutral-7)` (59%), which reads about 4.1:1 on white. Arc's own
+     floor is 4.5:1 for text (skill-accessibility.md); 55% reads about 4.9:1 on `--surface` and 4.6:1 on `--surface-muted`. */
+  --text-muted: oklch(55% 0 0);
   --border: oklch(93.5% 0 0);
   --border-subtle: oklch(96.5% 0 0);
   --border-strong: oklch(82% 0 0);

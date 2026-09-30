@@ -17,8 +17,11 @@ import styles from "./ArcOrdersScreen.module.css";
  * values, drawn with Arc's badge and avatar.
  */
 
-/** v3's badge tones, by the job they did, to Arc's (brief, §3.6). */
-const TONE: Record<V3BadgeTone, BadgeTone> = {
+/**
+ * v3's badge tones, by the job they did, to Arc's (brief, §3.6). The order's
+ * own page reads it too, for the badge beside its code (slice 1).
+ */
+export const TONE: Record<V3BadgeTone, BadgeTone> = {
   warn: "warning",
   ok: "success",
   info: "info",
@@ -45,7 +48,7 @@ export function CodeCell({ code }: { code: string }) {
  * v3 screen, not "TM". The avatar is hidden from assistive tech: the name is
  * printed beside it.
  */
-function monogramName(name: string): string {
+export function monogramName(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
   return words.length > 2 ? `${words[0]} ${words.at(-1)}` : words.join(" ");
 }
