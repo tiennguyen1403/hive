@@ -15,7 +15,8 @@
  *
  * Vietnamese survives in exactly one place: fields whose value is shown to a
  * shopper as-is (`name`, `kind`, `material`, `details`, a colour's `label`).
- * Everything else is English.
+ * Everything else is English. Since round v6 a style and a teaser also carry
+ * those words in English, in `en` (`ProductEn`, `TeaserEn`).
  */
 
 // ─────────────────────────────────────────────────────────────── branded ids
@@ -112,6 +113,22 @@ export type Fit = "OVERSIZE" | "REGULAR";
  */
 export type Stock = Partial<Record<ColorKey, Record<Size, number>>>;
 
+/**
+ * A style's words in English (round v6, slice B15), each beside the
+ * Vietnamese field it translates. Every field is optional on its own, and a
+ * missing one means "print the Vietnamese": the issues' styles keep their
+ * Vietnamese `name`, a back-office edit drops the English of exactly the
+ * field it changed (`admin_update_product`), and a style the back office
+ * creates has none. Read it through `productText` (`lib/product-text.ts`).
+ */
+export interface ProductEn {
+  name?: string;
+  kind?: string;
+  material?: string;
+  /** Line for line with `details`, in the same order. */
+  details?: readonly string[];
+}
+
 export interface Product {
   id: ProductId;
   /** URL segment. Shows up in the address bar, so it is Vietnamese and stable. */
@@ -194,6 +211,8 @@ export interface Product {
    * has no field for them.
    */
   details: string[];
+  /** The English of `name`, `kind`, `material`, `details`; absent when there is none at all. */
+  en?: ProductEn;
 }
 
 // ─────────────────────────────────────────────────────────────────── the drop
@@ -237,6 +256,14 @@ export interface Teaser {
    * database the B12 migration has not reached.
    */
   announcedAt: string | null;
+  /** The English of `name` and `kind` (slice B15, as `ProductEn`); absent when there is none. */
+  en?: TeaserEn;
+}
+
+/** A teaser's words in English; a missing field prints the Vietnamese. Read it through `teaserText`. */
+export interface TeaserEn {
+  name?: string;
+  kind?: string;
 }
 
 // ───────────────────────────────────────────────────────────────── customers

@@ -26,6 +26,14 @@ import { issueCode } from "@/lib/lexicon";
  * to prove it. The mock prints lines for Số 05 alone, so every other style
  * has an empty list.
  *
+ * English (backend slice B15, round v6): every style and teaser carries `en`,
+ * the British English of its `kind` and, for a style, its `material` and its
+ * lines — translated line for line, in their order, with the print titles in
+ * quotes kept as they are, like the names. Only the eight fixed styles have
+ * an English `name`; the issues' styles and the teasers keep theirs
+ * (`tasks/plan.md`, "Thuật ngữ tiếng Anh"). A style without lines has no
+ * English ones either: `details_en` is null or holds a line.
+ *
  * The figures themselves are carried over unchanged from the approved
  * prototype, and `catalog.test.ts` pins them against it style by style.
  *
@@ -80,8 +88,8 @@ function announcedFor(dropNo: number): string {
  * (`announcedFor`).
  */
 export const TEASERS: Teaser[] = [
-  { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong", announcedAt: announcedFor(6) },
-  { slug: "s06-ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi", announcedAt: announcedFor(6) },
+  { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong", announcedAt: announcedFor(6), en: { kind: "Nylon jacket" } },
+  { slug: "s06-ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi", announcedAt: announcedFor(6), en: { kind: "Printed hoodie" } },
 ];
 
 export function teasersIn(dropNo: number): Teaser[] {
@@ -128,6 +136,16 @@ const styles: Array<Omit<Product, "id">> = [
       "Cổ bo gân 2,5 cm",
       "In lụa dải khói halftone chéo từ gấu lên ngực",
     ],
+    en: {
+      kind: "Oversized tee",
+      material: "Cotton 250gsm",
+      details: [
+        "Dropped shoulders, wide body",
+        "Wide short sleeves, ending above the elbow",
+        "2.5 cm ribbed neckband",
+        "Screen-printed halftone smoke band running diagonally from hem to chest",
+      ],
+    },
   },
   {
     slug: "bui",
@@ -152,6 +170,17 @@ const styles: Array<Omit<Product, "id">> = [
       "Bo tay và gấu bản rộng",
       "In \"Bản đồ mòn\" ở ngực trên",
     ],
+    en: {
+      kind: "Hoodie",
+      material: "Brushed fleece 380gsm",
+      details: [
+        "Double-layer hood that stands up around the neck",
+        "Flat drawcord, metal tips",
+        "Kangaroo pocket",
+        "Wide ribbed cuffs and hem",
+        "\"Bản đồ mòn\" print on the upper chest",
+      ],
+    },
   },
   {
     slug: "nguoi",
@@ -172,6 +201,16 @@ const styles: Array<Omit<Product, "id">> = [
       "Túi kangaroo",
       "In \"Dư nhiệt\" ngang ngực trên",
     ],
+    en: {
+      kind: "Printed hoodie",
+      material: "Brushed fleece 380gsm",
+      details: [
+        "Double-layer hood that stands up around the neck",
+        "Flat drawcord, metal tips",
+        "Kangaroo pocket",
+        "\"Dư nhiệt\" print across the upper chest",
+      ],
+    },
   },
   {
     slug: "nang",
@@ -196,6 +235,16 @@ const styles: Array<Omit<Product, "id">> = [
       "Cổ bo gân 1,5 cm",
       "In \"Mảng nắng\" ở ngực",
     ],
+    en: {
+      kind: "Tee",
+      material: "Cotton 220gsm",
+      details: [
+        "Set-in shoulders on the natural shoulder line",
+        "Short sleeves ending mid-bicep",
+        "1.5 cm ribbed neckband",
+        "\"Mảng nắng\" print on the chest",
+      ],
+    },
   },
   {
     slug: "suong",
@@ -221,6 +270,18 @@ const styles: Array<Omit<Product, "id">> = [
       "Gấu dây rút có khoá chặn",
       "In \"Lớp sương\" ở vai và ngực",
     ],
+    en: {
+      kind: "Nylon jacket",
+      material: "Two-layer waterproof nylon",
+      details: [
+        "Full-length zip under a press-stud placket",
+        "Stand collar, fixed hood",
+        "Two zip pockets",
+        "Hook-and-loop tabs to adjust the cuffs",
+        "Drawcord hem with cord locks",
+        "\"Lớp sương\" print on the shoulders and chest",
+      ],
+    },
   },
   {
     slug: "muoi",
@@ -244,6 +305,16 @@ const styles: Array<Omit<Product, "id">> = [
       "Ống thuôn, bo gấu",
       "In \"Kết tinh\" dọc ống trái",
     ],
+    en: {
+      kind: "Joggers",
+      material: "French terry 320gsm",
+      details: [
+        "Covered elastic waistband with a drawcord",
+        "Side pockets",
+        "Tapered legs, ribbed cuffs",
+        "\"Kết tinh\" print down the left leg",
+      ],
+    },
   },
   {
     slug: "than",
@@ -268,6 +339,17 @@ const styles: Array<Omit<Product, "id">> = [
       "Hai túi mổ xéo",
       "In \"Mạch than\" ở ngực trái",
     ],
+    en: {
+      kind: "Bomber jacket",
+      material: "Quilted padded nylon",
+      details: [
+        "Horizontal quilting, lines 5 cm apart",
+        "Ribbed collar, cuffs and hem",
+        "Full-length zip",
+        "Two slanted welt pockets",
+        "\"Mạch than\" print on the left chest",
+      ],
+    },
   },
   {
     slug: "cat",
@@ -292,6 +374,16 @@ const styles: Array<Omit<Product, "id">> = [
       "Cổ bo gân 2 cm",
       "In \"Vân xói\" ở thân trên",
     ],
+    en: {
+      kind: "Half-sleeve tee",
+      material: "Cotton 240gsm",
+      details: [
+        "Deeply dropped shoulders, wide and long body",
+        "Wide sleeves, ending at the elbow",
+        "2 cm ribbed neckband",
+        "\"Vân xói\" print on the upper body",
+      ],
+    },
   },
   {
     slug: "gio",
@@ -316,6 +408,17 @@ const styles: Array<Omit<Product, "id">> = [
       "Gấu lượn",
       "In \"Luồng cắt\" ở thân phải",
     ],
+    en: {
+      kind: "Woven shirt",
+      material: "Silky poly-cotton",
+      details: [
+        "Point collar, tonal button placket",
+        "Patch pocket on the left chest",
+        "Long sleeves, single-button cuffs",
+        "Curved hem",
+        "\"Luồng cắt\" print on the right front",
+      ],
+    },
   },
   {
     slug: "da",
@@ -339,6 +442,16 @@ const styles: Array<Omit<Product, "id">> = [
       "Túi hộp có nắp hai bên đùi",
       "In \"Mặt cắt\" ở ống phải",
     ],
+    en: {
+      kind: "Cargo trousers",
+      material: "Chino twill 320gsm",
+      details: [
+        "Belt loops, zip and button",
+        "Slanted front pockets",
+        "Flapped cargo pockets on both thighs",
+        "\"Mặt cắt\" print on the right leg",
+      ],
+    },
   },
 
   // ── Drop 04 — closed, sold out ───────────────────────────────────────
@@ -357,6 +470,7 @@ const styles: Array<Omit<Product, "id">> = [
     stock: { moss: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["reu"],
     details: [],
+    en: { kind: "Puffer jacket", material: "Quilted down-filled nylon" },
   },
   {
     slug: "tro",
@@ -376,6 +490,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["tro", "than"],
     details: [],
+    en: { kind: "Zip hoodie", material: "Brushed fleece 400gsm" },
   },
   {
     slug: "song",
@@ -392,6 +507,7 @@ const styles: Array<Omit<Product, "id">> = [
     stock: { white: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["song"],
     details: [],
+    en: { kind: "Back-printed tee", material: "Cotton 250gsm" },
   },
   {
     slug: "vo",
@@ -411,6 +527,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["vo", "kho"],
     details: [],
+    en: { kind: "Gilet", material: "Two-layer nylon" },
   },
   {
     slug: "mua",
@@ -427,6 +544,7 @@ const styles: Array<Omit<Product, "id">> = [
     stock: { black: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["mua"],
     details: [],
+    en: { kind: "Long nylon jacket", material: "Waterproof nylon" },
   },
   {
     slug: "kho",
@@ -446,6 +564,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["kho", "reu"],
     details: [],
+    en: { kind: "Shorts", material: "Chino twill 280gsm" },
   },
 
   // ── Drop 03 — closed, sold out ───────────────────────────────────────
@@ -469,6 +588,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["dat", "than"],
     details: [],
+    en: { kind: "Fleece joggers", material: "French terry 320gsm" },
   },
   {
     slug: "lua",
@@ -488,6 +608,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["lua", "song"],
     details: [],
+    en: { kind: "Long-sleeve tee", material: "Cotton 240gsm" },
   },
   {
     slug: "bao",
@@ -504,6 +625,7 @@ const styles: Array<Omit<Product, "id">> = [
     stock: { grey: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["bui"],
     details: [],
+    en: { kind: "Funnel-neck hoodie", material: "Brushed fleece 380gsm" },
   },
   {
     slug: "men",
@@ -520,6 +642,7 @@ const styles: Array<Omit<Product, "id">> = [
     stock: { cream: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["nang"],
     details: [],
+    en: { kind: "Dyed tee", material: "Cotton 250gsm" },
   },
   {
     slug: "voi",
@@ -539,6 +662,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["suong", "vo"],
     details: [],
+    en: { kind: "Windbreaker", material: "Single-layer nylon" },
   },
 
   // ── Fixed styles (slice B5) — no issue, no cut ──────────────────────────
@@ -568,6 +692,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-tee-white", "flat-tee-black", "flat-tee-grey"],
     details: [],
+    en: { name: "PLAIN TEE", kind: "Tee", material: "Cotton 220gsm" },
   },
   {
     slug: "ao-thun-tay-dai",
@@ -586,6 +711,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-longsleeve-black", "flat-longsleeve-white"],
     details: [],
+    en: { name: "LONG-SLEEVE TEE", kind: "Long-sleeve tee", material: "Cotton 220gsm" },
   },
   {
     slug: "hoodie-tron",
@@ -605,6 +731,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-hoodie-grey", "flat-hoodie-black", "flat-hoodie-cream"],
     details: [],
+    en: { name: "PLAIN HOODIE", kind: "Hoodie", material: "Brushed fleece 340gsm" },
   },
   {
     slug: "ao-khoac-du",
@@ -623,6 +750,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-jacket-black", "flat-jacket-navy"],
     details: [],
+    en: { name: "NYLON JACKET", kind: "Nylon jacket", material: "Single-layer nylon" },
   },
   {
     slug: "gile-phao",
@@ -638,6 +766,7 @@ const styles: Array<Omit<Product, "id">> = [
     stock: { black: { S: 3, M: 5, L: 5, XL: 2 } },
     photoKeys: ["flat-vest-black"],
     details: [],
+    en: { name: "PUFFER GILET", kind: "Puffer gilet", material: "Quilted padded nylon" },
   },
   {
     slug: "so-mi-oxford",
@@ -656,6 +785,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-shirt-white", "flat-shirt-navy"],
     details: [],
+    en: { name: "OXFORD SHIRT", kind: "Oxford shirt", material: "Cotton oxford" },
   },
   {
     slug: "quan-kaki",
@@ -674,6 +804,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-trousers-cream", "flat-trousers-black"],
     details: [],
+    en: { name: "CHINOS", kind: "Chinos", material: "Chino twill 280gsm" },
   },
   {
     slug: "quan-short-ni",
@@ -692,6 +823,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-shorts-grey", "flat-shorts-black"],
     details: [],
+    en: { name: "FLEECE SHORTS", kind: "Fleece shorts", material: "French terry 300gsm" },
   },
 ];
 

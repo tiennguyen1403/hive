@@ -265,11 +265,12 @@ describe("(b) an order moves the date; a cancelled one and a transfer past its h
 
 // ───────────────────────────────────────── (c) nothing else about orders
 describe("(c) the catalogue shows when a colour sold, and nothing else about any order", () => {
+  // `en` joined both at slice B15: the English text, nothing about any order.
   const PRODUCT_KEYS = [
     "id", "slug", "name", "kind", "family", "material", "fit", "priceVnd", "cutUnits",
-    "dropNo", "soldOutAt", "colors", "photoKeys", "stock", "details", "lastSoldAt",
+    "dropNo", "soldOutAt", "colors", "photoKeys", "stock", "details", "lastSoldAt", "en",
   ].sort();
-  const TEASER_KEYS = ["slug", "name", "kind", "family", "dropNo", "photoKey", "announcedAt"].sort();
+  const TEASER_KEYS = ["slug", "name", "kind", "family", "dropNo", "photoKey", "announcedAt", "en"].sort();
 
   /** Everything personal the sample holds: names, e-mails, numbers, addresses. */
   const PERSONAL = CUSTOMERS.flatMap((c) => [

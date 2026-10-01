@@ -115,14 +115,15 @@ describe("the generator itself", () => {
   });
 
   // Slice B12: `seed_teasers.announced_at`, when each sample teaser was announced.
-  it("writes each teaser's announcement last, as the fixture authors it", () => {
+  // Its English (slice B15) follows it: name_en, kind_en.
+  it("writes each teaser's announcement after its position, as the fixture authors it", () => {
     const start = sql.indexOf("insert into public.seed_teasers (");
     expect(sql.slice(start, sql.indexOf("\n", start))).toBe(
-      "insert into public.seed_teasers (slug, name, kind, family, drop_no, photo_key, position, announced_at) values",
+      "insert into public.seed_teasers (slug, name, kind, family, drop_no, photo_key, position, announced_at, name_en, kind_en) values",
     );
     expect(rowsIn(sql, "seed_teasers")).toEqual([
-      "  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0, '2026-09-18T12:00:00+07:00'::timestamptz),",
-      "  ('s06-ngoi', 'NGÓI', 'Áo hoodie in', 'HOODIE', 6, 'nguoi', 1, '2026-09-18T12:00:00+07:00'::timestamptz)",
+      "  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0, '2026-09-18T12:00:00+07:00'::timestamptz, null, 'Nylon jacket'),",
+      "  ('s06-ngoi', 'NGÓI', 'Áo hoodie in', 'HOODIE', 6, 'nguoi', 1, '2026-09-18T12:00:00+07:00'::timestamptz, null, 'Printed hoodie')",
     ]);
   });
 
@@ -134,7 +135,9 @@ describe("the generator itself", () => {
       fixtureOrders(),
       fixtureStates(),
     );
-    expect(rowsIn(unknown, "seed_teasers")).toEqual(["  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0, null)"]);
+    expect(rowsIn(unknown, "seed_teasers")).toEqual([
+      "  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0, null, null, 'Nylon jacket')",
+    ]);
   });
 
   // Slice B6: `seed_products.details`, the style's construction lines.
@@ -143,27 +146,30 @@ describe("the generator itself", () => {
     /** A style's row, without the comma that separates it from the next. */
     const rowOf = (id: string) => rows.find((r) => r.startsWith(`  ('${id}'`))!.replace(/,$/, "");
 
-    it("are the last column of seed_products", () => {
+    // The English (slice B15) follows them: name_en, kind_en, material_en, details_en.
+    it("come after the position in seed_products, before the English", () => {
       const start = sql.indexOf("insert into public.seed_products (");
       const header = sql.slice(start, sql.indexOf("\n", start));
       expect(header).toBe(
         "insert into public.seed_products (id, slug, name, kind, family, material, fit, " +
-          "price_vnd, cut_units, drop_no, sold_out_at, position, details) values",
+          "price_vnd, cut_units, drop_no, sold_out_at, position, details, name_en, kind_en, material_en, details_en) values",
       );
     });
 
     it("are written as a text[] of the fixture's lines, in their order", () => {
       const lines = FIXTURE_CATALOG.byId.get("p-khoi" as never)!.details;
       expect(lines).toHaveLength(4);
-      expect(rowOf("p-khoi").endsWith(`, array[${lines.map((l) => `'${l}'`).join(", ")}]::text[])`)).toBe(true);
+      expect(rowOf("p-khoi")).toContain(`, 0, array[${lines.map((l) => `'${l}'`).join(", ")}]::text[], `);
       // A double quote inside a line is just a character of the literal.
       expect(rowOf("p-bui")).toContain(`'In "Bản đồ mòn" ở ngực trên'`);
     });
 
     it("are an empty text[] for a style with none", () => {
-      expect(rowOf("p-reu").endsWith(", array[]::text[])")).toBe(true);
-      expect(rowOf("p-ao-thun-tron").endsWith(", array[]::text[])")).toBe(true);
-      const withLines = rows.filter((r) => !r.replace(/,$/, "").endsWith(", array[]::text[])"));
+      // Never an empty English list (`details_en` is null or holds a line), so
+      // this is the Vietnamese column wherever it appears.
+      expect(rowOf("p-reu")).toContain(", array[]::text[], ");
+      expect(rowOf("p-ao-thun-tron")).toContain(", array[]::text[], ");
+      const withLines = rows.filter((r) => !r.includes(", array[]::text[], "));
       expect(withLines).toHaveLength(10);
     });
 
@@ -179,6 +185,63 @@ describe("the generator itself", () => {
         fixtureStates(),
       );
       expect(quoted).toContain("array['Cổ bo gân 2,5 cm', 'Túi ''kangaroo''']::text[]");
+    });
+  });
+
+  // Slice B15: the English of every style and teaser, null where there is none.
+  describe("the English", () => {
+    const rows = rowsIn(sql, "seed_products");
+    const rowOf = (id: string) => rows.find((r) => r.startsWith(`  ('${id}'`))!.replace(/,$/, "");
+    const quoted = (lines: readonly string[]) => `array[${lines.map((l) => `'${l}'`).join(", ")}]::text[]`;
+
+    /** The fixture with the first style's (KHÓI's) English replaced by `en`. */
+    const withEnglish = (en: object | undefined) => () => {
+      const input = fixtureInput();
+      const { en: _english, ...khoi } = input.products[0]!;
+      const first = en === undefined ? khoi : { ...khoi, en };
+      return renderSeedSql(
+        { ...input, products: [first, ...input.products.slice(1)] },
+        fixtureCustomers(),
+        fixtureOrders(),
+        fixtureStates(),
+      );
+    };
+
+    it("writes a style's English name, kind, material and lines last, in that order", () => {
+      const khoi = FIXTURE_CATALOG.byId.get("p-khoi" as never)!;
+      expect(khoi.en?.details).toHaveLength(4);
+      expect(rowOf("p-khoi").endsWith(`, null, 'Oversized tee', 'Cotton 250gsm', ${quoted(khoi.en!.details!)})`)).toBe(true);
+    });
+
+    it("writes a fixed style's English name, and null for a style's lines when it has none", () => {
+      expect(rowOf("p-ao-thun-tron").endsWith(", 'PLAIN TEE', 'Tee', 'Cotton 220gsm', null)")).toBe(true);
+      expect(rowOf("p-reu").endsWith(", null, 'Puffer jacket', 'Quilted down-filled nylon', null)")).toBe(true);
+      // Lines in English exactly where there are lines in Vietnamese: Số 05's ten.
+      expect(rows.filter((r) => r.replace(/,$/, "").endsWith("]::text[])"))).toHaveLength(10);
+    });
+
+    it("writes four nulls for a style with no English at all", () => {
+      expect(rowsIn(withEnglish(undefined)(), "seed_products")[0]!.endsWith(", null, null, null, null),")).toBe(true);
+    });
+
+    it("escapes a quote in the English instead of ending the literal", () => {
+      const sqlOut = withEnglish({ name: "SMOKE'S", details: ["Print 'smoke'"] })();
+      expect(rowsIn(sqlOut, "seed_products")[0]).toContain(", 'SMOKE''S', null, null, array['Print ''smoke''']::text[]),");
+    });
+
+    it("refuses a blank English field or an empty list of lines, naming the entry", () => {
+      expect(withEnglish({ kind: "  " })).toThrow("p-khoi: en.kind is blank");
+      expect(withEnglish({ details: [] })).toThrow("p-khoi: en.details is an empty list; leave it out instead");
+      expect(withEnglish({ details: ["Kangaroo pocket", " "] })).toThrow("p-khoi: en.details[1] is blank");
+      const input = fixtureInput();
+      expect(() =>
+        renderSeedSql(
+          { ...input, teasers: [{ ...input.teasers[0]!, en: { name: "" } }] },
+          fixtureCustomers(),
+          fixtureOrders(),
+          fixtureStates(),
+        ),
+      ).toThrow("s06-soi: en.name is blank");
     });
   });
 });

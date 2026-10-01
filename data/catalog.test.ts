@@ -450,7 +450,8 @@ describe("the teasers' announcement (backend slice B12)", () => {
   });
 
   it("changes none of the fixture's other teaser fields", () => {
-    expect(TEASERS.map(({ announcedAt: _told, ...t }) => t)).toEqual([
+    // `en` (slice B15) is checked with the rest of the English, below.
+    expect(TEASERS.map(({ announcedAt: _told, en: _english, ...t }) => t)).toEqual([
       { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong" },
       { slug: "s06-ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi" },
     ]);
@@ -458,5 +459,102 @@ describe("the teasers' announcement (backend slice B12)", () => {
 
   it("dates no style's sales: lastSoldAt is read off the orders by the database, never kept in the fixture", () => {
     expect(CATALOG.filter((p) => p.lastSoldAt !== undefined)).toEqual([]);
+  });
+});
+
+/**
+ * The English (backend slice B15, round v6). The words themselves are the
+ * main session's to read line by line; these pin the rules they follow
+ * (`tasks/plan.md`, "Thuật ngữ tiếng Anh", and brief B15 §2).
+ */
+describe("the English (backend slice B15)", () => {
+  /** The eight fixed styles' English names, as the glossary table has them. */
+  const BASICS_EN: Record<string, string> = {
+    "ÁO THUN TRƠN": "PLAIN TEE",
+    "ÁO THUN TAY DÀI": "LONG-SLEEVE TEE",
+    "HOODIE TRƠN": "PLAIN HOODIE",
+    "ÁO KHOÁC DÙ": "NYLON JACKET",
+    "GILE PHAO": "PUFFER GILET",
+    "SƠ MI OXFORD": "OXFORD SHIRT",
+    "QUẦN KAKI": "CHINOS",
+    "QUẦN SHORT NỈ": "FLEECE SHORTS",
+  };
+
+  /** Every letter Vietnamese has and English does not. */
+  const VIETNAMESE = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
+  /** A print's title, which stays as it is, like the style's own name. */
+  const TITLE = /"[^"]*"/g;
+
+  /** Every English string the fixture carries, with where it comes from. */
+  const english = [
+    ...CATALOG.flatMap((p) => [
+      ...(["name", "kind", "material"] as const).flatMap((k) => (p.en?.[k] === undefined ? [] : [[`${p.slug}.${k}`, p.en[k]!]])),
+      ...(p.en?.details ?? []).map((line, i) => [`${p.slug}.details[${i}]`, line]),
+    ]),
+    ...TEASERS.flatMap((t) => (["name", "kind"] as const).flatMap((k) => (t.en?.[k] === undefined ? [] : [[`${t.slug}.${k}`, t.en[k]!]]))),
+  ] as Array<[string, string]>;
+
+  it("names the eight fixed styles by the glossary, and leaves every issue's style and teaser its Vietnamese name", () => {
+    for (const p of CATALOG) {
+      if (p.dropNo === null) expect(p.en?.name, p.slug).toBe(BASICS_EN[p.name]);
+      else expect(p.en?.name, p.slug).toBeUndefined();
+    }
+    expect(CATALOG.filter((p) => p.en?.name !== undefined)).toHaveLength(8);
+    for (const t of TEASERS) expect(t.en?.name, t.slug).toBeUndefined();
+  });
+
+  it("gives every style an English kind and material, and every teaser an English kind", () => {
+    for (const p of CATALOG) {
+      expect(p.en?.kind, p.slug).toBeTruthy();
+      expect(p.en?.material, p.slug).toBeTruthy();
+    }
+    for (const t of TEASERS) expect(t.en?.kind, t.slug).toBeTruthy();
+  });
+
+  it("translates the lines one for one, exactly where there are lines, each print's title as it stands", () => {
+    for (const p of CATALOG) {
+      if (p.details.length === 0) {
+        // The column holds null or a line, never an empty list.
+        expect(p.en?.details, p.slug).toBeUndefined();
+        continue;
+      }
+      expect(p.en?.details, p.slug).toHaveLength(p.details.length);
+      p.details.forEach((line, i) => {
+        expect(p.en!.details![i]!.match(TITLE) ?? [], `${p.slug}.details[${i}]`).toEqual(line.match(TITLE) ?? []);
+      });
+    }
+    expect(CATALOG.filter((p) => p.en?.details !== undefined)).toHaveLength(10);
+  });
+
+  it("gives the same Vietnamese the same English across the catalogue", () => {
+    const seen = new Map<string, string>();
+    const once = (vi: string, en: string | undefined, where: string) => {
+      if (en === undefined) return;
+      const before = seen.get(vi);
+      if (before !== undefined) expect(en, `${where}: "${vi}"`).toBe(before);
+      seen.set(vi, en);
+    };
+    for (const p of CATALOG) {
+      once(`kind:${p.kind}`, p.en?.kind, p.slug);
+      once(`material:${p.material}`, p.en?.material, p.slug);
+      p.details.forEach((line, i) => once(`line:${line}`, p.en?.details?.[i], p.slug));
+    }
+    for (const t of TEASERS) once(`kind:${t.kind}`, t.en?.kind, t.slug);
+  });
+
+  it("is English: no Vietnamese letter outside a print's title, no decimal comma, nothing blank", () => {
+    expect(english.length).toBeGreaterThan(0);
+    for (const [where, text] of english) {
+      expect(text.trim(), where).not.toBe("");
+      expect(text.replace(TITLE, ""), where).not.toMatch(VIETNAMESE);
+      expect(text, where).not.toMatch(/\d,\d/);
+    }
+  });
+
+  it("capitalises a kind's first letter only, as the Vietnamese does", () => {
+    for (const [where, kind] of english.filter(([w]) => w.endsWith(".kind"))) {
+      expect(kind[0], where).toBe(kind[0]!.toUpperCase());
+      expect(kind.slice(1), where).toBe(kind.slice(1).toLowerCase());
+    }
   });
 });

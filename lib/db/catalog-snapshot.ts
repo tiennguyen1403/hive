@@ -9,10 +9,12 @@ import {
   type Family,
   type Fit,
   type Product,
+  type ProductEn,
   type Promotion,
   type Size,
   type Stock,
   type Teaser,
+  type TeaserEn,
 } from "@/data/types";
 import type { CatalogInput } from "@/lib/catalog";
 
@@ -119,6 +121,57 @@ function optionalInstant(
   const value = source[key];
   if (value === undefined || value === null) return undefined;
   return instant(source, key, path);
+}
+
+/** A non-empty string, as `text` wants, or nothing: null and a missing key alike. */
+function optionalText(source: Record<string, unknown>, key: string, path: string): string | undefined {
+  const value = source[key];
+  if (value === undefined || value === null) return undefined;
+  return text(source, key, path);
+}
+
+// ─────────────────────────────────────────────────────────────── English
+/**
+ * The English of a style or a teaser (slice B15, round v6).
+ * `catalog_snapshot()` writes `en` with one key per English column, each the
+ * English or null, and null means "print the Vietnamese". Each is read with
+ * the check its Vietnamese field gets — a non-empty string, a list of
+ * non-empty lines — and kept only when it is there: a null key is left out,
+ * and `en` itself when all of it is, so presence alone says "there is
+ * English". A list of lines that is empty is refused by name, since the
+ * column holds null or at least one line.
+ *
+ * No `en` at all, or null, is a database the B15 migration has not reached:
+ * read as no English, so the shop prints Vietnamese rather than going down.
+ */
+function readEnglish(
+  source: Record<string, unknown>,
+  keys: readonly ("name" | "kind" | "material")[],
+  withLines: boolean,
+  path: string,
+): ProductEn | undefined {
+  if (source.en === undefined || source.en === null) return undefined;
+  const at = `${path}.en`;
+  const en = record(source.en, at);
+  const out: ProductEn = {};
+
+  for (const key of keys) {
+    const value = optionalText(en, key, at);
+    if (value !== undefined) out[key] = value;
+  }
+
+  if (withLines && en.details !== undefined && en.details !== null) {
+    const lines = list(en.details, `${at}.details`).map((line, index) => {
+      if (typeof line !== "string" || line === "") {
+        return fail(`${at}.details[${index}]`, "must be a non-empty string");
+      }
+      return line;
+    });
+    if (lines.length === 0) fail(`${at}.details`, "must hold at least one line, or be null");
+    out.details = lines;
+  }
+
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 // ───────────────────────────────────────────────────────────────── products
@@ -257,6 +310,10 @@ function readProduct(value: unknown, path: string): Product {
   const lastSoldAt = readLastSold(source, colors, path);
   if (lastSoldAt !== undefined) product.lastSoldAt = lastSoldAt;
 
+  // And when the style has no English at all (slice B15).
+  const en = readEnglish(source, ["name", "kind", "material"], true, path);
+  if (en !== undefined) product.en = en;
+
   return product;
 }
 
@@ -272,7 +329,7 @@ function readDrop(value: unknown, path: string): Drop {
 
 function readTeaser(value: unknown, path: string): Teaser {
   const source = record(value, path);
-  return {
+  const teaser: Teaser = {
     slug: text(source, "slug", path),
     name: text(source, "name", path),
     kind: text(source, "kind", path),
@@ -283,6 +340,12 @@ function readTeaser(value: unknown, path: string): Teaser {
     // a database the B12 migration has not reached.
     announcedAt: optionalInstant(source, "announcedAt", path) ?? null,
   };
+
+  // Slice B15: a teaser's English is its name's and its kind's, nothing more.
+  const en: TeaserEn | undefined = readEnglish(source, ["name", "kind"], false, path);
+  if (en !== undefined) teaser.en = en;
+
+  return teaser;
 }
 
 // ─────────────────────────────────────────────────────────────── promotions

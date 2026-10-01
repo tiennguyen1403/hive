@@ -152,7 +152,7 @@ row (`NOT_FOUND`), the guard (`NOT_ALLOWED`), a shelf that moved under the form
 | `admin_pause_promo(code, paused, p_now)` | `promotions.paused`; pausing a paused code is `NOT_ALLOWED` | `PROMO_PAUSED {paused}` |
 | `admin_raise_promo_limit(code, after, p_now)` | `after` above the current limit, or any limit when there was none | `PROMO_LIMIT_RAISED {before, after}` |
 | `admin_end_promo(code, p_now)` | `ends_at = p_now`, only for a code inside its window | `PROMO_ENDED {before, after}` |
-| `admin_update_product(id, patch, p_now)` | patch ⊆ name, kind, slug, priceVnd, material, fit, dropNo — never the cut; slug new; a kind other styles file under one family moves the family too | `PRODUCT_EDITED {before, after}`, changed fields only |
+| `admin_update_product(id, patch, p_now)` | patch ⊆ name, kind, slug, priceVnd, material, fit, dropNo — never the cut; slug new; a kind other styles file under one family moves the family too; since B15 a name, kind or material that changes drops that field's English (`name_en`, `kind_en`, `material_en`), so the English shop shows the edit | `PRODUCT_EDITED {before, after}`, changed fields only |
 
 `place_order` refuses a paused code with `PROMO_INVALID`, and stamps
 `products.sold_out_at` when the last piece of a style goes; `cancel_order`,
@@ -164,6 +164,35 @@ cells, a promotion, products.
 `lib/db/catalog-admin.dbtest.ts` walks every function's allowed move and its
 refusals, the events, `sold_out_at` both ways, and a reset back to the
 fixture after all of it.
+
+## The catalogue in English (slice B15)
+
+The app speaks Vietnamese and English (QĐ-40). Words the code prints are
+translated in place; the free text a style or a teaser carries lives here,
+beside the Vietnamese:
+
+| Table | English columns |
+|---|---|
+| `products`, `seed_products` | `name_en`, `kind_en`, `material_en` (text), `details_en` (text[]) |
+| `teasers`, `seed_teasers` | `name_en`, `kind_en` |
+
+- Every English column may be null, and null means "use the Vietnamese".
+  When set it is never blank (`details_en`: at least one line, none blank,
+  `text_lines_ok()`).
+- The issues' style names stay Vietnamese (the user's call), so their
+  `name_en` is null; the eight fixed styles carry an English name.
+- `catalog_snapshot()` returns them under `en` (keys with a null value), and
+  `lib/db/catalog-snapshot.ts` leaves `en` out of a style whose English is all
+  null. `lib/product-text.ts` picks a language, field by field.
+- The English comes from `data/catalog.ts` (`en` on a style or a teaser)
+  through `npm run seed:gen`, and `reset_demo()` copies it from the mirrors.
+- `admin_add_product` and `admin_add_teaser` leave it null; an edit drops the
+  English of the field it changes (table above).
+
+On hosted, the columns come with the migration, but the English text only
+with the seed: reload `seed.sql` after `db push` (it ends with a reset).
+`lib/db/catalog-english.dbtest.ts` covers the snapshot, the reset, the edit
+and the constraints.
 
 ## What an account keeps (slice B9)
 

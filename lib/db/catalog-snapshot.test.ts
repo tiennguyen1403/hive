@@ -496,3 +496,87 @@ describe("the two moments of slice B12", () => {
     expect(() => parseCatalogSnapshot(doc)).toThrow("teasers[0].announcedAt must be an ISO instant ending in +07:00");
   });
 });
+
+/**
+ * Slice B15: the English, `en` on every style and every teaser. The database
+ * writes one key per English column, each the English or null; the parser
+ * keeps what is there and leaves out the rest — `en` itself when nothing is
+ * left, and when the key is missing, which is a database before B15.
+ */
+describe("the English of slice B15", () => {
+  /** KHÓI's English as `catalog_snapshot()` v7 writes it: no English name. */
+  const KHOI_EN = {
+    name: null,
+    kind: "Oversized tee",
+    material: "Cotton 250gsm",
+    details: [
+      "Dropped shoulders, wide body",
+      "Wide short sleeves, ending above the elbow",
+      "2.5 cm ribbed neckband",
+      "Screen-printed halftone smoke band running diagonally from hem to chest",
+    ],
+  };
+
+  it("reads a style's English field by field, leaving out a field that is null", () => {
+    const doc = snapshot();
+    Object.assign(doc.products[0]!, { en: KHOI_EN });
+    Object.assign(doc.products[1]!, { en: { name: null, kind: "Funnel-neck hoodie", material: "Brushed fleece 380gsm", details: null } });
+    const [khoi, bao] = parseCatalogSnapshot(doc).products;
+    expect(khoi!.en).toEqual({ kind: KHOI_EN.kind, material: KHOI_EN.material, details: KHOI_EN.details });
+    expect(Object.keys(khoi!.en!)).toEqual(["kind", "material", "details"]);
+    expect(bao!.en).toEqual({ kind: "Funnel-neck hoodie", material: "Brushed fleece 380gsm" });
+    expect(Object.keys(bao!.en!)).toEqual(["kind", "material"]);
+    // The Vietnamese is untouched.
+    expect(khoi).toMatchObject({ name: "KHÓI", kind: "Áo thun oversize", material: "Cotton 250gsm" });
+    expect(khoi!.details[2]).toBe("Cổ bo gân 2,5 cm");
+  });
+
+  it("reads a fixed style's English name", () => {
+    const doc = snapshot();
+    Object.assign(doc.products[0]!, { en: { name: "PLAIN TEE", kind: "Tee", material: "Cotton 220gsm", details: null } });
+    expect(parseCatalogSnapshot(doc).products[0]!.en).toEqual({ name: "PLAIN TEE", kind: "Tee", material: "Cotton 220gsm" });
+  });
+
+  it("leaves en off a style whose English is all null, null itself, or missing — a database before B15", () => {
+    const allNull = snapshot();
+    Object.assign(allNull.products[0]!, { en: { name: null, kind: null, material: null, details: null } });
+    expect("en" in parseCatalogSnapshot(allNull).products[0]!).toBe(false);
+    const nullEn = snapshot();
+    Object.assign(nullEn.products[0]!, { en: null });
+    expect("en" in parseCatalogSnapshot(nullEn).products[0]!).toBe(false);
+    expect("en" in parseCatalogSnapshot(snapshot()).products[0]!).toBe(false);
+  });
+
+  it("reads a teaser's English, and leaves en off one that has none", () => {
+    const doc = snapshot();
+    doc.teasers.push({ ...doc.teasers[0]!, slug: "ngoi", name: "NGÓI", kind: "Áo hoodie in" });
+    Object.assign(doc.teasers[0]!, { en: { name: null, kind: "Nylon jacket" } });
+    Object.assign(doc.teasers[1]!, { en: { name: null, kind: null } });
+    const [soi, ngoi] = parseCatalogSnapshot(doc).teasers;
+    expect(soi!.en).toEqual({ kind: "Nylon jacket" });
+    expect(Object.keys(soi!.en!)).toEqual(["kind"]);
+    expect(soi).toMatchObject({ name: "SỎI", kind: "Áo khoác dù" });
+    expect("en" in ngoi!).toBe(false);
+    expect("en" in parseCatalogSnapshot(snapshot()).teasers[0]!).toBe(false);
+  });
+
+  it("refuses English that is not what the columns hold, by name", () => {
+    const withEn = (en: unknown, at: "product" | "teaser" = "product") => {
+      const doc = snapshot();
+      Object.assign(at === "product" ? doc.products[0]! : doc.teasers[0]!, { en });
+      return () => parseCatalogSnapshot(doc);
+    };
+    expect(withEn("Oversized tee")).toThrow("products[0].en must be an object");
+    expect(withEn(["Oversized tee"])).toThrow("products[0].en must be an object");
+    expect(withEn({ ...KHOI_EN, kind: "" })).toThrow("products[0].en.kind must be a non-empty string");
+    expect(withEn({ ...KHOI_EN, name: 42 })).toThrow("products[0].en.name must be a non-empty string");
+    expect(withEn({ ...KHOI_EN, material: "" })).toThrow("products[0].en.material must be a non-empty string");
+    expect(withEn({ ...KHOI_EN, details: "Dropped shoulders" })).toThrow("products[0].en.details must be an array");
+    expect(withEn({ ...KHOI_EN, details: [] })).toThrow("products[0].en.details must hold at least one line, or be null");
+    expect(withEn({ ...KHOI_EN, details: ["Dropped shoulders", ""] })).toThrow(
+      "products[0].en.details[1] must be a non-empty string",
+    );
+    expect(withEn({ name: null, kind: "" }, "teaser")).toThrow("teasers[0].en.kind must be a non-empty string");
+    expect(withEn("Nylon jacket", "teaser")).toThrow("teasers[0].en must be an object");
+  });
+});

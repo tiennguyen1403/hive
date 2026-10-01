@@ -3319,6 +3319,9 @@ Phiên chính đo và tra trước khi đề xuất:
     đang giảm giá;
   - Dữ liệu mẫu Demo data · Đặt lại dữ liệu mẫu Reset demo data · Vào quản trị thử Try the admin;
   - tồn kho Stock · sắp hết Low stock · còn N N left.
+- **Họ hàng** (`FAMILY_LABELS`, `FAMILY_SHORT_LABELS`): Áo thun Tees · Áo hoodie / Hoodie Hoodies · Áo khoác / Khoác Jackets ·
+  Áo gile / Gile Gilets · Áo sơ mi / Sơ mi Shirts · Quần Bottoms. Phiên chính thêm 01/10 theo lời khuyên duyệt; người dùng sửa
+  được.
 - **Tên tám mẫu Basics:** ÁO THUN TRƠN PLAIN TEE · ÁO THUN TAY DÀI LONG-SLEEVE TEE · HOODIE TRƠN PLAIN HOODIE · ÁO KHOÁC DÙ
   NYLON JACKET · GILE PHAO PUFFER GILET · SƠ MI OXFORD OXFORD SHIRT · QUẦN KAKI CHINOS · QUẦN SHORT NỈ FLEECE SHORTS.
 
@@ -3335,13 +3338,19 @@ Phiên chính đo và tra trước khi đề xuất:
 - Văn bản tự do trong DB: `name`, `kind`, `material` của mẫu, chi tiết mẫu, `kind` của teaser. Cần cột tiếng Anh, thiếu thì rơi
   về tiếng Việt. Việc này cần một lát backend.
 
-**Lát dự kiến của phần tiếng Anh:**
-- E0 nền (`tasks/briefs/v6-lat-e0.md`, giao `ui-implementer` 01/10);
-- E1 trang chủ, Cửa hàng, trang mẫu, tìm, trang drop;
+**Lát dự kiến của phần tiếng Anh** (01/10, B15 dời lên trước E1: trang chủ, Cửa hàng và trang mẫu in chữ của DB):
+- E0 nền (`tasks/briefs/v6-lat-e0.md`, `e363ab3`);
+- B15 nội dung DB tiếng Anh (`tasks/briefs/backend-b15.md`, `backend-implementer`);
+- E1 trang chủ, Cửa hàng, trang mẫu, tìm, trang drop. **Ghi nhớ cho E1:** chú giải `FAMILY_LABELS` nói mỗi nhãn họ hàng là
+  chuỗi con của mọi `kind` trong họ, và chip gợi ý tìm dựa vào đó. Bản tiếng Anh "Bottoms" không nằm trong "Chinos" hay
+  "Fleece shorts", nên tìm theo họ hàng ở bản tiếng Anh phải so theo `family`, không so chữ;
 - E2 giỏ, thanh toán, đặt hàng xong, tra đơn;
 - E3 tài khoản, trang phụ (Hỏi đáp, Bảng size, Đổi trả, Giới thiệu, Liên hệ), 404;
-- B15 nội dung DB tiếng Anh (`backend-implementer`). Form mẫu ở quản trị có thêm ô tiếng Anh không là câu hỏi của lát đó;
 - E4, E5 quản trị.
+- **Form mẫu ở quản trị không có ô tiếng Anh** (phiên chính quyết 01/10, báo người dùng như một quyết định). Sửa một trường ở
+  quản trị thì bản tiếng Anh của trường đó bị xoá và rơi về chữ vừa sửa. Lý do: khách nước ngoài thử sửa "ÁO THUN TRƠN"
+  thành "PLAIN TEE V2" thì bản tiếng Anh phải hiện đúng chữ họ sửa. Thêm ô tiếng Anh vào form là một vòng thiết kế riêng, còn
+  mở.
 - **Đề xuất cho lúc push:** chưa đưa lên demo tới khi xong cả phần tiếng Anh. Giữa chừng, bản EN mới dịch một phần, mà trình duyệt
   nước ngoài sẽ tự vào bản EN.
 
@@ -3383,3 +3392,33 @@ commit trên máy, chưa push.
 - **Tài liệu:** `PRODUCT.md` dòng ngôn ngữ đã sửa. `DESIGN.md` (§1, §3 "quản trị Việt hoá toàn bộ", §7, §8) để documenter viết
   lại một lần khi xong phần tiếng Anh.
 - **Quy trình:** harness chặn subagent ghi `REPORT.md`. Các brief sau bỏ yêu cầu đó; báo cáo chỉ nằm trong tin cuối.
+
+**01/10, B15 ĐẠT (phiên chính duyệt).** Brief `tasks/briefs/backend-b15.md`, agent `backend-implementer`. Agent đã sửa ba dòng
+`details`; người dùng cho commit trên máy (chưa push) rồi làm E1.
+- **Migration `20261001150000_catalog_english.sql`:**
+  - cột `name_en`, `kind_en`, `material_en`, `details_en` ở `products` và `seed_products`; `name_en`, `kind_en` ở `teasers` và
+    `seed_teasers`. Null là "dùng bản Việt"; có giá trị thì không rỗng (`text_lines_ok()` cho `details_en`);
+  - thay `reset_demo` (bản 11), `catalog_snapshot()` (bản 7, trả `en`), `admin_update_product` (bản 3: đổi tên, loại hay chất liệu
+    thì xoá bản Anh của trường đó). `admin_add_product`, `admin_add_teaser` không cần thay vì đã ghi rõ tên cột.
+- **Dữ liệu:** `en` cho 29 mẫu và 2 teaser trong `data/catalog.ts`; seed sinh lại. Trên DB: `kind_en` 29, `material_en` 29,
+  `name_en` 8 (Basics), `details_en` 10 mẫu, 45 dòng.
+- **Code:** `ProductEn`, `TeaserEn` (mọi trường tuỳ chọn), `readEnglish` trong `lib/db/catalog-snapshot.ts`,
+  `lib/product-text.ts` (`productText`, `teaserText`, bắt buộc truyền `locale`). `en` tới được `useCatalog()`, đã đo trên trang.
+- **Phiên chính kiểm:** tsc sạch; 1.886 test, 323 test DB xanh; đọc phần SQL xoá bản Anh khi sửa; đọc từng dòng tiếng Anh.
+  Giao lại agent ba dòng `details`: MUỐI "Covered elastic waistband with a drawcord", "Side pockets"; GIÓ "print on the right
+  front".
+- **Quyết định agent, phiên chính giữ:**
+  - tên hình in trong ngoặc giữ tiếng Việt ("Bản đồ mòn" print…), theo luật giữ tên mẫu;
+  - `material_en` ghi cả khi giống bản Việt;
+  - `details_en` null ở 19 mẫu không có dòng Việt nào;
+  - "Joggers", "Windbreaker" thay vì ép chữ "trousers", "jacket".
+- **Đo:** HTML nén mỗi trang +1,1 KB (`/` +4,9%, `/products` +8,1%). Màn không đổi pixel nào do B15.
+- **Lên hosted** (người dùng chạy, lúc push cả phần tiếng Anh): `db push --linked --dry-run` (đúng một migration) → `db push
+  --linked --yes` → `db query --linked -f supabase/seed.sql` (seed kết thúc bằng `reset_demo`) → kiểm chỉ đọc: 29 / 8 / 10 / 45.
+  Code và DB lên trước hay sau đều an toàn. `supabase/README.md` có mục mới "The catalogue in English (slice B15)".
+- **Bản tiếng Anh vẫn in chữ Việt của DB ở** (cho brief E2, E4): payload `events` (tên trước/sau khi sửa mẫu, tên teaser);
+  `orders.cancel_reason` (4 lý do của quản trị, "quá hạn chuyển khoản", "khách huỷ"; dữ liệu mẫu có hai cách viết hoa);
+  `orders.carrier` (lưu nhãn của `DELIVERY_OPTIONS`); `orders.note`; `addresses.label`. Tập cố định thì dịch trong code; chữ gõ tự
+  do giữ nguyên.
+- **Cho E1:** mọi chỗ in tên, loại, chất liệu, chi tiết mẫu dùng `productText`/`teaserText`; tìm theo họ hàng ở bản Anh so theo
+  `family`.

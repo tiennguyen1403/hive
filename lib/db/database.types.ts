@@ -401,13 +401,17 @@ export type Database = {
         Row: {
           cut_units: number | null
           details: string[]
+          details_en: string[] | null
           drop_no: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
           id: string
           kind: string
+          kind_en: string | null
           material: string
+          material_en: string | null
           name: string
+          name_en: string | null
           position: number
           price_vnd: number
           slug: string
@@ -416,13 +420,17 @@ export type Database = {
         Insert: {
           cut_units?: number | null
           details?: string[]
+          details_en?: string[] | null
           drop_no?: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
           id: string
           kind: string
+          kind_en?: string | null
           material: string
+          material_en?: string | null
           name: string
+          name_en?: string | null
           position: number
           price_vnd: number
           slug: string
@@ -431,13 +439,17 @@ export type Database = {
         Update: {
           cut_units?: number | null
           details?: string[]
+          details_en?: string[] | null
           drop_no?: number | null
           family?: Database["public"]["Enums"]["product_family"]
           fit?: Database["public"]["Enums"]["product_fit"]
           id?: string
           kind?: string
+          kind_en?: string | null
           material?: string
+          material_en?: string | null
           name?: string
+          name_en?: string | null
           position?: number
           price_vnd?: number
           slug?: string
@@ -921,13 +933,17 @@ export type Database = {
         Row: {
           cut_units: number | null
           details: string[]
+          details_en: string[] | null
           drop_no: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
           id: string
           kind: string
+          kind_en: string | null
           material: string
+          material_en: string | null
           name: string
+          name_en: string | null
           position: number
           price_vnd: number
           slug: string
@@ -936,13 +952,17 @@ export type Database = {
         Insert: {
           cut_units?: number | null
           details?: string[]
+          details_en?: string[] | null
           drop_no?: number | null
           family: Database["public"]["Enums"]["product_family"]
           fit: Database["public"]["Enums"]["product_fit"]
           id: string
           kind: string
+          kind_en?: string | null
           material: string
+          material_en?: string | null
           name: string
+          name_en?: string | null
           position: number
           price_vnd: number
           slug: string
@@ -951,13 +971,17 @@ export type Database = {
         Update: {
           cut_units?: number | null
           details?: string[]
+          details_en?: string[] | null
           drop_no?: number | null
           family?: Database["public"]["Enums"]["product_family"]
           fit?: Database["public"]["Enums"]["product_fit"]
           id?: string
           kind?: string
+          kind_en?: string | null
           material?: string
+          material_en?: string | null
           name?: string
+          name_en?: string | null
           position?: number
           price_vnd?: number
           slug?: string
@@ -1060,7 +1084,9 @@ export type Database = {
           drop_no: number
           family: Database["public"]["Enums"]["product_family"]
           kind: string
+          kind_en: string | null
           name: string
+          name_en: string | null
           photo_key: string
           position: number
           slug: string
@@ -1070,7 +1096,9 @@ export type Database = {
           drop_no: number
           family: Database["public"]["Enums"]["product_family"]
           kind: string
+          kind_en?: string | null
           name: string
+          name_en?: string | null
           photo_key: string
           position: number
           slug: string
@@ -1080,7 +1108,9 @@ export type Database = {
           drop_no?: number
           family?: Database["public"]["Enums"]["product_family"]
           kind?: string
+          kind_en?: string | null
           name?: string
+          name_en?: string | null
           photo_key?: string
           position?: number
           slug?: string
@@ -1122,7 +1152,9 @@ export type Database = {
           drop_no: number
           family: Database["public"]["Enums"]["product_family"]
           kind: string
+          kind_en: string | null
           name: string
+          name_en: string | null
           photo_key: string
           position: number
           slug: string
@@ -1132,7 +1164,9 @@ export type Database = {
           drop_no: number
           family: Database["public"]["Enums"]["product_family"]
           kind: string
+          kind_en?: string | null
           name: string
+          name_en?: string | null
           photo_key: string
           position: number
           slug: string
@@ -1142,7 +1176,9 @@ export type Database = {
           drop_no?: number
           family?: Database["public"]["Enums"]["product_family"]
           kind?: string
+          kind_en?: string | null
           name?: string
+          name_en?: string | null
           photo_key?: string
           position?: number
           slug?: string
@@ -1367,6 +1403,7 @@ export type Database = {
         }
         Returns: number
       }
+      text_lines_ok: { Args: { p_lines: string[] }; Returns: boolean }
       tidy_rate_hits: {
         Args: { p_clear?: string[]; p_now?: string }
         Returns: number

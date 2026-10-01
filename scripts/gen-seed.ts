@@ -70,6 +70,33 @@ const textArray = (values: readonly string[]): string =>
   `array[${values.map(str).join(", ")}]::text[]`;
 
 /**
+ * One English field of a style or a teaser (slice B15, round v6): the text,
+ * or `null` where there is none — which the shop reads as "print the
+ * Vietnamese". The database refuses a blank one
+ * (`20261001150000_catalog_english.sql`); it is refused here first, so the
+ * error names the entry rather than a constraint.
+ */
+function enText(where: string, key: string, value: string | undefined): string {
+  if (value === undefined) return "null";
+  if (value.trim() === "") throw new Error(`${where}: en.${key} is blank`);
+  return str(value);
+}
+
+/**
+ * A style's English lines, or `null`. Never an empty list: the column holds
+ * null or at least one line, none blank — a style with no lines simply has no
+ * English ones.
+ */
+function enLines(where: string, lines: readonly string[] | undefined): string {
+  if (lines === undefined) return "null";
+  if (lines.length === 0) throw new Error(`${where}: en.details is an empty list; leave it out instead`);
+  lines.forEach((line, index) => {
+    if (line.trim() === "") throw new Error(`${where}: en.details[${index}] is blank`);
+  });
+  return textArray(lines);
+}
+
+/**
  * Ten digits starting with zero, which is the one form the database accepts
  * (`phone ~ '^0[0-9]{9}$'`) and the one `lib/checkout-form.ts` stores.
  *
@@ -274,10 +301,15 @@ export function renderSeedSql(
         "sold_out_at",
         "position",
         "details",
+        "name_en",
+        "kind_en",
+        "material_en",
+        "details_en",
       ],
       // `details` (slice B6) is written out for every style, an empty list
       // included, rather than left to the column default: it is what
       // `reset_demo()` copies back, so the seed says what a reset restores.
+      // The English follows (slice B15), null wherever the fixture has none.
       input.products.map((p, index) => [
         str(p.id),
         str(p.slug),
@@ -292,6 +324,10 @@ export function renderSeedSql(
         tsOrNull(p.soldOutAt),
         num(index),
         textArray(p.details),
+        enText(p.id, "name", p.en?.name),
+        enText(p.id, "kind", p.en?.kind),
+        enText(p.id, "material", p.en?.material),
+        enLines(p.id, p.en?.details),
       ]),
     ),
   );
@@ -325,11 +361,11 @@ export function renderSeedSql(
 
   // `announced_at` (slice B12): when the teaser was announced, as the fixture
   // authors it (`TEASER_LEAD_HOURS` in `data/catalog.ts`); `reset_demo()`
-  // moves it with every other instant.
+  // moves it with every other instant. Then its English (slice B15).
   parts.push(
     insert(
       "seed_teasers",
-      ["slug", "name", "kind", "family", "drop_no", "photo_key", "position", "announced_at"],
+      ["slug", "name", "kind", "family", "drop_no", "photo_key", "position", "announced_at", "name_en", "kind_en"],
       input.teasers.map((t, index) => [
         str(t.slug),
         str(t.name),
@@ -339,6 +375,8 @@ export function renderSeedSql(
         str(t.photoKey),
         num(index),
         tsOrNull(t.announcedAt),
+        enText(t.slug, "name", t.en?.name),
+        enText(t.slug, "kind", t.en?.kind),
       ]),
     ),
   );
