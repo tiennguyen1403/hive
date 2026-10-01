@@ -28,6 +28,7 @@ import {
   readWindow,
   sameOrder,
   sameTerms,
+  scheduleClash,
   termsOf,
   type CatalogFailure,
   type CatalogMove,
@@ -282,7 +283,16 @@ export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown):
   return done(`Đã tạo ${LEX.tl} ${issueNo(n)} (sắp mở) · đã lưu`);
 }
 
-/** "Sửa giờ": an issue's two instants, moved — any issue, in any state. */
+/**
+ * "Sửa giờ": an issue's two instants, moved — any issue, in any state.
+ *
+ * Slice B14: one issue at a time, as for "Tạo số". A window that runs into
+ * another issue is refused with "Lịch chồng lên Số NN", naming the one in the
+ * way; a window that only narrows the issue's own days never is
+ * (`scheduleClash`). The database asks the same under a lock, and its own
+ * refusal — another tab moved an issue in between — names the issue in DETAIL
+ * and reads the same.
+ */
 export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
   const pace = await takeRates("admin");
@@ -292,13 +302,25 @@ export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unkn
   const window = readWindow(opensAt, closesAt);
   if (!window.ok) return refused(window.error);
 
-  const failure = await run("admin_schedule_drop", {
+  const catalog = await loadCatalog();
+  const drop = catalog.dropByNo.get(n);
+  if (!drop) return failed("SCHEDULE_DROP", "NOT_FOUND", dropSubject(n));
+  const clash = scheduleClash(catalog.drops, drop, window.value);
+  if (clash) return refused(overlapMessage(clash.no));
+
+  const result = await call("admin_schedule_drop", {
     p_no: n,
     p_opens_at: window.value.opensAt,
     p_closes_at: window.value.closesAt,
     p_now: now(),
   });
-  if (failure) return failed("SCHEDULE_DROP", failure, dropSubject(n));
+  if (!result.ok) {
+    const other = Number(result.detail);
+    if (result.failure === "NOT_ALLOWED" && Number.isInteger(other) && other > 0) {
+      return refused(overlapMessage(other));
+    }
+    return failed("SCHEDULE_DROP", result.failure, dropSubject(n));
+  }
 
   catalogMoved();
   return done(

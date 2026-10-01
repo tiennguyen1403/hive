@@ -3074,3 +3074,22 @@ ba hộp `Dialog` (tạo số / sửa giờ, đóng sớm, thêm mẫu hé lộ)
   - `ArcResetDialog` (lát 0) không trả focus về nút "Đặt lại dữ liệu mẫu". Dự kiến sửa ở lát 5.
   - Lát 6: `AdminDropsScreen`, `DropFormModal`, `TeaserFormSheet` chỉ còn gọi lẫn nhau; `ISSUE_STATE` lặp ở Tổng quan và
     Các số.
+
+**01/10, lát 4 commit `8a9f595`** (người dùng cho phép; chưa push). Người dùng chọn sửa lỗi lịch trùng ngay, trước lát 5: lát
+**B14** (`tasks/briefs/backend-b14.md`, `backend-implementer`) cho `admin_schedule_drop()` và `scheduleDrop` từ chối lịch trùng
+như "Tạo số". Thu hẹp, kể cả "Đóng sớm", thì không bao giờ bị chặn. Cần `db push` lên hosted khi người dùng cho lên online.
+
+**01/10, B14 ĐẠT (phiên chính duyệt), chờ người dùng cho commit.** Migration `20261001100000_schedule_drop_overlap.sql` thay
+`admin_schedule_drop()`.
+- Lịch mới vượt ra ngoài khoảng cũ mà trùng số khác thì `NOT_ALLOWED`, DETAIL là số bị trùng. Thu hẹp thì không bao giờ bị
+  chặn. Khoá bảng `drops` như `admin_add_drop()`; agent đã chứng minh thiếu khoá thì hai lần sửa cùng lúc lọt 11/12 lần.
+- `scheduleDrop` hỏi trước bằng `scheduleClash` (`lib/catalog-admin.ts`) và báo "Lịch chồng lên Số NN".
+- 1.827 test và 58 test DB của tệp này xanh (phiên chính tự chạy lại; agent chạy đủ `test:db` 302/302).
+- Phiên chính cập nhật bảng hàm ở `supabase/README.md`.
+- **Lên online:** người dùng chạy `npx supabase db push --linked --dry-run` (phải thấy đúng một migration), rồi `--yes`. Không
+  nạp lại seed. `db push` trước, push code sau. Câu kiểm sau khi push nằm trong báo cáo B14.
+- **Agent tìm ra, chưa sửa:**
+  - 8 chỗ giả định các số chạy theo thứ tự số: lịch ra số, Bảng tin, ảnh chia sẻ, `/so`, nhắc mở bán, mẫu hé lộ ở Các số,
+    "Nhân bản" mã giảm giá, Tổng quan. Không trùng lịch nhưng đảo thứ tự (Số 07 chạy trước Số 06) thì các chỗ này báo sai.
+  - `catalog.currentDropNo` là số lớn nhất có mẫu, không phải số đang bán. Thêm một mẫu cho số sắp mở là Tổng quan ("Còn trong
+    Số NN", "Bán chạy trong Số NN") và nhãn "mới" của khách nhảy sang số đó. Lỗi này xảy ra cả khi dùng bình thường.

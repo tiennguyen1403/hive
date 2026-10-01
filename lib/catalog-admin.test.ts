@@ -42,6 +42,7 @@ import {
   readWindow,
   sameOrder,
   sameTerms,
+  scheduleClash,
   slugFor,
   slugTaken,
   termsOf,
@@ -502,6 +503,47 @@ describe("the window a new issue is offered", () => {
     expect(overlappingDrop(catalog.drops, { opensAt: "2026-10-01T20:00:00+07:00", closesAt: "2026-10-15T20:00:00+07:00" })?.no).toBe(6);
     expect(overlappingDrop(catalog.drops, { opensAt: six.closesAt, closesAt: "2026-10-30T20:00:00+07:00" })).toBeUndefined();
     expect(overlappingDrop(catalog.drops, { opensAt: "2026-09-12T20:00:00+07:00", closesAt: "2026-10-30T20:00:00+07:00" })?.no).toBe(5);
+  });
+});
+
+describe("scheduleClash · 'Sửa giờ' keeps one issue at a time (slice B14)", () => {
+  // The fixture: 04 runs 05/06 → 19/06, 05 runs 11/09 → 25/09, 06 runs 02/10 → 16/10, each at 20:00.
+  const four = catalog.dropByNo.get(4)!;
+  const five = catalog.dropByNo.get(5)!;
+  const six = catalog.dropByNo.get(6)!;
+  const at20 = (day: string) => `2026-${day}T20:00:00+07:00`;
+  const window = (opensAt: string, closesAt: string) => ({ opensAt, closesAt });
+
+  it("names the other issue a moved window runs into, the lowest when several", () => {
+    expect(scheduleClash(catalog.drops, six, window(at20("09-20"), at20("09-30")))?.no).toBe(5);
+    expect(scheduleClash(catalog.drops, six, window(at20("06-10"), at20("09-20")))?.no).toBe(4);
+    expect(scheduleClash(catalog.drops, four, window(four.opensAt, at20("09-12")))?.no).toBe(5);
+  });
+
+  it("never compares an issue with itself", () => {
+    expect(scheduleClash(catalog.drops, six, window(at20("10-03"), at20("10-17")))).toBeUndefined();
+  });
+
+  it("lets an issue open the instant another closes, and close the instant another opens — not a minute more", () => {
+    expect(scheduleClash(catalog.drops, six, window(five.closesAt, at20("10-09")))).toBeUndefined();
+    expect(scheduleClash(catalog.drops, six, window("2026-09-25T19:59:00+07:00", at20("10-09")))?.no).toBe(5);
+    expect(scheduleClash(catalog.drops, four, window(four.opensAt, five.opensAt))).toBeUndefined();
+    expect(scheduleClash(catalog.drops, four, window(four.opensAt, "2026-09-11T20:01:00+07:00"))?.no).toBe(5);
+  });
+
+  it("never refuses a window that only narrows, even over an overlap already there — and refuses widening one", () => {
+    // Số 06 opening inside Số 05, as the bug could leave it.
+    const inside = { ...six, opensAt: at20("09-20") };
+    const drops = catalog.drops.map((d) => (d.no === 6 ? inside : d));
+    expect(scheduleClash(drops, inside, window(at20("09-21"), at20("10-15")))).toBeUndefined();
+    expect(scheduleClash(drops, five, window(five.opensAt, at20("09-24")))).toBeUndefined();
+    // The same window moves nothing: a narrowing too.
+    expect(scheduleClash(drops, inside, window(inside.opensAt, inside.closesAt))).toBeUndefined();
+    // "Đóng sớm": the opening hour it has, closing now.
+    expect(scheduleClash(drops, five, window(five.opensAt, "2026-09-21T10:00:00+07:00"))).toBeUndefined();
+    // Wider on either side is a move like any other.
+    expect(scheduleClash(drops, inside, window(at20("09-19"), inside.closesAt))?.no).toBe(5);
+    expect(scheduleClash(drops, five, window(five.opensAt, at20("09-26")))?.no).toBe(6);
   });
 });
 

@@ -253,7 +253,7 @@ export const SLUG_TAKEN_MESSAGE = "Mã địa chỉ đã có mẫu khác dùng";
 /** A save that would change nothing — the brief's `NO_CHANGE`. */
 export const NO_CHANGE_MESSAGE = "Chưa có thay đổi nào để lưu.";
 
-/** A new issue whose window runs into another one's. */
+/** A new or moved issue whose window runs into another one's (slice B14: "Sửa giờ" too). */
 export function overlapMessage(no: number): string {
   return `Lịch chồng lên ${issueLabel(no)}`;
 }
@@ -470,6 +470,35 @@ export function overlappingDrop(
   return [...drops]
     .sort((a, b) => a.no - b.no)
     .find((d) => Date.parse(d.opensAt) < closes && Date.parse(d.closesAt) > opens);
+}
+
+/**
+ * "Sửa giờ" (slice B14): the first OTHER issue a moved window would share an
+ * instant with, or undefined. `overlappingDrop`'s rule, with two differences:
+ *
+ *   · the issue being moved is not compared with itself — its old days are
+ *     the ones it gives up;
+ *   · a window that only NARROWS — opening no earlier and closing no later
+ *     than `drop` does now — is never refused: it cannot make an overlap that
+ *     was not there already. "Đóng sớm" is such a move (the closing hour
+ *     brought to now), so it closes even on a calendar that already holds two
+ *     issues at once.
+ *
+ * `admin_schedule_drop` asks the same.
+ */
+export function scheduleClash(
+  drops: readonly Drop[],
+  drop: Drop,
+  window: Omit<Drop, "no">,
+): Drop | undefined {
+  const narrows =
+    Date.parse(window.opensAt) >= Date.parse(drop.opensAt) &&
+    Date.parse(window.closesAt) <= Date.parse(drop.closesAt);
+  if (narrows) return undefined;
+  return overlappingDrop(
+    drops.filter((d) => d.no !== drop.no),
+    window,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────── the teasers
