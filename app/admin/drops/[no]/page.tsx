@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { AdminDropsScreen } from "@/components/admin/AdminDropsScreen";
+import { ArcDropsScreen } from "@/components/admin-arc/ArcDropsScreen";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import { listAllOrders } from "@/lib/db/admin";
@@ -16,6 +16,9 @@ export const metadata = { title: "Chi tiết số" };
  * works too rather than 404-ing on a link somebody typed by hand. Anything
  * that is not a number at all is not an issue. `requireAdmin` first, as on
  * every admin page.
+ *
+ * Round v5 slice 4 draws it in the Arc frame (`ArcDropsScreen`, the tree
+ * `/admin/drops/` in `ARC_ADMIN_TREES`); the reads here are unchanged.
  */
 export default async function AdminDropDetailPage(props: PageProps<"/admin/drops/[no]">) {
   const { no } = await props.params;
@@ -25,5 +28,5 @@ export default async function AdminDropDetailPage(props: PageProps<"/admin/drops
   if (!Number.isInteger(parsed) || parsed <= 0) notFound();
 
   const orders = await listAllOrders();
-  return <AdminDropsScreen no={parsed} nowIso={toVnIso(demoNow())} orders={orders} />;
+  return <ArcDropsScreen no={parsed} nowIso={toVnIso(demoNow())} orders={orders} />;
 }

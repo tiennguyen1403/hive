@@ -24,6 +24,8 @@
 .item { position: relative; display: flex; align-items: center; min-height: 36px; border-radius: calc(var(--radius-control) - 8px); padding: 0 34px 0 11px; color: var(--foreground); font-size: var(--text-sm); cursor: default; outline: none; user-select: none; transition: background-color 80ms var(--ease-standard), color 80ms var(--ease-standard); }
 .item[data-highlighted] { background: var(--surface-muted); }
 .item[data-disabled] { opacity: .45; }
+/* HIVE patch (registry/PATCHES.md): an option's `note`, at the end of its row and before the tick (the item's right padding keeps the tick's room), in the secondary ink at the size Arc gives a row's meta (`filter-toolbar`'s `.itemMeta`). */
+.note { flex: none; margin-left: auto; padding-left: var(--space-3); color: var(--text-secondary); font-size: var(--text-xs); white-space: nowrap; }
 .indicator { position: absolute; right: 10px; display: inline-flex; align-items: center; color: var(--foreground); animation: indicator-in var(--duration-standard) var(--ease-enter) 40ms both; }
 .scrollButton { display: grid; height: 28px; place-items: center; color: var(--text-muted); }
 @keyframes select-in { from { opacity: 0; transform: translate(var(--menu-x), var(--menu-y)) scale(.97); } }

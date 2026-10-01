@@ -27,6 +27,13 @@
   padding: var(--space-8);
 }
 
+/* The toast stack's own layer (slice 4, `arc-toasts.ts`): an attribute for a
+   dialog to recognise, and no box of its own, so the stack is laid out as if
+   the wrapper were not there. */
+.toastLayer {
+  display: contents;
+}
+
 /* On paper (slice 1, the delivery slips): the page alone, as the v3 frame
    printed it (`app/styles/admin.css`, `@media print`). No sidebar and no
    toast, no gutter, no desktop floor, a white sheet. The frame drops its grid

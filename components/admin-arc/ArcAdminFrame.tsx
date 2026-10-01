@@ -3,6 +3,7 @@
 import { ToastStack, ToastStackProvider } from "@/registry/components/toast-stack/toast-stack";
 import styles from "./ArcAdminFrame.module.css";
 import { ArcSidebar } from "./ArcSidebar";
+import { TOAST_LAYER } from "./arc-toasts";
 
 /**
  * The frame of a back-office screen that has moved to Arc (round v5): the
@@ -30,7 +31,12 @@ export function ArcAdminFrame({
       <ToastStackProvider>
         <ArcSidebar me={me} waiting={waiting} lastResetAt={lastResetAt} />
         <main className={styles.main}>{children}</main>
-        <ToastStack position="bottom-right" className={styles.toasts} />
+        {/* The toasts' own layer, so a dialog or a drawer can tell a press on a
+            toast from one outside it (`keepOpenForToasts`, arc-toasts.ts). It
+            draws no box: the stack keeps its fixed place in the corner. */}
+        <div {...{ [TOAST_LAYER]: "" }} className={styles.toastLayer}>
+          <ToastStack position="bottom-right" className={styles.toasts} />
+        </div>
       </ToastStackProvider>
     </div>
   );

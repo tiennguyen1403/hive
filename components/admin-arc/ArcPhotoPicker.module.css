@@ -1,0 +1,84 @@
+/* The photo picker of the Arc back office (round v5 slice 4, `ArcPhotoPicker`):
+   a label, then the photos in a wrapping row, v3's 44×55 each. Arc tokens
+   only, on the 4px grid. */
+
+.field {
+  display: grid;
+  min-width: 0;
+}
+
+/* The label Arc's `Input` draws (`input.module.css`, `.label`), in the same
+   values, so "Ảnh" reads like "Tên mẫu" above it. */
+.label {
+  margin-bottom: var(--space-2);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: var(--leading-body);
+}
+
+.photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* One photo: 44×55, the shop's 4:5, with the 6px corner of the zone's small
+   photos (`.thumb`, the order page). */
+.photo {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 44px;
+  height: 55px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: calc(var(--radius-control) - var(--space-3));
+  background: var(--surface-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The edge, drawn over the photo so the photo never changes size: a hairline
+   at rest, so a pale photo still has an edge on the white dialog, and 2px of
+   ink once it is the chosen one. */
+.photo::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--border);
+  content: "";
+  pointer-events: none;
+  transition: box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.photo[aria-checked="true"]::after {
+  box-shadow: inset 0 0 0 2px var(--foreground);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .photo:hover:not([aria-checked="true"])::after {
+    box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+}
+
+/* The keyboard ring (QĐ-39), outside the edge; `--focus-ring` is transparent
+   while the pointer drives. */
+.photo:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo::after {
+    transition: none;
+  }
+}

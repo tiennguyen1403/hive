@@ -406,6 +406,10 @@ async (page) => {
     "/admin/customers/c-namle",
     "/admin/promotions?state=ENDED",
     "/admin/promotions?state=PAUSED",
+    // round v5 slice 4: the issues on Arc, a closed one, one not open, one that does not exist
+    "/admin/drops/04",
+    "/admin/drops/06",
+    "/admin/drops/99",
   ];
 
   const results = [];
@@ -558,7 +562,8 @@ async (page) => {
       await page.getByRole("button", { name: "Thao tác Số 05", exact: true }).click();
     }],
     ["/admin/drops#create", "admin-drops-create-sheet-1280", async () => {
-      await page.locator(".top").getByRole("button", { name: "Tạo số" }).click();
+      // round v5 slice 4: the Arc heading has no v3 `.top`; the page's own "Tạo số".
+      await page.getByRole("button", { name: "Tạo số" }).first().click();
     }],
     ["/admin/drops#edit", "admin-drops-edit-sheet-1280", async () => {
       await page.getByRole("button", { name: "Thao tác Số 06", exact: true }).click();
@@ -572,8 +577,31 @@ async (page) => {
     }],
     ["/admin/drops/05#teaser", "admin-drops-teaser-sheet-1280", async () => {
       await page.getByRole("button", { name: "Thêm mẫu hé lộ" }).click();
-      await page.waitForTimeout(350);
-      await page.getByRole("dialog").locator(".field3", { hasText: "Loại" }).first().locator("button.selbtn").click();
+      await page.waitForTimeout(700);
+      // round v5 slice 4: Arc's Select, found by its role and label, not v3's `.field3 button.selbtn`.
+      await page.getByRole("dialog").getByRole("combobox", { name: "Loại" }).click();
+    }],
+    // round v5 slice 4: the other states of the three Arc dialogs
+    ["/admin/drops#create-backwards", "admin-drops-create-backwards-1280", async () => {
+      await page.getByRole("button", { name: "Tạo số" }).first().click();
+      await page.waitForTimeout(700);
+      await page.getByRole("dialog").getByLabel("Đóng lúc 20:00 ngày").fill("01/10/2026");
+    }],
+    ["/admin/drops/05#close-detail", "admin-drops-close-detail-1280", async () => {
+      await page.locator("#detail").getByRole("button", { name: "Đóng sớm" }).click();
+    }],
+    ["/admin/drops/05#teaser-ready", "admin-drops-teaser-ready-1280", async () => {
+      await page.getByRole("button", { name: "Thêm mẫu hé lộ" }).click();
+      await page.waitForTimeout(700);
+      await page.getByRole("dialog").getByLabel("Tên mẫu").fill("SỎI");
+      await page.getByRole("dialog").getByRole("combobox", { name: "Loại" }).click();
+      await page.waitForTimeout(400);
+      await page.getByRole("option", { name: "Áo khoác dù", exact: true }).click();
+      await page.waitForTimeout(300);
+      await page.getByRole("dialog").getByRole("radio", { name: "Ảnh tro" }).click();
+    }],
+    ["/admin/drops/04#rowmenu", "admin-drops-04-row-menu-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác Số 04", exact: true }).click();
     }],
     ["/admin/promotions#rowmenu", "admin-promotions-row-menu-1280", async () => {
       await page.getByRole("button", { name: "Thao tác DOT05", exact: true }).click();

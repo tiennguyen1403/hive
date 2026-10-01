@@ -3042,3 +3042,35 @@ mã dùng `Drawer` 680px bên phải.
   Arc, làm tắt vòng focus bàn phím từ lát 0.
 - 1.751 test xanh; các trang v3 và phần khách không đổi.
 - Hai lần ghi DB lạ: một lần do script chọn nhầm, một lần người dùng bấm nhầm vào cửa sổ Chrome đang chạy thử. Dữ liệu đã đặt lại.
+
+**01/10, lát 3 commit `f6cb354`** (người dùng cho phép; chưa push). Lát 4 (Các số: bảng, chi tiết số, hộp tạo số / sửa giờ, hộp
+đóng sớm, hộp thêm mẫu hé lộ) đã giao agent theo `tasks/briefs/v5-lat-4.md`. Ba hộp đều ngắn nên dùng Arc `Dialog`.
+- **Sửa một ghi chú sai ở lát 3:** brief lát 3 và dòng trên ghi "v3 là tấm trượt bên phải". Thật ra ở máy tính, `AdminSheet`
+  của v3 là hộp giữa màn hình 520px, bản `wide` 680px (`app/styles/sheet.css`, từ 900px). Chỉ ở điện thoại nó mới trượt từ
+  dưới lên. `Drawer` cho form mã vẫn đúng luật chọn của Arc: form dài đặt cạnh trang thì dùng `drawer`
+  (`skill-components.md` của Arc). Người dùng muốn hộp giữa như v3 thì đổi sang `Dialog`.
+- **Thêm vào việc của lát 6:** gộp thanh 4px, đang có ở `ArcKpi`, Tổng quan, Mã giảm giá, và sắp có ở Các số.
+
+**01/10, lát 4 ĐẠT (phiên chính duyệt), chờ người dùng cho commit.** Các số chạy trên Arc: bảng các số, chi tiết số dưới bảng,
+ba hộp `Dialog` (tạo số / sửa giờ, đóng sớm, thêm mẫu hé lộ). Agent chạy hai lượt.
+- **Khác v3, theo brief:**
+  - hộp tạo số báo "Ngày đóng phải sau ngày mở." dưới ô Đóng thay cho nút ghi sai "Nhập hai ngày";
+  - chọn ảnh mẫu hé lộ là một nhóm radio, đi bằng phím mũi tên (`ArcPhotoPicker`, lát 5 dùng lại);
+  - "Đóng sớm" xuống cuối menu dòng, có vạch ngăn.
+- **Vá Arc:** `Select` nhận `note` cho từng dòng (họ của loại, như v3).
+- **Lượt sửa 1, phiên chính yêu cầu:**
+  - Năm thẻ số: ở 1280 một mục "S04 – SÓNG · hết 16/06" rộng khoảng 160px mà thẻ chỉ có 137px chữ. Thẻ "Hết hàng" của Số
+    04 vì vậy dài 11 dòng. Nay hàng thẻ chọn bố cục theo bề rộng của nó (container query): từ 1099px là 5 thẻ một hàng, hẹp
+    hơn là hai hàng (3 thẻ số rồi 2 thẻ danh sách). Một mục không bao giờ vỡ đôi.
+  - Đổi số bằng link hay "Mở chi tiết" làm focus rơi về `<body>`, vì segment `[no]` dựng lại (v3 cũng vậy). Nay focus về
+    đúng link hay nút menu của hàng đó.
+  - Bấm nút đóng toast làm đóng luôn hộp hay drawer đang mở, mất chữ đã gõ (có từ lát 0). Nay cả sáu hộp và drawer của vùng
+    Arc bỏ qua cú bấm trong vùng toast (`keepOpenForToasts`, không vá Arc); test canh các hộp sau này.
+- **Kiểm:** 1.815 test xanh (phiên chính tự chạy lại), typecheck và build sạch. Phiên chính đo lại focus khi đổi số và toast
+  trên hộp: đạt. Trang Mẫu và phần khách không đổi. `tools/layout-sweep.js` có thêm lượt cho Các số.
+- **Còn mở:**
+  - `scheduleDrop` / `admin_schedule_drop()` nhận lịch trùng với số khác. Chỉ "Tạo số" kiểm trùng. Lỗi server có từ B3c,
+    chờ người dùng quyết.
+  - `ArcResetDialog` (lát 0) không trả focus về nút "Đặt lại dữ liệu mẫu". Dự kiến sửa ở lát 5.
+  - Lát 6: `AdminDropsScreen`, `DropFormModal`, `TeaserFormSheet` chỉ còn gọi lẫn nhau; `ISSUE_STATE` lặp ở Tổng quan và
+    Các số.

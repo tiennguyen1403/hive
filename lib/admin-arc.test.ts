@@ -6,10 +6,11 @@ import { ARC_ADMIN_PATHS, ARC_ADMIN_TREES, isArcAdminPath } from "./admin-arc";
  * area per slice; every other admin route keeps the v3 frame untouched. Since
  * slice 1 the whole of "Đơn hàng" is Arc: the book, each order, the slips.
  * Since slice 2 the overview and the activity log are too; since slice 3 the
- * customers, each customer's page, and the discount codes.
+ * customers, each customer's page, and the discount codes; since slice 4 the
+ * issues and each issue's page.
  */
 describe("isArcAdminPath", () => {
-  it("lists the overview, the orders, the slips, the log, the customers, the codes, and two trees", () => {
+  it("lists the overview, the orders, the slips, the log, the customers, the codes, the issues, and three trees", () => {
     expect(ARC_ADMIN_PATHS).toEqual([
       "/admin",
       "/admin/orders",
@@ -17,8 +18,9 @@ describe("isArcAdminPath", () => {
       "/admin/log",
       "/admin/customers",
       "/admin/promotions",
+      "/admin/drops",
     ]);
-    expect(ARC_ADMIN_TREES).toEqual(["/admin/orders/", "/admin/customers/"]);
+    expect(ARC_ADMIN_TREES).toEqual(["/admin/orders/", "/admin/customers/", "/admin/drops/"]);
   });
 
   it("matches the overview, with or without a trailing slash", () => {
@@ -61,6 +63,14 @@ describe("isArcAdminPath", () => {
     expect(isArcAdminPath("/admin/promotions/")).toBe(true);
   });
 
+  it("matches the issues and each issue's page, padded or not (slice 4)", () => {
+    expect(isArcAdminPath("/admin/drops")).toBe(true);
+    expect(isArcAdminPath("/admin/drops/")).toBe(true);
+    expect(isArcAdminPath("/admin/drops/05")).toBe(true);
+    expect(isArcAdminPath("/admin/drops/5")).toBe(true);
+    expect(isArcAdminPath("/admin/drops/05/")).toBe(true);
+  });
+
   it("does not match a path that only begins like one", () => {
     expect(isArcAdminPath("/adminx")).toBe(false);
     expect(isArcAdminPath("/admin/ordersx")).toBe(false);
@@ -70,14 +80,15 @@ describe("isArcAdminPath", () => {
     expect(isArcAdminPath("/admin/customersx")).toBe(false);
     expect(isArcAdminPath("/admin/promotionsx")).toBe(false);
     expect(isArcAdminPath("/admin/promotions/DOT05")).toBe(false);
+    expect(isArcAdminPath("/admin/dropsx")).toBe(false);
+    expect(isArcAdminPath("/admin/dropsx/05")).toBe(false);
   });
 
-  it("does not match the screens still on v3: the styles and the issues", () => {
+  it("does not match the screens still on v3: the styles", () => {
     expect(isArcAdminPath("/admin/products")).toBe(false);
-    expect(isArcAdminPath("/admin/products/new")).toBe(false);
+    expect(isArcAdminPath("/admin/products/")).toBe(false);
     expect(isArcAdminPath("/admin/products/p-khoi")).toBe(false);
-    expect(isArcAdminPath("/admin/drops")).toBe(false);
-    expect(isArcAdminPath("/admin/drops/05")).toBe(false);
+    expect(isArcAdminPath("/admin/products/new")).toBe(false);
   });
 
   it("does not match the shop", () => {

@@ -1,0 +1,23 @@
+/* The issue form in its Arc `Dialog` (round v5 slice 4). The fields, the
+   error line and the row of actions are the zone's dialog body
+   (`ArcDialog.module.css`); this file adds what the issue form alone has.
+   Arc tokens only, on the 4px grid. */
+
+/* "Mở lúc 20:00 ngày" and "Đóng lúc 20:00 ngày", side by side as in v3. The
+   row aligns to the top, so the line under "Đóng" opens below its own box
+   without moving the other. */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+}
+
+/* What the issue will be, in one sentence, before it is saved (v3's words). */
+.preview {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
+}

@@ -78,6 +78,13 @@ Không sửa: `empty-state` (không có chuỗi tiếng Anh; icon mặc định 
 - Vá: Việt hoá tên nút đóng (mục 2) và vòng focus bàn phím của nút đó (mục 3). Màn dự án dựa vào một biến nội bộ của
   Drawer để đặt bề rộng (mục 4). Cùng lát, phiên chính yêu cầu vá vòng focus của `select` (mục 3), cài từ lát 0.
 
+## Lần sửa 01/10/2026 (đợt v5, lát 4)
+
+- **Không cài item mới.** Màn Các số dùng các item đã có: `dialog`, `input`, `select`, `badge`, `dropdown-menu`,
+  `sortable-data-table`, `button`. `package.json`, `package-lock.json` và `registry/foundation.css` không đổi.
+- **Vá `select`** (mục 3): option nhận trường tuỳ chọn `note`, chữ phụ ở cuối dòng trong danh sách, như `Select` của v3 in họ
+  ("Áo khoác") bên phải loại ("Áo khoác dù") ở hộp "Thêm mẫu hé lộ" (brief lát 4, §3.1). Không có chuỗi tiếng Anh mới.
+
 ## 1. `registry/foundation.css`: khoanh vùng
 
 Arc đặt mọi luật ở `:root`, nên tệp là toàn cục: tiêu đề v3 mất Unbounded vì trùng tên `--font-display`, luật cuối xoá vòng
@@ -167,6 +174,7 @@ Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không p
 | `search-field/search-field.module.css` (lát 2) | Thêm `.shell button { cursor: pointer; }` sau luật gốc của nút xoá | Nút xoá nội dung tìm giữ mũi tên của trình duyệt, trong khi mọi nút Arc khác có bàn tay; máy dò `tools/layout-sweep.js` coi mũi tên trên một nút là lỗi (`arrowCursor`, đo 30/09 ở `/admin/log?q=zzz`). Nút này cũng có trên `/admin/orders` khi đang tìm |
 | `input/input.tsx` (lát 1) | Prop `hideLabel` (mặc định `false`): nhãn mang class `.srOnly` có sẵn trong `input.module.css` thay cho `.label`, nên ẩn cho mắt mà máy đọc vẫn đọc. Không đổi CSS | Ô "Thêm ghi chú…" của panel "Ghi chú nội bộ" trên trang chi tiết đơn: tiêu đề panel đã gọi tên ô, như ô tìm trên thanh công cụ (`skill-accessibility.md`). Cùng cách `SearchField` `hideLabel` |
 | `select/select.module.css` (lát 3, phiên chính yêu cầu 01/10) | `.trigger:focus-visible`: `outline: 3px solid var(--accent-subtle); outline-offset: 0` thành `outline: 2px solid var(--focus-ring); outline-offset: 2px`. Giữ `border-color: var(--accent)` | QĐ-39. Quầng gốc là `--accent-subtle` (accent 10%), gần như không thấy trên nền trắng: đi bằng Tab vào "Loại" hay "Hình thức giao" chỉ còn viền 1px đổi màu, trong khi mọi điều khiển Arc khác có vòng 2–3px `--focus-ring`. Bấm chuột thì `--focus-ring` trong suốt như mọi vòng khác; viền accent vẫn đổi như Arc gốc |
+| `select/select.tsx` + `.module.css` (lát 4, brief yêu cầu) | Kiểu `options` thêm `note?: string`. Mỗi dòng in `note` trong một `<span className={styles.note}>` sau `ItemText` và trước `ItemIndicator`, chỉ khi có `note`: không có thì dòng y như Arc gốc. CSS `.note`: `margin-left: auto` (dồn về cuối dòng; phần đệm phải 34px của `.item` vẫn giữ chỗ cho dấu chọn), `padding-left: var(--space-3)`, `color: var(--text-secondary)`, `font-size: var(--text-xs)` (cỡ Arc dùng cho chữ phụ cuối dòng, `.itemMeta` của `filter-toolbar`), `white-space: nowrap` | Hộp "Thêm mẫu hé lộ" (lát 4): v3 in họ của từng loại bên phải dòng ("Áo khoác dù" · "Áo khoác"). Nằm ngoài `ItemText` nên ô chọn và giá trị Radix đọc cho máy đọc màn hình chỉ có nhãn; tên của dòng (`aria-labelledby` trỏ vào `ItemText`) cũng chỉ là nhãn. Không mất gì: họ luôn là một phần của tên loại (`FAMILY_LABELS`, `data/types.ts`) |
 | `drawer/drawer.module.css` (lát 3) | Thêm `.close:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }`, đúng luật của nút đóng trong `dialog.module.css` | QĐ-39: giữ vòng focus bàn phím. Nút đóng của Drawer bản gốc không có luật `:focus-visible` nào (Arc dựa vào luật `outline: none !important` toàn cục mà dự án đã xoá, mục 1), nên đi bằng Tab thì Chrome vẽ vòng mặc định của nó, khác vòng 2–3px `--focus-ring` của mọi điều khiển Arc khác. Radix đưa focus vào nút này đầu tiên khi Drawer mở, nên vòng đó là thứ đầu tiên người dùng bàn phím thấy. Bấm chuột thì `--focus-ring` trong suốt như mọi vòng khác |
 
 Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, `iconOnly`, `hideLabel` của
@@ -174,6 +182,12 @@ Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`,
 `npm run typecheck` đỏ ở `components/admin-arc/ArcOrdersScreen.tsx`, `components/admin-arc/ArcOrderScreen.tsx` và
 `components/admin-arc/ArcRevenueChart.tsx`, nơi dùng chúng. Chỗ vá CSS của `search-field`, prop `formatTick`, vòng focus
 của nút đóng `drawer` và của `select` (lát 3) còn có test riêng trong `components/admin-arc/arc-registry.test.ts`.
+
+Trường `note` của option `Select` (lát 4) thì `npm run typecheck` **không** bắt được khi mất: `ArcTeaserDialog.tsx` đưa vào
+một mảng lấy từ `kindOptions()` (`lib/teaser-form.ts`), không phải object literal, nên TypeScript không báo thuộc tính thừa;
+bản Arc gốc chỉ lặng lẽ bỏ chữ phụ. Test "lets a select option carry a note…" trong `arc-registry.test.ts` canh chỗ vá này:
+kiểu có `note`, `note` nằm sau `ItemText` và trước `ItemIndicator`, và luật `.note` có `margin-left: auto` cùng
+`--text-secondary`.
 
 ## 4. Mã dự án dựa vào tên class nội bộ của Arc
 

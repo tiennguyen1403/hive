@@ -13,6 +13,21 @@
   background: var(--surface);
 }
 
+/* `aligned` (slice 4): three rows of the parent's grid as a subgrid, so the
+   label, the figure and the line start at one height across the row. The
+   parent sets the columns and no row gap; the card keeps none of its own. */
+.kpi[data-aligned] {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+}
+
+/* The line and its bar, one block (`ArcKpi.tsx`). */
+.foot {
+  min-width: 0;
+}
+
 .label,
 .context {
   margin: 0;

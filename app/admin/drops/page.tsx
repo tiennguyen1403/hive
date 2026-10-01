@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { AdminDropsScreen } from "@/components/admin/AdminDropsScreen";
+import { ArcDropsScreen } from "@/components/admin-arc/ArcDropsScreen";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import { listAllOrders } from "@/lib/db/admin";
@@ -17,10 +17,13 @@ export const metadata = { title: "Các số" };
  *
  * Dynamic: an issue's state is the clock's answer, not a stored flag, so a
  * page built once would keep calling an open issue open long after it shut.
+ *
+ * Round v5 slice 4 draws it in the Arc frame (`ArcDropsScreen`, its three
+ * forms Arc dialogs); the reads here are unchanged.
  */
 export default async function AdminDropsPage() {
   await requireAdmin("/admin/drops");
   await connection();
   const orders = await listAllOrders();
-  return <AdminDropsScreen no={null} nowIso={toVnIso(demoNow())} orders={orders} />;
+  return <ArcDropsScreen no={null} nowIso={toVnIso(demoNow())} orders={orders} />;
 }

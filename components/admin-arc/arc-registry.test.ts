@@ -189,6 +189,28 @@ describe("registry/components (patches a re-install would drop, slices 2 and 3)"
     // Arc shipped a 10% halo, `--accent-subtle`, too faint to find the field by.
     expect(body).not.toContain("--accent-subtle");
   });
+
+  it("lets a select option carry a note at its row's end, outside the item text (slice 4)", () => {
+    const source = readFileSync(join(COMPONENTS, "select", "select.tsx"), "utf8");
+    // The option type takes an optional note.
+    expect(source).toMatch(/options:\s*\{[^}]*\bnote\?:\s*string[^}]*\}\[\]/);
+    // Drawn after the item text and before the tick, and only when there is one: without a
+    // note the row is Arc's own. Outside ItemText, so the trigger and the value Radix reads
+    // to assistive tech carry the label alone.
+    const item = source.slice(source.indexOf("<SelectPrimitive.Item "), source.indexOf("</SelectPrimitive.Item>"));
+    const text = item.indexOf("</SelectPrimitive.ItemText>");
+    const note = item.indexOf("{option.note ? <span className={styles.note}>{option.note}</span> : null}");
+    const tick = item.indexOf("<SelectPrimitive.ItemIndicator");
+    expect(text).toBeGreaterThan(-1);
+    expect(note).toBeGreaterThan(text);
+    expect(tick).toBeGreaterThan(note);
+    // The note's look: the row's end, the secondary ink.
+    const css = readFileSync(join(COMPONENTS, "select", "select.module.css"), "utf8");
+    const rule = rules(css).find((r) => r.selector === ".note");
+    expect(rule).toBeDefined();
+    expect(rule!.body).toMatch(/margin-left\s*:\s*auto/);
+    expect(rule!.body).toMatch(/color\s*:\s*var\(--text-secondary\)/);
+  });
 });
 
 describe("the app's pointer switch, beside Arc's buttons (slice 3)", () => {

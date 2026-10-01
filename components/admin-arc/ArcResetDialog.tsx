@@ -8,6 +8,7 @@ import { LEX } from "@/lib/lexicon";
 import { Button } from "@/registry/components/button/button";
 import { Dialog, DialogContent } from "@/registry/components/dialog/dialog";
 import styles from "./ArcDialog.module.css";
+import { keepOpenForToasts } from "./arc-toasts";
 import { useArcToast } from "./useArcToast";
 
 /**
@@ -56,6 +57,7 @@ export function ArcResetDialog({
       }}
     >
       <DialogContent
+        onInteractOutside={keepOpenForToasts}
         title="Đặt lại dữ liệu mẫu?"
         description={`Đơn hàng quay về các đơn mẫu — đơn đặt thêm, kể cả của tài khoản đăng ký thật, sẽ mất. Mẫu, tồn kho, các ${LEX.tl}, mẫu hé lộ, mã giảm giá, các tài khoản mẫu và sổ địa chỉ của họ về như ban đầu; nhật ký bắt đầu lại. Ngày giờ mẫu neo vào 18:50 gần nhất.`}
       >

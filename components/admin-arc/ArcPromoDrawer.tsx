@@ -12,6 +12,7 @@ import { Drawer, DrawerContent } from "@/registry/components/drawer/drawer";
 import { Input } from "@/registry/components/input/input";
 import { Select } from "@/registry/components/select/select";
 import styles from "./ArcPromoDrawer.module.css";
+import { keepOpenForToasts } from "./arc-toasts";
 
 /** The three shapes a code can take, named the way the form names them (v3). */
 const KIND_OPTIONS: Array<{ value: PromoKind; label: string }> = [
@@ -93,6 +94,7 @@ export function ArcPromoDrawer({
       }}
     >
       <DrawerContent
+        onInteractOutside={keepOpenForToasts}
         className={styles.drawer}
         title={promo ? `Sửa mã ${promo.code}` : "Tạo mã"}
         // Opening the sentence on a new code, the verb takes the capital

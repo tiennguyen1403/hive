@@ -9,9 +9,10 @@
  *
  * One area per slice. Slice 0 moved the order book; slice 1 moved the rest of
  * "Đơn hàng": an order's own page and the delivery slips; slice 2 moved the
- * overview and the activity log; slice 3 moves the customers, each customer's
- * page, and the discount codes. `/admin` is listed as a path, not as a tree:
- * it matches the overview alone, never the screens below it.
+ * overview and the activity log; slice 3 moved the customers, each customer's
+ * page, and the discount codes; slice 4 moves the issues, the table and each
+ * issue under it. `/admin` is listed as a path, not as a tree: it matches the
+ * overview alone, never the screens below it.
  */
 export const ARC_ADMIN_PATHS: readonly string[] = [
   "/admin",
@@ -20,16 +21,17 @@ export const ARC_ADMIN_PATHS: readonly string[] = [
   "/admin/log",
   "/admin/customers",
   "/admin/promotions",
+  "/admin/drops",
 ];
 
 /**
  * Routes whose every page below them is an Arc screen: `/admin/orders/DH-2430`
  * and any other order code, `/admin/customers/c-minhanh` and any other
- * customer. A tree matches only when something follows its slash, as
- * `FEED_TREES` does in `lib/wait.ts`; the bare path belongs to
- * `ARC_ADMIN_PATHS`.
+ * customer, `/admin/drops/05` (or `/admin/drops/5`) and any other issue. A
+ * tree matches only when something follows its slash, as `FEED_TREES` does in
+ * `lib/wait.ts`; the bare path belongs to `ARC_ADMIN_PATHS`.
  */
-export const ARC_ADMIN_TREES: readonly string[] = ["/admin/orders/", "/admin/customers/"];
+export const ARC_ADMIN_TREES: readonly string[] = ["/admin/orders/", "/admin/customers/", "/admin/drops/"];
 
 /** True when the Arc frame owns this path. A trailing slash is ignored. */
 export function isArcAdminPath(pathname: string): boolean {

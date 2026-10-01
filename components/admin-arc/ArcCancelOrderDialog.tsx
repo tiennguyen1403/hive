@@ -11,6 +11,7 @@ import { Dialog, DialogContent } from "@/registry/components/dialog/dialog";
 import { Input } from "@/registry/components/input/input";
 import { Select } from "@/registry/components/select/select";
 import styles from "./ArcDialog.module.css";
+import { keepOpenForToasts } from "./arc-toasts";
 
 /** The four reasons, fixed (user, 22/09), from the list the Server Action checks against. */
 const REASON_OPTIONS = CANCEL_REASONS.map((r) => ({ value: r, label: r }));
@@ -67,6 +68,7 @@ export function ArcCancelOrderDialog({
       }}
     >
       <DialogContent
+        onInteractOutside={keepOpenForToasts}
         title={`Huỷ đơn ${shown?.code ?? ""}?`}
         description={`${
           paid

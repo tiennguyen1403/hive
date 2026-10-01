@@ -1,0 +1,190 @@
+/* The issues in the Arc frame (round v5 slice 4). The heading strip is
+   `ArcPage.module.css`; the table's cells, its number link and its foot are
+   the order book's (`ArcOrdersScreen.module.css`, slice 0); the panels and
+   the small photos are the order page's (`ArcOrderScreen.module.css`, slice
+   1); the figures are `ArcKpi` and the sold bar is the overview's
+   (`ArcOverviewScreen.module.css`, slice 2). This file places the detail and
+   draws what the issues alone have. Arc tokens only, on the 4px grid: 24px
+   between regions (the page's gap), 16px inside the detail. */
+
+/* ── the table ─────────────────────────────────────────────────────────── */
+/* The issue open below wears the tint Arc's table gives a selected row
+   (`tr[data-selected]` in `sortable-data-table.module.css`): 8% of the
+   accent, 11% under the pointer. The attribute comes from `rowAttributes`. */
+.issues tbody tr[data-open] td {
+  --cell-fill: color-mix(in oklch, var(--accent) 8%, var(--cell-base));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .issues tbody tr[data-open]:hover td {
+    --cell-fill: color-mix(in oklch, var(--accent) 11%, var(--cell-base));
+  }
+}
+
+/* The row's menu, wrapped only so a dialog opened from it can hand focus back
+   to its trigger, as on the codes (slice 3). The wrapper draws nothing. */
+.menu {
+  display: contents;
+}
+
+/* ── the issue under the table ─────────────────────────────────────────── */
+.detail {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.detail > * {
+  min-width: 0;
+}
+
+/* "Số 05" and its state on one line, the actions at the right. */
+.detailHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.detailHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  min-width: 0;
+}
+
+.detailTitle {
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+}
+
+.detailState {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The five figures (`ArcKpi`). Each card is `aligned`: it spans three rows of
+   the grid as a subgrid, so in one row of cards every figure and every line
+   under it start at one height, whatever a label takes.
+
+   The row picks its layout from its own width, not the viewport's (a
+   container query). Five across while each card keeps about 165px of text:
+   room for the widest entry a list figure holds, "S04 – SÓNG · hết 16/06 ·",
+   157px at 14px, measured 01/10. Narrower than that, two rows: the three
+   figures a third each, then the two lists half each, 16px apart like the
+   cards; each list then holds its entries whole. */
+.kpis {
+  container: issue-kpis / inline-size;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0 var(--space-4);
+}
+
+/* 1099px = 5 cards × (165px of text + 2 × 20px of padding + 2 × 1px of
+   border) + 4 gaps × 16px. Six columns carry both rows (a third is two, a
+   half is three); the 16px between the rows is a track of its own, because a
+   row gap would also open between a card's own subgrid rows. The attribute is
+   `ArcKpi`'s, and it lets these placements outrank the card's own
+   `grid-row: span 3`. */
+@container issue-kpis (width < 1099px) {
+  .kpiGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-rows: repeat(3, auto) var(--space-4) repeat(3, auto);
+  }
+
+  .kpiGrid > [data-aligned]:nth-child(-n + 3) {
+    grid-row: 1 / span 3;
+    grid-column: span 2;
+  }
+
+  .kpiGrid > [data-aligned]:nth-child(n + 4) {
+    grid-row: 5 / span 3;
+    grid-column: span 3;
+  }
+}
+
+/* A panel with nothing to show says so in one quiet line (v3's words). */
+.none {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+/* ── the styles ────────────────────────────────────────────────────────── */
+/* The style's name is the row's key: 500, on one line. */
+.name {
+  color: var(--foreground);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The bar takes what the count leaves; the count is a box of one width on
+   every row, flush right, so the bars start and end at the same x down the
+   column (the codes' "Lượt", slice 3). */
+.sold {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 180px;
+}
+
+.soldBar {
+  flex: 1;
+  min-width: 0;
+}
+
+.soldCount {
+  min-width: 6.5em;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── the next issue's teasers ──────────────────────────────────────────── */
+.teasers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.teaser {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.teaserText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.teaserName {
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: var(--leading-body);
+  white-space: nowrap;
+}
+
+.teaserKind {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
