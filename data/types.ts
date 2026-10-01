@@ -19,6 +19,8 @@
  * those words in English, in `en` (`ProductEn`, `TeaserEn`).
  */
 
+import { pick, pickAll, type Locale, type Pair } from "@/lib/i18n";
+
 // ─────────────────────────────────────────────────────────────── branded ids
 // A bare `string` id lets any id go anywhere. The brand is erased at runtime
 // and costs nothing; it exists so the compiler rejects the mix-up.
@@ -52,7 +54,10 @@ export const COLOR_KEYS = [
 ] as const;
 export type ColorKey = (typeof COLOR_KEYS)[number];
 
-/** A fabric colour. `label` is shown to the shopper, so it stays Vietnamese. */
+/**
+ * A fabric colour. `label` is shown to the shopper in Vietnamese; its English
+ * is `colorLabel(key, "en")` (`data/colors.ts`, round v6 slice E1).
+ */
 export interface Color {
   key: ColorKey;
   label: string;
@@ -71,16 +76,28 @@ export interface Color {
 export const FAMILIES = ["TEE", "HOODIE", "JACKET", "VEST", "SHIRT", "PANTS"] as const;
 export type Family = (typeof FAMILIES)[number];
 
-/** Shown as-is. Each label is also a substring of every `kind` in its family,
- *  which is what lets a suggestion chip search for it and find something. */
-export const FAMILY_LABELS: Record<Family, string> = {
-  TEE: "Áo thun",
-  HOODIE: "Áo hoodie",
-  JACKET: "Áo khoác",
-  VEST: "Áo gile",
-  SHIRT: "Áo sơ mi",
-  PANTS: "Quần",
+/**
+ * Shown as-is. Each Vietnamese label is also a substring of every `kind` in
+ * its family, which is what lets a suggestion chip search for it and find
+ * something.
+ *
+ * In English since round v6 slice E1 (the user's glossary: Tees, Hoodies,
+ * Jackets, Gilets, Shirts, Bottoms), as `{ vi, en }` pairs; `FAMILY_LABELS`
+ * stays the Vietnamese side. The substring rule does NOT hold in English —
+ * "Bottoms" is in neither "Chinos" nor "Fleece shorts" — so the English search
+ * reads the family itself, through the label keyed by `family`
+ * (`lib/feed-search.ts`), never by matching a kind.
+ */
+export const FAMILY_LABELS_TEXT: Readonly<Record<Family, Pair>> = {
+  TEE: { vi: "Áo thun", en: "Tees" },
+  HOODIE: { vi: "Áo hoodie", en: "Hoodies" },
+  JACKET: { vi: "Áo khoác", en: "Jackets" },
+  VEST: { vi: "Áo gile", en: "Gilets" },
+  SHIRT: { vi: "Áo sơ mi", en: "Shirts" },
+  PANTS: { vi: "Quần", en: "Bottoms" },
 };
+
+export const FAMILY_LABELS: Record<Family, string> = pickAll(FAMILY_LABELS_TEXT, "vi");
 
 /**
  * The same six, for a row where they stand side by side — the nav bar and
@@ -89,16 +106,28 @@ export const FAMILY_LABELS: Record<Family, string> = {
  * "Áo hoodie · Áo khoác · Áo sơ mi" repeats "Áo" three times across one bar
  * and the repetition is the only thing the eye picks up. Shown as-is, and
  * kept beside `FAMILY_LABELS` so the two cannot drift into naming different
- * things.
+ * things. English has no "Áo" to drop: the short names are the long ones.
  */
-export const FAMILY_SHORT_LABELS: Record<Family, string> = {
-  TEE: "Áo thun",
-  HOODIE: "Hoodie",
-  JACKET: "Khoác",
-  VEST: "Gile",
-  SHIRT: "Sơ mi",
-  PANTS: "Quần",
+export const FAMILY_SHORT_LABELS_TEXT: Readonly<Record<Family, Pair>> = {
+  TEE: { vi: "Áo thun", en: "Tees" },
+  HOODIE: { vi: "Hoodie", en: "Hoodies" },
+  JACKET: { vi: "Khoác", en: "Jackets" },
+  VEST: { vi: "Gile", en: "Gilets" },
+  SHIRT: { vi: "Sơ mi", en: "Shirts" },
+  PANTS: { vi: "Quần", en: "Bottoms" },
 };
+
+export const FAMILY_SHORT_LABELS: Record<Family, string> = pickAll(FAMILY_SHORT_LABELS_TEXT, "vi");
+
+/** A family's name in one language: "Áo hoodie", or "Hoodies". */
+export function familyLabel(family: Family, locale: Locale = "vi"): string {
+  return pick(FAMILY_LABELS_TEXT[family], locale);
+}
+
+/** A family's short name in one language: "Hoodie", or "Hoodies". */
+export function familyShortLabel(family: Family, locale: Locale = "vi"): string {
+  return pick(FAMILY_SHORT_LABELS_TEXT[family], locale);
+}
 
 export type Fit = "OVERSIZE" | "REGULAR";
 

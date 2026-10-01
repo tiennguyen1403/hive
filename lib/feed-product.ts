@@ -1,14 +1,15 @@
 import type { ColorKey, Product, Size } from "@/data/types";
 import type { Catalog } from "./catalog";
-import { FIT_LABELS } from "./catalog-query";
+import { fitLabel } from "./catalog-query";
 import { dropState } from "./drop";
 import { firstColor, isGone, isLive, photoKeyOf, type PictureKind } from "./feed";
-import { footDelivery, homeMoment, lineIssue } from "./feed-home";
+import { footDelivery, footPayments, homeMoment, lineIssue } from "./feed-home";
+import { pick, picker, plural, type Locale } from "./i18n";
 import { isFixed, isIssueStyle, isLowStock, onHand, productsInDrop, soldOutSizes, soldUnits } from "./inventory";
-import { issueLabel } from "./lexicon";
+import { FIXED_WORD_TEXT, issueLabel } from "./lexicon";
 import { vnd } from "./money";
-import { PAYMENT_LABEL } from "./order-labels";
 import { lookbookUrl } from "./photos";
+import { productText } from "./product-text";
 import { COD_SURCHARGE_VND, RETURN_WINDOW_DAYS } from "./shipping";
 
 /**
@@ -75,17 +76,24 @@ export function overIssue(catalog: Catalog, p: Product, now: Date): { no: number
   return { no: p.dropNo, closed: !drop || dropState(drop, now) === "CLOSED" };
 }
 
-/** The disabled button's words — a fact, not an instruction (conflict #6 the user accepted); none while it sells. */
-export function buyLabel(s: BuyState): string | null {
+/**
+ * The disabled button's words — a fact, not an instruction (conflict #6 the
+ * user accepted); none while it sells. In English (round v6 slice E1) "Sold
+ * out", "Out of stock", "Drop 05 closed", "Drop 06 hasn't opened yet".
+ */
+export function buyLabel(s: BuyState, locale: Locale = "vi"): string | null {
+  const t = picker(locale);
   switch (s.kind) {
     case "open":
       return null;
     case "sold":
-      return "Đã hết";
+      return t({ vi: "Đã hết", en: "Sold out" });
     case "empty":
-      return "Tạm hết";
-    case "over":
-      return `${issueLabel(s.no)} ${s.closed ? "đã đóng" : "chưa mở"}`;
+      return t({ vi: "Tạm hết", en: "Out of stock" });
+    case "over": {
+      const no = issueLabel(s.no, locale);
+      return s.closed ? t({ vi: `${no} đã đóng`, en: `${no} closed` }) : t({ vi: `${no} chưa mở`, en: `${no} hasn't opened yet` });
+    }
   }
 }
 
@@ -128,16 +136,28 @@ export interface FactRow {
   value: string;
   /** A row that leads on: the whole row is the link. */
   href?: string;
+  /**
+   * `"vi"` on an English page for a value that is a Vietnamese name: the
+   * print's, which stays as the garment brief names it (round v6 slice E1).
+   */
+  lang?: "vi";
 }
 
-/** "Thông số": the material, the fit, and the print when the style has a named one. */
-export function specRows(p: Product): FactRow[] {
+/**
+ * "Thông số": the material, the fit, and the print when the style has a named
+ * one. In English (round v6 slice E1) "Material", "Fit", "Print": the material
+ * through `productText`, the fit by the glossary. The print's name is read off
+ * the Vietnamese lines, the only ones that name it as `In "…"`, and stays
+ * Vietnamese, as the style names do.
+ */
+export function specRows(p: Product, locale: Locale = "vi"): FactRow[] {
+  const t = picker(locale);
   const rows: FactRow[] = [
-    { label: "Chất liệu", value: p.material },
-    { label: "Form", value: FIT_LABELS[p.fit] },
+    { label: t({ vi: "Chất liệu", en: "Material" }), value: productText(p, locale).material },
+    { label: t({ vi: "Form", en: "Fit" }), value: fitLabel(p.fit, locale) },
   ];
   const print = printOf(p);
-  if (print) rows.push({ label: "Hình in", value: print });
+  if (print) rows.push({ label: t({ vi: "Hình in", en: "Print" }), value: print, ...(locale === "en" ? { lang: "vi" as const } : {}) });
   return rows;
 }
 
@@ -146,14 +166,25 @@ export function specRows(p: Product): FactRow[] {
  * delivery line (the footer's rows, `footDelivery`), the COD surcharge, the
  * return window — itself the link to Hỏi đáp's return group (`/faq#doi-tra`,
  * slice 4b), which is why this page's footer leaves its own "Đổi trả 7 ngày"
- * out — and the ways to pay.
+ * out — and the ways to pay, named as the footer names them ("Chuyển khoản,
+ * Thẻ, COD"; in English "Bank transfer, Card, COD", round v6 slice E1).
  */
-export function shipRows(): FactRow[] {
+export function shipRows(locale: Locale = "vi"): FactRow[] {
+  const t = picker(locale);
   return [
-    ...footDelivery(),
-    { label: "Phụ phí COD", value: vnd(COD_SURCHARGE_VND) },
-    { label: "Đổi trả", value: `${RETURN_WINDOW_DAYS} ngày`, href: "/faq#doi-tra" },
-    { label: "Thanh toán", value: [PAYMENT_LABEL.BANK_TRANSFER, PAYMENT_LABEL.CARD, PAYMENT_LABEL.COD].join(", ") },
+    ...footDelivery(locale),
+    { label: t({ vi: "Phụ phí COD", en: "COD surcharge" }), value: vnd(COD_SURCHARGE_VND, locale) },
+    {
+      label: t({ vi: "Đổi trả", en: "Returns" }),
+      value: t({ vi: `${RETURN_WINDOW_DAYS} ngày`, en: plural(RETURN_WINDOW_DAYS, "day", "days") }),
+      href: "/faq#doi-tra",
+    },
+    {
+      label: t({ vi: "Thanh toán", en: "Payment" }),
+      value: footPayments(locale)
+        .map((f) => f.label)
+        .join(", "),
+    },
   ];
 }
 
@@ -174,21 +205,27 @@ export interface StyleLine {
   others: Product[];
 }
 
-export function styleLine(catalog: Catalog, p: Product, now: Date): StyleLine {
+/** "Cùng Số 05"; in English "More from Drop 05" (round v6 slice E1). */
+const railTitleOf = (label: string, locale: Locale): string =>
+  pick({ vi: `Cùng ${label}`, en: `More from ${label}` }, locale);
+
+export function styleLine(catalog: Catalog, p: Product, now: Date, locale: Locale = "vi"): StyleLine {
   if (isFixed(p)) {
+    const label = pick(FIXED_WORD_TEXT, locale);
     return {
-      label: "Cố định",
+      label,
       href: "/products?line=fixed",
-      railTitle: "Cùng Cố định",
+      railTitle: railTitleOf(label, locale),
       others: catalog.products.filter((x) => isFixed(x) && x.id !== p.id),
     };
   }
   const no = p.dropNo!;
   const shown = lineIssue(homeMoment(catalog, now));
+  const label = issueLabel(no, locale);
   return {
-    label: issueLabel(no),
+    label,
     href: shown?.no === no ? `/products?line=${no}` : `/so/${no}`,
-    railTitle: `Cùng ${issueLabel(no)}`,
+    railTitle: railTitleOf(label, locale),
     others: productsInDrop(catalog, no).filter((x) => x.id !== p.id),
   };
 }

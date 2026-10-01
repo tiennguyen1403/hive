@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { clearSearches, forgetRecent, recordSearch, useRecentSearches } from "@/components/shop/recent-searches";
 import { searchPool, searchRail, searchStyles, suggestTerms } from "@/lib/feed-search";
+import { picker, plural } from "@/lib/i18n";
 import { backOrFollow } from "../back";
 import { Rail } from "../FeedBlocks";
 import { GridCard } from "../FeedCards";
@@ -30,13 +32,20 @@ const SETTLE_MS = 140;
  * so a reload or a shared link finds it again, and the server renders it
  * first. A search is remembered when it is sent or a chip is chosen — one
  * that found nothing is not (`rememberSearch`).
+ *
+ * In both languages since round v6 slice E1: an English page searches the
+ * styles' English words and Vietnamese names, finds a family by its English
+ * name ("Bottoms" is CHINOS and FLEECE SHORTS), and suggests in English
+ * (`lib/feed-search.ts`).
  */
 export function SearchScreen({ initial }: { initial: string }) {
   const catalog = useCatalog();
   const now = useNow();
+  const locale = useLocale();
+  const t = picker(locale);
   const pool = useMemo(() => searchPool(catalog, now), [catalog, now]);
-  const rail = useMemo(() => searchRail(catalog, now), [catalog, now]);
-  const terms = useMemo(() => suggestTerms(pool), [pool]);
+  const rail = useMemo(() => searchRail(catalog, now, locale), [catalog, now, locale]);
+  const terms = useMemo(() => suggestTerms(pool, locale), [pool, locale]);
   const { list: recents, ready } = useRecentSearches();
 
   const [value, setValue] = useState(initial);
@@ -45,7 +54,7 @@ export function SearchScreen({ initial }: { initial: string }) {
   const timer = useRef(0);
   const refocus = useRef(false);
 
-  const hits = useMemo(() => searchStyles(pool, query), [pool, query]);
+  const hits = useMemo(() => searchStyles(pool, query, locale), [pool, query, locale]);
 
   // The query in the address and the tab's title, as the results show it.
   function show(next: string) {
@@ -55,9 +64,11 @@ export function SearchScreen({ initial }: { initial: string }) {
     window.history.replaceState(null, "", url);
   }
 
+  // The tab's title, as `generateMetadata` (`app/search/page.tsx`) writes it: "hoodie · Tìm", in English "hoodie · Search".
   useEffect(() => {
-    document.title = query ? `${query} · Tìm · HIVE` : "Tìm · HIVE";
-  }, [query]);
+    const word = picker(locale)({ vi: "Tìm", en: "Search" });
+    document.title = query ? `${query} · ${word} · HIVE` : `${word} · HIVE`;
+  }, [query, locale]);
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
@@ -70,8 +81,8 @@ export function SearchScreen({ initial }: { initial: string }) {
   }, [recents]);
 
   function remember(term: string) {
-    const t = term.trim();
-    if (t) recordSearch(t, searchStyles(pool, t).length);
+    const typed = term.trim();
+    if (typed) recordSearch(typed, searchStyles(pool, typed, locale).length);
   }
 
   function onInput(next: string) {
@@ -119,9 +130,10 @@ export function SearchScreen({ initial }: { initial: string }) {
         {title}
       </h2>
       <div className="schips">
-        {terms.map((t) => (
-          <button key={t} className="schip" type="button" onClick={() => pick(t)}>
-            {t}
+        {/* Keyed by place: the suggestions change with the language. */}
+        {terms.map((term, i) => (
+          <button key={i} className="schip" type="button" onClick={() => pick(term)}>
+            {term}
           </button>
         ))}
       </div>
@@ -136,24 +148,24 @@ export function SearchScreen({ initial }: { initial: string }) {
           <section className="ssec" aria-labelledby="s-recent">
             <div className="ssec-head">
               <h2 className="ssec-title" id="s-recent">
-                Tìm gần đây
+                {t({ vi: "Tìm gần đây", en: "Recent searches" })}
               </h2>
               <button className="link" type="button" onClick={forgetAll}>
-                Xoá hết
+                {t({ vi: "Xoá hết", en: "Clear all" })}
               </button>
             </div>
             <div className="schips">
-              {recents.map((t) => (
-                <span className="rchip" key={t}>
-                  <button className="rchip-go" type="button" onClick={() => pick(t)}>
+              {recents.map((term) => (
+                <span className="rchip" key={term}>
+                  <button className="rchip-go" type="button" onClick={() => pick(term)}>
                     <FeedIcon name="clock-counter-clockwise" />
-                    <span>{t}</span>
+                    <span>{term}</span>
                   </button>
                   <button
                     className="rchip-x"
                     type="button"
-                    aria-label={`Xoá “${t}” khỏi tìm gần đây`}
-                    onClick={() => forget(t)}
+                    aria-label={t({ vi: `Xoá “${term}” khỏi tìm gần đây`, en: `Remove “${term}” from recent searches` })}
+                    onClick={() => forget(term)}
                   >
                     <FeedIcon name="x" />
                   </button>
@@ -162,9 +174,15 @@ export function SearchScreen({ initial }: { initial: string }) {
             </div>
           </section>
         )}
-        {suggestions("Gợi ý")}
+        {suggestions(t({ vi: "Gợi ý", en: "Suggestions" }))}
         {rail.items.length > 0 && (
-          <Rail id="s-rail" title="Cửa hàng" sub={rail.sub} more={{ href: rail.href, label: "Xem tất cả" }} items={rail.items} />
+          <Rail
+            id="s-rail"
+            title={t({ vi: "Cửa hàng", en: "Shop" })}
+            sub={rail.sub}
+            more={{ href: rail.href, label: t({ vi: "Xem tất cả", en: "View all" }) }}
+            items={rail.items}
+          />
         )}
       </>
     );
@@ -172,8 +190,20 @@ export function SearchScreen({ initial }: { initial: string }) {
     body = (
       <>
         <div className="sres-head">
+          {/* The Vietnamese as the JSX it always was, words and figures apart (`FeedCards.tsx` says why). */}
           <p className="count" aria-live="polite">
-            <b>{hits.length} mẫu</b> cho “{query}”
+            {t({
+              vi: (
+                <>
+                  <b>{hits.length} mẫu</b> cho “{query}”
+                </>
+              ),
+              en: (
+                <>
+                  <b>{plural(hits.length, "style", "styles")}</b> for “{query}”
+                </>
+              ),
+            })}
           </p>
         </div>
         <div className="shop-grid">
@@ -188,22 +218,24 @@ export function SearchScreen({ initial }: { initial: string }) {
       <>
         <div className="snone">
           <p className="snone-line" aria-live="polite">
-            Không có mẫu nào cho “{query}”
+            {t<React.ReactNode>({ vi: <>Không có mẫu nào cho “{query}”</>, en: `No styles for “${query}”` })}
           </p>
         </div>
-        {suggestions("Thử tìm")}
+        {suggestions(t({ vi: "Thử tìm", en: "Try searching" }))}
         <div className="snone-act">
           <Link className="btn btn-line" href="/products">
-            Xem Cửa hàng
+            {t({ vi: "Xem Cửa hàng", en: "Go to Shop" })}
           </Link>
         </div>
       </>
     );
   }
 
+  const fieldName = t({ vi: "Tìm mẫu, loại, chất liệu", en: "Search styles, types, fabrics" });
+
   return (
     <div className="srch">
-      <h1 className="sr-only">Tìm</h1>
+      <h1 className="sr-only">{t({ vi: "Tìm", en: "Search" })}</h1>
       <div className="sbar">
         {/* Without script the form still searches: a GET to this page with `q`, which the server renders. */}
         <form className="sform" role="search" action="/search" onSubmit={onSubmit}>
@@ -216,19 +248,19 @@ export function SearchScreen({ initial }: { initial: string }) {
             autoComplete="off"
             enterKeyHint="search"
             spellCheck={false}
-            placeholder="Tìm mẫu, loại, chất liệu"
-            aria-label="Tìm mẫu, loại, chất liệu"
+            placeholder={fieldName}
+            aria-label={fieldName}
             value={value}
             onChange={(e) => onInput(e.target.value)}
           />
           {value !== "" && (
-            <button className="sclear" type="button" aria-label="Xoá chữ" onClick={clear}>
+            <button className="sclear" type="button" aria-label={t({ vi: "Xoá chữ", en: "Clear" })} onClick={clear}>
               <FeedIcon name="x" />
             </button>
           )}
         </form>
         <Link className="scancel" href="/" onClick={backOrFollow}>
-          Huỷ
+          {t({ vi: "Huỷ", en: "Cancel" })}
         </Link>
       </div>
       <div className="sbody">{body}</div>

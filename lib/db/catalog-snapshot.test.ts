@@ -520,11 +520,11 @@ describe("the English of slice B15", () => {
   it("reads a style's English field by field, leaving out a field that is null", () => {
     const doc = snapshot();
     Object.assign(doc.products[0]!, { en: KHOI_EN });
-    Object.assign(doc.products[1]!, { en: { name: null, kind: "Funnel-neck hoodie", material: "Brushed fleece 380gsm", details: null } });
+    Object.assign(doc.products[1]!, { en: { name: null, kind: "Funnel-neck hoodie", material: "Fleece 380gsm", details: null } });
     const [khoi, bao] = parseCatalogSnapshot(doc).products;
     expect(khoi!.en).toEqual({ kind: KHOI_EN.kind, material: KHOI_EN.material, details: KHOI_EN.details });
     expect(Object.keys(khoi!.en!)).toEqual(["kind", "material", "details"]);
-    expect(bao!.en).toEqual({ kind: "Funnel-neck hoodie", material: "Brushed fleece 380gsm" });
+    expect(bao!.en).toEqual({ kind: "Funnel-neck hoodie", material: "Fleece 380gsm" });
     expect(Object.keys(bao!.en!)).toEqual(["kind", "material"]);
     // The Vietnamese is untouched.
     expect(khoi).toMatchObject({ name: "KHÓI", kind: "Áo thun oversize", material: "Cotton 250gsm" });

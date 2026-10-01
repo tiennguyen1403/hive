@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { FeedFrame } from "@/components/feed/FeedFrame";
 import { HomeCalendar } from "@/components/feed/home/HomeCalendar";
@@ -9,6 +10,18 @@ import { loadCatalog } from "@/lib/db/catalog";
 import { dropState } from "@/lib/drop";
 import { parseShopState, shopLines } from "@/lib/feed";
 import { homeMoment, lineIssue } from "@/lib/feed-home";
+import { pick, picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
+
+/**
+ * The home page's title is the layout's "HIVE"; its description is the
+ * site's, in the page's language since round v6 slice E1. The link card keeps
+ * the layout's Vietnamese one (QĐ-40).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  return { description: pick(SITE_DESCRIPTION_TEXT, await getLocale()) };
+}
 
 /**
  * The home page, round v4 "Feed" (slice 1a): the approved mock's
@@ -26,7 +39,8 @@ import { homeMoment, lineIssue } from "@/lib/feed-home";
  */
 export default async function HomePage(props: PageProps<"/">) {
   const sp = await props.searchParams;
-  const catalog = await loadCatalog();
+  const [catalog, locale] = await Promise.all([loadCatalog(), getLocale()]);
+  const t = picker(locale);
   const nowMs = demoNowMs();
   const now = new Date(nowMs);
 
@@ -56,11 +70,11 @@ export default async function HomePage(props: PageProps<"/">) {
           <HomeFeed />
         </HomePanel>
         <HomePanel id="cua-hang" className="panel-shop">
-          <h2 className="sr-only">Cửa hàng</h2>
+          <h2 className="sr-only">{t({ vi: "Cửa hàng", en: "Shop" })}</h2>
           <HomeShop />
         </HomePanel>
         <HomePanel id="sap-mo">
-          <h2 className="sr-only">Sắp mở</h2>
+          <h2 className="sr-only">{t({ vi: "Sắp mở", en: "Coming soon" })}</h2>
           <HomeCalendar />
         </HomePanel>
       </FeedFrame>

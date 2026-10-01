@@ -14,7 +14,8 @@ import {
   type SizeSlot,
 } from "@/data/types";
 import type { ActionState } from "@/lib/actions/state";
-import { LEX } from "./lexicon";
+import { pick, type Locale, type Pair } from "./i18n";
+import { LEX, lexicon } from "./lexicon";
 
 /**
  * What the signed-in account keeps (slice B9) — saved styles, issue
@@ -63,8 +64,14 @@ export type ProfileErrors = Partial<Record<keyof ProfileDraft, string>>;
 /** The toast after a save, the mock's own words. */
 export const PROFILE_SAVED = "Đã lưu hồ sơ";
 
-/** Signed out: the title of the mock's signed-out Hồ sơ (`profile.js`). */
-export const PROFILE_SIGN_IN = "Đăng nhập để sửa hồ sơ";
+/**
+ * Signed out: the title of the mock's signed-out Hồ sơ (`profile.js`). In both
+ * languages since round v6 slice E1, for the refusal a size press answers
+ * with (`keepFailureMessage`); `PROFILE_SIGN_IN` stays the Vietnamese side.
+ */
+export const PROFILE_SIGN_IN_TEXT: Pair = { vi: "Đăng nhập để sửa hồ sơ", en: "Sign in to edit your profile" };
+
+export const PROFILE_SIGN_IN = PROFILE_SIGN_IN_TEXT.vi;
 
 /** Anything else that stopped the save — the database, the network. */
 export const PROFILE_FAILED = "Chưa lưu được hồ sơ. Thử lại sau ít phút.";
@@ -236,28 +243,41 @@ export function keepFailureOf(error: { code?: string; message?: string } | null)
  * Signed out, the mock's own invitation for the thing that was pressed: the
  * heart and "Nhắc tôi" say it in a toast (`feed.js#askSignIn`); the sizes live
  * on Hồ sơ and the switches on Thông báo, whose signed-out pages carry these
- * two titles.
+ * two titles. In both languages since round v6 slice E1.
  */
-const SIGN_IN_TO: Readonly<Record<KeepTopic, string>> = {
-  favorites: "Đăng nhập để lưu mẫu",
-  reminders: "Đăng nhập để bật nhắc",
-  sizes: PROFILE_SIGN_IN,
-  notify: "Đăng nhập để xem thông báo",
+const SIGN_IN_TO: Readonly<Record<KeepTopic, Pair>> = {
+  favorites: { vi: "Đăng nhập để lưu mẫu", en: "Sign in to save styles" },
+  reminders: { vi: "Đăng nhập để bật nhắc", en: "Sign in to set a reminder" },
+  sizes: PROFILE_SIGN_IN_TEXT,
+  notify: { vi: "Đăng nhập để xem thông báo", en: "Sign in to see notifications" },
 };
 
-export function keepFailureMessage(reason: KeepFailure, topic: KeepTopic): string {
+/**
+ * A refusal's sentence. In both languages since round v6 slice E1: the
+ * actions answer in Vietnamese, as before, and a Feed screen words the
+ * refusal again from its `reason` in the page's language (`useKeep`). The rate
+ * limit's own sentence (`rateLimitMessage`) is still Vietnamese; it is shared
+ * by every action in the app and moves with them.
+ */
+export function keepFailureMessage(reason: KeepFailure, topic: KeepTopic, locale: Locale = "vi"): string {
   switch (reason) {
     case "SIGNED_OUT":
-      return SIGN_IN_TO[topic];
+      return pick(SIGN_IN_TO[topic], locale);
     case "INVALID":
-      return "Chưa lưu được. Tải lại trang rồi thử lại.";
+      return pick({ vi: "Chưa lưu được. Tải lại trang rồi thử lại.", en: "Couldn't save. Reload the page and try again." }, locale);
     case "NOT_UPCOMING":
-      return `Chỉ bật nhắc được cho ${LEX.t} chưa mở.`;
+      return pick(
+        {
+          vi: `Chỉ bật nhắc được cho ${LEX.t} chưa mở.`,
+          en: `You can only set a reminder before a ${lexicon("en").tl} opens.`,
+        },
+        locale,
+      );
     case "NOT_FOUND":
-      return "Không còn gì để hoàn tác.";
+      return pick({ vi: "Không còn gì để hoàn tác.", en: "Nothing left to undo." }, locale);
     case "RATE_LIMITED":
     case "UNAVAILABLE":
-      return "Chưa lưu được. Thử lại sau ít phút.";
+      return pick({ vi: "Chưa lưu được. Thử lại sau ít phút.", en: "Couldn't save. Try again in a few minutes." }, locale);
   }
 }
 

@@ -3,13 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Drop, Product, Teaser } from "@/data/types";
 import { teasersIn } from "@/lib/catalog";
 import { issueHref } from "@/lib/drop";
 import { PICTURE, teaserPicture } from "@/lib/feed";
-import { TEASER_NOTE, dateParts, issueFacts } from "@/lib/feed-home";
+import { TEASER_NOTE_TEXT, dateParts, issueFacts } from "@/lib/feed-home";
+import { picker } from "@/lib/i18n";
 import { issueLabel, kindInSentence } from "@/lib/lexicon";
+import { nameLang, teaserText } from "@/lib/product-text";
 import { MiniCard } from "./FeedCards";
 import { FeedClock } from "./FeedClock";
 import { FeedIcon } from "./icon/FeedIcon";
@@ -20,7 +23,9 @@ import { cx, useReveal } from "./useReveal";
 /*
  * The Feed's blocks between the cards (`feed.js`: `rail`, `soon`, `teasers`,
  * `remindBtn`, `closedRows`): a rail of small cards, the next issue, the
- * reminder, the closed issues.
+ * reminder, the closed issues. In both languages since round v6 slice E1;
+ * a teaser's words come through `teaserText`, and its name keeps `lang="vi"`
+ * on an English page.
  */
 
 /** A link a block leads on with: a place on this page (the home's tabs) is a plain anchor, anywhere else a Next link. */
@@ -60,6 +65,7 @@ interface RailProps {
 
 /** A horizontal list that snaps; from 900px two arrows page through it. */
 export function Rail({ id, title, chip, sub, more, items, className }: RailProps) {
+  const t = picker(useLocale());
   const { ref, shown } = useReveal<HTMLElement>();
   const track = useRef<HTMLDivElement>(null);
   const [ends, setEnds] = useState({ start: true, end: false });
@@ -105,10 +111,22 @@ export function Rail({ id, title, chip, sub, more, items, className }: RailProps
         <div className="rail-side">
           {more && <BlockAnchor link={more} className="link" />}
           <div className="rail-nav">
-            <button className="ib" type="button" aria-label="Xem mẫu trước" disabled={ends.start} onClick={() => page(-1)}>
+            <button
+              className="ib"
+              type="button"
+              aria-label={t({ vi: "Xem mẫu trước", en: "Previous styles" })}
+              disabled={ends.start}
+              onClick={() => page(-1)}
+            >
               <FeedIcon name="caret-left" />
             </button>
-            <button className="ib" type="button" aria-label="Xem mẫu sau" disabled={ends.end} onClick={() => page(1)}>
+            <button
+              className="ib"
+              type="button"
+              aria-label={t({ vi: "Xem mẫu sau", en: "Next styles" })}
+              disabled={ends.end}
+              onClick={() => page(1)}
+            >
               <FeedIcon name="caret-right" />
             </button>
           </div>
@@ -125,25 +143,31 @@ export function Rail({ id, title, chip, sub, more, items, className }: RailProps
 
 /** The next issue's styles as their garments' silhouettes: no photo, no price (`feed.js`: `teasers`). */
 export function Teasers({ teasers }: { teasers: readonly Teaser[] }) {
+  const locale = useLocale();
   return (
     <div className="teasers">
-      {teasers.map((t) => (
-        <figure className="teaser" key={t.slug}>
-          <div className="teaser-plate">
-            <Image
-              src={teaserPicture(t)}
-              width={PICTURE.width}
-              height={PICTURE.height}
-              sizes="(min-width: 900px) 200px, 45vw"
-              alt={`${t.name}, ${kindInSentence(t.kind)}`}
-            />
-          </div>
-          <figcaption>
-            <p className="teaser-name disp">{t.name}</p>
-            <p className="teaser-kind">{t.kind}</p>
-          </figcaption>
-        </figure>
-      ))}
+      {teasers.map((teaser) => {
+        const text = teaserText(teaser, locale);
+        return (
+          <figure className="teaser" key={teaser.slug}>
+            <div className="teaser-plate">
+              <Image
+                src={teaserPicture(teaser)}
+                width={PICTURE.width}
+                height={PICTURE.height}
+                sizes="(min-width: 900px) 200px, 45vw"
+                alt={`${text.name}, ${kindInSentence(text.kind, locale)}`}
+              />
+            </div>
+            <figcaption>
+              <p className="teaser-name disp" lang={nameLang(teaser, locale)}>
+                {text.name}
+              </p>
+              <p className="teaser-kind">{text.kind}</p>
+            </figcaption>
+          </figure>
+        );
+      })}
     </div>
   );
 }
@@ -156,6 +180,7 @@ export function Teasers({ teasers }: { teasers: readonly Teaser[] }) {
  */
 export function RemindButton({ no, onToggle }: { no: number; onToggle?: (on: boolean) => void }) {
   const keep = useKeep();
+  const t = picker(useLocale());
   const on = keep.hasReminder(no);
   // `onToggle` hears the state asked for before the press is drawn: Thông báo sends the focus to what replaces the
   // button (slice 4a, `notifications.js`: `focusAfter`).
@@ -170,7 +195,7 @@ export function RemindButton({ no, onToggle }: { no: number; onToggle?: (on: boo
       }}
     >
       <FeedIcon name={on ? "bell-fill" : "bell"} />
-      <span>{on ? "Đã bật nhắc" : "Nhắc tôi"}</span>
+      <span>{on ? t({ vi: "Đã bật nhắc", en: "Reminder on" }) : t({ vi: "Nhắc tôi", en: "Remind me" })}</span>
     </button>
   );
 }
@@ -183,33 +208,36 @@ export function RemindButton({ no, onToggle }: { no: number; onToggle?: (on: boo
 export function SoonCard({ drop, lead = false, idSuffix = "" }: { drop: Drop; lead?: boolean; idSuffix?: string }) {
   const catalog = useCatalog();
   const now = useNowMs();
+  const locale = useLocale();
+  const t = picker(locale);
   const { ref, shown } = useReveal<HTMLElement>();
-  const p = dateParts(drop.opensAt);
+  const p = dateParts(drop.opensAt, locale);
   const id = (lead ? "lead-title" : "soon-title") + idSuffix;
   const teasers = teasersIn(catalog, drop.no);
   return (
     <section ref={ref} className={cx("soon rv", shown && "in", lead && "soon-lead")} aria-labelledby={id}>
       <div className="soon-head">
-        <span className="chip-line">SẮP MỞ</span>
+        <span className="chip-line">{t({ vi: "SẮP MỞ", en: "COMING SOON" })}</span>
         <h2 className="soon-no disp" id={id}>
-          {issueLabel(drop.no)}
+          {issueLabel(drop.no, locale)}
         </h2>
       </div>
       <p className="date">
         <span className="dd">{p.dd}</span>
         <span className="date-side">
-          <span className="mm disp">Thg {p.mm}</span>
+          {/* The Vietnamese as the JSX it always was, word and figure apart (`FeedCards.tsx` says why). */}
+          <span className="mm disp">{t<React.ReactNode>({ vi: <>Thg {p.mm}</>, en: p.mm })}</span>
           <span className="dow disp">
             {p.dow} {p.time}
           </span>
         </span>
       </p>
       <p className="soon-cd">
-        <span className="cd-label">Mở sau</span>
+        <span className="cd-label">{t({ vi: "Mở sau", en: "Opens in" })}</span>
         <FeedClock until={drop.opensAt} now={now} tag="span" />
       </p>
       {teasers.length > 0 && <Teasers teasers={teasers} />}
-      <p className="soon-note">{TEASER_NOTE}</p>
+      <p className="soon-note">{t(TEASER_NOTE_TEXT)}</p>
       <RemindButton no={drop.no} />
     </section>
   );
@@ -221,28 +249,39 @@ export function SoonCard({ drop, lead = false, idSuffix = "" }: { drop: Drop; le
  */
 export function ClosedList({ drops }: { drops: readonly Drop[] }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const { ref, shown } = useReveal<HTMLElement>();
   if (drops.length === 0) return null;
   return (
     <section ref={ref} className={cx("closed rv", shown && "in")} aria-labelledby="closed-title">
       <div className="closed-head">
         <h2 className="closed-title disp" id="closed-title">
-          Đã đóng
+          {t({ vi: "Đã đóng", en: "Closed" })}
         </h2>
         <Link className="link" href="/so">
-          Xem tất cả
+          {t({ vi: "Xem tất cả", en: "View all" })}
         </Link>
       </div>
       {drops.map((d) => {
-        const f = issueFacts(catalog, d);
+        const f = issueFacts(catalog, d, locale);
         return (
           <Link className="closed-row" key={d.no} href={issueHref(d.no)}>
-            <h3 className="closed-no disp">{issueLabel(d.no)}</h3>
+            <h3 className="closed-no disp">{issueLabel(d.no, locale)}</h3>
             <p className="closed-sold">
-              {f.sold}/{f.cut} đã bán
+              {t<React.ReactNode>({
+                vi: (
+                  <>
+                    {f.sold}/{f.cut} đã bán
+                  </>
+                ),
+                en: `${f.sold}/${f.cut} sold`,
+              })}
             </p>
             <p className="closed-dates">{f.run}</p>
-            <p className="closed-names">{f.names}</p>
+            <p className="closed-names" lang={f.namesLang}>
+              {f.names}
+            </p>
           </Link>
         );
       })}

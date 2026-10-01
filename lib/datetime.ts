@@ -119,11 +119,29 @@ export function weekdayLabel(iso: string, locale: Locale = "vi"): string {
  *
  * A drop is a promise about a clock, and "25/09" alone makes a shopper count
  * days on their fingers. The weekday is the unit people actually plan in.
+ *
+ * In English (round v6 slice E1) `"20:00, Friday 25 Sep"`: the clock first and
+ * a comma, as `dateTimeLabel` writes a moment, then the day the way the
+ * glossary writes one.
  */
-export function clockDayLabel(iso: string): string {
+export function clockDayLabel(iso: string, locale: Locale = "vi"): string {
   const p = partsOf(iso);
   if (!p) return "";
+  if (locale === "en") return `${p.hour}:${p.minute}, ${weekdayLabel(iso, "en")} ${dayMonthEn(p)}`;
   return `${p.hour}:${p.minute} ${weekdayLabel(iso)} ${p.day}/${p.month}`;
+}
+
+/**
+ * A date block's day and month, set apart (the Feed's big dates): `"02"` and
+ * `"10"`; in English `"2"` and `"Oct"`, the glossary's day without a leading
+ * zero and its month by name. Read off the fields, never off a formatted
+ * date. Empty strings when the input is not a timestamp.
+ */
+export function dayAndMonth(iso: string, locale: Locale = "vi"): { day: string; month: string } {
+  const p = partsOf(iso);
+  if (!p) return { day: "", month: "" };
+  if (locale === "en") return { day: String(Number(p.day)), month: MONTHS_EN[Number(p.month) - 1] ?? p.month };
+  return { day: p.day, month: p.month };
 }
 
 /**

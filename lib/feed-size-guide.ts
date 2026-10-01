@@ -103,7 +103,7 @@ export function sizeGuide(catalog: Catalog, now: Date): SizeGuide {
       head: TOP_HEAD,
       rows: sizeChart(fit).map((r) => ({
         size: r.size,
-        cells: [r.chestFlat, r.length, r.shoulder].map(chartNumber).concat(heightRange(r.heightFrom, r.heightTo)),
+        cells: [r.chestFlat, r.length, r.shoulder].map((n) => chartNumber(n)).concat(heightRange(r.heightFrom, r.heightTo)),
       })),
       pants: false,
     };
@@ -126,7 +126,7 @@ export function sizeGuide(catalog: Catalog, now: Date): SizeGuide {
         head: PANTS_HEAD,
         rows: pantsChart(style).map((r) => ({
           size: r.size,
-          cells: [r.waist, r.hip, r.length, r.thigh].map(chartNumber).concat(heightRange(r.heightFrom, r.heightTo)),
+          cells: [r.waist, r.hip, r.length, r.thigh].map((n) => chartNumber(n)).concat(heightRange(r.heightFrom, r.heightTo)),
         })),
         pants: true,
       },

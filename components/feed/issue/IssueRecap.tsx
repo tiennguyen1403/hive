@@ -2,16 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { IssueStyle } from "@/lib/inventory";
-import { FIT_LABELS } from "@/lib/catalog-query";
+import { fitLabel } from "@/lib/catalog-query";
 import { clockDayLabel } from "@/lib/datetime";
 import { PICTURE, pictureAlt, pictureOf } from "@/lib/feed";
 import { issueFacts } from "@/lib/feed-home";
 import { closedIssues, closedNeighbours, issueHasPhotos, issueNow } from "@/lib/feed-issue";
+import { picker, plural } from "@/lib/i18n";
 import { isFixed, productsInDrop, soldUnits } from "@/lib/inventory";
-import { issueLabel } from "@/lib/lexicon";
+import { issueLabel, lexicon } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
+import { nameLang, productText } from "@/lib/product-text";
 import { styleHref } from "../FeedCards";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNow } from "../now";
@@ -28,13 +31,19 @@ import { ColorChips, NextNow } from "./IssueParts";
  * colour it led with, and leads to the style's page. One without (Số 03 and
  * 04, whose frames are borrowed) sets each name as the picture on a plate,
  * with its colours as chips — never another issue's photos.
+ *
+ * In both languages since round v6 slice E1 (an issue is a Drop; its styles
+ * keep their Vietnamese names, marked `lang="vi"` on an English page).
  */
 export function IssueRecap({ no }: { no: number }) {
   const catalog = useCatalog();
   const now = useNow();
+  const locale = useLocale();
+  const t = picker(locale);
+  const lex = lexicon(locale);
   const drop = catalog.dropByNo.get(no);
   if (!drop) return null;
-  const f = issueFacts(catalog, drop);
+  const f = issueFacts(catalog, drop, locale);
   const styles = productsInDrop(catalog, no);
   const photos = issueHasPhotos(catalog, no);
   const { older, newer } = closedNeighbours(closedIssues(catalog, now), no);
@@ -47,9 +56,9 @@ export function IssueRecap({ no }: { no: number }) {
   return (
     <>
       <section className="b-hero" aria-labelledby="iss-no">
-        <span className="chip-tag">Đã đóng</span>
+        <span className="chip-tag">{t({ vi: "Đã đóng", en: "Closed" })}</span>
         <h1 className="b-hero-no disp" id="iss-no">
-          {issueLabel(no)}
+          {issueLabel(no, locale)}
         </h1>
         <p className="b-hero-meta">
           <span>{f.run}</span>
@@ -57,14 +66,17 @@ export function IssueRecap({ no }: { no: number }) {
             <b>
               {f.sold}/{f.cut}
             </b>{" "}
-            đã bán
+            {t({ vi: "đã bán", en: "sold" })}
           </span>
         </p>
       </section>
 
       <section
         className={cx("b-tiles", `n-${styles.length}`, odd && "is-odd")}
-        aria-label={`${f.styles} mẫu của ${issueLabel(no)}`}
+        aria-label={t({
+          vi: `${f.styles} mẫu của ${issueLabel(no)}`,
+          en: `${plural(f.styles, "style", "styles")} in ${issueLabel(no, "en")}`,
+        })}
       >
         {styles.map((s, i) =>
           photos ? (
@@ -78,28 +90,28 @@ export function IssueRecap({ no }: { no: number }) {
       <div className={`b-next pn-${pn}`}>
         <NextNow
           live={live}
-          opens={live.kind === "next" ? clockDayLabel(live.drop.opensAt) : ""}
+          opens={live.kind === "next" ? clockDayLabel(live.drop.opensAt, locale) : ""}
           styles={liveStyles}
           fixed={fixed}
         />
         {pn > 0 && (
-          <nav className={`b-pn n-${pn}`} aria-label="Các Số đã đóng khác">
+          <nav className={`b-pn n-${pn}`} aria-label={t({ vi: "Các Số đã đóng khác", en: "Other closed drops" })}>
             {older && (
               <Link className="is-prev" href={`/so/${older.no}`}>
                 <small>
                   <FeedIcon name="caret-left" />
-                  Số trước
+                  {lex.prev}
                 </small>
-                <span className="disp">{issueLabel(older.no)}</span>
+                <span className="disp">{issueLabel(older.no, locale)}</span>
               </Link>
             )}
             {newer && (
               <Link className="is-next" href={`/so/${newer.no}`}>
                 <small>
-                  Số sau
+                  {t({ vi: "Số sau", en: "Next drop" })}
                   <FeedIcon name="caret-right" />
                 </small>
-                <span className="disp">{issueLabel(newer.no)}</span>
+                <span className="disp">{issueLabel(newer.no, locale)}</span>
               </Link>
             )}
           </nav>
@@ -111,9 +123,11 @@ export function IssueRecap({ no }: { no: number }) {
 
 /** A style of an issue with photos: worn, in the colour it led with, and the way to its page (`lookTile`). */
 function LookTile({ product: s, lazy, wide }: { product: IssueStyle; lazy: boolean; wide: boolean }) {
+  const locale = useLocale();
   const { ref, shown } = useReveal<HTMLElement>();
   const color = s.colors[0]!;
   const pic = pictureOf(s, color, "look");
+  const text = productText(s, locale);
   return (
     <article ref={ref} className={cx("b-tile rv", shown && "in")}>
       <Link className="b-tile-link" href={styleHref(s)}>
@@ -124,19 +138,21 @@ function LookTile({ product: s, lazy, wide }: { product: IssueStyle; lazy: boole
             height={PICTURE.height}
             sizes={wide ? "(min-width: 900px) 260px, 100vw" : "(min-width: 900px) 260px, 50vw"}
             loading={lazy ? "lazy" : "eager"}
-            alt={pictureAlt(s, color, pic.look)}
+            alt={pictureAlt(s, color, pic.look, locale)}
           />
         </div>
         <div className="b-tile-body">
-          <h2 className="b-tile-name disp">{s.name}</h2>
-          <p className="b-tile-meta">{s.kind}</p>
+          <h2 className="b-tile-name disp" lang={nameLang(s, locale)}>
+            {text.name}
+          </h2>
+          <p className="b-tile-meta">{text.kind}</p>
           <p className="b-tile-row">
-            <span className="b-tile-price">{vnd(s.priceVnd)}</span>
+            <span className="b-tile-price">{vnd(s.priceVnd, locale)}</span>
             <span className="b-tile-sold">
               <b>
                 {soldUnits(s)}/{s.cutUnits}
               </b>{" "}
-              đã bán
+              {picker(locale)({ vi: "đã bán", en: "sold" })}
             </span>
           </p>
         </div>
@@ -147,29 +163,35 @@ function LookTile({ product: s, lazy, wide }: { product: IssueStyle; lazy: boole
 
 /** A style of an issue without photos: its name is the picture, sized to the plate by its letter count (`typeTile`). */
 function TypeTile({ product: s }: { product: IssueStyle }) {
+  const locale = useLocale();
   const { ref, shown } = useReveal<HTMLElement>();
+  const text = productText(s, locale);
   return (
     <article ref={ref} className={cx("b-tile rv", shown && "in")}>
       <div className="b-tile-plate">
         <div className="b-tile-top">
-          <p className="b-tile-kind">{s.kind}</p>
+          <p className="b-tile-kind">{text.kind}</p>
           <ColorChips colors={s.colors} />
         </div>
-        <h2 className="b-tile-big disp" style={{ "--f-n": [...s.name].length } as React.CSSProperties}>
-          {s.name}
+        <h2
+          className="b-tile-big disp"
+          lang={nameLang(s, locale)}
+          style={{ "--f-n": [...text.name].length } as React.CSSProperties}
+        >
+          {text.name}
         </h2>
       </div>
       <div className="b-tile-body">
         <p className="b-tile-meta">
-          {s.material} · {FIT_LABELS[s.fit]}
+          {text.material} · {fitLabel(s.fit, locale)}
         </p>
         <p className="b-tile-row">
-          <span className="b-tile-price">{vnd(s.priceVnd)}</span>
+          <span className="b-tile-price">{vnd(s.priceVnd, locale)}</span>
           <span className="b-tile-sold">
             <b>
               {soldUnits(s)}/{s.cutUnits}
             </b>{" "}
-            đã bán
+            {picker(locale)({ vi: "đã bán", en: "sold" })}
           </span>
         </p>
       </div>

@@ -1,6 +1,6 @@
 import type { ColorKey, DeliveryMethod, Drop, PaymentMethod, Product } from "@/data/types";
 import type { Catalog } from "./catalog";
-import { clockLabel, dayMonth, weekdayLabel } from "./datetime";
+import { clockLabel, dayAndMonth, weekdayLabel } from "./datetime";
 import { dropState, timeLeft } from "./drop";
 import { firstColor, photoKeyOf } from "./feed";
 import { feedDayRange, feedTight } from "./feed-range";
@@ -9,6 +9,7 @@ import { dropSummary, isFixed, onHandByColor, productsInDrop } from "./inventory
 import { vnd } from "./money";
 import { paymentLabel } from "./order-labels";
 import { lookbookUrl } from "./photos";
+import { nameLang, productText } from "./product-text";
 import { COD_SURCHARGE_VND, DELIVERY_OPTIONS, FREE_SHIPPING_FROM_VND, RETURN_WINDOW_DAYS } from "./shipping";
 
 /**
@@ -135,7 +136,12 @@ export function fixedLead(catalog: Catalog): { product: Product; color: ColorKey
 
 // ─────────────────────────────────────────────────────────── the clock
 
-/** "02" · "10" · "thứ Sáu" · "20:00": a date block's four parts (the mock's `parts`). */
+/**
+ * "02" · "10" · "thứ Sáu" · "20:00": a date block's four parts (the mock's
+ * `parts`). In English (round v6 slice E1) "2" · "Oct" · "Friday" · "20:00":
+ * the glossary's day without a leading zero, the month by name — the screen
+ * prints the Vietnamese month as "Thg 10" and the English one as it is.
+ */
 export interface DateParts {
   dd: string;
   mm: string;
@@ -143,19 +149,21 @@ export interface DateParts {
   time: string;
 }
 
-export function dateParts(iso: string): DateParts {
-  const [dd = "", mm = ""] = dayMonth(iso).split("/");
-  return { dd, mm, dow: weekdayLabel(iso), time: clockLabel(iso) };
+export function dateParts(iso: string, locale: Locale = "vi"): DateParts {
+  const { day, month } = dayAndMonth(iso, locale);
+  return { dd: day, mm: month, dow: weekdayLabel(iso, locale), time: clockLabel(iso) };
 }
 
 /**
  * "4 ngày 00:57:57", or "00:57:57" inside the last day — the countdown the
- * mock ticks every second. Zero once the instant has passed.
+ * mock ticks every second. Zero once the instant has passed. In English
+ * "4 days 00:57:57", "1 day 00:57:57" (round v6 slice E1).
  */
-export function countdownText(iso: string, nowMs: number): string {
+export function countdownText(iso: string, nowMs: number, locale: Locale = "vi"): string {
   const t = timeLeft(iso, new Date(nowMs));
   const two = (n: number) => String(n).padStart(2, "0");
-  return `${t.days ? `${t.days} ngày ` : ""}${two(t.hours)}:${two(t.minutes)}:${two(t.seconds)}`;
+  const days = locale === "en" ? `${t.days} ${pluralNoun(t.days, "day", "days")} ` : `${t.days} ngày `;
+  return `${t.days ? days : ""}${two(t.hours)}:${two(t.minutes)}:${two(t.seconds)}`;
 }
 
 // ─────────────────────────────────────────────────────────── issues
@@ -175,20 +183,33 @@ export interface IssueFacts {
   run: string;
   /** "RÊU, TRO, SÓNG, VỎ, MƯA, KHÔ". */
   names: string;
+  /**
+   * `"vi"` on an English page when every name in `names` is a Vietnamese one
+   * (`nameLang`, round v6 slice E1): the list then carries `lang="vi"`. Absent
+   * on a Vietnamese page.
+   */
+  namesLang?: "vi";
 }
 
-export function issueFacts(catalog: Catalog, drop: Drop): IssueFacts {
+/**
+ * An issue's figures. In English (round v6 slice E1) the run is written the
+ * English way ("5 Jun - 19 Jun") and the names come through `productText`
+ * (an issue's styles keep their Vietnamese names, so the list is marked
+ * `namesLang`).
+ */
+export function issueFacts(catalog: Catalog, drop: Drop, locale: Locale = "vi"): IssueFacts {
   const s = dropSummary(catalog, drop.no);
+  const styles = productsInDrop(catalog, drop.no);
+  const allVi = styles.length > 0 && styles.every((p) => nameLang(p, locale) === "vi");
   return {
     no: drop.no,
     styles: s.styles,
     cut: s.cutUnits,
     sold: s.soldUnits,
     left: s.onHand,
-    run: feedDayRange(drop.opensAt, drop.closesAt),
-    names: productsInDrop(catalog, drop.no)
-      .map((p) => p.name)
-      .join(", "),
+    run: feedDayRange(drop.opensAt, drop.closesAt, locale),
+    names: styles.map((p) => productText(p, locale).name).join(", "),
+    ...(allVi ? { namesLang: "vi" as const } : {}),
   };
 }
 
@@ -307,5 +328,10 @@ export function footSkipped(href: string, skip: readonly string[]): boolean {
   return skip.some((x) => x === href || (!x.includes("#") && x === href.split(/[?#]/)[0]));
 }
 
-/** The words under the next issue's silhouettes (the mock's `FACTS.teaser`). */
-export const TEASER_NOTE = "Giá và số lượng công bố lúc mở.";
+/** The words under the next issue's silhouettes (the mock's `FACTS.teaser`), in both languages since round v6 slice E1. */
+export const TEASER_NOTE_TEXT: Pair = {
+  vi: "Giá và số lượng công bố lúc mở.",
+  en: "Price and quantity announced at opening.",
+};
+
+export const TEASER_NOTE = TEASER_NOTE_TEXT.vi;

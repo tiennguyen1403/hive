@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker } from "@/lib/i18n";
 import { FeedIcon } from "./icon/FeedIcon";
 import { cx } from "./useReveal";
 
@@ -22,8 +24,12 @@ interface FeedCopyProps {
  * neither can reach the clipboard — an insecure origin, a policy — the text
  * on screen is selected instead, so the shopper is one keystroke from the
  * same result, and the button claims nothing.
+ *
+ * "Copy" and "Copied" in English (round v6 slice E1); `what` is the caller's.
  */
 export function FeedCopy({ value, what, target }: FeedCopyProps) {
+  const locale = useLocale();
+  const t = picker(locale);
   const [done, setDone] = useState(false);
   const timer = useRef(0);
 
@@ -54,9 +60,14 @@ export function FeedCopy({ value, what, target }: FeedCopyProps) {
   }
 
   return (
-    <button className={cx("copy", done && "done")} type="button" aria-label={`Chép ${what.toLocaleLowerCase("vi")}`} onClick={copy}>
+    <button
+      className={cx("copy", done && "done")}
+      type="button"
+      aria-label={t({ vi: `Chép ${what.toLocaleLowerCase("vi")}`, en: `Copy ${what.toLocaleLowerCase("en")}` })}
+      onClick={copy}
+    >
       <FeedIcon name="copy" />
-      <span>{done ? "Đã chép" : "Chép"}</span>
+      <span>{done ? t({ vi: "Đã chép", en: "Copied" }) : t({ vi: "Chép", en: "Copy" })}</span>
     </button>
   );
 }

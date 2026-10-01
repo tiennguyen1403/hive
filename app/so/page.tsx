@@ -3,9 +3,19 @@ import { FeedFrame } from "@/components/feed/FeedFrame";
 import { ArchiveList } from "@/components/feed/issue/ArchiveList";
 import { demoNowMs } from "@/lib/clock";
 import { loadCatalog } from "@/lib/db/catalog";
+import { ARCHIVE_TITLE } from "@/lib/feed-issue";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
-/** "Các Số đã đóng" — the layout adds "· HIVE". */
-export const metadata: Metadata = { title: "Các Số đã đóng" };
+/**
+ * "Các Số đã đóng" — the layout adds "· HIVE". In the page's language since
+ * round v6 slice E1 ("Closed drops"), with the site's description in it.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return { title: t(ARCHIVE_TITLE), description: t(SITE_DESCRIPTION_TEXT) };
+}
 
 /**
  * The closed issues, round v4 "Feed" (slice 1b): the approved mock's
@@ -19,9 +29,10 @@ export const metadata: Metadata = { title: "Các Số đã đóng" };
  * never prerendered with a frozen clock.
  */
 export default async function ArchivePage() {
-  await loadCatalog();
+  const [, locale] = await Promise.all([loadCatalog(), getLocale()]);
+  const title = picker(locale)(ARCHIVE_TITLE);
   return (
-    <FeedFrame page="archive" now={demoNowMs()} mbar={{ title: "Các Số đã đóng", back: "/", watch: "[data-ui='feed'] .b-title" }}>
+    <FeedFrame page="archive" now={demoNowMs()} mbar={{ title, back: "/", watch: "[data-ui='feed'] .b-title" }}>
       <div className="b-wrap b-page">
         <ArchiveList />
       </div>

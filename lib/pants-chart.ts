@@ -1,6 +1,7 @@
 import { SIZES, type Product, type Size } from "@/data/types";
 import { sizeChart } from "@/data/size-chart";
 import { feedTightRange } from "./feed-range";
+import type { Locale } from "./i18n";
 
 /**
  * The trousers' measurements, per size — the table the Feed product page's
@@ -56,13 +57,19 @@ export function pantsChart(p: Pick<Product, "kind">): PantsChartRow[] {
   }));
 }
 
-/** A measurement as a Vietnamese chart writes it: `31,5`, `98`. */
-export function chartNumber(n: number): string {
-  return String(n).replace(".", ",");
+/** A measurement as a Vietnamese chart writes it: `31,5`, `98`; in English `31.5` (round v6 slice E1). */
+export function chartNumber(n: number, locale: Locale = "vi"): string {
+  return locale === "en" ? String(n) : String(n).replace(".", ",");
 }
 
-/** `1m55-1m65`, the wearer's height as the mock's charts print it: a Feed range, held tight (`lib/feed-range.ts`). */
-export function heightRange(from: number, to: number): string {
+/**
+ * `1m55-1m65`, the wearer's height as the mock's charts print it: a Feed
+ * range, held tight (`lib/feed-range.ts`). In English (round v6 slice E1)
+ * `155-165`, in centimetres like every other cell of the chart, whose line
+ * says "cm": "1m55" is a Vietnamese way of writing a height.
+ */
+export function heightRange(from: number, to: number, locale: Locale = "vi"): string {
+  if (locale === "en") return feedTightRange(String(from), String(to));
   const m = (cm: number) => `${Math.floor(cm / 100)}m${String(cm % 100).padStart(2, "0")}`;
   return feedTightRange(m(from), m(to));
 }

@@ -3422,3 +3422,39 @@ commit trên máy, chưa push.
   do giữ nguyên.
 - **Cho E1:** mọi chỗ in tên, loại, chất liệu, chi tiết mẫu dùng `productText`/`teaserText`; tìm theo họ hàng ở bản Anh so theo
   `family`.
+
+**01/10, lát E1 ĐẠT (phiên chính duyệt; agent đã sửa các chỗ nhỏ, phiên chính kiểm lại test và ảnh).** Brief
+`tasks/briefs/v6-lat-e1.md`, agent `ui-implementer`. Người dùng cho commit trên máy (chưa push) rồi làm E2.
+- **Phạm vi đã dịch:** trang chủ (3 tab), `/products`, `/products/[slug]`, `/search`, `/so/[no]` và `/so`, các sheet (thêm nhanh,
+  bảng size, "Added to bag", sắp xếp), toast lưu và nhắc. `<title>` và mô tả theo ngôn ngữ; OG giữ tiếng Việt.
+- **Mã:** nhãn màu (`colorLabel`), họ hàng (`familyLabel`, `familyShortLabel`), form (`fitLabel`), sắp xếp (`sortLabel`) theo mẫu
+  bảng `*_TEXT` của E0. Tìm ở bản Anh khớp `productText` cộng tên Việt cộng tên họ hàng tiếng Anh theo `family`. Tên mẫu Việt
+  trong trang Anh mang `lang="vi"` (`nameLang`). Câu từ chối khi lưu hay nhắc viết lại ở client từ `reason` (`useKeep`), trừ
+  `RATE_LIMITED`.
+- **Phiên chính kiểm:** tsc sạch, 1.919 test xanh (33 test mới, không test cũ nào bị sửa); xem ảnh tiếng Anh trang chủ, Cửa hàng,
+  trang mẫu, sheet thêm nhanh ở 390, `/so` ở 1280, thẻ Basics hai thứ tiếng.
+- **Agent đo:** bản VI 58 cặp ảnh không lệch pixel nào vượt nhiễu; script dò chữ Việt ở bản EN ra 0 lỗi trên 60 lượt; sweep 110
+  phát hiện như E0 ở cả hai thứ tiếng; JS nén +3,4 đến +3,9 KB mỗi route.
+- **Quyết định (phiên chính, 01/10):**
+  - "DROP 04" ở `/so` 1280 xuống hai dòng: giữ, trông có chủ ý. Luật CSS chỉ cho EN: `[data-ui="feed"]:lang(en) .b-issue-no`
+    cỡ `min(168px, 14vw)` từ 900px, vì "DROP" ở 168px rộng hơn cột;
+  - dấu trên ảnh: VI "ĐÃ HẾT" (QĐ-36), EN "SOLD OUT";
+  - nút đổi ngôn ngữ không bấm được khi sheet đang mở (modal): chấp nhận.
+- **Sửa sau duyệt:**
+  - B15: rút ngắn `en.material` (Fleece, Quilted nylon, Quilted down, Twill, Terry, 2-layer…), vì dòng meta của thẻ Basics và ô
+    ở `/so` xuống hai hàng trong khi bản Việt một hàng;
+  - E1: "Out of S, M"; "Drop 06 hasn't opened yet"; "You can only set a reminder before a drop opens."; kiểm trạng thái "giữa
+    hai drop" ở bản EN (đóng tạm Số 05 trên DB cục bộ rồi đặt lại).
+- **Mẫu thêm cho các lát sau** (từ báo cáo E1):
+  - câu Việt có giá trị chen giữa chữ thì phía `vi` giữ đúng JSX cũ, `t<React.ReactNode>({ vi: <>Xem {n} mẫu</>, en: … })`.
+    Gộp thành một chuỗi làm glyph lệch dưới 1px;
+  - hàm bị gọi kiểu `.map(fn)` thì không thêm tham số thứ hai;
+  - hằng server dùng không export từ tệp `"use client"`;
+  - CSS chỉ cho EN viết `[data-ui="feed"]:lang(en) …`, vì `scope.test.ts` chặn `html[lang]`.
+- **Sau sửa:** lưới `/products?line=all` ở 390, 600, 900 không còn chỗ nào bản EN xuống dòng mà bản VI không. Trạng thái "giữa
+  hai drop" ở bản EN (đóng tạm Số 05 trên DB cục bộ, đã đặt lại): 14 ảnh, script dò chữ Việt ra 0; phiên chính xem trang chủ 390
+  và 1280. Bản VI so lại 40 cặp: không lệch vượt nhiễu.
+- **Còn xuống dòng ở bản EN mà bản VI không, để lượt rà cuối** (không tràn, không lệch lưới): dải 900 trang chủ (dòng tồn của BỤI,
+  `.soon-note`); ô `/so/4`, `/so/3` ở 390 và 900 (`.b-tile-meta`, `.b-tile-kind` "Funnel-neck hoodie"); tiêu đề `/so/5` ở 390.
+- **Còn tiếng Việt ở bản EN, để lát sau:** `rateLimitMessage`; tham số `what` của `FeedCopy` từ trang đơn ("Copy số tiền", E2/E3);
+  head của `/checkout` (E2); `closesInLabel`/`opensInLabel` của quản trị (E4).

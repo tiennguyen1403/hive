@@ -2,13 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Drop } from "@/data/types";
 import { PICTURE, pictureAlt, pictureOf } from "@/lib/feed";
 import { issueFacts } from "@/lib/feed-home";
-import { archivePicture, closedIssues, issueHasPhotos, issueNow } from "@/lib/feed-issue";
+import { ARCHIVE_TITLE, archivePicture, closedIssues, issueHasPhotos, issueNow } from "@/lib/feed-issue";
+import { picker, plural } from "@/lib/i18n";
 import { productsInDrop } from "@/lib/inventory";
 import { issueLabel } from "@/lib/lexicon";
+import { nameLang, productText } from "@/lib/product-text";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNow } from "../now";
 import { cx, useReveal } from "../useReveal";
@@ -24,15 +27,19 @@ import { ColorChips, NowStrip } from "./IssueParts";
  * An issue with photographs of its own wears one (Số 05, once it has closed:
  * KHÓI, black, worn); one without (Số 04, Số 03) is set in type — the number
  * large, the names as a wall, each with its colour chips.
+ *
+ * In both languages since round v6 slice E1 ("Closed drops"; the names keep
+ * `lang="vi"` on an English page).
  */
 export function ArchiveList() {
   const catalog = useCatalog();
   const now = useNow();
+  const t = picker(useLocale());
   const closed = closedIssues(catalog, now);
   return (
     <>
       <div className="b-head">
-        <h1 className="b-title disp">Các Số đã đóng</h1>
+        <h1 className="b-title disp">{t(ARCHIVE_TITLE)}</h1>
       </div>
       <NowStrip live={issueNow(catalog, now)} />
       <div className="b-arc">
@@ -44,16 +51,18 @@ export function ArchiveList() {
 
 /** The issue's number, the link to its page, stretched over the whole entry. */
 function IssueTitle({ drop }: { drop: Drop }) {
+  const locale = useLocale();
   return (
     <h2 className="b-issue-no disp" id={`arc-${drop.no}`}>
-      <Link href={`/so/${drop.no}`}>{issueLabel(drop.no)}</Link>
+      <Link href={`/so/${drop.no}`}>{issueLabel(drop.no, locale)}</Link>
     </h2>
   );
 }
 
 function IssueMeta({ drop }: { drop: Drop }) {
   const catalog = useCatalog();
-  const f = issueFacts(catalog, drop);
+  const locale = useLocale();
+  const f = issueFacts(catalog, drop, locale);
   return (
     <p className="b-issue-meta">
       <span>{f.run}</span>
@@ -61,17 +70,21 @@ function IssueMeta({ drop }: { drop: Drop }) {
         <b>
           {f.sold}/{f.cut}
         </b>{" "}
-        đã bán
+        {picker(locale)({ vi: "đã bán", en: "sold" })}
       </span>
     </p>
   );
 }
 
-/** "Xem 6 mẫu →": what the entry's link does, said once, for the eye (the link is the number). */
+/**
+ * "Xem 6 mẫu →": what the entry's link does, said once, for the eye (the link is the number). In English "View 6
+ * styles". The Vietnamese as the JSX it always was, its parts apart (`FeedCards.tsx` says why).
+ */
 function Go({ n }: { n: number }) {
+  const t = picker(useLocale());
   return (
     <span className="b-go" aria-hidden="true">
-      Xem {n} mẫu
+      {t<React.ReactNode>({ vi: <>Xem {n} mẫu</>, en: `View ${plural(n, "style", "styles")}` })}
       <FeedIcon name="arrow-right" />
     </span>
   );
@@ -79,6 +92,7 @@ function Go({ n }: { n: number }) {
 
 function PhotoIssue({ drop }: { drop: Drop }) {
   const catalog = useCatalog();
+  const locale = useLocale();
   const { ref, shown } = useReveal<HTMLElement>();
   const list = productsInDrop(catalog, drop.no);
   const pic = archivePicture(catalog, drop.no);
@@ -93,7 +107,7 @@ function PhotoIssue({ drop }: { drop: Drop }) {
             height={PICTURE.height}
             sizes="(min-width: 900px) 520px, 100vw"
             loading="eager"
-            alt={pictureAlt(pic.product, pic.color, shot.look)}
+            alt={pictureAlt(pic.product, pic.color, shot.look, locale)}
           />
         </div>
       )}
@@ -106,7 +120,9 @@ function PhotoIssue({ drop }: { drop: Drop }) {
           <ul className="b-names">
             {list.map((x) => (
               <li className="b-name" key={x.id}>
-                <span className="disp">{x.name}</span>
+                <span className="disp" lang={nameLang(x, locale)}>
+                  {productText(x, locale).name}
+                </span>
               </li>
             ))}
           </ul>
@@ -119,6 +135,7 @@ function PhotoIssue({ drop }: { drop: Drop }) {
 
 function TypeIssue({ drop }: { drop: Drop }) {
   const catalog = useCatalog();
+  const locale = useLocale();
   const { ref, shown } = useReveal<HTMLElement>();
   const list = productsInDrop(catalog, drop.no);
   return (
@@ -131,7 +148,9 @@ function TypeIssue({ drop }: { drop: Drop }) {
         <ul className="b-names">
           {list.map((x) => (
             <li className="b-name" key={x.id}>
-              <span className="disp">{x.name}</span>
+              <span className="disp" lang={nameLang(x, locale)}>
+                {productText(x, locale).name}
+              </span>
               <ColorChips colors={x.colors} />
             </li>
           ))}

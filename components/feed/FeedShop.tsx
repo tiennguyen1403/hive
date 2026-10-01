@@ -1,20 +1,22 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { FAMILY_SHORT_LABELS, type Family } from "@/data/types";
+import { familyShortLabel, type Family } from "@/data/types";
 import { dropState } from "@/lib/drop";
 import {
   SHOP_FAMILIES,
   SHOP_SORTS,
-  SHOP_SORT_LABELS,
   lineLabel,
   otherLineWith,
   shopList,
+  sortLabel,
   type ShopLine,
   type ShopState,
 } from "@/lib/feed";
 import { issueFacts } from "@/lib/feed-home";
+import { picker, plural } from "@/lib/i18n";
 import { GridCard } from "./FeedCards";
 import { FeedIcon } from "./icon/FeedIcon";
 import { FeedSheet } from "./FeedSheet";
@@ -42,14 +44,20 @@ interface FeedShopProps {
  * It holds no state of its own: the page hands it the state and takes back
  * every change, because the state belongs in the URL, where a reload and a
  * shared link find it again.
+ *
+ * In both languages since round v6 slice E1: the lines, the families (the
+ * glossary's Tees, Hoodies…; a chip still filters by `family`), the counts and
+ * the orders.
  */
 export function FeedShop({ lines, state, onChange, title, sort = false, h = "h3" }: FeedShopProps) {
   const catalog = useCatalog();
   const now = useNow();
+  const locale = useLocale();
+  const t = picker(locale);
   const list = shopList(catalog, lines, state);
   const drop = typeof state.line === "number" ? catalog.dropByNo.get(state.line) : undefined;
   const closed = drop !== undefined && dropState(drop, now) === "CLOSED";
-  const facts = drop && closed ? issueFacts(catalog, drop) : undefined;
+  const facts = drop && closed ? issueFacts(catalog, drop, locale) : undefined;
   const other = list.length === 0 ? otherLineWith(catalog, lines, state) : undefined;
   const families: (Family | "ALL")[] = ["ALL", ...SHOP_FAMILIES];
 
@@ -57,7 +65,7 @@ export function FeedShop({ lines, state, onChange, title, sort = false, h = "h3"
     <div className="shop">
       <div className="shop-top">
         {title && <h1 className="page-title disp">{title}</h1>}
-        <div className="seg" role="group" aria-label="Dòng hàng">
+        <div className="seg" role="group" aria-label={t({ vi: "Dòng hàng", en: "Line" })}>
           {lines.map((l) => (
             <button
               key={String(l)}
@@ -66,12 +74,12 @@ export function FeedShop({ lines, state, onChange, title, sort = false, h = "h3"
               aria-pressed={l === state.line}
               onClick={() => onChange({ ...state, line: l })}
             >
-              {lineLabel(l)}
+              {lineLabel(l, locale)}
             </button>
           ))}
         </div>
       </div>
-      <div className="chips" role="group" aria-label="Loại">
+      <div className="chips" role="group" aria-label={t({ vi: "Loại", en: "Type" })}>
         {families.map((f) => (
           <button
             key={f}
@@ -80,17 +88,24 @@ export function FeedShop({ lines, state, onChange, title, sort = false, h = "h3"
             aria-pressed={f === state.family}
             onClick={() => onChange({ ...state, family: f })}
           >
-            {f === "ALL" ? "Mọi loại" : FAMILY_SHORT_LABELS[f]}
+            {f === "ALL" ? t({ vi: "Mọi loại", en: "All types" }) : familyShortLabel(f, locale)}
           </button>
         ))}
       </div>
       <div>
         {facts && drop && (
           <p className="line-status">
-            <span className="chip-tag">Đã đóng</span>
+            <span className="chip-tag">{t({ vi: "Đã đóng", en: "Closed" })}</span>
             <span>{facts.run}</span>
             <b>
-              {facts.sold}/{facts.cut} đã bán
+              {t<React.ReactNode>({
+                vi: (
+                  <>
+                    {facts.sold}/{facts.cut} đã bán
+                  </>
+                ),
+                en: `${facts.sold}/${facts.cut} sold`,
+              })}
             </b>
           </p>
         )}
@@ -98,7 +113,7 @@ export function FeedShop({ lines, state, onChange, title, sort = false, h = "h3"
       {sort && (
         <div className="shop-bar">
           <p className="count" aria-live="polite">
-            {list.length} mẫu
+            {t<React.ReactNode>({ vi: <>{list.length} mẫu</>, en: plural(list.length, "style", "styles") })}
           </p>
           <SortChip value={state.sort} onPick={(s) => onChange({ ...state, sort: s })} />
         </div>
@@ -110,12 +125,30 @@ export function FeedShop({ lines, state, onChange, title, sort = false, h = "h3"
           ))
         ) : (
           <div className="empty">
+            {/* The Vietnamese as the JSX it always was, its parts apart (`FeedCards.tsx` says why). */}
             <p>
-              {lineLabel(state.line)} không có {state.family === "ALL" ? "mẫu nào" : FAMILY_SHORT_LABELS[state.family]}
+              {t<React.ReactNode>({
+                vi: (
+                  <>
+                    {lineLabel(state.line)} không có {state.family === "ALL" ? "mẫu nào" : familyShortLabel(state.family)}
+                  </>
+                ),
+                en:
+                  state.family === "ALL"
+                    ? `${lineLabel(state.line, "en")} has no styles`
+                    : `${lineLabel(state.line, "en")} has no ${familyShortLabel(state.family, "en")}`,
+              })}
             </p>
             {other !== undefined && state.family !== "ALL" && (
               <button className="btn btn-line" type="button" onClick={() => onChange({ ...state, line: other })}>
-                Xem {FAMILY_SHORT_LABELS[state.family]} ở {lineLabel(other)}
+                {t<React.ReactNode>({
+                  vi: (
+                    <>
+                      Xem {familyShortLabel(state.family)} ở {lineLabel(other)}
+                    </>
+                  ),
+                  en: `View ${familyShortLabel(state.family, "en")} in ${lineLabel(other, "en")}`,
+                })}
               </button>
             )}
           </div>
@@ -130,6 +163,8 @@ export function FeedShop({ lines, state, onChange, title, sort = false, h = "h3"
  * menu dropped from the chip from 900px (`feed.js`: `openSort`).
  */
 function SortChip({ value, onPick }: { value: ShopState["sort"]; onPick: (s: ShopState["sort"]) => void }) {
+  const locale = useLocale();
+  const t = picker(locale);
   const [open, setOpen] = useState(false);
   const [place, setPlace] = useState<{ top: number; left: number } | undefined>(undefined);
   const chip = useRef<HTMLButtonElement>(null);
@@ -161,11 +196,11 @@ function SortChip({ value, onPick }: { value: ShopState["sort"]; onPick: (s: Sho
         className="chip sort-btn"
         type="button"
         aria-haspopup="dialog"
-        aria-label={`Sắp xếp: ${SHOP_SORT_LABELS[value]}`}
+        aria-label={t({ vi: `Sắp xếp: ${sortLabel(value)}`, en: `Sort: ${sortLabel(value, "en")}` })}
         onClick={show}
       >
         <FeedIcon name="sliders-horizontal" />
-        <span>{SHOP_SORT_LABELS[value]}</span>
+        <span>{sortLabel(value, locale)}</span>
         <FeedIcon name="caret-down" />
       </button>
       <FeedSheet
@@ -180,9 +215,9 @@ function SortChip({ value, onPick }: { value: ShopState["sort"]; onPick: (s: Sho
           <div className="grab" aria-hidden="true" />
           <div className="sh-head plain">
             <h2 className="sh-title" id="sort-title">
-              Sắp xếp
+              {t({ vi: "Sắp xếp", en: "Sort" })}
             </h2>
-            <button className="sh-x" type="button" data-close aria-label="Đóng">
+            <button className="sh-x" type="button" data-close aria-label={t({ vi: "Đóng", en: "Close" })}>
               <FeedIcon name="x" />
             </button>
           </div>
@@ -201,7 +236,7 @@ function SortChip({ value, onPick }: { value: ShopState["sort"]; onPick: (s: Sho
                   setOpen(false);
                 }}
               >
-                {SHOP_SORT_LABELS[k]}
+                {sortLabel(k, locale)}
                 <FeedIcon name="check" />
               </button>
             ))}

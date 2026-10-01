@@ -1,3 +1,5 @@
+import type { Pair } from "./i18n";
+
 /**
  * The site as others name it: the document head, the link cards, the search
  * results, the phone's home screen. One place, so `app/layout.tsx` and
@@ -10,8 +12,18 @@ export const SITE_NAME = "HIVE";
  * Description A (QĐ-31): the line under the name in a search result and on a
  * link card. It was `metadata.description` before the share card existed and
  * the user kept it for the card too.
+ *
+ * In both languages since round v6 slice E1: the shop's pages print the
+ * English as their `description` when the page is English. The link card
+ * (`openGraph`, and the Twitter card Next fills from it) keeps the Vietnamese
+ * `SITE_DESCRIPTION`, as the share image does (QĐ-40).
  */
-export const SITE_DESCRIPTION = "Streetwear unisex bán theo số. Mỗi số cắt một lần.";
+export const SITE_DESCRIPTION_TEXT: Pair = {
+  vi: "Streetwear unisex bán theo số. Mỗi số cắt một lần.",
+  en: "Unisex streetwear, sold in drops. Each drop is cut once.",
+};
+
+export const SITE_DESCRIPTION = SITE_DESCRIPTION_TEXT.vi;
 
 /**
  * The ground, as the browser's own chrome wears it: `viewport.themeColor`,

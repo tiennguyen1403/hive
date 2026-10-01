@@ -215,7 +215,7 @@ describe("the generator itself", () => {
 
     it("writes a fixed style's English name, and null for a style's lines when it has none", () => {
       expect(rowOf("p-ao-thun-tron").endsWith(", 'PLAIN TEE', 'Tee', 'Cotton 220gsm', null)")).toBe(true);
-      expect(rowOf("p-reu").endsWith(", null, 'Puffer jacket', 'Quilted down-filled nylon', null)")).toBe(true);
+      expect(rowOf("p-reu").endsWith(", null, 'Puffer jacket', 'Quilted down', null)")).toBe(true);
       // Lines in English exactly where there are lines in Vietnamese: Số 05's ten.
       expect(rows.filter((r) => r.replace(/,$/, "").endsWith("]::text[])"))).toHaveLength(10);
     });

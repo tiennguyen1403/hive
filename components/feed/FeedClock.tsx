@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { demoNowMs } from "@/lib/clock";
 import { countdownText } from "@/lib/feed-home";
 
@@ -26,12 +27,17 @@ interface FeedClockProps {
  * on the second boundary, recomputing from the deadline each time — a tab that
  * slept comes back right, not behind. At the deadline it stays at zero; the
  * page's state turns over on the next load, never under the shopper's thumb.
+ *
+ * In the page's language since round v6 slice E1 ("4 DAYS 00:57:57"): a
+ * switch of language starts the ticking over, so the days change words at once
+ * rather than on the next second.
  */
 export function FeedClock({ until, now, tag = "p", className = "cd-big", label }: FeedClockProps) {
-  const [text, setText] = useState(() => countdownText(until, now));
+  const locale = useLocale();
+  const [text, setText] = useState(() => countdownText(until, now, locale));
 
   useEffect(() => {
-    const tick = () => setText(countdownText(until, demoNowMs()));
+    const tick = () => setText(countdownText(until, demoNowMs(), locale));
     tick();
     let every = 0;
     const first = window.setTimeout(() => {
@@ -42,7 +48,7 @@ export function FeedClock({ until, now, tag = "p", className = "cd-big", label }
       window.clearTimeout(first);
       window.clearInterval(every);
     };
-  }, [until]);
+  }, [until, locale]);
 
   const Tag = tag;
   return (

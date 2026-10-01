@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Drop, Product } from "@/data/types";
 import { clockDayLabel, dayMonth } from "@/lib/datetime";
@@ -14,9 +15,11 @@ import {
   storyPicture,
   type StoryPicture,
 } from "@/lib/feed-home";
+import { picker, plural, type Pair } from "@/lib/i18n";
 import { isFixed, productsInDrop } from "@/lib/inventory";
-import { HOME_COVER, issueLabel } from "@/lib/lexicon";
+import { FIXED_WORD_TEXT, HOME_HEADLINE, issueLabel } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
+import { nameLang, productText } from "@/lib/product-text";
 import { ClosedList, Rail, SoonCard } from "../FeedBlocks";
 import { FeedCard, styleHref } from "../FeedCards";
 import { FeedClock } from "../FeedClock";
@@ -39,10 +42,29 @@ import { useNow, useNowMs } from "../now";
  * Bảng tin never shows the Cửa hàng tab's grid, and no style shows twice.
  * The phone and the desktop order the open and quiet feeds differently; the
  * page carries both and the stylesheet shows the one for the width.
+ *
+ * In both languages since round v6 slice E1: the cover line is the glossary's
+ * "Cut once." / "No restocks.", an issue is a Drop, the open one is LIVE.
  */
+
+/*
+ * A Vietnamese side that sets a figure inside its words stays the JSX it always
+ * was (`<>Xem {n} mẫu</>`): one merged string moves the glyphs a sub-pixel
+ * (`FeedCards.tsx`).
+ */
+
+/** "Xem 8 mẫu"; in English "View 8 styles". */
+const viewStyles = (n: number): Pair<React.ReactNode> => ({ vi: <>Xem {n} mẫu</>, en: `View ${plural(n, "style", "styles")}` });
+
+/** "Xem lại 6 mẫu", the styles of an issue that has closed; in English "Revisit 6 styles". */
+const revisitStyles = (n: number): Pair<React.ReactNode> => ({
+  vi: <>Xem lại {n} mẫu</>,
+  en: `Revisit ${plural(n, "style", "styles")}`,
+});
 
 /** The story's photo: the lookbook frame edge to edge, the page's first image. */
 function StoryImage({ pic }: { pic: StoryPicture }) {
+  const locale = useLocale();
   const p = pictureOf(pic.product, pic.color, pic.look ? "look" : "pack");
   return (
     <div className="story-media">
@@ -53,7 +75,7 @@ function StoryImage({ pic }: { pic: StoryPicture }) {
         sizes="(min-width: 900px) 540px, 100vw"
         loading="eager"
         fetchPriority="high"
-        alt={pictureAlt(pic.product, pic.color, p.look)}
+        alt={pictureAlt(pic.product, pic.color, p.look, locale)}
       />
     </div>
   );
@@ -63,7 +85,9 @@ function StoryImage({ pic }: { pic: StoryPicture }) {
 function StoryOpen({ issue }: { issue: Drop }) {
   const catalog = useCatalog();
   const now = useNowMs();
-  const f = issueFacts(catalog, issue);
+  const locale = useLocale();
+  const t = picker(locale);
+  const f = issueFacts(catalog, issue, locale);
   const pic = storyPicture(catalog, issue.no);
   return (
     <a className="story" href={`/?line=${issue.no}#cua-hang`}>
@@ -72,31 +96,32 @@ function StoryOpen({ issue }: { issue: Drop }) {
         <div className="story-top">
           <span className="chip-live">
             <span className="dot" aria-hidden="true" />
-            ĐANG MỞ
+            {t({ vi: "ĐANG MỞ", en: "LIVE" })}
           </span>
-          <span className="story-no">{issueLabel(issue.no).toUpperCase()}</span>
+          <span className="story-no">{issueLabel(issue.no, locale).toUpperCase()}</span>
         </div>
         <div className="story-body">
           <p className="cover disp">
-            {coverLines(HOME_COVER.headline).map((line) => (
-              <span key={line}>{line}</span>
+            {/* Keyed by place: the lines change with the language. */}
+            {coverLines(t(HOME_HEADLINE)).map((line, i) => (
+              <span key={i}>{line}</span>
             ))}
           </p>
           <div className="story-close">
             <div className="story-cd">
-              <p className="cd-label">Đóng sau</p>
+              <p className="cd-label">{t({ vi: "Đóng sau", en: "Closes in" })}</p>
               <FeedClock until={issue.closesAt} now={now} />
-              <p className="cd-label">{clockDayLabel(issue.closesAt)}</p>
+              <p className="cd-label">{clockDayLabel(issue.closesAt, locale)}</p>
             </div>
             <div className="story-stats">
-              <p className="cd-label">Còn lại</p>
+              <p className="cd-label">{t({ vi: "Còn lại", en: "Remaining" })}</p>
               <p className="cd-big">
                 {f.left}/{f.cut}
               </p>
-              <p className="cd-label">chiếc</p>
+              <p className="cd-label">{t({ vi: "chiếc", en: "pieces" })}</p>
             </div>
             <span className="story-go">
-              Xem {f.styles} mẫu
+              {t(viewStyles(f.styles))}
               <FeedIcon name="arrow-right" />
             </span>
           </div>
@@ -112,30 +137,34 @@ function StoryOpen({ issue }: { issue: Drop }) {
  */
 function StoryClosed({ issue }: { issue: Drop }) {
   const catalog = useCatalog();
-  const f = issueFacts(catalog, issue);
+  const locale = useLocale();
+  const t = picker(locale);
+  const f = issueFacts(catalog, issue, locale);
   const pic = storyPicture(catalog, issue.no);
   return (
     <Link className="story story-past" href={`/products?line=${issue.no}`}>
       {pic && <StoryImage pic={pic} />}
       <div className="story-panel">
         <div className="story-top">
-          <span className="story-no">{issueLabel(issue.no).toUpperCase()}</span>
+          <span className="story-no">{issueLabel(issue.no, locale).toUpperCase()}</span>
         </div>
         <div className="story-body">
           <p className="cover disp">
-            <span>Đã đóng</span>
-            <span>{dayMonth(issue.closesAt)}.</span>
+            <span>{t({ vi: "Đã đóng", en: "Closed" })}</span>
+            <span>{dayMonth(issue.closesAt, locale)}.</span>
           </p>
           <div className="story-close">
             <div className="story-cd">
-              <p className="cd-label">Đã bán</p>
+              <p className="cd-label">{t({ vi: "Đã bán", en: "Sold" })}</p>
               <p className="cd-big">
                 {f.sold}/{f.cut}
               </p>
-              <p className="cd-label">Mở {dayMonth(issue.opensAt)}</p>
+              <p className="cd-label">
+                {t<React.ReactNode>({ vi: <>Mở {dayMonth(issue.opensAt)}</>, en: `Opened ${dayMonth(issue.opensAt, "en")}` })}
+              </p>
             </div>
             <span className="story-go">
-              Xem lại {f.styles} mẫu
+              {t(revisitStyles(f.styles))}
               <FeedIcon name="arrow-right" />
             </span>
           </div>
@@ -151,8 +180,11 @@ function StoryClosed({ issue }: { issue: Drop }) {
  * button opens the Cửa hàng tab on the line.
  */
 function StoryFixed({ lead, count }: { lead: { product: Product; color: Product["colors"][number] }; count: number }) {
+  const locale = useLocale();
+  const t = picker(locale);
   const s = lead.product;
   const p = pictureOf(s, lead.color, "pack");
+  const text = productText(s, locale);
   return (
     <article className="story story-fixed" aria-labelledby="lead-fixed">
       <div className="story-media">
@@ -163,28 +195,29 @@ function StoryFixed({ lead, count }: { lead: { product: Product; color: Product[
           sizes="(min-width: 900px) 540px, 70vw"
           loading="eager"
           fetchPriority="high"
-          alt={pictureAlt(s, lead.color, false)}
+          alt={pictureAlt(s, lead.color, false, locale)}
         />
       </div>
       <div className="story-panel">
         <div className="story-top">
-          <span className="chip-line">ĐANG BÁN</span>
+          {/* "Đang bán" is LIVE in English: "On sale" would read as a discount (the glossary). */}
+          <span className="chip-line">{t({ vi: "ĐANG BÁN", en: "LIVE" })}</span>
         </div>
         <div className="story-body">
           <h2 className="cover disp" id="lead-fixed">
-            <span>Cố định</span>
+            <span>{t(FIXED_WORD_TEXT)}</span>
           </h2>
           <div className="story-close">
             <div className="story-piece">
-              <h3 className="story-piece-name disp">
-                <Link href={styleHref(s)}>{s.name}</Link>
+              <h3 className="story-piece-name disp" lang={nameLang(s, locale)}>
+                <Link href={styleHref(s)}>{text.name}</Link>
               </h3>
               <p className="story-piece-meta">
-                {s.kind} · <b>{vnd(s.priceVnd)}</b>
+                {text.kind} · <b>{vnd(s.priceVnd, locale)}</b>
               </p>
             </div>
             <a className="story-go" href="/?line=fixed#cua-hang">
-              Xem {count} mẫu
+              {t(viewStyles(count))}
               <FeedIcon name="arrow-right" />
             </a>
           </div>
@@ -197,13 +230,14 @@ function StoryFixed({ lead, count }: { lead: { product: Product; color: Product[
 /** The fixed line's rail: its styles, and the shop's grid on the line (`products.html?dong=co-dinh` in the mock). */
 function FixedRail({ idSuffix = "" }: { idSuffix?: string }) {
   const catalog = useCatalog();
+  const t = picker(useLocale());
   const fixed = catalog.products.filter((p) => isFixed(p));
   if (fixed.length === 0) return null;
   return (
     <Rail
       id={`rail-fixed${idSuffix}`}
-      title="Cố định"
-      more={{ href: "/products?line=fixed", label: "Xem tất cả" }}
+      title={t(FIXED_WORD_TEXT)}
+      more={{ href: "/products?line=fixed", label: t({ vi: "Xem tất cả", en: "View all" }) }}
       items={fixed}
     />
   );
@@ -212,24 +246,33 @@ function FixedRail({ idSuffix = "" }: { idSuffix?: string }) {
 /** The issue that just closed, as a rail: its run, what sold, the way back to its styles on the shop's grid. */
 function PastRail({ issue }: { issue: Drop }) {
   const catalog = useCatalog();
-  const f = issueFacts(catalog, issue);
+  const locale = useLocale();
+  const t = picker(locale);
+  const f = issueFacts(catalog, issue, locale);
   const styles = productsInDrop(catalog, issue.no);
   if (styles.length === 0) return null;
   return (
     <Rail
       id="rail-past"
       className="rail-past"
-      title={issueLabel(issue.no)}
-      chip="Đã đóng"
-      sub={
-        <>
-          {f.run} ·{" "}
-          <b>
-            {f.sold}/{f.cut} đã bán
-          </b>
-        </>
-      }
-      more={{ href: `/products?line=${issue.no}`, label: "Xem lại" }}
+      title={issueLabel(issue.no, locale)}
+      chip={t({ vi: "Đã đóng", en: "Closed" })}
+      sub={t({
+        vi: (
+          <>
+            {f.run} ·{" "}
+            <b>
+              {f.sold}/{f.cut} đã bán
+            </b>
+          </>
+        ),
+        en: (
+          <>
+            {f.run} · <b>{`${f.sold}/${f.cut} sold`}</b>
+          </>
+        ),
+      })}
+      more={{ href: `/products?line=${issue.no}`, label: t({ vi: "Xem lại", en: "Revisit" }) }}
       items={styles}
     />
   );

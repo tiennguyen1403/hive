@@ -452,6 +452,10 @@
   [data-ui="feed"] .b-arc { padding-top: 16px; }
   [data-ui="feed"] .b-issue { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); column-gap: 56px; align-items: start; padding: 40px 0 44px; }
   [data-ui="feed"] .b-issue-no { font-size: 168px; }
+  /* Not in the mock (round v6 slice E1): "DROP" is twice as wide as "SỐ". At 168px it measured 319px against an issue
+     column of 255px at 900 and 322px at 1100, and ran into the names beside it. On an English page the number is set
+     at 14vw up to the same 168px (126px at 900, 168px from 1200), so the word fits its column; Vietnamese is untouched. */
+  [data-ui="feed"]:lang(en) .b-issue-no { font-size: min(168px, 14vw); }
   [data-ui="feed"] .b-issue-side { grid-column: 2; }
   [data-ui="feed"] .b-issue-meta { font-size: 15px; }
   [data-ui="feed"] .b-names { margin-top: 0; gap: 0 26px; }

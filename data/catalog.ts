@@ -172,7 +172,7 @@ const styles: Array<Omit<Product, "id">> = [
     ],
     en: {
       kind: "Hoodie",
-      material: "Brushed fleece 380gsm",
+      material: "Fleece 380gsm",
       details: [
         "Double-layer hood that stands up around the neck",
         "Flat drawcord, metal tips",
@@ -203,7 +203,7 @@ const styles: Array<Omit<Product, "id">> = [
     ],
     en: {
       kind: "Printed hoodie",
-      material: "Brushed fleece 380gsm",
+      material: "Fleece 380gsm",
       details: [
         "Double-layer hood that stands up around the neck",
         "Flat drawcord, metal tips",
@@ -272,7 +272,7 @@ const styles: Array<Omit<Product, "id">> = [
     ],
     en: {
       kind: "Nylon jacket",
-      material: "Two-layer waterproof nylon",
+      material: "2-layer waterproof nylon",
       details: [
         "Full-length zip under a press-stud placket",
         "Stand collar, fixed hood",
@@ -307,7 +307,7 @@ const styles: Array<Omit<Product, "id">> = [
     ],
     en: {
       kind: "Joggers",
-      material: "French terry 320gsm",
+      material: "Terry 320gsm",
       details: [
         "Covered elastic waistband with a drawcord",
         "Side pockets",
@@ -341,7 +341,7 @@ const styles: Array<Omit<Product, "id">> = [
     ],
     en: {
       kind: "Bomber jacket",
-      material: "Quilted padded nylon",
+      material: "Quilted nylon",
       details: [
         "Horizontal quilting, lines 5 cm apart",
         "Ribbed collar, cuffs and hem",
@@ -444,7 +444,7 @@ const styles: Array<Omit<Product, "id">> = [
     ],
     en: {
       kind: "Cargo trousers",
-      material: "Chino twill 320gsm",
+      material: "Twill 320gsm",
       details: [
         "Belt loops, zip and button",
         "Slanted front pockets",
@@ -470,7 +470,7 @@ const styles: Array<Omit<Product, "id">> = [
     stock: { moss: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["reu"],
     details: [],
-    en: { kind: "Puffer jacket", material: "Quilted down-filled nylon" },
+    en: { kind: "Puffer jacket", material: "Quilted down" },
   },
   {
     slug: "tro",
@@ -490,7 +490,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["tro", "than"],
     details: [],
-    en: { kind: "Zip hoodie", material: "Brushed fleece 400gsm" },
+    en: { kind: "Zip hoodie", material: "Fleece 400gsm" },
   },
   {
     slug: "song",
@@ -527,7 +527,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["vo", "kho"],
     details: [],
-    en: { kind: "Gilet", material: "Two-layer nylon" },
+    en: { kind: "Gilet", material: "2-layer nylon" },
   },
   {
     slug: "mua",
@@ -564,7 +564,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["kho", "reu"],
     details: [],
-    en: { kind: "Shorts", material: "Chino twill 280gsm" },
+    en: { kind: "Shorts", material: "Twill 280gsm" },
   },
 
   // ── Drop 03 — closed, sold out ───────────────────────────────────────
@@ -588,7 +588,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["dat", "than"],
     details: [],
-    en: { kind: "Fleece joggers", material: "French terry 320gsm" },
+    en: { kind: "Fleece joggers", material: "Terry 320gsm" },
   },
   {
     slug: "lua",
@@ -625,7 +625,7 @@ const styles: Array<Omit<Product, "id">> = [
     stock: { grey: { S: 0, M: 0, L: 0, XL: 0 } },
     photoKeys: ["bui"],
     details: [],
-    en: { kind: "Funnel-neck hoodie", material: "Brushed fleece 380gsm" },
+    en: { kind: "Funnel-neck hoodie", material: "Fleece 380gsm" },
   },
   {
     slug: "men",
@@ -731,7 +731,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-hoodie-grey", "flat-hoodie-black", "flat-hoodie-cream"],
     details: [],
-    en: { name: "PLAIN HOODIE", kind: "Hoodie", material: "Brushed fleece 340gsm" },
+    en: { name: "PLAIN HOODIE", kind: "Hoodie", material: "Fleece 340gsm" },
   },
   {
     slug: "ao-khoac-du",
@@ -766,7 +766,7 @@ const styles: Array<Omit<Product, "id">> = [
     stock: { black: { S: 3, M: 5, L: 5, XL: 2 } },
     photoKeys: ["flat-vest-black"],
     details: [],
-    en: { name: "PUFFER GILET", kind: "Puffer gilet", material: "Quilted padded nylon" },
+    en: { name: "PUFFER GILET", kind: "Puffer gilet", material: "Quilted nylon" },
   },
   {
     slug: "so-mi-oxford",
@@ -804,7 +804,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-trousers-cream", "flat-trousers-black"],
     details: [],
-    en: { name: "CHINOS", kind: "Chinos", material: "Chino twill 280gsm" },
+    en: { name: "CHINOS", kind: "Chinos", material: "Twill 280gsm" },
   },
   {
     slug: "quan-short-ni",
@@ -823,7 +823,7 @@ const styles: Array<Omit<Product, "id">> = [
     },
     photoKeys: ["flat-shorts-grey", "flat-shorts-black"],
     details: [],
-    en: { name: "FLEECE SHORTS", kind: "Fleece shorts", material: "French terry 300gsm" },
+    en: { name: "FLEECE SHORTS", kind: "Fleece shorts", material: "Terry 300gsm" },
   },
 ];
 

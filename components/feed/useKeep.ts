@@ -24,8 +24,10 @@ import {
   withSize,
   withoutFavorite,
 } from "@/lib/feed-me";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { signHref } from "@/lib/feed-sign-in";
-import { keepFailureMessage, type KeepRefusal, type KeepResult, type UnsaveResult } from "@/lib/my-state";
+import { picker } from "@/lib/i18n";
+import { keepFailureMessage, type KeepRefusal, type KeepResult, type KeepTopic, type UnsaveResult } from "@/lib/my-state";
 import { useFeedToast } from "./FeedToast";
 
 /** What a heart press did: saved (the heart pops), taken off, or asked the shopper to sign in first. */
@@ -67,36 +69,48 @@ export interface Keep {
  * (`feed.js`: `askSignIn` — "Đăng nhập để lưu mẫu", "Đăng nhập để bật
  * nhắc"). Signed in, a refusal takes the drawing back and says the action's
  * own sentence; one that says the session has gone offers the way in too.
+ *
+ * In the page's language since round v6 slice E1: the actions answer in
+ * Vietnamese, so a refusal is worded again here from its `reason` and the
+ * write's topic (`keepFailureMessage`) — the same sentence in Vietnamese, its
+ * English on an English page. The rate limit's sentence carries a wait the
+ * action measured, so it is shown as the action wrote it (still Vietnamese,
+ * like every action's rate limit until its slice).
  */
 export function useKeep(): Keep {
   const { state, signedIn, keep } = useMyState();
   const toast = useFeedToast();
   const router = useRouter();
+  const locale = useLocale();
 
   const askSignIn = useCallback(
     (text: string) => {
       const here = `${window.location.pathname}${window.location.search}${window.location.hash}`;
       const href = signHref("in", here);
       toast(text, {
-        label: "Đăng nhập",
+        label: picker(locale)({ vi: "Đăng nhập", en: "Sign in" }),
         run: () => {
           startWait(href);
           router.push(href);
         },
       });
     },
-    [toast, router],
+    [toast, router, locale],
   );
 
   const refused = useCallback(
-    (r: KeepRefusal) => (r.reason === "SIGNED_OUT" ? askSignIn(r.message) : toast(r.message)),
-    [askSignIn, toast],
+    (r: KeepRefusal, topic: KeepTopic) => {
+      const text = r.reason === "RATE_LIMITED" ? r.message : keepFailureMessage(r.reason, topic, locale);
+      if (r.reason === "SIGNED_OUT") askSignIn(text);
+      else toast(text);
+    },
+    [askSignIn, toast, locale],
   );
 
   const toggleFavorite = useCallback(
     (p: Product, color: ColorKey): HeartPress => {
       if (!signedIn) {
-        askSignIn(keepFailureMessage("SIGNED_OUT", "favorites"));
+        askSignIn(keepFailureMessage("SIGNED_OUT", "favorites", locale));
         return "ask";
       }
       const saved = isSaved(state, p.id);
@@ -104,24 +118,24 @@ export function useKeep(): Keep {
         ? keep("favorites", (s) => withoutFavorite(s, p.id), () => unsaveFavoriteAction(p.id))
         : keep("favorites", (s) => withFavorite(s, p.id, color), () => saveFavoriteAction(p.id, color));
       void run.then((r) => {
-        if (!r.ok) refused(r);
+        if (!r.ok) refused(r, "favorites");
       });
       return saved ? "removed" : "saved";
     },
-    [signedIn, state, keep, askSignIn, refused],
+    [signedIn, state, keep, askSignIn, refused, locale],
   );
 
   const setReminder = useCallback(
     (no: number, on: boolean) => {
       if (!signedIn) {
-        askSignIn(keepFailureMessage("SIGNED_OUT", "reminders"));
+        askSignIn(keepFailureMessage("SIGNED_OUT", "reminders", locale));
         return;
       }
       void keep("reminders", (s) => withReminder(s, no, on), () => setReminderAction(no, on)).then((r) => {
-        if (!r.ok) refused(r);
+        if (!r.ok) refused(r, "reminders");
       });
     },
-    [signedIn, keep, askSignIn, refused],
+    [signedIn, keep, askSignIn, refused, locale],
   );
 
   const toggleReminder = useCallback(
@@ -132,20 +146,20 @@ export function useKeep(): Keep {
   const setNotify = useCallback(
     (key: NotifyKey, on: boolean) => {
       if (!signedIn) {
-        askSignIn(keepFailureMessage("SIGNED_OUT", "notify"));
+        askSignIn(keepFailureMessage("SIGNED_OUT", "notify", locale));
         return;
       }
       void keep("notify", (s) => withNotify(s, key, on), () => setNotifyAction(key, on)).then((r) => {
-        if (!r.ok) refused(r);
+        if (!r.ok) refused(r, "notify");
       });
     },
-    [signedIn, keep, askSignIn, refused],
+    [signedIn, keep, askSignIn, refused, locale],
   );
 
   const setSize = useCallback(
     async (slot: SizeSlot, size: Size | null) => {
       const r = await keep("sizes", (s) => withSize(s, slot, size), () => setMySizeAction(slot, size));
-      if (!r.ok) refused(r);
+      if (!r.ok) refused(r, "sizes");
       return r.ok;
     },
     [keep, refused],
@@ -154,7 +168,7 @@ export function useKeep(): Keep {
   const unsave = useCallback(
     async (id: ProductId) => {
       const r = await keep("favorites", (s) => withoutFavorite(s, id), () => unsaveFavoriteAction(id));
-      if (!r.ok) refused(r);
+      if (!r.ok) refused(r, "favorites");
       return r;
     },
     [keep, refused],
@@ -163,7 +177,7 @@ export function useKeep(): Keep {
   const restore = useCallback(
     async (fav: Favorite, at: number) => {
       const r = await keep("favorites", (s) => withFavoriteBack(s, fav, at), () => restoreFavoriteAction(fav.productId));
-      if (!r.ok) refused(r);
+      if (!r.ok) refused(r, "favorites");
       return r;
     },
     [keep, refused],

@@ -5,12 +5,13 @@ import Link from "next/link";
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { useMyState } from "@/components/account/MyStateContext";
 import { useCart } from "@/components/cart/CartContext";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { COLORS } from "@/data/colors";
+import { colorLabel } from "@/data/colors";
 import { sizeChart } from "@/data/size-chart";
 import type { ColorKey, Product, Size } from "@/data/types";
 import { addableOf, qtyInCart, type Cart } from "@/lib/cart";
-import { FIT_LABELS } from "@/lib/catalog-query";
+import { fitLabel } from "@/lib/catalog-query";
 import { demoNow } from "@/lib/clock";
 import {
   canBuy,
@@ -24,9 +25,11 @@ import {
   swatchNote,
 } from "@/lib/feed";
 import { mySizeOf } from "@/lib/feed-me";
+import { picker, type Locale } from "@/lib/i18n";
 import { isFixed, onHandByColor } from "@/lib/inventory";
 import { vnd } from "@/lib/money";
 import { chartNumber, heightRange, isShorts, pantsChart } from "@/lib/pants-chart";
+import { nameLang, productText } from "@/lib/product-text";
 import { FeedIcon } from "./icon/FeedIcon";
 import { FeedSheet } from "./FeedSheet";
 
@@ -101,6 +104,9 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
   const catalog = useCatalog();
   const { add: addLine, cart } = useCart();
   const { state: kept } = useMyState();
+  // The sheets' words in the page's language (round v6 slice E1); a switch while a sheet is open redraws it in place.
+  const locale = useLocale();
+  const t = picker(locale);
 
   const [buy, setBuy] = useState<Choice | null>(null);
   const [buyOpen, setBuyOpen] = useState(false);
@@ -185,6 +191,7 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const p = buy?.product;
+  const text = p ? productText(p, locale) : null;
   const ready = !!buy && !!buy.size && addableOf(buy.product, cart, buy.color, buy.size) > 0;
   const held = buy ? heldIn(cart, buy.product, buy.color) : () => 0;
 
@@ -193,37 +200,39 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
       {children}
 
       <FeedSheet open={buyOpen} onClose={() => setBuyOpen(false)} onClosed={afterBuy} labelledBy="buy-title" back={buy?.opener}>
-        {buy && p && (
+        {buy && p && text && (
           <div className="sheet-panel">
             <div className="grab" aria-hidden="true" />
             <div className="sh-head">
               <Image className="sh-thumb" src={pictureOf(p, buy.color, "pack").src} width={56} height={70} alt="" />
               <div>
-                <h2 className="sh-name disp" id="buy-title">
-                  {p.name}
+                <h2 className="sh-name disp" id="buy-title" lang={nameLang(p, locale)}>
+                  {text.name}
                 </h2>
                 <p className="sh-sub">
-                  {p.kind} · <b>{vnd(p.priceVnd)}</b>
+                  {text.kind} · <b>{vnd(p.priceVnd, locale)}</b>
                 </p>
               </div>
-              <button className="sh-x" type="button" data-close aria-label="Đóng">
+              <button className="sh-x" type="button" data-close aria-label={t({ vi: "Đóng", en: "Close" })}>
                 <FeedIcon name="x" />
               </button>
             </div>
             <div className="sh-block">
+              {/* "Màu " with its space, one text node as it always was (`FeedCards.tsx` says why). */}
               <p className="sh-label">
-                Màu <span>{COLORS[buy.color].label}</span>
+                {t({ vi: "Màu ", en: "Colour " })}
+                <span>{colorLabel(buy.color, locale)}</span>
               </p>
-              <div className="swatches" role="radiogroup" aria-label="Màu">
+              <div className="swatches" role="radiogroup" aria-label={t({ vi: "Màu", en: "Colour" })}>
                 {p.colors.map((c) => {
-                  const note = swatchNote(p, c);
+                  const note = swatchNote(p, c, locale);
                   return (
                     <label className="swatch" key={c}>
                       <input type="radio" name="buy-color" value={c} checked={c === buy.color} onChange={() => pickColor(c)} />
                       <span className={isFixed(p) ? "swatch-img flat" : "swatch-img"}>
                         <Image src={pictureOf(p, c, "pack").src} width={64} height={80} alt="" />
                       </span>
-                      <span className="swatch-name">{COLORS[c].label}</span>
+                      <span className="swatch-name">{colorLabel(c, locale)}</span>
                       {note && <span className="swatch-left">{note}</span>}
                     </label>
                   );
@@ -232,15 +241,15 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
             </div>
             <div className="sh-block">
               <div className="sh-label">
-                <span className="sh-label-t">{sizeRowLabel(buy.size, buy.mine)}</span>{" "}
+                <span className="sh-label-t">{sizeRowLabel(buy.size, buy.mine, locale)}</span>{" "}
                 <button className="link" type="button" onClick={(e) => guide(p, buy.size, e.currentTarget)}>
                   <FeedIcon name="ruler" />
-                  Bảng size
+                  {t({ vi: "Bảng size", en: "Size guide" })}
                 </button>
               </div>
               <div className="sizes" role="radiogroup" aria-label="Size">
                 {sizesIn(p, buy.color).map(({ size, n }) => {
-                  const opt = sizeOption(n, held(size));
+                  const opt = sizeOption(n, held(size), locale);
                   return (
                     <label className="size" key={size}>
                       <input
@@ -260,13 +269,17 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
             </div>
             <button className="btn btn-blue sh-cta" type="button" disabled={!ready} onClick={addNow}>
               {!ready || !buy.size ? (
-                "Chọn size"
+                t({ vi: "Chọn size", en: "Select size" })
               ) : buy.swap ? (
-                `Đổi sang ${COLORS[buy.color].label.toLocaleLowerCase("vi")}, size ${buy.size}`
+                t({
+                  vi: `Đổi sang ${colorLabel(buy.color).toLocaleLowerCase("vi")}, size ${buy.size}`,
+                  en: `Switch to ${colorLabel(buy.color, "en").toLocaleLowerCase("en")}, size ${buy.size}`,
+                })
               ) : (
                 <>
                   <FeedIcon name="bag" />
-                  Thêm vào giỏ <span className="price">· {vnd(p.priceVnd)}</span>
+                  {t({ vi: "Thêm vào giỏ ", en: "Add to bag " })}
+                  <span className="price">· {vnd(p.priceVnd, locale)}</span>
                 </>
               )}
             </button>
@@ -275,7 +288,7 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
       </FeedSheet>
 
       <FeedSheet open={guideOpen} onClose={() => setGuideOpen(false)} labelledBy="guide-title" back={guideBack.current}>
-        {guideFor && <GuidePanel product={guideFor.product} size={guideFor.size} />}
+        {guideFor && <GuidePanel product={guideFor.product} size={guideFor.size} locale={locale} />}
       </FeedSheet>
 
       <FeedSheet
@@ -292,10 +305,10 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
               <div className="ok-head">
                 <FeedIcon name="check-circle-fill" />
                 <h2 className="sh-title" id="added-title">
-                  Đã thêm vào giỏ
+                  {t({ vi: "Đã thêm vào giỏ", en: "Added to bag" })}
                 </h2>
               </div>
-              <button className="sh-x" type="button" data-close aria-label="Đóng">
+              <button className="sh-x" type="button" data-close aria-label={t({ vi: "Đóng", en: "Close" })}>
                 <FeedIcon name="x" />
               </button>
             </div>
@@ -304,22 +317,24 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
                 src={pictureOf(added.product, added.color, "pack").src}
                 width={72}
                 height={90}
-                alt={pictureAlt(added.product, added.color, false)}
+                alt={pictureAlt(added.product, added.color, false, locale)}
               />
               <div>
-                <p className="added-name disp">{added.product.name}</p>
-                <p className="added-meta">
-                  {COLORS[added.color].label} · Size {added.size}
+                <p className="added-name disp" lang={nameLang(added.product, locale)}>
+                  {productText(added.product, locale).name}
                 </p>
-                <p className="added-price">{vnd(added.product.priceVnd)}</p>
+                <p className="added-meta">
+                  {colorLabel(added.color, locale)} · Size {added.size}
+                </p>
+                <p className="added-price">{vnd(added.product.priceVnd, locale)}</p>
               </div>
             </div>
             <div className="stack">
               <Link className="btn btn-blue" href="/cart" data-autofocus>
-                Xem giỏ
+                {t({ vi: "Xem giỏ", en: "View bag" })}
               </Link>
               <button className="btn btn-line" type="button" data-close>
-                Tiếp tục xem
+                {t({ vi: "Tiếp tục xem", en: "Keep browsing" })}
               </button>
             </div>
           </div>
@@ -333,21 +348,34 @@ export function QuickAddProvider({ children }: { children: React.ReactNode }) {
  * "Bảng size" (`feed.js`: `openGuide`): tops by their fit (`data/size-chart.ts`),
  * trousers by their length (`lib/pants-chart.ts`: long, or shorts with their own
  * lengths). Both simulated, and the sheet says so. The chosen size's row is lit.
+ *
+ * In English (round v6 slice E1) "Size guide", the columns by their English
+ * names, the figures with a decimal point and the heights in centimetres like
+ * the rest of the chart (`chartNumber`, `heightRange`).
  */
-function GuidePanel({ product: p, size }: { product: Product; size: Size | null }) {
+function GuidePanel({ product: p, size, locale }: { product: Product; size: Size | null; locale: Locale }) {
+  const t = picker(locale);
   const pants = p.family === "PANTS";
-  const kind = pants ? (isShorts(p) ? "Quần short" : "Quần dài") : `Form ${FIT_LABELS[p.fit]}`;
+  const kind = pants
+    ? isShorts(p)
+      ? t({ vi: "Quần short", en: "Shorts" })
+      : t({ vi: "Quần dài", en: "Trousers" })
+    : t({ vi: `Form ${fitLabel(p.fit)}`, en: `${fitLabel(p.fit, "en")} fit` });
   const head = pants
-    ? ["Vòng eo", "Vòng mông", "Dài quần", "Ngang đùi", "Hợp chiều cao"]
-    : ["Ngang ngực", "Dài áo", "Ngang vai", "Hợp chiều cao"];
+    ? t({
+        vi: ["Vòng eo", "Vòng mông", "Dài quần", "Ngang đùi", "Hợp chiều cao"],
+        en: ["Waist", "Hip", "Length", "Thigh", "Height"],
+      })
+    : t({ vi: ["Ngang ngực", "Dài áo", "Ngang vai", "Hợp chiều cao"], en: ["Chest", "Length", "Shoulder", "Height"] });
+  const num = (n: number) => chartNumber(n, locale);
   const rows: { size: Size; cells: string[] }[] = pants
     ? pantsChart(p).map((r) => ({
         size: r.size,
-        cells: [r.waist, r.hip, r.length, r.thigh].map(chartNumber).concat(heightRange(r.heightFrom, r.heightTo)),
+        cells: [r.waist, r.hip, r.length, r.thigh].map(num).concat(heightRange(r.heightFrom, r.heightTo, locale)),
       }))
     : sizeChart(p.fit).map((r) => ({
         size: r.size,
-        cells: [r.chestFlat, r.length, r.shoulder].map(chartNumber).concat(heightRange(r.heightFrom, r.heightTo)),
+        cells: [r.chestFlat, r.length, r.shoulder].map(num).concat(heightRange(r.heightFrom, r.heightTo, locale)),
       }));
   return (
     <div className="sheet-panel">
@@ -355,11 +383,14 @@ function GuidePanel({ product: p, size }: { product: Product; size: Size | null 
       <div className="sh-head plain">
         <div>
           <h2 className="sh-title" id="guide-title">
-            Bảng size
+            {t({ vi: "Bảng size", en: "Size guide" })}
           </h2>
-          <p className="sh-sub">{kind} · Số đo mô phỏng, cm</p>
+          <p className="sh-sub">
+            {kind}
+            {t({ vi: " · Số đo mô phỏng, cm", en: " · Simulated measurements, cm" })}
+          </p>
         </div>
-        <button className="sh-x" type="button" data-close aria-label="Đóng">
+        <button className="sh-x" type="button" data-close aria-label={t({ vi: "Đóng", en: "Close" })}>
           <FeedIcon name="x" />
         </button>
       </div>
@@ -367,8 +398,9 @@ function GuidePanel({ product: p, size }: { product: Product; size: Size | null 
         <thead>
           <tr>
             <th scope="col">Size</th>
-            {head.map((h) => (
-              <th scope="col" key={h}>
+            {/* Keyed by place: a column's name changes with the language. */}
+            {head.map((h, i) => (
+              <th scope="col" key={i}>
                 {h}
               </th>
             ))}
@@ -385,7 +417,11 @@ function GuidePanel({ product: p, size }: { product: Product; size: Size | null 
           ))}
         </tbody>
       </table>
-      <p className="fit-note">{pants ? "Sai số ±1 cm." : "Đo phẳng, sai số ±1 cm."}</p>
+      <p className="fit-note">
+        {pants
+          ? t({ vi: "Sai số ±1 cm.", en: "Allow ±1 cm." })
+          : t({ vi: "Đo phẳng, sai số ±1 cm.", en: "Measured flat. Allow ±1 cm." })}
+      </p>
     </div>
   );
 }

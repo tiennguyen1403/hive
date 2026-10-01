@@ -55,3 +55,18 @@ export function teaserText(teaser: Pick<Teaser, "name" | "kind" | "en">, locale:
   if (locale === "vi" || teaser.en === undefined) return { name: teaser.name, kind: teaser.kind };
   return { name: either(teaser.en.name, teaser.name), kind: either(teaser.en.kind, teaser.kind) };
 }
+
+/**
+ * The `lang` an element holding nothing but a style's or a teaser's name
+ * carries (round v6 slice E1): `"vi"` on an English page when the name printed
+ * is the Vietnamese one — an issue's style (KHÓI, SỎI), or a fixed style whose
+ * English the back office dropped — so a screen reader says it as Vietnamese;
+ * nothing otherwise, and nothing at all on a Vietnamese page, whose `<html>`
+ * says it already. Read off the same fallback `productText` and `teaserText`
+ * take, so the two cannot disagree.
+ */
+export function nameLang(item: { en?: { name?: string } | undefined }, locale: Locale): "vi" | undefined {
+  if (locale === "vi") return undefined;
+  const english = item.en?.name;
+  return english !== undefined && english.trim() !== "" ? undefined : "vi";
+}

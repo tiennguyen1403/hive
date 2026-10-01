@@ -2,6 +2,7 @@ import type { ColorKey, Drop, Product } from "@/data/types";
 import type { Catalog } from "./catalog";
 import { dropState } from "./drop";
 import { firstColor, photoKeyOf } from "./feed";
+import type { Pair } from "./i18n";
 import { productsInDrop } from "./inventory";
 import { lookbookUrl } from "./photos";
 
@@ -11,6 +12,12 @@ import { lookbookUrl } from "./photos";
  * (`prototype/explore/feed/archive.js`, `issue.js`). Pure; the time is
  * handed in.
  */
+
+/**
+ * The archive's name (round v6 slice E1: in both languages), on the page
+ * (`ArchiveList`) and as its tab's title and its bar's (`app/so/page.tsx`).
+ */
+export const ARCHIVE_TITLE: Pair = { vi: "Các Số đã đóng", en: "Closed drops" };
 
 /** Every issue that has closed, the newest first. */
 export function closedIssues(catalog: Catalog, now: Date): Drop[] {

@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useMyState } from "@/components/account/MyStateContext";
 import { useCart } from "@/components/cart/CartContext";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { COLORS } from "@/data/colors";
+import { colorLabel } from "@/data/colors";
 import type { ColorKey, Product, Size } from "@/data/types";
 import { addableOf, qtyInCart } from "@/lib/cart";
 import { PICTURE, pictureAlt, pictureOf, sizeOption, sizeRowLabel, sizesIn, startSize, swatchNote } from "@/lib/feed";
@@ -24,8 +25,10 @@ import {
   type FactRow,
   type MainStock,
 } from "@/lib/feed-product";
+import { picker, plural, type Pair } from "@/lib/i18n";
 import { isFixed } from "@/lib/inventory";
 import { vnd } from "@/lib/money";
+import { nameLang, productText } from "@/lib/product-text";
 import { backOrFollow } from "../back";
 import { Rail } from "../FeedBlocks";
 import { FavButton } from "../FeedCards";
@@ -67,6 +70,11 @@ const desktop = () => window.matchMedia("(min-width: 900px)").matches;
  * basket already is struck through like a size that cannot be bought, noted
  * "Đã có trong giỏ", and cannot be chosen; a chosen size that fills up that
  * way lets go, and the button asks for a size again.
+ *
+ * In both languages since round v6 slice E1: the style's words through
+ * `productText` (its name with `lang="vi"` when it is a Vietnamese one), the
+ * facts and the buttons by the glossary. A switch of language keeps the
+ * colour, the size and the photo on show.
  */
 export function ProductPage({ slug, asked }: { slug: string; asked?: string }) {
   const catalog = useCatalog();
@@ -78,10 +86,14 @@ export function ProductPage({ slug, asked }: { slug: string; asked?: string }) {
 function ProductView({ product: p, asked }: { product: Product; asked: string | undefined }) {
   const catalog = useCatalog();
   const now = useNow();
+  const locale = useLocale();
+  const t = picker(locale);
   const quick = useQuickAdd();
   const { cart } = useCart();
   const { state: kept } = useMyState();
   const mine = mySizeOf(kept, p);
+  const text = productText(p, locale);
+  const lang = nameLang(p, locale);
 
   const buy = buyState(catalog, p, now);
   const selling = buy.kind === "open";
@@ -90,7 +102,7 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
   const over = standing !== null;
   const sold = buy.kind === "sold";
   const fixed = isFixed(p);
-  const line = styleLine(catalog, p, now);
+  const line = styleLine(catalog, p, now, locale);
 
   const [color, setColor] = useState<ColorKey>(() => pageColor(p, asked));
   // Size của tôi from the first render when the colour has it (`product.js`: `myPick(color0)`). The basket is not
@@ -226,37 +238,44 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
     });
   }
 
-  const label = buyLabel(buy);
+  const label = buyLabel(buy, locale);
   const cta = (
     <button className="btn btn-blue" type="button" disabled={label !== null} onClick={onCta}>
       {label ??
         (ready ? (
           <>
             <FeedIcon name="bag" />
-            Thêm vào giỏ <span className="price">· {vnd(p.priceVnd)}</span>
+            {t({ vi: "Thêm vào giỏ ", en: "Add to bag " })}
+            <span className="price">· {vnd(p.priceVnd, locale)}</span>
           </>
         ) : (
-          "Chọn size"
+          t({ vi: "Chọn size", en: "Select size" })
         ))}
     </button>
   );
 
-  const colorName = COLORS[color].label;
+  const colorName = colorLabel(color, locale);
 
   return (
     <>
       <PhoneBar product={p} color={color} solid={solid} />
 
       <div className="pdp">
-        <nav className="crumbs" aria-label="Đường dẫn">
-          <Link href="/products">Cửa hàng</Link>
+        <nav className="crumbs" aria-label={t({ vi: "Đường dẫn", en: "Breadcrumb" })}>
+          <Link href="/products">{t({ vi: "Cửa hàng", en: "Shop" })}</Link>
           <span aria-hidden="true">/</span>
           <Link href={line.href}>{line.label}</Link>
           <span aria-hidden="true">/</span>
-          <span aria-current="page">{p.name}</span>
+          <span aria-current="page" lang={lang}>
+            {text.name}
+          </span>
         </nav>
 
-        <section ref={gal} className={cx("gal", sold && "is-sold", !many && "one")} aria-label={`Ảnh ${p.name}`}>
+        <section
+          ref={gal}
+          className={cx("gal", sold && "is-sold", !many && "one")}
+          aria-label={t({ vi: `Ảnh ${text.name}`, en: `Photos of ${text.name}` })}
+        >
           <div
             ref={track}
             className="gal-track"
@@ -276,7 +295,7 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
                     sizes={FRAME_SIZES}
                     loading={i > 1 ? "lazy" : "eager"}
                     {...(i === 0 ? { fetchPriority: "high" as const } : {})}
-                    alt={pictureAlt(p, color, pic.look)}
+                    alt={pictureAlt(p, color, pic.look, locale)}
                   />
                 </figure>
               );
@@ -292,7 +311,7 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
               <button
                 className="gal-btn gal-prev"
                 type="button"
-                aria-label="Ảnh trước"
+                aria-label={t({ vi: "Ảnh trước", en: "Previous photo" })}
                 disabled={frame === 0}
                 onClick={(e) => go(frame - 1, e.currentTarget)}
               >
@@ -301,7 +320,7 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
               <button
                 className="gal-btn gal-next"
                 type="button"
-                aria-label="Ảnh sau"
+                aria-label={t({ vi: "Ảnh sau", en: "Next photo" })}
                 disabled={frame === last}
                 onClick={(e) => go(frame + 1, e.currentTarget)}
               >
@@ -309,10 +328,13 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
               </button>
             </>
           )}
-          {sold && <span className="plate">ĐÃ HẾT</span>}
+          {sold && <span className="plate">{t({ vi: "ĐÃ HẾT", en: "SOLD OUT" })}</span>}
           {many && (
             <p className="sr-only" id="gal-count" aria-live="polite">
-              Ảnh {frame + 1} trên {kinds.length}, màu {colorName.toLocaleLowerCase("vi")}
+              {t({
+                vi: `Ảnh ${frame + 1} trên ${kinds.length}, màu ${colorName.toLocaleLowerCase("vi")}`,
+                en: `Photo ${frame + 1} of ${kinds.length}, ${colorName.toLocaleLowerCase("en")}`,
+              })}
             </p>
           )}
         </section>
@@ -321,27 +343,35 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
           <div className="pinfo">
             <div className="pinfo-tags">
               <span className="chip-tag">{line.label}</span>
-              {standing && <span className="chip-line">{standing.closed ? "ĐÃ ĐÓNG" : "SẮP MỞ"}</span>}
+              {standing && (
+                <span className="chip-line">
+                  {standing.closed ? t({ vi: "ĐÃ ĐÓNG", en: "CLOSED" }) : t({ vi: "SẮP MỞ", en: "COMING SOON" })}
+                </span>
+              )}
             </div>
-            <h1 className="pname disp">{p.name}</h1>
-            <p className="pkind">{p.kind}</p>
-            <p className="pprice">{vnd(p.priceVnd)}</p>
+            <h1 className="pname disp" lang={lang}>
+              {text.name}
+            </h1>
+            <p className="pkind">{text.kind}</p>
+            <p className="pprice">{vnd(p.priceVnd, locale)}</p>
             <StockMain facts={mainStock(catalog, p, now)} />
 
             <div className="pblock">
+              {/* "Màu " with its space, one text node as it always was (`FeedCards.tsx` says why). */}
               <p className="sh-label">
-                Màu <span>{colorName}</span>
+                {t({ vi: "Màu ", en: "Colour " })}
+                <span>{colorName}</span>
               </p>
-              <div className="swatches" role="radiogroup" aria-label="Màu">
+              <div className="swatches" role="radiogroup" aria-label={t({ vi: "Màu", en: "Colour" })}>
                 {p.colors.map((c) => {
-                  const note = over ? null : swatchNote(p, c);
+                  const note = over ? null : swatchNote(p, c, locale);
                   return (
                     <label className="swatch" key={c}>
                       <input type="radio" name="p-color" value={c} checked={c === color} onChange={() => chooseColor(c)} />
                       <span className={fixed ? "swatch-img flat" : "swatch-img"}>
                         <Image src={pictureOf(p, c, "pack").src} width={64} height={80} alt="" />
                       </span>
-                      <span className="swatch-name">{COLORS[c].label}</span>
+                      <span className="swatch-name">{colorLabel(c, locale)}</span>
                       {note && <span className="swatch-left">{note}</span>}
                     </label>
                   );
@@ -352,15 +382,15 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
             {!over && (
               <div ref={sizeBlock} className={cx("pblock", need && "need")}>
                 <div className="sh-label">
-                  <span className="sh-label-t">{sizeRowLabel(chosen, mine)}</span>{" "}
+                  <span className="sh-label-t">{sizeRowLabel(chosen, mine, locale)}</span>{" "}
                   <button className="link" type="button" onClick={(e) => quick.guide(p, chosen, e.currentTarget)}>
                     <FeedIcon name="ruler" />
-                    Bảng size
+                    {t({ vi: "Bảng size", en: "Size guide" })}
                   </button>
                 </div>
                 <div ref={sizesRow} className="sizes" role="radiogroup" aria-label="Size">
                   {sizesIn(p, color).map(({ size: z, n }) => {
-                    const opt = sizeOption(n, held(color)(z));
+                    const opt = sizeOption(n, held(color)(z), locale);
                     return (
                       <label className="size" key={z}>
                         <input
@@ -378,7 +408,7 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
                   })}
                 </div>
                 <p className="size-hint" aria-live="polite">
-                  {need ? "Chọn size để thêm vào giỏ" : ""}
+                  {need ? t({ vi: "Chọn size để thêm vào giỏ", en: "Select a size to add to bag" }) : ""}
                 </p>
               </div>
             )}
@@ -388,35 +418,41 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
         </div>
 
         <div className="psects">
-          {p.details.length > 0 && (
+          {text.details.length > 0 && (
             <section className="sect" aria-labelledby="h-detail">
               <h2 className="sect-title" id="h-detail">
-                Chi tiết
+                {t({ vi: "Chi tiết", en: "Details" })}
               </h2>
               <ul className="details">
-                {p.details.map((d) => (
-                  <li key={d}>{d}</li>
+                {/* Keyed by place: a line's words change with the language. */}
+                {text.details.map((d, i) => (
+                  <li key={i}>{d}</li>
                 ))}
               </ul>
             </section>
           )}
           <section className="sect" aria-labelledby="h-spec">
             <h2 className="sect-title" id="h-spec">
-              Thông số
+              {t({ vi: "Thông số", en: "Specs" })}
             </h2>
-            <Facts rows={specRows(p)} />
+            <Facts rows={specRows(p, locale)} />
           </section>
           <section className="sect" aria-labelledby="h-ship">
             <h2 className="sect-title" id="h-ship">
-              Giao hàng và đổi trả
+              {t({ vi: "Giao hàng và đổi trả", en: "Delivery and returns" })}
             </h2>
-            <Facts rows={shipRows()} />
+            <Facts rows={shipRows(locale)} />
           </section>
         </div>
 
         {line.others.length > 0 && (
           <div className="sect rail-sect">
-            <Rail id="rail-more" title={line.railTitle} more={{ href: line.href, label: "Xem tất cả" }} items={line.others} />
+            <Rail
+              id="rail-more"
+              title={line.railTitle}
+              more={{ href: line.href, label: t({ vi: "Xem tất cả", en: "View all" }) }}
+              items={line.others}
+            />
           </div>
         )}
       </div>
@@ -431,19 +467,25 @@ function ProductView({ product: p, asked }: { product: Product; asked: string | 
  * the photo has scrolled away and the bar has turned solid — the heart and
  * the bag with its count. Gone from 900px, where the top bar is.
  */
+/** "Giỏ, 2 món" / "Giỏ, đang trống" — the bag's name with its count, as the top bar names it (`FeedChrome`). */
+const bagLabel = (n: number): Pair =>
+  n ? { vi: `Giỏ, ${n} món`, en: `Bag, ${plural(n, "item", "items")}` } : { vi: "Giỏ, đang trống", en: "Bag, empty" };
+
 function PhoneBar({ product: p, color, solid }: { product: Product; color: ColorKey; solid: boolean }) {
   const { units, ready } = useCart();
+  const locale = useLocale();
+  const t = picker(locale);
   const n = ready ? units : 0;
   return (
     <div className={cx("pbar", solid && "solid")}>
-      <Link className="ib" href="/" aria-label="Quay lại" onClick={backOrFollow}>
+      <Link className="ib" href="/" aria-label={t({ vi: "Quay lại", en: "Back" })} onClick={backOrFollow}>
         <FeedIcon name="caret-left" />
       </Link>
-      <p className="pbar-title disp" aria-hidden="true">
-        {p.name}
+      <p className="pbar-title disp" aria-hidden="true" lang={nameLang(p, locale)}>
+        {productText(p, locale).name}
       </p>
       <FavButton product={p} color={color} bar />
-      <Link className="ib" href="/cart" data-cart-link="" aria-label={n ? `Giỏ, ${n} món` : "Giỏ, đang trống"}>
+      <Link className="ib" href="/cart" data-cart-link="" aria-label={t(bagLabel(n))}>
         <FeedIcon name="bag" />
         {n > 0 && <span className="badge">{n > 99 ? "99+" : n}</span>}
       </Link>
@@ -451,20 +493,36 @@ function PhoneBar({ product: p, color, solid }: { product: Product; color: Color
   );
 }
 
-/** The line under the price (`stockMain`): what is left of the cut, what sold, or the sizes a fixed style is out of. */
+/**
+ * The line under the price (`stockMain`): what is left of the cut, what sold, or the sizes a fixed style is out of.
+ * In English "17 left / 35 pieces cut", "18/35 sold", "Out of S, M", "All sizes".
+ */
 function StockMain({ facts }: { facts: MainStock }) {
+  const t = picker(useLocale());
   switch (facts.kind) {
     case "fixed":
       return (
         <p className="stock pstock">
-          <span>{facts.gone.length ? `Hết ${facts.gone.join(" ")}` : "Đủ size"}</span>
+          <span>
+            {facts.gone.length
+              ? t({ vi: `Hết ${facts.gone.join(" ")}`, en: `Out of ${facts.gone.join(", ")}` })
+              : t({ vi: "Đủ size", en: "All sizes" })}
+          </span>
         </p>
       );
+    // The Vietnamese as the JSX it always was, words and figures apart (`FeedCards.tsx` says why).
     case "sold":
       return (
         <p className="stock pstock">
           <b>
-            {facts.sold}/{facts.cut} đã bán
+            {t<React.ReactNode>({
+              vi: (
+                <>
+                  {facts.sold}/{facts.cut} đã bán
+                </>
+              ),
+              en: `${facts.sold}/${facts.cut} sold`,
+            })}
           </b>
         </p>
       );
@@ -473,21 +531,25 @@ function StockMain({ facts }: { facts: MainStock }) {
         <p className={cx("stock pstock", facts.low && "is-low")}>
           <b>
             {facts.low && <FeedIcon name="fire-fill" />}
-            Còn {facts.n}
+            {t<React.ReactNode>({ vi: <>Còn {facts.n}</>, en: `${facts.n} left` })}
           </b>
-          <span>/ {facts.cut} chiếc đã cắt</span>
+          <span>{t<React.ReactNode>({ vi: <>/ {facts.cut} chiếc đã cắt</>, en: `/ ${plural(facts.cut, "piece", "pieces")} cut` })}</span>
         </p>
       );
   }
 }
 
-/** A list of facts; a row with a link is a link across the whole row, its value ending in a quiet arrow. */
+/**
+ * A list of facts; a row with a link is a link across the whole row, its value ending in a quiet arrow. Rows are
+ * keyed by place, since their labels change with the language; a value that is a Vietnamese name (a print's) carries
+ * `lang="vi"` on an English page.
+ */
 function Facts({ rows }: { rows: FactRow[] }) {
   return (
     <dl className="facts">
-      {rows.map((r) =>
+      {rows.map((r, i) =>
         r.href ? (
-          <div className="facts-go" key={r.label}>
+          <div className="facts-go" key={i}>
             <dt>{r.label}</dt>
             <dd>
               <Link href={r.href} aria-label={`${r.label} ${r.value}`}>
@@ -497,9 +559,9 @@ function Facts({ rows }: { rows: FactRow[] }) {
             </dd>
           </div>
         ) : (
-          <div key={r.label}>
+          <div key={i}>
             <dt>{r.label}</dt>
-            <dd>{r.value}</dd>
+            <dd lang={r.lang}>{r.value}</dd>
           </div>
         ),
       )}

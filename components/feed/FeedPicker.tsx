@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { fold } from "@/lib/catalog-query";
+import { picker } from "@/lib/i18n";
 import { FeedIcon } from "./icon/FeedIcon";
 import { FeedSheet } from "./FeedSheet";
 
@@ -41,8 +43,12 @@ const finePointer = () => window.matchMedia("(hover: hover) and (pointer: fine)"
  * On a mouse the field takes the focus; on a touch screen the keyboard would
  * cover half the list, so the focus rests on the current choice, or the first
  * row, scrolled into the middle.
+ *
+ * Its own words in the page's language since round v6 slice E1 ("Close", "No
+ * results"); the title, the field's name and the waiting line are the caller's.
  */
 export function FeedPicker({ open, onClose, title, sub, placeholder, items, value, waiting, onPick, back }: FeedPickerProps) {
+  const t = picker(useLocale());
   const [query, setQuery] = useState("");
   const list = useRef<HTMLUListElement>(null);
   const field = useRef<HTMLInputElement>(null);
@@ -117,7 +123,7 @@ export function FeedPicker({ open, onClose, title, sub, placeholder, items, valu
             </h2>
             {sub && <p className="sh-sub">{sub}</p>}
           </div>
-          <button className="sh-x" type="button" data-close aria-label="Đóng">
+          <button className="sh-x" type="button" data-close aria-label={t({ vi: "Đóng", en: "Close" })}>
             <FeedIcon name="x" />
           </button>
         </div>
@@ -150,7 +156,9 @@ export function FeedPicker({ open, onClose, title, sub, placeholder, items, valu
             </li>
           ))}
         </ul>
-        {hits.length === 0 && <p className="pick-empty">{items.length === 0 && waiting ? waiting : "Không có kết quả"}</p>}
+        {hits.length === 0 && (
+          <p className="pick-empty">{items.length === 0 && waiting ? waiting : t({ vi: "Không có kết quả", en: "No results" })}</p>
+        )}
       </div>
     </FeedSheet>
   );

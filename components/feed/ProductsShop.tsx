@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { shopQuery, type ShopLine, type ShopState } from "@/lib/feed";
+import { picker } from "@/lib/i18n";
 import { FeedShop } from "./FeedShop";
 
 /**
@@ -16,6 +18,7 @@ import { FeedShop } from "./FeedShop";
  * so a reload or a shared link opens the same grid.
  */
 export function ProductsShop({ lines, initial }: { lines: readonly ShopLine[]; initial: ShopState }) {
+  const t = picker(useLocale());
   const [state, setState] = useState<ShopState>(initial);
 
   const onChange = useCallback(
@@ -27,5 +30,5 @@ export function ProductsShop({ lines, initial }: { lines: readonly ShopLine[]; i
     [lines],
   );
 
-  return <FeedShop lines={lines} state={state} onChange={onChange} title="Cửa hàng" sort h="h2" />;
+  return <FeedShop lines={lines} state={state} onChange={onChange} title={t({ vi: "Cửa hàng", en: "Shop" })} sort h="h2" />;
 }

@@ -1,4 +1,5 @@
 import { dayMonth } from "./datetime";
+import type { Locale } from "./i18n";
 
 /**
  * A range as the Feed screens print it (round v4): the mock's hyphen-minus,
@@ -23,9 +24,12 @@ export function feedRange(from: string, to: string): string {
   return from === to ? from : `${from}${FEED_DASH}${to}`;
 }
 
-/** Two instants as the days they fall on: "11/09 - 25/09" (Vietnamese wall clock, `dayMonth`). */
-export function feedDayRange(fromIso: string, toIso: string): string {
-  return feedRange(dayMonth(fromIso), dayMonth(toIso));
+/**
+ * Two instants as the days they fall on: "11/09 - 25/09" (Vietnamese wall
+ * clock, `dayMonth`); in English "11 Sep - 25 Sep" (round v6 slice E1).
+ */
+export function feedDayRange(fromIso: string, toIso: string, locale: Locale = "vi"): string {
+  return feedRange(dayMonth(fromIso, locale), dayMonth(toIso, locale));
 }
 
 /** "1m55-1m65": two values joined tight. */

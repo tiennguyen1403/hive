@@ -1,4 +1,5 @@
 import type { Fit, Product } from "@/data/types";
+import { pick, pickAll, type Locale, type Pair } from "./i18n";
 import { styleName } from "./lexicon";
 
 /**
@@ -8,10 +9,22 @@ import { styleName } from "./lexicon";
  */
 
 export const FITS = ["OVERSIZE", "REGULAR"] as const;
-export const FIT_LABELS: Record<Fit, string> = {
-  OVERSIZE: "Oversize",
-  REGULAR: "Regular",
+
+/**
+ * The two fits in both languages (round v6 slice E1, the glossary's "Form
+ * Fit (Oversized / Regular)"); `FIT_LABELS` stays the Vietnamese side.
+ */
+export const FIT_LABELS_TEXT: Readonly<Record<Fit, Pair>> = {
+  OVERSIZE: { vi: "Oversize", en: "Oversized" },
+  REGULAR: { vi: "Regular", en: "Regular" },
 };
+
+export const FIT_LABELS: Record<Fit, string> = pickAll(FIT_LABELS_TEXT, "vi");
+
+/** A fit's name in one language: "Oversize", or "Oversized". */
+export function fitLabel(fit: Fit, locale: Locale = "vi"): string {
+  return pick(FIT_LABELS_TEXT[fit], locale);
+}
 
 // ─────────────────────────────────────────────────────────── accent folding
 /**

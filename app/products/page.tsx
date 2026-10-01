@@ -5,9 +5,19 @@ import { demoNowMs } from "@/lib/clock";
 import { loadCatalog } from "@/lib/db/catalog";
 import { parseShopState, shopLines } from "@/lib/feed";
 import { homeMoment, lineIssue } from "@/lib/feed-home";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
-/** "Cửa hàng" — the layout's template adds "· HIVE". */
-export const metadata: Metadata = { title: "Cửa hàng" };
+/**
+ * "Cửa hàng" — the layout's template adds "· HIVE". In the page's language
+ * since round v6 slice E1 ("Shop"), with the site's description in it too;
+ * the link card keeps the layout's Vietnamese one (QĐ-40).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return { title: t({ vi: "Cửa hàng", en: "Shop" }), description: t(SITE_DESCRIPTION_TEXT) };
+}
 
 /**
  * The shop, round v4 "Feed" (slice 1b): the approved mock's

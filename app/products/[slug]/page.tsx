@@ -5,6 +5,9 @@ import { ProductPage } from "@/components/feed/product/ProductPage";
 import { legacySlugTarget } from "@/lib/catalog";
 import { demoNowMs } from "@/lib/clock";
 import { loadCatalog } from "@/lib/db/catalog";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { productText } from "@/lib/product-text";
 
 // There is no `generateStaticParams` here. It used to pre-render all twenty-one
 // styles, which was free while the catalogue was a fixture in the bundle;
@@ -24,15 +27,18 @@ import { loadCatalog } from "@/lib/db/catalog";
 
 export async function generateMetadata(props: PageProps<"/products/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
-  const catalog = await loadCatalog();
+  const [catalog, locale] = await Promise.all([loadCatalog(), getLocale()]);
   const p = catalog.bySlug.get(slug);
   // An old address is redirected by the page below; its title is never shown.
-  if (!p) return { title: "Không tìm thấy" };
+  if (!p) return { title: picker(locale)({ vi: "Không tìm thấy", en: "Not found" }) };
   // The name as the Feed page prints it — "KHÓI", without its issue's code
   // (round v4, conflict #3 the user settled for the Feed) — as the mock titles it.
+  // In the page's language since round v6 slice E1, through `productText`:
+  // "PLAIN TEE", "Tee · Cotton 220gsm".
+  const text = productText(p, locale);
   return {
-    title: p.name,
-    description: `${p.kind} · ${p.material}`,
+    title: text.name,
+    description: `${text.kind} · ${text.material}`,
   };
 }
 

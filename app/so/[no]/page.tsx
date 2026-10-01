@@ -7,7 +7,10 @@ import type { Catalog } from "@/lib/catalog";
 import { demoNowMs } from "@/lib/clock";
 import { loadCatalog } from "@/lib/db/catalog";
 import { dropState } from "@/lib/drop";
+import { picker } from "@/lib/i18n";
 import { issueLabel } from "@/lib/lexicon";
+import { getLocale } from "@/lib/locale";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
 /** The issue the address names — `/so/5` — or nothing for a number no issue has. */
 async function askedDrop(catalog: Catalog, props: PageProps<"/so/[no]">): Promise<Drop | undefined> {
@@ -16,10 +19,15 @@ async function askedDrop(catalog: Catalog, props: PageProps<"/so/[no]">): Promis
   return Number.isInteger(asked) ? catalog.dropByNo.get(asked) : undefined;
 }
 
-/** "Số 04" — the layout adds "· HIVE". */
+/** "Số 04" — the layout adds "· HIVE". In English (round v6 slice E1) "Drop 04", with the site's description in it. */
 export async function generateMetadata(props: PageProps<"/so/[no]">): Promise<Metadata> {
-  const drop = await askedDrop(await loadCatalog(), props);
-  return { title: drop ? issueLabel(drop.no) : "Không tìm thấy" };
+  const [catalog, locale] = await Promise.all([loadCatalog(), getLocale()]);
+  const drop = await askedDrop(catalog, props);
+  const t = picker(locale);
+  return {
+    title: drop ? issueLabel(drop.no, locale) : t({ vi: "Không tìm thấy", en: "Not found" }),
+    description: t(SITE_DESCRIPTION_TEXT),
+  };
 }
 
 /**
@@ -36,7 +44,7 @@ export async function generateMetadata(props: PageProps<"/so/[no]">): Promise<Me
  * `notFound` throw, so nothing after them runs.
  */
 export default async function IssuePage(props: PageProps<"/so/[no]">) {
-  const catalog = await loadCatalog();
+  const [catalog, locale] = await Promise.all([loadCatalog(), getLocale()]);
   const drop = await askedDrop(catalog, props);
   if (!drop) notFound();
 
@@ -49,7 +57,7 @@ export default async function IssuePage(props: PageProps<"/so/[no]">) {
     <FeedFrame
       page="issue"
       now={nowMs}
-      mbar={{ title: issueLabel(drop.no), back: "/so", watch: "[data-ui='feed'] .b-hero-no" }}
+      mbar={{ title: issueLabel(drop.no, locale), back: "/so", watch: "[data-ui='feed'] .b-hero-no" }}
     >
       <div className="b-wrap b-page">
         <IssueRecap no={drop.no} />

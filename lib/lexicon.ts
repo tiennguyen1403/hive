@@ -234,8 +234,11 @@ export const FIXED_WORD = FIXED_WORD_TEXT.vi;
  * (`Product.kind`) and nothing says a future one cannot carry a word that
  * has to keep its capital — a fabric brand, a collaboration. Lowering the
  * whole string would quietly rewrite it.
+ *
+ * In English (round v6 slice E1) the same, by the English rules:
+ * "Oversized tee" → "oversized tee".
  */
-export function kindInSentence(kind: string): string {
+export function kindInSentence(kind: string, locale: Locale = "vi"): string {
   const first = kind.slice(0, 1);
-  return first.toLocaleLowerCase("vi") + kind.slice(1);
+  return first.toLocaleLowerCase(locale) + kind.slice(1);
 }
