@@ -26,8 +26,8 @@ import { orderTotalVnd } from "./orders";
  *
  * The 24 sample orders are a RECENT SAMPLE, not the full ledger, and since
  * slice B3a they share the book with whatever the demo's visitors order.
- * Screens reading this module must say so; that is what `AdminTop`'s "Dữ
- * liệu mẫu" badge is for.
+ * Screens reading this module must say so; that is what the "Dữ liệu mẫu"
+ * badge in every Arc screen's heading is for.
  */
 
 /**

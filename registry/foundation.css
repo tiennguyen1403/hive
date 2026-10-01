@@ -192,5 +192,6 @@
 html[data-pointer]:has([data-ui="admin"]) { --focus-ring: transparent; }
 
 /* HIVE patch: layers portalled to <body> (Dialog, Select, menus, toasts) inherit their text from here, not from the
-   Arc zone. Without it a Dialog body read Be Vietnam Pro, the v3 face Tailwind's preflight sets on <html>. */
+   Arc zone. Without it a Dialog body read Be Vietnam Pro, the v3 face Tailwind's preflight set on <html> until round v5
+   slice 6; <html> now reads Mona Sans too, and the rule still sets the zone's face and ink on the portals. */
 :root:has([data-ui="admin"]) body { font-family: var(--font-body); color: var(--foreground); }

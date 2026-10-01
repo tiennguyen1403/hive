@@ -1,12 +1,11 @@
 import Link from "next/link";
-import type { BadgeTone as V3BadgeTone } from "@/components/ui/Badge";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
 import type { Order } from "@/data/types";
 import type { AdminOrder } from "@/lib/admin-orders";
 import { orderCustomer, orderNote } from "@/lib/admin-rows";
 import type { CustomerTag } from "@/lib/customer-tags";
 import { clockLabel, dayMonth } from "@/lib/datetime";
-import { PAYMENT_LABEL, STATE_LABEL } from "@/lib/order-labels";
+import { PAYMENT_LABEL, STATE_LABEL, type StatusTone } from "@/lib/order-labels";
 import { formatPhone } from "@/lib/phone";
 import { Avatar } from "@/registry/components/avatar/avatar";
 import { Badge, type BadgeTone } from "@/registry/components/badge/badge";
@@ -19,10 +18,11 @@ import styles from "./ArcOrdersScreen.module.css";
  */
 
 /**
- * v3's badge tones, by the job they did, to Arc's (brief, §3.6). The order's
- * own page reads it too, for the badge beside its code (slice 1).
+ * A status label's tone (`StatusTone`, the job v3's badge tones did) to Arc's
+ * (brief v5 slice 0, §3.6). The order's own page reads it too, for the badge
+ * beside its code (slice 1).
  */
-export const TONE: Record<V3BadgeTone, BadgeTone> = {
+export const TONE: Record<StatusTone, BadgeTone> = {
   warn: "warning",
   ok: "success",
   info: "info",
@@ -58,8 +58,8 @@ export function CodeCell({ code }: { code: string }) {
  * The name Arc's `Avatar` takes its two letters from. Arc reads the first two
  * words; a Vietnamese name runs họ · đệm · tên, and the letters the back
  * office has always shown are the family name and the given name, the first
- * word and the last (`lib/initials.ts`). "Trần Minh Anh" is "TA", as on every
- * v3 screen, not "TM". The avatar is hidden from assistive tech: the name is
+ * word and the last (v3's `initialsOf`, gone with the v3 screens at round v5
+ * slice 6). "Trần Minh Anh" is "TA", as on every v3 screen, not "TM". The avatar is hidden from assistive tech: the name is
  * printed beside it.
  */
 export function monogramName(name: string): string {

@@ -31,16 +31,18 @@ import { compactVnd, plainVnd, vnd } from "@/lib/money";
 import { STATE_LABEL } from "@/lib/order-labels";
 import { orderTotalVnd } from "@/lib/orders";
 import { photoUrl } from "@/lib/photos";
-import { Badge, type BadgeTone } from "@/registry/components/badge/badge";
+import { Badge } from "@/registry/components/badge/badge";
 import { Button } from "@/registry/components/button/button";
 import SegmentedControl from "@/registry/components/segmented-control/segmented-control";
 import { ArcButtonLink } from "./ArcButtonLink";
 import { ArcKpi } from "./ArcKpi";
+import { ArcMeter } from "./ArcMeter";
 import { CodeCell, TONE } from "./ArcOrderCells";
 import panel from "./ArcOrderScreen.module.css";
 import styles from "./ArcOverviewScreen.module.css";
 import page from "./ArcPage.module.css";
 import { ArcRevenueChart } from "./ArcRevenueChart";
+import { ISSUE_STATE } from "./arc-issue-state";
 import { useArcToast } from "./useArcToast";
 
 /** Lucide at 16, Arc's stroke (skill-design.md). Decorative: every icon sits beside its label. */
@@ -48,13 +50,6 @@ const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
 
 /** "Kỳ xem": v3's three ranges, as segments (brief v5 slice 2, §3.2). */
 const RANGES = WINDOW_CHOICES.map((n) => ({ value: String(n), label: `${n} ngày` }));
-
-/** The issue's state beside its dates: v3's words, Arc's tones (brief §3.2). */
-const ISSUE_STATE: Record<DropState, { text: string; tone: BadgeTone }> = {
-  OPEN: { text: "Đang bán", tone: "success" },
-  UPCOMING: { text: "Sắp mở", tone: "info" },
-  CLOSED: { text: "Đã đóng", tone: "neutral" },
-};
 
 /**
  * A seller's bar, by what it says: the accent while the style sells, the
@@ -402,9 +397,7 @@ export function ArcOverviewScreen({
                     height={45}
                   />
                   <span className={styles.name}>{styleName(r.product.name, r.product.dropNo)}</span>
-                  <span className={styles.bar} data-state={barState(r)} aria-hidden="true">
-                    <span className={styles.barFill} style={{ width: `${r.percent}%` }} />
-                  </span>
+                  <ArcMeter percent={r.percent} reading={barState(r)} />
                   <span className={styles.count}>
                     <b>{r.sold}</b> / {r.cut} · {r.left === 0 ? "hết" : `${r.percent}%`}
                   </span>

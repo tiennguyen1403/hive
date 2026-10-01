@@ -5,7 +5,7 @@ import { monaSans } from "./font";
  * `app/globals.css`) and every Feed rule (`app/styles/feed/*.css`) is
  * declared under `[data-ui="feed"]`, so nothing outside an element carrying it
  * changes by a pixel. The frame's root carries it (`FeedChrome`), and the back
- * office (`.s.adm3`) never does.
+ * office (the Arc zone, `data-ui="admin"`) never does.
  */
 export const FEED_ZONE = { "data-ui": "feed" } as const;
 

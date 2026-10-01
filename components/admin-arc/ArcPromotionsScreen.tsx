@@ -14,7 +14,7 @@ import {
 } from "@/lib/actions/catalog-admin";
 import type { ActionState } from "@/lib/actions/state";
 import { PROMO_KIND_LABEL, promoState, promoValueLabel, type PromoState } from "@/lib/admin-rows";
-import { hrefWith, type Query } from "@/lib/admin-url";
+import { hrefWith, patched, type Query } from "@/lib/admin-url";
 import { downloadCsv } from "@/lib/csv";
 import { clockLabel, dayMonth, dayMonthYear } from "@/lib/datetime";
 import { dropState } from "@/lib/drop";
@@ -28,6 +28,7 @@ import {
   type DataColumn,
 } from "@/registry/components/sortable-data-table/sortable-data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/registry/components/tabs/tabs";
+import { ArcMeter } from "./ArcMeter";
 import book from "./ArcOrdersScreen.module.css";
 import page from "./ArcPage.module.css";
 import { ArcPromoDrawer, type PromoCopy } from "./ArcPromoDrawer";
@@ -68,16 +69,6 @@ type Row = { code: string; promo: Promotion; standing: PromoState };
 
 /** The form: which code it holds (none for a new one), and which opening this is. */
 type Form = { promo: Promotion | null; opening: number };
-
-/** The address with some keys changed: `hrefWith`'s rule, as a query. */
-function patched(current: Query, patch: Record<string, string | null>): Query {
-  const next: Query = { ...current };
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === null || value === "") delete next[key];
-    else next[key] = value;
-  }
-  return next;
-}
 
 /**
  * The discount codes, and the six things an operator does to one, in the Arc
@@ -376,10 +367,10 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
 }
 
 /**
- * How much of its cap a code has spent: a 4px bar and "đã dùng / giới hạn",
- * the bar in the accent and the whole track in ink once it is full, as the
- * overview's sellers read (slice 2). A code without a cap has nothing to fill:
- * "N · không giới hạn", as v3.
+ * How much of its cap a code has spent: the 4px bar (`ArcMeter`) and "đã
+ * dùng / giới hạn", the bar in the accent and the whole track in ink once it
+ * is full, as the overview's sellers read (slice 2). A code without a cap has
+ * nothing to fill: "N · không giới hạn", as v3.
  */
 function UsesCell({ promo: p }: { promo: Promotion }) {
   if (p.usageLimit === null || p.usageLimit === 0) {
@@ -388,9 +379,7 @@ function UsesCell({ promo: p }: { promo: Promotion }) {
   const percent = Math.min(100, Math.round((p.usedCount / p.usageLimit) * 100));
   return (
     <span className={styles.uses}>
-      <span className={styles.meter} data-full={percent >= 100 ? "" : undefined} aria-hidden="true">
-        <span className={styles.meterFill} style={{ width: `${percent}%` }} />
-      </span>
+      <ArcMeter percent={percent} reading={percent >= 100 ? "gone" : undefined} className={styles.usesBar} />
       <span className={styles.usesCount}>
         {p.usedCount} / {p.usageLimit}
       </span>

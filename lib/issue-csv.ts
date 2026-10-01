@@ -12,7 +12,7 @@ import { issueNo, styleName } from "./lexicon";
  * Moved out of v3's `downloadIssueCsv` (`components/admin/AdminDropsScreen.tsx`)
  * word for word when the screen moved to Arc (round v5 slice 4), as rows
  * rather than a download, so the file can be tested; the screen hands them to
- * `downloadCsv`. The v3 screen keeps its own copy until the clean-up slice.
+ * `downloadCsv`. The v3 screen and its own copy went at slice 6.
  *
  * The three style-level figures repeat down the rows, and their headers say
  * so — a flat file has no other way to carry two levels, and silently

@@ -25,6 +25,25 @@ export function queryOf(sp: Record<string, string | string[] | undefined>): Quer
 }
 
 /**
+ * The same query with some keys changed: `hrefWith`'s rule, as a query
+ * rather than an address. The Arc screens show a new tab, filter or page at
+ * once and write the address after it, so they keep the view they show as a
+ * query and patch that (round v5; one copy per screen until slice 6).
+ *
+ * `null` REMOVES a key rather than writing an empty one, and so does an empty
+ * string; a number is written as its digits. The query handed in is left as
+ * it was.
+ */
+export function patched(current: Query, patch: Record<string, string | number | null | undefined>): Query {
+  const next: Query = { ...current };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === null || value === undefined || value === "") delete next[key];
+    else next[key] = String(value);
+  }
+  return next;
+}
+
+/**
  * The same address with some keys changed.
  *
  * `null` REMOVES a key rather than writing an empty one, so "Tất cả" gives
@@ -37,11 +56,7 @@ export function hrefWith(
   current: Query,
   patch: Record<string, string | number | null | undefined> = {},
 ): string {
-  const next: Query = { ...current };
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === null || value === undefined || value === "") delete next[key];
-    else next[key] = String(value);
-  }
+  const next = patched(current, patch);
   const pairs = Object.entries(next)
     .filter(([, v]) => v !== undefined && v !== "")
     .sort(([a], [b]) => a.localeCompare(b));

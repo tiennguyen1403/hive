@@ -5,7 +5,8 @@ import { FIXED_LOW_AT, isFixed, isRunningLow, onHand, onHandOf, productsOnSale }
 
 /**
  * The styles table's rules for the FIXED styles (v3 slice 12), kept out of
- * `components/admin/ProductsTable.tsx` so they read and test without a DOM.
+ * the table (v3's `ProductsTable`, the Arc `ArcProductsScreen` since round v5
+ * slice 5a) so they read and test without a DOM.
  *
  * Approved on the fixed-styles board (`prototype/v3/line.html`, round 4,
  * 25/09/2026; the frame `line/admin-products.html`): "Cố định" is the first

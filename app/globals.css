@@ -28,64 +28,24 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
 
-/* The v3 design system, in twelve files.
+/* What is left of the v3 design system, in three files: the box model and
+   `.sr-only` (base), the wait veil (sheet), the printed page's margin
+   (checkout). Round v5 slice 6 took the rest with the last v3 screen: the
+   `.s` scope and the back office's v3 frame, the portalled sheet, menu and
+   toast, and nine files (`nav`, `buttons`, `forms`, `lists`, `admin`,
+   `listing`, `product`, `account`, `interaction`). `cards.css`, `home.css`,
+   `pages.css` and `desktop.css` went at round v4 slice 5 with the v3 shop
+   screens, `table.css` (the v2 data table) at v3 slice 6.
 
    GROUPING INTO FILES DECIDES SOURCE ORDER, and source order decides every
-   tie. Two rules of equal specificity that set the same property are settled
-   by whichever comes last, so which file a rule lives in is part of what it
-   does (`.s .chonsize .szrow` against `.s .szrow.w`, both 0,3,0 — that tie
-   once pinned the size row to the left edge).
-
-   MEASURED AGAIN at v3 slice 6, after the sweep that deleted the whole v2
-   layer, by the method this note has always named — list every cross-file
-   pair that ties on specificity AND shares a declaration, then ask the
-   browser whether one element matches both halves:
-
-     1181 rule branches across the sixteen files
-    23505 cross-file pairs tie and share a declaration
-        7 of them land on a single element, on 69 route visits at 390 and
-          1280 (685 distinct co-occurrence signatures)
-
-   Those seven, each resolved by the file that loads later — which is how
-   they already resolved before the sweep, because deleting rules can only
-   remove ties, never create one. Round v4 slice 5 took the v3 shop's rules
-   and with them one half of three; the four left:
-
-     .s .nm (base)           × .s .wm (nav)            font face and tracking
-     .s .inp.area (forms)    × .s .field3 .inp (checkout)   height
-     .s.adm3 .cb (admin)     × .s [role="checkbox"] (interaction)   cursor
-     .s.adm3 .meter i (admin) × .s .meter.hot i (product)   background
-
-   Adding a rule to any of these files, or moving one between them, means
-   running that measurement again. Do NOT sort these @imports alphabetically.
-
-   `table.css` (the v2 data table) was the seventeenth and went at slice 6
-   with `/system`, the only route that still rendered `.dt`. `cards.css`,
-   `home.css`, `pages.css` and `desktop.css` went at round v4 slice 5 with
-   the v3 shop screens, whose rules they were. */
+   tie. The cross-file ties measured at v3 slice 6 and round v4 slice 5 were
+   all between `.s` rules, and went with them; the three files left set no
+   property on a shared selector. Keep them in this order all the same, and
+   measure again before adding a rule to any of them. Do NOT sort these
+   @imports alphabetically. */
 @import "./styles/base.css";
-@import "./styles/nav.css";
-@import "./styles/buttons.css";
-@import "./styles/forms.css";
-@import "./styles/lists.css";
-@import "./styles/admin.css";
 @import "./styles/sheet.css";
-/* What is left of the listing and the product page: the filter chip
-   (`.chip3`) and the meter (`.meter`). Added at v2 slice 2, rebuilt at v3
-   slice 2. NEW class names only. */
-@import "./styles/listing.css";
-@import "./styles/product.css";
-/* What is left of the cart, the checkout, the confirmation and the order
-   lookup: the form rows, panels, money box, timeline and QR slot the back
-   office wears. Added at v2 slice 3, rebuilt at v3 slices 2–3. */
 @import "./styles/checkout.css";
-/* What is left of the account screens: a panel heading's way out. It loads
-   after `checkout.css` so it adds to `.panel3` on source order rather than
-   with a deeper selector. */
-@import "./styles/account.css";
-/* Hover, press and touch targets. Ported late from `prototype/shell.css`,
-   where they were filed under the viewer chrome but scoped to `.s`. */
-@import "./styles/interaction.css";
 /* ── Round v4 "Feed" (QĐ-32), one folder, every rule under the Feed zone ──
    Each file mirrors the mock stylesheet of the same name
    (`prototype/explore/feed/feed.css`, `flow.css`, `more.css` since slice 1b,
@@ -93,12 +53,10 @@
    mock's account pages load them) and keeps its rules in the
    mock's order, so the cascade among Feed rules is the mock's: every
    selector gains the same `[data-ui="feed"]` (0,1,0), which leaves their
-   order of specificity as the mock had it. No Feed rule can reach an element
-   of `.s.adm3`, and no v3 rule scoped to `.s` can reach a Feed element, so
-   the placement after the v3 files settles no tie. The four v3
-   layers that are NOT scoped to `.s` (`.sheetwrap`, `.menu3`, `.toast`,
-   `.veil`) reach any element wearing those names, so the Feed files must
-   not use them — the mock's `.toast` included — which
+   order of specificity as the mock had it. What is left of v3 before them is
+   not scoped to a zone: `.veil` reaches any element wearing the name, so the
+   Feed files must not use it, nor the names v3's portalled layers wore
+   (`.sheetwrap`, `.menu3`, `.toast` — the mock's `.toast` included), which
    `styles/feed/scope.test.ts` checks; `.sr-only` is shared on purpose. */
 @import "./styles/feed/feed.css";
 @import "./styles/feed/flow.css";
@@ -108,28 +66,17 @@
 /* =========================================================================
    TOKEN LAYER — v3, hướng NHÃN (nhãn dệt: vải đen, chỉ mật ong, sàn trắng).
 
-   Decided 21/09/2026 22:38 and carried into code at v3 slice 0. Values are
-   copied from `prototype/v3/v3.css`, block `html[data-dir="nhan"]` — the
-   approved mock. Every text/background pair was computed before it was
-   written (`scratchpad/v3/contrast.js`) and clears WCAG AA. Do NOT adjust a
-   value by eye; recompute first, then change it.
-
-   Two rules the v3 world adds to the v2 one:
-   · BLACK CLOTH IS NOT A THEME. `--stage` (#171410) is the material of the
-     ISSUE — in the v3 shop the cover, the next-issue teaser and the issue
-     stamp in the nav; in the back office the sidebar. Everywhere else is
-     light ground with ink on it. Do not paint a surface dark because it
-     "needs weight".
-   · HONEY CANNOT CARRY WHITE TEXT. `--brand-ink` is ink, not #fff, and text
-     that wants to BE honey uses `--brand-text` (#9e6817, 4.72:1 on white).
-
-   Declaring each colour twice is deliberate:
-   · `@theme` lets Tailwind generate utilities (`bg-fill`, `text-ink`,
-     `rounded-md`).
-   · the `:root` block below aliases them to the short names (`--fill`,
-     `--ink`) so the design-system CSS could be lifted verbatim instead of
-     find-and-replaced variable by variable. Only the aliases a stylesheet
-     still reads are declared; they point at the v3 values.
+   Decided 21/09/2026 22:38 and carried into code at v3 slice 0, from
+   `prototype/v3/v3.css`, block `html[data-dir="nhan"]`. The v3 screens are
+   gone (the shop's at round v4 slice 5, the back office's at round v5 slice
+   6), and two things still read this layer:
+   · `@theme`, which Tailwind emits on `:root` and its preflight reads:
+     `--font-sans` is the font of <html>. Left whole but for the two families.
+   · the short aliases after it: only the three a stylesheet still reads, the
+     page's backdrop (`--bg`, on `html` and `body` below) and the wait veil's
+     ground and stitches (`--bg`, `--ink`, `--brand`, `styles/sheet.css`).
+     Round v5 slice 6 took every alias, type step and spacing step that
+     nothing read any more.
    ========================================================================= */
 @theme {
   /* primary ramp — HONEY */
@@ -199,86 +146,20 @@
   --radius-md: 4px;
   --radius-sm: 3px;
 
-  /* Both families are self-hosted by next/font; `app/layout.tsx` puts the
-     variables on <html>. Unbounded 800 carries the numbers, the headings,
-     the style names and the wordmark; Be Vietnam Pro carries everything
-     else. Pair D, chosen 22/09/2026. */
-  --font-sans: var(--font-be-vietnam), system-ui, sans-serif;
-  --font-display: var(--font-unbounded), sans-serif;
+  /* One family, Mona Sans (`components/feed/font.ts`), self-hosted by
+     next/font; `app/layout.tsx` puts `--font-mona` on <html>. The Feed zone
+     and the Arc zone each set their own; this is what text outside both
+     falls back to, from preflight's <html>. Until round v5 slice 6 the two
+     read v3's pair D (22/09/2026), Be Vietnam Pro and Unbounded. */
+  --font-sans: var(--font-mona);
+  --font-display: var(--font-mona);
 }
 
-/* ── Short aliases: the variable names the design-system CSS already uses ── */
+/* ── Short aliases: the three a stylesheet still reads ── */
 :root {
-  --gold-50: var(--color-gold-50);
-  --gold-100: var(--color-gold-100);
-  --gold-200: var(--color-gold-200);
-  --gold-400: var(--color-gold-400);
-  --gold-800: var(--color-gold-800);
-
-  --fill: var(--color-fill);
-  --fill-bd: var(--color-fill-bd);
-  --fill-ink: var(--color-fill-ink);
-  --mark: var(--color-mark);
-  --link: var(--color-link);
-
   --ink: var(--color-ink);
-  --ink2: var(--color-ink2);
-  --hair: var(--color-hair);
-  --line: var(--color-line);
   --bg: var(--color-bg);
-  --plate: var(--color-plate);
-
-  --stage: var(--color-stage);
-  --stage-ink: var(--color-stage-ink);
-  --stage-ink2: var(--color-stage-ink2);
-  --stage-hair: var(--color-stage-hair);
-
   --brand: var(--color-brand);
-  --brand-ink: var(--color-brand-ink);
-  --brand-soft: var(--color-brand-soft);
-  --brand-text: var(--color-brand-text);
-  --sel: var(--color-sel);
-  --sel-ink: var(--color-sel-ink);
-
-  --hot: var(--color-hot);
-  --hot-bg: var(--color-hot-bg);
-  --ok: var(--color-ok);
-  --ok-bg: var(--color-ok-bg);
-  --info: var(--color-info);
-  --info-bg: var(--color-info-bg);
-
-  --r: var(--radius-md);
-  --r-sm: var(--radius-sm);
-
-  /* ── The spacing steps still read, 4-based (s3–s6), and the page gutter.
-        Not colours, so they stay out of `@theme`: Tailwind would turn them
-        into a second spacing scale beside its own. ── */
-  --s3: 12px;
-  --s4: 16px;
-  --s5: 24px;
-  --s6: 32px;
-  --gut: 18px;
-
-  /* ── Six type roles: h2 · h3 · body · ui · small · micro. 11px is the
-        floor for text a shopper has to read to act (QĐ-22). The desktop
-        values arrive at the single 900px breakpoint. ── */
-  --fs-h2: 18px;
-  --fs-h3: 15px;
-  --fs-body: 14px;
-  --fs-ui: 13px;
-  --fs-sm: 12px;
-  --fs-xs: 11px;
-
-  /* Unbounded 800 is drawn wide; the display roles pull it back in. */
-  --fw-display: 800;
-  --ls-display: -0.03em;
-}
-
-@media (min-width: 900px) {
-  :root {
-    --fs-h2: 21px;
-    --fs-h3: 16px;
-  }
 }
 
 /* =========================================================================
@@ -290,14 +171,15 @@
    `components/feed/FeedScope.tsx`. Everything below, and
    every rule in `styles/feed/*.css`, is declared under `[data-ui="feed"]`:
    inside that element the Feed applies, outside it nothing changes by a
-   pixel — the back office (`.s.adm3`) never carries the attribute. A layer portalled out of the zone (a toast on
+   pixel — the back office (the Arc zone, `data-ui="admin"`) never carries the
+   attribute. A layer portalled out of the zone (a toast on
    <body>) carries the attribute and the class on its own root; a
    `<dialog>` rendered inside the zone inherits them where it sits.
 
    Values are copied from the approved mock, `prototype/explore/feed/
    feed.css` `:root` (`styles/feed/scope.test.ts` holds every one to it),
-   under their own names: `--f-*` never reuses a v3 name (`--ink`, `--line`,
-   `--bg`, `--max`… mean the v3 values everywhere, inside the zone too).
+   under their own names: `--f-*` never reuses a v3 name (`--ink`, `--bg`
+   and `--brand` keep the v3 values everywhere, inside the zone too).
    Not in `@theme`: Tailwind emits `@theme` on `:root`, where these would
    stop being the zone's, and it generates no utilities here anyway (QĐ-23).
 
@@ -383,9 +265,10 @@
   }
 }
 
-/* ── Page backdrop. `.s` — placed by each route group's layout — is what
-      carries the system's font and text colour; body only has to make the
-      background reach the edges of the viewport. ── */
+/* ── Page backdrop. Each zone's root — the Feed's `[data-ui="feed"]`, the
+      back office's `[data-ui="admin"]` — carries its own font and text
+      colour; body only has to make the background reach the edges of the
+      viewport. ── */
 html,
 body {
   background: var(--bg);

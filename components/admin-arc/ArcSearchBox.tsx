@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { SearchField } from "@/registry/components/search-field/search-field";
 
 /**
- * A list's search in the Arc back office: v3's `SearchBox`
- * (`components/admin/AdminOrdersScreen.tsx`) in an Arc `SearchField`, with
- * the label and placeholder of the screen it sits on. The order book (slice
- * 0) keeps its own copy of the same rules; the log (slice 2) reads this one.
+ * A list's search in the Arc back office: v3's `SearchBox` (the v3 order
+ * book's) in an Arc `SearchField`, with the label and placeholder of the
+ * screen it sits on. The order book (slice 0) kept its own copy of the same
+ * rules until slice 6; every list with a search reads this one now.
  *
  * It hands the words to `onSubmit` rather than filtering in React state,
  * because the result IS what the screen is showing, and the screen writes it

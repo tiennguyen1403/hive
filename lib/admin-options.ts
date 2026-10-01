@@ -1,5 +1,4 @@
 import type { Catalog } from "./catalog";
-import type { SelectOption } from "@/components/ui/Select";
 import { dropState } from "./drop";
 import { demoNow } from "./clock";
 import { FIXED_WORD } from "./lexicon";
@@ -11,6 +10,19 @@ import { FIXED_WORD } from "./lexicon";
  * somebody adds a style the menu has never heard of, and a hard-coded list
  * of drops goes stale the moment one opens.
  */
+
+/**
+ * One row of a menu: the value sent, the words shown, and an optional note at
+ * the row's end ("12 mẫu"). The shape Arc's `Select` takes, with its `note`
+ * (round v5 slice 4, `registry/PATCHES.md`). Until slice 6 this type came
+ * from v3's `Select`.
+ */
+export interface SelectOption {
+  value: string;
+  label: string;
+  /** Right-aligned secondary text — a count, a hint. */
+  note?: string;
+}
 
 /** Every kind the catalogue actually uses, with how many styles wear it. */
 export function kindOptions(catalog: Catalog): SelectOption[] {

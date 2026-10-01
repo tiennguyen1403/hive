@@ -1,67 +1,18 @@
-/* Foundation: box model, type, focus ring and browser-drawn surfaces.
-
-   Lifted from `prototype/app.css`. ONE line departs from the
-   original: font-family resolves through next/font's variables
-   (--font-sans / --font-display) instead of naming the families directly,
-   because next/font self-hosts them. Every other value is unchanged; change
-   one and you owe a screenshot comparison against http://127.0.0.1:4321.
+/* What is left of the v3 foundation: two rules every page still relies on.
+   The rest of this file, the `.s` scope's type, focus ring, browser surfaces
+   and text wrapping, went with the last v3 screen at round v5 slice 6.
 
    The tokens, and the switch that kills the focus ring while the pointer is
    driving, live in ../globals.css. */
 
 *,*::before,*::after{ box-sizing:border-box; }
 
-.s{
-  background:var(--bg); color:var(--ink);
-  font-family:var(--font-sans);
-  font-size:var(--fs-ui); line-height:1.55; -webkit-font-smoothing:antialiased;
-}
-/* ── The display role, v3 ────────────────────────────────────────────────
-   Nine roles live as tokens in ../globals.css. `.nm` is the style name set
-   in the display face; Unbounded 800 is drawn wide and loose, so it is
-   pulled back with `--ls-display`. */
-.s .nm{ font-family:var(--font-display); font-weight:var(--fw-display);
-  letter-spacing:var(--ls-display); }
-.s .muted{ color:var(--ink2); }
-/* A phone number and a date range are read as one token; the non-breaking
-   spaces inside them (lib/phone.ts, lib/datetime.ts) do the real work, and
-   this is for the places that need the whole run held together. */
-.s .nw{ white-space:nowrap; }
-.s a{ color:inherit; text-decoration:none; }
 /* ── The one utility this project uses, defined here rather than borrowed ──
-   The admin tables and the Feed screens render `.sr-only` to give a screen
-   reader the sentence a graphic says visually. It arrived from
-   Tailwind's utilities, which `globals.css` no longer generates — they
-   collided with this system's own class names. This is the standard recipe,
-   and it belongs to the design system now like everything else here. */
+   The Feed screens render `.sr-only` to give a screen reader the sentence a
+   graphic says visually. It arrived from Tailwind's utilities, which
+   `globals.css` no longer generates — they collided with this system's own
+   class names. This is the standard recipe, and it belongs to the design
+   system now like everything else here. */
 .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px;
   overflow:hidden; clip:rect(0,0,0,0); clip-path:inset(50%); white-space:nowrap;
   border-width:0; }
-.s :focus-visible{ outline:2px solid var(--mark); outline-offset:2px;
-  border-radius:var(--r-sm); }
-
-/* ── Surfaces the browser draws for you. Leave them alone and they arrive
-      wearing the operating system's defaults, which belong to no design
-      system at all. ── */
-.s ::selection{ background:var(--brand); color:var(--brand-ink); }
-.s{ caret-color:var(--brand); }
-.s ::-webkit-scrollbar{ width:10px; height:10px; }
-.s ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:99px;
-  border:3px solid var(--bg); }
-.s ::-webkit-scrollbar-thumb:hover{ background:var(--ink2); }
-
-/* A heading should not drop a single orphaned word onto its last line. */
-.s h1{ text-wrap:balance; }
-.s p{ text-wrap:pretty; }
-/* The small second lines, too (v3 slice 13): the footer calendar left "lộ"
-   and "lại" alone at 390 on every page, a teaser caption "mở", the size
-   note "này.". The LONGHAND on purpose: the `text-wrap` shorthand also sets
-   `text-wrap-mode`, and would turn wrapping back on in a line another rule
-   holds with `white-space:nowrap`. The phrases that must never part ("hé
-   lộ", "xem lại", "khi mở") are held with no-break spaces where the string
-   is made. */
-.s .sub,
-.s .meta,
-.s .help,
-.s .fine3,
-.s figcaption{ text-wrap-style:pretty; }

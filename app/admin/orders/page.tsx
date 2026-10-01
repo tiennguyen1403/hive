@@ -28,7 +28,7 @@ export default async function AdminOrdersPage(props: PageProps<"/admin/orders">)
   const sp = await props.searchParams;
   const orders = await listAllOrders();
   // The Arc screen since round v5 slice 0; the admin layout wraps it in the
-  // Arc frame (`ARC_ADMIN_PATHS`). The v3 `AdminOrdersScreen` stays in the
-  // tree until the clean-up slice, which also moves its `SearchBox`.
+  // Arc frame. v3's `AdminOrdersScreen` went at slice 6, and its `SearchBox`
+  // lives on as `ArcSearchBox`.
   return <ArcOrdersScreen orders={orders} nowIso={toVnIso(demoNow())} query={queryOf(sp)} />;
 }

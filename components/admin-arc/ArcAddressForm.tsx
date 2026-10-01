@@ -29,9 +29,8 @@ const PROVINCE_OPTIONS = provincesByName().map((p) => option(p.code, p.name));
 
 /**
  * The communes of one province, asked of `/api/wards` as v3's `WardSelect`
- * (`components/checkout/WardSelect.tsx`) asks: one province at a time, kept
- * for the visit, and a slow answer for a province already left behind never
- * overwrites the list on screen.
+ * asked: one province at a time, kept for the visit, and a slow answer for a
+ * province already left behind never overwrites the list on screen.
  */
 function useWards(provinceCode: string) {
   const [wards, setWards] = useState<Ward[]>([]);

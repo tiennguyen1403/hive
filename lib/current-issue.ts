@@ -21,8 +21,8 @@ import { dropState } from "./drop";
  * overview to an issue that had not opened ("Bán chạy trong Số 06" with
  * nothing sold) and the "mới" label with it, while the customer table and a
  * customer's page read the issue selling, or none. Read off the clock, every
- * screen names the same issue. `currentDropNo` itself stays as it was: the v3
- * screens still read it until the clean-up slice.
+ * screen names the same issue. `currentDropNo` itself stays as it was: the
+ * rule below still reads it before any issue has opened, and so do tests.
  *
  * "Closed last" is by the closing hour, not by the number: since slice B14b
  * the two agree, and where an older calendar has them out of order the hour

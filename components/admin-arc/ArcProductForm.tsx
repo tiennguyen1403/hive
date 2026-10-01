@@ -108,8 +108,8 @@ interface Upload {
 /**
  * Add or edit a style, in the Arc frame (round v5 slice 5b): v3's
  * `ProductForm` (`components/admin/ProductForm.tsx`, v3 slice 7, QĐ-27) rule
- * for rule and word for word, drawn with Arc's parts. The v3 file stays until
- * the clean-up slice.
+ * for rule and word for word, drawn with Arc's parts. The v3 file went at
+ * slice 6.
  *
  * NEW: the colours are chosen here, as seven toggles, and the order they are
  * picked in IS the band order on the shop's card (a chosen toggle carries its

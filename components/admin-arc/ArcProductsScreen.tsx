@@ -13,7 +13,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import type { BadgeTone as V3BadgeTone } from "@/components/ui/Badge";
 import { COLORS } from "@/data/colors";
 import { SIZES, type DropState, type Product, type ProductId, type Teaser } from "@/data/types";
 import { adjustStock, restockProduct } from "@/lib/actions/catalog-admin";
@@ -26,7 +25,7 @@ import {
   stylesLine,
   type FixedStatus,
 } from "@/lib/admin-products";
-import { hrefWith, type Query } from "@/lib/admin-url";
+import { hrefWith, patched, type Query } from "@/lib/admin-url";
 import { RESTOCK_STALE_MESSAGE } from "@/lib/catalog-admin";
 import { styleNameHas } from "@/lib/catalog-query";
 import { downloadCsv } from "@/lib/csv";
@@ -45,6 +44,7 @@ import {
 import type { InventoryCell } from "@/lib/inventory-adjust";
 import { FIXED_WORD, LEX, issueNo, styleName } from "@/lib/lexicon";
 import { plainVnd } from "@/lib/money";
+import type { StatusTone } from "@/lib/order-labels";
 import { photoUrl } from "@/lib/photos";
 import { PRODUCTS_CSV_NAME, productsCsvRows } from "@/lib/products-csv";
 import type { RestockCell } from "@/lib/restock";
@@ -64,10 +64,10 @@ import {
 } from "@/registry/components/sortable-data-table/sortable-data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/registry/components/tabs/tabs";
 import { ArcButtonLink } from "./ArcButtonLink";
+import { ArcMeter } from "./ArcMeter";
 import { TONE } from "./ArcOrderCells";
 import panel from "./ArcOrderScreen.module.css";
 import book from "./ArcOrdersScreen.module.css";
-import overview from "./ArcOverviewScreen.module.css";
 import page from "./ArcPage.module.css";
 import styles from "./ArcProductsScreen.module.css";
 import { ArcSearchBox } from "./ArcSearchBox";
@@ -101,28 +101,18 @@ type Row = { id: string; product: Product };
 type TeaserRow = { slug: string; teaser: Teaser };
 
 /** A fixed style's badge, v3's words in v3's tones, through `TONE`. */
-const FIXED_BADGE: Record<FixedStatus, { text: string; tone: V3BadgeTone }> = {
+const FIXED_BADGE: Record<FixedStatus, { text: string; tone: StatusTone }> = {
   OUT: { text: "Hết", tone: "shut" },
   LOW: { text: "Sắp hết", tone: "hot" },
   OK: { text: "Đang bán", tone: "ok" },
 };
-
-/** The address with some keys changed: `hrefWith`'s rule, as a query. */
-function patched(current: Query, patch: Record<string, string | number | null>): Query {
-  const next: Query = { ...current };
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === null || value === "") delete next[key];
-    else next[key] = String(value);
-  }
-  return next;
-}
 
 /**
  * Every style the shop sells, the fixed ones then the issues, in the Arc
  * frame (round v5 slice 5a): v3's `ProductsTable`
  * (`components/admin/ProductsTable.tsx`) rule for rule and word for word,
  * drawn with Arc's parts, the order book's tabs and table (slice 0), the
- * log's toolbar (slice 2) and the overview's bar (slice 2).
+ * log's toolbar (slice 2) and the 4px bar (`ArcMeter`).
  *
  * The first tab is "Cố định", the styles that belong to no issue, and it is
  * the one a bare `/admin/products` opens (`?fixed=1` names it); a fixed style
@@ -617,7 +607,7 @@ function colourList(p: Product): string {
 }
 
 /** An issue's style, in v3's words and v3's tones (`TONE` reads them as Arc's). */
-function issueStanding(p: IssueStyle, state: DropState): { text: string; tone: V3BadgeTone } {
+function issueStanding(p: IssueStyle, state: DropState): { text: string; tone: StatusTone } {
   const left = onHand(p);
   if (left === 0) return { text: "Hết", tone: "shut" };
   if (state === "UPCOMING") return { text: "Sắp mở", tone: "info" };
@@ -637,7 +627,7 @@ function StyleCell({ photoKey, name }: { photoKey: string; name: string }) {
 }
 
 /**
- * What is left of an issue's cut: the overview's 4px bar in its three
+ * What is left of an issue's cut: the 4px bar (`ArcMeter`) in its three
  * readings (accent; the danger colour at `LOW_STOCK_AT` or fewer; the whole
  * track in ink once it is gone) beside "còn 17 / 35" or "hết · 0 / 14". The
  * count is a box of one width on every row, flush right, so the bars start
@@ -649,9 +639,7 @@ function IssueStock({ p }: { p: IssueStyle }) {
   const reading = left === 0 ? "gone" : left <= LOW_STOCK_AT ? "hot" : undefined;
   return (
     <span className={styles.stock}>
-      <span className={`${overview.bar} ${styles.stockBar}`} data-state={reading} aria-hidden="true">
-        <span className={overview.barFill} style={{ width: `${percent}%` }} />
-      </span>
+      <ArcMeter percent={percent} reading={reading} className={styles.stockBar} />
       <span className={styles.stockCount}>
         {left === 0 ? "hết · 0" : `còn ${left}`} / {p.cutUnits}
       </span>

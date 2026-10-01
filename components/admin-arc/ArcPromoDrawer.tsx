@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Check, Copy } from "lucide-react";
-import { useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useState, type RefObject } from "react";
 import type { Promotion } from "@/data/types";
 import { PROMO_KIND_LABEL } from "@/lib/admin-rows";
 import type { PromoKind } from "@/lib/catalog-admin";
@@ -13,6 +13,7 @@ import { Input } from "@/registry/components/input/input";
 import { Select } from "@/registry/components/select/select";
 import styles from "./ArcPromoDrawer.module.css";
 import { keepOpenForToasts } from "./arc-toasts";
+import { useCapitals } from "./useCapitals";
 
 /** The three shapes a code can take, named the way the form names them (v3). */
 const KIND_OPTIONS: Array<{ value: PromoKind; label: string }> = [
@@ -218,34 +219,22 @@ function PromoForm({
 
   /**
    * A code is written in capitals, as checkout reads it and as the table
-   * prints it: v3 drew the box in capitals, and here the value itself is, so
-   * no text transform is needed. Not while an input method is still
-   * composing a character; the finished character is raised when it lands.
-   * Raising the value makes React rewrite the box, which would throw the
-   * caret to the end: it is put back where it was.
+   * prints it: v3 drew the box in capitals, and here the value itself is
+   * (`useCapitals`, shared with the style names since slice 6), not while an
+   * input method is still composing a character, and with the caret kept
+   * where it was. Typing clears what was said, as in every field a check
+   * reads.
    */
-  const codeBox = useRef<HTMLInputElement>(null);
-  const caret = useRef<{ start: number; end: number } | null>(null);
-  function typeCode(box: HTMLInputElement, composing: boolean) {
-    const value = composing ? box.value : box.value.toLocaleUpperCase("vi");
-    if (value !== box.value) {
-      caret.current = { start: box.selectionStart ?? value.length, end: box.selectionEnd ?? value.length };
-    }
-    setCode(value);
+  const capitals = useCapitals(code, (next) => {
+    setCode(next);
     clear();
-  }
-  useLayoutEffect(() => {
-    const box = codeBox.current;
-    if (!box || !caret.current) return;
-    box.setSelectionRange(caret.current.start, caret.current.end);
-    caret.current = null;
-  }, [code]);
+  });
 
   return (
     <div className={styles.form}>
       <div className={styles.fields}>
         <Input
-          ref={codeBox}
+          {...capitals}
           label="Mã"
           placeholder="DOT06"
           autoComplete="off"
@@ -255,8 +244,6 @@ function PromoForm({
           className={promo ? styles.readOnly : undefined}
           description={promo ? "Mã không đổi được sau khi tạo — dùng Nhân bản để có mã mới." : undefined}
           error={problems.code}
-          onChange={(e) => typeCode(e.target, (e.nativeEvent as InputEvent).isComposing)}
-          onCompositionEnd={(e) => typeCode(e.currentTarget, false)}
         />
         {/* Another kind draws other fields: what was said about the old ones goes with them. */}
         <Select

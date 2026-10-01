@@ -236,7 +236,7 @@ async (page) => {
 
       // 4. A control that keeps the arrow cursor does not read as pressable.
       //    Disabled controls are exempt — there the arrow is the honest answer.
-      const CONTROLS = 'button, [role="button"], a[href], summary, .chip, .btn, .sz, .fct';
+      const CONTROLS = 'button, [role="button"], a[href], summary, .chip, .btn, .sz';
       for (const el of document.querySelectorAll(CONTROLS)) {
         if (el.disabled || el.getAttribute("aria-disabled") === "true") continue;
         const r = el.getBoundingClientRect();
@@ -370,7 +370,7 @@ async (page) => {
       return out;
     }, width);
 
-  // The admin is desktop-only by design (`.s.adm{min-width:1180px}`), so its
+  // The admin is desktop-only by design (`ArcAdminFrame.module.css`, `min-width: 1180px`), so its
   // routes join the sweep at the desktop width and skip the phone width.
   const ADMIN_ROUTES = [
     "/admin",

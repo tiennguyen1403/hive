@@ -3,18 +3,20 @@
 import { useLayoutEffect, useRef, type ChangeEvent, type CompositionEvent } from "react";
 
 /**
- * A style's name, written in capitals as it is typed (round v5): the teaser
- * dialog's name field (slice 4) and the style form's (slice 5b) share it.
+ * A name written in capitals as it is typed (round v5): the teaser dialog's
+ * style name (slice 4), the style form's (slice 5b), and since slice 6 the
+ * discount form's code, which kept a copy of its own from slice 3.
  *
  * v3 drew those boxes in capitals with a CSS transform. Arc draws none, and
- * its rules ban the transform, so here the VALUE itself is raised, as the code
- * field of the discount form does (slice 3). Not while an input method is
- * still composing a character (Telex, VNI): the finished character is raised
- * when it lands. Raising the value makes React rewrite the box, which would
- * throw the caret to the end, so the caret is put back where it was.
+ * its rules ban the transform, so here the VALUE itself is raised. Not while
+ * an input method is still composing a character (Telex, VNI): the finished
+ * character is raised when it lands. Raising the value makes React rewrite
+ * the box, which would throw the caret to the end, so the caret is put back
+ * where it was.
  *
- * The server raises the name too (`lib/catalog-admin.ts`), so what the box
- * shows is what is saved. Spread the answer onto the `Input`, with `value`.
+ * What the box shows is what is saved: the server raises a style's name too
+ * (`lib/catalog-admin.ts`), and the discount form sends the code raised.
+ * Spread the answer onto the `Input`, with `value`.
  */
 export function useCapitals(value: string, onValue: (next: string) => void) {
   const ref = useRef<HTMLInputElement>(null);

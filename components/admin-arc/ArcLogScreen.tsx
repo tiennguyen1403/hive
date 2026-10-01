@@ -19,7 +19,7 @@ import {
   type LogRow,
 } from "@/lib/activity-log";
 import type { AdminOrder } from "@/lib/admin-orders";
-import { hrefWith, type Query } from "@/lib/admin-url";
+import { hrefWith, patched, type Query } from "@/lib/admin-url";
 import { downloadCsv } from "@/lib/csv";
 import type { AdminEvent } from "@/lib/db/event-dto";
 import { LEX } from "@/lib/lexicon";
@@ -65,16 +65,6 @@ const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
 
 /** One row of the table: the log's row, keyed by its stable id. */
 type Row = { id: string; entry: LogRow };
-
-/** The address with some keys changed: `hrefWith`'s rule, as a query. */
-function patched(current: Query, patch: Record<string, string | null>): Query {
-  const next: Query = { ...current };
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === null || value === "") delete next[key];
-    else next[key] = value;
-  }
-  return next;
-}
 
 /** "chờ chuyển khoản → **đã thanh toán** · 1.272.000₫": v3's cell, the state it went to in the heavier weight. */
 function Change({ row }: { row: LogRow }) {

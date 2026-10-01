@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+/**
+ * The key the order book's columns are kept under. It keeps its v3 name: the
+ * hook moved here from `components/admin/` at round v5 slice 6, and an
+ * operator's choice saved before the move has to be found after it.
+ */
 export const ADMIN_COLS_KEY = "brand.adminCols";
 
 /**

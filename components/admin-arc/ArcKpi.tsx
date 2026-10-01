@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import styles from "./ArcKpi.module.css";
+import { ArcMeter } from "./ArcMeter";
 
 /**
  * One figure of the Arc back office's overview (round v5 slice 2): what it
@@ -12,9 +13,9 @@ import styles from "./ArcKpi.module.css";
  * that case to `stat-card`, which the free set does not have (brief v5 slice
  * 2, §3.2).
  *
- * `meter` draws the 4px bar under the line, filled to that share (0 to 100):
- * how much of an issue has sold. It is a picture of the line above it, so it
- * is hidden from assistive tech.
+ * `meter` draws the 4px bar under the line (`ArcMeter`), filled to that share
+ * (0 to 100): how much of an issue has sold. It is a picture of the line
+ * above it, so it is hidden from assistive tech.
  *
  * `aligned` (round v5 slice 4) lines the card up with its siblings in a row
  * whose labels may wrap: the card spans three rows of the row's grid as a
@@ -43,9 +44,7 @@ export function ArcKpi({
       <div className={styles.foot}>
         <p className={styles.context}>{children}</p>
         {meter !== undefined && (
-          <span className={styles.meter} aria-hidden="true">
-            <span className={styles.fill} style={{ width: `${Math.min(100, Math.max(0, meter))}%` }} />
-          </span>
+          <ArcMeter percent={Math.min(100, Math.max(0, meter))} className={styles.meter} />
         )}
       </div>
     </div>

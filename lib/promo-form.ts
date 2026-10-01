@@ -7,8 +7,8 @@ import { clockLabel, dayMonthYear, isoDayFromInput } from "./datetime";
  *
  * Moved out of v3's `PromoFormSheet` (`components/admin/PromoFormSheet.tsx`)
  * word for word when the form moved to Arc (round v5 slice 3), so the Arc
- * drawer does not import a v3 sheet and its chrome. The v3 file keeps its own
- * copy until the clean-up slice retires it.
+ * drawer does not import a v3 sheet and its chrome. The v3 file and its own
+ * copy went at slice 6.
  */
 
 /** What the form sends: `addPromo` and `editPromo` read it (`readPromoDraft`, lib/catalog-admin.ts). */

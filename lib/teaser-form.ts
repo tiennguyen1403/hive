@@ -8,9 +8,9 @@ import { PHOTO_KEYS, isUploadedKey } from "./photos";
  *
  * Moved out of v3's `TeaserFormSheet` (`components/admin/TeaserFormSheet.tsx`)
  * word for word when the form moved to Arc (round v5 slice 4), as the code
- * form's parts went to `lib/promo-form.ts` in slice 3. The v3 file keeps its
- * own copy until the clean-up slice retires it. `teaserName` and
- * `teaserBlocker` are v3's two inline rules, named so they can be tested.
+ * form's parts went to `lib/promo-form.ts` in slice 3. The v3 file and its
+ * own copy went at slice 6. `teaserName` and `teaserBlocker` are v3's two
+ * inline rules, named so they can be tested.
  */
 
 /**

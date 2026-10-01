@@ -17,8 +17,8 @@ export const metadata = { title: "Chi tiết số" };
  * that is not a number at all is not an issue. `requireAdmin` first, as on
  * every admin page.
  *
- * Round v5 slice 4 draws it in the Arc frame (`ArcDropsScreen`, the tree
- * `/admin/drops/` in `ARC_ADMIN_TREES`); the reads here are unchanged.
+ * Round v5 slice 4 draws it in the Arc frame (`ArcDropsScreen`); the reads
+ * here are unchanged.
  */
 export default async function AdminDropDetailPage(props: PageProps<"/admin/drops/[no]">) {
   const { no } = await props.params;

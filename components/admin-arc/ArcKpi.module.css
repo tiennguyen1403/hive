@@ -77,22 +77,10 @@
   outline-offset: 2px;
 }
 
-/* How much of the issue has sold: 4px, the sold share in the accent on the
-   muted ground, 8px under the line it pictures, as v3's `.meter`. */
+/* How much of the issue has sold: the 4px bar (`ArcMeter`), 8px under the
+   line it pictures, as v3's `.meter`. */
 .meter {
-  position: relative;
-  display: block;
-  height: 4px;
   margin-top: var(--space-2);
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: var(--surface-muted);
-}
-
-.fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: var(--accent);
 }
 
 @media (prefers-reduced-motion: reduce) {

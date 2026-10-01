@@ -17,10 +17,11 @@ import { PHOTO_KEYS, isRealPhotoKey, isUploadedKey } from "./photos";
  * the panel heads count, which file the photo box takes — kept out of the
  * component so they can be read and tested without a browser.
  *
- * The form itself is `components/admin/ProductForm.tsx`; the actions it calls
- * check every one of these again (`lib/catalog-admin.ts`). These exist so the
- * button can name what is missing BEFORE anything is sent, the way the
- * approved mock does (`prototype/v3/product-form.js`).
+ * The form itself is `components/admin-arc/ArcProductForm.tsx` (v3's
+ * `ProductForm` until round v5 slice 5b); the actions it calls check every
+ * one of these again (`lib/catalog-admin.ts`). These exist so the button can
+ * name what is missing BEFORE anything is sent, the way the approved mock
+ * does (`prototype/v3/product-form.js`).
  */
 
 /**

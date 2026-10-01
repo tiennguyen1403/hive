@@ -6,14 +6,13 @@ import { ArcSidebar } from "./ArcSidebar";
 import { TOAST_LAYER } from "./arc-toasts";
 
 /**
- * The frame of a back-office screen that has moved to Arc (round v5): the
- * Arc zone's root, the sidebar, the page container, and the toast stack in
- * the bottom right corner that `useArcToast()` speaks through.
+ * The frame of every back-office screen (round v5): the Arc zone's root, the
+ * sidebar, the page container, and the toast stack in the bottom right corner
+ * that `useArcToast()` speaks through.
  *
  * `data-ui="admin"` is the switch for `registry/foundation.css`. The admin
- * layout picks this frame for the paths in `ARC_ADMIN_PATHS` and the v3 frame
- * for every other one (`AdminShell`), so no Arc component ever sits inside
- * `.s.adm3`, whose CSS reaches into it.
+ * layout draws this frame around every page (since slice 6; until then it
+ * chose between this frame and v3's by path).
  */
 export function ArcAdminFrame({
   me,

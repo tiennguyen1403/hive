@@ -3,7 +3,6 @@
 import { Check, Columns3, Download, Eye, MoreHorizontal, Printer, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
-import { useAdminCols } from "@/components/admin/useAdminCols";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Catalog } from "@/lib/catalog";
 import type { Order, OrderState, PaymentMethod } from "@/data/types";
@@ -12,7 +11,7 @@ import type { ActionState } from "@/lib/actions/state";
 import { needsAction, recentOrders } from "@/lib/admin-metrics";
 import { canCancel, nextMove, type AdminOrder } from "@/lib/admin-orders";
 import { orderCustomer, orderItemsLabel } from "@/lib/admin-rows";
-import { hrefWith, pageOf, paginate, perPageOf, PER_PAGE_CHOICES, type Query } from "@/lib/admin-url";
+import { hrefWith, pageOf, paginate, patched, PER_PAGE_CHOICES, perPageOf, type Query } from "@/lib/admin-url";
 import { downloadCsv } from "@/lib/csv";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { issueOf } from "@/lib/customer-tags";
@@ -34,7 +33,6 @@ import {
 } from "@/registry/components/filter-toolbar/filter-toolbar";
 import { Pagination } from "@/registry/components/pagination/pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "@/registry/components/popover/popover";
-import { SearchField } from "@/registry/components/search-field/search-field";
 import SegmentedControl from "@/registry/components/segmented-control/segmented-control";
 import {
   SortableDataTable,
@@ -54,6 +52,8 @@ import {
   StatusCell,
 } from "./ArcOrderCells";
 import styles from "./ArcOrdersScreen.module.css";
+import { ArcSearchBox } from "./ArcSearchBox";
+import { useAdminCols } from "./useAdminCols";
 import { useArcToast } from "./useArcToast";
 
 const PATH = "/admin/orders";
@@ -95,16 +95,6 @@ const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
 
 /** One row of the table: the order, keyed by its code. */
 type Row = { code: string; total: number; order: AdminOrder };
-
-/** The address with some keys changed: `hrefWith`'s rule, as a query. */
-function patched(current: Query, patch: Record<string, string | number | null>): Query {
-  const next: Query = { ...current };
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === null || value === "") delete next[key];
-    else next[key] = String(value);
-  }
-  return next;
-}
 
 /**
  * The order book in the Arc frame (round v5 slice 0), in place of the v3
@@ -491,7 +481,9 @@ export function ArcOrdersScreen({
         <div className={styles.toolbarSlot}>
           <div className={styles.toolbar} inert={bulk || undefined}>
             <div className={styles.search}>
-              <SearchBox
+              <ArcSearchBox
+                label="Tìm đơn"
+                placeholder="Tìm mã đơn, tên, số điện thoại"
                 value={view.q ?? ""}
                 onSubmit={(v) => go({ q: v || null, page: null }, "replace")}
               />
@@ -608,38 +600,4 @@ export function ArcOrdersScreen({
  */
 function issueOfOrder(catalog: Catalog, o: Order): number | undefined {
   return issueOf(catalog, o);
-}
-
-/**
- * The table's search, v3's `SearchBox` in an Arc `SearchField`.
- *
- * It writes `?q=` rather than filtering in React state, because the result IS
- * what the screen is showing (QĐ-8). Typed locally and sent after a 350ms
- * pause, so the caret never jumps while somebody is still typing; Enter sends
- * it at once. The label is read, not shown: the toolbar names the field.
- */
-function SearchBox({ value, onSubmit }: { value: string; onSubmit: (v: string) => void }) {
-  const [text, setText] = useState(value);
-
-  useEffect(() => setText(value), [value]);
-
-  useEffect(() => {
-    if (text === value) return;
-    const id = window.setTimeout(() => onSubmit(text.trim()), 350);
-    return () => window.clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text]);
-
-  return (
-    <SearchField
-      label="Tìm đơn"
-      hideLabel
-      placeholder="Tìm mã đơn, tên, số điện thoại"
-      value={text}
-      onValueChange={setText}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") onSubmit(text.trim());
-      }}
-    />
-  );
 }

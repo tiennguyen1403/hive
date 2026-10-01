@@ -22,7 +22,7 @@ export const metadata = { title: "Tổng quan" };
  * component, draws exactly what the server sent on its first pass.
  *
  * Since round v5 slice 2 the screen is the Arc one (`ArcOverviewScreen`,
- * in the Arc frame through `ARC_ADMIN_PATHS`); the reads are unchanged.
+ * in the Arc frame); the reads are unchanged.
  */
 export default async function AdminOverviewPage(props: PageProps<"/admin">) {
   await requireAdmin("/admin");

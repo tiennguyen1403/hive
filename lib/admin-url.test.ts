@@ -4,6 +4,7 @@ import {
   hrefWith,
   pageOf,
   paginate,
+  patched,
   perPageOf,
   queryOf,
 } from "./admin-url";
@@ -15,6 +16,29 @@ describe("queryOf", () => {
 
   it("drops empty and missing keys", () => {
     expect(queryOf({ q: "", pay: undefined, state: "PAID" })).toEqual({ state: "PAID" });
+  });
+});
+
+describe("patched", () => {
+  it("changes the keys it is given and keeps every other one", () => {
+    expect(patched({ state: "PAID", pay: "COD" }, { page: 2 })).toEqual({ state: "PAID", pay: "COD", page: "2" });
+    expect(patched({ kind: "order" }, { kind: "promo" })).toEqual({ kind: "promo" });
+  });
+
+  it("removes a key for null or an empty string rather than keeping it empty", () => {
+    expect(patched({ state: "PAID", q: "an", page: "2" }, { state: null, q: "" })).toEqual({ page: "2" });
+  });
+
+  it("leaves the query it was handed as it was", () => {
+    const current = { state: "PAID" };
+    expect(patched(current, { state: "SHIPPING", page: null })).toEqual({ state: "SHIPPING" });
+    expect(current).toEqual({ state: "PAID" });
+  });
+
+  it("is the query hrefWith writes into the address", () => {
+    const current = { group: "loyal", q: "an", page: "3" };
+    const patch = { page: null, q: "minh", per: 25 };
+    expect(hrefWith("/admin/customers", patched(current, patch))).toBe(hrefWith("/admin/customers", current, patch));
   });
 });
 

@@ -1,0 +1,27 @@
+/* The 4px bar (`ArcMeter.tsx`): the muted ground, the share in the accent
+   from the left; the danger colour while it runs hot; the whole track in ink
+   once it is over. Arc tokens only. The row it sits in places it. */
+
+.meter {
+  position: relative;
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+}
+
+.meter[data-state="hot"] .fill {
+  background: var(--danger);
+}
+
+.meter[data-state="gone"],
+.meter[data-state="gone"] .fill {
+  background: var(--foreground);
+}

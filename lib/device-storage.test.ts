@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ADMIN_COLS_KEY } from "@/components/admin/useAdminCols";
+import { ADMIN_COLS_KEY } from "@/components/admin-arc/useAdminCols";
 import { CART_STORAGE_KEY } from "./cart";
 import { RETIRED_KEYS, forgetRetiredKeys } from "./device-storage";
 import { GUIDE_HEIGHT_STORAGE_KEY } from "./feed-size-guide";

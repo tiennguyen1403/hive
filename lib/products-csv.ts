@@ -13,7 +13,7 @@ import { LEX, issueNo, styleName } from "./lexicon";
  * word for word when the table moved to Arc (round v5 slice 5a), as rows
  * rather than a download, so the file can be tested; the screen hands them to
  * `downloadCsv`, as an issue's file does (`lib/issue-csv.ts`, slice 4). The v3
- * table keeps its own copy until the clean-up slice.
+ * table and its own copy went at slice 6.
  *
  * One row per style, issue or fixed, in catalogue order, whatever tab the
  * table is on. A fixed style (slice B5) has no issue, no cut and so no "đã

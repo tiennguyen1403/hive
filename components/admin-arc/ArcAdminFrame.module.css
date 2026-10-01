@@ -1,10 +1,10 @@
 /* The root of the Arc zone (round v5 slice 0). It carries `data-ui="admin"`,
    which is what turns on the tokens of `registry/foundation.css`: every rule
    there is scoped `:root:has([data-ui="admin"])`, so outside this element the
-   v3 back office and the shop do not change by a pixel.
+   shop does not change by a pixel.
 
-   Desktop only, like the v3 frame (`.s.adm3`): below 1180px the page scrolls
-   sideways rather than folding. */
+   Desktop only, as the v3 frame was: below 1180px the page scrolls sideways
+   rather than folding. */
 
 .frame {
   display: grid;
@@ -35,9 +35,10 @@
 }
 
 /* On paper (slice 1, the delivery slips): the page alone, as the v3 frame
-   printed it (`app/styles/admin.css`, `@media print`). No sidebar and no
-   toast, no gutter, no desktop floor, a white sheet. The frame drops its grid
-   too: with the sidebar gone, the page would land in the sidebar's column. */
+   printed it. No sidebar and no toast, no gutter, no desktop floor, a white
+   sheet; the page's margin is `app/styles/checkout.css`'s `@page`. The frame
+   drops its grid too: with the sidebar gone, the page would land in the
+   sidebar's column. */
 @media print {
   .frame {
     display: block;

@@ -6,12 +6,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, useTransition, type Ref } from "react";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { SIZES, type Drop, type DropState, type Product, type Teaser } from "@/data/types";
+import { SIZES, type Drop, type Product, type Teaser } from "@/data/types";
 import { addDrop, addTeaser, closeDropNow, scheduleDrop } from "@/lib/actions/catalog-admin";
 import type { ActionState } from "@/lib/actions/state";
 import { stockAlerts } from "@/lib/admin-metrics";
 import type { AdminOrder } from "@/lib/admin-orders";
-import { DROP_STATE_LABEL, dropRows, type DropRow } from "@/lib/admin-rows";
+import { dropRows, type DropRow } from "@/lib/admin-rows";
 import { teasersIn } from "@/lib/catalog";
 import { nextDropNo, proposedWindow } from "@/lib/catalog-admin";
 import { downloadCsv } from "@/lib/csv";
@@ -35,7 +35,7 @@ import { orderTotalVnd } from "@/lib/orders";
 import { photoUrl } from "@/lib/photos";
 import { soldOutTimes } from "@/lib/sold-out-times";
 import type { TeaserDraft } from "@/lib/teaser-form";
-import { Badge, type BadgeTone } from "@/registry/components/badge/badge";
+import { Badge } from "@/registry/components/badge/badge";
 import { Button } from "@/registry/components/button/button";
 import { DropdownMenu, type DropdownItem } from "@/registry/components/dropdown-menu/dropdown-menu";
 import {
@@ -47,22 +47,16 @@ import { ArcCloseDropDialog, type CloseTarget } from "./ArcCloseDropDialog";
 import { ArcDropFormDialog, type DropFormTarget } from "./ArcDropFormDialog";
 import styles from "./ArcDropsScreen.module.css";
 import { ArcKpi } from "./ArcKpi";
+import { ArcMeter } from "./ArcMeter";
 import panel from "./ArcOrderScreen.module.css";
 import book from "./ArcOrdersScreen.module.css";
-import overview from "./ArcOverviewScreen.module.css";
 import page from "./ArcPage.module.css";
 import { ArcTeaserDialog } from "./ArcTeaserDialog";
+import { ISSUE_STATE } from "./arc-issue-state";
 import { useArcToast } from "./useArcToast";
 
 /** Lucide at 16, Arc's stroke (skill-design.md). Decorative: every icon sits beside its label. */
 const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
-
-/** An issue's state, in v3's words ("Đang bán" where the label says "Đang mở"), with Arc's tones (brief §3.2). */
-const ISSUE_STATE: Record<DropState, { text: string; tone: BadgeTone }> = {
-  OPEN: { text: "Đang bán", tone: "success" },
-  UPCOMING: { text: DROP_STATE_LABEL.UPCOMING, tone: "info" },
-  CLOSED: { text: DROP_STATE_LABEL.CLOSED, tone: "neutral" },
-};
 
 /**
  * " · " between the entries a figure lists. The space before the dot is a
@@ -783,9 +777,9 @@ function IssueDetail({
 }
 
 /**
- * How much of a style has gone: the overview's 4px bar in its three readings
- * (accent while it sells, `--danger` from 85% sold, the whole track in ink
- * once it is gone; slice 2's "Bán chạy"), beside "18 · còn 17" or "14 · hết".
+ * How much of a style has gone: the 4px bar (`ArcMeter`) in its three
+ * readings (accent while it sells, `--danger` from 85% sold, the whole track
+ * in ink once it is gone; slice 2's "Bán chạy"), beside "18 · còn 17" or "14 · hết".
  * The count is a box of one width on every row, flush right, so the bars start
  * and end at the same x down the column, as the codes' "Lượt" (slice 3).
  */
@@ -796,9 +790,7 @@ function SoldCell({ product }: { product: IssueStyle }) {
   const reading = left === 0 ? "gone" : percent >= 85 ? "hot" : undefined;
   return (
     <span className={styles.sold}>
-      <span className={`${overview.bar} ${styles.soldBar}`} data-state={reading} aria-hidden="true">
-        <span className={overview.barFill} style={{ width: `${percent}%` }} />
-      </span>
+      <ArcMeter percent={percent} reading={reading} className={styles.soldBar} />
       <span className={styles.soldCount}>
         {sold} · {left === 0 ? "hết" : `còn ${left}`}
       </span>

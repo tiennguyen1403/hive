@@ -36,8 +36,7 @@ export default async function AdminOrderDetailPage(props: PageProps<"/admin/orde
   const customerOrders = order.owner ? ordersOfCustomer(book, order.owner) : [];
 
   // The Arc screen since round v5 slice 1; the admin layout wraps it in the
-  // Arc frame (`ARC_ADMIN_TREES`). The v3 `AdminOrderScreen` stays in the
-  // tree until the clean-up slice.
+  // Arc frame.
   return (
     <ArcOrderScreen
       order={order}

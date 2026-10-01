@@ -21,8 +21,7 @@ export const metadata = { title: "Thêm mẫu" };
  * them yet, and the save button says which is still missing. No sentence
  * under the heading (v3 slice 12): the form explains neither kind of style.
  *
- * Round v5 slice 5b: the screen is the Arc one (`ArcProductScreen`); the v3
- * form stays in `components/admin/` until the clean-up slice.
+ * Round v5 slice 5b: the screen is the Arc one (`ArcProductScreen`).
  */
 export default async function AdminNewProductPage() {
   await requireAdmin("/admin/products/new");

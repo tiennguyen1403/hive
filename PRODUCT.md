@@ -73,8 +73,8 @@ Thanh điều hướng của cửa hàng mang lockup không số, chữ cao 62,5
 
 Tất cả sinh bằng `scripts/brand-assets.ts`. Chân trang, thanh bên quản trị và phiếu giao hàng vẫn là chữ HIVE.
 
-Hệ thiết kế (màu, chữ, giọng) đã chốt qua các đợt v2–v4: phần khách theo Feed từ đợt v4, quản trị còn v3 tới vòng mock
-riêng. Nguồn sự thật là `DESIGN.md`, không lặp lại ở đây.
+Hệ thiết kế (màu, chữ, giọng) đã chốt qua các đợt v2–v5: phần khách theo Feed từ đợt v4; quản trị theo bộ Arc (uiarc.dev,
+bản free) từ đợt v5 (QĐ-37–39). Nguồn sự thật là `DESIGN.md`, không lặp lại ở đây.
 
 **Quy trình đã được người dùng nêu rõ:** hướng thiết kế phải được họ duyệt
 **trước khi** viết code. Một câu mô tả thẩm mỹ là ràng buộc, không phải lời duyệt.

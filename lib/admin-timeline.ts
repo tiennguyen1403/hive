@@ -7,8 +7,8 @@ import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "./datetime";
  * `Stepper` draws it in (round v5 slice 1).
  *
  * `timelineOf` is the v3 order screen's own function
- * (`components/admin/AdminOrderScreen.tsx`), word for word: the v3 screen is
- * no longer routed, and the clean-up slice deletes it with its private copy.
+ * (`components/admin/AdminOrderScreen.tsx`), word for word; that screen and
+ * its private copy went at round v5 slice 6, so this is the only one.
  */
 
 export interface Milestone {

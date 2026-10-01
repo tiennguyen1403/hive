@@ -31,8 +31,7 @@ export const metadata = { title: "Sửa mẫu" };
  * an issue that has not opened is hidden from shoppers (slice B3c) but not
  * from the manager, so the link works for the one person who sees it here.
  *
- * Round v5 slice 5b: the screen is the Arc one (`ArcProductScreen`); the v3
- * form stays in `components/admin/` until the clean-up slice.
+ * Round v5 slice 5b: the screen is the Arc one (`ArcProductScreen`).
  */
 export default async function AdminEditProductPage(props: PageProps<"/admin/products/[id]">) {
   const { id } = await props.params;

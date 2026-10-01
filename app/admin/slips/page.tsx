@@ -52,7 +52,6 @@ export default async function AdminSlipsPage(props: PageProps<"/admin/slips">) {
     if (reason) reasons[String(o.code)] = reason;
   }
 
-  // The Arc screen since round v5 slice 1 (`ARC_ADMIN_PATHS`); the v3
-  // `SlipScreen` stays in the tree until the clean-up slice.
+  // The Arc screen since round v5 slice 1.
   return <ArcSlipScreen orders={orders} editReasons={reasons} nowIso={toVnIso(now)} />;
 }

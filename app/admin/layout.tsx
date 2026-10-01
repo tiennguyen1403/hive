@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { AdminToastProvider } from "@/components/admin/AdminToast";
-import { AdminShell } from "@/components/admin-arc/AdminShell";
+import { ArcAdminFrame } from "@/components/admin-arc/ArcAdminFrame";
 import { needsAction } from "@/lib/admin-metrics";
 import { demoNow } from "@/lib/clock";
 import { effectiveOrder } from "@/lib/customer-orders";
@@ -9,8 +8,8 @@ import { loadMe } from "@/lib/db/profiles";
 import { requireAdmin } from "@/lib/db/session";
 // Arc's tokens (round v5, QĐ-37), here and not in the root layout. Every rule
 // in the file is scoped `:root:has([data-ui="admin"])`, so it acts only while
-// an Arc frame is in the page: the v3 screens and the shop, which keep the
-// stylesheet after a client navigation, never match it.
+// the Arc frame is in the page: the shop, which keeps the stylesheet after a
+// client navigation, never matches it.
 import "@/registry/foundation.css";
 
 export const metadata: Metadata = {
@@ -40,19 +39,14 @@ export const metadata: Metadata = {
  * reads the page below uses (`lib/db/admin.ts`), so the count and the queue
  * cannot disagree.
  *
- * Round v5 moves the back office to Arc one screen at a time. `AdminShell`
- * picks the frame from the path: the Arc frame for `ARC_ADMIN_PATHS`
- * (`lib/admin-arc.ts`), and for every other screen the v3 frame exactly as it
- * was — `.s.adm3`, the same design system as the shop switched to the back
- * office's own surface, a cream page with white panels on it. v3 screens
- * supply their own `<AdminTop>`.
- *
- * `AdminToastProvider` sits here and wraps both frames: the v3 back office
- * has one toast, and a sheet that closes when its action succeeds still has
- * the answer said after it has gone. The Arc frame brings its own toast stack
- * (`useArcToast`). Nothing in the back office is simulated in the browser any
- * more (slice B3b) — every screen reads the database and every button writes
- * it.
+ * Every screen wears the Arc frame (round v5, QĐ-37): the zone's root, the
+ * sidebar and the toast stack (`ArcAdminFrame`). Round v5 moved the back
+ * office one area at a time and switched frames by path; since slice 6, with
+ * the v3 frame and its screens gone, the layout draws the Arc frame directly.
+ * A path no page answers never reaches this layout: the root `not-found`
+ * answers it, outside the back office. Nothing in the back office is
+ * simulated in the browser any more (slice B3b) — every screen reads the
+ * database and every button writes it.
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await requireAdmin();
@@ -61,14 +55,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const waiting = needsAction(orders.map((o) => effectiveOrder(o, now))).length;
 
   return (
-    <AdminToastProvider>
-      <AdminShell
-        me={{ name: me?.name ?? session.email, email: session.email }}
-        waiting={waiting}
-        lastResetAt={lastResetAt}
-      >
-        {children}
-      </AdminShell>
-    </AdminToastProvider>
+    <ArcAdminFrame
+      me={{ name: me?.name ?? session.email, email: session.email }}
+      waiting={waiting}
+      lastResetAt={lastResetAt}
+    >
+      {children}
+    </ArcAdminFrame>
   );
 }

@@ -26,8 +26,8 @@ import styles from "./ArcSidebar.module.css";
 
 /**
  * The seven places of the back office: the same order, labels and addresses
- * as `LINKS` in the v3 sidebar (`components/admin/AdminNav.tsx`), each with a
- * Lucide icon. The label of the issues is the lexicon's (`LEX.adm`), and the
+ * as `LINKS` in the v3 sidebar (`AdminNav`, until round v5 slice 6), each with
+ * a Lucide icon. The label of the issues is the lexicon's (`LEX.adm`), and the
  * address stays English, as in v3.
  */
 const LINKS: Array<{ href: string; label: string; icon: LucideIcon }> = [
@@ -49,8 +49,8 @@ function isOpen(pathname: string, href: string): boolean {
 }
 
 /**
- * The Arc back office's sidebar (round v5 slice 0), in place of the v3
- * `AdminNav` and `SimBar` on the screens that moved to Arc.
+ * The Arc back office's sidebar (round v5 slice 0), in place of v3's
+ * `AdminNav` and `SimBar`.
  *
  * Everything it prints comes from the server, through the admin layout, as
  * in v3: who is signed in, how many orders wait on the shop (the same count

@@ -21,7 +21,7 @@ export const metadata = { title: "Nhật ký thao tác" };
  * opened on schedule — so a page rendered once would stop growing.
  *
  * Since round v5 slice 2 the screen is the Arc one (`ArcLogScreen`, in the
- * Arc frame through `ARC_ADMIN_PATHS`); the reads are unchanged.
+ * Arc frame); the reads are unchanged.
  */
 export default async function AdminLogPage(props: PageProps<"/admin/log">) {
   await requireAdmin("/admin/log");

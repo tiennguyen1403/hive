@@ -3164,3 +3164,32 @@ Arc**; test quét `app/admin/**/page.tsx`.
   - gộp các bản chép: thanh 4px, `ISSUE_STATE`, `patched()`, `SearchBox`, `timelineOf`, `LINKS`/`isOpen`; `ArcPromoDrawer`
     dùng `useCapitals`; `lib/admin-options.ts` thôi lấy kiểu `SelectOption` từ `components/ui/Select` của v3;
   - documenter viết lại DESIGN.md cho vùng Arc.
+
+**01/10, lát 5b commit `17060a1`** (người dùng cho phép; chưa push). Lát 6 (dọn mã quản trị v3, gộp bản chép trong vùng Arc)
+đã giao agent theo `tasks/briefs/v5-lat-6-don.md`. Yêu cầu: phần khách và vùng Arc lệch 0 px. Phiên chính phát hiện thêm:
+`--font-sans` và `--font-display` ở `@theme` vẫn trỏ về font v3 (Be Vietnam Pro, Unbounded). Lát này đổi chúng sang Mona Sans
+rồi bỏ hai font. Sau lát này, documenter viết lại DESIGN.md.
+
+**01/10, lát 6 ĐẠT (phiên chính duyệt), chờ người dùng cho commit.** Mã quản trị v3 đã xoá: 58 tệp, gồm `components/admin/`,
+phần v3 của `components/ui/`, `components/icon/`, `AdminShell`, `lib/admin-arc.ts` và 9 tệp CSS. Hai font v3 bỏ;
+`--font-sans` và `--font-display` trỏ Mona Sans. Gộp các bản chép: `ArcMeter` (thanh 4px, 5 chỗ), `arc-issue-state.ts`,
+`patched()` trong `lib/admin-url.ts`, ô mã dùng `useCapitals`, `SearchBox` của Đơn hàng thành `ArcSearchBox`.
+- **0 px do mã.** 169 cặp ảnh trước/sau. Chỗ lệch nào cũng lệch y như vậy giữa hai lần chụp cùng một bản dựng: agent dựng lại
+  HEAD để đối chứng; phiên chính xem mẫu, thấy lệch chỉ nằm trong ảnh sản phẩm. Không phần tử nào đổi font.
+- **Số đo:**
+  - CSS nén của `/` 32,2 → 23,9 KB;
+  - JS nén của `/admin` giảm 16,4 KB;
+  - font trong bản dựng 20 → 3 tệp, mất 198 KB font v3;
+  - mã TS/TSX 77,6 → 67,5 nghìn dòng.
+- 1.763 test xanh (giảm 148, là test của mã đã xoá; thêm 4 test `patched`); typecheck, build sạch; khoá cột Đơn hàng giữ
+  nguyên; sweep 110 phát hiện như trước.
+- **Phiên chính sửa sau duyệt:**
+  - bỏ 4 ignore v3 trong `.impeccable/config.json`;
+  - `tools/layout-sweep.js`: bỏ `.fct` chết, sửa chú giải bề rộng quản trị;
+  - chú giải font ở `registry/foundation.css` và `PATCHES.md`;
+  - định nghĩa `ui-implementer` thôi nhắc Iconsax, `AdminTop`, scope `.s.adm` và token v3;
+  - câu hệ thiết kế ở `PRODUCT.md`.
+- **Còn mở:**
+  - DESIGN.md (documenter, bước kế);
+  - `ArcOrderCells` kéo `data/regions` (3.321 phường, 28,9 KB nén) vào 4 trang quản trị, có từ lát 0;
+  - thư mục ảnh đối chứng `.playwright-cli/shots/v5/lat-6/noise/` (85 MB, không theo dõi) xoá được.

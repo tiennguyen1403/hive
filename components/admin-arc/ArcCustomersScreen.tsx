@@ -6,7 +6,7 @@ import { useMemo, useOptimistic, useTransition } from "react";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { customerKey, customerRows, type AdminCustomer, type CustomerRow } from "@/lib/admin-customers";
 import type { AdminOrder } from "@/lib/admin-orders";
-import { hrefWith, pageOf, paginate, perPageOf, PER_PAGE_CHOICES, type Query } from "@/lib/admin-url";
+import { hrefWith, pageOf, paginate, patched, PER_PAGE_CHOICES, perPageOf, type Query } from "@/lib/admin-url";
 import { downloadCsv } from "@/lib/csv";
 import { currentIssueNo } from "@/lib/current-issue";
 import {
@@ -48,16 +48,6 @@ const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
 
 /** One row of the table: the account and what its orders say, keyed by the account's id. */
 type Row = { id: string; customer: AdminCustomer; facts: CustomerFacts };
-
-/** The address with some keys changed: `hrefWith`'s rule, as a query. */
-function patched(current: Query, patch: Record<string, string | number | null>): Query {
-  const next: Query = { ...current };
-  for (const [key, value] of Object.entries(patch)) {
-    if (value === null || value === "") delete next[key];
-    else next[key] = String(value);
-  }
-  return next;
-}
 
 /**
  * Who has bought, and what the orders say about them, in the Arc frame (round

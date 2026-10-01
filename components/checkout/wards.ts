@@ -7,8 +7,9 @@ import type { Ward } from "@/data/regions";
  *
  * `data/wards.json` is 218KB of 3,321 communes and stays on the server
  * behind `/api/wards` (see the route's own note). The screens that ask it
- * for a province — the back office's `WardSelect`, the Feed's checkout and
- * address sheet — name each commune the one way, with `wardOptionLabel`.
+ * for a province — the back office's address form (`ArcAddressForm`), the
+ * Feed's checkout and address sheet — name each commune the one way, with
+ * `wardOptionLabel`.
  */
 
 /** Mirrors `wardLabel` in `data/regions.ts`, which is server-side only here. */

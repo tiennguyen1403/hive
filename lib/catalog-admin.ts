@@ -735,7 +735,7 @@ export function sameTerms(a: PromoTerms, b: PromoTerms): boolean {
 }
 
 /**
- * The code sheet's draft — `PromoDraft` in `components/admin/PromoFormSheet`,
+ * The code form's draft — `PromoDraft` in `lib/promo-form.ts`,
  * where a cap or a minimum of 0 means "none" and a blank limit is null —
  * read into a code and its terms. Only the fields the kind carries survive:
  * the sheet keeps an amount in its state while the percentage tab is open,

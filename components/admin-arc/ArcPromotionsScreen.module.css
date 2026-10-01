@@ -33,28 +33,11 @@
   min-width: 140px;
 }
 
-/* 4px on the muted ground; the spent share in the accent, and the whole
-   track in ink once the cap is reached, the one reading that means over (the
-   overview's sellers, slice 2). */
-.meter {
-  position: relative;
-  display: block;
+/* The 4px bar (`ArcMeter`) takes what the count leaves: the spent share in
+   the accent, and the whole track in ink once the cap is reached, the one
+   reading that means over (the overview's sellers, slice 2). */
+.usesBar {
   flex: 1;
-  height: 4px;
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: var(--surface-muted);
-}
-
-.meterFill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: var(--accent);
-}
-
-.meter[data-full],
-.meter[data-full] .meterFill {
-  background: var(--foreground);
 }
 
 .usesCount {

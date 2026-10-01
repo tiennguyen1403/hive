@@ -103,9 +103,10 @@ describe("the Feed stylesheets stay inside the zone", () => {
   });
 
   it("never wears a v3 layer name that v3 styles without .s, so no v3 rule can land on a Feed element", () => {
-    // `.sheetwrap`, `.menu3`, `.toast` and `.veil` are styled bare in
-    // `styles/sheet.css` and `styles/admin.css`; the mock's own `.toast`
-    // (flow.css) would pick all of those rules up.
+    // `.veil` is styled bare in `styles/sheet.css`. `.sheetwrap`, `.menu3`
+    // and `.toast` were v3's portalled layers, styled bare too until round v5
+    // slice 6, and stay refused: the mock's own `.toast` (flow.css) picked
+    // their rules up once.
     const taken = /\.(sheetwrap|menu3|toast|veil)(?![\w-])/;
     expect(feedRules.filter((r) => taken.test(r.selector)).map((r) => `${r.file}: ${r.selector}`)).toEqual([]);
   });
@@ -186,7 +187,7 @@ describe("the Feed stylesheets stay inside the zone", () => {
     const imports = [...globals.matchAll(/@import "\.\/styles\/([\w/.-]+)"/g)].map((m) => m[1]);
     const feed = imports.filter((i) => i!.startsWith("feed/"));
     expect(feed).toEqual(["feed/feed.css", "feed/flow.css", "feed/account.css", "feed/more.css"]);
-    // Every v3 file comes before them (since slice 5 the last is `interaction.css`).
+    // Every v3 file comes before them (since round v5 slice 6 the last is `checkout.css`).
     expect(imports.length).toBeGreaterThan(feed.length);
     expect(imports.slice(-feed.length)).toEqual(feed);
   });

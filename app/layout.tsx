@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, Unbounded } from "next/font/google";
 import { CartProvider } from "@/components/cart/CartContext";
 import { MeProvider } from "@/components/account/MeContext";
 import { MyStateProvider } from "@/components/account/MyStateContext";
@@ -12,39 +11,11 @@ import { loadMe } from "@/lib/db/profiles";
 import { SITE_DESCRIPTION, SITE_NAME, THEME_COLOR, siteOrigin } from "@/lib/site";
 import "./globals.css";
 
-// Self-hosted by next/font — no runtime call to fonts.googleapis.com.
-// The `vietnamese` subset is required for BOTH: the style names (KHÓI, BỤI,
-// SƯƠNG, NGUỘI) and the word "Số" itself are set in Unbounded and carry
-// Vietnamese diacritics; a latin-only subset would drop them to a fallback
-// face mid-word.
-//
-// Pair D, chosen 22/09/2026: Unbounded 800 for the display roles (the issue
-// number, headings, style names, the wordmark, order codes), Be Vietnam Pro
-// for everything a sentence is made of. 700 joins the sans because a v3
-// badge is 700 — v2 stopped at 600 and the weight would have been faked.
-//
-// `preload: false` on both (round v4 slice 5): only the back office still
-// sets text in them — every Feed screen runs on Mona Sans — so the back office
-// fetches the two when it needs them, with `display: swap`, and the Feed pages
-// stop preloading ten files they never draw. The variables stay on <html>, as
-// the back office's layers portalled to <body> need them too.
-const beVietnamPro = Be_Vietnam_Pro({
-  subsets: ["vietnamese", "latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-be-vietnam",
-  display: "swap",
-  preload: false,
-});
-
-// One weight, not the variable axis: nothing in the system sets a display
-// weight other than 800, and the static instance is the smaller download.
-const unbounded = Unbounded({
-  subsets: ["vietnamese", "latin"],
-  weight: ["800"],
-  variable: "--font-unbounded",
-  display: "swap",
-  preload: false,
-});
+// One family, Mona Sans (`components/feed/font.ts`), self-hosted by next/font —
+// no runtime call to fonts.googleapis.com. The shop sets it through the Feed
+// zone, the back office through Arc's two type roles (QĐ-38). v3's pair, Be
+// Vietnam Pro and Unbounded, went at round v5 slice 6 with the last v3 screen;
+// `--font-sans` and `--font-display` in `globals.css` read Mona Sans since.
 
 // The head every page inherits (v3 slice 10, QĐ-31). The pictures are files
 // beside this one, and Next writes their tags itself: `favicon.ico`,
@@ -126,11 +97,7 @@ export default async function RootLayout({
   // (QĐ-38), and its Dialog, Select, menus and toasts render straight into
   // <body>, outside any zone root, so the variable has to exist at the top.
   return (
-    <html
-      lang="vi"
-      className={`${beVietnamPro.variable} ${unbounded.variable} ${monaSans.variable}`}
-      suppressHydrationWarning
-    >
+    <html lang="vi" className={monaSans.variable} suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: POINTER_PROBE }} />
         {/* One of each, above the router, so a line added on the product
