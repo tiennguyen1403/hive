@@ -1,5 +1,6 @@
 import type { Order } from "@/data/types";
 import type { LookupField } from "./feed-account";
+import { pick, pickAll, type Locale, type Pair } from "./i18n";
 import { normaliseOrderCode, phoneDigits } from "./lookup";
 
 /**
@@ -32,16 +33,45 @@ export type { LookupField };
  * form the same as `lookupCheck`'s in `lib/feed-account.ts`. The last is the
  * app's, in the words its other reads use when the database cannot be
  * reached ("Chưa … được. Thử lại sau ít phút."): the mock cannot fail.
+ *
+ * In both languages since round v6 slice E2: `LOOKUP_WORDS` is the Vietnamese
+ * side, as before, and `lookupWords(locale)` either side.
  */
-export const LOOKUP_WORDS = {
-  codeMissing: "Nhập mã đơn",
-  codeShape: "Mã đơn có dạng DH-1499",
-  phoneMissing: "Nhập số điện thoại",
-  phoneShape: "Số điện thoại gồm 10 số, bắt đầu bằng 0",
-  noOrder: "Không có đơn nào mang mã này",
-  phoneMismatch: "Số điện thoại không khớp với đơn",
-  unavailable: "Chưa tra được đơn. Thử lại sau ít phút.",
-} as const;
+export const LOOKUP_TEXT = {
+  codeMissing: { vi: "Nhập mã đơn", en: "Enter an order code" },
+  codeShape: { vi: "Mã đơn có dạng DH-1499", en: "Order codes look like DH-1499" },
+  phoneMissing: { vi: "Nhập số điện thoại", en: "Enter a phone number" },
+  phoneShape: { vi: "Số điện thoại gồm 10 số, bắt đầu bằng 0", en: "Phone numbers have 10 digits, starting with 0" },
+  noOrder: { vi: "Không có đơn nào mang mã này", en: "No order has this code" },
+  phoneMismatch: { vi: "Số điện thoại không khớp với đơn", en: "This phone number doesn't match the order" },
+  unavailable: {
+    vi: "Chưa tra được đơn. Thử lại sau ít phút.",
+    en: "Couldn't look up the order. Try again in a few minutes.",
+  },
+} as const satisfies Record<string, Pair>;
+
+export type LookupWord = keyof typeof LOOKUP_TEXT;
+
+/** The screen's sentences in one language. */
+export function lookupWords(locale: Locale = "vi"): Readonly<Record<LookupWord, string>> {
+  return pickAll(LOOKUP_TEXT, locale);
+}
+
+export const LOOKUP_WORDS = lookupWords("vi");
+
+/**
+ * One of the screen's sentences, in either language, written again in
+ * `locale`; anything that is not one of them is left as it is. The lookup
+ * screen keeps the sentence under a field as it arrived — from its own check
+ * or from the server, in the language of the moment — and reads it through
+ * this, so a switch of language rewords it in place.
+ */
+export function lookupWordIn(sentence: string, locale: Locale): string {
+  for (const pair of Object.values(LOOKUP_TEXT) as Pair[]) {
+    if (pair.vi === sentence || pair.en === sentence) return pick(pair, locale);
+  }
+  return sentence;
+}
 
 /** Field → the sentence under it, only for the fields that are wrong. */
 export type LookupErrors = Partial<Record<LookupField, string>>;
@@ -75,18 +105,20 @@ const CODE_SHAPE = /^DH-\d{3,6}$/;
 export function readLookup(
   code: unknown,
   phone: unknown,
+  locale: Locale = "vi",
 ): { ok: true; input: LookupInput } | { ok: false; errors: LookupErrors } {
   const codeText = typeof code === "string" ? code : "";
   const phoneText = typeof phone === "string" ? phone : "";
   const errors: LookupErrors = {};
+  const words = lookupWords(locale);
 
   const wanted = normaliseOrderCode(codeText);
-  if (!codeText.trim()) errors.code = LOOKUP_WORDS.codeMissing;
-  else if (!CODE_SHAPE.test(wanted)) errors.code = LOOKUP_WORDS.codeShape;
+  if (!codeText.trim()) errors.code = words.codeMissing;
+  else if (!CODE_SHAPE.test(wanted)) errors.code = words.codeShape;
 
   const digits = phoneDigits(phoneText);
-  if (!phoneText.trim()) errors.phone = LOOKUP_WORDS.phoneMissing;
-  else if (!digits) errors.phone = LOOKUP_WORDS.phoneShape;
+  if (!phoneText.trim()) errors.phone = words.phoneMissing;
+  else if (!digits) errors.phone = words.phoneShape;
 
   if (errors.code || errors.phone) return { ok: false, errors };
   return { ok: true, input: { code: wanted, phone: digits } };
@@ -175,14 +207,18 @@ export type LookupResult =
   | { ok: false; reason: "INVALID" | LookupMiss; errors: LookupErrors; message?: undefined }
   | { ok: false; reason: "RATE_LIMITED" | "UNAVAILABLE"; message: string; errors?: undefined };
 
-/** The server's answer, in the screen's words: each miss under its own field. */
-export function lookupResultOf(answer: LookupAnswer): LookupResult {
+/**
+ * The server's answer, in the screen's words: each miss under its own field.
+ * A refusal for going too fast keeps the sentence `takeRate` wrote, already in
+ * the request's language.
+ */
+export function lookupResultOf(answer: LookupAnswer, locale: Locale = "vi"): LookupResult {
   if (answer.ok) return { ok: true, order: answer.order };
   switch (answer.reason) {
     case "NO_ORDER":
-      return { ok: false, reason: "NO_ORDER", errors: { code: LOOKUP_WORDS.noOrder } };
+      return { ok: false, reason: "NO_ORDER", errors: { code: lookupWords(locale).noOrder } };
     case "PHONE_MISMATCH":
-      return { ok: false, reason: "PHONE_MISMATCH", errors: { phone: LOOKUP_WORDS.phoneMismatch } };
+      return { ok: false, reason: "PHONE_MISMATCH", errors: { phone: lookupWords(locale).phoneMismatch } };
     case "RATE_LIMITED":
       return { ok: false, reason: "RATE_LIMITED", message: answer.message };
   }

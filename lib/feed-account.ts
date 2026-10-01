@@ -12,12 +12,14 @@ import {
 } from "@/data/types";
 import type { Catalog } from "./catalog";
 import { CUSTOMER_CANCEL_REASON, OVERDUE_REASON } from "./customer-orders";
-import { addDaysIso, clockLabel, dayMonth } from "./datetime";
+import { addDaysIso, clockLabel, dateTimeLabel, dayMonth } from "./datetime";
 import { canBuy, photoKeyOf, pictureOf } from "./feed";
 import { FEED_PAYMENTS, feedDelivery } from "./feed-checkout";
+import { pick, pickAll, type Locale, type Pair } from "./i18n";
 import { isFixed, onHandOf } from "./inventory";
-import { issueLabel } from "./lexicon";
+import { FIXED_WORD_TEXT, issueLabel } from "./lexicon";
 import { phoneDigits } from "./lookup";
+import { lookupWords } from "./order-lookup";
 import { isRealPhotoKey } from "./photos";
 import { RETURN_WINDOW_DAYS } from "./shipping";
 
@@ -48,14 +50,47 @@ export const FEED_STATE_LABEL: Readonly<Record<OrderState, string>> = {
 };
 
 /**
+ * Every reason the app itself writes into `orders.cancel_reason`, in English
+ * (round v6 slice E2): the back office's four (`CANCEL_REASONS`,
+ * `lib/admin-orders.ts`), the hold that ran out (`OVERDUE_REASON`) and the
+ * shopper's own cancel (`CUSTOMER_CANCEL_REASON`). Keyed by the stored
+ * Vietnamese in lower case — the sample writes the overdue one both ways,
+ * "Quá hạn chuyển khoản" and "quá hạn chuyển khoản". The column keeps the
+ * Vietnamese; it is translated where it is printed.
+ */
+const CANCEL_REASON_EN: Readonly<Record<string, string>> = {
+  "khách đổi ý": "Change of mind",
+  [OVERDUE_REASON]: "Transfer overdue",
+  "hết hàng thật": "Out of stock",
+  "khác": "Other",
+  [CUSTOMER_CANCEL_REASON]: "Cancelled by the customer",
+};
+
+/** How a stored reason is looked up: composed, trimmed, lower case. */
+const reasonKey = (reason: string) => reason.normalize("NFC").trim().toLocaleLowerCase("vi");
+
+/**
+ * A stored reason in one language: in Vietnamese as it was stored; in English
+ * the table's words, ignoring case, or — for a reason that is not one of the
+ * app's own — exactly as it was stored.
+ */
+export function cancelReasonLabel(reason: string, locale: Locale = "vi"): string {
+  if (locale === "vi") return reason;
+  return CANCEL_REASON_EN[reasonKey(reason)] ?? reason;
+}
+
+/**
  * Why an order was cancelled, in the mock's words where it has them: the
  * shopper's own cancel reads "Bạn đã huỷ", the hold that ran out "Quá hạn
  * chuyển khoản". Any other reason — the shop's, in its own words — is kept as
- * the app has it, with a capital to start the line.
+ * the app has it, with a capital to start the line. In English (round v6
+ * slice E2) "You cancelled", "Transfer overdue", or the reason by
+ * `cancelReasonLabel`.
  */
-export function cancelReasonText(reason: string): string {
+export function cancelReasonText(reason: string, locale: Locale = "vi"): string {
   const r = reason.trim();
   const low = r.toLocaleLowerCase("vi");
+  if (locale === "en") return low === CUSTOMER_CANCEL_REASON ? "You cancelled" : cancelReasonLabel(r, "en");
   if (low === CUSTOMER_CANCEL_REASON) return "Bạn đã huỷ";
   if (low === OVERDUE_REASON) return "Quá hạn chuyển khoản";
   return capitalise(r);
@@ -129,9 +164,18 @@ export function groupSlug(g: OrderGroup): string {
   return g === "fixed" ? "co-dinh" : `so-${String(g).padStart(2, "0")}`;
 }
 
-/** On the chip and above the code: "Số 05", "Cố định". */
+/**
+ * On the chip and above the code: "Số 05", "Cố định". One parameter: the
+ * orders list maps over it (`groups.map(groupLabel)`); the language is
+ * `groupLabelIn`'s.
+ */
 export function groupLabel(g: OrderGroup): string {
-  return g === "fixed" ? "Cố định" : issueLabel(g);
+  return groupLabelIn(g, "vi");
+}
+
+/** The same in one language (round v6 slice E2): "Drop 05", "Basics" in English. */
+export function groupLabelIn(g: OrderGroup, locale: Locale): string {
+  return g === "fixed" ? pick(FIXED_WORD_TEXT, locale) : issueLabel(g, locale);
 }
 
 export interface OrdersFilter {
@@ -291,29 +335,37 @@ function stepMoments(o: Pick<Order, "status" | "moments">): {
  * never guessed. COD's "Xác nhận" has none at all: the order is RECEIVED the
  * moment it is placed, and the shop's call is not recorded; a payment the
  * shop marked is not a confirmation, so it is not printed there either.
+ *
+ * In English (round v6 slice E2) "Ordered", "Payment" ("Confirmation" for
+ * COD), "Dispatch", "Delivered"; a cancelled order's second step "Cancelled"
+ * (`STEP_TEXT`).
  */
-export function orderSteps(o: Pick<Order, "status" | "placedAt" | "payment" | "moments">): OrderStep[] {
+export function orderSteps(
+  o: Pick<Order, "status" | "placedAt" | "payment" | "moments">,
+  locale: Locale = "vi",
+): OrderStep[] {
+  const w = pickAll(STEP_TEXT, locale);
   const s = o.status;
   if (s.state === "CANCELLED") {
     return [
-      { label: "Đặt hàng", at: o.placedAt, state: "done" },
-      { label: "Đã huỷ", at: s.cancelledAt, state: "off" },
-      { label: "Gửi hàng", at: null, state: "off" },
-      { label: "Đã giao", at: null, state: "off" },
+      { label: w.placed, at: o.placedAt, state: "done" },
+      { label: w.cancelled, at: s.cancelledAt, state: "off" },
+      { label: w.shipped, at: null, state: "off" },
+      { label: w.delivered, at: null, state: "off" },
     ];
   }
   const cod = o.payment === "COD";
   const moment = stepMoments(o);
   const shipped = s.state === "SHIPPING" || s.state === "DELIVERED";
   const steps: { label: string; at: string | null; done: boolean }[] = [
-    { label: "Đặt hàng", at: o.placedAt, done: true },
+    { label: w.placed, at: o.placedAt, done: true },
     {
-      label: cod ? "Xác nhận" : "Thanh toán",
+      label: cod ? w.confirmed : w.paid,
       at: cod ? null : moment.paidAt,
       done: cod ? shipped : s.state === "PAID" || shipped,
     },
-    { label: "Gửi hàng", at: moment.shippedAt, done: shipped },
-    { label: "Đã giao", at: moment.deliveredAt, done: s.state === "DELIVERED" },
+    { label: w.shipped, at: moment.shippedAt, done: shipped },
+    { label: w.delivered, at: moment.deliveredAt, done: s.state === "DELIVERED" },
   ];
   let now = false;
   return steps.map(({ label, at, done }) => {
@@ -326,9 +378,24 @@ export function orderSteps(o: Pick<Order, "status" | "placedAt" | "payment" | "m
   });
 }
 
-/** "19:02 21/09": when a step happened (`at`). */
-export function stepStamp(iso: string): string {
-  return `${clockLabel(iso)} ${dayMonth(iso)}`;
+/**
+ * The steps' names, in both languages. The step an order waits on is drawn as
+ * "now", so the two in the middle are named for what happens there —
+ * "Payment", "Confirmation", "Dispatch", as the Vietnamese says "Thanh toán",
+ * "Gửi hàng" — never as done ("Paid") before they are.
+ */
+const STEP_TEXT = {
+  placed: { vi: "Đặt hàng", en: "Ordered" },
+  paid: { vi: "Thanh toán", en: "Payment" },
+  confirmed: { vi: "Xác nhận", en: "Confirmation" },
+  shipped: { vi: "Gửi hàng", en: "Dispatch" },
+  delivered: { vi: "Đã giao", en: "Delivered" },
+  cancelled: { vi: "Đã huỷ", en: "Cancelled" },
+} as const satisfies Record<string, Pair>;
+
+/** "19:02 21/09": when a step happened (`at`); in English "19:02, 21 Sep", as a moment is written there (`dateTimeLabel`). */
+export function stepStamp(iso: string, locale: Locale = "vi"): string {
+  return locale === "en" ? dateTimeLabel(iso, "en") : `${clockLabel(iso)} ${dayMonth(iso)}`;
 }
 
 /**
@@ -458,20 +525,23 @@ export type LookupField = "code" | "phone";
  * "Tra cứu đơn" without an account (`lookupForm`), checked in the mock's
  * words: "Nhập mã đơn", "Mã đơn có dạng DH-1499", "Nhập số điện thoại", "Số
  * điện thoại gồm 10 số, bắt đầu bằng 0". A valid pair leads to `/track`, the
- * code with its dash and the phone as its ten digits.
+ * code with its dash and the phone as its ten digits. The sentences are the
+ * lookup's own (`LOOKUP_TEXT`), in both languages since round v6 slice E2.
  */
 export function lookupCheck(
   rawCode: string,
   rawPhone: string,
+  locale: Locale = "vi",
 ): { ok: true; href: string } | { ok: false; errors: Partial<Record<LookupField, string>> } {
+  const words = lookupWords(locale);
   const code = rawCode.trim().toUpperCase();
   const phone = rawPhone.trim();
   const errors: Partial<Record<LookupField, string>> = {};
-  if (!code) errors.code = "Nhập mã đơn";
-  else if (!/^DH-?\d{3,6}$/.test(code)) errors.code = "Mã đơn có dạng DH-1499";
+  if (!code) errors.code = words.codeMissing;
+  else if (!/^DH-?\d{3,6}$/.test(code)) errors.code = words.codeShape;
   const digits = phone.replace(/\D/g, "");
-  if (!phone) errors.phone = "Nhập số điện thoại";
-  else if (!/^0\d{9}$/.test(digits)) errors.phone = "Số điện thoại gồm 10 số, bắt đầu bằng 0";
+  if (!phone) errors.phone = words.phoneMissing;
+  else if (!/^0\d{9}$/.test(digits)) errors.phone = words.phoneShape;
   if (errors.code || errors.phone) return { ok: false, errors };
   const q = new URLSearchParams({ code: code.replace(/^DH(\d)/, "DH-$1"), phone: digits });
   return { ok: true, href: `/track?${q.toString()}` };

@@ -26,6 +26,12 @@ interface FeedPickerProps {
   value: string | null;
   /** The line the list shows while it has nothing to list yet: still arriving, or it could not be fetched. */
   waiting?: string | null | undefined;
+  /**
+   * The language of the items and of `sub` when it is not the page's: the
+   * provinces' and communes' Vietnamese names on an English page (QĐ-40,
+   * round v6 slice E2). Nothing on a Vietnamese page.
+   */
+  lang?: "vi" | undefined;
   onPick: (item: PickItem) => void;
   /** The control that opened it, where the focus goes back. */
   back: HTMLElement | null;
@@ -47,7 +53,7 @@ const finePointer = () => window.matchMedia("(hover: hover) and (pointer: fine)"
  * Its own words in the page's language since round v6 slice E1 ("Close", "No
  * results"); the title, the field's name and the waiting line are the caller's.
  */
-export function FeedPicker({ open, onClose, title, sub, placeholder, items, value, waiting, onPick, back }: FeedPickerProps) {
+export function FeedPicker({ open, onClose, title, sub, placeholder, items, value, waiting, lang, onPick, back }: FeedPickerProps) {
   const t = picker(useLocale());
   const [query, setQuery] = useState("");
   const list = useRef<HTMLUListElement>(null);
@@ -121,7 +127,11 @@ export function FeedPicker({ open, onClose, title, sub, placeholder, items, valu
             <h2 className="sh-title" id="pick-title">
               {title}
             </h2>
-            {sub && <p className="sh-sub">{sub}</p>}
+            {sub && (
+              <p className="sh-sub" lang={lang}>
+                {sub}
+              </p>
+            )}
           </div>
           <button className="sh-x" type="button" data-close aria-label={t({ vi: "Đóng", en: "Close" })}>
             <FeedIcon name="x" />
@@ -141,7 +151,7 @@ export function FeedPicker({ open, onClose, title, sub, placeholder, items, valu
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <ul className="pick-list" id="pick-list" role="listbox" aria-labelledby="pick-title" ref={list}>
+        <ul className="pick-list" id="pick-list" role="listbox" aria-labelledby="pick-title" ref={list} lang={lang}>
           {hits.map((it) => (
             <li
               key={it.value}

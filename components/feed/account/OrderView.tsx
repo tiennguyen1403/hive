@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { useCart } from "@/components/cart/CartContext";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { startWait } from "@/components/shop/WaitVeil";
-import { COLORS } from "@/data/colors";
+import { COLORS, colorLabel } from "@/data/colors";
 import type { Order, OrderLine } from "@/data/types";
 import { cancelOrderAction } from "@/lib/actions/orders";
 import { dayMonth } from "@/lib/datetime";
@@ -23,10 +24,12 @@ import {
 } from "@/lib/feed-account";
 import { feedSentence } from "@/lib/feed-checkout";
 import { confirmRows, confirmTransfer } from "@/lib/feed-order";
+import { picker } from "@/lib/i18n";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd, orderUnits } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
 import type { CancelOrderResult } from "@/lib/order-payload";
+import { nameLang, productText } from "@/lib/product-text";
 import { styleHref } from "../FeedCards";
 import { FeedClock } from "../FeedClock";
 import { FeedCopy } from "../FeedCopy";
@@ -304,10 +307,13 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
 /**
  * The pieces (`account.js`: `items`): each as a tile with its name, colour,
  * size, count and price as sold. One order's page and the lookup (slice 4a)
- * draw them alike.
+ * draw them alike. In the page's language since round v6 slice E2: the name
+ * by `productText` (a drop style's Vietnamese name marked `lang="vi"`), the
+ * colour by `colorLabel`.
  */
 export function OrderItems({ lines }: { lines: readonly OrderLine[] }) {
   const catalog = useCatalog();
+  const locale = useLocale();
   return (
     <ul className="od-items">
       {lines.map((l, i) => {
@@ -316,13 +322,15 @@ export function OrderItems({ lines }: { lines: readonly OrderLine[] }) {
           <>
             <Tile line={l} product={p} size="lg" qty={false} named={false} />
             <div>
-              <p className="od-item-name disp">{p?.name ?? "—"}</p>
+              <p className="od-item-name disp" lang={p ? nameLang(p, locale) : undefined}>
+                {p ? productText(p, locale).name : "—"}
+              </p>
               <p className="od-item-meta">
-                {COLORS[l.color]?.label ?? l.color} · Size {l.size}
+                {COLORS[l.color] ? colorLabel(l.color, locale) : l.color} · Size {l.size}
                 {l.qty > 1 && ` · ×${l.qty}`}
               </p>
             </div>
-            <p className="od-item-price">{vnd(l.unitPriceVnd * l.qty)}</p>
+            <p className="od-item-price">{vnd(l.unitPriceVnd * l.qty, locale)}</p>
           </>
         );
         const key = `${l.productId}:${l.color}:${l.size}:${i}`;
@@ -343,25 +351,30 @@ export function OrderItems({ lines }: { lines: readonly OrderLine[] }) {
   );
 }
 
-/** "Tóm tắt" as the order was priced, then "Tổng" (`account.js`: `totals`); one order's page and the lookup alike. */
+/**
+ * "Tóm tắt" as the order was priced, then "Tổng" (`account.js`: `totals`); one
+ * order's page and the lookup alike. In the page's language since round v6
+ * slice E2 ("Subtotal", "Total").
+ */
 export function OrderSums({
   order,
 }: {
   order: Pick<Order, "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd" | "promo">;
 }) {
+  const locale = useLocale();
   return (
     <>
       <dl className="facts">
-        {confirmRows(order).map((r) => (
-          <div key={r.label}>
+        {confirmRows(order, locale).map((r, i) => (
+          <div key={i}>
             <dt>{r.label}</dt>
             <dd>{r.value}</dd>
           </div>
         ))}
       </dl>
       <div className="csum-total">
-        <span>Tổng</span>
-        <b>{vnd(orderTotalVnd(order))}</b>
+        <span>{picker(locale)({ vi: "Tổng", en: "Total" })}</span>
+        <b>{vnd(orderTotalVnd(order), locale)}</b>
       </div>
     </>
   );

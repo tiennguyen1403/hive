@@ -2,22 +2,24 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { lookupOrderAction } from "@/lib/actions/order-lookup";
 import { dayMonth } from "@/lib/datetime";
 import {
   canReturn,
   cancelReasonText,
-  groupLabel,
+  groupLabelIn,
   lookupCheck,
   orderGroups,
   returnUntil,
   type LookupField,
 } from "@/lib/feed-account";
-import { confirmTransfer } from "@/lib/feed-order";
+import { BACK_IN_STOCK_EN, confirmTransfer } from "@/lib/feed-order";
 import { signHref } from "@/lib/feed-sign-in";
+import { picker, plural } from "@/lib/i18n";
 import { vnd } from "@/lib/money";
-import type { LookedUpOrder, LookupErrors } from "@/lib/order-lookup";
+import { lookupWordIn, type LookedUpOrder, type LookupErrors } from "@/lib/order-lookup";
 import { orderUnits } from "@/lib/orders";
 import { FeedClock } from "../FeedClock";
 import { useMbarTitle } from "../FeedMbar";
@@ -68,9 +70,16 @@ type Focus = "result" | "error" | "code" | null;
  * carries `code` and `phone` is looked up once, when the screen mounts, and
  * never again as the address changes; after a lookup the address is written
  * with `history.replaceState`, as the mock writes it.
+ *
+ * In the page's language since round v6 slice E2 ("Track an order"). The
+ * sentence under a field is kept as it came — from the check here or from the
+ * server — and read through `lookupWordIn`, so a switch of language rewords it
+ * in place.
  */
 export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackViewProps) {
   const toast = useFeedToast();
+  const locale = useLocale();
+  const t = picker(locale);
   const [values, setValues] = useState({ code: fromCode, phone: fromPhone });
   const [errors, setErrors] = useState<LookupErrors>({});
   const [found, setFound] = useState<{ order: LookedUpOrder; phone: string; fresh: boolean } | null>(null);
@@ -133,7 +142,7 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
     if (opened.current) return;
     opened.current = true;
     if (!fromCode && !fromPhone) return;
-    const check = lookupCheck(fromCode, fromPhone);
+    const check = lookupCheck(fromCode, fromPhone, locale);
     if (!check.ok) {
       setErrors(check.errors);
       return;
@@ -145,7 +154,7 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy) return;
-    const check = lookupCheck(values.code, values.phone);
+    const check = lookupCheck(values.code, values.phone, locale);
     if (!check.ok) {
       setErrors(check.errors);
       setFound(null);
@@ -174,32 +183,35 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
     focus.current = "code";
   }
 
-  const field = (name: LookupField, label: string, input: React.ReactNode) => (
-    <label className={cx("field", errors[name] && "is-error")} data-f={name}>
-      <span className="lbl">{label}</span>
-      {input}
-      <span className="err" id={`e-${name}`} hidden={!errors[name]}>
-        {errors[name] && (
-          <>
-            <FeedIcon name="warning-circle" />
-            <span>{errors[name]}</span>
-          </>
-        )}
-      </span>
-    </label>
-  );
+  const field = (name: LookupField, label: string, input: React.ReactNode) => {
+    const error = errors[name];
+    return (
+      <label className={cx("field", error && "is-error")} data-f={name}>
+        <span className="lbl">{label}</span>
+        {input}
+        <span className="err" id={`e-${name}`} hidden={!error}>
+          {error && (
+            <>
+              <FeedIcon name="warning-circle" />
+              <span>{lookupWordIn(error, locale)}</span>
+            </>
+          )}
+        </span>
+      </label>
+    );
+  };
 
   return (
     <>
       <div className={cx("b-head", has && "b-head-quiet")}>
-        <h1 className="b-title disp">Tra cứu đơn</h1>
+        <h1 className="b-title disp">{t({ vi: "Tra cứu đơn", en: "Track an order" })}</h1>
       </div>
       <div className={cx("b-trk", has && "has-result", busy && "is-busy")}>
         <div className="b-trk-side">
           <form className="b-trk-form" action="/track" noValidate onSubmit={submit}>
             {field(
               "code",
-              "Mã đơn",
+              t({ vi: "Mã đơn", en: "Order code" }),
               <input
                 id="f-code"
                 name="code"
@@ -207,7 +219,7 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
                 autoCapitalize="characters"
                 spellCheck={false}
                 enterKeyHint="next"
-                placeholder="VD: DH-1499"
+                placeholder={t({ vi: "VD: DH-1499", en: "e.g. DH-1499" })}
                 aria-describedby="e-code"
                 aria-invalid={errors.code ? true : undefined}
                 value={values.code}
@@ -216,7 +228,7 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
             )}
             {field(
               "phone",
-              "Số điện thoại đặt hàng",
+              t({ vi: "Số điện thoại đặt hàng", en: "Phone number on the order" }),
               <input
                 id="f-phone"
                 name="phone"
@@ -231,7 +243,7 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
               />,
             )}
             <button className="btn btn-blue" type="submit" aria-busy={busy || undefined}>
-              {busy ? "Đang tra cứu" : "Tra cứu"}
+              {busy ? t({ vi: "Đang tra cứu", en: "Tracking" }) : t({ vi: "Tra cứu", en: "Track" })}
             </button>
           </form>
           {!has &&
@@ -239,14 +251,14 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
               <p className="b-trk-alt">
                 <Link className="link" href="/account/orders">
                   <FeedIcon name="package" />
-                  Đơn hàng của bạn
+                  {t({ vi: "Đơn hàng của bạn", en: "Your orders" })}
                 </Link>
               </p>
             ) : (
               <p className="b-trk-alt">
-                Có tài khoản?{" "}
+                {t({ vi: "Có tài khoản?", en: "Have an account?" })}{" "}
                 <Link className="link" href={signHref("in", query ? `/track?${query}` : "/track")}>
-                  Đăng nhập
+                  {t({ vi: "Đăng nhập", en: "Sign in" })}
                 </Link>
               </p>
             ))}
@@ -287,6 +299,8 @@ interface TrackResultProps {
 /** The order found (`track.js`: `result`). */
 function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProps) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const now = useNow();
   const nowMs = useNowMs();
   const s = order.status;
@@ -294,45 +308,85 @@ function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProp
   const page = `/account/orders/${order.code}`;
 
   let act: React.ReactNode = null;
-  const transfer = confirmTransfer(order);
+  const transfer = confirmTransfer(order, locale);
   if (s.state === "AWAITING_TRANSFER" && transfer) {
     act = (
-      <section className="od-act" aria-label="Chuyển khoản">
+      <section className="od-act" aria-label={t({ vi: "Chuyển khoản", en: "Bank transfer" })}>
         <p className="od-hold">
-          <FeedClock until={transfer.dueAt} now={nowMs} tag="span" label="Thời gian giữ hàng còn lại" />
+          <FeedClock
+            until={transfer.dueAt}
+            now={nowMs}
+            tag="span"
+            label={t({ vi: "Thời gian giữ hàng còn lại", en: "Reservation time left" })}
+          />
         </p>
         <p className="od-act-line">
-          Giữ hàng tới <b>{transfer.until}</b>. {transfer.note}
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Giữ hàng tới <b>{transfer.until}</b>. {transfer.note}
+              </>
+            ),
+            en: (
+              <>
+                Reserved until <b>{transfer.until}</b>. {transfer.note}
+              </>
+            ),
+          })}
         </p>
         <div className="od-pay">
-          <CopyRow k="Số tiền" shown={vnd(transfer.amountVnd)} value={String(transfer.amountVnd)} />
-          <CopyRow k="Nội dung" shown={transfer.memo} value={transfer.memo} />
+          <CopyRow k={t({ vi: "Số tiền", en: "Amount" })} shown={vnd(transfer.amountVnd, locale)} value={String(transfer.amountVnd)} />
+          <CopyRow k={t({ vi: "Nội dung", en: "Reference" })} shown={transfer.memo} value={transfer.memo} />
           <div className="copyrow is-pending">
-            <span className="copy-k">Tài khoản</span>
-            <span className="copy-v">Số tài khoản và tên ngân hàng đang chuẩn bị</span>
+            <span className="copy-k">{t({ vi: "Tài khoản", en: "Account" })}</span>
+            <span className="copy-v">
+              {t({ vi: "Số tài khoản và tên ngân hàng đang chuẩn bị", en: "Account number and bank name coming soon" })}
+            </span>
           </div>
         </div>
       </section>
     );
   } else if (s.state === "RECEIVED") {
     act = (
-      <section className="od-act" aria-label="Xác nhận đơn">
+      <section className="od-act" aria-label={t({ vi: "Xác nhận đơn", en: "Order confirmation" })}>
         <p className="od-act-line">
-          Cửa hàng gọi <b>{phone}</b> để xác nhận trước khi giao.
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Cửa hàng gọi <b>{phone}</b> để xác nhận trước khi giao.
+              </>
+            ),
+            en: (
+              <>
+                The shop will call <b>{phone}</b> to confirm before delivery.
+              </>
+            ),
+          })}
         </p>
       </section>
     );
   } else if (s.state === "SHIPPING" && s.trackingCode) {
     act = (
-      <section className="od-act" aria-label="Vận đơn">
-        <CopyRow k="Mã vận đơn" shown={s.trackingCode} value={s.trackingCode} />
+      <section className="od-act" aria-label={t({ vi: "Vận đơn", en: "Shipment" })}>
+        <CopyRow k={t({ vi: "Mã vận đơn", en: "Tracking no." })} shown={s.trackingCode} value={s.trackingCode} />
       </section>
     );
   } else if (s.state === "DELIVERED" && canReturn(order, now)) {
     act = (
-      <section className="od-act" aria-label="Đổi trả">
+      <section className="od-act" aria-label={t({ vi: "Đổi trả", en: "Returns" })}>
         <p className="od-act-line">
-          Đổi trả tới <b>{dayMonth(returnUntil(order)!)}</b>
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Đổi trả tới <b>{dayMonth(returnUntil(order)!)}</b>
+              </>
+            ),
+            en: (
+              <>
+                Returns until <b>{dayMonth(returnUntil(order)!, "en")}</b>
+              </>
+            ),
+          })}
         </p>
       </section>
     );
@@ -340,7 +394,16 @@ function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProp
     act = (
       <p className="od-why">
         <FeedIcon name="x" />
-        <span>{cancelReasonText(s.reason)}. Hàng đã về kệ.</span>
+        <span>
+          {t<React.ReactNode>({
+            vi: <>{cancelReasonText(s.reason)}. Hàng đã về kệ.</>,
+            en: (
+              <>
+                {cancelReasonText(s.reason, "en")}. {BACK_IN_STOCK_EN}
+              </>
+            ),
+          })}
+        </span>
       </p>
     );
   }
@@ -352,13 +415,13 @@ function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProp
           {order.code}
         </h2>
         <button className="link" type="button" onClick={onAgain}>
-          Tra đơn khác
+          {t({ vi: "Tra đơn khác", en: "Track another order" })}
         </button>
       </div>
       <div className="od-meta">
         {orderGroups(catalog, order).map((g) => (
           <span className="chip-tag" key={String(g)}>
-            {groupLabel(g)}
+            {groupLabelIn(g, locale)}
           </span>
         ))}
       </div>
@@ -369,7 +432,7 @@ function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProp
       <section className="acc-sec" aria-labelledby="h-items">
         <div className="acc-sec-head">
           <h3 className="acc-sec-title" id="h-items">
-            {units} món
+            {t<React.ReactNode>({ vi: <>{units} món</>, en: plural(units, "item", "items") })}
           </h3>
         </div>
         <OrderItems lines={order.lines} />
@@ -379,7 +442,7 @@ function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProp
         <section className="acc-sec" aria-labelledby="h-sum">
           <div className="acc-sec-head">
             <h3 className="acc-sec-title" id="h-sum">
-              Tóm tắt
+              {t({ vi: "Tóm tắt", en: "Summary" })}
             </h3>
           </div>
           <OrderSums order={order} />
@@ -388,11 +451,11 @@ function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProp
       <div className="b-res-go">
         {signedIn ? (
           <Link className="btn btn-line" href={page}>
-            Xem trang đơn
+            {t({ vi: "Xem trang đơn", en: "View order page" })}
           </Link>
         ) : (
           <Link className="btn btn-line" href={signHref("in", page)}>
-            Đăng nhập để xem trang đơn
+            {t({ vi: "Đăng nhập để xem trang đơn", en: "Sign in to view the order page" })}
           </Link>
         )}
       </div>

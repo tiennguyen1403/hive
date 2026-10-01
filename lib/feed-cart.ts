@@ -2,6 +2,7 @@ import type { Catalog } from "./catalog";
 import { cartSubtotalVnd, type ResolvedLine } from "./cart";
 import { canBuy, isOver } from "./feed";
 import { feedDeliveryWindow } from "./feed-checkout";
+import { picker, type Locale } from "./i18n";
 import { isFixed } from "./inventory";
 import { issueLabel } from "./lexicon";
 import { FREE_SHIPPING_FROM_VND, checkoutTotals } from "./shipping";
@@ -35,15 +36,31 @@ export function canSwap(catalog: Catalog, l: ResolvedLine, now: Date): boolean {
   return cartProblem(catalog, l, now) === "gone" && canBuy(catalog, l.product, now);
 }
 
-/** The line in the error red under a blocked line, with its fix (`cart.js`: `row`). */
-export function problemText(catalog: Catalog, l: ResolvedLine, now: Date): string | null {
+/**
+ * The line in the error red under a blocked line, with its fix (`cart.js`:
+ * `row`). In English (round v6 slice E2) "Drop 04 closed. Remove it to check
+ * out.", "Out of size M. …", "Only 2 left. …", as the shop's pages word them.
+ */
+export function problemText(catalog: Catalog, l: ResolvedLine, now: Date, locale: Locale = "vi"): string | null {
+  const t = picker(locale);
   switch (cartProblem(catalog, l, now)) {
     case "closed":
-      return `${l.product.dropNo === null ? "" : issueLabel(l.product.dropNo)} đã đóng. Xoá để thanh toán.`.trim();
-    case "gone":
-      return `Hết size ${l.line.size}. ${canSwap(catalog, l, now) ? "Đổi size" : "Xoá"} để thanh toán.`;
+      return t({
+        vi: `${l.product.dropNo === null ? "" : issueLabel(l.product.dropNo)} đã đóng. Xoá để thanh toán.`.trim(),
+        en: `${l.product.dropNo === null ? "Closed" : `${issueLabel(l.product.dropNo, "en")} closed`}. Remove it to check out.`,
+      });
+    case "gone": {
+      const swap = canSwap(catalog, l, now);
+      return t({
+        vi: `Hết size ${l.line.size}. ${swap ? "Đổi size" : "Xoá"} để thanh toán.`,
+        en: `Out of size ${l.line.size}. ${swap ? "Swap it" : "Remove it"} to check out.`,
+      });
+    }
     case "short":
-      return `Chỉ còn ${l.available}. Giảm số lượng để thanh toán.`;
+      return t({
+        vi: `Chỉ còn ${l.available}. Giảm số lượng để thanh toán.`,
+        en: `Only ${l.available} left. Lower the quantity to check out.`,
+      });
     case null:
       return null;
   }
@@ -78,9 +95,16 @@ export interface CartSummary {
  * way — "Tạm tính", "Giao hàng" (free from `FREE_SHIPPING_FROM_VND`), "Dự kiến
  * nhận", "Tổng" — and how far the basket is from free delivery. A blocked line
  * is counted in the pieces but not in the money. No code is applied here: the
- * mock takes the code at checkout.
+ * mock takes the code at checkout. The window in the page's language since
+ * round v6 slice E2 ("3 Oct - 5 Oct").
  */
-export function cartSummary(catalog: Catalog, lines: readonly ResolvedLine[], now: Date, nowIso: string): CartSummary {
+export function cartSummary(
+  catalog: Catalog,
+  lines: readonly ResolvedLine[],
+  now: Date,
+  nowIso: string,
+  locale: Locale = "vi",
+): CartSummary {
   const ok = lines.filter((l) => !cartProblem(catalog, l, now));
   const subtotalVnd = cartSubtotalVnd(ok);
   const t = checkoutTotals({ subtotalVnd, delivery: "STANDARD", payment: "BANK_TRANSFER" });
@@ -91,7 +115,7 @@ export function cartSummary(catalog: Catalog, lines: readonly ResolvedLine[], no
     totalVnd: t.totalVnd,
     toFreeVnd: Math.max(0, FREE_SHIPPING_FROM_VND - subtotalVnd),
     freeShare: Math.min(1, subtotalVnd / FREE_SHIPPING_FROM_VND),
-    window: feedDeliveryWindow("STANDARD", nowIso),
+    window: feedDeliveryWindow("STANDARD", nowIso, locale),
     blocked: ok.length < lines.length,
     buyable: ok.length > 0,
   };

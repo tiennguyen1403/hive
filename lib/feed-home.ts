@@ -263,9 +263,10 @@ const SERVICE_EN: Record<DeliveryMethod, string> = {
 /**
  * "2–4 ngày" → "2–4 days", "24 giờ" → "24 hours": the figures a label quotes,
  * with the unit in English (the plural by the last figure). Anything else is
- * left as written rather than guessed at.
+ * left as written rather than guessed at. The checkout's delivery cards read
+ * it too (round v6 slice E2, `lib/feed-checkout.ts`).
  */
-function daysEn(days: string): string {
+export function daysEn(days: string): string {
   const m = /^(\d+)(?:\s*–\s*(\d+))?\s+(ngày|giờ)$/u.exec(days.trim());
   if (!m) return days;
   const last = Number(m[2] ?? m[1]);

@@ -2,6 +2,7 @@ import "server-only";
 
 import { demoNow } from "@/lib/clock";
 import { effectiveOrder } from "@/lib/customer-orders";
+import type { Locale } from "@/lib/i18n";
 import type { LookupAnswer, LookupInput } from "@/lib/order-lookup";
 import { toLookupAnswer } from "./order-dto";
 import { takeRate } from "./rate-limit";
@@ -47,9 +48,12 @@ import { getSupabase } from "./server";
  *
  * A miss is an answer. A database or network failure throws, and the action
  * turns it into a sentence, with the reason in the server log.
+ *
+ * `locale` is the language of the rate limit's sentence (round v6 slice E2),
+ * the action's (`getActionLocale`); Vietnamese when none is given.
  */
-export async function lookupOrder(input: LookupInput): Promise<LookupAnswer> {
-  const pace = await takeRate("lookup");
+export async function lookupOrder(input: LookupInput, locale: Locale = "vi"): Promise<LookupAnswer> {
+  const pace = await takeRate("lookup", 1, locale);
   if (!pace.ok) {
     return {
       ok: false,

@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import { picker, plural, type Locale } from "./i18n";
 
 /**
  * How often one visitor may do something to the public demo (slice B4b).
@@ -247,27 +248,46 @@ export function subjectOf(ip: string, key: string): string {
 // ─────────────────────────────────────────────────────────── the sentence
 /**
  * "3 phút", or from an hour on "2 giờ" — always rounded UP, and never zero:
- * "thử lại sau 0 phút" is a promise the next press breaks.
+ * "thử lại sau 0 phút" is a promise the next press breaks. In English "3
+ * minutes", "1 minute", "2 hours".
  */
-function waitLabel(seconds: number): string {
+function waitLabel(seconds: number, locale: Locale): string {
   const s = Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
-  if (s >= HOUR) return `${Math.ceil(s / HOUR)} giờ`;
-  return `${Math.max(1, Math.ceil(s / MINUTE))} phút`;
+  if (s >= HOUR) {
+    const hours = Math.ceil(s / HOUR);
+    return locale === "en" ? plural(hours, "hour", "hours") : `${hours} giờ`;
+  }
+  const minutes = Math.max(1, Math.ceil(s / MINUTE));
+  return locale === "en" ? plural(minutes, "minute", "minutes") : `${minutes} phút`;
 }
 
 /**
  * What a refused visitor reads (B4b §2.7), in the neutral voice of the rest
  * of the shop: no "bạn", no apology, the wait and nothing else — except for
  * the two buckets whose refusal is about something other than speed.
+ *
+ * In the page's language since round v6 slice E2: the action that is refused
+ * reads the request's language (`getActionLocale`) and hands it down through
+ * `takeRate`; without one it stays Vietnamese.
  */
-export function rateLimitMessage(bucket: RateBucket, retryAfterSeconds: number): string {
-  const wait = waitLabel(retryAfterSeconds);
+export function rateLimitMessage(bucket: RateBucket, retryAfterSeconds: number, locale: Locale = "vi"): string {
+  const wait = waitLabel(retryAfterSeconds, locale);
+  const t = picker(locale);
   switch (bucket) {
     case "order_units":
-      return `Mỗi người mua đặt tối đa ${RATE_RULES.order_units.limit} chiếc mỗi ngày. Thử lại sau ${wait}.`;
+      return t({
+        vi: `Mỗi người mua đặt tối đa ${RATE_RULES.order_units.limit} chiếc mỗi ngày. Thử lại sau ${wait}.`,
+        en: `Each shopper can order up to ${RATE_RULES.order_units.limit} items a day. Try again in ${wait}.`,
+      });
     case "upload_global":
-      return `Kho ảnh hôm nay đã nhận đủ ảnh. Thử lại sau ${wait}.`;
+      return t({
+        vi: `Kho ảnh hôm nay đã nhận đủ ảnh. Thử lại sau ${wait}.`,
+        en: `The photo store is full for today. Try again in ${wait}.`,
+      });
     default:
-      return `Quá nhiều lượt liên tiếp. Thử lại sau ${wait}.`;
+      return t({
+        vi: `Quá nhiều lượt liên tiếp. Thử lại sau ${wait}.`,
+        en: `Too many tries in a row. Try again in ${wait}.`,
+      });
   }
 }

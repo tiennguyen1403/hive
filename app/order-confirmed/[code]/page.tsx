@@ -6,13 +6,26 @@ import { feedAddressLine } from "@/data/regions";
 import { demoNowMs } from "@/lib/clock";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { findMyOrder, loadReceipt } from "@/lib/db/orders";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Đã đặt hàng",
-  // A receipt is a name, a phone number and a home address. Nothing here
-  // belongs in a search index.
-  robots: { index: false, follow: false },
-};
+/**
+ * "Đã đặt hàng", in the page's language since round v6 slice E2 ("Order
+ * placed"), with the site's description in it; the link card keeps the
+ * layout's Vietnamese one (QĐ-40). Read without the order: the title is the
+ * same for every receipt, and one nobody may see gets the 404's own.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return {
+    title: t({ vi: "Đã đặt hàng", en: "Order placed" }),
+    description: t(SITE_DESCRIPTION_TEXT),
+    // A receipt is a name, a phone number and a home address. Nothing here
+    // belongs in a search index.
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * The receipt of one order, where checkout lands — round v4 "Feed" (slice 2):
@@ -41,9 +54,10 @@ export default async function OrderReceiptPage(props: PageProps<"/order-confirme
   const found = await loadReceipt(code);
   if (!found) notFound();
 
-  const mine = await findMyOrder(code);
+  const [mine, locale] = await Promise.all([findMyOrder(code), getLocale()]);
   const now = demoNowMs();
   const order = effectiveOrder(found, new Date(now));
+  const t = picker(locale);
 
   return (
     <FeedFrame
@@ -51,7 +65,7 @@ export default async function OrderReceiptPage(props: PageProps<"/order-confirme
       tabbar={false}
       foot="lite"
       now={now}
-      mbar={{ back: "/", label: "Đóng, về trang chủ", close: true, hard: true }}
+      mbar={{ back: "/", label: t({ vi: "Đóng, về trang chủ", en: "Close, back to home" }), close: true, hard: true }}
     >
       <OrderConfirmedView order={order} addressLine={feedAddressLine(order.shipTo)} inAccount={mine !== null} />
     </FeedFrame>

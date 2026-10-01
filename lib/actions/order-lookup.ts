@@ -1,7 +1,8 @@
 "use server";
 
 import { lookupOrder } from "@/lib/db/order-lookup";
-import { LOOKUP_WORDS, lookupResultOf, readLookup, type LookupResult } from "@/lib/order-lookup";
+import { getActionLocale } from "@/lib/locale";
+import { lookupResultOf, lookupWords, readLookup, type LookupResult } from "@/lib/order-lookup";
 
 /**
  * "Tra cứu" on the Feed's lookup screen (slice B11): the order behind a code
@@ -38,15 +39,20 @@ import { LOOKUP_WORDS, lookupResultOf, readLookup, type LookupResult } from "@/l
  * render, and not again when the URL changes. Writing `code` and `phone` into
  * the URL after a result, as the mock does, is `window.history.replaceState`,
  * which does not ask the server for anything.
+ *
+ * Its sentences are in the request's language since round v6 slice E2
+ * (`getActionLocale`: the `hive-lang` cookie, Vietnamese without a request),
+ * the rate limit's included.
  */
 export async function lookupOrderAction(code: string, phone: string): Promise<LookupResult> {
-  const read = readLookup(code, phone);
+  const locale = await getActionLocale();
+  const read = readLookup(code, phone, locale);
   if (!read.ok) return { ok: false, reason: "INVALID", errors: read.errors };
 
   try {
-    return lookupResultOf(await lookupOrder(read.input));
+    return lookupResultOf(await lookupOrder(read.input, locale), locale);
   } catch (error) {
     console.error("lookupOrderAction:", error instanceof Error ? error.message : error);
-    return { ok: false, reason: "UNAVAILABLE", message: LOOKUP_WORDS.unavailable };
+    return { ok: false, reason: "UNAVAILABLE", message: lookupWords(locale).unavailable };
   }
 }

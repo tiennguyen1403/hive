@@ -5,10 +5,21 @@ import { PROVINCES, findWard, wardLabel } from "@/data/regions";
 import type { Address } from "@/data/types";
 import { listAddresses } from "@/lib/db/addresses";
 import { loadMe } from "@/lib/db/profiles";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import type { Me } from "@/lib/me";
 import { formatPhone } from "@/lib/phone";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Thanh toán" };
+/**
+ * "Thanh toán" — the layout's template adds "· HIVE". In the page's language
+ * since round v6 slice E2 ("Checkout"), with the site's description in it; the
+ * link card keeps the layout's Vietnamese one (QĐ-40).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return { title: t({ vi: "Thanh toán", en: "Checkout" }), description: t(SITE_DESCRIPTION_TEXT) };
+}
 
 /**
  * Checkout, round v4 "Feed" (slice 2): the approved mock's
@@ -26,15 +37,16 @@ export const metadata: Metadata = { title: "Thanh toán" };
  *   B1), with its commune's name, and the account's e-mail.
  */
 export default async function CheckoutPage() {
-  const [me, book] = await Promise.all([loadMe(), listAddresses()]);
+  const [me, book, locale] = await Promise.all([loadMe(), listAddresses(), getLocale()]);
   const provinces: ProvinceName[] = PROVINCES.map((p) => ({ code: p.code, name: p.name }));
+  const t = picker(locale);
 
   return (
     <FeedFrame
       page="checkout"
       tabbar={false}
       foot="none"
-      mbar={{ title: "Thanh toán", back: "/cart", label: "Về giỏ", hard: true }}
+      mbar={{ title: t({ vi: "Thanh toán", en: "Checkout" }), back: "/cart", label: t({ vi: "Về giỏ", en: "Back to bag" }), hard: true }}
     >
       <CheckoutView provinces={provinces} prefill={me ? prefillOf(me, book) : null} />
     </FeedFrame>

@@ -7,9 +7,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 import { useMe } from "@/components/account/MeContext";
 import { useCart } from "@/components/cart/CartContext";
 import { wardOptionLabel } from "@/components/checkout/wards";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { startWait } from "@/components/shop/WaitVeil";
-import { COLORS } from "@/data/colors";
+import { colorLabel } from "@/data/colors";
 import type { Ward } from "@/data/regions";
 import type { DeliveryMethod, PaymentMethod, Promotion } from "@/data/types";
 import { placeOrderAction } from "@/lib/actions/orders";
@@ -19,22 +20,24 @@ import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import { pictureOf } from "@/lib/feed";
 import {
-  FEED_DELIVERY,
-  FEED_PAYMENTS,
   checkoutRows,
   deliverySub,
   expressOffNote,
   expressSwitchNote,
+  feedDeliveries,
   feedFormErrors,
+  feedPayments,
   feedPromoCheck,
   feedSentence,
   firstWrong,
   type FeedContact,
   type FeedField,
 } from "@/lib/feed-checkout";
+import { picker, plural, type Locale } from "@/lib/i18n";
 import { isFixed } from "@/lib/inventory";
 import { vnd } from "@/lib/money";
 import { MAX_NOTE_LENGTH, failureMovesCatalog } from "@/lib/order-rules";
+import { nameLang, productText } from "@/lib/product-text";
 import { appliedPromo } from "@/lib/promotions";
 import { EXPRESS_PROVINCE_CODE, checkoutTotals, isDeliveryAvailable, shippingFeeVnd, type CheckoutTotals } from "@/lib/shipping";
 import { FeedIcon, type FeedIconName } from "../icon/FeedIcon";
@@ -103,6 +106,23 @@ const NO_ITEMS: readonly PickItem[] = [];
 type WardStatus = "loading" | "error";
 
 /**
+ * `text` with the place `name` in it marked as Vietnamese on an English page —
+ * a province keeps its Vietnamese name (QĐ-40), and a screen reader should
+ * say it so; the text as it is otherwise, one node, as it always was.
+ */
+function withPlace(text: string, name: string, locale: Locale): React.ReactNode {
+  const at = locale === "en" && name ? text.indexOf(name) : -1;
+  if (at < 0) return text;
+  return (
+    <>
+      {text.slice(0, at)}
+      <span lang="vi">{name}</span>
+      {text.slice(at + name.length)}
+    </>
+  );
+}
+
+/**
  * Checkout, round v4 "Feed" (slice 2): the approved mock's `checkout.html` and
  * `checkout.js` — one scrolling screen of grouped sections, and on the phone
  * the "Đặt hàng" bar at the bottom.
@@ -128,12 +148,20 @@ type WardStatus = "loading" | "error";
  * As in the mock, the e-mail is "tuỳ chọn" — checked for its shape only when
  * one is typed, stored as none when not — and there is no box to tick, nor
  * any agreement sent for one (slice B8).
+ *
+ * In the page's language since round v6 slice E2. Provinces, communes and the
+ * shopper's own words stay as they are, the places marked `lang="vi"` on an
+ * English page. A refused code is kept as what was typed, and its sentence is
+ * written at render, so a switch of language rewords it along with the form's
+ * errors, and leaves everything typed where it was.
  */
 export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
   const router = useRouter();
   const catalog = useCatalog();
   const me = useMe();
   const toast = useFeedToast();
+  const locale = useLocale();
+  const t = picker(locale);
   const { cart, ready, clear, promoCode, setPromoCode } = useCart();
 
   const [contact, setContact] = useState({
@@ -151,7 +179,8 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
   const [payment, setPayment] = useState<PaymentMethod>("BANK_TRANSFER");
   const [submitted, setSubmitted] = useState(false);
   const [promoText, setPromoText] = useState("");
-  const [promoError, setPromoError] = useState("");
+  // The code that was refused, as typed ("" for none typed); its sentence is written at render.
+  const [promoRefused, setPromoRefused] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerKind, setPickerKind] = useState<"province" | "ward">("province");
   const pickerBack = useRef<HTMLElement | null>(null);
@@ -194,14 +223,20 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
       const check = feedPromoCheck(catalog, promoCode, liveSubtotal, now);
       if (!check.ok) {
         setPromoText(promoCode);
-        setPromoError(check.message);
+        setPromoRefused(promoCode);
       }
     }
   }, [ready, promoCode, livePromo, catalog, liveSubtotal, now]);
 
+  // The refused code's sentence, in the page's language.
+  const refusal = promoRefused === null ? null : feedPromoCheck(catalog, promoRefused, subtotalVnd, now, locale);
+  const promoError = refusal && !refusal.ok ? refusal.message : "";
+
   const provinceItems = useMemo<PickItem[]>(() => provinces.map((p) => ({ value: p.code, label: p.name })), [provinces]);
   const provinceName = provinces.find((p) => p.code === province)?.name ?? "";
   const expressCity = provinces.find((p) => p.code === EXPRESS_PROVINCE_CODE)?.name ?? "";
+  // The places' own names, on an English page (QĐ-40).
+  const placeLang = locale === "en" ? ("vi" as const) : undefined;
 
   /** The communes of a province, asked for once (`/api/wards`, the official order). */
   const fetchWards = useCallback((code: string) => {
@@ -231,7 +266,10 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
   }, [province, fetchWards]);
 
   const wardItems = wards[province] ?? NO_ITEMS;
-  const wardWaiting = wardStatus[province] === "error" ? "Không tải được" : "Đang tải…";
+  const wardWaiting =
+    wardStatus[province] === "error"
+      ? t({ vi: "Không tải được", en: "Couldn't load" })
+      : t({ vi: "Đang tải…", en: "Loading…" });
 
   const fields: FeedContact = {
     name: contact.name,
@@ -241,7 +279,7 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
     wardCode: ward?.value ?? "",
     street: contact.street,
   };
-  const errors = submitted ? feedFormErrors(fields) : {};
+  const errors = submitted ? feedFormErrors(fields, locale) : {};
 
   function openPicker(kind: "province" | "ward", opener: HTMLElement) {
     if (kind === "ward") {
@@ -262,7 +300,7 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
     setWard(null);
     if (delivery === "EXPRESS" && !isDeliveryAvailable("EXPRESS", code)) {
       setDelivery("STANDARD");
-      toast(expressSwitchNote(expressCity));
+      toast(expressSwitchNote(expressCity, locale));
     }
     after.current = () => document.getElementById("f-ward")?.focus();
   }
@@ -275,18 +313,18 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
   function applyPromo() {
     const typed = promoText.trim();
     if (!typed) {
-      setPromoError("Nhập mã giảm giá");
+      setPromoRefused("");
       return;
     }
-    const check = feedPromoCheck(catalog, typed, subtotalVnd, now);
+    const check = feedPromoCheck(catalog, typed, subtotalVnd, now, locale);
     if (check.ok) {
       setPromoCode(check.promo.code);
-      setPromoError("");
+      setPromoRefused(null);
       setPromoText("");
       after.current = () => document.getElementById("promo-drop")?.focus();
     } else {
       setPromoCode(null);
-      setPromoError(check.message);
+      setPromoRefused(typed);
     }
   }
 
@@ -298,7 +336,7 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitted(true);
-    const wrong = firstWrong(feedFormErrors(fields));
+    const wrong = firstWrong(feedFormErrors(fields, locale));
     if (wrong) {
       const el = document.getElementById(CONTROL[wrong]);
       el?.focus({ preventScroll: true });
@@ -330,6 +368,7 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
 
     setHeld({ lines, subtotalVnd, blocked, promo, totals });
     startPlacing(async () => {
+      // The refusal comes back in the request's language (`placeOrderAction`, `getActionLocale`).
       const result = await placeOrderAction(payload);
       if (!result.ok) {
         setHeld(null);
@@ -347,28 +386,35 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
     });
   }
 
-  if (!ready) return <h1 className="sr-only">Thanh toán</h1>;
+  const pageTitle = t({ vi: "Thanh toán", en: "Checkout" });
+
+  if (!ready) return <h1 className="sr-only">{pageTitle}</h1>;
 
   if (lines.length === 0 || blocked) {
     return (
       <div className="cop">
-        <h1 className="sr-only">Thanh toán</h1>
+        <h1 className="sr-only">{pageTitle}</h1>
         <div className="empty-state">
           <span className="empty-ic">
             <FeedIcon name={blocked ? "warning-circle" : "bag"} />
           </span>
-          <p className="empty-title">{blocked ? "Giỏ còn món đang vướng" : "Chưa có gì để thanh toán"}</p>
+          <p className="empty-title">
+            {blocked
+              ? t({ vi: "Giỏ còn món đang vướng", en: "Your bag has items to fix" })
+              : t({ vi: "Chưa có gì để thanh toán", en: "Nothing to check out yet" })}
+          </p>
           <Link className="btn btn-blue" href={blocked ? "/cart" : "/products"}>
-            {blocked ? "Về giỏ" : "Xem Cửa hàng"}
+            {blocked ? t({ vi: "Về giỏ", en: "Back to bag" }) : t({ vi: "Xem Cửa hàng", en: "Go to Shop" })}
           </Link>
         </div>
       </div>
     );
   }
 
-  const rows = checkoutRows(totals, promo ? promo.code : null);
+  const rows = checkoutRows(totals, promo ? promo.code : null, locale);
   const count = lines.reduce((n, l) => n + l.line.qty, 0);
-  const placeLabel = placing ? "Đang đặt hàng…" : null;
+  const placeLabel = placing ? t({ vi: "Đang đặt hàng…", en: "Placing order…" }) : null;
+  const optional = t({ vi: "tuỳ chọn", en: "optional" });
   const set = (key: keyof typeof contact) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setContact((c) => ({ ...c, [key]: value }));
@@ -378,36 +424,36 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
 
   return (
     <div className="cop">
-      <h1 className="sr-only">Thanh toán</h1>
+      <h1 className="sr-only">{pageTitle}</h1>
       <form className="co" id="co-form" noValidate onSubmit={onSubmit}>
         <section className="co-sec" data-area="contact" aria-labelledby="h-contact">
           <div className="co-sec-head">
             <h2 className="sect-title" id="h-contact">
-              Liên hệ
+              {t({ vi: "Liên hệ", en: "Contact" })}
             </h2>
             {!me && (
               <Link className="link" href="/sign-in?next=%2Fcheckout">
-                Đăng nhập
+                {t({ vi: "Đăng nhập", en: "Sign in" })}
               </Link>
             )}
           </div>
-          <Field id="name" label="Họ và tên" error={errors.name}>
+          <Field id="name" label={t({ vi: "Họ và tên", en: "Full name" })} error={errors.name}>
             <input id="f-name" name="name" autoComplete="name" value={contact.name} onChange={set("name")} {...inputAria("name")} />
           </Field>
-          <Field id="phone" label="Số điện thoại" error={errors.phone}>
+          <Field id="phone" label={t({ vi: "Số điện thoại", en: "Phone number" })} error={errors.phone}>
             <input
               id="f-phone"
               name="phone"
               type="tel"
               inputMode="tel"
               autoComplete="tel"
-              placeholder="10 số, bắt đầu bằng 0"
+              placeholder={t({ vi: "10 số, bắt đầu bằng 0", en: "10 digits, starting with 0" })}
               value={contact.phone}
               onChange={set("phone")}
               {...inputAria("phone")}
             />
           </Field>
-          <Field id="email" label="Email" opt="tuỳ chọn" error={errors.email}>
+          <Field id="email" label="Email" opt={optional} error={errors.email}>
             <input
               id="f-email"
               name="email"
@@ -423,34 +469,40 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
         <section className="co-sec" data-area="address" aria-labelledby="h-address">
           <div className="co-sec-head">
             <h2 className="sect-title" id="h-address">
-              Địa chỉ
+              {t({ vi: "Địa chỉ", en: "Address" })}
             </h2>
           </div>
           <div className="co-pair">
             <PickField
               id="province"
-              label="Tỉnh / thành"
+              label={t({ vi: "Tỉnh / thành", en: "Province / city" })}
               value={provinceName}
-              empty="Chọn tỉnh / thành"
+              valueLang={placeLang}
+              empty={t({ vi: "Chọn tỉnh / thành", en: "Choose province / city" })}
               error={errors.province}
               onOpen={(el) => openPicker("province", el)}
             />
             <PickField
               id="ward"
-              label="Phường / xã"
+              label={t({ vi: "Phường / xã", en: "Ward / commune" })}
               value={ward?.label ?? ""}
-              empty={province ? "Chọn phường / xã" : "Chọn tỉnh trước"}
+              valueLang={placeLang}
+              empty={
+                province
+                  ? t({ vi: "Chọn phường / xã", en: "Choose ward / commune" })
+                  : t({ vi: "Chọn tỉnh trước", en: "Choose a province first" })
+              }
               disabled={!province}
               error={errors.ward}
               onOpen={(el) => openPicker("ward", el)}
             />
           </div>
-          <Field id="street" label="Số nhà, đường" error={errors.street}>
+          <Field id="street" label={t({ vi: "Số nhà, đường", en: "House number, street" })} error={errors.street}>
             <input
               id="f-street"
               name="street"
               autoComplete="address-line1"
-              placeholder="VD: 12 Nguyễn Huệ"
+              placeholder={t({ vi: "VD: 12 Nguyễn Huệ", en: "e.g. 12 Nguyễn Huệ" })}
               value={contact.street}
               onChange={set("street")}
               {...inputAria("street")}
@@ -461,11 +513,11 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
         <section className="co-sec" data-area="delivery" aria-labelledby="h-delivery">
           <div className="co-sec-head">
             <h2 className="sect-title" id="h-delivery">
-              Giao hàng
+              {t({ vi: "Giao hàng", en: "Delivery" })}
             </h2>
           </div>
           <div className="rcards" role="radiogroup" aria-labelledby="h-delivery">
-            {FEED_DELIVERY.map((d) => {
+            {feedDeliveries(locale).map((d) => {
               // Express is out of reach once a province it does not serve is chosen (before that, it can be picked).
               const off = province !== "" && !isDeliveryAvailable(d.method, province);
               const fee = shippingFeeVnd(d.method, subtotalVnd);
@@ -484,10 +536,14 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
                   </span>
                   <span className="rcard-main">
                     <span className="rcard-title">{d.title}</span>
-                    <span className="rcard-sub">{deliverySub(d.method, nowIso)}</span>
-                    {d.note && <span className="rcard-note">{off ? expressOffNote(provinceName) : d.note}</span>}
+                    <span className="rcard-sub">{deliverySub(d.method, nowIso, locale)}</span>
+                    {d.note && (
+                      <span className="rcard-note">
+                        {off ? withPlace(expressOffNote(provinceName, locale), provinceName, locale) : d.note}
+                      </span>
+                    )}
                   </span>
-                  <span className="rcard-price">{off ? "" : fee ? vnd(fee) : "Miễn phí"}</span>
+                  <span className="rcard-price">{off ? "" : fee ? vnd(fee, locale) : t({ vi: "Miễn phí", en: "Free" })}</span>
                 </label>
               );
             })}
@@ -497,11 +553,11 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
         <section className="co-sec" data-area="payment" aria-labelledby="h-payment">
           <div className="co-sec-head">
             <h2 className="sect-title" id="h-payment">
-              Thanh toán
+              {t({ vi: "Thanh toán", en: "Payment" })}
             </h2>
           </div>
           <div className="rcards" role="radiogroup" aria-labelledby="h-payment">
-            {FEED_PAYMENTS.map((p) => (
+            {feedPayments(locale).map((p) => (
               <label className="rcard" key={p.method}>
                 <input
                   type="radio"
@@ -523,33 +579,37 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
           </div>
         </section>
 
-        <aside className="co-side" data-area="side" aria-label="Mã giảm giá và tóm tắt đơn">
+        <aside
+          className="co-side"
+          data-area="side"
+          aria-label={t({ vi: "Mã giảm giá và tóm tắt đơn", en: "Discount code and order summary" })}
+        >
           <section className={cx("co-sec co-promo", promoError && "is-error")} aria-labelledby="h-promo">
             <h2 className="sect-title" id="h-promo">
-              Mã giảm giá
+              {t({ vi: "Mã giảm giá", en: "Discount code" })}
             </h2>
             {promo ? (
               <div className="promo-ok">
                 <FeedIcon name="check-circle-fill" />
                 <span className="promo-code">{promo.code}</span>
                 <button className="link" type="button" id="promo-drop" onClick={dropPromo}>
-                  Bỏ mã
+                  {t({ vi: "Bỏ mã", en: "Remove code" })}
                 </button>
               </div>
             ) : (
               <div className="promo">
                 <label className="promo-field">
-                  <span className="sr-only">Mã giảm giá</span>
+                  <span className="sr-only">{t({ vi: "Mã giảm giá", en: "Discount code" })}</span>
                   <input
                     id="f-promo"
                     autoComplete="off"
                     autoCapitalize="characters"
                     spellCheck={false}
-                    placeholder="Nhập mã"
+                    placeholder={t({ vi: "Nhập mã", en: "Enter code" })}
                     value={promoText}
                     onChange={(e) => {
                       setPromoText(e.target.value);
-                      if (promoError) setPromoError("");
+                      if (promoRefused !== null) setPromoRefused(null);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -561,7 +621,7 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
                   />
                 </label>
                 <button className="pill promo-go" type="button" onClick={applyPromo}>
-                  Áp dụng
+                  {t({ vi: "Áp dụng", en: "Apply" })}
                 </button>
               </div>
             )}
@@ -576,9 +636,9 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
           <section className="co-sec co-sum" aria-labelledby="h-sum">
             <div className="co-sec-head">
               <h2 className="sect-title" id="h-sum">
-                Tóm tắt
+                {t({ vi: "Tóm tắt", en: "Summary" })}
               </h2>
-              <span className="co-count">{count} món</span>
+              <span className="co-count">{t<React.ReactNode>({ vi: <>{count} món</>, en: plural(count, "item", "items") })}</span>
             </div>
             <ul className="co-items">
               {lines.map((l) => (
@@ -586,19 +646,19 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
               ))}
             </ul>
             <dl className="facts co-lines">
-              {rows.map((r) => (
-                <div key={r.label}>
+              {rows.map((r, i) => (
+                <div key={i}>
                   <dt>{r.label}</dt>
                   <dd>{r.value}</dd>
                 </div>
               ))}
             </dl>
             <div className="csum-total">
-              <span>Tổng</span>
-              <b>{vnd(totals.totalVnd)}</b>
+              <span>{t({ vi: "Tổng", en: "Total" })}</span>
+              <b>{vnd(totals.totalVnd, locale)}</b>
             </div>
             <button className="btn btn-blue only-desk co-place" type="submit" disabled={placing}>
-              {placeLabel ?? "Đặt hàng"}
+              {placeLabel ?? t({ vi: "Đặt hàng", en: "Place order" })}
             </button>
           </section>
         </aside>
@@ -606,14 +666,25 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
         <section className="co-sec" data-area="note" aria-labelledby="h-note">
           <label className="field field-note">
             <span className="lbl" id="h-note">
-              Ghi chú <span className="opt">tuỳ chọn</span>
+              {t<React.ReactNode>({
+                vi: (
+                  <>
+                    Ghi chú <span className="opt">tuỳ chọn</span>
+                  </>
+                ),
+                en: (
+                  <>
+                    Note <span className="opt">optional</span>
+                  </>
+                ),
+              })}
             </span>
             <textarea
               id="f-note"
               name="note"
               rows={3}
               maxLength={MAX_NOTE_LENGTH}
-              placeholder="Giờ nhận, chỉ đường"
+              placeholder={t({ vi: "Giờ nhận, chỉ đường", en: "Delivery time, directions" })}
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -622,11 +693,19 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
 
         <div className="orderbar">
           <button className="btn btn-blue" type="submit" disabled={placing}>
-            {placeLabel ?? (
-              <>
-                Đặt hàng <span className="price">· {vnd(totals.totalVnd)}</span>
-              </>
-            )}
+            {placeLabel ??
+              t<React.ReactNode>({
+                vi: (
+                  <>
+                    Đặt hàng <span className="price">· {vnd(totals.totalVnd)}</span>
+                  </>
+                ),
+                en: (
+                  <>
+                    Place order <span className="price">· {vnd(totals.totalVnd, "en")}</span>
+                  </>
+                ),
+              })}
           </button>
         </div>
       </form>
@@ -634,12 +713,17 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
       <FeedPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        title={pickerKind === "ward" ? "Phường / xã" : "Tỉnh / thành"}
+        title={pickerKind === "ward" ? t({ vi: "Phường / xã", en: "Ward / commune" }) : t({ vi: "Tỉnh / thành", en: "Province / city" })}
         sub={pickerKind === "ward" ? provinceName : undefined}
-        placeholder={pickerKind === "ward" ? "Tìm phường / xã" : "Tìm tỉnh / thành"}
+        placeholder={
+          pickerKind === "ward"
+            ? t({ vi: "Tìm phường / xã", en: "Search ward / commune" })
+            : t({ vi: "Tìm tỉnh / thành", en: "Search province / city" })
+        }
         items={pickerKind === "ward" ? wardItems : provinceItems}
         value={pickerKind === "ward" ? (ward?.value ?? null) : province || null}
         waiting={pickerKind === "ward" ? wardWaiting : null}
+        lang={placeLang}
         onPick={(it) => (pickerKind === "ward" ? chooseWard(it) : chooseProvince(it.value))}
         back={pickerBack.current}
       />
@@ -685,6 +769,8 @@ interface PickFieldProps {
   label: string;
   /** The choice's name, or "" before there is one. */
   value: string;
+  /** The choice's language when it is not the page's: a place's Vietnamese name on an English page. */
+  valueLang?: "vi" | undefined;
   /** What the button says before a choice: "Chọn tỉnh / thành", "Chọn tỉnh trước". */
   empty: string;
   disabled?: boolean;
@@ -693,7 +779,7 @@ interface PickFieldProps {
 }
 
 /** A field whose value is picked in a sheet (`checkout.js`: `pickField`). */
-function PickField({ id, label, value, empty, disabled = false, error, onOpen }: PickFieldProps) {
+function PickField({ id, label, value, valueLang, empty, disabled = false, error, onOpen }: PickFieldProps) {
   return (
     <div className={cx("field", error && "is-error")} data-f={id}>
       <span className="lbl" id={`l-${id}`}>
@@ -709,7 +795,7 @@ function PickField({ id, label, value, empty, disabled = false, error, onOpen }:
         onClick={(e) => onOpen(e.currentTarget)}
         {...(error ? { "aria-invalid": true as const, "aria-describedby": `e-${id}` } : {})}
       >
-        <span className={cx("pick-v", !value && "is-empty")} id={`v-${id}`}>
+        <span className={cx("pick-v", !value && "is-empty")} id={`v-${id}`} lang={value ? valueLang : undefined}>
           {value || empty}
         </span>
         <FeedIcon name="caret-down" />
@@ -726,6 +812,7 @@ function PickField({ id, label, value, empty, disabled = false, error, onOpen }:
 
 /** One piece of the summary: the packshot, the bare name, colour, size and count, the line's money. */
 function SummaryItem({ l }: { l: ResolvedLine }) {
+  const locale = useLocale();
   const p = l.product;
   return (
     <li className="co-item">
@@ -733,13 +820,15 @@ function SummaryItem({ l }: { l: ResolvedLine }) {
         <Image src={pictureOf(p, l.line.color, "pack").src} width={48} height={60} alt="" />
       </span>
       <span className="co-item-main">
-        <span className="co-item-name disp">{p.name}</span>
+        <span className="co-item-name disp" lang={nameLang(p, locale)}>
+          {productText(p, locale).name}
+        </span>
         <span className="co-item-meta">
-          {COLORS[l.line.color].label} · Size {l.line.size}
+          {colorLabel(l.line.color, locale)} · Size {l.line.size}
           {l.line.qty > 1 && ` · ×${l.line.qty}`}
         </span>
       </span>
-      <span className="co-item-price">{vnd(l.lineTotalVnd)}</span>
+      <span className="co-item-price">{vnd(l.lineTotalVnd, locale)}</span>
     </li>
   );
 }

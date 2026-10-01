@@ -1,5 +1,6 @@
 import type { Catalog } from "./catalog";
 import type { Promotion } from "@/data/types";
+import { picker, type Locale } from "./i18n";
 import { vnd } from "./money";
 import { demoNow } from "./clock";
 
@@ -36,34 +37,46 @@ export type PromoCheck =
  * neither "hết hạn" nor "hết lượt", and `place_order()` refuses it the same
  * way. The dates and the cap are read first, as in the back office's
  * `promoState`: a code that is over is over, paused or not.
+ *
+ * Its refusals in both languages since round v6 slice E2.
  */
 export function checkPromoCode(
   catalog: Catalog,
   raw: string,
   subtotalVnd: number,
   now: Date = demoNow(),
+  locale: Locale = "vi",
 ): PromoCheck {
+  const say = picker(locale);
   const code = normalisePromoCode(raw);
-  if (!code) return { ok: false, message: "Nhập mã giảm giá trước khi áp dụng." };
+  if (!code) {
+    return { ok: false, message: say({ vi: "Nhập mã giảm giá trước khi áp dụng.", en: "Enter a discount code before applying it." }) };
+  }
 
   const promo = catalog.promoByCode.get(code as never);
-  if (!promo) return { ok: false, message: `Không có mã ${code}.` };
+  if (!promo) return { ok: false, message: say({ vi: `Không có mã ${code}.`, en: `There is no code ${code}.` }) };
 
   const t = now.getTime();
   if (t < Date.parse(promo.startsAt)) {
-    return { ok: false, message: `Mã ${code} chưa tới ngày dùng được.` };
+    return { ok: false, message: say({ vi: `Mã ${code} chưa tới ngày dùng được.`, en: `Code ${code} isn't active yet.` }) };
   }
   if (t >= Date.parse(promo.endsAt)) {
-    return { ok: false, message: `Mã ${code} đã hết hạn.` };
+    return { ok: false, message: say({ vi: `Mã ${code} đã hết hạn.`, en: `Code ${code} has expired.` }) };
   }
   if (promo.usageLimit !== null && promo.usedCount >= promo.usageLimit) {
-    return { ok: false, message: `Mã ${code} đã hết lượt dùng.` };
+    return { ok: false, message: say({ vi: `Mã ${code} đã hết lượt dùng.`, en: `Code ${code} has been used up.` }) };
   }
   if (promo.paused) {
-    return { ok: false, message: `Mã ${code} đang tạm dừng.` };
+    return { ok: false, message: say({ vi: `Mã ${code} đang tạm dừng.`, en: `Code ${code} is paused.` }) };
   }
   if (promo.minOrderVnd !== undefined && subtotalVnd < promo.minOrderVnd) {
-    return { ok: false, message: `Mã ${code} cần đơn từ ${vnd(promo.minOrderVnd)}.` };
+    return {
+      ok: false,
+      message: say({
+        vi: `Mã ${code} cần đơn từ ${vnd(promo.minOrderVnd)}.`,
+        en: `Code ${code} needs an order from ${vnd(promo.minOrderVnd, "en")}.`,
+      }),
+    };
   }
 
   return { ok: true, promo };

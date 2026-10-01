@@ -6,6 +6,7 @@ import { toVnIso } from "@/lib/datetime";
 import { OrderError, cancelOrder, placeOrder, rememberGuestReceipt } from "@/lib/db/orders";
 import { takeRate } from "@/lib/db/rate-limit";
 import { getSession, requireSession } from "@/lib/db/session";
+import { getActionLocale } from "@/lib/locale";
 import { isOrderCode } from "@/lib/lookup";
 import {
   cancelFailureMessage,
@@ -61,15 +62,19 @@ import {
  * visitor cannot buy an issue's shelf empty, twenty pieces at a time. A token
  * spent is not given back when the order then fails; a refusal spends none.
  * It answers `RATE_LIMITED`, and the catalogue did not move.
+ *
+ * Round v6 slice E2: every sentence is in the request's language
+ * (`getActionLocale`, the `hive-lang` cookie; Vietnamese without a request).
  */
 export async function placeOrderAction(payload: unknown): Promise<PlaceOrderResult> {
-  const read = readPlaceOrderPayload(payload);
+  const locale = await getActionLocale();
+  const read = readPlaceOrderPayload(payload, locale);
   if (!read.ok) return { ok: false, failure: "INVALID", message: read.message };
 
-  const pace = await takeRate("order_place");
+  const pace = await takeRate("order_place", 1, locale);
   if (!pace.ok) return { ok: false, failure: "RATE_LIMITED", message: pace.message };
   const pieces = read.input.lines.reduce((n, line) => n + line.qty, 0);
-  const volume = await takeRate("order_units", pieces);
+  const volume = await takeRate("order_units", pieces, locale);
   if (!volume.ok) return { ok: false, failure: "RATE_LIMITED", message: volume.message };
 
   const session = await getSession();
@@ -84,7 +89,7 @@ export async function placeOrderAction(payload: unknown): Promise<PlaceOrderResu
       // The reason stays in the server log; the shopper gets the sentence.
       console.error("placeOrderAction:", error instanceof Error ? error.message : error);
     }
-    return { ok: false, failure, message: placeFailureMessage(failure) };
+    return { ok: false, failure, message: placeFailureMessage(failure, locale) };
   }
 }
 
@@ -103,16 +108,18 @@ export async function placeOrderAction(payload: unknown): Promise<PlaceOrderResu
  * the shelf, which the product pages and the browser's catalogue show.
  *
  * Slice B4b: one token of the visitor's `account` limit, right after the
- * session check (thirty account writes per ten minutes).
+ * session check (thirty account writes per ten minutes). Its sentences in the
+ * request's language since round v6 slice E2, as `placeOrderAction`'s.
  */
 export async function cancelOrderAction(code: unknown): Promise<CancelOrderResult> {
   await requireSession("/account/orders");
+  const locale = await getActionLocale();
 
-  const pace = await takeRate("account");
+  const pace = await takeRate("account", 1, locale);
   if (!pace.ok) return { ok: false, message: pace.message };
 
   if (typeof code !== "string" || !isOrderCode(code)) {
-    return { ok: false, message: cancelFailureMessage("NOT_OWNER") };
+    return { ok: false, message: cancelFailureMessage("NOT_OWNER", locale) };
   }
 
   try {
@@ -122,7 +129,7 @@ export async function cancelOrderAction(code: unknown): Promise<CancelOrderResul
     if (failure === "UNAVAILABLE") {
       console.error("cancelOrderAction:", error instanceof Error ? error.message : error);
     }
-    return { ok: false, message: cancelFailureMessage(failure) };
+    return { ok: false, message: cancelFailureMessage(failure, locale) };
   }
 
   revalidatePath("/", "layout");

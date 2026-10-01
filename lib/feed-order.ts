@@ -1,11 +1,13 @@
-import { COLORS } from "@/data/colors";
+import { colorLabel } from "@/data/colors";
 import type { Order, Product, Size } from "@/data/types";
 import type { Catalog } from "./catalog";
 import { clockDayLabel } from "./datetime";
+import { cancelReasonLabel } from "./feed-account";
 import { feedDelivery, feedDeliveryWindow, type FeedRow } from "./feed-checkout";
+import { pickAll, picker, plural, type Locale, type Pair } from "./i18n";
 import { trackHref } from "./lookup";
 import { vnd } from "./money";
-import { STATE_LABEL } from "./order-labels";
+import { stateLabel } from "./order-labels";
 import {
   TRANSFER_HOLD_HOURS,
   orderSubtotalVnd,
@@ -15,6 +17,7 @@ import {
   transferReference,
 } from "./orders";
 import { formatPhone } from "./phone";
+import { nameLang, productText } from "./product-text";
 
 /**
  * The Feed's order confirmation (round v4 slice 2): the approved mock's
@@ -36,11 +39,24 @@ export function confirmFlow(o: Pick<Order, "payment">): ConfirmFlow {
   return paysByTransfer(o.payment) ? "transfer" : "cod";
 }
 
-/** The mock's four steps of each flow (`confirmed.js`: `STEPS`). */
-export const CONFIRM_STEPS: Readonly<Record<ConfirmFlow, readonly string[]>> = {
-  transfer: ["Đã đặt", "Chờ chuyển khoản", "Đang giao", "Đã giao"],
-  cod: ["Đã đặt", "Gọi xác nhận", "Đang giao", "Đã giao"],
+/**
+ * The mock's four steps of each flow (`confirmed.js`: `STEPS`), in both
+ * languages since round v6 slice E2 — the order states in the glossary's
+ * words ("Awaiting transfer", "Shipping", "Delivered"); `CONFIRM_STEPS` is the
+ * Vietnamese side.
+ */
+export const CONFIRM_STEPS_TEXT: Readonly<Record<ConfirmFlow, Pair<readonly string[]>>> = {
+  transfer: {
+    vi: ["Đã đặt", "Chờ chuyển khoản", "Đang giao", "Đã giao"],
+    en: ["Placed", "Awaiting transfer", "Shipping", "Delivered"],
+  },
+  cod: {
+    vi: ["Đã đặt", "Gọi xác nhận", "Đang giao", "Đã giao"],
+    en: ["Placed", "Call to confirm", "Shipping", "Delivered"],
+  },
 };
+
+export const CONFIRM_STEPS: Readonly<Record<ConfirmFlow, readonly string[]>> = pickAll(CONFIRM_STEPS_TEXT, "vi");
 
 export type StepState = "done" | "now" | "todo";
 
@@ -56,8 +72,8 @@ export interface ConfirmStep {
  * third is now; delivered: all four done. A cancelled order does not show the
  * steps it will never reach: it was placed, and it is cancelled.
  */
-export function confirmSteps(o: Order): ConfirmStep[] {
-  const labels = CONFIRM_STEPS[confirmFlow(o)];
+export function confirmSteps(o: Order, locale: Locale = "vi"): ConfirmStep[] {
+  const labels = CONFIRM_STEPS_TEXT[confirmFlow(o)][locale];
   const lit = (done: number, now: number | null): ConfirmStep[] =>
     labels.map((label, i) => ({ label, state: i < done ? "done" : i === now ? "now" : "todo" }));
   switch (o.status.state) {
@@ -73,7 +89,7 @@ export function confirmSteps(o: Order): ConfirmStep[] {
     case "CANCELLED":
       return [
         { label: labels[0]!, state: "done" },
-        { label: STATE_LABEL.CANCELLED.text, state: "now" },
+        { label: stateLabel("CANCELLED", locale).text, state: "now" },
       ];
   }
 }
@@ -86,21 +102,37 @@ const capitalise = (s: string) => (s ? s.charAt(0).toLocaleUpperCase("vi") + s.s
  * taken before slice B7 waits in RECEIVED and pays by transfer (the checkout's
  * words). Reopened later: the state in its own words, or, cancelled, why and
  * that the pieces went back (the Feed's order page, `order.js`).
+ *
+ * In English (round v6 slice E2) the reason a cancelled order gives is the
+ * stored one translated by `cancelReasonLabel`, or as stored when it is not
+ * one of the app's own.
  */
-export function confirmNext(o: Order): string {
+export function confirmNext(o: Order, locale: Locale = "vi"): string {
+  const t = picker(locale);
   switch (o.status.state) {
     case "AWAITING_TRANSFER":
-      return `Chuyển khoản trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng.`;
+      return t({
+        vi: `Chuyển khoản trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng.`,
+        en: `Transfer within ${TRANSFER_HOLD_HOURS} hours to keep your items.`,
+      });
     case "RECEIVED":
-      return o.payment === "COD" ? "Cửa hàng gọi xác nhận trước khi giao." : "Tạm thời trả bằng chuyển khoản.";
+      return o.payment === "COD"
+        ? t({ vi: "Cửa hàng gọi xác nhận trước khi giao.", en: "The shop will call to confirm before delivery." })
+        : t({ vi: "Tạm thời trả bằng chuyển khoản.", en: "For now, paid by bank transfer." });
     case "PAID":
     case "SHIPPING":
     case "DELIVERED":
-      return `${STATE_LABEL[o.status.state].text}.`;
+      return `${stateLabel(o.status.state, locale).text}.`;
     case "CANCELLED":
-      return `${capitalise(o.status.reason)}. Hàng đã về kệ.`;
+      return t({
+        vi: `${capitalise(o.status.reason)}. Hàng đã về kệ.`,
+        en: `${cancelReasonLabel(o.status.reason, "en")}. ${BACK_IN_STOCK_EN}`,
+      });
   }
 }
+
+/** "Hàng đã về kệ." in English: what follows a cancelled order's reason, here and on the lookup. */
+export const BACK_IN_STOCK_EN = "Items back in stock.";
 
 /** The transfer block and the hold, while the transfer is awaited. */
 export interface ConfirmTransfer {
@@ -121,14 +153,19 @@ export interface ConfirmTransfer {
  */
 export function confirmTransfer(
   o: Pick<Order, "code" | "status" | "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd">,
+  locale: Locale = "vi",
 ): ConfirmTransfer | null {
   if (o.status.state !== "AWAITING_TRANSFER") return null;
+  const units = orderUnits(o);
   return {
     amountVnd: orderTotalVnd(o),
     memo: transferReference(o.code),
     dueAt: o.status.dueAt,
-    until: clockDayLabel(o.status.dueAt),
-    note: `Quá giờ, đơn tự huỷ và ${orderUnits(o)} chiếc về kệ.`,
+    until: clockDayLabel(o.status.dueAt, locale),
+    note: picker(locale)({
+      vi: `Quá giờ, đơn tự huỷ và ${units} chiếc về kệ.`,
+      en: `Then it's cancelled and ${plural(units, "item goes", "items go")} back in stock.`,
+    }),
   };
 }
 
@@ -137,12 +174,18 @@ export function confirmTransfer(
  * placed (a receipt reopened days later keeps the window it promised), the
  * recipient, the address. The address line is built on the server, where the
  * communes are.
+ *
+ * In English (round v6 slice E2) the recipient and the address keep their
+ * Vietnamese (QĐ-40), so their rows say so (`lang`).
  */
-export function confirmShipRows(o: Order, addressLine: string): FeedRow[] {
+export function confirmShipRows(o: Order, addressLine: string, locale: Locale = "vi"): FeedRow[] {
+  const t = picker(locale);
+  const window = feedDeliveryWindow(o.delivery, o.placedAt, locale);
+  const vi = locale === "en" ? { lang: "vi" as const } : {};
   return [
-    { label: feedDelivery(o.delivery).title, value: `dự kiến ${feedDeliveryWindow(o.delivery, o.placedAt)}` },
-    { label: "Người nhận", value: `${o.shipTo.recipient}, ${formatPhone(o.shipTo.phone)}` },
-    { label: "Địa chỉ", value: addressLine },
+    { label: feedDelivery(o.delivery, locale).title, value: t({ vi: `dự kiến ${window}`, en: `expected ${window}` }) },
+    { label: t({ vi: "Người nhận", en: "Recipient" }), value: `${o.shipTo.recipient}, ${formatPhone(o.shipTo.phone)}`, ...vi },
+    { label: t({ vi: "Địa chỉ", en: "Address" }), value: addressLine, ...vi },
   ];
 }
 
@@ -153,21 +196,33 @@ export function confirmShipRows(o: Order, addressLine: string): FeedRow[] {
  * back office's order page prints the same line (round v5 slice 1), so its
  * sums add up to a total that includes the surcharge (`orderTotalVnd`).
  */
-export function codFeeRow(o: Pick<Order, "codFeeVnd">): FeedRow | null {
-  return o.codFeeVnd ? { label: "Phụ phí COD", value: `+${vnd(o.codFeeVnd)}` } : null;
+export function codFeeRow(o: Pick<Order, "codFeeVnd">, locale: Locale = "vi"): FeedRow | null {
+  return o.codFeeVnd
+    ? { label: picker(locale)({ vi: "Phụ phí COD", en: "COD surcharge" }), value: `+${vnd(o.codFeeVnd, locale)}` }
+    : null;
 }
 
-/** "Tóm tắt" above "Tổng", as the order was priced: the code's line only when it took something off. */
+/**
+ * "Tóm tắt" above "Tổng", as the order was priced: the code's line only when
+ * it took something off. In English the checkout's words (`checkoutRows`).
+ */
 export function confirmRows(
   o: Pick<Order, "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd" | "promo">,
+  locale: Locale = "vi",
 ): FeedRow[] {
+  const t = picker(locale);
   const rows: FeedRow[] = [
-    { label: "Tạm tính", value: vnd(orderSubtotalVnd(o)) },
-    { label: "Giao hàng", value: o.shippingFeeVnd ? vnd(o.shippingFeeVnd) : "Miễn phí" },
+    { label: t({ vi: "Tạm tính", en: "Subtotal" }), value: vnd(orderSubtotalVnd(o), locale) },
+    {
+      label: t({ vi: "Giao hàng", en: "Delivery" }),
+      value: o.shippingFeeVnd ? vnd(o.shippingFeeVnd, locale) : t({ vi: "Miễn phí", en: "Free" }),
+    },
   ];
-  const cod = codFeeRow(o);
+  const cod = codFeeRow(o, locale);
   if (cod) rows.push(cod);
-  if (o.discountVnd && o.promo) rows.push({ label: `Mã ${o.promo}`, value: `-${vnd(o.discountVnd)}` });
+  if (o.discountVnd && o.promo) {
+    rows.push({ label: t({ vi: `Mã ${o.promo}`, en: `Code ${o.promo}` }), value: `-${vnd(o.discountVnd, locale)}` });
+  }
   return rows;
 }
 
@@ -176,6 +231,8 @@ export interface ConfirmLine {
   key: string;
   product: Product | undefined;
   name: string;
+  /** `"vi"` on an English page when `name` is the Vietnamese one (`nameLang`); absent otherwise. */
+  nameLang?: "vi";
   colorLabel: string;
   color: Order["lines"][number]["color"];
   size: Size;
@@ -183,14 +240,17 @@ export interface ConfirmLine {
   totalVnd: number;
 }
 
-export function confirmLines(catalog: Catalog, o: Order): ConfirmLine[] {
+/** In the page's language since round v6 slice E2: the name by `productText`, the colour by `colorLabel`. */
+export function confirmLines(catalog: Catalog, o: Order, locale: Locale = "vi"): ConfirmLine[] {
   return o.lines.map((l, i) => {
     const product = catalog.byId.get(l.productId);
+    const lang = product ? nameLang(product, locale) : undefined;
     return {
       key: `${l.productId}:${l.color}:${l.size}:${i}`,
       product,
-      name: product?.name ?? "—",
-      colorLabel: COLORS[l.color].label,
+      name: product ? productText(product, locale).name : "—",
+      ...(lang ? { nameLang: lang } : {}),
+      colorLabel: colorLabel(l.color, locale),
       color: l.color,
       size: l.size,
       qty: l.qty,
@@ -202,10 +262,12 @@ export function confirmLines(catalog: Catalog, o: Order): ConfirmLine[] {
 /**
  * The second button: the order's own page for an order in the signed-in
  * account, the lookup by code and phone otherwise — an order placed signed
- * out is not in the account's list, whoever is signed in now.
+ * out is not in the account's list, whoever is signed in now. In English
+ * "View order", or the lookup by its glossary name, "Track an order".
  */
-export function followLink(o: Order, inAccount: boolean): { label: string; href: string } {
+export function followLink(o: Order, inAccount: boolean, locale: Locale = "vi"): { label: string; href: string } {
+  const t = picker(locale);
   return inAccount
-    ? { label: "Xem đơn", href: `/account/orders/${o.code}` }
-    : { label: "Tra cứu đơn", href: trackHref(o.code, o.shipTo.phone) };
+    ? { label: t({ vi: "Xem đơn", en: "View order" }), href: `/account/orders/${o.code}` }
+    : { label: t({ vi: "Tra cứu đơn", en: "Track an order" }), href: trackHref(o.code, o.shipTo.phone) };
 }

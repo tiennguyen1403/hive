@@ -1,7 +1,9 @@
 import Image from "next/image";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { COLORS } from "@/data/colors";
 import type { Order, OrderLine, OrderState, Product } from "@/data/types";
 import { FEED_STATE_LABEL, linePicture, orderSteps, stepStamp, tileLabel } from "@/lib/feed-account";
+import { picker } from "@/lib/i18n";
 import { isFixed } from "@/lib/inventory";
 import { FeedIcon, type FeedIconName } from "../icon/FeedIcon";
 import { cx } from "../useReveal";
@@ -16,14 +18,17 @@ import { cx } from "../useReveal";
  * come, or off; each passed step with the time the order recorded for it.
  * On one order's page, on Tôi's card for the parcel on its way, and on the
  * guest lookup's result (slice 4a), whose order has only these fields of
- * its own to read (`LookedUpOrder`).
+ * its own to read (`LookedUpOrder`). In the page's language since round v6
+ * slice E2, for the lookup ("Ordered", "Payment", "Dispatch", "Delivered").
+ * Every screen that draws it is a client component.
  */
 export function OrderSteps({ order }: { order: Pick<Order, "status" | "placedAt" | "payment" | "moments"> }) {
+  const locale = useLocale();
   return (
-    <ol className="osteps" aria-label="Hành trình">
-      {orderSteps(order).map((step) => (
+    <ol className="osteps" aria-label={picker(locale)({ vi: "Hành trình", en: "Order progress" })}>
+      {orderSteps(order, locale).map((step, i) => (
         <li
-          key={step.label}
+          key={i}
           className={cx(
             "ostep",
             step.state === "done" && "is-done",
@@ -36,7 +41,7 @@ export function OrderSteps({ order }: { order: Pick<Order, "status" | "placedAt"
             <i />
           </div>
           <p className="ostep-label">{step.label}</p>
-          {step.at && <p className="ostep-at">{stepStamp(step.at)}</p>}
+          {step.at && <p className="ostep-at">{stepStamp(step.at, locale)}</p>}
         </li>
       ))}
     </ol>

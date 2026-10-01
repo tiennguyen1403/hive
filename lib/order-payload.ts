@@ -7,7 +7,8 @@ import {
   type Size,
 } from "@/data/types";
 import { normalisePhone, validateCheckout, type CheckoutDraft } from "./checkout-form";
-import { LEX } from "./lexicon";
+import { picker, type Locale } from "./i18n";
+import { LEX, lexicon } from "./lexicon";
 import { MAX_NOTE_LENGTH } from "./order-rules";
 import { normalisePromoCode } from "./promotions";
 
@@ -117,35 +118,65 @@ export function orderFailureOf(error: { code?: string; message?: string } | null
  *
  * Each one says what to do next, because the next move differs: another
  * size, another code, nothing at all.
+ *
+ * In both languages since round v6 slice E2, the action answering in the
+ * request's language. The English is written without the long dash, as the
+ * Feed prints every sentence (`feedSentence`).
  */
-export function placeFailureMessage(failure: OrderFailure): string {
+export function placeFailureMessage(failure: OrderFailure, locale: Locale = "vi"): string {
+  const t = picker(locale);
   switch (failure) {
     case "OUT_OF_STOCK":
-      return "Một món vừa hết — mở giỏ để đổi size hoặc bỏ món.";
+      return t({
+        vi: "Một món vừa hết — mở giỏ để đổi size hoặc bỏ món.",
+        en: "An item just sold out. Open your bag to change the size or remove it.",
+      });
     case "DROP_CLOSED":
-      return `${LEX.t} đã đóng — món trong giỏ không còn bán.`;
+      return t({
+        vi: `${LEX.t} đã đóng — món trong giỏ không còn bán.`,
+        en: `The ${lexicon("en").tl} has closed. An item in your bag is no longer on sale.`,
+      });
     case "PROMO_INVALID":
-      return "Mã giảm giá không còn dùng được cho đơn này — bỏ mã hoặc thử mã khác.";
+      return t({
+        vi: "Mã giảm giá không còn dùng được cho đơn này — bỏ mã hoặc thử mã khác.",
+        en: "The discount code no longer works for this order. Remove it or try another.",
+      });
     case "EMPTY_ORDER":
-      return "Giỏ đang trống, nên chưa có đơn nào để đặt.";
+      return t({
+        vi: "Giỏ đang trống, nên chưa có đơn nào để đặt.",
+        en: "Your bag is empty, so there is no order to place.",
+      });
     case "BAD_INPUT":
-      return "Thông tin đơn chưa đúng — kiểm lại địa chỉ và giỏ rồi đặt lại.";
+      return t({
+        vi: "Thông tin đơn chưa đúng — kiểm lại địa chỉ và giỏ rồi đặt lại.",
+        en: "Some order details aren't right. Check the address and your bag, then try again.",
+      });
     case "NOT_OWNER":
     case "NOT_CANCELLABLE":
     case "UNAVAILABLE":
-      return "Chưa đặt được đơn. Thử lại sau ít phút.";
+      return t({
+        vi: "Chưa đặt được đơn. Thử lại sau ít phút.",
+        en: "Couldn't place the order. Try again in a few minutes.",
+      });
   }
 }
 
 /** The same, for "Huỷ đơn". Somebody else's order and no order read alike (QĐ-16). */
-export function cancelFailureMessage(failure: OrderFailure): string {
+export function cancelFailureMessage(failure: OrderFailure, locale: Locale = "vi"): string {
+  const t = picker(locale);
   switch (failure) {
     case "NOT_OWNER":
-      return "Không tìm thấy đơn này trong tài khoản.";
+      return t({ vi: "Không tìm thấy đơn này trong tài khoản.", en: "This order isn't in your account." });
     case "NOT_CANCELLABLE":
-      return "Đơn này không huỷ được nữa — liên hệ cửa hàng.";
+      return t({
+        vi: "Đơn này không huỷ được nữa — liên hệ cửa hàng.",
+        en: "This order can no longer be cancelled. Contact the shop.",
+      });
     default:
-      return "Chưa huỷ được đơn. Thử lại sau ít phút.";
+      return t({
+        vi: "Chưa huỷ được đơn. Thử lại sau ít phút.",
+        en: "Couldn't cancel the order. Try again in a few minutes.",
+      });
   }
 }
 
@@ -193,20 +224,27 @@ function readLines(raw: unknown): PlaceOrderLine[] | null {
 /**
  * The request, re-read on the server. Whatever the browser validated, this
  * decides — and says, in the form's own words, the first thing that is
- * wrong.
+ * wrong. In the request's language since round v6 slice E2.
  */
-export function readPlaceOrderPayload(raw: unknown): PayloadCheck {
+export function readPlaceOrderPayload(raw: unknown, locale: Locale = "vi"): PayloadCheck {
+  const t = picker(locale);
   if (!isRecord(raw) || !isRecord(raw.draft)) {
-    return { ok: false, message: placeFailureMessage("BAD_INPUT") };
+    return { ok: false, message: placeFailureMessage("BAD_INPUT", locale) };
   }
 
   const lines = readLines(raw.lines);
-  if (lines === null) return { ok: false, message: placeFailureMessage("BAD_INPUT") };
-  if (lines.length === 0) return { ok: false, message: placeFailureMessage("EMPTY_ORDER") };
+  if (lines === null) return { ok: false, message: placeFailureMessage("BAD_INPUT", locale) };
+  if (lines.length === 0) return { ok: false, message: placeFailureMessage("EMPTY_ORDER", locale) };
 
   const units = lines.reduce((n, l) => n + l.qty, 0);
   if (units > MAX_UNITS_PER_ORDER) {
-    return { ok: false, message: `Mỗi đơn tối đa ${MAX_UNITS_PER_ORDER} chiếc.` };
+    return {
+      ok: false,
+      message: t({
+        vi: `Mỗi đơn tối đa ${MAX_UNITS_PER_ORDER} chiếc.`,
+        en: `An order takes up to ${MAX_UNITS_PER_ORDER} items.`,
+      }),
+    };
   }
 
   const d = raw.draft;
@@ -214,7 +252,7 @@ export function readPlaceOrderPayload(raw: unknown): PayloadCheck {
   const payment =
     d.payment === "BANK_TRANSFER" || d.payment === "CARD" || d.payment === "COD" ? d.payment : null;
   if (delivery === null || payment === null) {
-    return { ok: false, message: placeFailureMessage("BAD_INPUT") };
+    return { ok: false, message: placeFailureMessage("BAD_INPUT", locale) };
   }
 
   // No `agreed` (slice B8): the Feed checkout has no box to tick, and a check
@@ -232,13 +270,19 @@ export function readPlaceOrderPayload(raw: unknown): PayloadCheck {
     payment,
   };
 
-  const errors = validateCheckout(draft);
+  const errors = validateCheckout(draft, locale);
   const first = Object.values(errors).find((m) => typeof m === "string" && m !== "");
   if (first) return { ok: false, message: first };
 
   const note = draft.note.trim();
   if (note.length > MAX_NOTE_LENGTH) {
-    return { ok: false, message: `Ghi chú tối đa ${MAX_NOTE_LENGTH} ký tự.` };
+    return {
+      ok: false,
+      message: t({
+        vi: `Ghi chú tối đa ${MAX_NOTE_LENGTH} ký tự.`,
+        en: `A note takes up to ${MAX_NOTE_LENGTH} characters.`,
+      }),
+    };
   }
 
   const promo = typeof raw.promoCode === "string" ? normalisePromoCode(raw.promoCode) : "";

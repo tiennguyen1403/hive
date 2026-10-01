@@ -3458,3 +3458,31 @@ commit trên máy, chưa push.
   `.soon-note`); ô `/so/4`, `/so/3` ở 390 và 900 (`.b-tile-meta`, `.b-tile-kind` "Funnel-neck hoodie"); tiêu đề `/so/5` ở 390.
 - **Còn tiếng Việt ở bản EN, để lát sau:** `rateLimitMessage`; tham số `what` của `FeedCopy` từ trang đơn ("Copy số tiền", E2/E3);
   head của `/checkout` (E2); `closesInLabel`/`opensInLabel` của quản trị (E4).
+
+**02/10, lát E2 ĐẠT (phiên chính duyệt; agent đã sửa hai chỗ chữ, phiên chính kiểm lại test).** Brief
+`tasks/briefs/v6-lat-e2.md`, agent `ui-implementer`. Người dùng cho commit trên máy (chưa push) rồi làm E3a.
+- **Phạm vi đã dịch:** `/cart`, `/checkout`, `/order-confirmed/[code]`, `/track`, picker tỉnh và phường, các sheet và toast; câu báo
+  của action đặt đơn, huỷ đơn, tra đơn; `rateLimitMessage` (số nhiều phút, giờ). `<title>` theo ngôn ngữ.
+- **Mã:**
+  - `getActionLocale()` (`lib/locale.ts`): chỉ action dùng. Bắt lỗi "ngoài request" để test rơi về `vi`, nhưng `unstable_rethrow`
+    ném lại tín hiệu dựng động của Next; có test đột biến;
+  - `takeRate(bucket, cost, locale)`;
+  - lý do huỷ in qua bảng tiếng Anh khoá bằng chữ Việt đã chuẩn hoá (NFC, chữ thường), giá trị lạ in nguyên;
+  - câu báo của mã giảm giá và của tra đơn viết lúc render, nên đổi ngôn ngữ thì câu đổi tại chỗ.
+- **Phiên chính kiểm:** tsc sạch, 1.968 test xanh (49 test mới, không test cũ nào bị sửa); xem ảnh tiếng Anh giỏ (có món vướng),
+  thanh toán (giao nhanh, COD), đặt hàng xong (chuyển khoản), tra đơn, ở 390.
+- **Agent đo:** bản VI 84 cặp ảnh không lệch vượt nhiễu; script dò chữ Việt ở bản EN ra 0 trên 84 lượt; 10 chỗ xuống dòng của bản EN
+  đo phương án ngay trên trang rồi sửa 8 (ví dụ "Tracking no.", "Arrives", "Change of mind"); sweep 110 phát hiện như cũ; JS nén
+  +1,2 đến +1,3 KB.
+- **Giao lại agent:** câu về vùng giao nhanh dùng "HCMC" như chân trang; aria nút số lượng "Decrease quantity" / "Increase quantity".
+- **Còn lại:** `/account/orders/[code]` ở bản EN có bước, món, tổng tiền tiếng Anh giữa trang còn tiếng Việt tới E3a. `rateLimitMessage`
+  của Keep, đăng nhập, sổ địa chỉ, hồ sơ, quản trị còn tiếng Việt, mỗi chỗ sửa một dòng ở lát của nó. Bảng dịch `orders.carrier`
+  để E4.
+- **Mẫu thêm cho các lát sau** (từ báo cáo E2):
+  - action gọi `getActionLocale()` rồi truyền `locale` xuống câu báo và `takeRate`; trang và metadata dùng `getLocale()`;
+  - câu báo nào phải đổi theo ngôn ngữ tại chỗ thì giữ dữ liệu thô (mã đã gõ, loại lỗi) và viết câu lúc render;
+  - `lang="vi"` chỉ gắn khi `locale === "en"`, để DOM bản VI không đổi;
+  - hàm bị gọi kiểu `.map(fn)` thì thêm hàm anh em `…In(x, locale)`;
+  - nhãn đã dịch không làm `key`, dùng index;
+  - test action theo ngôn ngữ: mock `@/lib/locale` (`getActionLocale`).
+- **Tách E3:** E3a vùng tài khoản (brief `tasks/briefs/v6-lat-e3a.md`), E3b trang trợ giúp và 404, vì Hỏi đáp nhiều chữ.

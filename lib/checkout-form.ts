@@ -1,5 +1,6 @@
 import { findWard } from "@/data/regions";
 import type { PaymentMethod } from "@/data/types";
+import { picker, type Locale } from "./i18n";
 import { isDeliveryAvailable, type DeliveryMethod } from "./shipping";
 
 /**
@@ -57,27 +58,47 @@ function looksLikeEmail(raw: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(raw.trim());
 }
 
-export function validateCheckout(d: CheckoutDraft): CheckoutErrors {
+/**
+ * In both languages since round v6 slice E2: the Server Action that re-reads
+ * the order (`readPlaceOrderPayload`) answers in the request's language. The
+ * city keeps its Vietnamese name (QĐ-40).
+ */
+export function validateCheckout(d: CheckoutDraft, locale: Locale = "vi"): CheckoutErrors {
   const e: CheckoutErrors = {};
+  const t = picker(locale);
 
-  if (!d.recipient.trim()) e.recipient = "Cần tên người nhận.";
-  if (!d.phone.trim()) e.phone = "Cần số điện thoại để người giao gọi.";
-  else if (!normalisePhone(d.phone)) e.phone = "Số điện thoại chưa đúng — 10 số, bắt đầu bằng 0.";
+  if (!d.recipient.trim()) e.recipient = t({ vi: "Cần tên người nhận.", en: "A recipient's name is needed." });
+  if (!d.phone.trim()) {
+    e.phone = t({ vi: "Cần số điện thoại để người giao gọi.", en: "A phone number is needed for the courier to call." });
+  } else if (!normalisePhone(d.phone)) {
+    e.phone = t({
+      vi: "Số điện thoại chưa đúng — 10 số, bắt đầu bằng 0.",
+      en: "The phone number isn't right. It has 10 digits, starting with 0.",
+    });
+  }
   // Optional (slice B8): none is fine, one that is typed has to look like one.
-  if (d.email.trim() && !looksLikeEmail(d.email)) e.email = "Email chưa đúng định dạng.";
+  if (d.email.trim() && !looksLikeEmail(d.email)) {
+    e.email = t({ vi: "Email chưa đúng định dạng.", en: "The email isn't in a valid format." });
+  }
 
-  if (!d.provinceCode) e.provinceCode = "Chọn tỉnh / thành phố.";
-  if (!d.wardCode) e.wardCode = "Chọn phường / xã.";
+  if (!d.provinceCode) e.provinceCode = t({ vi: "Chọn tỉnh / thành phố.", en: "Choose a province or city." });
+  if (!d.wardCode) e.wardCode = t({ vi: "Chọn phường / xã.", en: "Choose a ward or commune." });
   else if (d.provinceCode && !findWard(d.provinceCode, d.wardCode)) {
     // Changing province and leaving the old ward behind is the usual way
     // this goes wrong, and a parcel addressed to a commune in another
     // province is a parcel that does not arrive.
-    e.wardCode = "Phường / xã này không thuộc tỉnh đã chọn.";
+    e.wardCode = t({
+      vi: "Phường / xã này không thuộc tỉnh đã chọn.",
+      en: "This ward or commune isn't in the chosen province.",
+    });
   }
-  if (!d.line.trim()) e.line = "Cần số nhà và tên đường.";
+  if (!d.line.trim()) e.line = t({ vi: "Cần số nhà và tên đường.", en: "A house number and street are needed." });
 
   if (!isDeliveryAvailable(d.delivery, d.provinceCode || undefined)) {
-    e.delivery = "Giao nhanh chỉ có ở nội thành TP. Hồ Chí Minh.";
+    e.delivery = t({
+      vi: "Giao nhanh chỉ có ở nội thành TP. Hồ Chí Minh.",
+      en: "Express delivery only runs in central HCMC.",
+    });
   }
 
   return e;

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { headers } from "next/headers";
+import type { Locale } from "@/lib/i18n";
 import {
   EVERYONE,
   RATE_RULES,
@@ -47,8 +48,12 @@ let missingKeyLogged = false;
  *
  * `p_now` is left to the database: the counter lives by Postgres' clock, and
  * nothing a request carries should choose which window it lands in.
+ *
+ * `locale` is the language of the refusal's sentence (round v6 slice E2): the
+ * action that spends the token reads it from the request (`getActionLocale`)
+ * and passes it here. Vietnamese when it does not.
  */
-export async function takeRate(bucket: RateBucket, cost = 1): Promise<RateVerdict> {
+export async function takeRate(bucket: RateBucket, cost = 1, locale: Locale = "vi"): Promise<RateVerdict> {
   const key = process.env.SUPABASE_SECRET_KEY;
   const service = getServiceSupabase();
   if (!service || !key) {
@@ -81,7 +86,7 @@ export async function takeRate(bucket: RateBucket, cost = 1): Promise<RateVerdic
       return THROUGH;
     }
     if (typeof data !== "number" || data <= 0) return THROUGH;
-    return { ok: false, retryAfterSeconds: data, message: rateLimitMessage(bucket, data) };
+    return { ok: false, retryAfterSeconds: data, message: rateLimitMessage(bucket, data, locale) };
   } catch (e) {
     console.error(`take_rate(${bucket}):`, e instanceof Error ? e.message : e);
     return THROUGH;
