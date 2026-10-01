@@ -1,43 +1,168 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-30T19:30:00+07:00",
+  "generatedAt": "2026-10-01T12:00:00+07:00",
   "title": "Design System: HIVE — Feed",
   "extensions": {
     "colorMeta": {
-      "blue": { "role": "primary", "displayName": "Xanh nhấn", "canonical": "#1846f0", "tonalRamp": ["#081a5c", "#0d2a94", "#0f37d6", "#1846f0", "#4a6ff4", "#8199f7", "#b9c6fb", "#e9ecff"] },
-      "err": { "role": "error", "displayName": "Đỏ lỗi", "canonical": "#c62a1d", "tonalRamp": ["#4a0f0a", "#7a1a12", "#a52318", "#c62a1d", "#d9584d", "#e68c84", "#f2c1bc", "#fbeae8"] },
-      "ink": { "role": "neutral", "displayName": "Mực", "canonical": "#111214", "tonalRamp": ["#111214", "#22242a", "#2a2c30", "#5b5f66", "#9a9ea6", "#d5d7dc", "#e4e6ea", "#f1f2f4"] },
-      "ink2": { "role": "neutral", "displayName": "Chữ phụ", "canonical": "#5b5f66" },
-      "bg": { "role": "neutral", "displayName": "Nền", "canonical": "#fcfcfd" },
-      "bg2": { "role": "neutral", "displayName": "Nền nhóm", "canonical": "#f1f2f4" },
-      "select": { "role": "primary", "displayName": "Bôi đen", "canonical": "color-mix(in srgb, #1846f0 24%, #ffffff)" },
-      "plate": { "role": "neutral", "displayName": "Nền hình phẳng", "canonical": "#f4efe6" },
-      "scrim": { "role": "neutral", "displayName": "Màn tối dưới chữ trên ảnh", "canonical": "#000000" }
+      "blue": {
+        "role": "primary",
+        "displayName": "Xanh nhấn",
+        "canonical": "#1846f0",
+        "tonalRamp": [
+          "#081a5c",
+          "#0d2a94",
+          "#0f37d6",
+          "#1846f0",
+          "#4a6ff4",
+          "#8199f7",
+          "#b9c6fb",
+          "#e9ecff"
+        ]
+      },
+      "err": {
+        "role": "error",
+        "displayName": "Đỏ lỗi",
+        "canonical": "#c62a1d",
+        "tonalRamp": [
+          "#4a0f0a",
+          "#7a1a12",
+          "#a52318",
+          "#c62a1d",
+          "#d9584d",
+          "#e68c84",
+          "#f2c1bc",
+          "#fbeae8"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Mực",
+        "canonical": "#111214",
+        "tonalRamp": [
+          "#111214",
+          "#22242a",
+          "#2a2c30",
+          "#5b5f66",
+          "#9a9ea6",
+          "#d5d7dc",
+          "#e4e6ea",
+          "#f1f2f4"
+        ]
+      },
+      "ink2": {
+        "role": "neutral",
+        "displayName": "Chữ phụ",
+        "canonical": "#5b5f66"
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Nền",
+        "canonical": "#fcfcfd"
+      },
+      "bg2": {
+        "role": "neutral",
+        "displayName": "Nền nhóm",
+        "canonical": "#f1f2f4"
+      },
+      "select": {
+        "role": "primary",
+        "displayName": "Bôi đen",
+        "canonical": "color-mix(in srgb, #1846f0 24%, #ffffff)"
+      },
+      "plate": {
+        "role": "neutral",
+        "displayName": "Nền hình phẳng",
+        "canonical": "#f4efe6"
+      },
+      "scrim": {
+        "role": "neutral",
+        "displayName": "Màn tối dưới chữ trên ảnh",
+        "canonical": "#000000"
+      }
     },
     "typographyMeta": {
-      "body": { "displayName": "Chữ nền", "purpose": "Chữ nền của vùng Feed, Mona Sans 100%, 450." },
-      "ui-16": { "displayName": "Nút, ô nhập", "purpose": "Nút .btn, ô nhập, size, dòng sắp xếp." },
-      "title-20": { "displayName": "Tiêu đề mục", "purpose": ".sect-title, .sh-title, .csum-title; 24–26px từ 900px." },
-      "display-44": { "displayName": "Tiêu đề trang", "purpose": "Mona Sans 75%, 900, viết hoa; 64–72px từ 900px." },
-      "display-132": { "displayName": "Ngày mở", "purpose": "Ngày của Số sắp mở; tới 208px trên máy tính." }
+      "body": {
+        "displayName": "Chữ nền",
+        "purpose": "Chữ nền của vùng Feed, Mona Sans 100%, 450."
+      },
+      "ui-16": {
+        "displayName": "Nút, ô nhập",
+        "purpose": "Nút .btn, ô nhập, size, dòng sắp xếp."
+      },
+      "title-20": {
+        "displayName": "Tiêu đề mục",
+        "purpose": ".sect-title, .sh-title, .csum-title; 24–26px từ 900px."
+      },
+      "display-44": {
+        "displayName": "Tiêu đề trang",
+        "purpose": "Mona Sans 75%, 900, viết hoa; 64–72px từ 900px."
+      },
+      "display-132": {
+        "displayName": "Ngày mở",
+        "purpose": "Ngày của Số sắp mở; tới 208px trên máy tính."
+      }
     },
     "shadows": [
-      { "name": "f-lift", "value": "0 -8px 28px rgba(17, 18, 20, .12)", "purpose": "Sheet điện thoại, thanh mua, thanh thanh toán, thanh đặt hàng." },
-      { "name": "sheet-desktop", "value": "0 24px 64px rgba(17, 18, 20, .18)", "purpose": "Sheet thành hộp giữa màn từ 900px." },
-      { "name": "snack", "value": "0 12px 32px rgba(17, 18, 20, .24)", "purpose": "Toast .snack." },
-      { "name": "f-scrim", "value": "linear-gradient(to top, rgba(0, 0, 0, .66), rgba(0, 0, 0, 0) 58%)", "purpose": "Dưới chữ đặt trên ảnh." }
+      {
+        "name": "f-lift",
+        "value": "0 -8px 28px rgba(17, 18, 20, .12)",
+        "purpose": "Sheet điện thoại, thanh mua, thanh thanh toán, thanh đặt hàng."
+      },
+      {
+        "name": "sheet-desktop",
+        "value": "0 24px 64px rgba(17, 18, 20, .18)",
+        "purpose": "Sheet thành hộp giữa màn từ 900px."
+      },
+      {
+        "name": "snack",
+        "value": "0 12px 32px rgba(17, 18, 20, .24)",
+        "purpose": "Toast .snack."
+      },
+      {
+        "name": "f-scrim",
+        "value": "linear-gradient(to top, rgba(0, 0, 0, .66), rgba(0, 0, 0, 0) 58%)",
+        "purpose": "Dưới chữ đặt trên ảnh."
+      }
     ],
     "motion": [
-      { "name": "f-spring", "value": "cubic-bezier(.2, .9, .2, 1.05)", "purpose": "Sheet bật lên 0,48s, vạch tab 0,42s, tim nảy 0,42s (QĐ-36 #8)." },
-      { "name": "f-out", "value": "cubic-bezier(.22, .8, .24, 1)", "purpose": "Hiện dần .rv 0,6s, ảnh phóng 0,7s, tab mờ sang 0,28s." },
-      { "name": "press", "value": "transform: scale(.97)", "purpose": "Nhấn nút, pill, chip, đoạn." },
-      { "name": "skeleton", "value": "f-b-shimmer 1.1s ease-in-out infinite alternate", "purpose": "Khối xám đang tải (lát 4)." }
+      {
+        "name": "f-spring",
+        "value": "cubic-bezier(.2, .9, .2, 1.05)",
+        "purpose": "Sheet bật lên 0,48s, vạch tab 0,42s, tim nảy 0,42s (QĐ-36 #8)."
+      },
+      {
+        "name": "f-out",
+        "value": "cubic-bezier(.22, .8, .24, 1)",
+        "purpose": "Hiện dần .rv 0,6s, ảnh phóng 0,7s, tab mờ sang 0,28s."
+      },
+      {
+        "name": "press",
+        "value": "transform: scale(.97)",
+        "purpose": "Nhấn nút, pill, chip, đoạn."
+      },
+      {
+        "name": "skeleton",
+        "value": "f-b-shimmer 1.1s ease-in-out infinite alternate",
+        "purpose": "Khối xám đang tải (lát 4)."
+      }
     ],
     "breakpoints": [
-      { "name": "tablet", "value": "600px" },
-      { "name": "desktop", "value": "900px" },
-      { "name": "desktop-narrow-end", "value": "1199.98px" },
-      { "name": "max", "value": "1280px" }
+      {
+        "name": "tablet",
+        "value": "600px"
+      },
+      {
+        "name": "desktop",
+        "value": "900px"
+      },
+      {
+        "name": "desktop-narrow-end",
+        "value": "1199.98px"
+      },
+      {
+        "name": "max",
+        "value": "1280px"
+      }
     ]
   },
   "components": [
@@ -108,18 +233,40 @@
   ],
   "narrative": {
     "northStar": "Ứng dụng lướt",
-    "overview": "Cửa hàng như một ứng dụng lướt: mỗi mẫu là một khung ảnh tràn màn, lịch mở bán và đếm ngược luôn trong tầm mắt. Phần khách chạy Feed; khu quản trị chạy v3 tới vòng mock quản trị Feed.",
+    "overview": "Cửa hàng như một ứng dụng lướt: mỗi mẫu là một khung ảnh tràn màn, lịch mở bán và đếm ngược luôn trong tầm mắt. Phần khách chạy Feed; khu quản trị chạy bộ Arc (xám trung tính, Mona Sans 100%), tả ở DESIGN.md §7, không có trong sidecar này.",
     "keyCharacteristics": [
       "Trên điện thoại là một app: thanh trên, tab chia đoạn, tab đáy năm mục, sheet trượt từ đáy. Trên máy tính là web app gọn.",
       "Ảnh tràn viền, góc vuông. Chữ hiển thị to, hẹp (Mona Sans 75%), viết hoa; chữ giao diện gọn (100%).",
       "Thời gian tổ chức cửa hàng: đang mở, sắp mở, đã đóng.",
-      "Một màu nhấn xanh; đỏ chỉ cho lỗi; mọi điều khiển bo tròn hẳn."
+      "Một màu nhấn xanh; đỏ chỉ cho lỗi; mọi điều khiển bo tròn hẳn.",
+      "Quản trị: Arc xám trung tính, chỉ nền sáng, Mona Sans 100%, chỉ máy tính."
     ],
     "rules": [
-      { "name": "The One Accent Rule", "body": "Xanh là màu nhấn duy nhất; đỏ chỉ cho lỗi, không bao giờ trang trí. Còn ít là mực kèm icon lửa và con số, không phải màu thứ hai (`.stock.is-low`). Logo là đen trắng để xanh đứng một mình (QĐ-33).", "section": "colors" },
-      { "name": "The Dark Block Rule", "body": "Khối nền mực chữ trắng là luật của Feed (QĐ-36 #2), dùng ở: story Số đang mở `.story` (cả bản chia đôi máy tính), Số sắp mở dẫn Bảng tin `.soon-lead`, thẻ \"Chưa có tài khoản\" `.out-card`, thẻ đơn đang đi `.now`, dấu ĐÃ HẾT `.plate`, lựa chọn đang bật, toast `.snack`. Ảnh chia sẻ nền `#171410`.", "section": "colors" },
-      { "name": "The Big Display Rule", "body": "Chữ hiển thị trên 6rem là luật của Feed (QĐ-36 #15): ngày, số Số, câu bìa, tên mẫu trang sản phẩm.", "section": "typography" },
-      { "name": "The Proportional Figures Rule", "body": "Không `tabular-nums` ở giá thẻ lựa chọn (lát 0) và cột giờ hộp thư (lát 4); đồng hồ đếm giữ bề rộng từng chữ số bằng `.dg` (`width: 1ch`).", "section": "typography" }
+      {
+        "name": "The One Accent Rule",
+        "body": "Xanh là màu nhấn duy nhất; đỏ chỉ cho lỗi, không bao giờ trang trí. Còn ít là mực kèm icon lửa và con số, không phải màu thứ hai (`.stock.is-low`). Logo là đen trắng để xanh đứng một mình (QĐ-33).",
+        "section": "colors"
+      },
+      {
+        "name": "The Dark Block Rule",
+        "body": "Khối nền mực chữ trắng là luật của Feed (QĐ-36 #2), dùng ở: story Số đang mở `.story` (cả bản chia đôi máy tính), Số sắp mở dẫn Bảng tin `.soon-lead`, thẻ \"Chưa có tài khoản\" `.out-card`, thẻ đơn đang đi `.now`, dấu ĐÃ HẾT `.plate`, lựa chọn đang bật, toast `.snack`. Ảnh chia sẻ nền `#171410`.",
+        "section": "colors"
+      },
+      {
+        "name": "The Grey Desk Rule",
+        "body": "Vùng Arc không mượn xanh của Feed hay mật ong của v3. Mọi màu đọc qua token Arc; màu có tông chỉ là trạng thái (`--success`, `--warning`, `--danger`, tone `info` của badge).",
+        "section": "colors"
+      },
+      {
+        "name": "The Big Display Rule",
+        "body": "Chữ hiển thị trên 6rem là luật của Feed (QĐ-36 #15): ngày, số Số, câu bìa, tên mẫu trang sản phẩm.",
+        "section": "typography"
+      },
+      {
+        "name": "The Proportional Figures Rule",
+        "body": "Feed không `tabular-nums` ở giá thẻ lựa chọn (lát 0) và cột giờ hộp thư (lát 4); đồng hồ đếm giữ bề rộng từng chữ số bằng `.dg` (`width: 1ch`). Vùng Arc thì ngược lại: số luôn `tabular-nums`.",
+        "section": "typography"
+      }
     ],
     "dos": [
       "Do đặt mọi rule mới dưới `[data-ui=\"feed\"]` và đọc token `--f-*`.",
@@ -127,14 +274,19 @@
       "Do bo tròn hẳn mọi điều khiển; thẻ lựa chọn 16px; sheet 20px; ảnh nhỏ 10px; ảnh lớn góc vuông.",
       "Do chọn cỡ chữ trong danh sách §3; chữ hiển thị 75%, 900, viết hoa, `line-height` ≥ 1,06 khi nhiều dòng.",
       "Do cho điều khiển dưới 44px một lớp phủ `::after` tới 46.",
-      "Do khai chuyển động trong `prefers-reduced-motion: no-preference`."
+      "Do khai chuyển động trong `prefers-reduced-motion: no-preference`.",
+      "Do dựng màn quản trị bằng item Arc và CSS Module chỉ đọc token Arc (`var(--space-*)`, `--text-*`, `--radius-*`).",
+      "Do cho mọi Dialog và Drawer của vùng Arc `onInteractOutside={keepOpenForToasts}` và trả focus về chỗ đã mở."
     ],
     "donts": [
       "Don't dùng đỏ cho gì khác ngoài lỗi, kể cả còn ít hay hết size.",
       "Don't dùng tên `.sheetwrap`, `.menu3`, `.toast`, `.veil` hay tên utility Tailwind trong Feed.",
       "Don't thêm vòng lặp chuyển động ngoài chip đang mở và khối đang tải.",
       "Don't tô logo màu; logo là đen trắng.",
-      "Don't thêm phần marketing, tiêu đề giữa trên gradient, ba thẻ tính năng bằng nhau, khối chữ dài (`BRIEF.md`, *Not in this direction*)."
+      "Don't thêm phần marketing, tiêu đề giữa trên gradient, ba thẻ tính năng bằng nhau, khối chữ dài (`BRIEF.md`, *Not in this direction*).",
+      "Don't trộn token Feed vào vùng Arc hay token Arc vào Feed.",
+      "Don't chạy `shadcn init` hay để CLI ghi đè `registry/foundation.css`; cài item Arc bằng tay (§1).",
+      "Don't viết hoa bằng `text-transform` trong vùng Arc; nâng giá trị bằng `useCapitals`."
     ]
   }
 }

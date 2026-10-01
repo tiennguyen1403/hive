@@ -3193,3 +3193,25 @@ phần v3 của `components/ui/`, `components/icon/`, `AdminShell`, `lib/admin-a
   - DESIGN.md (documenter, bước kế);
   - `ArcOrderCells` kéo `data/regions` (3.321 phường, 28,9 KB nén) vào 4 trang quản trị, có từ lát 0;
   - thư mục ảnh đối chứng `.playwright-cli/shots/v5/lat-6/noise/` (85 MB, không theo dõi) xoá được.
+
+**01/10, lát 6 commit `dc6db0a`** (người dùng cho phép; chưa push). Người dùng chọn để sau việc tách danh sách phường khỏi
+trang quản trị. DESIGN.md cho đợt v5 đã giao documenter theo `tasks/briefs/v5-design-md.md`. Frontmatter vẫn là Feed; vùng
+Arc viết lại ở §7.
+
+**01/10, DESIGN.md đợt v5 ĐẠT (phiên chính duyệt), chờ người dùng cho commit.** Documenter viết lại phần thân: frontmatter Feed
+giữ nguyên từng dòng (1–382); §1–§10 thêm vùng Arc (nguồn, luật vùng, màu xám trung tính, chữ, bo 18/26/34, lớp nổi, bảng
+`z-index`, 23 item đã cài và phần tự dựng, đo đạc đợt v5, khiếm khuyết đang mang theo); mọi chỗ nhắc v3 còn sống đã bỏ.
+Sidecar `.impeccable/design.json` vẫn là Feed, chỉ đổi phần mô tả.
+- Máy dò theo vùng, trước và sau: Feed 0, `components/admin-arc` 2 (góc đồng tâm `ArcCountField`), `registry/` 21 (13 bo,
+  6 màu `--arc-gradient-*`, 2 cỡ chữ `avatar`). `document.md` không có cách ghi hệ thứ hai cho máy dò, nên vùng Arc vẫn bị chấm
+  theo bảng Feed.
+- Kiểm bằng script: 180 đường dẫn, 28 tên component, 96 token đều có thật.
+- **Chờ người dùng quyết:** có cho máy dò bỏ qua `registry/` (ruột Arc, dùng nguyên theo QĐ-37) không.
+- **01/10, người dùng duyệt** cho máy dò bỏ qua ba luật `design-system-radius`, `design-system-color`,
+  `design-system-font-size` trong `registry/components/**`. Các luật khác vẫn chấm Arc. Đo lại `registry` + `components/admin-arc`:
+  23 → 8.
+  - Còn 6 `design-system-color` ở `registry/foundation.css`, là token gradient `--arc-gradient-*` của Arc, nằm ngoài mẫu đã
+    duyệt.
+  - Còn 2 `design-system-radius` ở `ArcCountField` (góc đồng tâm).
+- DESIGN.md và sidecar commit cùng lượt này (người dùng cho phép). **Đợt v5 xong phần việc**; chưa push. Lên online cần
+  `db push` hai migration B14, B14b trước khi push code.
