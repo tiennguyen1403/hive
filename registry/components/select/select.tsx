@@ -7,6 +7,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { Variants } from "motion/react";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { pick } from "@/lib/i18n";
 import styles from "./select.module.css";
 
 export interface SelectProps extends Omit<ComponentPropsWithoutRef<typeof SelectPrimitive.Root>, "children"> {
@@ -29,9 +32,12 @@ const valueRoll: Variants = {
 const valueFade: Variants = { enter: { opacity: 0 }, center: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: motionTokens.duration.instant } }, exit: { opacity: 0, transition: { duration: motionTokens.duration.instant } } };
 
 export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select(
-  { label, description, placeholder = "Chọn", options, id, className, disabled, onValueChange, ...rootProps },
+  { label, description, placeholder: placeholderProp, options, id, className, disabled, onValueChange, ...rootProps },
   ref,
 ) {
+  // HIVE patch (registry/PATCHES.md): the default placeholder in the page's language; in English, Arc's own.
+  const locale = useLocale();
+  const placeholder = placeholderProp ?? pick({ vi: "Chọn", en: "Select an option" }, locale);
   const generatedId = useId();
   const controlId = id ?? generatedId;
   const hintId = description ? `${controlId}-description` : undefined;

@@ -3,11 +3,13 @@ import { CartProvider } from "@/components/cart/CartContext";
 import { MeProvider } from "@/components/account/MeContext";
 import { MyStateProvider } from "@/components/account/MyStateContext";
 import { monaSans } from "@/components/feed/font";
+import { LocaleProvider } from "@/components/i18n/LocaleContext";
 import { CatalogProvider } from "@/components/shop/CatalogContext";
 import { WaitVeil } from "@/components/shop/WaitVeil";
 import { catalogInput, loadCatalog } from "@/lib/db/catalog";
 import { getMyState } from "@/lib/db/my-state";
 import { loadMe } from "@/lib/db/profiles";
+import { getLocale } from "@/lib/locale";
 import { SITE_DESCRIPTION, SITE_NAME, THEME_COLOR, siteOrigin } from "@/lib/site";
 import "./globals.css";
 
@@ -90,36 +92,51 @@ export default async function RootLayout({
   // the notification switches) comes in the same round since round v4 slice
   // 3b, for the same reason: the heart on a card is filled in the first HTML,
   // not one commit later. Null signed out.
-  const [catalog, me, myState] = await Promise.all([loadCatalog(), loadMe(), getMyState()]);
+  //
+  // The language too, since round v6 slice E0 (QĐ-40): the `hive-lang`
+  // cookie, which the proxy has already written onto a first visit's request.
+  // When the switch's Server Action sets it, this layout re-renders in the
+  // action's own response with the new value, and the page below redraws in
+  // place (`lib/actions/locale.ts`).
+  const [catalog, me, myState, locale] = await Promise.all([
+    loadCatalog(),
+    loadMe(),
+    getMyState(),
+    getLocale(),
+  ]);
 
   // `--font-mona` on <html> as well as on the Feed zone's root (round v5
   // slice 0): the Arc back office sets both of its type roles in Mona Sans
   // (QĐ-38), and its Dialog, Select, menus and toasts render straight into
   // <body>, outside any zone root, so the variable has to exist at the top.
   return (
-    <html lang="vi" className={monaSans.variable} suppressHydrationWarning>
+    <html lang={locale} className={monaSans.variable} suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: POINTER_PROBE }} />
-        {/* One of each, above the router, so a line added on the product
-            page is already there when the cart route renders — no round
-            trip. Catalog is outermost: the basket reads the shop through it.
-            The account then wraps the rest: who is signed in, what the
-            account keeps (the optimistic writes of the Feed screens,
-            `MyStateProvider`), then the basket, which the device keeps and
-            which is readable signed out. */}
-        <CatalogProvider input={catalogInput(catalog)}>
-          <MeProvider me={me}>
-            <MyStateProvider initial={myState}>
-              <CartProvider>{children}</CartProvider>
-            </MyStateProvider>
-          </MeProvider>
-        </CatalogProvider>
-        {/* The wait veil (v3 slice 9): once, here, above the page boundary,
-            because it has to outlive the page it covers — each page's frame
-            remounts with it, and the veil plays its closing over the NEW
-            one. It needs none of the providers. On `/admin` it renders
-            nothing. */}
-        <WaitVeil />
+        {/* The language wraps everything, the veil included: every client
+            component below reads it with `useLocale()`. */}
+        <LocaleProvider locale={locale}>
+          {/* One of each, above the router, so a line added on the product
+              page is already there when the cart route renders — no round
+              trip. Catalog is outermost: the basket reads the shop through it.
+              The account then wraps the rest: who is signed in, what the
+              account keeps (the optimistic writes of the Feed screens,
+              `MyStateProvider`), then the basket, which the device keeps and
+              which is readable signed out. */}
+          <CatalogProvider input={catalogInput(catalog)}>
+            <MeProvider me={me}>
+              <MyStateProvider initial={myState}>
+                <CartProvider>{children}</CartProvider>
+              </MyStateProvider>
+            </MeProvider>
+          </CatalogProvider>
+          {/* The wait veil (v3 slice 9): once, here, above the page boundary,
+              because it has to outlive the page it covers — each page's frame
+              remounts with it, and the veil plays its closing over the NEW
+              one. It needs none of the providers. On `/admin` it renders
+              nothing. */}
+          <WaitVeil />
+        </LocaleProvider>
       </body>
     </html>
   );

@@ -5,6 +5,9 @@ import type { KeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode, RefObject
 import { ArrowUp } from "lucide-react";
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, type Transition, type Variants } from "motion/react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker } from "@/lib/i18n";
 import styles from "./sortable-data-table.module.css";
 
 export type SortDirection = "asc" | "desc";
@@ -52,7 +55,8 @@ export type SortableDataTableProps<T extends Record<string, unknown>> = {
 /** HIVE patch: what `rowAttributes` may set on a row. */
 export type RowAttributes = { [key: `data-${string}`]: string | undefined };
 
-const collator = new Intl.Collator("vi", { numeric: true, sensitivity: "base" });
+// HIVE patch (registry/PATCHES.md): rows sort by the page's language, Vietnamese order or Arc's own English one.
+const collators = { vi: new Intl.Collator("vi", { numeric: true, sensitivity: "base" }), en: new Intl.Collator("en", { numeric: true, sensitivity: "base" }) };
 const isEmpty = (value: unknown) => value == null || value === "";
 const comparable = (value: unknown) => value instanceof Date ? value.getTime() : value;
 const blur = (px: number) => `blur(${px}px)`;
@@ -136,8 +140,15 @@ function SelectBox({ checked, mixed = false, label, nav, reduced, onToggle, inpu
   </label>;
 }
 
-export function SortableDataTable<T extends Record<string, unknown>>({ rows, columns, rowKey, caption = "Bảng", emptyMessage = "Không có dòng nào", defaultSort, onSortChange, selectable = false, selectedKeys, defaultSelectedKeys, onSelectionChange, itemName = { one: "dòng", other: "dòng" }, selectOnRowClick = true, showCount = true, rowAttributes, holdWidths = true, density = "default" }: SortableDataTableProps<T>) {
+export function SortableDataTable<T extends Record<string, unknown>>({ rows, columns, rowKey, caption: captionProp, emptyMessage: emptyMessageProp, defaultSort, onSortChange, selectable = false, selectedKeys, defaultSelectedKeys, onSelectionChange, itemName: itemNameProp, selectOnRowClick = true, showCount = true, rowAttributes, holdWidths = true, density = "default" }: SortableDataTableProps<T>) {
   const reduced = useReducedMotion() ?? false;
+  // HIVE patch (registry/PATCHES.md): the defaults, the count, the names and the announcements in the page's language; in English, Arc's own.
+  const locale = useLocale();
+  const t = picker(locale);
+  const collator = collators[locale];
+  const caption = captionProp ?? t({ vi: "Bảng", en: "Data table" });
+  const emptyMessage = emptyMessageProp ?? t({ vi: "Không có dòng nào", en: "No rows to show" });
+  const itemName = itemNameProp ?? t({ vi: { one: "dòng", other: "dòng" }, en: { one: "row", other: "rows" } });
   const tableRef = useRef<HTMLTableElement>(null);
   const selectAllRef = useRef<HTMLInputElement>(null);
   const anchor = useRef<string | null>(null);
@@ -156,7 +167,7 @@ export function SortableDataTable<T extends Record<string, unknown>>({ rows, col
       const result = typeof left === "number" && typeof right === "number" ? left - right : collator.compare(String(left), String(right));
       return (sort.direction === "asc" ? result : -result) || a.index - b.index;
     }).map(entry => entry.row);
-  }, [rows, sort]);
+  }, [rows, sort, collator]);
 
   const numeric = useMemo(() => new Set(columns.filter(column => column.numeric ?? (rows.some(row => typeof row[column.key] === "number") && rows.every(row => typeof row[column.key] === "number" || isEmpty(row[column.key])))).map(column => column.key)), [columns, rows]);
   const getRowKey = (row: T) => String(typeof rowKey === "function" ? rowKey(row) : row[rowKey]);
@@ -215,7 +226,7 @@ export function SortableDataTable<T extends Record<string, unknown>>({ rows, col
   }, [reduced, sort?.key, widths]);
 
   const shownCount = selectedCount || keys.length;
-  const noun = selectedCount ? "đã chọn" : keys.length === 1 ? itemName.one : itemName.other;
+  const noun = selectedCount ? t({ vi: "đã chọn", en: "selected" }) : keys.length === 1 ? itemName.one : itemName.other;
   const [lastCount, setLastCount] = useState(shownCount);
   const [countDirection, setCountDirection] = useState(1);
   if (shownCount !== lastCount) { setLastCount(shownCount); setCountDirection(shownCount > lastCount ? 1 : -1); }
@@ -224,14 +235,19 @@ export function SortableDataTable<T extends Record<string, unknown>>({ rows, col
     const next: SortState = { key: column.key, direction: sort?.key === column.key && sort.direction === "asc" ? "desc" : "asc" };
     setSort(next);
     onSortChange?.(next);
-    setAnnouncement(`Đã sắp theo ${column.label}, ${next.direction === "asc" ? "tăng dần" : "giảm dần"}`);
+    setAnnouncement(t({
+      vi: `Đã sắp theo ${column.label}, ${next.direction === "asc" ? "tăng dần" : "giảm dần"}`,
+      en: `Sorted by ${column.label}, ${next.direction === "asc" ? "ascending" : "descending"}`,
+    }));
   }
 
   function commit(next: Set<string>) {
     const list = keys.filter(key => next.has(key));
     if (selectedKeys === undefined) setInternalSelection(list);
     onSelectionChange?.(list);
-    setAnnouncement(list.length ? `Đã chọn ${list.length} trên ${keys.length}` : "Đã bỏ chọn");
+    setAnnouncement(list.length
+      ? t({ vi: `Đã chọn ${list.length} trên ${keys.length}`, en: `${list.length} of ${keys.length} selected` })
+      : t({ vi: "Đã bỏ chọn", en: "Selection cleared" }));
   }
 
   function toggleRow(key: string, extend: boolean) {
@@ -290,12 +306,15 @@ export function SortableDataTable<T extends Record<string, unknown>>({ rows, col
           {columns.map((column, index) => <col key={column.key} style={{ width: column.width !== undefined ? (typeof column.width === "number" ? `${column.width}px` : column.width) : widths && index > 0 ? `${widths[column.key]}%` : undefined }} />)}
         </colgroup>
         <thead role="rowgroup"><tr role="row">
-          {selectable ? <th scope="col" role="columnheader" className={styles.selectCell}><SelectBox inputRef={selectAllRef} checked={allSelected} mixed={selectedCount > 0 && !allSelected} label="Chọn tất cả" nav="head" reduced={reduced} onToggle={() => commit(allSelected ? new Set() : new Set(keys))} /></th> : null}
+          {selectable ? <th scope="col" role="columnheader" className={styles.selectCell}><SelectBox inputRef={selectAllRef} checked={allSelected} mixed={selectedCount > 0 && !allSelected} label={t({ vi: "Chọn tất cả", en: "Select all rows" })} nav="head" reduced={reduced} onToggle={() => commit(allSelected ? new Set() : new Set(keys))} /></th> : null}
           {columns.map((column, index) => {
             const active = sort?.key === column.key;
             const sortable = column.sortable !== false;
             return <th key={column.key} scope="col" role="columnheader" data-key={column.key} data-primary={index === 0 || undefined} data-sorted={active || undefined} data-numeric={numeric.has(column.key) || undefined} data-sortable={sortable || undefined} aria-sort={!sortable ? undefined : active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}>
-              {sortable ? <button className={styles.sortButton} type="button" data-nav="head" onClick={() => sortBy(column)} aria-label={`Sắp theo ${column.label}${active ? `, đang ${sort.direction === "asc" ? "tăng dần" : "giảm dần"}` : ""}`}>
+              {sortable ? <button className={styles.sortButton} type="button" data-nav="head" onClick={() => sortBy(column)} aria-label={t({
+                vi: `Sắp theo ${column.label}${active ? `, đang ${sort.direction === "asc" ? "tăng dần" : "giảm dần"}` : ""}`,
+                en: `Sort by ${column.label}${active ? `, currently ${sort.direction === "asc" ? "ascending" : "descending"}` : ""}`,
+              })}>
                 <span className={styles.sortInner}><span>{column.label}</span><SortGlyph active={active} descending={active && sort.direction === "desc"} reduced={reduced} /></span>
               </button> : column.label}
             </th>;
@@ -305,7 +324,7 @@ export function SortableDataTable<T extends Record<string, unknown>>({ rows, col
           const key = keys[index];
           const selected = selectable && selection.has(key);
           return <motion.tr {...rowAttributes?.(row)} key={key} role="row" layout={reduced ? false : "position"} layoutDependency={order} transition={motionTokens.spring.smooth} data-selected={selected || undefined} onClick={event => onRowClick(event, key)} onMouseDown={event => { if (selectable && selectOnRowClick && event.shiftKey) event.preventDefault(); }}>
-            {selectable ? <td role="cell" className={styles.selectCell}><SelectBox checked={selected} label={`Chọn ${String(row[columns[0]?.key] ?? key)}`} nav="row" reduced={reduced} onToggle={extend => toggleRow(key, extend)} /></td> : null}
+            {selectable ? <td role="cell" className={styles.selectCell}><SelectBox checked={selected} label={t({ vi: `Chọn ${String(row[columns[0]?.key] ?? key)}`, en: `Select ${String(row[columns[0]?.key] ?? key)}` })} nav="row" reduced={reduced} onToggle={extend => toggleRow(key, extend)} /></td> : null}
             {columns.map((column, columnIndex) => <td key={column.key} role="cell" data-label={column.label} data-primary={columnIndex === 0 || undefined} data-sorted={sort?.key === column.key || undefined} data-numeric={numeric.has(column.key) || undefined}>{column.render ? column.render(row[column.key], row) : String(row[column.key] ?? "–")}</td>)}
           </motion.tr>;
         }) : <tr role="row"><td role="cell" className={styles.empty} colSpan={columns.length + (selectable ? 1 : 0)}>{emptyMessage}</td></tr>}</tbody>
@@ -317,7 +336,7 @@ export function SortableDataTable<T extends Record<string, unknown>>({ rows, col
         <Swap className={styles.number} value={String(shownCount)} direction={countDirection} reduced={reduced} />
         <Swap value={noun} direction={selectedCount ? 1 : -1} reduced={reduced} />
       </span>
-      <AnimatePresence initial={false}>{selectedCount ? <motion.button key="clear" type="button" className={styles.clear} data-clear="" onClick={clearSelection} initial={reduced ? { opacity: 0 } : { opacity: 0, scale: .96, filter: blur(motionTokens.blur.soft) }} animate={{ opacity: 1, scale: 1, filter: blur(0) }} exit={reduced ? { opacity: 0, transition: instant } : { opacity: 0, scale: .98, filter: blur(motionTokens.blur.subtle), transition: leave }} transition={reduced ? instant : enter} whileTap={reduced ? undefined : { scale: .97, transition: { duration: motionTokens.duration.instant } }}>Bỏ chọn</motion.button> : null}</AnimatePresence>
+      <AnimatePresence initial={false}>{selectedCount ? <motion.button key="clear" type="button" className={styles.clear} data-clear="" onClick={clearSelection} initial={reduced ? { opacity: 0 } : { opacity: 0, scale: .96, filter: blur(motionTokens.blur.soft) }} animate={{ opacity: 1, scale: 1, filter: blur(0) }} exit={reduced ? { opacity: 0, transition: instant } : { opacity: 0, scale: .98, filter: blur(motionTokens.blur.subtle), transition: leave }} transition={reduced ? instant : enter} whileTap={reduced ? undefined : { scale: .97, transition: { duration: motionTokens.duration.instant } }}>{t({ vi: "Bỏ chọn", en: "Clear selection" })}</motion.button> : null}</AnimatePresence>
     </div> : null}
     <p className={styles.srOnly} role="status">{announcement}</p>
   </div>;

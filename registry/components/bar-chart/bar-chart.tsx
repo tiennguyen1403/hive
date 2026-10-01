@@ -3,6 +3,9 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from "react";
 import { AnimatePresence, animate, cancelFrame, frame, motion, useInView, useMotionValue, usePresence, useReducedMotion, useTransform, type MotionValue, type Variants } from "motion/react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker, type Locale } from "@/lib/i18n";
 import styles from "./bar-chart.module.css";
 
 export interface BarChartDatum {
@@ -59,8 +62,10 @@ function soon(start: () => { stop: () => void }) {
 
 /** Room above the top gridline, the share of each slot a bar fills, its widest size, and the radius of its data end. */
 const TOP = 12, FILL = .58, MAX_BAR = 28, RADIUS = 4;
-// HIVE patch (registry/PATCHES.md): the chart speaks Vietnamese, its default numbers grouped the Vietnamese way.
-const grouped = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 });
+// HIVE patch (registry/PATCHES.md): the chart speaks the page's language, its default numbers grouped that language's way
+// (in English, Arc's own format). One formatter per language, made once, so the default keeps its identity between renders.
+const grouped = { vi: new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }), en: new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }) };
+const formatGrouped: Record<Locale, (value: number) => string> = { vi: value => grouped.vi.format(value), en: value => grouped.en.format(value) };
 const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value));
 
 /** Clean gridlines: the smallest step of 1, 2, 3, or 5 that covers the data in four rows or fewer, so shared steps survive a range change. */
@@ -230,8 +235,15 @@ function useReducedMotionSafe() {
 }
 
 // HIVE patch (registry/PATCHES.md): the defaults, the mean line ("TB"), the summary ("Cao nhất", "Thấp nhất"), the empty
-// reading ("Chưa có dữ liệu") and the scrubber name (", xem theo …") in Vietnamese.
-export function BarChart({ data, label, period, unit = "", averageLabel = "Trung bình mỗi ngày", valueLabel = "Tổng", categoryLabel = "Ngày", showAverage = true, height = 176, formatValue = value => grouped.format(value), formatTick = formatValue }: BarChartProps) {
+// reading ("Chưa có dữ liệu") and the scrubber name (", xem theo …") in the page's language; in English, Arc's own.
+export function BarChart({ data, label, period, unit = "", averageLabel: averageLabelProp, valueLabel: valueLabelProp, categoryLabel: categoryLabelProp, showAverage = true, height = 176, formatValue: formatValueProp, formatTick: formatTickProp }: BarChartProps) {
+  const locale = useLocale();
+  const t = picker(locale);
+  const averageLabel = averageLabelProp ?? t({ vi: "Trung bình mỗi ngày", en: "Daily average" });
+  const valueLabel = valueLabelProp ?? t({ vi: "Tổng", en: "Total" });
+  const categoryLabel = categoryLabelProp ?? t({ vi: "Ngày", en: "Day" });
+  const formatValue = formatValueProp ?? formatGrouped[locale];
+  const formatTick = formatTickProp ?? formatValue;
   const reduced = useReducedMotionSafe();
   const figure = useRef<HTMLElement>(null);
   const plot = useRef<HTMLDivElement>(null);
@@ -321,7 +333,7 @@ export function BarChart({ data, label, period, unit = "", averageLabel = "Trung
 
   const cursorX = useTransform(() => Math.round(centerOf(frame, cursor.get())) + .5);
   const meanY = useTransform(() => Math.round(height - (mean.get() / scale.get()) * (height - TOP)) + .5);
-  const meanText = useTransform(() => `TB ${formatTick(Math.round(mean.get()))}`);
+  const meanText = useTransform(() => t({ vi: `TB ${formatTick(Math.round(mean.get()))}`, en: `Avg ${formatTick(Math.round(mean.get()))}` }));
 
   const pointAt = (clientX: number) => {
     const rect = plot.current?.getBoundingClientRect();
@@ -346,10 +358,10 @@ export function BarChart({ data, label, period, unit = "", averageLabel = "Trung
 
   const scrubbed = scrubbing ? data[index] : null;
   const reading = scrubbed ?? data[last];
-  const valueText = reading ? `${reading.label}: ${formatValue(reading.value)}${suffix}` : "Chưa có dữ liệu";
+  const valueText = reading ? `${reading.label}: ${formatValue(reading.value)}${suffix}` : t({ vi: "Chưa có dữ liệu", en: "No data" });
   const highest = data.reduce<BarChartDatum | null>((best, item) => !best || item.value > best.value ? item : best, null);
   const lowest = data.reduce<BarChartDatum | null>((best, item) => !best || item.value < best.value ? item : best, null);
-  const summary = `${label}, ${period}. ${averageLabel} ${formatValue(Math.round(average))}${suffix}.${highest ? ` Cao nhất ${highest.label}, ${formatValue(highest.value)}${suffix}.` : ""}${lowest && lowest !== highest ? ` Thấp nhất ${lowest.label}, ${formatValue(lowest.value)}${suffix}.` : ""}`;
+  const summary = `${label}, ${period}. ${averageLabel} ${formatValue(Math.round(average))}${suffix}.${highest ? t({ vi: ` Cao nhất ${highest.label}, ${formatValue(highest.value)}${suffix}.`, en: ` Highest ${highest.label}, ${formatValue(highest.value)}${suffix}.` }) : ""}${lowest && lowest !== highest ? t({ vi: ` Thấp nhất ${lowest.label}, ${formatValue(lowest.value)}${suffix}.`, en: ` Lowest ${lowest.label}, ${formatValue(lowest.value)}${suffix}.` }) : ""}`;
   const shown = inView || reduced;
   const avoid = showAverage ? meanY : null;
 
@@ -383,7 +395,7 @@ export function BarChart({ data, label, period, unit = "", averageLabel = "Trung
         <span ref={measure} className={styles.measure}>{labelTexts.split("\n").filter(Boolean).map(text => <span key={text} data-text={text}>{text}</span>)}</span>
       </div>
       {/* The scrubber lies over the plot: hover or drag across it, or focus it and use the arrow keys. Vertical swipes still scroll the page. */}
-      <div className={styles.scrubber} role="slider" tabIndex={0} aria-label={`${label}, xem theo ${categoryLabel.toLowerCase()}`} aria-orientation="horizontal" aria-valuemin={1} aria-valuemax={Math.max(1, data.length)} aria-valuenow={(index ?? last) + 1} aria-valuetext={valueText}
+      <div className={styles.scrubber} role="slider" tabIndex={0} aria-label={t({ vi: `${label}, xem theo ${categoryLabel.toLowerCase()}`, en: `${label}, explore by ${categoryLabel.toLowerCase()}` })} aria-orientation="horizontal" aria-valuemin={1} aria-valuemax={Math.max(1, data.length)} aria-valuenow={(index ?? last) + 1} aria-valuetext={valueText}
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={release} onPointerCancel={() => setActive(null)} onPointerLeave={event => { if (event.pointerType === "mouse") setActive(null); }} onKeyDown={onKeyDown} onBlur={() => setActive(null)}
         onFocus={event => { if (event.currentTarget.matches(":focus-visible") && last >= 0) setActive(current => current ?? last); }} />
     </div>

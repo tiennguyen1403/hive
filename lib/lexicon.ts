@@ -1,3 +1,4 @@
+import { pick, pickAll, type Locale, type Pair } from "./i18n";
 
 /**
  * One word for one concept, in one place.
@@ -21,25 +22,41 @@
  * The one English word on a shopper-facing screen is SOLD OUT, stamped on a
  * photo of a style that has gone. It is streetwear's own convention, the
  * user settled it on 22/09, and in a sentence the shop still says "đã hết".
+ *
+ * IN ENGLISH (round v6, QĐ-40), by the glossary the user settled on
+ * 01/10/2026 (`tasks/plan.md`, "Thuật ngữ tiếng Anh"): an issue is a DROP —
+ * "Drop 05", which is also the code's own word, where "issue" would read as a
+ * fault. Each word below is a `{ vi, en }` pair; `LEX` is the Vietnamese side,
+ * as it always was, and `lexicon(locale)` either side.
  */
-export const LEX = {
+const LEX_TEXT = {
   /** Capitalised, in front of a number: "Số 05". */
-  t: "Số",
+  t: { vi: "Số", en: "Drop" },
   /** Lower case, inside a sentence: "mỗi số cắt một lần". */
-  tl: "số",
+  tl: { vi: "số", en: "drop" },
   /** Upper case, as a label above the number on a cover. */
-  tu: "SỐ",
+  tu: { vi: "SỐ", en: "DROP" },
   /** The footer column that lists which issues are open, next and past. */
-  cal: "Lịch ra số",
+  cal: { vi: "Lịch ra số", en: "Drop calendar" },
   /** The back office's own name for the list of them. */
-  adm: "Các số",
+  adm: { vi: "Các số", en: "Drops" },
   /** A section heading on the home page. */
-  in: "Trong số này",
+  in: { vi: "Trong số này", en: "In this drop" },
   /** The same, inside a sentence. */
-  inl: "trong số này",
-  next: "Số kế tiếp",
-  prev: "Số trước",
-} as const;
+  inl: { vi: "trong số này", en: "in this drop" },
+  next: { vi: "Số kế tiếp", en: "Next drop" },
+  prev: { vi: "Số trước", en: "Previous drop" },
+} as const satisfies Record<string, Pair>;
+
+export type Lexicon = Readonly<Record<keyof typeof LEX_TEXT, string>>;
+
+/** The lexicon in one language. */
+export function lexicon(locale: Locale = "vi"): Lexicon {
+  return pickAll(LEX_TEXT, locale);
+}
+
+/** The lexicon in Vietnamese, the table every screen has read since v3. */
+export const LEX: Lexicon = lexicon("vi");
 
 /**
  * The cover line the home page opens with — the only copy on that screen that
@@ -67,6 +84,15 @@ export const HOME_COVER = {
     "Mỗi mẫu cắt đúng một lần từ khổ vải đã đặt. Số còn lại của từng mẫu hiện ngay " +
     "bên dưới. Hết size là hết, không may thêm.",
 } as const;
+
+/**
+ * The cover line in both languages (round v6): "Cut once. No restocks.", set
+ * on the same two lines by `coverLines` — "Cut once." / "No restocks." (the
+ * user's glossary, 01/10/2026). The Vietnamese side IS `HOME_COVER.headline`,
+ * which the share image is drawn from and checked against; the share image
+ * stays Vietnamese (QĐ-40).
+ */
+export const HOME_HEADLINE: Pair = { vi: HOME_COVER.headline, en: "Cut once. No restocks." };
 
 /**
  * The one sentence `/about` opens with.
@@ -114,9 +140,10 @@ export const FOUR_RULES: readonly { title: string; body: string }[] = [
  *
  * Two digits always: the numbers are read in a column (a calendar, a table,
  * a filter menu) and "Số 5" beside "Số 05" reads as two different things.
+ * In English `"Drop 05"`.
  */
-export function issueLabel(no: number): string {
-  return `${LEX.t} ${issueNo(no)}`;
+export function issueLabel(no: number, locale: Locale = "vi"): string {
+  return `${pick(LEX_TEXT.t, locale)} ${issueNo(no)}`;
 }
 
 /** `"05"` — just the padded number, for the places that set it in display type. */
@@ -187,8 +214,12 @@ export function stylePrefix(no: number): string {
  * styles table, the last choice of the issue menu, the read-only issue field
  * of such a style. Only the back office says it; a shopper sees a style.
  * Not in `LEX`, which is pinned to the shop's table in the v3 mock.
+ *
+ * In English "Basics" (the user's glossary, 01/10/2026: their choice over
+ * the proposed "Core"); `FIXED_WORD` stays the Vietnamese side.
  */
-export const FIXED_WORD = "Cố định";
+export const FIXED_WORD_TEXT: Pair = { vi: "Cố định", en: "Basics" };
+export const FIXED_WORD = FIXED_WORD_TEXT.vi;
 
 /**
  * `"Áo thun oversize"` → `"áo thun oversize"` — a garment kind dropped into

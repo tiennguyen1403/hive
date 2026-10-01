@@ -4,6 +4,9 @@ import type { MouseEvent } from "react";
 import { ChevronRight as NavArrowRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { pick } from "@/lib/i18n";
 import styles from "./breadcrumb.module.css";
 export interface BreadcrumbItem {
   label: string;
@@ -13,8 +16,11 @@ export interface BreadcrumbItem {
 }
 export interface BreadcrumbProps { items: BreadcrumbItem[]; ariaLabel?: string }
 /** Crumbs present on first render stay still; crumbs added later slide in from the path before them. */
-export function Breadcrumb({ items, ariaLabel = "Đường dẫn" }: BreadcrumbProps) {
+export function Breadcrumb({ items, ariaLabel: ariaLabelProp }: BreadcrumbProps) {
   const reduced = useReducedMotion() ?? false;
+  // HIVE patch (registry/PATCHES.md): the default name in the page's language; in English, Arc's own.
+  const locale = useLocale();
+  const ariaLabel = ariaLabelProp ?? pick({ vi: "Đường dẫn", en: "Breadcrumb" }, locale);
   const still = { duration: 0 };
   const path = items.map(item => item.label).join("/");
   return <nav aria-label={ariaLabel}><ol className={styles.list}><AnimatePresence mode="popLayout" initial={false}>{items.map((item, index) => {

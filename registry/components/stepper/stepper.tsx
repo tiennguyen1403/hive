@@ -4,6 +4,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } from "motion/react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker, type Pair } from "@/lib/i18n";
 import styles from "./stepper.module.css";
 
 export type StepperOrientation = "horizontal" | "vertical";
@@ -112,11 +115,15 @@ function Marker({ number, kind, current, glyphDelay, ringDelay, reduced }: { num
   </span>;
 }
 
-/** HIVE patch (registry/PATCHES.md): the status read after each step, in Vietnamese. */
-const statusText: Record<StepperStatus, string> = { complete: "Đã xong", current: "", upcoming: "Chưa bắt đầu", error: "Lỗi" };
+/** HIVE patch (registry/PATCHES.md): the status read after each step, in the page's language; in English, Arc's own. */
+const statusText: Record<StepperStatus, Pair> = { complete: { vi: "Đã xong", en: "Completed" }, current: { vi: "", en: "" }, upcoming: { vi: "Chưa bắt đầu", en: "Not started" }, error: { vi: "Lỗi", en: "Error" } };
 
-export function Stepper({ steps, current, orientation = "horizontal", onStepSelect, details = "all", compact = false, label = "Tiến trình", completeLabel = "Đã xong mọi bước", className }: StepperProps) {
+export function Stepper({ steps, current, orientation = "horizontal", onStepSelect, details = "all", compact = false, label: labelProp, completeLabel: completeLabelProp, className }: StepperProps) {
   const reduced = useReducedMotion() ?? false;
+  // HIVE patch (registry/PATCHES.md): the defaults, the statuses and the live sentence in the page's language; in English, Arc's own.
+  const t = picker(useLocale());
+  const label = labelProp ?? t({ vi: "Tiến trình", en: "Progress" });
+  const completeLabel = completeLabelProp ?? t({ vi: "Đã xong mọi bước", en: "All steps complete" });
   const count = steps.length;
   const active = Math.min(Math.max(Math.round(current), 0), count);
   // Remember where progress came from, so a jump across several steps fills or drains its connectors one after another.
@@ -162,7 +169,7 @@ export function Stepper({ steps, current, orientation = "horizontal", onStepSele
           <Marker number={index + 1} kind={kind} current={isCurrent} glyphDelay={delayAt(index)} ringDelay={ringDelay} reduced={reduced} />
           <span className={styles.text}>
             <span className={styles.label}>{step.label}</span>
-            {statusText[status] ? <span className={styles.srOnly}>, {statusText[status]}</span> : null}
+            {t(statusText[status]) ? <span className={styles.srOnly}>, {t(statusText[status])}</span> : null}
             <SwapText text={detail} className={step.error ? styles.error : styles.description} reduced={reduced} />
           </span>
         </>;
@@ -180,7 +187,7 @@ export function Stepper({ steps, current, orientation = "horizontal", onStepSele
       <SwapText text={now?.label ?? completeLabel} className={styles.captionLabel} reduced={reduced} />
       <SwapText text={now?.error ?? now?.description} className={now?.error ? styles.error : styles.description} reduced={reduced} />
     </span>}
-    <span className={styles.srOnly} aria-live="polite">{now ? `Bước ${active + 1} trên ${count}: ${now.label}` : completeLabel}</span>
+    <span className={styles.srOnly} aria-live="polite">{now ? t({ vi: `Bước ${active + 1} trên ${count}: ${now.label}`, en: `Step ${active + 1} of ${count}: ${now.label}` }) : completeLabel}</span>
   </Root>;
 }
 

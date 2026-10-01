@@ -21,6 +21,8 @@ import { purgeUploadedPhotos } from "@/lib/db/photos";
 import { takeRates, tidyRateHits } from "@/lib/db/rate-limit";
 import { getSupabase } from "@/lib/db/server";
 import { requireAdmin } from "@/lib/db/session";
+import { pick, plural, type Locale } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { isOrderCode } from "@/lib/lookup";
 import type { RateBucket } from "@/lib/rate-limit";
 import type { ActionState } from "./state";
@@ -70,8 +72,8 @@ const MAX_LINE = 200;
 const now = () => toVnIso(demoNow());
 
 const done = (message: string): ActionState => ({ errors: {}, ok: true, message });
-const refused = (move: AdminMove, failure: AdminFailure, code = ""): ActionState => ({
-  errors: { form: adminFailureMessage(move, failure, code) },
+const refused = (move: AdminMove, failure: AdminFailure, code = "", locale: Locale = "vi"): ActionState => ({
+  errors: { form: adminFailureMessage(move, failure, code, locale) },
 });
 
 const text = (value: unknown): string => (typeof value === "string" ? value.trim() : "");
@@ -318,33 +320,53 @@ export async function resetDemo(): Promise<ActionState> {
   await requireAdmin("/admin");
   const limited = await overLimit("reset");
   if (limited) return limited;
+  // Round v6 slice E0: the toast speaks the visitor's language (the
+  // `hive-lang` cookie). The rate limit's refusal above is still Vietnamese:
+  // every action in the app shares it, so it moves with them.
+  const locale = await getLocale();
 
   const supabase = await getSupabase();
   const anchor = await supabase.rpc("demo_anchor");
   if (anchor.error) {
     console.error("demo_anchor:", anchor.error.message);
-    return refused("RESET", "UNAVAILABLE");
+    return refused("RESET", "UNAVAILABLE", "", locale);
   }
   const { error } = await supabase.rpc("reset_demo", { p_anchor: anchor.data });
   if (error) {
     const failure = adminFailureOf(error);
     if (failure === "UNAVAILABLE") console.error("reset_demo:", error.message);
-    return refused("RESET", failure);
+    return refused("RESET", failure, "", locale);
   }
 
   let photos = "";
   try {
     const removed = await purgeUploadedPhotos();
-    if (removed > 0) photos = ` · đã xoá ${removed} ảnh tải lên`;
+    if (removed > 0) {
+      photos = pick(
+        {
+          vi: ` · đã xoá ${removed} ảnh tải lên`,
+          en: ` · ${plural(removed, "uploaded photo", "uploaded photos")} deleted`,
+        },
+        locale,
+      );
+    }
     // Slice B4b: the bucket is empty again, so the day's photo count
     // (`upload_global`) describes photos that are gone. Only after a purge
     // that went through — a bucket still full keeps its count.
     await tidyRateHits(["upload_global"]);
   } catch (e) {
     console.error("reset: uploaded photos left in the bucket:", e instanceof Error ? e.message : e);
-    photos = " · ảnh tải lên chưa xoá được";
+    photos = pick({ vi: " · ảnh tải lên chưa xoá được", en: " · uploaded photos not deleted" }, locale);
   }
 
   revalidatePath("/", "layout");
-  return done(`Đã đặt lại dữ liệu mẫu · đơn hàng, tồn kho và nhật ký về như ban đầu${photos}`);
+  return done(
+    pick(
+      {
+        vi: `Đã đặt lại dữ liệu mẫu · đơn hàng, tồn kho và nhật ký về như ban đầu${photos}`,
+        en: `Demo data reset · orders, stock and activity are back to the start${photos}`,
+      },
+      locale,
+    ),
+  );
 }

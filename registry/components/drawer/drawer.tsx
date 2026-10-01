@@ -7,6 +7,9 @@ import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } fr
 import type { PanInfo, Transition } from "motion/react";
 import { X } from "lucide-react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { pick } from "@/lib/i18n";
 import styles from "./drawer.module.css";
 
 /** Mirrors the open state so the panel can stay mounted while it slides out, retarget mid-flight, and close itself after a drag. */
@@ -80,6 +83,7 @@ export function DrawerContent({
 }: DrawerContentProps) {
   const drawer = useContext(DrawerContext);
   const reduced = useReducedMotion();
+  const locale = useLocale();
   const panelRef = useRef<HTMLDivElement>(null);
   const offset = useMotionValue<number | string>(0);
   const pan = useRef<number | null>(null);
@@ -124,8 +128,8 @@ export function DrawerContent({
           </DialogPrimitive.Description>
         ) : null}
       </div>
-      {/* HIVE patch (registry/PATCHES.md): the close button's name in Vietnamese. */}
-      <DialogPrimitive.Close className={styles.close} aria-label="Đóng">
+      {/* HIVE patch (registry/PATCHES.md): the close button's name in the page's language; in English, Arc's own. */}
+      <DialogPrimitive.Close className={styles.close} aria-label={pick({ vi: "Đóng", en: "Close drawer" }, locale)}>
         <X size={18} strokeWidth={1.8} aria-hidden="true" />
       </DialogPrimitive.Close>
     </motion.div>

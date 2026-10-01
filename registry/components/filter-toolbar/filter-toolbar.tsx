@@ -5,6 +5,9 @@ import type { FocusEvent, KeyboardEvent, MouseEvent, ReactNode, RefObject } from
 import { Check, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { AnimatePresence, animate, motion, useIsPresent, useMotionValue, useReducedMotion, useTransform, type HTMLMotionProps, type MotionValue, type Variants } from "motion/react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker, type Locale } from "@/lib/i18n";
 import styles from "./filter-toolbar.module.css";
 
 export interface FilterChip { id: string; label: string; value?: string; }
@@ -122,13 +125,15 @@ function useReflowGlide(list: RefObject<HTMLElement | null>, armed: RefObject<nu
   }, [armed, list, reduced]);
 }
 
-function describeChange(before: FilterChip[], after: FilterChip[]) {
+// HIVE patch (registry/PATCHES.md): the announcement in the page's language; in English, Arc's own sentences.
+function describeChange(before: FilterChip[], after: FilterChip[], locale: Locale) {
+  const t = picker(locale);
   const text = (filter: FilterChip) => filter.value ? `${filter.label}: ${filter.value}` : filter.label;
   const removed = before.filter(old => !after.some(filter => filter.id === old.id));
-  if (!after.length && removed.length > 1) return "Đã xoá hết bộ lọc";
+  if (!after.length && removed.length > 1) return t({ vi: "Đã xoá hết bộ lọc", en: "All filters cleared" });
   const added = after.filter(filter => !before.some(old => old.id === filter.id));
   const changed = after.filter(filter => before.some(old => old.id === filter.id && old.value !== filter.value));
-  return [...added.map(filter => `Đã thêm ${text(filter)}`), ...changed.map(filter => `${filter.label} đổi thành ${filter.value ?? "bất kỳ"}`), ...removed.map(filter => `Đã bỏ ${text(filter)}`)].join(". ");
+  return [...added.map(filter => t({ vi: `Đã thêm ${text(filter)}`, en: `Added ${text(filter)}` })), ...changed.map(filter => t({ vi: `${filter.label} đổi thành ${filter.value ?? "bất kỳ"}`, en: `${filter.label} changed to ${filter.value ?? "any"}` })), ...removed.map(filter => t({ vi: `Đã bỏ ${text(filter)}`, en: `Removed ${text(filter)}` }))].join(". ");
 }
 
 type Row = { key: string; label: string; icon?: ReactNode; meta?: ReactNode; checked?: boolean; drill?: boolean };
@@ -213,8 +218,11 @@ function roomFor(node: HTMLElement) {
 
 /** An Add filter button that grows into its own menu: pick a field, then a value. The shape springs between the
  *  button and the panel, and the panel renders in place, so keep its ancestors free of overflow clipping. */
-export function FilterMenu({ fields, onSelect, active = [], label = "Thêm bộ lọc", align = "end" }: FilterMenuProps) {
+export function FilterMenu({ fields, onSelect, active = [], label: labelProp, align = "end" }: FilterMenuProps) {
   const reduced = useReducedMotion() ?? false;
+  // HIVE patch (registry/PATCHES.md): the default label and the back button's name in the page's language; in English, Arc's own.
+  const t = picker(useLocale());
+  const label = labelProp ?? t({ vi: "Thêm bộ lọc", en: "Add filter" });
   const id = useId(), panelId = `${id}panel`, titleId = `${id}title`;
   const root = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null), panel = useRef<HTMLDivElement>(null);
   const phaseRef = useRef<Phase>("closed"), run = useRef(0), focusNext = useRef<FocusRequest | null>(null);
@@ -370,7 +378,7 @@ export function FilterMenu({ fields, onSelect, active = [], label = "Thêm bộ 
         <motion.div style={contentStyle}>
           <div className={styles.head}>
             <AnimatePresence initial={false}>
-              {field ? <motion.button key="back" type="button" className={styles.back} aria-label="Quay lại" onClick={event => goBack(event.detail === 0)}
+              {field ? <motion.button key="back" type="button" className={styles.back} aria-label={t({ vi: "Quay lại", en: "Back to fields" })} onClick={event => goBack(event.detail === 0)}
                 initial={reduced ? { opacity: 0, width: 28, marginRight: 2 } : { opacity: 0, width: 0, marginRight: 0, scale: .6 }} animate={{ opacity: 1, width: 28, marginRight: 2, scale: 1 }}
                 exit={reduced ? { opacity: 0, transition: still } : { opacity: 0, width: 0, marginRight: 0, scale: .6, transition: { ...motionTokens.spring.snappy, opacity: leave } }}
                 transition={reduced ? fade : { ...motionTokens.spring.snappy, opacity: enter }}><ChevronLeft size={16} strokeWidth={1.8} aria-hidden="true" /></motion.button> : null}
@@ -394,13 +402,21 @@ export function FilterMenu({ fields, onSelect, active = [], label = "Thêm bộ 
   </div>;
 }
 
-export function FilterToolbar({ filters, onRemove, onClearAll, children, label = "Bộ lọc đang dùng", addFilter }: FilterToolbarProps) {
+export function FilterToolbar({ filters, onRemove, onClearAll, children, label: labelProp, addFilter }: FilterToolbarProps) {
   const reduced = useReducedMotion() ?? false;
+  // HIVE patch (registry/PATCHES.md): the default label, the chips' remove names, the empty note, "Clear all" and the announcement in the page's language; in English, Arc's own.
+  const locale = useLocale();
+  const t = picker(locale);
+  const label = labelProp ?? t({ vi: "Bộ lọc đang dùng", en: "Active filters" });
+  const removeName = (filter: FilterChip) => {
+    const value = filter.value ? `: ${filter.value}` : "";
+    return t({ vi: `Bỏ ${filter.label}${value}`, en: `Remove ${filter.label}${value}` });
+  };
   const root = useRef<HTMLDivElement>(null), list = useRef<HTMLDivElement>(null);
   const armed = useRef(0), pendingFocus = useRef<number | null>(null);
   const [seen, setSeen] = useState(filters);
   const [message, setMessage] = useState("");
-  if (seen !== filters) { setSeen(filters); const next = describeChange(seen, filters); if (next) setMessage(next); }
+  if (seen !== filters) { setSeen(filters); const next = describeChange(seen, filters, locale); if (next) setMessage(next); }
   const signature = filters.map(filter => `${filter.id}:${filter.value ?? ""}`).join("|");
   // Layout motion runs only for a moment after the filters change, so window resizes and font swaps settle at once.
   useLayoutEffect(() => { armed.current = performance.now() + 900; }, [signature]);
@@ -438,11 +454,11 @@ export function FilterToolbar({ filters, onRemove, onClearAll, children, label =
     <motion.div className={styles.frame} style={{ height: frameHeight }}>
       <div ref={list} className={styles.chips}>
         <AnimatePresence initial={false}>
-          {filters.map((filter, index) => <motion.span className={styles.slot} key={filter.id} {...slot(8)}><motion.span className={styles.chip} {...chip}><span className={styles.chipLabel}>{filter.label}{filter.value ? <span className={styles.value}><span className={styles.separator}> · </span><MorphText text={filter.value} /></span> : null}</span><button type="button" data-chip-remove={filter.id} aria-label={`Bỏ ${filter.label}${filter.value ? `: ${filter.value}` : ""}`} onClick={event => { if (document.activeElement === event.currentTarget) pendingFocus.current = index; onRemove(filter.id); }}><X size={14} strokeWidth={1.8} aria-hidden="true" /></button></motion.span></motion.span>)}
+          {filters.map((filter, index) => <motion.span className={styles.slot} key={filter.id} {...slot(8)}><motion.span className={styles.chip} {...chip}><span className={styles.chipLabel}>{filter.label}{filter.value ? <span className={styles.value}><span className={styles.separator}> · </span><MorphText text={filter.value} /></span> : null}</span><button type="button" data-chip-remove={filter.id} aria-label={removeName(filter)} onClick={event => { if (document.activeElement === event.currentTarget) pendingFocus.current = index; onRemove(filter.id); }}><X size={14} strokeWidth={1.8} aria-hidden="true" /></button></motion.span></motion.span>)}
         </AnimatePresence>
         {/* The empty note sits over the leading edge instead of in the flow, so it fades in where the chips were rather than riding their collapsing slots across the row. */}
         <AnimatePresence initial={false}>
-          {filters.length ? null : <motion.span key="empty" className={styles.empty} {...emptyText}>Chưa lọc</motion.span>}
+          {filters.length ? null : <motion.span key="empty" className={styles.empty} {...emptyText}>{t({ vi: "Chưa lọc", en: "No filters applied" })}</motion.span>}
         </AnimatePresence>
       </div>
     </motion.div>
@@ -450,7 +466,7 @@ export function FilterToolbar({ filters, onRemove, onClearAll, children, label =
       {addFilter ? <FilterMenu fields={addFilter.fields} onSelect={addFilter.onAdd} active={filters} label={addFilter.label} align={addFilter.align} /> : null}
       {children}
       <AnimatePresence initial={false}>
-        {filters.length > 0 ? <motion.span key="clear" className={styles.slot} {...slot(12)}><button className={styles.clear} type="button" onClick={() => { pendingFocus.current = -1; onClearAll?.(); }}><motion.span className={styles.clearText} {...text}>Xoá hết</motion.span></button></motion.span> : null}
+        {filters.length > 0 ? <motion.span key="clear" className={styles.slot} {...slot(12)}><button className={styles.clear} type="button" onClick={() => { pendingFocus.current = -1; onClearAll?.(); }}><motion.span className={styles.clearText} {...text}>{t({ vi: "Xoá hết", en: "Clear all" })}</motion.span></button></motion.span> : null}
       </AnimatePresence>
     </div>
     <span className={styles.srOnly} role="status">{message}</span>

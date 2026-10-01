@@ -1,5 +1,6 @@
 import type { Order, OrderState } from "@/data/types";
 import { effectiveStatus } from "./customer-orders";
+import { picker, type Locale } from "./i18n";
 import { DELIVERY_OPTIONS } from "./shipping";
 
 /**
@@ -172,43 +173,80 @@ export type AdminMove =
  * `NOT_ALLOWED` almost always means the order moved on while the screen was
  * open — somebody else confirmed it, the hold ran out — so the sentence says
  * to look again rather than to try again.
+ *
+ * In both languages since round v6 slice E0 (QĐ-40), where the reset of the
+ * sample data (`resetDemo`) asks for it in the visitor's language; the order
+ * screens pass theirs when they move to English.
  */
-export function adminFailureMessage(move: AdminMove, failure: AdminFailure, code = ""): string {
+export function adminFailureMessage(move: AdminMove, failure: AdminFailure, code = "", locale: Locale = "vi"): string {
+  const t = picker(locale);
   switch (failure) {
     case "NOT_ADMIN":
-      return "Phiên quản trị đã hết — đăng nhập lại bằng tài khoản quản trị.";
+      return t({
+        vi: "Phiên quản trị đã hết — đăng nhập lại bằng tài khoản quản trị.",
+        en: "Your admin session has ended. Sign in again with an admin account.",
+      });
     case "NOT_FOUND":
-      return code ? `Không tìm thấy đơn ${code}.` : "Không tìm thấy đơn này.";
+      return code
+        ? t({ vi: `Không tìm thấy đơn ${code}.`, en: `Order ${code} not found.` })
+        : t({ vi: "Không tìm thấy đơn này.", en: "Order not found." });
     case "NOT_ALLOWED":
       switch (move) {
         case "MARK_PAID":
-          return `${code} không còn chờ tiền — tải lại trang để xem trạng thái mới.`;
+          return t({
+            vi: `${code} không còn chờ tiền — tải lại trang để xem trạng thái mới.`,
+            en: `${code} is no longer awaiting payment. Reload the page to see its status.`,
+          });
         case "HAND_OVER":
-          return `${code} chưa bàn giao được ở trạng thái này — tải lại trang để xem.`;
+          return t({
+            vi: `${code} chưa bàn giao được ở trạng thái này — tải lại trang để xem.`,
+            en: `${code} can't be handed over in this state. Reload the page to check.`,
+          });
         case "MARK_DELIVERED":
-          return `${code} không còn ở bước đang giao — tải lại trang để xem.`;
+          return t({
+            vi: `${code} không còn ở bước đang giao — tải lại trang để xem.`,
+            en: `${code} is no longer shipping. Reload the page to check.`,
+          });
         case "CANCEL":
-          return `${code} đã bàn giao hoặc đã đóng, không huỷ được nữa.`;
+          return t({
+            vi: `${code} đã bàn giao hoặc đã đóng, không huỷ được nữa.`,
+            en: `${code} has been handed over or closed and can no longer be cancelled.`,
+          });
         case "EDIT_ADDRESS":
-          return `${code} đã bàn giao hoặc đã đóng, không sửa địa chỉ được nữa.`;
+          return t({
+            vi: `${code} đã bàn giao hoặc đã đóng, không sửa địa chỉ được nữa.`,
+            en: `${code} has been handed over or closed. Its address can no longer be changed.`,
+          });
         default:
-          return "Thao tác này không còn làm được — tải lại trang để xem.";
+          return t({
+            vi: "Thao tác này không còn làm được — tải lại trang để xem.",
+            en: "This can no longer be done. Reload the page to check.",
+          });
       }
     case "BAD_INPUT":
       switch (move) {
         case "HAND_OVER":
-          return "Mã vận đơn chỉ gồm chữ, số, dấu chấm và gạch ngang, tối đa 40 ký tự.";
+          return t({
+            vi: "Mã vận đơn chỉ gồm chữ, số, dấu chấm và gạch ngang, tối đa 40 ký tự.",
+            en: "A tracking number can only contain letters, digits, dots and hyphens, up to 40 characters.",
+          });
         case "CANCEL":
-          return "Chọn một lý do trước khi huỷ.";
+          return t({ vi: "Chọn một lý do trước khi huỷ.", en: "Choose a reason before cancelling." });
         case "NOTE":
-          return "Ghi chú trống hoặc quá dài — tối đa 500 ký tự.";
+          return t({
+            vi: "Ghi chú trống hoặc quá dài — tối đa 500 ký tự.",
+            en: "The note is empty or longer than 500 characters.",
+          });
         case "EDIT_ADDRESS":
-          return "Địa chỉ chưa đủ hoặc số điện thoại chưa đúng — kiểm lại các ô.";
+          return t({
+            vi: "Địa chỉ chưa đủ hoặc số điện thoại chưa đúng — kiểm lại các ô.",
+            en: "The address is incomplete or the phone number is wrong. Check the fields.",
+          });
         default:
-          return "Thông tin gửi lên chưa hợp lệ.";
+          return t({ vi: "Thông tin gửi lên chưa hợp lệ.", en: "The submitted data isn't valid." });
       }
     case "UNAVAILABLE":
-      return "Chưa lưu được. Thử lại sau ít phút.";
+      return t({ vi: "Chưa lưu được. Thử lại sau ít phút.", en: "Couldn't save. Try again in a few minutes." });
   }
 }
 

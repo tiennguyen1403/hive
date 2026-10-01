@@ -20,7 +20,12 @@
  */
 async (page) => {
   const ORIGIN = "http://127.0.0.1:3200";
-  const SHOTS = ".playwright-cli/shots";
+  // The language of this run (round v6, QD-40): "vi" by default, "en" for the
+  // English pass. The cookie is set after the sign-in reset below, and the
+  // words the sweep clicks by follow it through `T`.
+  const LANG = "vi";
+  const T = (vi, en) => (LANG === "en" ? en : vi);
+  const SHOTS = LANG === "vi" ? ".playwright-cli/shots" : `.playwright-cli/shots/${LANG}`;
   const WIDTHS = [390, 1280];
 
   // Every screen a shopper or the back office reaches. The internal pages that
@@ -99,6 +104,7 @@ async (page) => {
     for (const [k, v] of Object.entries(seed)) localStorage.setItem(k, v);
   }, SEED);
   await page.context().clearCookies();
+  await page.context().addCookies([{ name: "hive-lang", value: LANG, url: ORIGIN }]);
   await page.goto(ORIGIN + "/sign-in");
   await page.getByRole("button", { name: "Đăng nhập thử" }).click();
   await page.waitForURL("**/account", { timeout: 20000 });
@@ -527,17 +533,17 @@ async (page) => {
       await page.getByRole("button", { name: "Thao tác DH-2431" }).click();
     }],
     ["/admin#reset", "admin-reset-sheet-1280", async () => {
-      await page.locator("aside").getByRole("button", { name: "Đặt lại dữ liệu mẫu" }).click();
+      await page.locator("aside").getByRole("button", { name: T("Đặt lại dữ liệu mẫu", "Reset demo data") }).click();
     }],
     // round v5 slice 2: the overview's day table, the log's filter menu at both steps
     ["/admin#days", "admin-overview-day-table-1280", async () => {
       await page.getByText("Xem dạng bảng").click();
     }],
     ["/admin/log#filter", "admin-log-filter-fields-1280", async () => {
-      await page.getByRole("button", { name: "Thêm bộ lọc" }).click();
+      await page.getByRole("button", { name: T("Thêm bộ lọc", "Add filter") }).click();
     }],
     ["/admin/log#filter-values", "admin-log-filter-values-1280", async () => {
-      await page.getByRole("button", { name: "Thêm bộ lọc" }).click();
+      await page.getByRole("button", { name: T("Thêm bộ lọc", "Add filter") }).click();
       await page.waitForTimeout(400);
       await page.getByRole("menuitem", { name: /Loại thao tác/ }).click();
     }],
@@ -567,10 +573,10 @@ async (page) => {
     }],
     // round v5 slice 5a: the filter menu at both steps, the drawers in use
     ["/admin/products?drop=5#filter", "admin-products-filter-fields-1280", async () => {
-      await page.getByRole("button", { name: "Thêm bộ lọc" }).click();
+      await page.getByRole("button", { name: T("Thêm bộ lọc", "Add filter") }).click();
     }],
     ["/admin/products?drop=5#filter-values", "admin-products-filter-values-1280", async () => {
-      await page.getByRole("button", { name: "Thêm bộ lọc" }).click();
+      await page.getByRole("button", { name: T("Thêm bộ lọc", "Add filter") }).click();
       await page.waitForTimeout(400);
       await page.getByRole("menuitem", { name: /Loại/ }).click();
     }],

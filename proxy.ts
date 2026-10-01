@@ -1,6 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseEnv } from "@/lib/db/server";
+import {
+  chooseLocale,
+  LOCALE_COOKIE,
+  LOCALE_COOKIE_OPTIONS,
+  LOCALE_PARAM,
+  parseLocale,
+  withoutParam,
+} from "@/lib/i18n";
 import { PATH_HEADER } from "@/lib/request-path";
 
 /**
@@ -48,8 +56,48 @@ import { PATH_HEADER } from "@/lib/request-path";
  * (`03-api-reference/03-file-conventions/proxy.md`, "Setting Headers"). The
  * headers are copied again after a cookie refresh, so the refreshed cookies
  * travel with it. `set` overwrites whatever a client sent under that name.
+ *
+ * AND THE LANGUAGE, since round v6 slice E0 (QĐ-40). Two cases, neither a
+ * decision about who may see what:
+ *
+ * · `?lang=vi` or `?lang=en` on a GET (or HEAD) writes the `hive-lang` cookie
+ *   and redirects, 307, to the same address without `lang` — every other
+ *   parameter kept as written (`withoutParam`), since filters and pages live
+ *   in the address (QĐ-8). An unknown value is dropped from the address and
+ *   writes nothing. This returns BEFORE the Supabase client exists: a
+ *   redirect renders nothing, the request it leads to refreshes the session,
+ *   and nothing ever stands between the client and `getClaims()`.
+ * · A request with no valid cookie whose `Accept-Language` decides the
+ *   language (`chooseLocale`): the cookie goes onto the REQUEST before the
+ *   first `forward()` — so this very render, and the response `setAll` may
+ *   rebuild, read it — and onto the RESPONSE once `getClaims()` is done, since
+ *   `setAll` replaces the response object and would drop it if it were set
+ *   earlier. No header, no cookie: the render falls back to Vietnamese and
+ *   nothing is written, so a link preview's bot gets the Vietnamese page.
  */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const { searchParams } = request.nextUrl;
+  if ((request.method === "GET" || request.method === "HEAD") && searchParams.has(LOCALE_PARAM)) {
+    // The rest of the query is kept as the proxy is handed it. Next has already re-serialised it by then (measured
+    // 01/10: `?q=a%20b&z=c%2Bd` reaches `nextUrl.search` as `?q=a+b&z=c%2Bd`), so a space may come back as `+`, which
+    // reads as the same space; every value stays what it was.
+    const target = new URL(
+      request.nextUrl.pathname + withoutParam(request.nextUrl.search, LOCALE_PARAM),
+      request.nextUrl.origin,
+    );
+    const redirect = NextResponse.redirect(target, 307);
+    const forced = parseLocale(searchParams.get(LOCALE_PARAM));
+    if (forced) redirect.cookies.set(LOCALE_COOKIE, forced, LOCALE_COOKIE_OPTIONS);
+    return redirect;
+  }
+
+  const language = chooseLocale({
+    cookie: request.cookies.get(LOCALE_COOKIE)?.value,
+    acceptLanguage: request.headers.get("accept-language"),
+  });
+  const firstVisit = language.from === "header" ? language.locale : null;
+  if (firstVisit) request.cookies.set(LOCALE_COOKIE, firstVisit);
+
   const asked = request.nextUrl.pathname + request.nextUrl.search;
   const forward = () => {
     const headers = new Headers(request.headers);
@@ -82,6 +130,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // single-use refresh tokens.
   await supabase.auth.getClaims();
 
+  if (firstVisit) response.cookies.set(LOCALE_COOKIE, firstVisit, LOCALE_COOKIE_OPTIONS);
   return response;
 }
 

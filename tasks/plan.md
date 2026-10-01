@@ -3221,3 +3221,165 @@ Sidecar `.impeccable/design.json` vẫn là Feed, chỉ đổi phần mô tả.
 - Phiên chính kiểm chỉ đọc trên hosted: `admin_add_drop` và `admin_schedule_drop` có luật B14b và khoá bảng; `anon` không gọi
   được, `authenticated` gọi được; migration cuối `20261001120000`; lịch demo không có cặp số trùng hay đảo thứ tự.
 - Lệnh push của phiên chính bị hệ thống quyền chặn. Người dùng tự push: `65f4a88..3ffa49f`.
+
+## Đợt v6: demo cho khách nước ngoài *(01/10/2026)*
+
+**Bối cảnh.** Đợt v5 đã lên online. Ngày 01/10 người dùng muốn đem demo cho khách nước ngoài xem. Họ nêu bốn tính năng: tiếng
+Anh, thanh toán Stripe, đăng nhập Google, chế độ sáng/tối (tuỳ chọn). Họ hỏi thêm có nên rà soát toàn app để polish không.
+Phiên chính đo và tra trước khi đề xuất:
+- **Chữ trong mã:** 2.306 dòng có chữ Việt trong 187 tệp nguồn, không tính chú giải.
+  - `components/admin-arc`: 590 dòng, 28 tệp. `components/feed`: 508 dòng, 40 tệp. `lib/db`: 214. `data/catalog.ts`: 118.
+    Phần còn lại ở `lib/`. Khoảng 2/5 thuộc quản trị.
+  - Test: 1.401 dòng trong 75 tệp đang so chữ Việt.
+  - DB cũng chứa chữ Việt: seed có 70 dòng (chi tiết mẫu, teaser, nhãn địa chỉ…).
+- **Arc** vốn tiếng Anh. Dự án đã vá chữ, lịch và cách viết số sang tiếng Việt; test `arc-english-strings.ts` chặn chữ Anh.
+- **Next 16** (`node_modules/next/dist/docs/01-app/02-guides/internationalization.md`): cách chuẩn là đường dẫn `app/[lang]`,
+  `proxy` chuyển hướng theo ngôn ngữ, từ điển, và `next/root-params`.
+- **Thanh toán:** trang thanh toán đã có lựa chọn `CARD` "Thẻ (nội địa, Visa)", ghi "Tạm thời trả bằng chuyển khoản"
+  (`lib/feed-checkout.ts`).
+- **Stripe:**
+  - Việt Nam không có trong danh sách nước của Stripe (stripe.com/global).
+  - Tích hợp Stripe của Vercel Marketplace tạo sandbox không cần tài khoản Stripe, và đưa `STRIPE_SECRET_KEY`,
+    `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` vào dự án (vercel.com/docs/integrations/ecommerce/stripe).
+  - Tài liệu API Stripe ghi: sandbox chưa claim bị xoá sau 60 ngày. Claim cần tài khoản Stripe.
+  - Chưa kiểm gói Hobby có cài được không.
+- **Đăng nhập:** hiện chỉ có email và mật khẩu (`signInWithPassword` trong Server Action).
+- **Sáng/tối:** `registry/foundation.css` có sẵn bộ màu tối của Arc. Feed chỉ có `color-scheme: light`.
+
+**Người dùng chọn (01/10, AskUserQuestion):**
+- thứ tự: tiếng Anh, rồi Google, rồi Stripe, cuối cùng rà soát toàn app;
+- tiếng Anh phủ cả cửa hàng lẫn quản trị;
+- bỏ chế độ tối khỏi đợt này.
+
+### QĐ-40: Song ngữ Việt và Anh, cả cửa hàng lẫn quản trị *(01/10/2026)*
+- Ngôn ngữ lưu trong cookie. Lần đầu vào thì theo `Accept-Language`: trình duyệt ưu tiên tiếng Việt thì VI, còn lại EN. Có nút
+  đổi VI/EN. Link ép ngôn ngữ: `?lang=en`, `?lang=vi`.
+- **Không có `Accept-Language` thì VI**, như hiện nay. Bot tạo ảnh xem trước link (Zalo, Facebook, Slack) thường không gửi
+  header này, nên xem trước vẫn là tiếng Việt. Phiên chính chỉnh theo lời khuyên duyệt, đã báo người dùng.
+- **Ảnh chia sẻ (OG) giữ tiếng Việt**: nó in câu đề thành nét vẽ (`scripts/brand-assets.ts`) và không đổi theo cookie được.
+- Không đổi đường dẫn, không có `/en/…`. Đánh đổi đã nói với người dùng: link copy từ thanh địa chỉ không mang theo ngôn ngữ;
+  bù lại không phải dời mọi route vào `app/[lang]/`. Người dùng không phản đối.
+- Giá giữ VND, chỉ đổi cách viết theo ngôn ngữ. Địa chỉ vẫn theo đơn vị hành chính Việt Nam.
+- Câu chữ tiếng Anh: người dùng duyệt bảng thuật ngữ (khoảng 30 mục, gồm việc tên mẫu có giữ nguyên không và kiểu viết ngày)
+  cùng các câu chính. Agent dịch phần còn lại theo bảng đó.
+- Đảo dòng "Ngôn ngữ giao diện: tiếng Việt … Không xây i18n" của `PRODUCT.md`. Sửa dòng đó khi lát nền xong.
+
+### QĐ-41: Đăng nhập bằng Google *(01/10/2026)*
+- Qua Supabase Auth. Giữ luật trình duyệt không gọi Supabase: trình duyệt chỉ chuyển trang qua Google.
+- Người dùng tạo OAuth client trên Google Cloud, dán vào dashboard Supabase, và chuyển ứng dụng sang "In production". Nếu không,
+  chỉ người trong danh sách thử mới đăng nhập được.
+- Màn đồng ý của Google hiện tên miền `….supabase.co`. Cách hiện tên miền riêng sẽ cân trong brief.
+
+### QĐ-42: Stripe, chỉ chế độ thử *(01/10/2026)*
+- Chỉ sandbox, không bao giờ có tiền thật. Lựa chọn `CARD` thành thanh toán bằng thẻ thử trên trang Stripe. Khách quay về thì
+  đơn chuyển "đã thanh toán".
+- Khoá lấy từ tích hợp Stripe của Vercel Marketplace. Sandbox chưa claim bị xoá sau 60 ngày, khi đó tạo lại rồi deploy lại.
+- Đảo QĐ-25 ("không cổng thanh toán", `PRODUCT.md`) và ràng buộc 23/09 "tránh cổng thanh toán vì pháp lý". Lý do pháp lý không áp
+  với chế độ thử. Người dùng được nêu rõ cả hai trước khi chọn.
+- Trước lát Stripe phải sửa luật của `backend-implementer`, vì luật đó đang cấm thêm cổng thanh toán.
+
+### QĐ-43: Đợt này không làm chế độ tối *(01/10/2026)*
+- QĐ-38 giữ nguyên: quản trị chỉ nền sáng. Feed không có bản tối.
+
+### Rà soát
+- Một lượt toàn app ở cuối đợt: cả hai thứ tiếng, điện thoại, máy tính, quản trị, gồm cả luồng Google và Stripe.
+- Lỗi nặng thấy được trong lúc soạn bảng thuật ngữ thì sửa ngay, không chờ lượt cuối.
+
+### Thuật ngữ tiếng Anh *(01/10/2026)*
+**Người dùng chốt qua AskUserQuestion (đừng hỏi lại):**
+- "Số 05" là **Drop 05**. Khớp tên trong code (`Drop`, `/admin/drops`); "issue" trong tiếng Anh còn nghĩa là "lỗi".
+- 21 mẫu của các drop **giữ tên tiếng Việt** (KHÓI, BỤI, SÓNG…). Tên tám mẫu dòng Cố định và tên màu thì dịch, vì đó là mô tả.
+- **Tiếng Anh kiểu Anh:** colour, cancelled, trousers, gilet; ngày "1 Oct", giờ 24 tiếng "18:50".
+- **Giá: `390,000₫`**, chỉ đổi dấu chấm thành dấu phẩy.
+- Dòng Cố định là **Basics**. Người dùng chọn khác đề xuất (Core).
+- Câu đề trang chủ: **"Cut once. No restocks."**, hai dòng "Cut once." / "No restocks.".
+- **Nút đổi ngôn ngữ ở thanh trên của cửa hàng**, cả máy tính lẫn điện thoại, đứng trước các icon. Người dùng chọn khác đề
+  xuất (chân trang). Ở quản trị, nút nằm ở chân thanh bên, trên tên người đăng nhập.
+
+**Bảng từ còn lại.** Đây là đề xuất của phiên chính; người dùng sửa dòng nào thì sửa ở đây.
+- **Cửa hàng:**
+  - Trang chủ Home · Bảng tin Feed · Cửa hàng Shop · Sắp mở Coming soon · Tìm Search;
+  - Yêu thích Saved (hành động: Save / Saved) · Giỏ Bag · Tôi Account · Thông báo Notifications · Thanh toán Checkout;
+  - chân trang: Trợ giúp Help · Giao hàng Delivery · Thanh toán Payment;
+  - trang phụ: Hỏi đáp FAQ · Bảng size Size guide · Đổi trả Returns · Tra đơn Track an order · Giới thiệu About · Liên hệ
+    Contact;
+  - drop: Lịch ra số Drop calendar · Trong số này In this drop · Số kế tiếp Next drop · Số trước Previous drop;
+  - mẫu: Mẫu Style · Form Fit (Oversized / Regular) · Mới New · Nhắc tôi Remind me · đã hết Sold out. SOLD OUT trên ảnh
+    giữ nguyên;
+  - tài khoản: Đăng nhập Sign in · Đăng ký Sign up · Đăng xuất Sign out · Đăng nhập thử Try a demo account.
+- **Đơn hàng:**
+  - trạng thái: Chờ chuyển khoản Awaiting transfer · Đã nhận đơn Order received · Đã thanh toán Paid · Đang giao Shipping ·
+    Đã giao Delivered · Đã huỷ Cancelled;
+  - thanh toán: Chuyển khoản Bank transfer · Thẻ Card · COD Cash on delivery (COD);
+  - Phiếu giao Delivery slip.
+- **Quản trị:**
+  - thanh bên: Tổng quan Overview · Đơn hàng Orders · Các số Drops · Mẫu Styles · Khách hàng Customers · Mã giảm giá Discount
+    codes · Nhật ký Activity;
+  - trạng thái drop: Đang bán / Đang mở Live · Sắp mở Coming soon · Đã đóng Closed. Không dùng "On sale", vì tiếng Anh hiểu là
+    đang giảm giá;
+  - Dữ liệu mẫu Demo data · Đặt lại dữ liệu mẫu Reset demo data · Vào quản trị thử Try the admin;
+  - tồn kho Stock · sắp hết Low stock · còn N N left.
+- **Tên tám mẫu Basics:** ÁO THUN TRƠN PLAIN TEE · ÁO THUN TAY DÀI LONG-SLEEVE TEE · HOODIE TRƠN PLAIN HOODIE · ÁO KHOÁC DÙ
+  NYLON JACKET · GILE PHAO PUFFER GILET · SƠ MI OXFORD OXFORD SHIRT · QUẦN KAKI CHINOS · QUẦN SHORT NỈ FLEECE SHORTS.
+
+### Bước kế
+- Kiểm trước brief: chữ nào trong DB là nhãn cố định (dịch trong code), chữ nào là văn bản tự do (cần cột tiếng Anh hoặc
+  rơi về tiếng Việt). Đặc biệt bảng `events` của nhật ký.
+- Brief lát nền E0: hạ tầng ngôn ngữ, nút đổi, cách viết số và ngày, vá Arc theo ngôn ngữ, chứng minh trên khung cửa hàng và
+  khung quản trị ở cả hai thứ tiếng.
+
+**Kiểm trước brief (01/10), kết quả:**
+- Bảng `events` lưu `kind` (enum) và dữ liệu có cấu trúc, câu chữ dựng trong code (`lib/activity-log.ts`). Nhật ký dịch được
+  trong code, không cần lát backend.
+- `ADDRESS_LABELS` ("Nhà", "Công ty", "Khác") là nhãn cố định, dịch trong code. Bảng màu `data/colors.ts` (7 màu) cũng vậy.
+- Văn bản tự do trong DB: `name`, `kind`, `material` của mẫu, chi tiết mẫu, `kind` của teaser. Cần cột tiếng Anh, thiếu thì rơi
+  về tiếng Việt. Việc này cần một lát backend.
+
+**Lát dự kiến của phần tiếng Anh:**
+- E0 nền (`tasks/briefs/v6-lat-e0.md`, giao `ui-implementer` 01/10);
+- E1 trang chủ, Cửa hàng, trang mẫu, tìm, trang drop;
+- E2 giỏ, thanh toán, đặt hàng xong, tra đơn;
+- E3 tài khoản, trang phụ (Hỏi đáp, Bảng size, Đổi trả, Giới thiệu, Liên hệ), 404;
+- B15 nội dung DB tiếng Anh (`backend-implementer`). Form mẫu ở quản trị có thêm ô tiếng Anh không là câu hỏi của lát đó;
+- E4, E5 quản trị.
+- **Đề xuất cho lúc push:** chưa đưa lên demo tới khi xong cả phần tiếng Anh. Giữa chừng, bản EN mới dịch một phần, mà trình duyệt
+  nước ngoài sẽ tự vào bản EN.
+
+**01/10, lát E0 ĐẠT** (phiên chính duyệt; agent đã sửa năm chỗ chữ tiếng Anh, phiên chính kiểm lại ảnh và test). Người dùng cho
+commit trên máy, chưa push.
+- **Đã có:**
+  - `lib/i18n.ts`: `Locale`, `Pair`, `pick`, `picker`, `pickAll`, `groupDigits`, `plural`, `chooseLocale`, `withoutParam`;
+  - `lib/locale.ts` (`getLocale()`), `lib/actions/locale.ts` (`setLocale`), `components/i18n/LocaleContext.tsx`;
+  - `proxy.ts` chọn ngôn ngữ và xử lý `?lang=`; `<html lang>` theo ngôn ngữ;
+  - nút `EN`/`VI` ở mọi thanh trên của cửa hàng (`.ib-lang`), `SegmentedControl` ở chân thanh bên quản trị;
+  - khung hai vùng bằng tiếng Anh; `vnd`, `datetime`, `lexicon`, `order-labels`, trạng thái drop có bản `en`;
+  - 15 item Arc đọc ngôn ngữ (`registry/PATCHES.md`, mục lát E0).
+- **Phiên chính kiểm:**
+  - typecheck sạch, 1.861 test xanh (1.763 cũ không sửa, trừ một dòng `formatTick` và dữ liệu `ARC_ENGLISH`);
+  - `curl`: không header ra `vi` và không cookie; `en-US` ra `en` kèm cookie; `vi-VN,…,en` ra `vi`;
+    `/products?line=fixed&lang=en&page=2` chuyển 307 về `/products?line=fixed&page=2`;
+  - ảnh thanh trên 1280 và 390 ở hai ngôn ngữ, chân trang EN 1000, quản trị EN, hộp đặt lại EN, vòng focus bàn phím.
+- **Agent đo:** bản VI lệch pixel chỉ ở nút mới (31 trang cửa hàng: ô 20×11px chữ `EN`; 33 trang quản trị: chân thanh bên dâng lên
+  bằng chiều cao điều khiển mới). Sweep 110 phát hiện ở cả hai ngôn ngữ, như đợt v5. JS nén mỗi route +3,0 đến +3,4 KB.
+- **Phiên chính sửa sau duyệt:** `tools/layout-sweep.js` có hằng `LANG` (mặc định `vi`), `T(vi, en)` cho chữ sweep bấm theo,
+  cookie đặt sau `clearCookies()`; bản `en` chụp vào `.playwright-cli/shots/en`. Khi E3 dịch trang đăng nhập, nút "Đăng nhập thử"
+  của sweep cũng phải qua `T`.
+- **Năm chỗ chữ giao lại agent:** "Real time · demo data…" ở chân thanh bên; mô tả và câu lỗi của hộp đặt lại; bốn câu của
+  `adminFailureMessage`; chân trang dùng "COD" như bản VI.
+- **Người dùng chọn giữ như vậy (01/10):** trên điện thoại, nút đổi chỉ có ở thanh trên của 5 trang chính (Trang chủ, Cửa hàng,
+  Giỏ, Yêu thích, Tôi). Ba loại thanh của màn đẩy (`.mbar`, `.pbar`, `.sbar`) không có nút. Máy tính có nút ở mọi trang.
+- **Mẫu cho các lát sau** (chép vào brief E1 trở đi):
+  - chữ tại chỗ: `const t = picker(locale)`, rồi `t({ vi: "…", en: "…" })`;
+  - server: `picker(await getLocale())`; client: `picker(useLocale())`, gọi hook vô điều kiện; không dùng chữ đã dịch làm `key`;
+  - hàm `lib/`: tham số cuối `locale: Locale = "vi"`; bảng cũ giữ tên, suy từ bảng `*_TEXT`; test cũ không sửa, test EN viết ở
+    tệp mới;
+  - thứ đo theo bề rộng chữ (vạch tab) phải đo lại khi đổi ngôn ngữ;
+  - Arc: cặp tại chỗ, `en` là chữ gốc của Arc.
+- **Chưa làm, để các lát sau:** `rateLimitMessage`; `compactVnd` ("1tr₫" của biểu đồ), `sinceLabel`, `rangeLabel`, `clockDayLabel`,
+  `dateParts`, `kindInSentence`; nhãn màn truyền vào Arc (biểu đồ "Doanh thu", "Ngày"); `ABOUT_LEAD`, `FOUR_RULES`,
+  `HOME_COVER.lead`; `<title>` và metadata.
+- **Lỗi có từ trước, để lượt rà cuối:** không có script thì lưới Cửa hàng trống (thẻ `opacity: 0`). Giả thuyết của agent, chưa
+  đo: `[data-ui="feed"] .rv:not(.in)` (0,3,0) thắng luật dự phòng trong `<noscript>` (0,2,0).
+- **Tài liệu:** `PRODUCT.md` dòng ngôn ngữ đã sửa. `DESIGN.md` (§1, §3 "quản trị Việt hoá toàn bộ", §7, §8) để documenter viết
+  lại một lần khi xong phần tiếng Anh.
+- **Quy trình:** harness chặn subagent ghi `REPORT.md`. Các brief sau bỏ yêu cầu đó; báo cáo chỉ nằm trong tin cuối.

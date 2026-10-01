@@ -186,6 +186,12 @@ html:has([data-ui="feed"]) {
   box-shadow: 0 0 0 2px var(--f-bg);
 }
 [data-ui="feed"] .only-desk { display: none; }
+/* Not in the mock (round v6 slice E0, QĐ-40): the language switch, first among the bar's icons on the phone and the
+   desktop. It is an `.ib` (the 44px box, the hover and the ring of the icons beside it) carrying the code of the
+   language it switches to, at the size of the Feed's control text; its form takes no box, so the bar's row lays the
+   button out with the icons. */
+[data-ui="feed"] .lang-form { display: contents; }
+[data-ui="feed"] .ib-lang { font-size: 14px; font-weight: 650; line-height: 1; letter-spacing: .02em; }
 
 [data-ui="feed"] .tabs { grid-area: tabs; position: relative; display: grid; grid-template-columns: repeat(3, 1fr); height: var(--f-tabs-h); }
 [data-ui="feed"] .tab {

@@ -6,6 +6,9 @@ import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { motion, useReducedMotion } from "motion/react";
 import type { Transition } from "motion/react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { pick } from "@/lib/i18n";
 import styles from "./checkbox.module.css";
 
 export interface CheckboxProps extends ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root> {
@@ -23,13 +26,15 @@ export const Checkbox = forwardRef<ElementRef<typeof CheckboxPrimitive.Root>, Ch
   const generatedId = useId();
   const controlId = id ?? generatedId;
   const reduced = useReducedMotion();
+  // HIVE patch (registry/PATCHES.md): the fallback name in the page's language; in English, Arc's own.
+  const fallbackName = pick({ vi: "Ô đánh dấu", en: "Checkbox" }, useLocale());
   const [internal, setInternal] = useState<CheckboxPrimitive.CheckedState>(defaultChecked ?? false);
   const state = checked ?? internal;
   const on = state !== false;
   const change = (next: CheckboxPrimitive.CheckedState) => { if (checked === undefined) setInternal(next); onCheckedChange?.(next); };
   const fade: Transition = { duration: on ? motionTokens.duration.instant : motionTokens.duration.fast, ease: [...motionTokens.ease.standard] };
   return <div className={styles.field}>
-    <CheckboxPrimitive.Root {...props} id={controlId} ref={ref} checked={state} onCheckedChange={change} className={[styles.box, className].filter(Boolean).join(" ")} aria-describedby={description ? `${controlId}-description` : undefined} aria-label={props["aria-label"] ?? (label ? undefined : "Ô đánh dấu")}>
+    <CheckboxPrimitive.Root {...props} id={controlId} ref={ref} checked={state} onCheckedChange={change} className={[styles.box, className].filter(Boolean).join(" ")} aria-describedby={description ? `${controlId}-description` : undefined} aria-label={props["aria-label"] ?? (label ? undefined : fallbackName)}>
       <span className={styles.visual} aria-hidden="true">
         <motion.span className={styles.fill} initial={false} animate={{ opacity: on ? 1 : 0, scale: on ? 1 : .6 }} transition={reduced ? { duration: 0 } : { scale: motionTokens.spring.snappy, opacity: fade }} />
         <svg className={styles.mark} viewBox="0 0 18 18" fill="none" focusable="false">

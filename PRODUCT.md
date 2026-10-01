@@ -53,7 +53,10 @@ Chưa quyết định (không được bịa): điểm khác biệt cụ thể c
 
 **Ràng buộc kỹ thuật:**
 - Backend (từ 23/09/2026, QĐ-25): Supabase Postgres + Auth + Storage (ảnh tải lên, QĐ-27), đọc qua Server Components và ghi qua Server Actions; **trình duyệt không gọi Supabase**. `data/types.ts` vẫn là hợp đồng dữ liệu; `data/*.ts` là fixture cho test và nguồn sinh seed. Thanh toán: chuyển khoản đối chiếu tay + COD; không cổng thanh toán.
-- Ngôn ngữ giao diện: **tiếng Việt**. Tiền tệ: **VND**. Không xây i18n đa ngôn ngữ trong bản mock này.
+- Ngôn ngữ giao diện: **tiếng Việt và tiếng Anh** (từ 01/10/2026, QĐ-40, để demo cho khách nước ngoài). Ngôn ngữ lưu ở cookie
+  `hive-lang`; lần đầu theo `Accept-Language`, không có thì tiếng Việt; link `?lang=en` ép tiếng Anh. Nút đổi ở thanh trên của
+  cửa hàng và chân thanh bên quản trị. Tiền tệ: **VND** ở cả hai (`390.000₫` / `390,000₫`). Thuật ngữ tiếng Anh đã chốt ở
+  `tasks/plan.md`, mục "Thuật ngữ tiếng Anh".
 - Không có ảnh chụp sản phẩm. Số 05 có ảnh do AI tạo; các màn khác vẫn dùng ảnh thay thế hoặc hình phẳng (xem
   `## Evidence on Hand`).
 

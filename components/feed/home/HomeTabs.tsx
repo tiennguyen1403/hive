@@ -1,7 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { parseShopState, shopQuery, type ShopLine, type ShopState } from "@/lib/feed";
+import { picker, type Pair } from "@/lib/i18n";
 import { cx } from "../useReveal";
 
 /*
@@ -24,7 +26,12 @@ import { cx } from "../useReveal";
 export const HOME_TABS = ["bang-tin", "cua-hang", "sap-mo"] as const;
 export type HomeTab = (typeof HOME_TABS)[number];
 
-const LABELS: Record<HomeTab, string> = { "bang-tin": "Bảng tin", "cua-hang": "Cửa hàng", "sap-mo": "Sắp mở" };
+/** The tabs' names, in both languages since round v6 (the glossary: Feed, Shop, Coming soon); their ids stay. */
+const LABELS: Record<HomeTab, Pair> = {
+  "bang-tin": { vi: "Bảng tin", en: "Feed" },
+  "cua-hang": { vi: "Cửa hàng", en: "Shop" },
+  "sap-mo": { vi: "Sắp mở", en: "Coming soon" },
+};
 const ALIAS: Record<string, HomeTab> = { "kham-pha": "bang-tin", "dang-ban": "cua-hang", next: "sap-mo" };
 
 function tabOf(hash: string): string {
@@ -177,6 +184,8 @@ export function HomeTabs({
 /** The three tabs in the top bar, with the sliding blue rule under the one on show. */
 export function HomeTabList() {
   const { current, show } = useHomeTabs();
+  const locale = useLocale();
+  const t = picker(locale);
   const list = useRef<HTMLDivElement>(null);
   const ink = useRef<HTMLSpanElement>(null);
   const moved = useRef(false);
@@ -202,6 +211,15 @@ export function HomeTabList() {
     moved.current = true;
   }, [current, moveInk]);
 
+  // The rule is as wide as the label on show, so a switch of language, which
+  // changes the label, measures it again — in place, without the slide.
+  const shownIn = useRef(locale);
+  useLayoutEffect(() => {
+    if (shownIn.current === locale) return;
+    shownIn.current = locale;
+    moveInk(false);
+  }, [locale, moveInk]);
+
   useEffect(() => {
     const onResize = () => moveInk(false);
     window.addEventListener("resize", onResize);
@@ -222,7 +240,7 @@ export function HomeTabList() {
   }
 
   return (
-    <div className="tabs" role="tablist" aria-label="Trang chủ" ref={list} onKeyDown={onKeyDown}>
+    <div className="tabs" role="tablist" aria-label={t({ vi: "Trang chủ", en: "Home" })} ref={list} onKeyDown={onKeyDown}>
       {HOME_TABS.map((id) => (
         <button
           key={id}
@@ -236,7 +254,7 @@ export function HomeTabList() {
           tabIndex={current === id ? 0 : -1}
           onClick={() => show(id)}
         >
-          <span>{LABELS[id]}</span>
+          <span>{t(LABELS[id])}</span>
         </button>
       ))}
       <span className="tabs-ink" aria-hidden="true" ref={ink} />

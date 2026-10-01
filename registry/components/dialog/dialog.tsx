@@ -7,6 +7,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { Transition } from "motion/react";
 import { X } from "lucide-react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { pick } from "@/lib/i18n";
 import styles from "./dialog.module.css";
 
 /** Mirrors the open state so the content can stay mounted while it animates out, and retarget mid-flight if it is reopened or closed early. */
@@ -42,6 +45,8 @@ function SwapText({ text }: { text: string }) {
 export function DialogContent({ title, description, children, className, onPointerDownOutside, ...props }: DialogContentProps) {
   const open = useContext(OpenContext);
   const reduced = useReducedMotion();
+  // HIVE patch (registry/PATCHES.md): the close button's name in the page's language; in English, Arc's own.
+  const closeName = pick({ vi: "Đóng", en: "Close dialog" }, useLocale());
   // When the open state last changed. Radix waits for the click before treating a press as outside, and a press on the trigger
   // while the dialog leaves reopens it first, so that press must not close it again.
   const change = useRef({ open, at: 0 });
@@ -52,7 +57,7 @@ export function DialogContent({ title, description, children, className, onPoint
   };
   const classes = [styles.content, className].filter(Boolean).join(" ");
   const inner = <>
-    <div className={styles.header}><div><DialogPrimitive.Title className={styles.title}><SwapText text={title}/></DialogPrimitive.Title>{description ? <DialogPrimitive.Description className={styles.description}><SwapText text={description}/></DialogPrimitive.Description> : null}</div><DialogPrimitive.Close className={styles.close} aria-label="Đóng"><X width={18} height={18} aria-hidden="true"/></DialogPrimitive.Close></div>
+    <div className={styles.header}><div><DialogPrimitive.Title className={styles.title}><SwapText text={title}/></DialogPrimitive.Title>{description ? <DialogPrimitive.Description className={styles.description}><SwapText text={description}/></DialogPrimitive.Description> : null}</div><DialogPrimitive.Close className={styles.close} aria-label={closeName}><X width={18} height={18} aria-hidden="true"/></DialogPrimitive.Close></div>
     <div className={styles.body}>{children}</div>
   </>;
   // Under a bare Radix root the open state is unknown here, so CSS keyframes keyed off data-state animate the layers instead.

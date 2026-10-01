@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker, type Pair } from "@/lib/i18n";
 import { backOrFollow } from "./back";
 import { FeedLogo } from "./FeedLogo";
 import { FeedIcon } from "./icon/FeedIcon";
@@ -19,7 +21,10 @@ export interface FeedMbarProps {
    * scrolled away (`title-late`, `title-on` — `archive.js`, `issue.js`).
    */
   watch?: string;
-  /** The link's name: "Quay lại" unless the screen says where it goes ("Về giỏ", "Đóng, về trang chủ"). */
+  /**
+   * The link's name: "Quay lại" ("Back" in English, round v6) unless the
+   * screen says where it goes ("Về giỏ", "Đóng, về trang chủ").
+   */
   label?: string;
   /** A cross instead of the arrow: the receipt closes rather than going back. */
   close?: boolean;
@@ -77,6 +82,7 @@ export function useMbarTitle(on: boolean): void {
  * rule shows it where no script will ever watch the big one.
  */
 export function FeedMbar({ title, back, watch, label, close = false, hard = false, readAll = false }: FeedMbarProps) {
+  const t = picker(useLocale());
   const [on, setOn] = useState(false);
   const forced = useSyncExternalStore(subscribeTitle, () => titleForced, () => false);
 
@@ -97,7 +103,12 @@ export function FeedMbar({ title, back, watch, label, close = false, hard = fals
 
   return (
     <div className={cx("mbar", watch && "title-late", (on || forced) && "title-on")}>
-      <Link className="ib" href={back} aria-label={label ?? "Quay lại"} {...(hard ? {} : { onClick: backOrFollow })}>
+      <Link
+        className="ib"
+        href={back}
+        aria-label={label ?? t({ vi: "Quay lại", en: "Back" })}
+        {...(hard ? {} : { onClick: backOrFollow })}
+      >
         <FeedIcon name={close ? "x" : "caret-left"} />
       </Link>
       {title !== undefined && <p className="mbar-title">{title}</p>}
@@ -107,14 +118,21 @@ export function FeedMbar({ title, back, watch, label, close = false, hard = fals
 }
 
 /**
+ * The logo's name as a link home (round v6: in both languages), on every top
+ * bar (`FeedChrome`) and on the 404's bar below.
+ */
+export const HOME_LINK: Pair = { vi: "HIVE, trang chủ", en: "HIVE, home" };
+
+/**
  * The 404's own bar on the phone (`404.html`: `.mbar.b-mbar`): the logo
  * alone, like a tab root's, back to the home page — the black-and-white
  * lockup (QĐ-33) where the mock sets its italic word.
  */
 export function FeedBrandBar() {
+  const t = picker(useLocale());
   return (
     <div className="mbar b-mbar">
-      <Link className="brand" href="/" aria-label="HIVE, trang chủ">
+      <Link className="brand" href="/" aria-label={t(HOME_LINK)}>
         <FeedLogo className="logo" />
       </Link>
     </div>

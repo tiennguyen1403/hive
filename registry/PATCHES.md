@@ -116,6 +116,32 @@ n
 - **Vá `input`** (mục 3): prop `prefix`, đoạn cố định ở đầu ô ("S06 –" của ô tên mẫu).
 - Form mẫu dựa thêm vào kiểu nút của Arc (file picker) và bề rộng Dialog (mục 4).
 
+## Lần sửa 01/10/2026 (đợt v6, lát E0): song ngữ
+
+- **Không cài item mới.** `package.json`, `package-lock.json`, `registry/foundation.css` không đổi.
+- **Mọi chỗ Việt hoá ở mục 2 nay theo ngôn ngữ của trang** (QĐ-40). Mỗi chuỗi thành một cặp `{ vi, en }` viết ngay tại chỗ:
+  bản `vi` là cột Việt, bản `en` là **đúng chữ gốc của Arc** (cột Gốc). Cặp được chọn bằng `pick` / `picker` (`lib/i18n.ts`)
+  theo `useLocale()` (`components/i18n/LocaleContext.tsx`). Context đó do layout gốc cấp, và `ArcAdminFrame` cấp lại quanh
+  vùng Arc, kể cả các lớp portal ra `<body>`. Ngoài mọi provider, `useLocale()` trả `"vi"`.
+- **Default prop có chữ** (`label = "…"`, `placeholder = "…"`, `caption`, `emptyMessage`, `itemName`, `averageLabel`…) không
+  còn là default trong danh sách tham số, vì default không gọi được hook. Tham số đổi tên thành `…Prop`, và thân component
+  đặt `const label = labelProp ?? t({ vi, en })`. Màn nào truyền prop thì vẫn thắng như trước.
+- **Hàm ngoài component** nhận thêm tham số ngôn ngữ: `describeChange(before, after, locale)` của `filter-toolbar`.
+- **Số và thứ tự theo ngôn ngữ:** `bar-chart` có một `Intl.NumberFormat` cho mỗi ngôn ngữ (`vi-VN`, và `en-US` như Arc gốc),
+  tạo một lần ở cấp module để hàm định dạng mặc định giữ nguyên danh tính giữa các lần vẽ; `sortable-data-table` có một
+  `Intl.Collator` cho mỗi ngôn ngữ (`vi`, `en`) và sắp lại khi đổi ngôn ngữ.
+- Mỗi chỗ có chú giải `HIVE patch` mới hoặc sửa lại; mỗi tệp nhập `useLocale` với chú giải "the page's language, from the Arc
+  zone's frame".
+- **Vá thêm `segmented-control`** (mục 3): `Segment.lang`, cho nút đổi ngôn ngữ ở chân thanh bên.
+- **Lịch:** bản free đã cài không có item lịch nào (không có `calendar`, `date-picker`; tìm `weekday`, `getDay` trong
+  `registry/components/` không ra gì), nên luật "lịch bắt đầu thứ Hai ở cả hai thứ tiếng" chưa có chỗ áp.
+- **Test:** `components/admin-arc/arc-english-strings.ts` đổi 22 mục (đánh dấu "E0" trong tệp): mục chỉ là chuỗi trần nay khớp
+  với bản `en` của cặp, nên được viết lại bắt đầu từ cú pháp gốc quanh chữ đó (thuộc tính, lời gọi, tham số mặc định), là thứ
+  cặp `{ vi, en }` không bao giờ tái tạo. Kiểm bằng cách dựng lại mã gốc từ HEAD (đảo chữ Việt về chữ Anh): cả 22 mục là chuỗi
+  con của mã gốc. Thêm `ARC_ENGLISH_SIDE` (62 mục): bản `en` của từng cặp phải có trong tệp. `arc-registry.test.ts` thêm ba
+  test: mọi tệp đã vá đọc `useLocale()`, mỗi bản `en` là chữ gốc, và `Segment.lang`. Test `formatTick` đổi một dòng
+  (`formatTick = formatValue` thành `formatTick = formatTickProp ?? formatValue`), vì default nay đặt trong thân.
+
 ## 1. `registry/foundation.css`: khoanh vùng
 
 Arc đặt mọi luật ở `:root`, nên tệp là toàn cục: tiêu đề v3 mất Unbounded vì trùng tên `--font-display`, luật cuối xoá vòng
@@ -136,10 +162,14 @@ Test: `components/admin-arc/arc-registry.test.ts` (mọi luật có `:has([data-
 !important`, khối sáng có `--focus-ring` khác `transparent`, có luật `html[data-pointer]`, hai vai chữ trỏ `--font-mona`, có
 luật `body`, và từ lát 1 `--text-muted` đạt 4,5:1 trên `--surface` lẫn `--surface-muted`).
 
-## 2. Việt hoá
+## 2. Việt hoá, rồi song ngữ
 
 Mọi chuỗi tiếng Anh người dùng thấy hoặc máy đọc màn hình đọc. Danh sách chuỗi gốc (đúng đoạn mã, cả dấu nháy) ở
 `components/admin-arc/arc-english-strings.ts`; `arc-registry.test.ts` đỏ khi một chuỗi quay lại.
+
+**Từ đợt v6, lát E0:** mỗi dòng dưới đây là một cặp `{ vi: <cột Việt>, en: <cột Gốc> }` trong mã, chọn theo ngôn ngữ của
+trang (`useLocale()`, mục "Lần sửa 01/10/2026 (đợt v6, lát E0)"). Trang tiếng Việt in cột Việt như trước; trang tiếng Anh in
+đúng chữ gốc của Arc. Hai dòng định dạng số và sắp xếp cũng theo ngôn ngữ: `vi-VN` / `en-US`, `vi` / `en`.
 
 | Tệp | Gốc | Việt |
 |---|---|---|
@@ -207,6 +237,7 @@ Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không p
 | `select/select.module.css` (lát 3, phiên chính yêu cầu 01/10) | `.trigger:focus-visible`: `outline: 3px solid var(--accent-subtle); outline-offset: 0` thành `outline: 2px solid var(--focus-ring); outline-offset: 2px`. Giữ `border-color: var(--accent)` | QĐ-39. Quầng gốc là `--accent-subtle` (accent 10%), gần như không thấy trên nền trắng: đi bằng Tab vào "Loại" hay "Hình thức giao" chỉ còn viền 1px đổi màu, trong khi mọi điều khiển Arc khác có vòng 2–3px `--focus-ring`. Bấm chuột thì `--focus-ring` trong suốt như mọi vòng khác; viền accent vẫn đổi như Arc gốc |
 | `select/select.tsx` + `.module.css` (lát 4, brief yêu cầu) | Kiểu `options` thêm `note?: string`. Mỗi dòng in `note` trong một `<span className={styles.note}>` sau `ItemText` và trước `ItemIndicator`, chỉ khi có `note`: không có thì dòng y như Arc gốc. CSS `.note`: `margin-left: auto` (dồn về cuối dòng; phần đệm phải 34px của `.item` vẫn giữ chỗ cho dấu chọn), `padding-left: var(--space-3)`, `color: var(--text-secondary)`, `font-size: var(--text-xs)` (cỡ Arc dùng cho chữ phụ cuối dòng, `.itemMeta` của `filter-toolbar`), `white-space: nowrap` | Hộp "Thêm mẫu hé lộ" (lát 4): v3 in họ của từng loại bên phải dòng ("Áo khoác dù" · "Áo khoác"). Nằm ngoài `ItemText` nên ô chọn và giá trị Radix đọc cho máy đọc màn hình chỉ có nhãn; tên của dòng (`aria-labelledby` trỏ vào `ItemText`) cũng chỉ là nhãn. Không mất gì: họ luôn là một phần của tên loại (`FAMILY_LABELS`, `data/types.ts`) |
 | `drawer/drawer.module.css` (lát 3) | Thêm `.close:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }`, đúng luật của nút đóng trong `dialog.module.css` | QĐ-39: giữ vòng focus bàn phím. Nút đóng của Drawer bản gốc không có luật `:focus-visible` nào (Arc dựa vào luật `outline: none !important` toàn cục mà dự án đã xoá, mục 1), nên đi bằng Tab thì Chrome vẽ vòng mặc định của nó, khác vòng 2–3px `--focus-ring` của mọi điều khiển Arc khác. Radix đưa focus vào nút này đầu tiên khi Drawer mở, nên vòng đó là thứ đầu tiên người dùng bàn phím thấy. Bấm chuột thì `--focus-ring` trong suốt như mọi vòng khác |
+| `segmented-control/segmented-control.tsx` (đợt v6, lát E0, brief yêu cầu) | Kiểu `Segment` thêm `lang?: string`; nút của mỗi mục mang `lang={option.lang}`. Không có `lang` thì nút y như Arc gốc (React bỏ thuộc tính `undefined`). Không đổi CSS | Nút đổi ngôn ngữ ở chân thanh bên quản trị: hai mục "Tiếng Việt" và "English", mỗi mục viết bằng chính ngôn ngữ của nó nên cần `lang` riêng để máy đọc màn hình đọc đúng giọng (brief lát E0, §2.5). `Segment.label` là chuỗi, nên không gói được `<span lang>` mà không vá |
 | `input/input.tsx` + `.module.css` (lát 5b, brief yêu cầu) | Prop `prefix` (chuỗi). Có `prefix` thì ô nằm trong một khung `.affix` cùng một đoạn `.prefix` đứng đầu: nền `--surface-muted`, ngăn với phần gõ bằng viền phải 1px `--border`, chữ `--text-sm` đậm 500. Đoạn có id `{id}-prefix`, và ô nhập có `aria-describedby` trỏ tới nó (trước câu mô tả và câu lỗi), như v3. Khung nhận viền, bo góc, hover, vòng focus, viền lỗi và trạng thái vô hiệu của ô; ô bên trong bỏ viền và vòng của nó. Bấm vào đoạn thì con trỏ vào ô (v3 làm được nhờ `pointer-events: none`). Không có `prefix` thì Input y như Arc gốc | Form mẫu (lát 5b): ô tên mẫu của một số mang mã số ở đầu ("S06 –", `stylePrefix`), gõ quanh nó chứ không gõ nó. Arc `Input` không có phần đầu ô |
 
 Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, `iconOnly`, `hideLabel` của
@@ -244,6 +275,8 @@ không có `prefix`, và các luật `.prefix`, `.affix`.
    còn ghi vào `registry/`. Đừng chạy nó như cũ: tải `https://uiarc.dev/r/<id>.json`, chép `files[].content` vào
    `registry/components/<id>/` và đổi import `../lib/motion-tokens` thành `@/lib/motion-tokens` (lần cài lát 5b), hoặc để
    phiên chính quyết một cách cài mới.
-2. Vá lại theo mục 1 đến 3; mọi chỗ vá cũ có chú giải `HIVE patch` để tìm bằng `git diff`.
+2. Vá lại theo mục 1 đến 3; mọi chỗ vá cũ có chú giải `HIVE patch` để tìm bằng `git diff`. Từ đợt v6, vá chữ nghĩa là
+   bọc chữ gốc của Arc thành bản `en` của một cặp `{ vi, en }` đọc `useLocale()` (mục "Lần sửa 01/10/2026 (đợt v6, lát E0)"),
+   không phải thay chữ gốc.
 3. `npx vitest run components/admin-arc lib/admin-arc.test.ts` và `npm run typecheck` phải xanh. Chuỗi tiếng Anh mới xuất hiện
    thì thêm vào `arc-english-strings.ts` và dịch.

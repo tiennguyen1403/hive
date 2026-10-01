@@ -13,6 +13,9 @@ import {
 } from "react";
 import type { InputHTMLAttributes, KeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker } from "@/lib/i18n";
 import styles from "./combobox.module.css";
 
 export interface ComboboxOption {
@@ -57,9 +60,9 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
     defaultValue = "",
     onValueChange,
     description,
-    // HIVE patch (registry/PATCHES.md): the defaults in Vietnamese.
-    placeholder = "Tìm hoặc chọn…",
-    emptyMessage = "Không có mục nào khớp",
+    // HIVE patch (registry/PATCHES.md): the defaults in the page's language, set below.
+    placeholder: placeholderProp,
+    emptyMessage: emptyMessageProp,
     id,
     className,
     disabled,
@@ -68,6 +71,10 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
   },
   forwardedRef,
 ) {
+  // HIVE patch (registry/PATCHES.md): the defaults, the clear button's name and the list's name in the page's language; in English, Arc's own.
+  const t = picker(useLocale());
+  const placeholder = placeholderProp ?? t({ vi: "Tìm hoặc chọn…", en: "Search or select…" });
+  const emptyMessage = emptyMessageProp ?? t({ vi: "Không có mục nào khớp", en: "No matches found" });
   const generatedId = useId();
   const controlId = id ?? generatedId;
   const listboxId = `${controlId}-listbox`;
@@ -231,7 +238,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
             <motion.button
               type="button"
               className={styles.clear}
-              aria-label="Bỏ chọn"
+              aria-label={t({ vi: "Bỏ chọn", en: "Clear selection" })}
               onMouseDown={event => event.preventDefault()}
               onClick={clear}
               initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6, filter: `blur(${motionTokens.blur.subtle}px)` }}
@@ -256,7 +263,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
             role="presentation"
           >
             <AutoHeight reduceMotion={reduceMotion}>
-            <div id={listboxId} className={styles.listbox} role="listbox" aria-label={`Danh sách ${label}`}>
+            <div id={listboxId} className={styles.listbox} role="listbox" aria-label={t({ vi: `Danh sách ${label}`, en: `${label} options` })}>
               {filteredOptions.length ? filteredOptions.map((option, index) => (
                 <div
                   key={option.value}

@@ -10,6 +10,7 @@ import { orderTotalVnd } from "./orders";
 import { vnd } from "./money";
 import { STANDARD_FEE_VND } from "./shipping";
 import { demoNow } from "./clock";
+import { pick, pickAll, type Locale, type Pair } from "./i18n";
 
 /**
  * The rows behind the admin tables.
@@ -263,11 +264,24 @@ export interface DropRow {
   revenueVnd: number;
 }
 
-export const DROP_STATE_LABEL: Record<DropState, string> = {
-  UPCOMING: "Sắp mở",
-  OPEN: "Đang mở",
-  CLOSED: "Đã đóng",
+/**
+ * An issue's state, named. In both languages since round v6 (QĐ-40): the
+ * user's glossary calls an open issue "Live" — never "On sale", which in
+ * English reads as a discount — and the other two "Coming soon" and "Closed".
+ * `DROP_STATE_LABEL` is the Vietnamese side, as before.
+ */
+export const DROP_STATE_TEXT: Record<DropState, Pair> = {
+  UPCOMING: { vi: "Sắp mở", en: "Coming soon" },
+  OPEN: { vi: "Đang mở", en: "Live" },
+  CLOSED: { vi: "Đã đóng", en: "Closed" },
 };
+
+/** An issue's state in one language. */
+export function dropStateLabel(state: DropState, locale: Locale = "vi"): string {
+  return pick(DROP_STATE_TEXT[state], locale);
+}
+
+export const DROP_STATE_LABEL: Record<DropState, string> = pickAll(DROP_STATE_TEXT, "vi");
 
 /**
  * The issue rows, newest number first.

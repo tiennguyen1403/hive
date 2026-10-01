@@ -6,6 +6,9 @@ import { AnimatePresence, animate, motion, useIsPresent, useMotionValue, usePres
 import type { HTMLMotionProps, MotionProps, TargetAndTransition, Transition } from "motion/react";
 import { CircleCheck, CircleX, Info, TriangleAlert, X } from "lucide-react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker, type Pair } from "@/lib/i18n";
 import styles from "./toast-stack.module.css";
 
 export type ToastType = "success" | "info" | "warning" | "error" | "loading";
@@ -77,7 +80,8 @@ const BORDER = 2;
 /** A swipe this far right has faded most of the way out. */
 const SWIPE_FADE = 280;
 const EMPTY: ToastRecord[] = [];
-const typeLabels: Record<ToastType, string> = { success: "Xong", info: "Thông tin", warning: "Cảnh báo", error: "Lỗi", loading: "Đang xử lý" };
+// HIVE patch (registry/PATCHES.md): the type read before each toast in the page's language; in English, Arc's own.
+const typeLabels: Record<ToastType, Pair> = { success: { vi: "Xong", en: "Success" }, info: { vi: "Thông tin", en: "Info" }, warning: { vi: "Cảnh báo", en: "Warning" }, error: { vi: "Lỗi", en: "Error" }, loading: { vi: "Đang xử lý", en: "In progress" } };
 const icons = { success: CircleCheck, info: Info, warning: TriangleAlert, error: CircleX };
 
 const standard = [...motionTokens.ease.standard] as [number, number, number, number];
@@ -205,6 +209,8 @@ interface ToastItemProps {
 
 function ToastItem({ toast, target, expanded, front, hidden, paused, reduce, store, onMeasure, onDragChange, onTap, onHandOff }: ToastItemProps) {
   const { id } = toast;
+  // HIVE patch (registry/PATCHES.md): the type and the close button's name in the page's language; in English, Arc's own.
+  const t = picker(useLocale());
   const [isPresent, safeToRemove] = usePresence();
   const itemRef = useRef<HTMLLIElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -373,7 +379,7 @@ function ToastItem({ toast, target, expanded, front, hidden, paused, reduce, sto
           </AnimatePresence>
         </span>
         <div className={styles.copy}>
-          <span className={styles.srOnly}>{typeLabels[toast.type]}: </span>
+          <span className={styles.srOnly}>{t(typeLabels[toast.type])}: </span>
           <span className={styles.title}><AnimatePresence mode="popLayout" initial={false}><Swap key={toast.title} className={styles.line} {...swap}>{toast.title}</Swap></AnimatePresence></span>
           <AnimatePresence mode="popLayout" initial={false}>{toast.description ? <Swap key={toast.description} className={styles.description} {...swap}>{toast.description}</Swap> : null}</AnimatePresence>
         </div>
@@ -383,7 +389,7 @@ function ToastItem({ toast, target, expanded, front, hidden, paused, reduce, sto
             <button type="button" className={styles.action} onClick={runAction}>{toast.action.label}</button>
           </motion.div> : null}
         </AnimatePresence>
-        <button ref={closeRef} type="button" className={styles.close} aria-label="Đóng thông báo" onClick={() => store.dismiss(id)}>
+        <button ref={closeRef} type="button" className={styles.close} aria-label={t({ vi: "Đóng thông báo", en: "Dismiss notification" })} onClick={() => store.dismiss(id)}>
           <X width={16} height={16} strokeWidth={1.75} aria-hidden="true" />
         </button>
       </motion.div>
@@ -391,7 +397,10 @@ function ToastItem({ toast, target, expanded, front, hidden, paused, reduce, sto
   </motion.li>;
 }
 
-export function ToastStack({ label = "Thông báo", position = "bottom-right", contained = false, visibleToasts = 3, hotkey = true, className }: ToastStackProps) {
+export function ToastStack({ label: labelProp, position = "bottom-right", contained = false, visibleToasts = 3, hotkey = true, className }: ToastStackProps) {
+  // HIVE patch (registry/PATCHES.md): the region's default name in the page's language; in English, Arc's own.
+  const t = picker(useLocale());
+  const label = labelProp ?? t({ vi: "Thông báo", en: "Notifications" });
   const store = useStore();
   const toasts = useSyncExternalStore(store.subscribe, store.getSnapshot, getServerSnapshot);
   const reduce = !!useReducedMotion();

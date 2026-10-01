@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useCart } from "@/components/cart/CartContext";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import type { Order } from "@/data/types";
-import { FOOT_HELP, footDelivery, footPayments, footSkipped } from "@/lib/feed-home";
+import { setLocale } from "@/lib/actions/locale";
+import { footDelivery, footHelp, footPayments, footSkipped } from "@/lib/feed-home";
+import { LOCALE_PARAM, picker, plural, type Locale, type Pair } from "@/lib/i18n";
 import { FEED_ZONE, feedFontClass } from "./FeedScope";
 import { FeedLogo } from "./FeedLogo";
-import { FeedBrandBar, FeedMbar, type FeedMbarProps } from "./FeedMbar";
+import { FeedBrandBar, FeedMbar, HOME_LINK, type FeedMbarProps } from "./FeedMbar";
 import { FeedIcon, type FeedIconName } from "./icon/FeedIcon";
 import { FeedToastProvider } from "./FeedToast";
 import { InboxProvider, useInbox } from "./inbox";
@@ -189,20 +192,67 @@ export function FeedShell({
 
 const badge = (n: number) => (n > 99 ? "99+" : String(n));
 
+/*
+ * The chrome's words in both languages (round v6 slice E0, QĐ-40): each
+ * `{ vi, en }` pair is written where it is printed, and the English is the
+ * glossary's (`tasks/plan.md`, "Thuật ngữ tiếng Anh") wherever it has the
+ * word. The few the frame prints in more than one place are named here, and
+ * the logo's name as a link home (`HOME_LINK`) beside the 404's bar, which
+ * prints it too.
+ */
+
+/** Giỏ, with its count or empty: the top bar's bag, the checkout's way back, the tab bar's bag. */
+const bagLabel = (count: number): Pair =>
+  count
+    ? { vi: `Giỏ, ${count} món`, en: `Bag, ${plural(count, "item", "items")}` }
+    : { vi: "Giỏ, đang trống", en: "Bag, empty" };
+
+/** Each language's name in itself, for the switch's screen-reader name. */
+const LANGUAGE_NAME: Record<Locale, string> = { vi: "Tiếng Việt", en: "English" };
+
+/**
+ * The language switch (round v6 slice E0, QĐ-40): first among the top bar's
+ * icons, on every Feed screen's top bar — the checkout's own included — on
+ * the phone as from 900px (the user approved the place on 01/10/2026). It
+ * shows the code of the language it switches TO ("EN" while the page is
+ * Vietnamese), and a screen reader hears that language's name in that
+ * language, "English" or "Tiếng Việt", with its `lang`.
+ *
+ * A form posting the Server Action `setLocale`. With script the action sets
+ * the cookie and the page is redrawn in place — the basket, a half-typed
+ * form, an open sheet stay as they were; without script the browser posts
+ * the form and the answer is the page in the other language. The button is
+ * an `.ib`, the icons' own 44px box with their hover and ring, its text set
+ * by `.ib-lang` (feed.css).
+ */
+function LangSwitch() {
+  const to: Locale = useLocale() === "vi" ? "en" : "vi";
+  return (
+    <form action={setLocale} className="lang-form">
+      <input type="hidden" name={LOCALE_PARAM} value={to} />
+      <button className="ib ib-lang" type="submit" lang={to} aria-label={LANGUAGE_NAME[to]}>
+        {to.toUpperCase()}
+      </button>
+    </form>
+  );
+}
+
 /**
  * The top bar. On the phone the brand and the bell (the tab bar below carries
  * Giỏ with its count); from 900px the brand, the three shop tabs in the
  * middle and five icons — Tìm, Thông báo, Yêu thích, Giỏ with its count, Tôi.
  * The bell counts the account's unread rows (`useInbox`, slice 4a); signed
- * out it has no number (`feed.js`: `paintBell`).
+ * out it has no number (`feed.js`: `paintBell`). The language switch stands
+ * before the icons (round v6 slice E0).
  */
 function FeedTop({ page, mid, tabbar }: { page: FeedPage; mid: React.ReactNode; tabbar: boolean }) {
   const { units, ready: cartReady } = useCart();
   const { unread: bell } = useInbox();
+  const t = picker(useLocale());
   const cart = cartReady ? units : 0;
   const tab = TAB_OF[page];
   const icon = (name: FeedIconName, on: boolean) => <FeedIcon name={on ? (`${name}-fill` as FeedIconName) : name} />;
-  const cartLabel = cart ? `Giỏ, ${cart} món` : "Giỏ, đang trống";
+  const cartLabel = t(bagLabel(cart));
 
   // The checkout's own bar: its name where the tabs would be, and the basket to go back to — no shop icons to wander
   // off by while paying (`feed.js`: `PAGE === "checkout"`).
@@ -210,14 +260,15 @@ function FeedTop({ page, mid, tabbar }: { page: FeedPage; mid: React.ReactNode; 
     return (
       <header className="top" data-top={page}>
         <div className="top-in">
-          <Link className="brand" href="/" aria-label="HIVE, trang chủ">
+          <Link className="brand" href="/" aria-label={t(HOME_LINK)}>
             <FeedLogo className="logo" />
           </Link>
-          <p className="top-title">Thanh toán</p>
+          <p className="top-title">{t({ vi: "Thanh toán", en: "Checkout" })}</p>
           <div className="acts">
+            <LangSwitch />
             <Link className="top-back" href="/cart" data-cart-link="" aria-label={cartLabel}>
               <FeedIcon name="bag" />
-              <span>Giỏ</span>
+              <span>{t({ vi: "Giỏ", en: "Bag" })}</span>
               {cart > 0 && <span className="badge">{badge(cart)}</span>}
             </Link>
           </div>
@@ -229,15 +280,16 @@ function FeedTop({ page, mid, tabbar }: { page: FeedPage; mid: React.ReactNode; 
   return (
     <header className="top" data-top={ROOTS.includes(page) ? "brand" : page}>
       <div className="top-in">
-        <Link className="brand" href="/" aria-label="HIVE, trang chủ">
+        <Link className="brand" href="/" aria-label={t(HOME_LINK)}>
           <FeedLogo className="logo" />
         </Link>
         {mid ?? <LinkTabs page={page} />}
         <div className="acts">
+          <LangSwitch />
           <Link
             className="ib only-desk"
             href="/search"
-            aria-label="Tìm"
+            aria-label={t({ vi: "Tìm", en: "Search" })}
             aria-current={page === "search" ? "page" : undefined}
           >
             {icon("magnifying-glass", page === "search")}
@@ -245,7 +297,11 @@ function FeedTop({ page, mid, tabbar }: { page: FeedPage; mid: React.ReactNode; 
           <Link
             className="ib"
             href="/account/notifications"
-            aria-label={bell ? `Thông báo, ${bell} chưa đọc` : "Thông báo"}
+            aria-label={
+              bell
+                ? t({ vi: `Thông báo, ${bell} chưa đọc`, en: `Notifications, ${bell} unread` })
+                : t({ vi: "Thông báo", en: "Notifications" })
+            }
             aria-current={page === "notifications" ? "page" : undefined}
           >
             {icon("bell", page === "notifications")}
@@ -254,7 +310,7 @@ function FeedTop({ page, mid, tabbar }: { page: FeedPage; mid: React.ReactNode; 
           <Link
             className="ib only-desk"
             href="/account/wishlist"
-            aria-label="Yêu thích"
+            aria-label={t({ vi: "Yêu thích", en: "Saved" })}
             aria-current={page === "favorites" ? "page" : undefined}
           >
             {icon("heart", page === "favorites")}
@@ -272,7 +328,7 @@ function FeedTop({ page, mid, tabbar }: { page: FeedPage; mid: React.ReactNode; 
           <Link
             className="ib only-desk"
             href="/account"
-            aria-label="Tôi"
+            aria-label={t({ vi: "Tôi", en: "Account" })}
             aria-current={tab === "me" && page !== "notifications" ? "true" : undefined}
           >
             {icon("user", tab === "me" && page !== "notifications")}
@@ -285,16 +341,17 @@ function FeedTop({ page, mid, tabbar }: { page: FeedPage; mid: React.ReactNode; 
 
 /** The three shop tabs as links, for every screen but the home page (from 900px only). */
 function LinkTabs({ page }: { page: FeedPage }) {
+  const t = picker(useLocale());
   return (
-    <nav className="tabs links" aria-label="Trang chủ">
+    <nav className="tabs links" aria-label={t({ vi: "Trang chủ", en: "Home" })}>
       <Link className="tab" href="/#bang-tin">
-        <span>Bảng tin</span>
+        <span>{t({ vi: "Bảng tin", en: "Feed" })}</span>
       </Link>
       <Link className="tab" href="/products" aria-current={page === "products" ? "page" : undefined}>
-        <span>Cửa hàng</span>
+        <span>{t({ vi: "Cửa hàng", en: "Shop" })}</span>
       </Link>
       <Link className="tab" href="/#sap-mo">
-        <span>Sắp mở</span>
+        <span>{t({ vi: "Sắp mở", en: "Coming soon" })}</span>
       </Link>
     </nav>
   );
@@ -303,6 +360,7 @@ function LinkTabs({ page }: { page: FeedPage }) {
 /** The phone's tab bar: Trang chủ, Tìm, Yêu thích, Giỏ with its count, Tôi. Gone from 900px. */
 function FeedTabbar({ page }: { page: FeedPage }) {
   const { units, ready } = useCart();
+  const t = picker(useLocale());
   const cart = ready ? units : 0;
   const on = TAB_OF[page];
   const item = (key: NonNullable<typeof on>, href: string, icon: FeedIconName, label: string) => {
@@ -312,9 +370,7 @@ function FeedTabbar({ page }: { page: FeedPage }) {
         className="tb"
         href={href}
         aria-current={current ? "page" : undefined}
-        {...(key === "cart"
-          ? { "data-cart-link": "", "aria-label": cart ? `Giỏ, ${cart} món` : "Giỏ, đang trống" }
-          : {})}
+        {...(key === "cart" ? { "data-cart-link": "", "aria-label": t(bagLabel(cart)) } : {})}
       >
         <FeedIcon name={current ? (`${icon}-fill` as FeedIconName) : icon} />
         {key === "cart" && cart > 0 && <span className="badge">{badge(cart)}</span>}
@@ -323,12 +379,12 @@ function FeedTabbar({ page }: { page: FeedPage }) {
     );
   };
   return (
-    <nav className="tabbar" aria-label="Điều hướng chính">
-      {item("home", "/", "house", "Trang chủ")}
-      {item("search", "/search", "magnifying-glass", "Tìm")}
-      {item("fav", "/account/wishlist", "heart", "Yêu thích")}
-      {item("cart", "/cart", "bag", "Giỏ")}
-      {item("me", "/account", "user", "Tôi")}
+    <nav className="tabbar" aria-label={t({ vi: "Điều hướng chính", en: "Main navigation" })}>
+      {item("home", "/", "house", t({ vi: "Trang chủ", en: "Home" }))}
+      {item("search", "/search", "magnifying-glass", t({ vi: "Tìm", en: "Search" }))}
+      {item("fav", "/account/wishlist", "heart", t({ vi: "Yêu thích", en: "Saved" }))}
+      {item("cart", "/cart", "bag", t({ vi: "Giỏ", en: "Bag" }))}
+      {item("me", "/account", "user", t({ vi: "Tôi", en: "Account" }))}
     </nav>
   );
 }
@@ -337,9 +393,13 @@ function FeedTabbar({ page }: { page: FeedPage }) {
  * The footer: the logo, "Trợ giúp" — the mock's five help links, less the
  * ones the screen already carries (`footSkipped`) — and, unless `lite`,
  * "Giao hàng" and "Thanh toán", every figure from `lib/shipping.ts`
- * (`feed.js`: `footer`).
+ * (`feed.js`: `footer`). In the page's language since round v6: the help
+ * links, the delivery and payment rows come from `lib/feed-home.ts` in it,
+ * each row keyed by its place so a switch redraws the same rows.
  */
 export function FeedFooter({ lite = false, skip = [] }: { lite?: boolean; skip?: readonly string[] }) {
+  const locale = useLocale();
+  const t = picker(locale);
   return (
     <footer className={cx("foot", lite && "foot-lite")}>
       <div className="foot-in">
@@ -348,22 +408,24 @@ export function FeedFooter({ lite = false, skip = [] }: { lite?: boolean; skip?:
           <span className="sr-only">HIVE</span>
         </div>
         <nav aria-labelledby="foot-help">
-          <h2 id="foot-help">Trợ giúp</h2>
+          <h2 id="foot-help">{t({ vi: "Trợ giúp", en: "Help" })}</h2>
           <ul className="foot-links">
-            {FOOT_HELP.filter((h) => !footSkipped(h.href, skip)).map((h) => (
-              <li key={h.href}>
-                <Link href={h.href}>{h.label}</Link>
-              </li>
-            ))}
+            {footHelp(locale)
+              .filter((h) => !footSkipped(h.href, skip))
+              .map((h) => (
+                <li key={h.href}>
+                  <Link href={h.href}>{h.label}</Link>
+                </li>
+              ))}
           </ul>
         </nav>
         {!lite && (
           <>
             <div>
-              <h2>Giao hàng</h2>
+              <h2>{t({ vi: "Giao hàng", en: "Delivery" })}</h2>
               <ul className="foot-facts">
-                {footDelivery().map((f) => (
-                  <li key={f.label}>
+                {footDelivery(locale).map((f, i) => (
+                  <li key={i}>
                     <span>{f.label}</span>
                     {f.value && <b>{f.value}</b>}
                   </li>
@@ -371,10 +433,10 @@ export function FeedFooter({ lite = false, skip = [] }: { lite?: boolean; skip?:
               </ul>
             </div>
             <div>
-              <h2>Thanh toán</h2>
+              <h2>{t({ vi: "Thanh toán", en: "Payment" })}</h2>
               <ul className="foot-facts">
-                {footPayments().map((f) => (
-                  <li key={f.label}>
+                {footPayments(locale).map((f, i) => (
+                  <li key={i}>
                     <span>{f.label}</span>
                     {f.value && <b>{f.value}</b>}
                   </li>

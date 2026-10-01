@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ARC_ENGLISH } from "./arc-english-strings";
+import { ARC_ENGLISH, ARC_ENGLISH_SIDE } from "./arc-english-strings";
 
 /**
  * The patches Arc needs to live in this app (round v5 slice 0,
@@ -161,7 +161,9 @@ describe("registry/components (patches a re-install would drop, slices 2 and 3)"
 
   it("lets the bar chart format its value axis apart from its headline (formatTick)", () => {
     const source = readFileSync(join(COMPONENTS, "bar-chart", "bar-chart.tsx"), "utf8");
-    expect(source).toContain("formatTick = formatValue");
+    // Round v6 slice E0: the defaults are set in the body, by the page's language, so the axis's
+    // default is written `formatTickProp ?? formatValue` rather than as a default parameter.
+    expect(source).toContain("formatTick = formatTickProp ?? formatValue");
     expect(source).toContain("format={formatTick}");
     expect(source).toContain("`TB ${formatTick(");
   });
@@ -279,5 +281,28 @@ describe("registry/components (Vietnamese)", () => {
       return ARC_ENGLISH.filter(({ text }) => source.includes(text)).map(({ text }) => `${file}: ${text}`);
     });
     expect(hits).toEqual([]);
+  });
+});
+
+describe("registry/components (both languages, round v6 slice E0)", () => {
+  const patched = [...new Set(ARC_ENGLISH.map(({ file }) => file))];
+
+  it("reads the page's language in every component patched for it", () => {
+    for (const file of patched) {
+      const source = readFileSync(join(COMPONENTS, file), "utf8");
+      expect(source, file).toContain('import { useLocale } from "@/components/i18n/LocaleContext";');
+      expect(source, file).toMatch(/useLocale\(\)/);
+    }
+  });
+
+  it.each(ARC_ENGLISH_SIDE)("says Arc's own $text in $file, in English", ({ file, text }) => {
+    const source = readFileSync(join(COMPONENTS, file), "utf8");
+    expect(source).toContain(text);
+  });
+
+  it("lets a segmented control's option carry its own lang, on its button", () => {
+    const source = readFileSync(join(COMPONENTS, "segmented-control", "segmented-control.tsx"), "utf8");
+    expect(source).toMatch(/lang\?: string;/);
+    expect(source).toContain("lang={option.lang}");
   });
 });

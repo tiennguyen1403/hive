@@ -3,6 +3,9 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft as NavArrowLeft, ChevronRight as NavArrowRight } from "lucide-react";
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, type Variants } from "motion/react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker } from "@/lib/i18n";
 import styles from "./pagination.module.css";
 export interface PaginationProps { page: number; pageCount: number; onPageChange: (page: number) => void; label?: string }
 /** When the five page window shifts, numbers travel like a belt: each one moves by the same number of slots. */
@@ -12,8 +15,11 @@ const slide: Variants = {
   center: { opacity: 1, x: "0%" },
   exit: (shift: number) => ({ opacity: 0, x: `${-slot * shift}%`, transition: { x: motionTokens.spring.smooth, opacity: { duration: motionTokens.duration.instant, ease: [...motionTokens.ease.standard] } } }),
 };
-export function Pagination({ page, pageCount, onPageChange, label = "Phân trang" }: PaginationProps) {
+export function Pagination({ page, pageCount, onPageChange, label: labelProp }: PaginationProps) {
   const reduced = useReducedMotion() ?? false;
+  // HIVE patch (registry/PATCHES.md): the default label and the buttons' names in the page's language; in English, Arc's own.
+  const t = picker(useLocale());
+  const label = labelProp ?? t({ vi: "Phân trang", en: "Pagination" });
   const navRef = useRef<HTMLElement>(null);
   const markX = useMotionValue(0);
   const markY = useMotionValue(0);
@@ -46,12 +52,12 @@ export function Pagination({ page, pageCount, onPageChange, label = "Phân trang
   }, [currentPage, start, safePageCount, reduced, markX, markY]);
 
   if (!safePageCount) return <nav className={styles.nav} aria-label={label} />;
-  return <nav ref={navRef} className={styles.nav} aria-label={label}><button type="button" className={styles.step} onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} aria-label="Trang trước"><NavArrowLeft width={16} height={16} aria-hidden="true" /></button>
+  return <nav ref={navRef} className={styles.nav} aria-label={label}><button type="button" className={styles.step} onClick={() => onPageChange(currentPage - 1)} disabled={currentPage <= 1} aria-label={t({ vi: "Trang trước", en: "Previous page" })}><NavArrowLeft width={16} height={16} aria-hidden="true" /></button>
     <motion.span aria-hidden="true" className={styles.mark} style={{ x: markX, y: markY }} />
     <AnimatePresence mode="popLayout" initial={false} custom={shift}>
-      {visible.map(number => <motion.button type="button" key={number} onClick={() => onPageChange(number)} aria-label={`Trang ${number}`} aria-current={currentPage === number ? "page" : undefined}
+      {visible.map(number => <motion.button type="button" key={number} onClick={() => onPageChange(number)} aria-label={t({ vi: `Trang ${number}`, en: `Page ${number}` })} aria-current={currentPage === number ? "page" : undefined}
         layout={reduced ? false : "position"} layoutDependency={start} custom={shift} variants={slide} initial={reduced ? false : "enter"} animate="center" exit={reduced ? undefined : "exit"}
         transition={reduced ? { duration: 0 } : { x: motionTokens.spring.smooth, layout: motionTokens.spring.smooth, opacity: { duration: motionTokens.duration.standard, ease: [...motionTokens.ease.enter] } }}>{number}</motion.button>)}
     </AnimatePresence>
-    <button type="button" className={styles.step} onClick={() => onPageChange(currentPage + 1)} disabled={currentPage >= safePageCount} aria-label="Trang sau"><NavArrowRight width={16} height={16} aria-hidden="true" /></button></nav>;
+    <button type="button" className={styles.step} onClick={() => onPageChange(currentPage + 1)} disabled={currentPage >= safePageCount} aria-label={t({ vi: "Trang sau", en: "Next page" })}><NavArrowRight width={16} height={16} aria-hidden="true" /></button></nav>;
 }

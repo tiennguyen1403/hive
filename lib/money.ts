@@ -1,12 +1,18 @@
+import { groupDigits, type Locale } from "./i18n";
+
 /**
  * Đồng has no subunit, so every amount in this codebase is an integer count
  * of đồng and every field carrying one says `Vnd` in its name. Formatting is
  * the only place that turns it into something a shopper reads.
+ *
+ * Prices stay in đồng in both languages (QĐ-40); only the way they are
+ * written changes: `390.000₫` in Vietnamese, `390,000₫` in English (the
+ * user's glossary, 01/10/2026).
  */
 
-/** `1290000` → `"1.290.000₫"`. */
-export function vnd(amount: number): string {
-  return `${plainVnd(amount)}₫`;
+/** `1290000` → `"1.290.000₫"`, or `"1,290,000₫"` in English. */
+export function vnd(amount: number, locale: Locale = "vi"): string {
+  return `${plainVnd(amount, locale)}₫`;
 }
 
 /**
@@ -17,13 +23,12 @@ export function vnd(amount: number): string {
  * back to the default locale without complaining when a runtime ships partial
  * ICU, and that fallback renders `1,290,000` — an English-looking price on a
  * Vietnamese storefront, wrong in the one place a shopper is most careful.
- * Four lines buys a format that cannot drift with the environment.
+ * Four lines buys a format that cannot drift with the environment
+ * (`groupDigits`, `lib/i18n.ts`, since round v6: a dot in Vietnamese, a comma
+ * in English).
  */
-export function plainVnd(amount: number): string {
-  const sign = amount < 0 ? "-" : "";
-  const digits = String(Math.abs(Math.round(amount)));
-  const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return sign + grouped;
+export function plainVnd(amount: number, locale: Locale = "vi"): string {
+  return groupDigits(amount, locale);
 }
 
 /**

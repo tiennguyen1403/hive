@@ -12,7 +12,23 @@
  * the same gamble `lib/money.ts` already refused: a runtime shipping partial
  * ICU silently falls back to the default locale and format. Pulling the
  * fields out of the text costs one regex and cannot drift.
+ *
+ * English since round v6 slice E0 (QĐ-40, the user's glossary: British,
+ * "1 Oct", a 24-hour clock): the same fields, the month's name from a fixed
+ * three-letter table rather than from `Intl`, for the same reason. The day and
+ * its month are held together by a no-break space, as a Vietnamese "01/10"
+ * never breaks.
  */
+
+import type { Locale } from "./i18n";
+
+/** The months as British English abbreviates them, January first. */
+const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+
+/** "1 Oct": the day without a leading zero, a no-break space, the month. */
+function dayMonthEn(p: Parts): string {
+  return `${Number(p.day)} ${MONTHS_EN[Number(p.month) - 1] ?? p.month}`;
+}
 
 interface Parts {
   year: string;
@@ -30,28 +46,31 @@ function partsOf(iso: string): Parts | null {
   return { year: m[1]!, month: m[2]!, day: m[3]!, hour: m[4]!, minute: m[5]! };
 }
 
-/** `"20:00"`. Empty string when the input is not a timestamp. */
+/** `"20:00"`, in both languages. Empty string when the input is not a timestamp. */
 export function clockLabel(iso: string): string {
   const p = partsOf(iso);
   return p ? `${p.hour}:${p.minute}` : "";
 }
 
-/** `"25/09"`. */
-export function dayMonth(iso: string): string {
+/** `"25/09"`; in English `"25 Sep"`. */
+export function dayMonth(iso: string, locale: Locale = "vi"): string {
   const p = partsOf(iso);
-  return p ? `${p.day}/${p.month}` : "";
+  if (!p) return "";
+  return locale === "en" ? dayMonthEn(p) : `${p.day}/${p.month}`;
 }
 
-/** `"25/09/2026"`. */
-export function dayMonthYear(iso: string): string {
+/** `"25/09/2026"`; in English `"25 Sep 2026"`. */
+export function dayMonthYear(iso: string, locale: Locale = "vi"): string {
   const p = partsOf(iso);
-  return p ? `${p.day}/${p.month}/${p.year}` : "";
+  if (!p) return "";
+  return locale === "en" ? `${dayMonthEn(p)} ${p.year}` : `${p.day}/${p.month}/${p.year}`;
 }
 
-/** `"06:50 ngày 21/09"` — a moment on the clock AND on the calendar. */
-export function dateTimeLabel(iso: string): string {
+/** `"06:50 ngày 21/09"` — a moment on the clock AND on the calendar; in English `"06:50, 21 Sep"`. */
+export function dateTimeLabel(iso: string, locale: Locale = "vi"): string {
   const p = partsOf(iso);
-  return p ? `${p.hour}:${p.minute} ngày ${p.day}/${p.month}` : "";
+  if (!p) return "";
+  return locale === "en" ? `${p.hour}:${p.minute}, ${dayMonthEn(p)}` : `${p.hour}:${p.minute} ngày ${p.day}/${p.month}`;
 }
 
 // ────────────────────────────────────────── which day of the week that is
@@ -72,6 +91,9 @@ const WEEKDAYS = [
   "thứ Bảy",
 ] as const;
 
+/** The same seven in English, Sunday first, in the same order as `getUTCDay()`. */
+const WEEKDAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+
 /**
  * `"thứ Sáu"` — the day of the week a timestamp falls on.
  *
@@ -81,15 +103,15 @@ const WEEKDAYS = [
  * Vietnamese storefront. The index comes from `Date.UTC` over the three
  * fields already parsed out of the +07:00 text — a UTC midnight on the
  * Vietnamese calendar date, which cannot be nudged into the day before by
- * the zone the server happens to run in.
+ * the zone the server happens to run in. In English `"Friday"`.
  */
-export function weekdayLabel(iso: string): string {
+export function weekdayLabel(iso: string, locale: Locale = "vi"): string {
   const p = partsOf(iso);
   if (!p) return "";
   const index = new Date(
     Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day)),
   ).getUTCDay();
-  return WEEKDAYS[index] ?? "";
+  return (locale === "en" ? WEEKDAYS_EN[index] : WEEKDAYS[index]) ?? "";
 }
 
 /**

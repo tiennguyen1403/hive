@@ -3,7 +3,9 @@
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { resetDemo } from "@/lib/actions/admin";
+import { picker } from "@/lib/i18n";
 import { LEX } from "@/lib/lexicon";
 import { Button } from "@/registry/components/button/button";
 import { Dialog, DialogContent } from "@/registry/components/dialog/dialog";
@@ -23,6 +25,9 @@ import { useArcToast } from "./useArcToast";
  * Radix hands focus back only to a `DialogTrigger`, and this dialog is opened
  * from the sidebar's own button, so the sidebar says where focus goes when it
  * shuts (`onCloseAutoFocus`, slice 5a), as the issues' dialogs do (slice 4).
+ *
+ * In the page's language since round v6 slice E0 (QĐ-40), and so is the
+ * toast: `resetDemo()` writes its sentence in the visitor's language.
  */
 export function ArcResetDialog({
   open,
@@ -36,6 +41,7 @@ export function ArcResetDialog({
 }) {
   const say = useArcToast();
   const router = useRouter();
+  const t = picker(useLocale());
   const [resetting, startReset] = useTransition();
 
   function confirmReset() {
@@ -48,7 +54,9 @@ export function ArcResetDialog({
         onOpenChange(false);
         if (result.ok) router.refresh();
         say(
-          result.message ?? result.errors.form ?? "Chưa đặt lại được. Thử lại sau ít phút.",
+          result.message ??
+            result.errors.form ??
+            t({ vi: "Chưa đặt lại được. Thử lại sau ít phút.", en: "Couldn't reset. Try again in a few minutes." }),
           result.ok ? "ok" : "error",
         );
       });
@@ -66,8 +74,11 @@ export function ArcResetDialog({
       <DialogContent
         onInteractOutside={keepOpenForToasts}
         onCloseAutoFocus={onCloseAutoFocus}
-        title="Đặt lại dữ liệu mẫu?"
-        description={`Đơn hàng quay về các đơn mẫu — đơn đặt thêm, kể cả của tài khoản đăng ký thật, sẽ mất. Mẫu, tồn kho, các ${LEX.tl}, mẫu hé lộ, mã giảm giá, các tài khoản mẫu và sổ địa chỉ của họ về như ban đầu; nhật ký bắt đầu lại. Ngày giờ mẫu neo vào 18:50 gần nhất.`}
+        title={t({ vi: "Đặt lại dữ liệu mẫu?", en: "Reset demo data?" })}
+        description={t({
+          vi: `Đơn hàng quay về các đơn mẫu — đơn đặt thêm, kể cả của tài khoản đăng ký thật, sẽ mất. Mẫu, tồn kho, các ${LEX.tl}, mẫu hé lộ, mã giảm giá, các tài khoản mẫu và sổ địa chỉ của họ về như ban đầu; nhật ký bắt đầu lại. Ngày giờ mẫu neo vào 18:50 gần nhất.`,
+          en: "Orders return to the sample orders, and any order placed since, including those of real sign-ups, is lost. Styles, stock, drops, teasers, discount codes, the demo accounts and their address books go back to how they started, and the activity log starts over. Demo dates and times are anchored to the most recent 18:50.",
+        })}
       >
         <div className={styles.actions}>
           <Button
@@ -77,11 +88,11 @@ export function ArcResetDialog({
             onClick={() => onOpenChange(false)}
           >
             {resetting ? null : <ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />}
-            Giữ nguyên
+            {t({ vi: "Giữ nguyên", en: "Keep as is" })}
           </Button>
           <Button variant="danger" size="sm" loading={resetting} onClick={confirmReset}>
             {resetting ? null : <RotateCcw size={16} strokeWidth={1.75} aria-hidden="true" />}
-            {resetting ? "Đang đặt lại…" : "Đặt lại"}
+            {resetting ? t({ vi: "Đang đặt lại…", en: "Resetting…" }) : t({ vi: "Đặt lại", en: "Reset" })}
           </Button>
         </div>
       </DialogContent>

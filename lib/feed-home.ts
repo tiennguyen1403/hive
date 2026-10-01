@@ -1,12 +1,13 @@
-import type { ColorKey, Drop, PaymentMethod, Product } from "@/data/types";
+import type { ColorKey, DeliveryMethod, Drop, PaymentMethod, Product } from "@/data/types";
 import type { Catalog } from "./catalog";
 import { clockLabel, dayMonth, weekdayLabel } from "./datetime";
 import { dropState, timeLeft } from "./drop";
 import { firstColor, photoKeyOf } from "./feed";
 import { feedDayRange, feedTight } from "./feed-range";
+import { pick, picker, pluralNoun, type Locale, type Pair } from "./i18n";
 import { dropSummary, isFixed, onHandByColor, productsInDrop } from "./inventory";
 import { vnd } from "./money";
-import { PAYMENT_LABEL } from "./order-labels";
+import { paymentLabel } from "./order-labels";
 import { lookbookUrl } from "./photos";
 import { COD_SURCHARGE_VND, DELIVERY_OPTIONS, FREE_SHIPPING_FROM_VND, RETURN_WINDOW_DAYS } from "./shipping";
 
@@ -205,22 +206,67 @@ export interface FootFact {
  * same-city courier of province 29, TP.HCM. The days are a Feed range, "2-4
  * ngày" with the mock's hyphen held tight (`feedTight`); the v3 label itself
  * keeps its en dash, since a handover stores it as the order's carrier.
+ *
+ * In English (round v6) each service has its English name (`SERVICE_EN`) and
+ * the same days, the label's own figures with their unit in English
+ * (`daysEn`); the amounts are written the English way, "30,000₫".
  */
-export function footDelivery(): FootFact[] {
+export function footDelivery(locale: Locale = "vi"): FootFact[] {
+  const t = picker(locale);
   const rows = DELIVERY_OPTIONS.map((o) => {
     const [name = o.label, days = ""] = o.label.split(" · ");
     const where = o.method === "EXPRESS" ? " TP.HCM" : "";
-    return { label: `${name}${where}, ${feedTight(days)}`, value: vnd(o.feeVnd) };
+    const label = t({
+      vi: `${name}${where}, ${feedTight(days)}`,
+      en: `${SERVICE_EN[o.method]}, ${feedTight(daysEn(days))}`,
+    });
+    return { label, value: vnd(o.feeVnd, locale) };
   });
-  return [...rows, { label: "Miễn phí giao từ", value: vnd(FREE_SHIPPING_FROM_VND) }];
+  return [
+    ...rows,
+    { label: t({ vi: "Miễn phí giao từ", en: "Free delivery from" }), value: vnd(FREE_SHIPPING_FROM_VND, locale) },
+  ];
 }
 
+/**
+ * A delivery service's name in English. The Vietnamese one is read off its
+ * label in `lib/shipping.ts`, which a handover stores as the order's carrier
+ * and so stays as it is; the express one names its city, as the Vietnamese
+ * line adds "TP.HCM".
+ */
+const SERVICE_EN: Record<DeliveryMethod, string> = {
+  STANDARD: "Standard delivery",
+  EXPRESS: "Express delivery in HCMC",
+};
+
+/**
+ * "2–4 ngày" → "2–4 days", "24 giờ" → "24 hours": the figures a label quotes,
+ * with the unit in English (the plural by the last figure). Anything else is
+ * left as written rather than guessed at.
+ */
+function daysEn(days: string): string {
+  const m = /^(\d+)(?:\s*–\s*(\d+))?\s+(ngày|giờ)$/u.exec(days.trim());
+  if (!m) return days;
+  const last = Number(m[2] ?? m[1]);
+  const unit = m[3] === "ngày" ? pluralNoun(last, "day", "days") : pluralNoun(last, "hour", "hours");
+  return `${m[1]}${m[2] ? `–${m[2]}` : ""} ${unit}`;
+}
+
+/**
+ * The footer names cash on delivery by its short name in both languages,
+ * "COD", as the Vietnamese one does: the English "Cash on delivery (COD)"
+ * took two lines in the payment column from 900 to 1199px (the main
+ * session, round v6 slice E0). The checkout still names it in full
+ * (`paymentLabel`).
+ */
+const FOOT_COD: Pair = { vi: "COD", en: "COD" };
+
 /** "Thanh toán": the three ways, COD with its surcharge. */
-export function footPayments(): FootFact[] {
+export function footPayments(locale: Locale = "vi"): FootFact[] {
   const order: PaymentMethod[] = ["BANK_TRANSFER", "CARD", "COD"];
   return order.map((m) => ({
-    label: PAYMENT_LABEL[m],
-    value: m === "COD" ? `+${vnd(COD_SURCHARGE_VND)}` : "",
+    label: m === "COD" ? pick(FOOT_COD, locale) : paymentLabel(m, locale),
+    value: m === "COD" ? `+${vnd(COD_SURCHARGE_VND, locale)}` : "",
   }));
 }
 
@@ -229,14 +275,26 @@ export function footPayments(): FootFact[] {
  * `HELP_HREF`, `WORDS`). "Đổi trả 7 ngày" opens Hỏi đáp's return group: the
  * Feed has no returns page of its own, and `/returns` leads there too (the
  * user, 30/09). "Bảng size" since slice 4b, with its route.
+ *
+ * In both languages since round v6: `footHelp(locale)`, with `FOOT_HELP` the
+ * Vietnamese side. The English names are the glossary's ("FAQ", "Track an
+ * order", "Size guide", "Contact"); the returns link counts its days as the
+ * Vietnamese one does.
  */
-export const FOOT_HELP: readonly { label: string; href: string }[] = [
-  { label: "Hỏi đáp", href: "/faq" },
-  { label: `Đổi trả ${RETURN_WINDOW_DAYS} ngày`, href: "/faq#doi-tra" },
-  { label: "Tra cứu đơn", href: "/track" },
-  { label: "Bảng size", href: "/size-guide" },
-  { label: "Liên hệ", href: "/contact" },
+const FOOT_HELP_TEXT: readonly { label: Pair; href: string }[] = [
+  { label: { vi: "Hỏi đáp", en: "FAQ" }, href: "/faq" },
+  { label: { vi: `Đổi trả ${RETURN_WINDOW_DAYS} ngày`, en: `${RETURN_WINDOW_DAYS}-day returns` }, href: "/faq#doi-tra" },
+  { label: { vi: "Tra cứu đơn", en: "Track an order" }, href: "/track" },
+  { label: { vi: "Bảng size", en: "Size guide" }, href: "/size-guide" },
+  { label: { vi: "Liên hệ", en: "Contact" }, href: "/contact" },
 ];
+
+/** The footer's help links in one language. */
+export function footHelp(locale: Locale = "vi"): { label: string; href: string }[] {
+  return FOOT_HELP_TEXT.map((h) => ({ label: pick(h.label, locale), href: h.href }));
+}
+
+export const FOOT_HELP: readonly { label: string; href: string }[] = footHelp("vi");
 
 /**
  * Whether a screen leaves a help link out of its footer because it already

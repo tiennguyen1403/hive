@@ -7,6 +7,9 @@ import { ChevronLeft as NavArrowLeft, ChevronRight as NavArrowRight } from "luci
 import { AnimatePresence, LayoutGroup, animate, motion, useReducedMotion } from "motion/react";
 import type { AnimationPlaybackControls, Variants } from "motion/react";
 import { motionTokens } from "@/lib/motion-tokens";
+// HIVE patch (registry/PATCHES.md): the page's language, from the Arc zone's frame.
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker } from "@/lib/i18n";
 import styles from "./tabs.module.css";
 
 type RootProps = ComponentPropsWithoutRef<typeof TabsPrimitive.Root>;
@@ -35,6 +38,8 @@ export function Tabs({ value, defaultValue, onValueChange, className, ...props }
 export function TabsList({ className, ...props }: ComponentPropsWithoutRef<typeof TabsPrimitive.List>) {
   const { active } = useContext(TabsContext);
   const reduced = useReducedMotion();
+  // HIVE patch (registry/PATCHES.md): the scroll buttons' names in the page's language; in English, Arc's own.
+  const t = picker(useLocale());
   const shell = useRef<HTMLDivElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLDivElement>(null);
@@ -74,11 +79,11 @@ export function TabsList({ className, ...props }: ComponentPropsWithoutRef<typeo
   useLayoutEffect(() => { reveal(list.current?.querySelector<HTMLElement>('[role="tab"][data-state="active"]') ?? null); }, [active, reveal]);
   const scrollTabs = (direction: number) => viewport.current?.scrollBy({ left: direction * (viewport.current?.clientWidth ?? 0) * .75, behavior: reduced ? "instant" : "smooth" });
   return <div ref={shell} className={styles.listShell} data-overflow={edges.overflow} data-left={edges.left} data-right={edges.right}>
-    {edges.overflow && <button type="button" className={`${styles.scrollButton} ${styles.scrollLeft}`} aria-label="Cuộn tab sang trái" disabled={!edges.left} onClick={() => scrollTabs(-1)}><NavArrowLeft width={17} height={17} aria-hidden="true"/></button>}
+    {edges.overflow && <button type="button" className={`${styles.scrollButton} ${styles.scrollLeft}`} aria-label={t({ vi: "Cuộn tab sang trái", en: "Scroll tabs left" })} disabled={!edges.left} onClick={() => scrollTabs(-1)}><NavArrowLeft width={17} height={17} aria-hidden="true"/></button>}
     <motion.div ref={viewport} layoutScroll className={styles.viewport} onFocusCapture={event => { if (event.target instanceof HTMLElement && event.target.getAttribute("role") === "tab") reveal(event.target); }}>
       <TabsPrimitive.List {...props} ref={list} className={[styles.list, className].filter(Boolean).join(" ")}/>
     </motion.div>
-    {edges.overflow && <button type="button" className={`${styles.scrollButton} ${styles.scrollRight}`} aria-label="Cuộn tab sang phải" disabled={!edges.right} onClick={() => scrollTabs(1)}><NavArrowRight width={17} height={17} aria-hidden="true"/></button>}
+    {edges.overflow && <button type="button" className={`${styles.scrollButton} ${styles.scrollRight}`} aria-label={t({ vi: "Cuộn tab sang phải", en: "Scroll tabs right" })} disabled={!edges.right} onClick={() => scrollTabs(1)}><NavArrowRight width={17} height={17} aria-hidden="true"/></button>}
   </div>;
 }
 
