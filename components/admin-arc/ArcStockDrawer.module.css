@@ -1,0 +1,158 @@
+/* The two stock drawers (round v5 slice 5a, `ArcStockDrawer`): the shelf of
+   one style, colour by size, then the fields and the buttons. Arc's drawer
+   owns the panel, its header and the scrolling body, and is 680px wide
+   through the discount form's class (`ArcPromoDrawer.module.css`); this file
+   lays out what goes inside it. Arc tokens only, on the 4px grid. */
+
+.form {
+  display: grid;
+}
+
+/* ── the grid ──────────────────────────────────────────────────────────── */
+/* The head as the order page's hand-built tables (`ArcOrderScreen.module.css`,
+   `.lines`): quiet 500 labels over a hairline. The sizes are centred over
+   their fields, the colours start at the drawer's own edge. 4px either side
+   of a cell: four fields of 108px, a colour and a sum fit the drawer's 631px
+   without a line breaking. */
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.grid thead th {
+  height: 36px;
+  padding: 0 var(--space-1);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.grid tbody th,
+.grid td {
+  padding: var(--space-3) var(--space-1);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--foreground);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.grid tbody th {
+  font-weight: 400;
+}
+
+.grid thead th:first-child,
+.grid tbody th {
+  padding-left: 0;
+  text-align: left;
+}
+
+.grid thead th:last-child,
+.grid td:last-child {
+  padding-right: 0;
+}
+
+/* The colour: its swatch and its name, on one line. */
+.colour {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+/* 12px round. The fill is the colour itself (inline, from `COLORS`); the
+   hairline keeps a pale one visible on the white drawer. */
+.swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* One cell: what is on the shelf (restock), the field, and what changed
+   (adjust), stacked and centred on the field. */
+.cell {
+  display: inline-grid;
+  justify-items: center;
+  gap: var(--space-1);
+}
+
+/* "+1 · hàng trả về DH-2419": on one line while the drawer has the room, its
+   column widening for it as v3's did; a reference too long for the drawer
+   wraps inside its column rather than pushing the grid past the edge. */
+.delta {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+}
+
+/* "còn 3" over a restock field; at two or fewer, the danger colour the
+   table's line under a fixed style's stock uses. */
+.left {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.left[data-thin] {
+  color: var(--danger);
+}
+
+/* "Cộng": the row's total at 500, the change after it in the quiet ink. */
+.sum {
+  white-space: nowrap;
+}
+
+.sum b {
+  font-weight: 500;
+}
+
+.change {
+  color: var(--text-secondary);
+}
+
+/* ── the fields ────────────────────────────────────────────────────────── */
+/* Two columns, as v3's sheet: the reason beside the reference, the note
+   across both. 24px under the grid, 16px between fields (the forms of the
+   order page and the discount drawer). */
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+/* "Trên kệ sau khi lưu: 16 / 35 đã cắt (-1) · 1 ô đổi." */
+.total {
+  margin: var(--space-4) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.total b {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+/* The way out and the one primary button, at the right, as the discount
+   drawer and the dialogs set their actions. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}

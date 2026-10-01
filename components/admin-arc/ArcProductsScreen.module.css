@@ -1,0 +1,137 @@
+/* The styles table in the Arc frame (round v5 slice 5a). The heading strip is
+   `ArcPage.module.css`; the tabs' counts, the table's cells and its foot are
+   the order book's (`ArcOrdersScreen.module.css`, slice 0); the toolbar is
+   the log's (`ArcLogScreen.module.css`, slice 2) in the same values; the
+   photo is the order page's `.thumb` and the bar the overview's `.bar`. This
+   file places them and draws what the styles alone have. Arc tokens only, on
+   the 4px grid. */
+
+/* ── the tabs ──────────────────────────────────────────────────────────── */
+/* Cố định with a style running low: a 6px dot in the danger colour after the
+   count, seen from any tab. Its words are its `aria-label` and `title`. */
+.lowDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--danger);
+  vertical-align: middle;
+}
+
+/* ── the toolbar ───────────────────────────────────────────────────────── */
+/* The search, "Thêm bộ lọc", the chip while a kind is on, and the stock
+   segment at the far end. Each line is as tall as the chip's box (Arc's
+   `FilterToolbar`: a row of small controls, 12px above and below, a
+   hairline), so the line does not jump when the chip arrives or goes; 16px
+   under the tabs, as the order book's toolbar. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-3);
+  min-height: calc(var(--control-height-sm) + var(--space-3) * 2 + 2px);
+  margin-top: var(--space-4);
+}
+
+/* 280px, not the order book's 320: with a kind's chip and its "Xoá hết" on
+   the line, the stock segment still fits beside them at 1280 with the page's
+   scroll bar (961px of page, measured 01/10). Never narrower than its whole
+   placeholder, "Tìm tên mẫu", with the field's own padding, glass and clear
+   button. */
+.search {
+  flex: 0 1 280px;
+  min-width: 200px;
+}
+
+.menuSlot {
+  display: flex;
+  flex: none;
+}
+
+.chips {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The toolbar's own line height, so on a line of its own it keeps the same
+   12px above and below as the line with the chip. */
+.stockSlot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: calc(var(--control-height-sm) + var(--space-3) * 2 + 2px);
+  margin-left: auto;
+}
+
+/* A segment's count, after its label (v3's chip counts). */
+.segmentCount {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* An issue the address names without a tab: where a tab's panel would be. */
+.untabbed {
+  margin-top: var(--space-4);
+}
+
+/* ── the table's cells ─────────────────────────────────────────────────── */
+/* 8px above and below every cell, so the 36×45 photos clear their hairlines. */
+.table tbody td {
+  padding-block: var(--space-2);
+}
+
+/* The style: its photo, then its name, the row's key, at 500 on one line. */
+.style {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.name {
+  color: var(--foreground);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* What is left of an issue's cut: the bar takes what the count leaves; the
+   count is a box of one width on every row, flush right, so the bars line up
+   down the column (the codes' "Lượt", slice 3). 140px, v3's `.cellmeter`; the
+   box holds the widest count the sample prints, "còn 17 / 35", 72px at 14px
+   (measured 01/10). */
+.stock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 140px;
+}
+
+.stockBar {
+  flex: 1;
+  min-width: 32px;
+}
+
+.stockCount {
+  min-width: 5.5em;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A fixed style running low: which sizes, under its stock. */
+.lowNote {
+  color: var(--danger);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+/* A fixed style missing a size: the size, in the same colour. */
+.hot {
+  color: var(--danger);
+}
+
+/* The row's menu, wrapped only so a drawer opened from it can hand focus
+   back to its trigger. The wrapper draws nothing. */
+.menu {
+  display: contents;
+}

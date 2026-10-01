@@ -410,6 +410,12 @@ async (page) => {
     "/admin/drops/04",
     "/admin/drops/06",
     "/admin/drops/99",
+    // round v5 slice 5a: the styles on Arc, each kind of tab, empty states
+    "/admin/products?drop=6",
+    "/admin/products?drop=4",
+    "/admin/products?fixed=1&gone=1",
+    "/admin/products?drop=5&q=zzz",
+    "/admin/products?drop=99",
   ];
 
   const results = [];
@@ -556,7 +562,32 @@ async (page) => {
       await page.waitForTimeout(250);
       await page.getByRole("menuitem", { name: "Điều chỉnh tồn kho" }).click();
       await page.waitForTimeout(350);
-      await page.getByRole("dialog").locator(".field3", { hasText: "Lý do" }).first().locator("button.selbtn").click();
+      // round v5 slice 5a: Arc Select, by role and label.
+      await page.getByRole("dialog").getByRole("combobox", { name: "Lý do" }).click();
+    }],
+    // round v5 slice 5a: the filter menu at both steps, the drawers in use
+    ["/admin/products?drop=5#filter", "admin-products-filter-fields-1280", async () => {
+      await page.getByRole("button", { name: "Thêm bộ lọc" }).click();
+    }],
+    ["/admin/products?drop=5#filter-values", "admin-products-filter-values-1280", async () => {
+      await page.getByRole("button", { name: "Thêm bộ lọc" }).click();
+      await page.waitForTimeout(400);
+      await page.getByRole("menuitem", { name: /Loại/ }).click();
+    }],
+    ["/admin/products?drop=5#adjust-ready", "admin-products-adjust-ready-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác S05 – KHÓI", exact: true }).click();
+      await page.waitForTimeout(250);
+      await page.getByRole("menuitem", { name: "Điều chỉnh tồn kho" }).click();
+      await page.waitForTimeout(500);
+      await page.getByRole("dialog").getByRole("button", { name: "Bớt Đen M" }).click();
+      await page.getByRole("dialog").getByRole("combobox", { name: "Lý do" }).click();
+      await page.waitForTimeout(300);
+      await page.getByRole("option", { name: "Hư hỏng" }).click();
+    }],
+    ["/admin/products#adjust-fixed", "admin-products-adjust-fixed-1280", async () => {
+      await page.getByRole("button", { name: "Thao tác HOODIE TRƠN", exact: true }).click();
+      await page.waitForTimeout(250);
+      await page.getByRole("menuitem", { name: "Điều chỉnh tồn kho" }).click();
     }],
     ["/admin/drops#rowmenu", "admin-drops-row-menu-1280", async () => {
       await page.getByRole("button", { name: "Thao tác Số 05", exact: true }).click();

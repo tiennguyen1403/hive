@@ -7,10 +7,11 @@ import { ARC_ADMIN_PATHS, ARC_ADMIN_TREES, isArcAdminPath } from "./admin-arc";
  * slice 1 the whole of "Đơn hàng" is Arc: the book, each order, the slips.
  * Since slice 2 the overview and the activity log are too; since slice 3 the
  * customers, each customer's page, and the discount codes; since slice 4 the
- * issues and each issue's page.
+ * issues and each issue's page; since slice 5a the styles table, without the
+ * style form under it.
  */
 describe("isArcAdminPath", () => {
-  it("lists the overview, the orders, the slips, the log, the customers, the codes, the issues, and three trees", () => {
+  it("lists the overview, the orders, the slips, the log, the customers, the codes, the issues, the styles, and three trees", () => {
     expect(ARC_ADMIN_PATHS).toEqual([
       "/admin",
       "/admin/orders",
@@ -19,6 +20,7 @@ describe("isArcAdminPath", () => {
       "/admin/customers",
       "/admin/promotions",
       "/admin/drops",
+      "/admin/products",
     ]);
     expect(ARC_ADMIN_TREES).toEqual(["/admin/orders/", "/admin/customers/", "/admin/drops/"]);
   });
@@ -71,6 +73,11 @@ describe("isArcAdminPath", () => {
     expect(isArcAdminPath("/admin/drops/05/")).toBe(true);
   });
 
+  it("matches the styles table, with or without a trailing slash (slice 5a)", () => {
+    expect(isArcAdminPath("/admin/products")).toBe(true);
+    expect(isArcAdminPath("/admin/products/")).toBe(true);
+  });
+
   it("does not match a path that only begins like one", () => {
     expect(isArcAdminPath("/adminx")).toBe(false);
     expect(isArcAdminPath("/admin/ordersx")).toBe(false);
@@ -82,13 +89,14 @@ describe("isArcAdminPath", () => {
     expect(isArcAdminPath("/admin/promotions/DOT05")).toBe(false);
     expect(isArcAdminPath("/admin/dropsx")).toBe(false);
     expect(isArcAdminPath("/admin/dropsx/05")).toBe(false);
+    expect(isArcAdminPath("/admin/productsx")).toBe(false);
   });
 
-  it("does not match the screens still on v3: the styles", () => {
-    expect(isArcAdminPath("/admin/products")).toBe(false);
-    expect(isArcAdminPath("/admin/products/")).toBe(false);
-    expect(isArcAdminPath("/admin/products/p-khoi")).toBe(false);
+  it("does not match the screens still on v3: the style form, new or edited (until slice 5b)", () => {
     expect(isArcAdminPath("/admin/products/new")).toBe(false);
+    expect(isArcAdminPath("/admin/products/new/")).toBe(false);
+    expect(isArcAdminPath("/admin/products/p-khoi")).toBe(false);
+    expect(isArcAdminPath("/admin/products/p-ao-thun-tron")).toBe(false);
   });
 
   it("does not match the shop", () => {

@@ -97,9 +97,12 @@ export function longestStreak(issues: number[]): number {
 /**
  * Everything the table and the profile need about one person.
  *
- * `openIssueNo` is the issue selling right now, or null between two — which
- * is why "mới" simply does not apply then, rather than quietly falling back
- * to the newest issue and calling three-month-old customers new.
+ * `openIssueNo` is the issue "mới" is read against, or null for none. The v3
+ * screens pass the issue selling right now, or null between two. Since round
+ * v5 slice 5a the Arc screens pass `currentIssueNo` (`lib/current-issue.ts`,
+ * the user's rule of 01/10/2026): the issue selling, else the one that closed
+ * last, so between two issues a customer whose first order was in the issue
+ * just closed is still "mới", and never one whose first order is older.
  */
 export function customerFacts(
   catalog: Catalog,

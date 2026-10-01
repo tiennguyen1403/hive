@@ -19,13 +19,20 @@ import { useArcToast } from "./useArcToast";
  * answered: a reset that failed must not look like one that worked. While it
  * runs the dialog cannot be closed, and "Đặt lại" shows Arc's spinner
  * (`loading`) with "Đang đặt lại…" as its label.
+ *
+ * Radix hands focus back only to a `DialogTrigger`, and this dialog is opened
+ * from the sidebar's own button, so the sidebar says where focus goes when it
+ * shuts (`onCloseAutoFocus`, slice 5a), as the issues' dialogs do (slice 4).
  */
 export function ArcResetDialog({
   open,
   onOpenChange,
+  onCloseAutoFocus,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Where focus goes when the dialog shuts: the button that opened it. */
+  onCloseAutoFocus: (event: Event) => void;
 }) {
   const say = useArcToast();
   const router = useRouter();
@@ -58,6 +65,7 @@ export function ArcResetDialog({
     >
       <DialogContent
         onInteractOutside={keepOpenForToasts}
+        onCloseAutoFocus={onCloseAutoFocus}
         title="Đặt lại dữ liệu mẫu?"
         description={`Đơn hàng quay về các đơn mẫu — đơn đặt thêm, kể cả của tài khoản đăng ký thật, sẽ mất. Mẫu, tồn kho, các ${LEX.tl}, mẫu hé lộ, mã giảm giá, các tài khoản mẫu và sổ địa chỉ của họ về như ban đầu; nhật ký bắt đầu lại. Ngày giờ mẫu neo vào 18:50 gần nhất.`}
       >

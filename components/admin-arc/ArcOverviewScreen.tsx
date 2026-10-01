@@ -21,6 +21,7 @@ import {
 import type { AdminOrder } from "@/lib/admin-orders";
 import { orderCustomer, queueRows } from "@/lib/admin-rows";
 import { downloadCsv } from "@/lib/csv";
+import { currentIssueNo } from "@/lib/current-issue";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { closesInLabel, dropState, opensInLabel } from "@/lib/drop";
@@ -101,10 +102,15 @@ export function ArcOverviewScreen({
   days: WindowDays;
 }) {
   const catalog = useCatalog();
-  const currentDropNo = catalog.currentDropNo;
   const say = useArcToast();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
+  /**
+   * The issue this page counts: the one selling, else the one that closed
+   * last (slice 5a). Not the highest issue holding a style, which a style
+   * added to the next issue would move.
+   */
+  const currentNo = currentIssueNo(catalog, now);
   const [range, setRange] = useOptimistic(days);
   const [, startNavigation] = useTransition();
   /** Rows just confirmed, kept disabled until the answer re-renders the queue. */
@@ -159,13 +165,13 @@ export function ArcOverviewScreen({
   const queue = queueRows(catalog, orders, now);
   const awaiting = queue.filter((q) => q.action === "MARK_PAID").length;
   const toHandOver = queue.length - awaiting;
-  const drop = catalog.dropByNo.get(currentDropNo);
+  const drop = catalog.dropByNo.get(currentNo);
   const state: DropState = drop ? dropState(drop, now) : "CLOSED";
-  const summary = dropSummary(catalog, currentDropNo, products);
+  const summary = dropSummary(catalog, currentNo, products);
   const soldPercent =
     summary.cutUnits === 0 ? 0 : Math.round((summary.soldUnits / summary.cutUnits) * 100);
-  const alerts = stockAlerts(catalog, currentDropNo, products);
-  const ranking = dropRanking(catalog, currentDropNo, products);
+  const alerts = stockAlerts(catalog, currentNo, products);
+  const ranking = dropRanking(catalog, currentNo, products);
   const latest = recentOrders(orders, 5);
   const split = customerSplit(now, orders, range, drop?.opensAt ?? nowIso);
 
@@ -240,7 +246,7 @@ export function ArcOverviewScreen({
           )}
         </ArcKpi>
         <ArcKpi
-          label={`Còn trong ${LEX.tl} ${issueNo(currentDropNo)}`}
+          label={`Còn trong ${LEX.tl} ${issueNo(currentNo)}`}
           value={`${summary.onHand} chiếc`}
           meter={soldPercent}
         >
@@ -379,7 +385,7 @@ export function ArcOverviewScreen({
             <div className={panel.panelHead}>
               <div className={panel.panelHeading}>
                 <h2 id={ids.best} className={panel.panelTitle}>
-                  Bán chạy trong {LEX.tl} {issueNo(currentDropNo)}
+                  Bán chạy trong {LEX.tl} {issueNo(currentNo)}
                 </h2>
                 <p className={panel.panelSub}>đã bán / đã cắt</p>
               </div>
@@ -406,7 +412,7 @@ export function ArcOverviewScreen({
               ))}
             </ol>
             <p className={styles.more}>
-              <Link className={panel.textLink} href={`/admin/drops/${issueNo(currentDropNo)}`}>
+              <Link className={panel.textLink} href={`/admin/drops/${issueNo(currentNo)}`}>
                 Xem cả {ranking.length} mẫu của {LEX.tl}
               </Link>
             </p>
@@ -423,7 +429,7 @@ export function ArcOverviewScreen({
             </div>
             {alerts.length === 0 ? (
               <p className={styles.none}>
-                Chưa mẫu nào trong {LEX.tl} {issueNo(currentDropNo)} xuống tới {LOW_STOCK_AT} chiếc.
+                Chưa mẫu nào trong {LEX.tl} {issueNo(currentNo)} xuống tới {LOW_STOCK_AT} chiếc.
               </p>
             ) : (
               <ul className={styles.rows}>

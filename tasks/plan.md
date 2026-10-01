@@ -3115,3 +3115,23 @@ DETAIL là số kia, HINT là `OVERLAP` / `PREVIOUS` / `NEXT`; code mới đọc
 - Câu kiểm chỉ đọc sau khi push: `select p.proname, p.prosrc like '%''PREVIOUS''%' as b14b from pg_proc p where
   p.pronamespace = 'public'::regnamespace and p.proname in ('admin_add_drop', 'admin_schedule_drop') order by p.proname;`
   phải ra hai dòng `true`.
+
+**01/10, B14b commit `8c300a1`** (người dùng cho phép; chưa push). Lát 5a (bảng Mẫu, hai tấm tồn kho, sửa "số hiện tại") đã
+giao agent theo `tasks/briefs/v5-lat-5a.md`.
+
+**01/10, lát 5a ĐẠT (phiên chính duyệt), chờ người dùng cho commit.** Bảng Mẫu chạy trên Arc, kèm hai tấm `Drawer` 680px
+"Điều chỉnh tồn kho" và "Nhập thêm" (ô số có nút bớt/thêm dựng trong dự án, `ArcCountField`).
+- **"Số hiện tại":** `currentIssueNo(catalog, now)` (`lib/current-issue.ts`) theo luật người dùng duyệt. Tổng quan, panel khách
+  ở chi tiết đơn, danh sách khách và hồ sơ khách cùng dùng hàm này. Test tái hiện lỗi; một test chặn mã Arc đọc
+  `currentDropNo`. Đã thử thật: thêm S06 – MÂY bằng form v3, Tổng quan vẫn "Còn trong số 05".
+- Hộp "Đặt lại dữ liệu mẫu" trả focus về nút ở thanh bên.
+- Khác v3: tab chỉ có mẫu hé lộ không vẽ thanh công cụ (không nút chết); đổi tab dùng `replace` như các màn Arc khác.
+- 1.880 test xanh (phiên chính tự chạy lại), typecheck và build sạch; form mẫu v3 và `/faq` lệch 0 px. `tools/layout-sweep.js`
+  đã thêm 5 route và 4 lớp nổi của bảng Mẫu.
+- **Còn mở:**
+  - `ArcCancelOrderDialog` (lát 0) cũng thả focus về `<body>` khi đóng. Sửa ở lát 5b.
+  - Hồ sơ khách in "đơn đầu là …, trong số đang bán" và "…hoặc đơn đầu trong số đang bán". Giữa hai số, nhãn "mới" nay tính
+    theo số vừa đóng, nên chữ "đang bán" sai. Chờ người dùng quyết chữ.
+  - Máy dò báo advisory `design-system-radius` ở `ArcCountField.module.css` (`calc(var(--radius-control) - 1px)`, góc đồng
+    tâm). Chấp nhận, không thêm ignore.
+  - Lát 6: `ProductsTable.tsx`, `InventoryAdjustSheet.tsx` không còn route dùng.

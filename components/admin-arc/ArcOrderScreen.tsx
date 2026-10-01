@@ -22,6 +22,7 @@ import { canCancel, canEditAddress, isPaidFor, nextMove, type AdminOrder } from 
 import { HANDOVER_LATE_DAYS, orderItemsLabel } from "@/lib/admin-rows";
 import { timelineOf, timelineSteps } from "@/lib/admin-timeline";
 import type { Catalog } from "@/lib/catalog";
+import { currentIssueNo } from "@/lib/current-issue";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { customerFacts, issueOf } from "@/lib/customer-tags";
 import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "@/lib/datetime";
@@ -137,7 +138,12 @@ export function ArcOrderScreen({
   const carrier = order.status.state === "SHIPPING" ? order.status.carrier : undefined;
   const delivery = deliveryOption(order.shippingFeeVnd === EXPRESS_FEE_VND ? "EXPRESS" : "STANDARD");
   const editReason = addressEditReason(events, code);
-  const facts = owner ? customerFacts(catalog, customerOrders, catalog.currentDropNo, now) : null;
+  // "mới" is read against the current issue, as on the customer table and
+  // the customer's own page (slice 5a): the one selling, else the one that
+  // closed last; 0, a catalogue without issues, is none.
+  const facts = owner
+    ? customerFacts(catalog, customerOrders, currentIssueNo(catalog, now) || null, now)
+    : null;
   const notes = internalNotes(events, order);
   const journey = timelineSteps(timelineOf(order, now, carrier));
 

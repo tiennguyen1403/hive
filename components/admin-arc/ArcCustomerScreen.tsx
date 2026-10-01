@@ -7,8 +7,8 @@ import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions
 import { customerKey, type AdminCustomerDetail } from "@/lib/admin-customers";
 import type { AdminOrder } from "@/lib/admin-orders";
 import { customerFacts, issueOf, issuesLabel, type CustomerFacts } from "@/lib/customer-tags";
+import { currentIssueNo } from "@/lib/current-issue";
 import { clockLabel, dayMonth, dayMonthYear } from "@/lib/datetime";
-import { dropState } from "@/lib/drop";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { plainVnd, vnd } from "@/lib/money";
 import { STATE_LABEL } from "@/lib/order-labels";
@@ -58,8 +58,10 @@ export function ArcCustomerScreen({
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const ids = { orders: useId(), contact: useId(), address: useId(), tag: useId() };
 
-  const openIssue = catalog.drops.find((d) => dropState(d, now) === "OPEN")?.no ?? null;
-  const facts = customerFacts(catalog, orders, openIssue, now);
+  // "mới" is read against the current issue (slice 5a): the one selling, else
+  // the one that closed last, as on the table and an order's customer panel;
+  // 0, a catalogue without issues, is none.
+  const facts = customerFacts(catalog, orders, currentIssueNo(catalog, now) || null, now);
   const home = customer.addresses.find((a) => a.isDefault) ?? customer.addresses[0];
   const province = home ? findProvince(home.provinceCode) : undefined;
   const ward = home ? findWard(home.provinceCode, home.wardCode) : undefined;

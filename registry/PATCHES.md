@@ -85,6 +85,14 @@ Không sửa: `empty-state` (không có chuỗi tiếng Anh; icon mặc định 
 - **Vá `select`** (mục 3): option nhận trường tuỳ chọn `note`, chữ phụ ở cuối dòng trong danh sách, như `Select` của v3 in họ
   ("Áo khoác") bên phải loại ("Áo khoác dù") ở hộp "Thêm mẫu hé lộ" (brief lát 4, §3.1). Không có chuỗi tiếng Anh mới.
 
+## Lần sửa 01/10/2026 (đợt v5, lát 5a)
+
+- **Không cài item mới, không vá ruột Arc.** Bảng Mẫu và hai tấm tồn kho dùng các item đã có: `tabs`, `search-field`,
+  `filter-toolbar`, `segmented-control`, `sortable-data-table`, `dropdown-menu`, `badge`, `button`, `drawer`, `select`,
+  `input`. `package.json`, `package-lock.json`, `registry/foundation.css` và `registry/components/` không đổi.
+- Ô số có nút bớt và thêm (`components/admin-arc/ArcCountField.tsx`) dựng trong dự án bằng token Arc, vì bản free không có.
+- Hai tấm tồn kho dùng lại class bề rộng 680px của form mã giảm giá (mục 4).
+
 ## 1. `registry/foundation.css`: khoanh vùng
 
 Arc đặt mọi luật ở `:root`, nên tệp là toàn cục: tiêu đề v3 mất Unbounded vì trùng tên `--font-display`, luật cuối xoá vòng
@@ -194,7 +202,7 @@ kiểu có `note`, `note` nằm sau `ItemText` và trước `ItemIndicator`, và
 | Tệp | Dựa vào | Vì sao |
 |---|---|---|
 | `components/admin-arc/ArcButtonLink.tsx` | class `button`, biến thể (`primary`, `secondary`, `ghost`, `danger`) và cỡ (`sm`, `md`, `lg`) của `registry/components/button/button.module.css` | Arc `Button` bản free không có `href`; wrapper render `next/link` với đúng kiểu nút. Không vá Button. Bản mới đổi tên class thì link mất kiểu nút (build vẫn qua) |
-| `components/admin-arc/ArcPromoDrawer.module.css` (lát 3) | biến `--drawer-size` mà `.content` của `registry/components/drawer/drawer.module.css` đọc để đặt bề rộng panel, và thuộc tính `data-side` trên panel | Form mã giảm giá rộng 680px như `AdminSheet` bản `wide` của v3 (brief lát 3, §3.4), trong khi Drawer cố định `min(30rem, …)` và không có prop bề rộng. Class đi vào panel qua `className` (prop Radix có trong tài liệu); luật `.drawer[data-side]` đặt lại biến, thuộc tính giúp nó thắng luật gốc bất kể thứ tự nạp CSS. Không vá Drawer. Bản mới đổi tên biến thì form về 480px (build vẫn qua) |
+| `components/admin-arc/ArcPromoDrawer.module.css` (lát 3) | biến `--drawer-size` mà `.content` của `registry/components/drawer/drawer.module.css` đọc để đặt bề rộng panel, và thuộc tính `data-side` trên panel | Form mã giảm giá rộng 680px như `AdminSheet` bản `wide` của v3 (brief lát 3, §3.4), trong khi Drawer cố định `min(30rem, …)` và không có prop bề rộng. Class đi vào panel qua `className` (prop Radix có trong tài liệu); luật `.drawer[data-side]` đặt lại biến, thuộc tính giúp nó thắng luật gốc bất kể thứ tự nạp CSS. Không vá Drawer. Bản mới đổi tên biến thì form về 480px (build vẫn qua). Từ lát 5a hai tấm tồn kho (`ArcStockDrawer.tsx`) dùng lại đúng class này, nên cũng về 480px và lưới màu × size của chúng chật lại |
 
 ## Cài lại bản mới
 

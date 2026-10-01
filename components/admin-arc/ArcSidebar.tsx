@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FeedLogo } from "@/components/feed/FeedLogo";
 import { signOut } from "@/lib/actions/auth";
 import { clockLabel, dayMonth } from "@/lib/datetime";
@@ -69,6 +69,8 @@ export function ArcSidebar({
 }) {
   const pathname = usePathname();
   const [asking, setAsking] = useState(false);
+  /** "Đặt lại dữ liệu mẫu": focus comes back to it when its dialog shuts (slice 5a). */
+  const resetButton = useRef<HTMLButtonElement>(null);
 
   return (
     <aside className={styles.side}>
@@ -121,7 +123,13 @@ export function ArcSidebar({
           )}
           .
         </p>
-        <Button variant="ghost" size="sm" className={styles.edge} onClick={() => setAsking(true)}>
+        <Button
+          ref={resetButton}
+          variant="ghost"
+          size="sm"
+          className={styles.edge}
+          onClick={() => setAsking(true)}
+        >
           <RotateCcw size={16} strokeWidth={1.75} aria-hidden="true" />
           Đặt lại dữ liệu mẫu
         </Button>
@@ -136,7 +144,18 @@ export function ArcSidebar({
         </form>
       </div>
 
-      <ArcResetDialog open={asking} onOpenChange={setAsking} />
+      <ArcResetDialog
+        open={asking}
+        onOpenChange={setAsking}
+        // Radix returns focus only to a `DialogTrigger`: without this, closing
+        // the dialog with Escape or "Giữ nguyên" dropped focus on <body>.
+        onCloseAutoFocus={(event) => {
+          const back = resetButton.current;
+          if (!back?.isConnected) return;
+          event.preventDefault();
+          back.focus();
+        }}
+      />
     </aside>
   );
 }

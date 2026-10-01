@@ -10,9 +10,12 @@
  * One area per slice. Slice 0 moved the order book; slice 1 moved the rest of
  * "Đơn hàng": an order's own page and the delivery slips; slice 2 moved the
  * overview and the activity log; slice 3 moved the customers, each customer's
- * page, and the discount codes; slice 4 moves the issues, the table and each
- * issue under it. `/admin` is listed as a path, not as a tree: it matches the
- * overview alone, never the screens below it.
+ * page, and the discount codes; slice 4 moved the issues, the table and each
+ * issue under it; slice 5a moves the styles table. `/admin` and
+ * `/admin/products` are listed as paths, not as trees: the first matches the
+ * overview alone, the second the table alone, while the style form below it
+ * (`/admin/products/new`, `/admin/products/<id>`) keeps the v3 frame until
+ * slice 5b.
  */
 export const ARC_ADMIN_PATHS: readonly string[] = [
   "/admin",
@@ -22,6 +25,7 @@ export const ARC_ADMIN_PATHS: readonly string[] = [
   "/admin/customers",
   "/admin/promotions",
   "/admin/drops",
+  "/admin/products",
 ];
 
 /**

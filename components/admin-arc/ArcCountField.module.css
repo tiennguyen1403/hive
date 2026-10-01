@@ -1,0 +1,102 @@
+/* One cell of the stock grid (round v5 slice 5a, `ArcCountField`): − , the
+   count, + in one field as tall as Arc's small controls. Arc tokens only, in
+   the values of Arc's `Input` (`input.module.css`): its border, its corner,
+   its ring. */
+
+.field {
+  display: inline-flex;
+  align-items: stretch;
+  height: var(--control-height-sm);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  box-shadow: 0 0 0 6px transparent;
+  transition: border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-standard) var(--ease-standard);
+}
+
+/* Moved from what the shelf holds: an ink edge, and the count at 500. */
+.field[data-changed] {
+  border-color: var(--foreground);
+}
+
+/* The box takes Arc's input focus: an ink edge and its ring, which the
+   pointer switch turns off (`--focus-ring`, QĐ-39). */
+.field:has(> .value:focus-visible) {
+  border-color: var(--foreground);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* − and +: the field's own corners, one pixel in (concentric with its
+   border), so the hover fill follows the field's shape. */
+.step {
+  display: grid;
+  width: 32px;
+  flex: none;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.step:first-child {
+  border-radius: calc(var(--radius-control) - 1px) 0 0 calc(var(--radius-control) - 1px);
+}
+
+.step:last-child {
+  border-radius: 0 calc(var(--radius-control) - 1px) calc(var(--radius-control) - 1px) 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .step:hover:not(:disabled) {
+    background: var(--surface-muted);
+  }
+}
+
+.step:active:not(:disabled) {
+  background: var(--surface-muted);
+}
+
+/* As Arc's disabled buttons (`button.module.css`). */
+.step:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+/* The keyboard ring inside the button's own edge, where the field's border
+   cannot cover it, as Arc's segmented control draws it. */
+.step:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.value {
+  width: 40px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-inline: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-body);
+  text-align: center;
+  outline: none;
+}
+
+.field[data-changed] .value {
+  font-weight: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field,
+  .step {
+    transition: none;
+  }
+}

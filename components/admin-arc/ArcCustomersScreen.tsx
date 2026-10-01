@@ -8,6 +8,7 @@ import { customerKey, customerRows, type AdminCustomer, type CustomerRow } from 
 import type { AdminOrder } from "@/lib/admin-orders";
 import { hrefWith, pageOf, paginate, perPageOf, PER_PAGE_CHOICES, type Query } from "@/lib/admin-url";
 import { downloadCsv } from "@/lib/csv";
+import { currentIssueNo } from "@/lib/current-issue";
 import {
   customerGroup,
   inGroup,
@@ -16,7 +17,6 @@ import {
   type CustomerGroup,
 } from "@/lib/customer-tags";
 import { dayMonth } from "@/lib/datetime";
-import { dropState } from "@/lib/drop";
 import { LEX, issueNo } from "@/lib/lexicon";
 import { plainVnd } from "@/lib/money";
 import { STATE_LABEL } from "@/lib/order-labels";
@@ -105,10 +105,13 @@ export function ArcCustomersScreen({
     });
   }
 
-  const openIssue = catalog.drops.find((d) => dropState(d, now) === "OPEN")?.no ?? null;
+  // "mới" and its tab are read against the current issue (slice 5a): the one
+  // selling, else the one that closed last, as on the overview and an order's
+  // customer panel; 0, a catalogue without issues, is none.
+  const current = currentIssueNo(catalog, now) || null;
   const all = useMemo<CustomerRow[]>(
-    () => customerRows(catalog, customers, orders, openIssue, now),
-    [catalog, customers, orders, openIssue, now],
+    () => customerRows(catalog, customers, orders, current, now),
+    [catalog, customers, orders, current, now],
   );
 
   const group = customerGroup(view.group);
@@ -130,7 +133,7 @@ export function ArcCustomersScreen({
     { value: "all", label: "Tất cả" },
     { value: "loyal", label: "Thân thiết" },
     { value: "returning", label: "Quay lại" },
-    { value: "new", label: openIssue ? `Mới trong ${LEX.tl} ${issueNo(openIssue)}` : "Mới" },
+    { value: "new", label: current ? `Mới trong ${LEX.tl} ${issueNo(current)}` : "Mới" },
     { value: "pending", label: "Có đơn chờ" },
   ];
 
