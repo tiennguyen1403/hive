@@ -64,10 +64,11 @@ describe("every dialog and drawer of components/admin-arc", () => {
   const overlays = (source: string) => count(source, /<(DialogContent|DrawerContent)\b/g);
   const kept = (source: string) => count(source, /onInteractOutside=\{keepOpenForToasts\}/g);
 
-  it("finds the overlays of round v5 so far: five dialogs and three drawers", () => {
+  it("finds the overlays of round v5 so far: six dialogs and three drawers", () => {
     const total = files.reduce((n, f) => n + overlays(readFileSync(join(DIR, f), "utf8")), 0);
-    // Slice 5a adds the two stock drawers (`ArcStockDrawer.tsx`).
-    expect(total).toBeGreaterThanOrEqual(8);
+    // Slice 5a adds the two stock drawers (`ArcStockDrawer.tsx`), slice 5b the
+    // crop dialog of the style form (`ArcCropDialog.tsx`).
+    expect(total).toBeGreaterThanOrEqual(9);
   });
 
   it.each(files)("%s passes keepOpenForToasts to each DialogContent and DrawerContent", (file) => {

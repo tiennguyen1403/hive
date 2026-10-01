@@ -3,6 +3,7 @@ import { CUSTOMERS } from "@/data/customers";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { ORDERS, ordersOf } from "@/data/orders";
 import type { Order } from "@/data/types";
+import { currentIssueNo } from "./current-issue";
 import {
   LOYAL_ISSUES,
   RETURNING_ORDERS,
@@ -12,6 +13,8 @@ import {
   issueOf,
   issuesLabel,
   longestStreak,
+  tagReason,
+  untaggedReason,
 } from "./customer-tags";
 
 /** Inside issue 05's window, after every order in the fixtures. */
@@ -170,5 +173,70 @@ describe("what the screen prints", () => {
   it("names the issues in the shop's own word", () => {
     expect(issuesLabel([3, 4, 5])).toBe("Số 03 · 04 · 05");
     expect(issuesLabel([])).toBe("—");
+  });
+});
+
+/**
+ * The line beside the label on a customer's page (round v5 slice 5b, the
+ * user's words of 01/10/2026): "mới" names the issue it was read against,
+ * "trong Số 05", not "trong số đang bán". Between two issues the label is read
+ * against the one that closed last (`currentIssueNo`), and "đang bán" was
+ * wrong there.
+ */
+describe("the label's line", () => {
+  /** After Số 05 closed (20:00 25/09) and before Số 06 opens (20:00 02/10). */
+  const BETWEEN = new Date("2026-09-28T12:00:00+07:00");
+
+  it("says why with the numbers the label was read from", () => {
+    const all = CUSTOMERS.map((c) => customerFacts(FIXTURE_CATALOG, ordersOf(c.id), OPEN, NOW));
+    const loyal = all.find((f) => f.tag?.key === "loyal")!;
+    expect(tagReason("loyal", loyal, OPEN)).toBe(
+      `mua ở ${loyal.streak} số liên tiếp (${issuesLabel(loyal.issues)})`,
+    );
+    const back = all.find((f) => f.tag?.key === "returning")!;
+    expect(tagReason("returning", back, OPEN)).toBe(`${back.booked.length} đơn đã thanh toán`);
+  });
+
+  it("names the issue selling for somebody new in it", () => {
+    const order = ORDERS.find((o) => {
+      const facts = customerFacts(FIXTURE_CATALOG, [o], OPEN, NOW);
+      return facts.tag?.key === "new";
+    })!;
+    expect(order).toBeDefined();
+    const facts = customerFacts(FIXTURE_CATALOG, [order], OPEN, NOW);
+    expect(tagReason("new", facts, OPEN)).toBe(`đơn đầu là ${order.code}, trong Số 05`);
+    expect(untaggedReason(OPEN)).toBe(
+      "Chưa đủ để gắn nhãn nào: cần ≥ 2 đơn đã thanh toán, hoặc đơn đầu trong Số 05.",
+    );
+  });
+
+  it("names the issue that closed last between two issues: the one the label was read against", () => {
+    const current = currentIssueNo(FIXTURE_CATALOG, BETWEEN);
+    expect(current).toBe(5);
+    const fresh = ORDERS.map((o) => customerFacts(FIXTURE_CATALOG, [o], current, BETWEEN)).filter(
+      (f) => f.tag?.key === "new",
+    );
+    // Somebody whose one paid order is in Số 05 is still "mới" after it closed…
+    expect(fresh.length).toBeGreaterThan(0);
+    for (const f of fresh) {
+      expect(issueOf(FIXTURE_CATALOG, f.booked[0]!)).toBe(current);
+      // …and the line names Số 05, which no longer sells.
+      expect(tagReason("new", f, current)).toBe(`đơn đầu là ${f.booked[0]!.code}, trong Số 05`);
+      expect(tagReason("new", f, current)).not.toContain("đang bán");
+    }
+    expect(untaggedReason(current)).toBe(
+      "Chưa đủ để gắn nhãn nào: cần ≥ 2 đơn đã thanh toán, hoặc đơn đầu trong Số 05.",
+    );
+  });
+
+  it("follows the number it is given, so the label and its line name one issue", () => {
+    expect(untaggedReason(6)).toBe("Chưa đủ để gắn nhãn nào: cần ≥ 2 đơn đã thanh toán, hoặc đơn đầu trong Số 06.");
+    expect(untaggedReason(12)).toContain("trong Số 12.");
+  });
+
+  it("keeps the old words only where no issue exists to name", () => {
+    expect(untaggedReason(null)).toBe(
+      "Chưa đủ để gắn nhãn nào: cần ≥ 2 đơn đã thanh toán, hoặc đơn đầu trong số đang bán.",
+    );
   });
 });

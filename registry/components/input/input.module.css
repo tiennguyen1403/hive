@@ -21,3 +21,15 @@
 .column > span { display: inline-block; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .input { transition-duration: .01ms; } }
+/* HIVE patch (registry/PATCHES.md, round v5 slice 5b): `prefix`, a fixed segment at the head of the field ("S06 –"), on the muted ground and ruled off from what is typed by a 1px line. The frame takes the input's border, corner, hover, ring and error, so the input inside draws none of its own; the frame clips the segment to its corner. */
+.affix { display: flex; align-items: stretch; min-height: var(--control-height-md); overflow: hidden; border: 1px solid var(--border-strong); border-radius: var(--radius-control); background: var(--surface); box-shadow: 0 0 0 6px transparent; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-standard) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard); }
+.prefix { display: flex; flex: none; align-items: center; padding: 0 var(--space-3); border-right: 1px solid var(--border); background: var(--surface-muted); color: var(--foreground); font-size: var(--text-sm); font-weight: 500; line-height: var(--leading-body); letter-spacing: var(--tracking-body); white-space: nowrap; cursor: text; user-select: none; }
+.affix > .input { flex: 1; min-width: 0; min-height: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.affix > .input:focus-visible { box-shadow: none; }
+@media (hover: hover) and (pointer: fine) { .affix:hover:not(:has(> .input:disabled, > .input[aria-invalid="true"])) { border-color: var(--foreground); } }
+.affix:has(> .input:focus-visible) { border-color: var(--foreground); box-shadow: 0 0 0 3px var(--focus-ring); }
+.affix:has(> .input[aria-invalid="true"]) { border-color: var(--danger); }
+.affix:has(> .input[aria-invalid="true"]:focus-visible) { box-shadow: 0 0 0 3px color-mix(in oklch, var(--danger) 24%, transparent); }
+.affix:has(> .input:disabled) { cursor: not-allowed; opacity: .5; background: var(--surface-muted); }
+.affix > .input:disabled { opacity: 1; background: transparent; }
+@media (prefers-reduced-motion: reduce) { .affix { transition-duration: .01ms; } }

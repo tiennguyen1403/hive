@@ -3135,3 +3135,32 @@ giao agent theo `tasks/briefs/v5-lat-5a.md`.
   - Máy dò báo advisory `design-system-radius` ở `ArcCountField.module.css` (`calc(var(--radius-control) - 1px)`, góc đồng
     tâm). Chấp nhận, không thêm ignore.
   - Lát 6: `ProductsTable.tsx`, `InventoryAdjustSheet.tsx` không còn route dùng.
+
+**01/10, lát 5a commit `8e3e252`** (người dùng cho phép; chưa push). Người dùng duyệt chữ nhãn "mới" ghi tên số: "đơn đầu là
+DH-2430, trong Số 05" và "… hoặc đơn đầu trong Số 05.". Lát 5b (form mẫu, ảnh, khung cắt; kèm sửa focus hộp huỷ đơn và chữ
+nhãn "mới") đã giao agent theo `tasks/briefs/v5-lat-5b.md`.
+
+**01/10, lát 5b ĐẠT (phiên chính duyệt), chờ người dùng cho commit.** Form thêm và sửa mẫu, "Màu và ảnh" (chọn màu, ảnh từng
+màu, ảnh mượn tạm, kéo thả, tải ảnh lên) và hộp "Chọn vùng cắt" chạy trên Arc. Từ lát này **mọi route quản trị dùng khung
+Arc**; test quét `app/admin/**/page.tsx`.
+- Logic của `ProductForm` chép nguyên; không sửa tệp v3.
+- Vá Arc `input`: prop `prefix` cho đoạn "S06 –". Cài `textarea`.
+- Sửa thêm:
+  - hộp huỷ đơn trả focus ở bảng đơn và chi tiết đơn;
+  - hồ sơ khách ghi "đơn đầu là DH-2426, trong Số 05" theo `currentIssueNo`;
+  - toast sau khi tạo mẫu hiện ở bảng Mẫu.
+- **CLI Arc đã đổi (phát hiện ở lát này):** registry nay khai đích `@components/arc/…`. `shadcn add` không hỏi gì mà ghi vào
+  `components/arc/`, kèm một `foundation.css` gốc chưa vá. Agent đã xoá thư mục đó và cài tay: chép `files[].content` của
+  `https://uiarc.dev/r/textarea.json` vào `registry/components/textarea/`, chỉ đổi import thành `@/lib/motion-tokens`. Phiên
+  chính đối chiếu với registry: khớp, trừ dòng import đó. Từ nay cài item Arc bằng tay theo cách này (ghi ở
+  `registry/PATCHES.md`).
+- 1.907 test xanh (phiên chính tự chạy lại), typecheck và build sạch. Phần khách lệch 0 px; sweep 110 phát hiện, như mốc lát
+  5a. `tools/layout-sweep.js`: các lượt của form tìm theo vai trò, thêm hai lượt.
+- **Việc của lát 6 (dọn):**
+  - xoá mã quản trị v3: `components/admin/*` (kể cả `ProductForm`, `ProductPhotoSlot`, `CropSheet`, `ProductsTable`,
+    `InventoryAdjustSheet`, `AdminDropsScreen`, `DropFormModal`, `TeaserFormSheet`), nhánh v3 của `AdminShell` (nay chỉ còn
+    cho đường lạ), `admin.css`, CSS v3 chỉ quản trị dùng, font v3 và Iconsax nếu không còn chỗ dùng;
+  - các ignore v3 của máy dò, các lượt chỉ dành cho v3 trong `tools/layout-sweep.js`;
+  - gộp các bản chép: thanh 4px, `ISSUE_STATE`, `patched()`, `SearchBox`, `timelineOf`, `LINKS`/`isOpen`; `ArcPromoDrawer`
+    dùng `useCapitals`; `lib/admin-options.ts` thôi lấy kiểu `SelectOption` từ `components/ui/Select` của v3;
+  - documenter viết lại DESIGN.md cho vùng Arc.

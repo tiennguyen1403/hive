@@ -22,12 +22,20 @@ import styles from "./ArcPhotoPicker.module.css";
  * Arc has no photo picker, and its `radio-group` is a list of text rows, so
  * this is built here on Arc's tokens. Each photo is named by `nameOf`, v3's
  * "Ảnh reu" by default; the image itself is decoration (`alt=""`).
+ *
+ * The style form (slice 5b) opens it under a colour row, "Mượn tạm": there
+ * the row already says what the grid is for, so its label is for assistive
+ * tech only (`hideLabel`, as Arc's `SearchField` hides one in a toolbar), and
+ * a click, Enter or Space on a photo also commits it (`onCommit`), which
+ * closes the grid as v3's did, while the arrow keys keep choosing in place.
  */
 export function ArcPhotoPicker({
   label,
   keys,
   value,
   onValueChange,
+  onCommit,
+  hideLabel = false,
   nameOf = (key) => `Ảnh ${key}`,
 }: {
   /** The visible label, and the group's accessible name. */
@@ -37,6 +45,10 @@ export function ArcPhotoPicker({
   /** The chosen key, or null while none is. */
   value: string | null;
   onValueChange: (key: string) => void;
+  /** A press on a photo (pointer, Enter or Space), after `onValueChange`; the arrow keys do not commit. */
+  onCommit?: (key: string) => void;
+  /** Keep the label for assistive tech only, where the context already names the group. */
+  hideLabel?: boolean;
   /** The name each photo is read by. */
   nameOf?: (key: string) => string;
 }) {
@@ -63,7 +75,7 @@ export function ArcPhotoPicker({
 
   return (
     <div className={styles.field}>
-      <span id={labelId} className={styles.label}>
+      <span id={labelId} className={hideLabel ? styles.srOnly : styles.label}>
         {label}
       </span>
       <div role="radiogroup" aria-labelledby={labelId} className={styles.photos} onKeyDown={onKeyDown}>
@@ -79,7 +91,10 @@ export function ArcPhotoPicker({
             aria-label={nameOf(key)}
             tabIndex={i === stop ? 0 : -1}
             className={styles.photo}
-            onClick={() => onValueChange(key)}
+            onClick={() => {
+              onValueChange(key);
+              onCommit?.(key);
+            }}
           >
             <Image src={photoUrl(key, 120)} alt="" width={44} height={55} />
           </button>

@@ -1,0 +1,273 @@
+/* The style form in the Arc frame (round v5 slice 5b, `ArcProductForm`). The
+   panels are the order page's (`ArcOrderScreen.module.css`), the grid's table
+   the stock drawers' (`ArcStockDrawer.module.css`); this file places them as
+   v3 did and draws what Arc has no component for: the seven colour toggles,
+   the grid's number boxes and the bar at the end of the page. Arc tokens
+   only, on the 4px grid: 24px between regions, 16px between the panels of a
+   column and between fields. */
+
+.form {
+  display: grid;
+  gap: var(--space-6);
+}
+
+/* ── the two columns ───────────────────────────────────────────────────── */
+/* "Thông tin cơ bản" and the grid on the left, "Màu và ảnh" on the right, as
+   v3. The right column is 400px where v3's was 380px: Arc's panel pads 24px
+   where v3's padded 16px, and at 380px a picked file's three moves ("Khung
+   cắt", "Đổi ảnh", "Mượn tạm", 236px with their gaps) no longer kept the one
+   line v3 kept them on (measured 01/10 at 1280: 218px of room). Tab follows
+   the columns. */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  align-items: start;
+  gap: var(--space-6);
+}
+
+.column {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* ── the fields ────────────────────────────────────────────────────────── */
+.fields {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Kind, fit, issue and price, two by two, as v3. The row aligns to the top,
+   so a line under one field opens below its own box without moving the
+   other. */
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--space-4);
+}
+
+/* A fixed style's issue field cannot change: the box reads as fixed, on the
+   muted ground Arc gives a control that is not taking input (the discount
+   form's code, slice 3). The attribute lifts the rule over Arc's `.input`. */
+.readOnly[readonly] {
+  background: var(--surface-muted);
+}
+
+/* A panel's one quiet line: "Đen · Kem.", or why the grid has no rows yet. */
+.quiet {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+/* ── the grid's boxes ──────────────────────────────────────────────────── */
+/* One count, 44px, in the values of the stock drawers' field
+   (`ArcCountField.module.css`) without its two buttons: the cut is typed. */
+.count {
+  width: 44px;
+  height: var(--control-height-sm);
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-body);
+  text-align: center;
+  outline: none;
+  box-shadow: 0 0 0 6px transparent;
+  transition: border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-standard) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .count:hover {
+    border-color: var(--foreground);
+  }
+}
+
+/* Arc's input focus: an ink edge and its ring, which the pointer switch turns
+   off (`--focus-ring`, QĐ-39). */
+.count:focus-visible {
+  border-color: var(--foreground);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* ── the colours ───────────────────────────────────────────────────────── */
+.colorField {
+  display: grid;
+}
+
+/* The label Arc's `Input` draws (`input.module.css`, `.label`), in its values. */
+.label {
+  margin-bottom: var(--space-2);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: var(--leading-body);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* One colour, on or off (`aria-pressed`): Arc's chip (`chip-group`, free) in
+   its values, with the colour's swatch where Arc puts its check and, once on,
+   its place in the band. Arc's chip group has neither, so it is drawn here. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-height-sm);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: var(--tracking-body);
+  line-height: var(--leading-body);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+/* On: a quiet tint of the accent and the ink, as Arc's chosen chip, never the
+   colour alone: the place number says it too. */
+.chip[aria-pressed="true"] {
+  border-color: color-mix(in oklch, var(--accent) 42%, var(--border));
+  background: color-mix(in oklch, var(--accent) 11%, var(--surface));
+  color: var(--foreground);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    border-color: var(--border-strong);
+    color: var(--foreground);
+  }
+
+  .chip[aria-pressed="true"]:hover {
+    border-color: color-mix(in oklch, var(--accent) 60%, var(--border));
+    background: color-mix(in oklch, var(--accent) 16%, var(--surface));
+  }
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* 12px round, the grid's swatch. The fill is the colour itself (inline, from
+   `COLORS`); the hairline keeps a pale one (Kem, Trắng) visible. */
+.dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* The colour's place in the band, once chosen. */
+.place {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The line Arc's `Input` draws for its `description` (`input.module.css`). */
+.help {
+  margin: 0;
+  padding-top: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-body);
+}
+
+.rows {
+  margin-top: var(--space-6);
+}
+
+/* ── the bar ───────────────────────────────────────────────────────────── */
+/* A panel at the end of the page: what the form holds, then the way out and
+   the one primary button. 16px of padding, so the buttons' corner is
+   concentric with the panel's. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-surface);
+  background: var(--surface);
+}
+
+.barText {
+  margin: 0 auto 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.barText b {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+/* ── a text link that is a button ──────────────────────────────────────── */
+/* "Mượn tạm", "Đổi ảnh mượn", "Toàn ảnh", and the file picker beside "Khung
+   cắt": the order page's text link (`ArcOrderScreen.module.css`,
+   `.textLink`) on a button or a label, as tall as a small button so a row of
+   moves lines up. */
+.link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  text-decoration-line: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+/* The keyboard ring (QĐ-39); `--focus-ring` is transparent while the pointer drives. */
+.link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .count,
+  .chip,
+  .link {
+    transition: none;
+  }
+}

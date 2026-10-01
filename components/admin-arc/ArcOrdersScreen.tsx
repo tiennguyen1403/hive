@@ -146,6 +146,12 @@ export function ArcOrdersScreen({
   const [picked, setPicked] = useState<string[]>([]);
   const [cancelling, setCancelling] = useState<Order | null>(null);
   const [pending, startAction] = useTransition();
+  /** The screen, to find the tab that is open. */
+  const root = useRef<HTMLDivElement>(null);
+  /** Each row's menu, by order code, so the cancel dialog can hand focus back to its trigger. */
+  const menus = useRef(new Map<string, HTMLElement>());
+  /** The menu trigger that opened the cancel dialog. */
+  const opener = useRef<HTMLElement | null>(null);
   const [, startNavigation] = useTransition();
   const [view, setView] = useOptimistic(query);
   const { cols, toggle } = useAdminCols(COLS_DEFAULT);
@@ -354,14 +360,41 @@ export function ArcOrdersScreen({
               icon: <X {...ICON} />,
               destructive: true,
               separatorBefore: true,
-              onSelect: () => setCancelling(o),
+              onSelect: () => {
+                opener.current = menus.current.get(code)?.querySelector("button") ?? null;
+                setCancelling(o);
+              },
             },
           ]
         : []),
     ];
     return (
-      <DropdownMenu iconOnly label={`Thao tác ${code}`} icon={<MoreHorizontal {...ICON} />} items={items} />
+      <span
+        className={styles.rowMenu}
+        ref={(el) => {
+          if (el) menus.current.set(code, el);
+          else menus.current.delete(code);
+        }}
+      >
+        <DropdownMenu iconOnly label={`Thao tác ${code}`} icon={<MoreHorizontal {...ICON} />} items={items} />
+      </span>
     );
+  }
+
+  /**
+   * Radix hands focus back only to a `DialogTrigger`, and the cancel dialog
+   * opens from a row menu (slice 5b, as the issues and the styles do). Back
+   * to that menu; when its row has left the table (a cancelled order leaves
+   * the tab of the orders waiting), to the tab that is open instead of to
+   * the top of the page.
+   */
+  function returnFocus(event: Event) {
+    const back = opener.current?.isConnected
+      ? opener.current
+      : (root.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]') ?? null);
+    if (!back) return;
+    event.preventDefault();
+    back.focus();
   }
 
   const rows = page.rows.map<Row>((o) => ({ code: String(o.code), total: orderTotalVnd(o), order: o }));
@@ -415,7 +448,7 @@ export function ArcOrdersScreen({
   const bulk = picked.length > 0;
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} ref={root}>
       <header className={styles.header}>
         <div className={styles.heading}>
           <h1 className={styles.title}>Đơn hàng</h1>
@@ -553,6 +586,7 @@ export function ArcOrdersScreen({
       <ArcCancelOrderDialog
         order={cancelling}
         pending={pending}
+        onCloseAutoFocus={returnFocus}
         onClose={() => setCancelling(null)}
         onConfirm={(reason, note) => {
           if (!cancelling) return;

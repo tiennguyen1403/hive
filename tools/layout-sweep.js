@@ -656,29 +656,41 @@ async (page) => {
     ["/admin/customers#rowmenu", "admin-customers-row-menu-1280", async () => {
       await page.getByRole("button", { name: "Thao tác Trần Minh Anh", exact: true }).click();
     }],
+    // round v5 slice 5b: the style form is Arc's. Its fields are found by
+    // role and label, not by v3's `.field3`, `button.selbtn`, `.colorpick`,
+    // `.cslot` and `.sheetwrap`.
     ["/admin/products/new#issue-menu", "admin-product-new-issue-menu-1280", async () => {
-      await page.locator(".field3", { has: page.locator(".lbl", { hasText: /^Số$/ }) }).locator("button.selbtn").click();
+      await page.getByRole("combobox", { name: "Số", exact: true }).click();
     }],
     ["/admin/products/new#fixed", "admin-product-new-fixed-1280", async () => {
-      await page.locator(".field3", { has: page.locator(".lbl", { hasText: /^Số$/ }) }).locator("button.selbtn").click();
+      await page.getByRole("combobox", { name: "Số", exact: true }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("menuitemradio", { name: "Cố định" }).click();
+      await page.getByRole("option", { name: "Cố định" }).click();
     }],
     ["/admin/products/p-khoi#kind", "admin-product-form-kind-menu-1280", async () => {
-      await page.locator(".field3", { hasText: "Loại" }).first().locator("button.selbtn").click();
+      await page.getByRole("combobox", { name: "Loại" }).click();
     }],
-    // v3 slice 7: the crop sheet after a picked file, and the borrowed-photo grid open
+    // v3 slice 7: the crop dialog after a picked file, and the borrowed-photo grid open
     ["/admin/products/new#crop", "admin-product-new-crop-sheet-1280", async () => {
-      await page.locator(".colorpick .chip3", { hasText: /^Đen/ }).click();
-      await page.locator(".cslot").first().locator('input[type="file"]').setInputFiles("tools/fixtures/soi-den.png");
-      await page.locator(".sheetwrap .frame").waitFor({ state: "visible", timeout: 8000 });
+      await page.getByRole("group", { name: "Màu sẽ cắt" }).getByRole("button", { name: "Đen", exact: true }).click();
+      await page.getByLabel("Chọn tệp cho Đen").setInputFiles("tools/fixtures/soi-den.png");
+      await page.getByRole("dialog").getByRole("group", { name: /^Khung cắt/ }).waitFor({ state: "visible", timeout: 8000 });
     }],
     ["/admin/products/new#photopick", "admin-product-new-photopick-1280", async () => {
-      await page.locator(".colorpick .chip3", { hasText: /^Đen/ }).click();
-      await page.locator(".cslot").first().getByRole("button", { name: "Mượn tạm" }).click();
+      await page.getByRole("group", { name: "Màu sẽ cắt" }).getByRole("button", { name: "Đen", exact: true }).click();
+      await page.getByRole("button", { name: "Mượn tạm" }).first().click();
     }],
     ["/admin/products/p-khoi#photopick", "admin-product-edit-photopick-1280", async () => {
-      await page.locator(".cslot").first().getByRole("button", { name: "Mượn tạm" }).click();
+      await page.getByRole("button", { name: "Mượn tạm" }).first().click();
+    }],
+    // round v5 slice 5b: three colours with their rows and grid, a fixed style's loan grid
+    ["/admin/products/new#colours", "admin-product-new-colours-1280", async () => {
+      for (const c of ["Đen", "Trắng", "Xám"]) {
+        await page.getByRole("group", { name: "Màu sẽ cắt" }).getByRole("button", { name: c, exact: true }).click();
+      }
+    }],
+    ["/admin/products/p-ao-thun-tron#photopick", "admin-product-fixed-photopick-1280", async () => {
+      await page.getByRole("button", { name: "Đổi ảnh mượn" }).first().click();
     }],
   ];
   for (const [route, name, open] of ADMIN_OVERLAYS) await visit(route, 1280, name, open);

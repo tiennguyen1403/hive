@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/db/session";
-import { AdminTop } from "@/components/admin/AdminTop";
-import { ProductForm } from "@/components/admin/ProductForm";
-import { ButtonLink } from "@/components/ui/Button";
+import { ArcProductScreen } from "@/components/admin-arc/ArcProductScreen";
 import { SIZES, productId } from "@/data/types";
 import { loadCatalog } from "@/lib/db/catalog";
 import { dropOptions, kindOptions } from "@/lib/admin-options";
@@ -24,13 +22,17 @@ export const metadata = { title: "Sửa mẫu" };
  *
  * The address is the style's id, which no edit changes: a new address
  * segment moves the shop's page (`/products/<slug>`), not this one. The form
- * is keyed on the values it was rendered with, so the response that answers
- * a save — which re-renders this page — starts it again from what the
- * database now holds, photos and band order included (v3 slice 7).
+ * is keyed on the values it was rendered with (`ArcProductScreen`), so the
+ * response that answers a save — which re-renders this page — starts it
+ * again from what the database now holds, photos and band order included
+ * (v3 slice 7).
  *
  * "Xem trên cửa hàng" opens the style's page as the shop draws it. A style of
  * an issue that has not opened is hidden from shoppers (slice B3c) but not
  * from the manager, so the link works for the one person who sees it here.
+ *
+ * Round v5 slice 5b: the screen is the Arc one (`ArcProductScreen`); the v3
+ * form stays in `components/admin/` until the clean-up slice.
  */
 export default async function AdminEditProductPage(props: PageProps<"/admin/products/[id]">) {
   const { id } = await props.params;
@@ -64,29 +66,22 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
   };
 
   return (
-    <>
-      <AdminTop
-        crumb={{ label: "Mẫu", href: "/admin/products", here: shown }}
-        title={shown}
-        // An issue's style says how much of it was cut; a fixed style (slice
-        // B5) was cut for no issue and has no line (v3 slice 13).
-        {...(product.dropNo !== null && product.cutUnits !== null
-          ? { sub: `${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc.` }
-          : {})}
-      >
-        <ButtonLink tone="ink sm" icon="eye" href={`/products/${product.slug}`}>
-          Xem trên cửa hàng
-        </ButtonLink>
-      </AdminTop>
-      <ProductForm
-        key={JSON.stringify(values)}
-        mode="edit"
-        productId={product.id}
-        kindOptions={kindOptions(catalog)}
-        dropOptions={dropOptions(catalog, now)}
-        cutUnits={product.cutUnits ?? undefined}
-        values={values}
-      />
-    </>
+    <ArcProductScreen
+      mode="edit"
+      title={shown}
+      // An issue's style says how much of it was cut; a fixed style (slice
+      // B5) was cut for no issue and has no line (v3 slice 13).
+      sub={
+        product.dropNo !== null && product.cutUnits !== null
+          ? `${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc.`
+          : undefined
+      }
+      shopHref={`/products/${product.slug}`}
+      productId={product.id}
+      kindOptions={kindOptions(catalog)}
+      dropOptions={dropOptions(catalog, now)}
+      cutUnits={product.cutUnits ?? undefined}
+      values={values}
+    />
   );
 }

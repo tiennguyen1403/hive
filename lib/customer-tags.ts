@@ -2,7 +2,7 @@ import type { Catalog } from "./catalog";
 import type { Order } from "@/data/types";
 import { BOOKED_STATES } from "./admin-metrics";
 import { effectiveOrder } from "./customer-orders";
-import { LEX } from "./lexicon";
+import { LEX, issueLabel } from "./lexicon";
 import { orderTotalVnd } from "./orders";
 
 /**
@@ -184,4 +184,41 @@ export function customerGroup(raw: string | string[] | undefined): CustomerGroup
 export function issuesLabel(issues: number[]): string {
   if (issues.length === 0) return "—";
   return `${LEX.t} ${issues.map((n) => String(n).padStart(2, "0")).join(" · ")}`;
+}
+
+/**
+ * Why a person carries their label, in the numbers it was read from (v3's
+ * words, a customer's own page): "mua ở 3 số liên tiếp (Số 03 · 04 · 05)",
+ * "2 đơn đã thanh toán", "đơn đầu là DH-2430, trong Số 05".
+ *
+ * "mới" names the issue it was read against, `current` (the user, 01/10/2026,
+ * round v5 slice 5b). Since slice 5a that is `currentIssueNo`: the issue
+ * selling, and between two issues the one that closed last, so the words
+ * "trong số đang bán" were wrong there. Pass the number the facts were read
+ * with, so the line and the label cannot name two issues.
+ */
+export function tagReason(key: CustomerTagKey, facts: CustomerFacts, current: number | null): string {
+  if (key === "loyal") {
+    return `mua ở ${facts.streak} ${LEX.tl} liên tiếp (${issuesLabel(facts.issues)})`;
+  }
+  if (key === "returning") return `${facts.booked.length} đơn đã thanh toán`;
+  // "mới" holds exactly one paid order: the first is the only one.
+  return `đơn đầu là ${facts.booked[0]?.code ?? "—"}, trong ${currentIssueWords(current)}`;
+}
+
+/**
+ * The line for a person with no label yet: what either label would take,
+ * "Chưa đủ để gắn nhãn nào: cần ≥ 2 đơn đã thanh toán, hoặc đơn đầu trong
+ * Số 05." (the user, 01/10/2026), with the issue "mới" is read against.
+ */
+export function untaggedReason(current: number | null): string {
+  return `Chưa đủ để gắn nhãn nào: cần ≥ ${RETURNING_ORDERS} đơn đã thanh toán, hoặc đơn đầu trong ${currentIssueWords(current)}.`;
+}
+
+/**
+ * "Số 05". A catalogue with no issue at all has no number to name, and no
+ * customer can be "mới" in it: the line keeps the words it had before 01/10.
+ */
+function currentIssueWords(current: number | null): string {
+  return current === null ? `${LEX.tl} đang bán` : issueLabel(current);
 }

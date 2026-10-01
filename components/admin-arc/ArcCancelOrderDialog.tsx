@@ -25,12 +25,18 @@ const REASON_OPTIONS = CANCEL_REASONS.map((r) => ({ value: r, label: r }));
  * reason is chosen, then reads "Huỷ đơn"; while the cancellation is on its
  * way it shows Arc's spinner with "Đang huỷ…" and the dialog cannot close.
  * A disabled button carries no icon.
+ *
+ * Radix hands focus back only to a `DialogTrigger`, and this dialog opens
+ * from a row menu (the order book) or from "Thao tác khác" (an order's
+ * page), so the screen says where focus goes when it shuts
+ * (`onCloseAutoFocus`, slice 5b), as the issues' dialogs do (slice 4).
  */
 export function ArcCancelOrderDialog({
   order,
   pending = false,
   onClose,
   onConfirm,
+  onCloseAutoFocus,
 }: {
   /** The order being cancelled, or null when the dialog is shut. */
   order: Order | null;
@@ -38,6 +44,8 @@ export function ArcCancelOrderDialog({
   pending?: boolean;
   onClose: () => void;
   onConfirm: (reason: string, note: string) => void;
+  /** Where focus goes when the dialog shuts: the menu that opened it. */
+  onCloseAutoFocus: (event: Event) => void;
 }) {
   const [reason, setReason] = useState<string | null>(null);
   const [note, setNote] = useState("");
@@ -69,6 +77,7 @@ export function ArcCancelOrderDialog({
     >
       <DialogContent
         onInteractOutside={keepOpenForToasts}
+        onCloseAutoFocus={onCloseAutoFocus}
         title={`Huỷ đơn ${shown?.code ?? ""}?`}
         description={`${
           paid

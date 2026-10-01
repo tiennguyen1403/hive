@@ -15,7 +15,7 @@ export const metadata = { title: "Mẫu" };
  * product card. Dynamic, because which issue is open is the clock's answer.
  *
  * Round v5 slice 5a: the table is the Arc screen (`ArcProductsScreen`); the
- * style form under it stays v3 until slice 5b.
+ * style form under it followed in slice 5b (`ArcProductScreen`).
  */
 export default async function AdminProductsPage(props: PageProps<"/admin/products">) {
   await requireAdmin("/admin/products");

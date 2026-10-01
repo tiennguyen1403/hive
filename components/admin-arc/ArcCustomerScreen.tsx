@@ -6,7 +6,7 @@ import { useCatalog } from "@/components/shop/CatalogContext";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
 import { customerKey, type AdminCustomerDetail } from "@/lib/admin-customers";
 import type { AdminOrder } from "@/lib/admin-orders";
-import { customerFacts, issueOf, issuesLabel, type CustomerFacts } from "@/lib/customer-tags";
+import { customerFacts, issueOf, issuesLabel, tagReason, untaggedReason } from "@/lib/customer-tags";
 import { currentIssueNo } from "@/lib/current-issue";
 import { clockLabel, dayMonth, dayMonthYear } from "@/lib/datetime";
 import { LEX, issueNo } from "@/lib/lexicon";
@@ -60,8 +60,10 @@ export function ArcCustomerScreen({
 
   // "mới" is read against the current issue (slice 5a): the one selling, else
   // the one that closed last, as on the table and an order's customer panel;
-  // 0, a catalogue without issues, is none.
-  const facts = customerFacts(catalog, orders, currentIssueNo(catalog, now) || null, now);
+  // 0, a catalogue without issues, is none. The label's line names the same
+  // issue (slice 5b, `tagReason`).
+  const current = currentIssueNo(catalog, now) || null;
+  const facts = customerFacts(catalog, orders, current, now);
   const home = customer.addresses.find((a) => a.isDefault) ?? customer.addresses[0];
   const province = home ? findProvince(home.provinceCode) : undefined;
   const ward = home ? findWard(home.provinceCode, home.wardCode) : undefined;
@@ -233,12 +235,10 @@ export function ArcCustomerScreen({
                 <Badge tone={TAG_TONE[facts.tag.tone]} size="sm">
                   {facts.tag.label}
                 </Badge>
-                <span>— {reasonFor(facts.tag.key, facts)}</span>
+                <span>— {tagReason(facts.tag.key, facts, current)}</span>
               </p>
             ) : (
-              <p className={styles.none}>
-                Chưa đủ để gắn nhãn nào: cần ≥ 2 đơn đã thanh toán, hoặc đơn đầu trong {LEX.tl} đang bán.
-              </p>
+              <p className={styles.none}>{untaggedReason(current)}</p>
             )}
           </section>
         </div>
@@ -250,13 +250,4 @@ export function ArcCustomerScreen({
 /** An order's issue, two digits, or nothing for an order of fixed styles only (slice B5). */
 function issueCell(no: number | undefined): string {
   return no === undefined ? "" : issueNo(no);
-}
-
-/** Why this person carries this label, in the numbers it was read from (v3's words). */
-function reasonFor(key: string, facts: CustomerFacts): string {
-  if (key === "loyal") {
-    return `mua ở ${facts.streak} ${LEX.tl} liên tiếp (${issuesLabel(facts.issues)})`;
-  }
-  if (key === "returning") return `${facts.booked.length} đơn đã thanh toán`;
-  return `đơn đầu là ${facts.booked[0]?.code ?? "—"}, trong ${LEX.tl} đang bán`;
 }

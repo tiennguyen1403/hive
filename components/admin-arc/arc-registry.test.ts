@@ -213,6 +213,45 @@ describe("registry/components (patches a re-install would drop, slices 2 and 3)"
   });
 });
 
+describe("registry/components (the input's prefix, slice 5b)", () => {
+  // `prefix` is also an HTML attribute (RDFa) in React's types, so a
+  // re-install that drops the patch still type-checks: the style form's "S06 –"
+  // would vanish into an attribute nobody reads. These checks catch it.
+  const source = readFileSync(join(COMPONENTS, "input", "input.tsx"), "utf8");
+  const css = rules(readFileSync(join(COMPONENTS, "input", "input.module.css"), "utf8"));
+
+  it("takes a prefix, a string, and keeps it off the <input>", () => {
+    expect(source).toMatch(/prefix\?:\s*string;/);
+    expect(source).toContain("hideLabel = false, prefix, ...props");
+  });
+
+  it("gives the segment an id and describes the input by it, before its hint and its error", () => {
+    expect(source).toContain("const prefixId = prefix ? `${controlId}-prefix` : undefined;");
+    expect(source).toContain('[props["aria-describedby"], prefixId, hintId, errorId]');
+    expect(source).toContain("<span id={prefixId} className={styles.prefix}");
+  });
+
+  it("draws Arc's own field when there is no prefix", () => {
+    expect(source).toMatch(/\{prefix \? <span className=\{styles\.affix\}>[\s\S]*?\{input\}<\/span> : input\}/);
+  });
+
+  it("sets the segment on the muted ground, ruled off from the typing, and rings the frame", () => {
+    const prefix = css.find((r) => r.selector === ".prefix");
+    expect(prefix).toBeDefined();
+    expect(prefix!.body).toMatch(/background\s*:\s*var\(--surface-muted\)/);
+    expect(prefix!.body).toMatch(/border-right\s*:\s*1px solid var\(--border\)/);
+    const frame = css.find((r) => r.selector === ".affix");
+    expect(frame).toBeDefined();
+    expect(frame!.body).toMatch(/border\s*:\s*1px solid var\(--border-strong\)/);
+    // The keyboard ring moves to the frame (QĐ-39); the input inside draws none.
+    const ring = css.find((r) => r.selector === ".affix:has(> .input:focus-visible)");
+    expect(ring).toBeDefined();
+    expect(ring!.body).toMatch(/box-shadow\s*:\s*0 0 0 3px var\(--focus-ring\)/);
+    const inner = css.find((r) => r.selector === ".affix > .input:focus-visible");
+    expect(inner!.body).toMatch(/box-shadow\s*:\s*none/);
+  });
+});
+
 describe("the app's pointer switch, beside Arc's buttons (slice 3)", () => {
   it("marks the pointer only on a trusted pointerdown: Motion fakes one when Enter presses a button", () => {
     const layout = readFileSync(join("app", "layout.tsx"), "utf8");

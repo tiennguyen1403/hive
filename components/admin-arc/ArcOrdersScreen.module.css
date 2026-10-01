@@ -230,3 +230,9 @@
     transition: none;
   }
 }
+
+/* A row's menu inside the box the screen reads its trigger from (slice 5b):
+   the box draws nothing, so the cell lays the trigger out as before. */
+.rowMenu {
+  display: contents;
+}

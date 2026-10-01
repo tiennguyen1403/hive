@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Plus } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { LEX, issueNo } from "@/lib/lexicon";
 import {
@@ -18,6 +18,7 @@ import { Select } from "@/registry/components/select/select";
 import box from "./ArcDialog.module.css";
 import { ArcPhotoPicker } from "./ArcPhotoPicker";
 import { keepOpenForToasts } from "./arc-toasts";
+import { useCapitals } from "./useCapitals";
 
 /** Lucide at 16, Arc's stroke (skill-design.md). Decorative: every icon sits beside its label. */
 const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
@@ -98,42 +99,21 @@ function TeaserForm({
   const blocker = teaserBlocker(clean, kind, photo);
   const ready = blocker === null;
 
-  /**
-   * A style's name is written in capitals, as the shop prints it: v3 drew the
-   * box in capitals, and here the value itself is, as the code field of the
-   * discount form does (slice 3), since Arc draws no uppercase transform. Not
-   * while an input method is still composing a character; the finished
-   * character is raised when it lands. Raising the value makes React rewrite
-   * the box, which would throw the caret to the end: it is put back.
-   */
-  const nameField = useRef<HTMLInputElement>(null);
-  const caret = useRef<{ start: number; end: number } | null>(null);
-  function typeName(field: HTMLInputElement, composing: boolean) {
-    const value = composing ? field.value : field.value.toLocaleUpperCase("vi");
-    if (value !== field.value) {
-      caret.current = { start: field.selectionStart ?? value.length, end: field.selectionEnd ?? value.length };
-    }
-    setName(value);
-  }
-  useLayoutEffect(() => {
-    const field = nameField.current;
-    if (!field || !caret.current) return;
-    field.setSelectionRange(caret.current.start, caret.current.end);
-    caret.current = null;
-  }, [name]);
+  // A style's name is written in capitals, as the shop prints it: v3 drew the
+  // box in capitals, and here the value itself is (`useCapitals`, shared with
+  // the style form since slice 5b).
+  const capitals = useCapitals(name, setName);
 
   return (
     <>
       <div className={box.fields}>
         <Input
-          ref={nameField}
+          {...capitals}
           label="Tên mẫu"
           placeholder="VIẾT HOA, một từ"
           autoComplete="off"
           spellCheck={false}
           value={name}
-          onChange={(e) => typeName(e.target, (e.nativeEvent as InputEvent).isComposing)}
-          onCompositionEnd={(e) => typeName(e.currentTarget, false)}
         />
         <Select
           label="Loại"

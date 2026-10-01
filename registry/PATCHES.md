@@ -93,6 +93,29 @@ Không sửa: `empty-state` (không có chuỗi tiếng Anh; icon mặc định 
 - Ô số có nút bớt và thêm (`components/admin-arc/ArcCountField.tsx`) dựng trong dự án bằng token Arc, vì bản free không có.
 - Hai tấm tồn kho dùng lại class bề rộng 680px của form mã giảm giá (mục 4).
 
+## Lần cài 01/10/2026 (đợt v5, lát 5b)
+
+- **CLI đã đổi chỗ cài.** Lệnh của brief, `printf 'n
+n
+n
+n
+' | npx shadcn@latest add @uiarc/textarea --yes` (CLI vẫn
+  4.21.0), lần này **không** hỏi ghi đè `registry/foundation.css` mà ghi 5 tệp mới vào `components/arc/`:
+  `components/arc/foundation.css` (bản gốc, chưa vá), `components/arc/motion-tokens.ts`, `components/arc/lib/motion-tokens.ts`,
+  `components/arc/textarea/textarea.tsx`, `components/arc/textarea/textarea.module.css`, và in "Arc installs into an arc/
+  folder under your components alias … Arc files import each other with relative paths". Đo ở
+  `https://uiarc.dev/r/textarea.json`: mỗi tệp nay khai `target` `@components/arc/…`, nội dung vẫn là bản Arc đang dùng
+  (`motion-tokens.ts` trùng từng dòng, `foundation.css` chỉ khác ở các chỗ vá mục 1). `git status` có `components/arc/`, ngoài
+  danh sách cho phép, nên **đã hoàn lại** (xoá thư mục vừa tạo) theo luật của brief lát 0, §3.1.
+- **Cài tay** theo mục "Manual" trong tài liệu Arc (`textarea.md`: chép nguồn vào `registry/components/textarea/`, giữ đường
+  dẫn `@/`): `registry/components/textarea/textarea.tsx` và `textarea.module.css` là đúng `files[].content` của
+  `https://uiarc.dev/r/textarea.json`, đổi **một dòng** `import { motionTokens } from "../lib/motion-tokens"` thành
+  `"@/lib/motion-tokens"`, như mọi item khác trong `registry/components/`. Không phụ thuộc mới (`motion` có từ lát 0).
+  `package.json`, `package-lock.json`, `registry/foundation.css` không đổi; `git status` chỉ thêm `registry/components/textarea/`.
+- **1 item:** textarea. Không có chuỗi tiếng Anh (nhãn, mô tả, lỗi đều do prop), nên không Việt hoá gì.
+- **Vá `input`** (mục 3): prop `prefix`, đoạn cố định ở đầu ô ("S06 –" của ô tên mẫu).
+- Form mẫu dựa thêm vào kiểu nút của Arc (file picker) và bề rộng Dialog (mục 4).
+
 ## 1. `registry/foundation.css`: khoanh vùng
 
 Arc đặt mọi luật ở `:root`, nên tệp là toàn cục: tiêu đề v3 mất Unbounded vì trùng tên `--font-display`, luật cuối xoá vòng
@@ -184,6 +207,7 @@ Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không p
 | `select/select.module.css` (lát 3, phiên chính yêu cầu 01/10) | `.trigger:focus-visible`: `outline: 3px solid var(--accent-subtle); outline-offset: 0` thành `outline: 2px solid var(--focus-ring); outline-offset: 2px`. Giữ `border-color: var(--accent)` | QĐ-39. Quầng gốc là `--accent-subtle` (accent 10%), gần như không thấy trên nền trắng: đi bằng Tab vào "Loại" hay "Hình thức giao" chỉ còn viền 1px đổi màu, trong khi mọi điều khiển Arc khác có vòng 2–3px `--focus-ring`. Bấm chuột thì `--focus-ring` trong suốt như mọi vòng khác; viền accent vẫn đổi như Arc gốc |
 | `select/select.tsx` + `.module.css` (lát 4, brief yêu cầu) | Kiểu `options` thêm `note?: string`. Mỗi dòng in `note` trong một `<span className={styles.note}>` sau `ItemText` và trước `ItemIndicator`, chỉ khi có `note`: không có thì dòng y như Arc gốc. CSS `.note`: `margin-left: auto` (dồn về cuối dòng; phần đệm phải 34px của `.item` vẫn giữ chỗ cho dấu chọn), `padding-left: var(--space-3)`, `color: var(--text-secondary)`, `font-size: var(--text-xs)` (cỡ Arc dùng cho chữ phụ cuối dòng, `.itemMeta` của `filter-toolbar`), `white-space: nowrap` | Hộp "Thêm mẫu hé lộ" (lát 4): v3 in họ của từng loại bên phải dòng ("Áo khoác dù" · "Áo khoác"). Nằm ngoài `ItemText` nên ô chọn và giá trị Radix đọc cho máy đọc màn hình chỉ có nhãn; tên của dòng (`aria-labelledby` trỏ vào `ItemText`) cũng chỉ là nhãn. Không mất gì: họ luôn là một phần của tên loại (`FAMILY_LABELS`, `data/types.ts`) |
 | `drawer/drawer.module.css` (lát 3) | Thêm `.close:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }`, đúng luật của nút đóng trong `dialog.module.css` | QĐ-39: giữ vòng focus bàn phím. Nút đóng của Drawer bản gốc không có luật `:focus-visible` nào (Arc dựa vào luật `outline: none !important` toàn cục mà dự án đã xoá, mục 1), nên đi bằng Tab thì Chrome vẽ vòng mặc định của nó, khác vòng 2–3px `--focus-ring` của mọi điều khiển Arc khác. Radix đưa focus vào nút này đầu tiên khi Drawer mở, nên vòng đó là thứ đầu tiên người dùng bàn phím thấy. Bấm chuột thì `--focus-ring` trong suốt như mọi vòng khác |
+| `input/input.tsx` + `.module.css` (lát 5b, brief yêu cầu) | Prop `prefix` (chuỗi). Có `prefix` thì ô nằm trong một khung `.affix` cùng một đoạn `.prefix` đứng đầu: nền `--surface-muted`, ngăn với phần gõ bằng viền phải 1px `--border`, chữ `--text-sm` đậm 500. Đoạn có id `{id}-prefix`, và ô nhập có `aria-describedby` trỏ tới nó (trước câu mô tả và câu lỗi), như v3. Khung nhận viền, bo góc, hover, vòng focus, viền lỗi và trạng thái vô hiệu của ô; ô bên trong bỏ viền và vòng của nó. Bấm vào đoạn thì con trỏ vào ô (v3 làm được nhờ `pointer-events: none`). Không có `prefix` thì Input y như Arc gốc | Form mẫu (lát 5b): ô tên mẫu của một số mang mã số ở đầu ("S06 –", `stylePrefix`), gõ quanh nó chứ không gõ nó. Arc `Input` không có phần đầu ô |
 
 Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, `iconOnly`, `hideLabel` của
 `SearchField` và của `Input`, `formatTick` của `BarChart`) đều có mặc định giữ hành vi gốc. Cài lại bản mới mà quên vá thì
@@ -197,18 +221,29 @@ bản Arc gốc chỉ lặng lẽ bỏ chữ phụ. Test "lets a select option c
 kiểu có `note`, `note` nằm sau `ItemText` và trước `ItemIndicator`, và luật `.note` có `margin-left: auto` cùng
 `--text-secondary`.
 
+Prop `prefix` của `input` (lát 5b) cũng **không** bị `npm run typecheck` bắt khi mất: `prefix` còn là thuộc tính HTML (RDFa) trong
+kiểu của React, nên bản Arc gốc vẫn nhận nó và lặng lẽ đưa xuống `<input prefix="S06 –">`, không vẽ gì. Bốn test "the input's
+prefix" trong `arc-registry.test.ts` canh chỗ vá: kiểu và việc tách `prefix` khỏi `...props`, id và `aria-describedby`, nhánh
+không có `prefix`, và các luật `.prefix`, `.affix`.
+
 ## 4. Mã dự án dựa vào tên class nội bộ của Arc
 
 | Tệp | Dựa vào | Vì sao |
 |---|---|---|
 | `components/admin-arc/ArcButtonLink.tsx` | class `button`, biến thể (`primary`, `secondary`, `ghost`, `danger`) và cỡ (`sm`, `md`, `lg`) của `registry/components/button/button.module.css` | Arc `Button` bản free không có `href`; wrapper render `next/link` với đúng kiểu nút. Không vá Button. Bản mới đổi tên class thì link mất kiểu nút (build vẫn qua) |
 | `components/admin-arc/ArcPromoDrawer.module.css` (lát 3) | biến `--drawer-size` mà `.content` của `registry/components/drawer/drawer.module.css` đọc để đặt bề rộng panel, và thuộc tính `data-side` trên panel | Form mã giảm giá rộng 680px như `AdminSheet` bản `wide` của v3 (brief lát 3, §3.4), trong khi Drawer cố định `min(30rem, …)` và không có prop bề rộng. Class đi vào panel qua `className` (prop Radix có trong tài liệu); luật `.drawer[data-side]` đặt lại biến, thuộc tính giúp nó thắng luật gốc bất kể thứ tự nạp CSS. Không vá Drawer. Bản mới đổi tên biến thì form về 480px (build vẫn qua). Từ lát 5a hai tấm tồn kho (`ArcStockDrawer.tsx`) dùng lại đúng class này, nên cũng về 480px và lưới màu × size của chúng chật lại |
+| `components/admin-arc/ArcPhotoRow.tsx` (lát 5b) | class `button`, `secondary`, `sm` của `registry/components/button/button.module.css`, như `ArcButtonLink` | Ba nút chọn tệp "Chọn tệp", "Tải ảnh thật", "Đổi ảnh" là `<label>` bọc ô file ẩn (brief lát 5b, §3.5), nên không dùng được Arc `Button`; nhãn mượn kiểu nút. Bản mới đổi tên class thì ba nhãn mất kiểu nút (build vẫn qua) |
+| `components/admin-arc/ArcCropDialog.module.css` (lát 5b) | Arc đặt bề rộng Dialog (`width: min(…, 440px)` ở `.content`) lên đúng phần tử nhận `className` của `DialogContent`, và thuộc tính `data-state` Radix gắn lên đó | Hộp "Chọn vùng cắt" rộng 720px như v3 (brief lát 5b, §2). Luật `.dialog[data-state]` thắng luật gốc bất kể thứ tự nạp CSS. Không vá Dialog. Bản mới đặt bề rộng ở phần tử khác thì hộp về 440px (build vẫn qua) |
 
 ## Cài lại bản mới
 
 1. `npx shadcn@latest add @uiarc/<id> … --overwrite` (không bao giờ `init`). Kiểm `git status` như trên. `--overwrite` ghi đè
    cả `registry/foundation.css` (kéo theo qua `arc-foundation`): vá lại mục 1 ngay. Cài item **mới** thì không dùng
    `--overwrite`, trả lời `n` cho câu hỏi ghi đè `foundation.css` (lần cài lát 1).
+   **Từ 01/10/2026 (lát 5b) registry của Arc đặt mọi tệp vào `components/arc/`** với đường dẫn tương đối, nên lệnh trên không
+   còn ghi vào `registry/`. Đừng chạy nó như cũ: tải `https://uiarc.dev/r/<id>.json`, chép `files[].content` vào
+   `registry/components/<id>/` và đổi import `../lib/motion-tokens` thành `@/lib/motion-tokens` (lần cài lát 5b), hoặc để
+   phiên chính quyết một cách cài mới.
 2. Vá lại theo mục 1 đến 3; mọi chỗ vá cũ có chú giải `HIVE patch` để tìm bằng `git diff`.
 3. `npx vitest run components/admin-arc lib/admin-arc.test.ts` và `npm run typecheck` phải xanh. Chuỗi tiếng Anh mới xuất hiện
    thì thêm vào `arc-english-strings.ts` và dịch.

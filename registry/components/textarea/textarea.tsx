@@ -1,21 +1,10 @@
 "use client";
-
 import { forwardRef, useEffect, useId, useRef, useState } from "react";
-import type { InputHTMLAttributes } from "react";
+import type { TextareaHTMLAttributes } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { motionTokens } from "@/lib/motion-tokens";
-import styles from "./input.module.css";
-
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  description?: string;
-  error?: string;
-  /** HIVE patch (registry/PATCHES.md): hides the label from sight but keeps it for screen readers, for a field whose context names it (skill-accessibility.md), as `SearchField`'s `hideLabel`. */
-  hideLabel?: boolean;
-  /** HIVE patch (registry/PATCHES.md): a fixed segment at the head of the field, such as "S06 –", on the muted ground and ruled off from what is typed. It has an id, and the input is described by it. Without it the field is Arc's own. */
-  prefix?: string;
-}
-
+import styles from "./textarea.module.css";
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> { label: string; description?: string; error?: string }
 /* Digits roll up when a number grows and down when it shrinks; `custom` hands the latest direction to digits already leaving. */
 const digit = {
   enter: (direction: number) => ({ opacity: 0, y: `${direction * 0.6}em`, filter: `blur(${motionTokens.blur.subtle}px)` }),
@@ -63,31 +52,13 @@ function MessageRow({ id, text, className, alert }: { id?: string; text: string;
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
-  // Reduced motion mounts the row at full height: a zero-duration open would still paint one collapsed frame. The presence starts
-  // with initial={false}, so rows present at hydration render the same on server and client either way.
   return <motion.span className={styles.messageSlot} initial={reduced ? false : { height: 0, opacity: 0 }} animate={{ height, opacity: 1 }} exit={{ height: 0, opacity: 0, transition: reduced ? { duration: 0 } : { height: motionTokens.spring.smooth, opacity: { duration: motionTokens.duration.instant } } }} transition={reduced ? { duration: 0 } : { height: motionTokens.spring.smooth, opacity: { duration: motionTokens.duration.fast } }}>
     <motion.span ref={copyRef} id={id} className={className} role={alert ? "alert" : undefined} initial={reduced ? false : { y: "0.35em", filter: `blur(${motionTokens.blur.soft}px)` }} animate={{ y: 0, filter: "blur(0px)" }} transition={{ duration: reduced ? 0 : motionTokens.duration.standard, ease: [...motionTokens.ease.enter] }}><MotionText text={text} /></motion.span>
   </motion.span>;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, description, error, id, className, hideLabel = false, prefix, ...props }, ref,
-) {
-  const generatedId = useId();
-  const controlId = id ?? generatedId;
-  const hintId = description ? `${controlId}-description` : undefined;
-  const errorId = error ? `${controlId}-error` : undefined;
-  // HIVE patch (registry/PATCHES.md): the prefix is read with the field, before its hint and its error.
-  const prefixId = prefix ? `${controlId}-prefix` : undefined;
-  const describedBy = [props["aria-describedby"], prefixId, hintId, errorId].filter(Boolean).join(" ") || undefined;
-  const input = <input {...props} id={controlId} ref={ref} className={[styles.input, className].filter(Boolean).join(" ")} aria-invalid={error ? true : props["aria-invalid"]} aria-describedby={describedBy}/>;
-  return <div className={styles.field}>
-    <label className={hideLabel ? styles.srOnly : styles.label} htmlFor={controlId}>{label}</label>
-    {/* HIVE patch (registry/PATCHES.md): the prefix and the input share one frame. A press on the segment puts the caret in the input, as the v3 field did. */}
-    {prefix ? <span className={styles.affix}><span id={prefixId} className={styles.prefix} onMouseDown={event => { event.preventDefault(); (event.currentTarget.nextElementSibling as HTMLInputElement | null)?.focus(); }}>{prefix}</span>{input}</span> : input}
-    <FieldMessage id={hintId} text={description} className={styles.description} />
-    <FieldMessage id={errorId} text={error} className={styles.error} alert />
-  </div>;
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea({ label, description, error, id, className, ...props }, ref) {
+  const generatedId = useId(); const controlId = id ?? generatedId;
+  const hintId = description ? `${controlId}-description` : undefined; const errorId = error ? `${controlId}-error` : undefined;
+  return <div className={styles.field}><label htmlFor={controlId}>{label}</label><textarea {...props} id={controlId} ref={ref} className={[styles.control, className].filter(Boolean).join(" ")} aria-invalid={error ? true : props["aria-invalid"]} aria-describedby={[props["aria-describedby"], hintId, errorId].filter(Boolean).join(" ") || undefined}/><FieldMessage id={hintId} text={description} className={styles.hint} /><FieldMessage id={errorId} text={error} className={styles.error} alert /></div>;
 });
-
-Input.displayName = "Input";

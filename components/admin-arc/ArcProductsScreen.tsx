@@ -488,7 +488,7 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
               <Download {...ICON} />
               Tải CSV
             </Button>
-            {/* The form is still v3's until slice 5b: the frame changes on the way. */}
+            {/* The form is in the Arc frame too since slice 5b: the frame stays on the way. */}
             <ArcButtonLink variant="primary" size="sm" href="/admin/products/new">
               <Plus {...ICON} />
               Thêm mẫu

@@ -1,3 +1,5 @@
+import { readdirSync, statSync } from "node:fs";
+import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ARC_ADMIN_PATHS, ARC_ADMIN_TREES, isArcAdminPath } from "./admin-arc";
 
@@ -7,11 +9,11 @@ import { ARC_ADMIN_PATHS, ARC_ADMIN_TREES, isArcAdminPath } from "./admin-arc";
  * slice 1 the whole of "Đơn hàng" is Arc: the book, each order, the slips.
  * Since slice 2 the overview and the activity log are too; since slice 3 the
  * customers, each customer's page, and the discount codes; since slice 4 the
- * issues and each issue's page; since slice 5a the styles table, without the
- * style form under it.
+ * issues and each issue's page; since slice 5a the styles table; since slice
+ * 5b the style form under it, and with it every page of `app/admin/`.
  */
 describe("isArcAdminPath", () => {
-  it("lists the overview, the orders, the slips, the log, the customers, the codes, the issues, the styles, and three trees", () => {
+  it("lists the overview, the orders, the slips, the log, the customers, the codes, the issues, the styles, and four trees", () => {
     expect(ARC_ADMIN_PATHS).toEqual([
       "/admin",
       "/admin/orders",
@@ -22,7 +24,7 @@ describe("isArcAdminPath", () => {
       "/admin/drops",
       "/admin/products",
     ]);
-    expect(ARC_ADMIN_TREES).toEqual(["/admin/orders/", "/admin/customers/", "/admin/drops/"]);
+    expect(ARC_ADMIN_TREES).toEqual(["/admin/orders/", "/admin/customers/", "/admin/drops/", "/admin/products/"]);
   });
 
   it("matches the overview, with or without a trailing slash", () => {
@@ -90,18 +92,60 @@ describe("isArcAdminPath", () => {
     expect(isArcAdminPath("/admin/dropsx")).toBe(false);
     expect(isArcAdminPath("/admin/dropsx/05")).toBe(false);
     expect(isArcAdminPath("/admin/productsx")).toBe(false);
+    expect(isArcAdminPath("/admin/productsx/new")).toBe(false);
   });
 
-  it("does not match the screens still on v3: the style form, new or edited (until slice 5b)", () => {
-    expect(isArcAdminPath("/admin/products/new")).toBe(false);
-    expect(isArcAdminPath("/admin/products/new/")).toBe(false);
-    expect(isArcAdminPath("/admin/products/p-khoi")).toBe(false);
-    expect(isArcAdminPath("/admin/products/p-ao-thun-tron")).toBe(false);
+  it("matches the style form, new or edited, whatever the style (slice 5b)", () => {
+    expect(isArcAdminPath("/admin/products/new")).toBe(true);
+    expect(isArcAdminPath("/admin/products/new/")).toBe(true);
+    expect(isArcAdminPath("/admin/products/p-khoi")).toBe(true);
+    expect(isArcAdminPath("/admin/products/p-ao-thun-tron")).toBe(true);
+    expect(isArcAdminPath("/admin/products/p-khoi/")).toBe(true);
   });
 
   it("does not match the shop", () => {
     expect(isArcAdminPath("/")).toBe(false);
     expect(isArcAdminPath("")).toBe(false);
     expect(isArcAdminPath("/account/orders")).toBe(false);
+  });
+});
+
+/**
+ * Every page in `app/admin/`, as the address it answers (slice 5b): a folder
+ * per segment, a dynamic segment (`[id]`, `[...slug]`) filled with a sample
+ * value, a route group (`(group)`) dropped. Read from the disk, so a page added
+ * later is checked without anybody remembering to list it here.
+ */
+function adminPages(dir = join("app", "admin")): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) return adminPages(path);
+    return name === "page.tsx" ? [path] : [];
+  });
+}
+
+function addressOf(page: string): string {
+  const segments = relative("app", page).split(sep).slice(0, -1);
+  const path = segments
+    .filter((s) => !(s.startsWith("(") && s.endsWith(")")))
+    .map((s) => (s.startsWith("[") && s.endsWith("]") ? "sample-1" : s))
+    .join("/");
+  return `/${path}`;
+}
+
+describe("every page of app/admin (slice 5b)", () => {
+  const pages = adminPages();
+
+  it("finds the back office's pages", () => {
+    // 13 when slice 5b landed: the overview, the orders and an order, the
+    // slips, the log, the customers and a customer, the codes, the issues and
+    // an issue, the styles, a new style and a style.
+    expect(pages.length).toBeGreaterThanOrEqual(13);
+    expect(pages.map(addressOf)).toContain("/admin/products/new");
+    expect(pages.map(addressOf)).toContain("/admin/products/sample-1");
+  });
+
+  it.each(adminPages().map((page) => [addressOf(page), page]))("wears the Arc frame at %s (%s)", (address) => {
+    expect(isArcAdminPath(address)).toBe(true);
   });
 });

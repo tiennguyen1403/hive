@@ -3,7 +3,7 @@
 import { Check, MoreHorizontal, Package, Pencil, Printer, Send, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useId, useMemo, useState, useTransition } from "react";
+import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { COLORS } from "@/data/colors";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
@@ -103,6 +103,8 @@ export function ArcOrderScreen({
   const [handing, setHanding] = useState(openHandover && nextMove(order, now) === "HAND_OVER");
   const [editingAddress, setEditingAddress] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  /** The heading's actions: "Thao tác khác", which opens the cancel dialog, and "In phiếu giao". */
+  const actions = useRef<HTMLDivElement>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<Busy>(null);
   const [, startAction] = useTransition();
@@ -171,7 +173,7 @@ export function ArcOrderScreen({
                 {state.text}
               </Badge>
             </div>
-            <div className={page.actions}>
+            <div className={page.actions} ref={actions}>
               <Badge size="sm">Dữ liệu mẫu</Badge>
               {/* No mail server is connected, so nothing can be sent: the
                   button says so rather than pretending (DESIGN.md §9 rule 3).
@@ -487,6 +489,18 @@ export function ArcOrderScreen({
 
       <ArcCancelOrderDialog
         order={cancelling ? order : null}
+        // Radix hands focus back only to a `DialogTrigger` (slice 5b): back to
+        // "Thao tác khác", which opened it, or, once the order is cancelled
+        // and the menu has gone with the move it offered, to "In phiếu giao".
+        onCloseAutoFocus={(event) => {
+          const box = actions.current;
+          const back =
+            box?.querySelector<HTMLElement>('button[aria-haspopup="menu"]') ??
+            box?.querySelector<HTMLElement>("a[href]");
+          if (!back) return;
+          event.preventDefault();
+          back.focus();
+        }}
         pending={busy === "CANCEL"}
         onClose={() => setCancelling(false)}
         onConfirm={(reason, why) =>
