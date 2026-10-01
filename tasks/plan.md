@@ -3215,3 +3215,9 @@ Sidecar `.impeccable/design.json` vẫn là Feed, chỉ đổi phần mô tả.
   - Còn 2 `design-system-radius` ở `ArcCountField` (góc đồng tâm).
 - DESIGN.md và sidecar commit cùng lượt này (người dùng cho phép). **Đợt v5 xong phần việc**; chưa push. Lên online cần
   `db push` hai migration B14, B14b trước khi push code.
+
+**01/10, ĐỢT v5 LÊN ONLINE.**
+- Người dùng chạy `db push --linked --dry-run`: đúng hai migration (B14, B14b), không seed. Rồi chạy `--yes`.
+- Phiên chính kiểm chỉ đọc trên hosted: `admin_add_drop` và `admin_schedule_drop` có luật B14b và khoá bảng; `anon` không gọi
+  được, `authenticated` gọi được; migration cuối `20261001120000`; lịch demo không có cặp số trùng hay đảo thứ tự.
+- Lệnh push của phiên chính bị hệ thống quyền chặn. Người dùng tự push: `65f4a88..3ffa49f`.
