@@ -5,6 +5,7 @@ import { COLORS } from "@/data/colors";
 import { productId, type ColorKey } from "@/data/types";
 import {
   NO_CHANGE_MESSAGE,
+  calendarRefusal,
   catalogFailureMessage,
   catalogFailureOf,
   checkAdjustment,
@@ -12,8 +13,11 @@ import {
   cutTotal,
   dropSubject,
   failureDetail,
+  failureHint,
   isEmptyPatch,
   nextDropNo,
+  orderClash,
+  orderMessage,
   overlapMessage,
   overlappingDrop,
   productPatch,
@@ -121,15 +125,16 @@ type CatalogFunction =
   | "admin_set_product_photo"
   | "admin_reorder_colors";
 
-/** What one call answered: its data, or the failure and what it was about. */
+/** What one call answered: its data, or the failure, what it was about and what kind it was. */
 type Called<T> =
   | { ok: true; data: T }
-  | { ok: false; failure: CatalogFailure; detail: string };
+  | { ok: false; failure: CatalogFailure; detail: string; hint: string };
 
 /**
  * Run one `admin_*` function and keep what it returned — the new style's id,
- * the photo a swap replaced — or the code it refused with and its DETAIL
- * (the colour, the issue in the way). A failure the database did not name is
+ * the photo a swap replaced — or the code it refused with, its DETAIL (the
+ * colour, the issue in the way) and its HINT (since slice B14b, what that
+ * issue is to a refused window). A failure the database did not name is
  * logged for the server and reported to the screen only as "chưa lưu được".
  */
 async function call<T = unknown>(fn: CatalogFunction, args: Record<string, unknown>): Promise<Called<T>> {
@@ -138,7 +143,7 @@ async function call<T = unknown>(fn: CatalogFunction, args: Record<string, unkno
   if (!error) return { ok: true, data: data as T };
   const failure = catalogFailureOf(error);
   if (failure === "UNAVAILABLE") console.error(`${fn}:`, error.message);
-  return { ok: false, failure, detail: failureDetail(error) };
+  return { ok: false, failure, detail: failureDetail(error), hint: failureHint(error) };
 }
 
 /** `call` for the functions that return nothing: null when it went through. */
@@ -248,7 +253,15 @@ export async function restockProduct(id: unknown, cells: unknown, note?: unknown
 }
 
 // ─────────────────────────────────────────────────────────────── the issues
-/** "Tạo số": the next number, two instants. */
+/**
+ * "Tạo số": the next number, two instants.
+ *
+ * Slice B14b: in the order of the numbers too — a new issue opens no earlier
+ * than the one before it closes ("Số 07 phải mở sau khi Số 06 đóng",
+ * `orderClash`), asked after the overlap, which is said first. The database
+ * asks both again under its lock; its refusal names the other issue in DETAIL
+ * and the rule in HINT, and reads the same (`calendarRefusal`).
+ */
 export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
   const pace = await takeRates("admin", "admin_create");
@@ -264,6 +277,8 @@ export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown):
   // names the issue in the way the same way.
   const clash = overlappingDrop(catalog.drops, window.value);
   if (clash) return refused(overlapMessage(clash.no));
+  const order = orderClash(catalog.drops, n, window.value);
+  if (order) return refused(orderMessage(n, order.side, order.drop.no));
 
   const result = await call("admin_add_drop", {
     p_no: n,
@@ -272,11 +287,8 @@ export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown):
     p_now: now(),
   });
   if (!result.ok) {
-    const other = Number(result.detail);
-    if (result.failure === "NOT_ALLOWED" && Number.isInteger(other) && other > 0) {
-      return refused(overlapMessage(other));
-    }
-    return failed("ADD_DROP", result.failure, dropSubject(n));
+    const said = calendarRefusal(n, result.failure, result.detail, result.hint);
+    return said ? refused(said) : failed("ADD_DROP", result.failure, dropSubject(n));
   }
 
   catalogMoved();
@@ -292,6 +304,13 @@ export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown):
  * (`scheduleClash`). The database asks the same under a lock, and its own
  * refusal — another tab moved an issue in between — names the issue in DETAIL
  * and reads the same.
+ *
+ * Slice B14b: in the order of the numbers too — the issue opens no earlier
+ * than the one before it closes and closes no later than the one after it
+ * opens ("Số 07 phải mở sau khi Số 06 đóng", "Số 06 phải đóng trước khi Số 07
+ * mở", `orderClash`), asked after the overlap, which is said first. A window
+ * that only narrows is never refused by this rule either. The database's
+ * refusal carries the rule in HINT and reads the same (`calendarRefusal`).
  */
 export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
@@ -307,6 +326,8 @@ export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unkn
   if (!drop) return failed("SCHEDULE_DROP", "NOT_FOUND", dropSubject(n));
   const clash = scheduleClash(catalog.drops, drop, window.value);
   if (clash) return refused(overlapMessage(clash.no));
+  const order = orderClash(catalog.drops, n, window.value);
+  if (order) return refused(orderMessage(n, order.side, order.drop.no));
 
   const result = await call("admin_schedule_drop", {
     p_no: n,
@@ -315,11 +336,8 @@ export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unkn
     p_now: now(),
   });
   if (!result.ok) {
-    const other = Number(result.detail);
-    if (result.failure === "NOT_ALLOWED" && Number.isInteger(other) && other > 0) {
-      return refused(overlapMessage(other));
-    }
-    return failed("SCHEDULE_DROP", result.failure, dropSubject(n));
+    const said = calendarRefusal(n, result.failure, result.detail, result.hint);
+    return said ? refused(said) : failed("SCHEDULE_DROP", result.failure, dropSubject(n));
   }
 
   catalogMoved();

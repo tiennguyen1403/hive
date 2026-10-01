@@ -3093,3 +3093,25 @@ như "Tạo số". Thu hẹp, kể cả "Đóng sớm", thì không bao giờ b�
     "Nhân bản" mã giảm giá, Tổng quan. Không trùng lịch nhưng đảo thứ tự (Số 07 chạy trước Số 06) thì các chỗ này báo sai.
   - `catalog.currentDropNo` là số lớn nhất có mẫu, không phải số đang bán. Thêm một mẫu cho số sắp mở là Tổng quan ("Còn trong
     Số NN", "Bán chạy trong Số NN") và nhãn "mới" của khách nhảy sang số đó. Lỗi này xảy ra cả khi dùng bình thường.
+
+**01/10, B14 commit `ce56bb7`** (người dùng cho phép; chưa push). Người dùng quyết thêm hai việc:
+- **B14b** (`tasks/briefs/backend-b14b.md`, `backend-implementer`): luật "số sau phải mở sau khi số trước đóng" cho "Tạo số" và
+  "Sửa giờ". Câu báo đã duyệt: "Số 07 phải mở sau khi Số 06 đóng", "Số 06 phải đóng trước khi Số 07 mở". Trùng lịch thì vẫn
+  báo câu của B14. Thu hẹp không bao giờ bị chặn. Có migration mới.
+- **"Số hiện tại" sửa trong lát 5a:** Tổng quan và nhãn khách theo số đang bán; giữa hai số thì theo số vừa đóng gần nhất.
+
+Lát 5 chia hai, phiên chính quyết để giảm rủi ro (v3 có khoảng 2.400 dòng):
+- 5a: bảng Mẫu và hai tấm tồn kho (`tasks/briefs/v5-lat-5a.md`);
+- 5b: form thêm và sửa mẫu, ảnh, khung cắt (`tasks/briefs/v5-lat-5b.md`, bản nháp).
+Thứ tự chạy: B14b, rồi 5a, rồi 5b.
+
+**01/10, B14b ĐẠT (phiên chính duyệt), chờ người dùng cho commit.** Migration `20261001120000_drops_in_number_order.sql` thay
+`admin_add_drop()` và `admin_schedule_drop()`. Thứ tự kiểm: trùng, rồi số trước, rồi số sau. Lời từ chối là `NOT_ALLOWED`,
+DETAIL là số kia, HINT là `OVERLAP` / `PREVIOUS` / `NEXT`; code mới đọc được DB cũ (thiếu HINT thì hiểu là trùng). Câu báo
+đúng hai câu người dùng duyệt. 1.851 test và 65 test DB của tệp này xanh (phiên chính tự chạy lại; agent chạy đủ `test:db`
+309/309). Bảng hàm ở `supabase/README.md` đã cập nhật.
+- **Lên online:** `npx supabase db push --linked --dry-run` phải thấy hai migration (B14, B14b), rồi `--yes`. Không nạp lại
+  seed. `db push` trước, push code sau.
+- Câu kiểm chỉ đọc sau khi push: `select p.proname, p.prosrc like '%''PREVIOUS''%' as b14b from pg_proc p where
+  p.pronamespace = 'public'::regnamespace and p.proname in ('admin_add_drop', 'admin_schedule_drop') order by p.proname;`
+  phải ra hai dòng `true`.

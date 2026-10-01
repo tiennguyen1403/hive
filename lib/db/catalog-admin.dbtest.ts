@@ -42,10 +42,16 @@ import type { Database, Json } from "./database.types";
  * role and removes them when the file ends — `reset_demo()` empties tables,
  * not the bucket.
  *
- * SLICE B14 (`20261001100000_schedule_drop_overlap.sql`) comes last:
+ * SLICE B14 (`20261001100000_schedule_drop_overlap.sql`) comes next:
  * "Sửa giờ" refuses a window that overlaps another issue, as "Tạo số" does,
  * never refuses one that only narrows ("Đóng sớm" always closes), and two
  * moves made at once cannot both take the same days.
+ *
+ * SLICE B14b (`20261001120000_drops_in_number_order.sql`) comes last: the
+ * issues run in the order of their numbers, for "Tạo số" and "Sửa giờ"
+ * alike — `NOT_ALLOWED` with the neighbour in DETAIL and `PREVIOUS` or `NEXT`
+ * in HINT, an overlap said first (`OVERLAP`), a narrowing never refused, and
+ * two moves made at once cannot swap two issues' places.
  *
  * Needs a running stack WITH STORAGE (`[storage] enabled = true`), `.env.local`
  * and the nine demo accounts (`npm run seed:users`).
@@ -1510,25 +1516,29 @@ describe("admin_schedule_drop keeps one issue at a time, slice B14", () => {
   });
 
   it("lets only one of two moves made at once take the same days", async () => {
-    // Số 07 right after Số 06; then both asked, at the same moment, for one fortnight a month on.
+    // Số 07 a month after Số 06 closes; then both asked, at the same moment, for
+    // the same fortnight in the gap between them — a move each would make alone.
+    // (Until slice B14b Số 07 sat right after Số 06 and both asked for a
+    // fortnight a month on, which now moves Số 06 past Số 07 whoever goes first.)
     const six = (await snapshot()).dropByNo.get(6)!;
     const seven = await manager.rpc("admin_add_drop", {
       p_no: 7,
-      p_opens_at: six.closesAt,
-      p_closes_at: plusDays(six.closesAt, 14),
+      p_opens_at: plusDays(six.closesAt, 30),
+      p_closes_at: plusDays(six.closesAt, 44),
       p_now: now(),
     });
     expect(seven.error).toBeNull();
 
-    const opens = plusDays(six.closesAt, 30);
-    const closes = plusDays(six.closesAt, 44);
+    const opens = plusDays(six.closesAt, 7);
+    const closes = plusDays(six.closesAt, 21);
     const answers = await Promise.all([move(6, opens, closes), move(7, opens, closes)]);
     const refused = answers.filter((a) => a.error !== null);
     expect(refused).toHaveLength(1);
     expect(refused[0]!.error?.message).toBe("NOT_ALLOWED");
-    // The one refused names the one that won.
+    // The one refused names the one that won, as an overlap.
     const won = answers[0]!.error === null ? "6" : "7";
     expect(refused[0]!.error?.details).toBe(won);
+    expect(refused[0]!.error?.hint).toBe("OVERLAP");
 
     const drops = (await snapshot()).drops;
     for (const a of drops) {
@@ -1536,5 +1546,158 @@ describe("admin_schedule_drop keeps one issue at a time, slice B14", () => {
         if (a.no < b.no) expect(overlap(a, b), `Số ${a.no} and Số ${b.no}`).toBe(false);
       }
     }
+  });
+});
+
+// ══════════════════════════════════════════════════════════════ slice B14b
+// `20261001120000_drops_in_number_order.sql`: the issues run in the order of
+// their numbers. An issue opens no earlier than the previous one closes and
+// closes no later than the next one opens, for "Tạo số" and "Sửa giờ" alike:
+// `NOT_ALLOWED`, the neighbour in DETAIL, `PREVIOUS` or `NEXT` in HINT. An
+// overlap is said first (`OVERLAP`), and a window that only narrows is never
+// refused, so "Đóng sớm" closes even on a calendar already out of order.
+
+describe("the issues run in the order of their numbers, slice B14b", () => {
+  /** "Sửa giờ", as `scheduleDrop` sends it. */
+  const move = (no: number, opensAt: string, closesAt: string, at = now()) =>
+    manager.rpc("admin_schedule_drop", { p_no: no, p_opens_at: opensAt, p_closes_at: closesAt, p_now: at });
+  /** "Tạo số", as `addDrop` sends it. */
+  const add = (no: number, opensAt: string, closesAt: string) =>
+    manager.rpc("admin_add_drop", { p_no: no, p_opens_at: opensAt, p_closes_at: closesAt, p_now: now() });
+
+  /** `iso` moved by whole days or minutes, in the app's shape. */
+  const plusDays = (iso: string, days: number) => toVnIso(new Date(Date.parse(iso) + days * 86_400_000));
+  const plusMinutes = (iso: string, minutes: number) => toVnIso(new Date(Date.parse(iso) + minutes * 60_000));
+
+  /** Every issue opens no earlier than the one numbered before it closes. */
+  const inOrder = (drops: readonly Drop[]) =>
+    [...drops]
+      .sort((a, b) => a.no - b.no)
+      .every((d, i, all) => i === 0 || Date.parse(all[i - 1]!.closesAt) <= Date.parse(d.opensAt));
+
+  /** The calendar with Số 07 from the day after Số 06 closes, for a fortnight: what "Tạo số" proposes. */
+  async function withSeven() {
+    const six = (await snapshot()).dropByNo.get(6)!;
+    const opens = plusDays(six.closesAt, 1);
+    const { error } = await add(7, opens, plusDays(opens, 14));
+    expect(error).toBeNull();
+    const { dropByNo } = await snapshot();
+    return { five: dropByNo.get(5)!, six: dropByNo.get(6)!, seven: dropByNo.get(7)! };
+  }
+
+  it("refuses 'Tạo số' opening before the previous issue closes, though it overlaps nothing — PREVIOUS, naming it — and writes nothing", async () => {
+    const before = await snapshot();
+    const five = before.dropByNo.get(5)!;
+    const six = before.dropByNo.get(6)!;
+    const events = await eventCount();
+
+    // The week between Số 05 closing and Số 06 opening: clear of every issue, but before Số 06 closes.
+    const between = await add(7, plusDays(five.closesAt, 1), plusDays(six.opensAt, -1));
+    expect(between.error).toMatchObject({ message: "NOT_ALLOWED", details: "6", hint: "PREVIOUS" });
+    expect((await snapshot()).drops).toEqual(before.drops);
+    expect(await eventCount()).toBe(events);
+
+    // Opening the instant Số 06 closes is fine.
+    expect((await add(7, six.closesAt, plusDays(six.closesAt, 14))).error).toBeNull();
+    expect(inOrder((await snapshot()).drops)).toBe(true);
+  });
+
+  it("says the overlap first when a new issue runs into one and opens before the previous one closes", async () => {
+    const five = (await snapshot()).dropByNo.get(5)!;
+    const inside = await add(7, plusDays(five.opensAt, 1), plusDays(five.opensAt, 3));
+    expect(inside.error).toMatchObject({ message: "NOT_ALLOWED", details: "5", hint: "OVERLAP" });
+  });
+
+  it("refuses moving an issue to open before the previous one closes — 'Số 07 phải mở sau khi Số 06 đóng' — and writes nothing", async () => {
+    const { five, six, seven } = await withSeven();
+    const before = await snapshot();
+    const events = await eventCount();
+
+    // The brief's case: Số 07 into the week before Số 06 opens, clear of every issue.
+    const early = await move(7, plusDays(five.closesAt, 1), plusDays(six.opensAt, -1));
+    expect(early.error).toMatchObject({ message: "NOT_ALLOWED", details: "6", hint: "PREVIOUS" });
+    expect((await snapshot()).drops).toEqual(before.drops);
+    expect(await eventCount()).toBe(events);
+
+    // Opening the instant Số 06 closes is fine.
+    expect((await move(7, six.closesAt, seven.closesAt)).error).toBeNull();
+    expect((await snapshot()).dropByNo.get(7)).toEqual({ no: 7, opensAt: six.closesAt, closesAt: seven.closesAt });
+  });
+
+  it("refuses moving an issue to close after the next one opens — 'Số 06 phải đóng trước khi Số 07 mở' — and writes nothing", async () => {
+    const { six, seven } = await withSeven();
+    const before = await snapshot();
+    const events = await eventCount();
+
+    // Số 06 moved past Số 07, clear of every issue.
+    const past = await move(6, plusDays(seven.closesAt, 1), plusDays(seven.closesAt, 10));
+    expect(past.error).toMatchObject({ message: "NOT_ALLOWED", details: "7", hint: "NEXT" });
+    expect((await snapshot()).drops).toEqual(before.drops);
+    expect(await eventCount()).toBe(events);
+
+    // Closing the instant Số 07 opens is fine; a minute later runs into Số 07.
+    const late = await move(6, six.opensAt, plusMinutes(seven.opensAt, 1));
+    expect(late.error).toMatchObject({ message: "NOT_ALLOWED", details: "7", hint: "OVERLAP" });
+    expect((await move(6, six.opensAt, seven.opensAt)).error).toBeNull();
+    expect(inOrder((await snapshot()).drops)).toBe(true);
+  });
+
+  it("says the overlap first when a move runs into an issue and breaks the order", async () => {
+    const { five, seven } = await withSeven();
+    // Số 07 into Số 05: it overlaps Số 05 and opens before Số 06 closes.
+    const into = await move(7, plusDays(five.opensAt, 1), plusDays(five.opensAt, 3));
+    expect(into.error).toMatchObject({ message: "NOT_ALLOWED", details: "5", hint: "OVERLAP" });
+    // Số 06 onto Số 07: it overlaps Số 07 and closes after Số 07 opens.
+    const onto = await move(6, plusDays(seven.opensAt, 1), plusDays(seven.closesAt, 1));
+    expect(onto.error).toMatchObject({ message: "NOT_ALLOWED", details: "7", hint: "OVERLAP" });
+  });
+
+  it("closes a selling issue early — 'Đóng sớm' — on a calendar already out of order; widening it again is refused", async () => {
+    // Số 06 back before Số 05 opened, written straight into the table: what
+    // "Sửa giờ" could leave behind before this slice.
+    const five = (await snapshot()).dropByNo.get(5)!;
+    const moved = await service
+      .from("drops")
+      .update({ opens_at: plusDays(five.opensAt, -9), closes_at: plusDays(five.opensAt, -2) })
+      .eq("no", 6);
+    if (moved.error) throw new Error(moved.error.message);
+    const out = await snapshot();
+    expect(inOrder(out.drops)).toBe(false);
+    const six = out.dropByNo.get(6)!;
+
+    // `closeDropNow`'s call on Số 05, selling: its own opening hour, closing now.
+    const at = now();
+    expect((await move(5, five.opensAt, at, at)).error).toBeNull();
+    expect((await snapshot()).dropByNo.get(5)).toEqual({ no: 5, opensAt: five.opensAt, closesAt: at });
+    expect((await place(service, {}, plusMinutes(at, 1))).error?.message).toBe("DROP_CLOSED");
+    // Số 06, out of place, narrowed: never refused either.
+    expect((await move(6, plusDays(six.opensAt, 1), six.closesAt)).error).toBeNull();
+
+    // Opening Số 05 again to its old closing hour is a move like any other:
+    // Số 06 opens before Số 05 would close.
+    const again = await move(5, five.opensAt, five.closesAt);
+    expect(again.error).toMatchObject({ message: "NOT_ALLOWED", details: "6", hint: "NEXT" });
+  });
+
+  it("lets only one of two moves made at once swap two issues' places", async () => {
+    // Số 07 a month after Số 06 closes. Then, at the same moment, Số 06 asks
+    // for the late part of the gap and Số 07 for the early part: each alone
+    // keeps the order, both together would put Số 07 before Số 06.
+    const six = (await snapshot()).dropByNo.get(6)!;
+    const seven = await add(7, plusDays(six.closesAt, 30), plusDays(six.closesAt, 44));
+    expect(seven.error).toBeNull();
+
+    const [sixMoved, sevenMoved] = await Promise.all([
+      move(6, plusDays(six.closesAt, 16), plusDays(six.closesAt, 26)),
+      move(7, plusDays(six.closesAt, 2), plusDays(six.closesAt, 12)),
+    ]);
+    expect([sixMoved.error, sevenMoved.error].filter((e) => e !== null)).toHaveLength(1);
+    // The one refused names the one that moved first, on the side it broke.
+    if (sixMoved.error) {
+      expect(sixMoved.error).toMatchObject({ message: "NOT_ALLOWED", details: "7", hint: "NEXT" });
+    } else {
+      expect(sevenMoved.error).toMatchObject({ message: "NOT_ALLOWED", details: "6", hint: "PREVIOUS" });
+    }
+    expect(inOrder((await snapshot()).drops)).toBe(true);
   });
 });

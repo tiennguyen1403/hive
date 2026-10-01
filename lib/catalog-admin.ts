@@ -91,6 +91,16 @@ export function failureDetail(error: { details?: string | null } | null): string
   return typeof error?.details === "string" ? error.details : "";
 }
 
+/**
+ * What kind of refusal it was, when the function said: `raise … using hint =`
+ * arrives as `hint` (PostgREST sends it as null when there was none). Since
+ * slice B14b, what the issue in DETAIL is to a refused window — `OVERLAP`,
+ * `PREVIOUS` or `NEXT` (`calendarRefusal`).
+ */
+export function failureHint(error: { hint?: string | null } | null): string {
+  return typeof error?.hint === "string" ? error.hint : "";
+}
+
 /** "Đen" for `black` — how a message names a colour the database named. */
 export function colorLabelOf(key: string): string {
   return (COLOR_KEYS as readonly string[]).includes(key) ? COLORS[key as ColorKey].label : "";
@@ -256,6 +266,51 @@ export const NO_CHANGE_MESSAGE = "Chưa có thay đổi nào để lưu.";
 /** A new or moved issue whose window runs into another one's (slice B14: "Sửa giờ" too). */
 export function overlapMessage(no: number): string {
   return `Lịch chồng lên ${issueLabel(no)}`;
+}
+
+/**
+ * Issue `no` on the wrong side of a neighbour (slice B14b), in the two
+ * sentences the user approved on 01/10: "Số 07 phải mở sau khi Số 06 đóng"
+ * when it opens before the previous issue `other` closes, "Số 06 phải đóng
+ * trước khi Số 07 mở" when it closes after the next issue `other` opens.
+ */
+export function orderMessage(no: number, side: OrderSide, other: number): string {
+  return side === "PREVIOUS"
+    ? `${issueLabel(no)} phải mở sau khi ${issueLabel(other)} đóng`
+    : `${issueLabel(no)} phải đóng trước khi ${issueLabel(other)} mở`;
+}
+
+/**
+ * The sentence for a calendar refusal of `admin_add_drop()` or
+ * `admin_schedule_drop()` about issue `no`, or null when the refusal is not
+ * about the calendar.
+ *
+ * A calendar refusal is `NOT_ALLOWED` with the other issue's number in DETAIL
+ * and, since slice B14b, what that issue is to the window in HINT: `OVERLAP`
+ * (they share an instant — "Lịch chồng lên Số NN"), `PREVIOUS` or `NEXT`
+ * (`orderMessage`). No HINT reads as an overlap: the only calendar refusal a
+ * database without B14b raises. `NOT_ALLOWED` with no number is something
+ * else — for "Tạo số", a number another tab took — and so is a HINT nobody
+ * wrote.
+ */
+export function calendarRefusal(
+  no: number,
+  failure: CatalogFailure,
+  detail: string,
+  hint: string,
+): string | null {
+  if (failure !== "NOT_ALLOWED" || !/^[1-9][0-9]*$/.test(detail)) return null;
+  const other = Number(detail);
+  switch (hint) {
+    case "":
+    case "OVERLAP":
+      return overlapMessage(other);
+    case "PREVIOUS":
+    case "NEXT":
+      return orderMessage(no, hint, other);
+    default:
+      return null;
+  }
 }
 
 // ──────────────────────────────────────────────────────────── small reads
@@ -491,14 +546,89 @@ export function scheduleClash(
   drop: Drop,
   window: Omit<Drop, "no">,
 ): Drop | undefined {
-  const narrows =
-    Date.parse(window.opensAt) >= Date.parse(drop.opensAt) &&
-    Date.parse(window.closesAt) <= Date.parse(drop.closesAt);
-  if (narrows) return undefined;
+  if (narrows(drop, window)) return undefined;
   return overlappingDrop(
     drops.filter((d) => d.no !== drop.no),
     window,
   );
+}
+
+/**
+ * Whether a window only NARROWS an issue's days — opens no earlier and closes
+ * no later than `drop` does now. Such a move is never refused, by the overlap
+ * rule (B14) or the order rule (B14b): it cannot make a clash that was not
+ * there already.
+ */
+function narrows(drop: Drop, window: Omit<Drop, "no">): boolean {
+  return (
+    Date.parse(window.opensAt) >= Date.parse(drop.opensAt) &&
+    Date.parse(window.closesAt) <= Date.parse(drop.closesAt)
+  );
+}
+
+/**
+ * Which neighbour a window is on the wrong side of (slice B14b), as
+ * `admin_add_drop()` and `admin_schedule_drop()` say it in their HINT:
+ * `PREVIOUS` when it opens before the previous issue closes, `NEXT` when it
+ * closes after the next issue opens.
+ */
+export type OrderSide = "PREVIOUS" | "NEXT";
+
+export interface OrderClash {
+  side: OrderSide;
+  /** The neighbour the window is on the wrong side of. */
+  drop: Drop;
+}
+
+/**
+ * The issues run in the order of their numbers (slice B14b): issue `no` with
+ * this window opens no earlier than the PREVIOUS issue closes — the nearest
+ * lower number there is — and closes no later than the NEXT one opens — the
+ * nearest higher number. Opening the very instant the previous one closes,
+ * or closing the instant the next one opens, is fine, as for an overlap.
+ * Undefined when the window keeps the order, else the side it breaks and the
+ * neighbour it breaks it with, the previous one first when it breaks both
+ * (only possible on a calendar already out of order).
+ *
+ * Why: until this slice "Sửa giờ" could move Số 07 before Số 06 without the
+ * two sharing an instant, and the eight places that assume the numbers run in
+ * order (listed in `tasks/plan.md` after slice B14) — the calendar of issues,
+ * the feed, the share image, `/so`, the opening reminders, the teasers on
+ * "Các số", "Nhân bản" for a code, the overview — then said the wrong thing.
+ *
+ * One function for both moves:
+ *
+ *   · "Tạo số" — `no` is not in `drops` yet, and is always the highest
+ *     number plus one, so only the previous issue counts;
+ *   · "Sửa giờ" — `no` is in `drops`: it is not compared with itself, and a
+ *     window that only narrows its days is never refused (`narrows`), so
+ *     "Đóng sớm" closes even on a calendar already out of order.
+ *
+ * An overlap is a different refusal, asked first (`overlappingDrop`,
+ * `scheduleClash`): a window that does both says the overlap.
+ * `admin_add_drop` and `admin_schedule_drop` ask the same, in that order.
+ */
+export function orderClash(
+  drops: readonly Drop[],
+  no: number,
+  window: Omit<Drop, "no">,
+): OrderClash | undefined {
+  const own = drops.find((d) => d.no === no);
+  if (own && narrows(own, window)) return undefined;
+
+  let previous: Drop | undefined;
+  let next: Drop | undefined;
+  for (const d of drops) {
+    if (d.no < no && (!previous || d.no > previous.no)) previous = d;
+    if (d.no > no && (!next || d.no < next.no)) next = d;
+  }
+  if (previous && Date.parse(window.opensAt) < Date.parse(previous.closesAt)) {
+    return { side: "PREVIOUS", drop: previous };
+  }
+  if (next && Date.parse(window.closesAt) > Date.parse(next.opensAt)) {
+    return { side: "NEXT", drop: next };
+  }
+  return undefined;
 }
 
 // ─────────────────────────────────────────────────────────────── the teasers

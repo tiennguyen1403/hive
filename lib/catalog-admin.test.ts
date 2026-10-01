@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
-import { productId, type Product, type Promotion } from "@/data/types";
+import { productId, type Drop, type Product, type Promotion } from "@/data/types";
 import { buildCatalog } from "./catalog";
 import {
   CATALOG_ERROR_CODES,
@@ -13,12 +13,14 @@ import {
   SLUG_TAKEN_MESSAGE,
   STALE_STOCK_MESSAGE,
   borrowedPhotoKeys,
+  calendarRefusal,
   catalogFailureMessage,
   catalogFailureOf,
   checkAdjustment,
   colorLabelOf,
   cutTotal,
   failureDetail,
+  failureHint,
   familyOfKind,
   gridCells,
   isEmptyPatch,
@@ -26,6 +28,8 @@ import {
   isSlug,
   isVnInstant,
   nextDropNo,
+  orderClash,
+  orderMessage,
   overlapMessage,
   overlappingDrop,
   productPatch,
@@ -544,6 +548,120 @@ describe("scheduleClash · 'Sửa giờ' keeps one issue at a time (slice B14)",
     // Wider on either side is a move like any other.
     expect(scheduleClash(drops, inside, window(at20("09-19"), inside.closesAt))?.no).toBe(5);
     expect(scheduleClash(drops, five, window(five.opensAt, at20("09-26")))?.no).toBe(6);
+  });
+});
+
+describe("orderClash · the issues run in the order of their numbers (slice B14b)", () => {
+  // The fixture: 03 runs 06/03 → 20/03, 04 runs 05/06 → 19/06, 05 runs 11/09 → 25/09,
+  // 06 runs 02/10 → 16/10, each at 20:00.
+  const five = catalog.dropByNo.get(5)!;
+  const six = catalog.dropByNo.get(6)!;
+  const at20 = (day: string) => `2026-${day}T20:00:00+07:00`;
+  const window = (opensAt: string, closesAt: string) => ({ opensAt, closesAt });
+  /** Số 07 from the day after Số 06 closes, for a fortnight: what "Tạo số" proposes. */
+  const seven: Drop = { no: 7, opensAt: at20("10-17"), closesAt: at20("10-31") };
+  const withSeven = [...catalog.drops, seven];
+  /** The week between Số 05 closing and Số 06 opening: clear of every issue. */
+  const between = window(at20("09-26"), at20("10-01"));
+
+  it("refuses a new issue that opens before the previous one closes, though it overlaps nothing", () => {
+    expect(overlappingDrop(catalog.drops, between)).toBeUndefined();
+    expect(orderClash(catalog.drops, 7, between)).toEqual({ side: "PREVIOUS", drop: six });
+  });
+
+  it("lets a new issue open the instant the previous one closes — not a minute before", () => {
+    expect(orderClash(catalog.drops, 7, window(six.closesAt, at20("10-30")))).toBeUndefined();
+    expect(orderClash(catalog.drops, 7, window("2026-10-16T19:59:00+07:00", at20("10-30")))).toEqual({
+      side: "PREVIOUS",
+      drop: six,
+    });
+    // The first issue there is has nobody before it.
+    expect(orderClash([], 1, between)).toBeUndefined();
+  });
+
+  it("refuses moving an issue to open before the previous one closes: Số 07 into the week before Số 06", () => {
+    expect(scheduleClash(withSeven, seven, between)).toBeUndefined();
+    expect(orderClash(withSeven, 7, between)).toEqual({ side: "PREVIOUS", drop: six });
+  });
+
+  it("refuses moving an issue to close after the next one opens: Số 06 past Số 07", () => {
+    const past = window(at20("11-01"), at20("11-10"));
+    expect(scheduleClash(withSeven, six, past)).toBeUndefined();
+    expect(orderClash(withSeven, 6, past)).toEqual({ side: "NEXT", drop: seven });
+  });
+
+  it("lets an issue close the instant the next one opens — not a minute after", () => {
+    expect(orderClash(withSeven, 6, window(six.opensAt, seven.opensAt))).toBeUndefined();
+    expect(orderClash(withSeven, 6, window(six.opensAt, "2026-10-17T20:01:00+07:00"))).toEqual({
+      side: "NEXT",
+      drop: seven,
+    });
+    // The last issue has nobody after it.
+    expect(orderClash(withSeven, 7, window(at20("11-01"), at20("12-31")))).toBeUndefined();
+  });
+
+  it("compares with the nearest numbers that exist", () => {
+    // Without Số 06, the issue before Số 07 is Số 05, and the one after Số 05 is Số 07.
+    const gap = withSeven.filter((d) => d.no !== 6);
+    expect(orderClash(gap, 7, between)).toBeUndefined();
+    expect(orderClash(gap, 7, window(at20("09-01"), at20("09-05")))).toEqual({ side: "PREVIOUS", drop: five });
+    expect(orderClash(gap, 5, window(at20("11-01"), at20("11-05")))).toEqual({ side: "NEXT", drop: seven });
+  });
+
+  it("names the previous issue first when a window is wrong on both sides", () => {
+    // Only on a calendar already out of order: Số 07 back in August, before Số 05.
+    const august: Drop = { no: 7, opensAt: at20("08-01"), closesAt: at20("08-10") };
+    const drops = [...catalog.drops, august];
+    const w = window(at20("08-15"), at20("08-20"));
+    expect(scheduleClash(drops, six, w)).toBeUndefined();
+    expect(orderClash(drops, 6, w)).toEqual({ side: "PREVIOUS", drop: five });
+  });
+
+  it("never refuses a window that only narrows, even on a calendar already out of order — and refuses widening one", () => {
+    // Số 07 in the week before Số 06, as "Sửa giờ" could leave it before this slice.
+    const early: Drop = { no: 7, ...between };
+    const drops = [...catalog.drops, early];
+    expect(orderClash(drops, 7, window(at20("09-27"), at20("09-30")))).toBeUndefined();
+    // The same window moves nothing: a narrowing too.
+    expect(orderClash(drops, 7, between)).toBeUndefined();
+    // "Đóng sớm" on Số 06, whose next issue opened before it: the opening hour it has, closing earlier.
+    expect(orderClash(drops, 6, window(six.opensAt, at20("10-05")))).toBeUndefined();
+    // Wider on either side is a move like any other.
+    expect(orderClash(drops, 7, window(at20("09-26"), at20("10-02")))).toEqual({ side: "PREVIOUS", drop: six });
+    expect(orderClash(drops, 6, window(six.opensAt, at20("10-17")))).toEqual({ side: "NEXT", drop: early });
+  });
+
+  it("finds both rules broken by a window that runs into another issue — the action says the overlap first", () => {
+    // Số 07 moved into Số 05: it overlaps Số 05 and opens before Số 06 closes.
+    const into = window(at20("09-20"), at20("09-30"));
+    expect(scheduleClash(withSeven, seven, into)?.no).toBe(5);
+    expect(orderClash(withSeven, 7, into)).toEqual({ side: "PREVIOUS", drop: six });
+  });
+
+  it("says the two sentences the user approved", () => {
+    expect(orderMessage(7, "PREVIOUS", 6)).toBe("Số 07 phải mở sau khi Số 06 đóng");
+    expect(orderMessage(6, "NEXT", 7)).toBe("Số 06 phải đóng trước khi Số 07 mở");
+  });
+
+  it("reads the database's calendar refusal: the other issue in DETAIL, what it is to the window in HINT", () => {
+    expect(calendarRefusal(7, "NOT_ALLOWED", "6", "PREVIOUS")).toBe("Số 07 phải mở sau khi Số 06 đóng");
+    expect(calendarRefusal(6, "NOT_ALLOWED", "7", "NEXT")).toBe("Số 06 phải đóng trước khi Số 07 mở");
+    expect(calendarRefusal(6, "NOT_ALLOWED", "5", "OVERLAP")).toBe("Lịch chồng lên Số 05");
+    // A database without slice B14b raised an overlap with no HINT.
+    expect(calendarRefusal(6, "NOT_ALLOWED", "5", "")).toBe("Lịch chồng lên Số 05");
+    // Not about the calendar: a number another tab took (no DETAIL), another code, a DETAIL or a HINT it does not know.
+    expect(calendarRefusal(7, "NOT_ALLOWED", "", "")).toBeNull();
+    expect(calendarRefusal(7, "BAD_INPUT", "6", "PREVIOUS")).toBeNull();
+    expect(calendarRefusal(7, "NOT_ALLOWED", "0", "PREVIOUS")).toBeNull();
+    expect(calendarRefusal(7, "NOT_ALLOWED", "Số 06", "PREVIOUS")).toBeNull();
+    expect(calendarRefusal(7, "NOT_ALLOWED", "6", "SIDEWAYS")).toBeNull();
+  });
+
+  it("keeps the HINT a refusal carried, or nothing", () => {
+    expect(failureHint({ hint: "NEXT" })).toBe("NEXT");
+    expect(failureHint({ hint: null })).toBe("");
+    expect(failureHint({})).toBe("");
+    expect(failureHint(null)).toBe("");
   });
 });
 
