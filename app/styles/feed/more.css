@@ -552,6 +552,14 @@
   [data-ui="feed"] .b-hero-no { font-size: 160px; }
 }
 
+/* Yêu thích from 900 to 1250: one card a row (02/10/2026, not in the mock). Two across, a card's text column is
+   (window − 15 scrollbar − 832) / 2 wide, 26.5px at 900, and the size row, four 46px sizes and three 6px gaps (202px),
+   cannot shrink: it ran into the next card and off the page (scrollWidth 1031 at 900). The column holds it from 1251.
+   The mock's rules are the same and break the same way. */
+@media (min-width: 900px) and (max-width: 1250.98px) {
+  [data-ui="feed"] .b-fcs { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* Pointer hover, where there is one. */
 @media (hover: hover) and (pointer: fine) {
   [data-ui="feed"] .b-nrow:hover { background: var(--f-bg2); }

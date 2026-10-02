@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Drop, NotifyKey } from "@/data/types";
 import { clockDayLabel } from "@/lib/datetime";
 import { dropCalendar } from "@/lib/drop";
 import { inboxGroups, inboxTime, type InboxKind } from "@/lib/feed-inbox";
+import { picker, type Pair } from "@/lib/i18n";
 import { issueLabel } from "@/lib/lexicon";
 import { RemindButton } from "../FeedBlocks";
 import { FeedClock } from "../FeedClock";
@@ -26,12 +28,16 @@ const KIND_ICON: Readonly<Record<InboxKind, FeedIconName>> = {
   promo: "ticket",
 };
 
-/** "Nhận thông báo về": the four switches of the account, in the mock's order (`PREFS`). */
-const PREFS: readonly (readonly [NotifyKey, string, FeedIconName])[] = [
-  ["order", "Đơn hàng", "package"],
-  ["drop", "Số mới", "calendar-star"],
-  ["wishlist", "Mẫu đã lưu sắp hết", "heart"],
-  ["promo", "Mã sắp hết hạn", "ticket"],
+/**
+ * "Nhận thông báo về": the four switches of the account, in the mock's order
+ * (`PREFS`). In English (round v6 slice E3a) "Orders", "New drops", "Saved
+ * styles running low", "Codes expiring".
+ */
+const PREFS: readonly (readonly [NotifyKey, Pair, FeedIconName])[] = [
+  ["order", { vi: "Đơn hàng", en: "Orders" }, "package"],
+  ["drop", { vi: "Số mới", en: "New drops" }, "calendar-star"],
+  ["wishlist", { vi: "Mẫu đã lưu sắp hết", en: "Saved styles running low" }, "heart"],
+  ["promo", { vi: "Mã sắp hết hạn", en: "Codes expiring" }, "ticket"],
 ];
 
 /**
@@ -53,29 +59,35 @@ const PREFS: readonly (readonly [NotifyKey, string, FeedIconName])[] = [
  *   does;
  * · "Nhận thông báo về": the four switches the account keeps
  *   (`setNotifyAction`), each taking its kind of row off the inbox.
+ *
+ * In the page's language since round v6 slice E3a: the rows as the inbox
+ * writes them in it (`inboxItems`), "Today" / "This week" / "Earlier", "Drop
+ * reminder", "In the app", "Notify me about".
  */
 export function NotificationsView() {
   const inbox = useInbox();
   const now = useNow();
-  const groups = inboxGroups(inbox.rows, now);
+  const locale = useLocale();
+  const t = picker(locale);
+  const groups = inboxGroups(inbox.rows, now, locale);
   const unread = inbox.rows.some((r) => r.unread);
 
   return (
     <>
       <div className="b-head">
         <h1 className="b-title disp" tabIndex={-1}>
-          Thông báo
+          {t({ vi: "Thông báo", en: "Notifications" })}
         </h1>
         {unread && <ReadAllButton className="b-desk-only" />}
       </div>
       <div className="b-notif">
-        <section className="b-inbox" aria-label="Hộp thư">
+        <section className="b-inbox" aria-label={t({ vi: "Hộp thư", en: "Inbox" })}>
           {groups.length === 0 ? (
             <div className="empty-state b-empty">
               <span className="empty-ic">
                 <FeedIcon name="bell" />
               </span>
-              <p className="empty-title">Chưa có thông báo</p>
+              <p className="empty-title">{t({ vi: "Chưa có thông báo", en: "No notifications yet" })}</p>
             </div>
           ) : (
             groups.map((g) => (
@@ -85,7 +97,7 @@ export function NotificationsView() {
                 </h2>
                 <ul>
                   {g.items.map((row) => (
-                    <NotifRow key={row.key} row={row} time={inboxTime(row.at, g.group)} onOpen={inbox.markRead} />
+                    <NotifRow key={row.key} row={row} time={inboxTime(row.at, g.group, locale)} onOpen={inbox.markRead} />
                   ))}
                 </ul>
               </section>
@@ -95,13 +107,13 @@ export function NotificationsView() {
         <div className="b-nside">
           <section className="b-sec" aria-labelledby="h-rem">
             <h2 className="sect-title" id="h-rem">
-              Nhắc mở bán
+              {t({ vi: "Nhắc mở bán", en: "Drop reminder" })}
             </h2>
             <ReminderCard />
           </section>
           <section className="b-sec" id="cai-dat" aria-labelledby="h-prefs">
             <h2 className="sect-title" id="h-prefs">
-              Nhận thông báo về
+              {t({ vi: "Nhận thông báo về", en: "Notify me about" })}
             </h2>
             <Switches />
           </section>
@@ -113,6 +125,7 @@ export function NotificationsView() {
 
 /** One row (`notifications.js`: `row`): its glyph, its title and line, when. Opening it reads it. */
 function NotifRow({ row, time, onOpen }: { row: InboxRow; time: string; onOpen: (key: string) => void }) {
+  const t = picker(useLocale());
   return (
     <li>
       <Link className={cx("b-nrow", row.unread && "is-unread")} href={row.href} onClick={() => onOpen(row.key)}>
@@ -124,7 +137,7 @@ function NotifRow({ row, time, onOpen }: { row: InboxRow; time: string; onOpen: 
           {row.body && <span className="b-nbody">{row.body}</span>}
         </span>
         <span className="b-ntime">{time}</span>
-        {row.unread && <span className="sr-only">, chưa đọc</span>}
+        {row.unread && <span className="sr-only">{t({ vi: ", chưa đọc", en: ", unread" })}</span>}
       </Link>
     </li>
   );
@@ -165,8 +178,9 @@ function SetRow({
 function ReminderCard() {
   const catalog = useCatalog();
   const now = useNow();
+  const t = picker(useLocale());
   const next = dropCalendar(catalog, now).upcoming;
-  if (!next) return <p className="b-quiet">Chưa có Số mới</p>;
+  if (!next) return <p className="b-quiet">{t({ vi: "Chưa có Số mới", en: "No new drop yet" })}</p>;
   return <Reminder next={next} />;
 }
 
@@ -174,9 +188,11 @@ function Reminder({ next }: { next: Drop }) {
   const keep = useKeep();
   const toast = useFeedToast();
   const nowMs = useNowMs();
+  const locale = useLocale();
+  const t = picker(locale);
   const focusNext = useRef<string | null>(null);
   const on = keep.hasReminder(next.no);
-  const label = issueLabel(next.no);
+  const label = issueLabel(next.no, locale);
 
   // Once the card has redrawn: the focus where the press sent it — the channel that replaced "Nhắc tôi", or
   // "Nhắc tôi" back in place of the channel turned off (`focusAfter`).
@@ -193,8 +209,8 @@ function Reminder({ next }: { next: Drop }) {
   function channelOff() {
     focusNext.current = ".remind";
     keep.setReminder(next.no, false);
-    toast(`Đã tắt nhắc ${label}`, {
-      label: "Hoàn tác",
+    toast(t({ vi: `Đã tắt nhắc ${label}`, en: `${label} reminder off` }), {
+      label: t({ vi: "Hoàn tác", en: "Undo" }),
       run: () => {
         focusNext.current = '[data-ch="push"]';
         keep.setReminder(next.no, true);
@@ -206,12 +222,23 @@ function Reminder({ next }: { next: Drop }) {
     <div className="b-rem">
       <p className="b-rem-no disp">{label}</p>
       <p className="b-rem-cd">
-        <span className="cd-label">Mở sau</span>
-        <FeedClock until={next.opensAt} now={nowMs} tag="span" label={`Mở ${clockDayLabel(next.opensAt)}`} />
+        <span className="cd-label">{t({ vi: "Mở sau", en: "Opens in" })}</span>
+        <FeedClock
+          until={next.opensAt}
+          now={nowMs}
+          tag="span"
+          label={t({ vi: `Mở ${clockDayLabel(next.opensAt)}`, en: `Opens ${clockDayLabel(next.opensAt, "en")}` })}
+        />
       </p>
       {on ? (
-        <div className="b-set" role="group" aria-label={`Nhắc ${label} qua`}>
-          <SetRow icon="device-mobile" label="Trong app" on onPress={channelOff} data={{ "data-ch": "push" }} />
+        <div className="b-set" role="group" aria-label={t({ vi: `Nhắc ${label} qua`, en: `${label} reminder via` })}>
+          <SetRow
+            icon="device-mobile"
+            label={t({ vi: "Trong app", en: "In the app" })}
+            on
+            onPress={channelOff}
+            data={{ "data-ch": "push" }}
+          />
         </div>
       ) : (
         <RemindButton
@@ -228,6 +255,7 @@ function Reminder({ next }: { next: Drop }) {
 /** "Nhận thông báo về" (`prefsHTML`): each switch kept on the account at once, drawn before the server answers. */
 function Switches() {
   const keep = useKeep();
+  const t = picker(useLocale());
   const notify = keep.state?.notify;
   if (!notify) return null;
   return (
@@ -236,7 +264,7 @@ function Switches() {
         <SetRow
           key={key}
           icon={icon}
-          label={label}
+          label={t(label)}
           on={notify[key]}
           onPress={() => keep.setNotify(key, !notify[key])}
           data={{ "data-pref": key }}

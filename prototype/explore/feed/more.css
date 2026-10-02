@@ -500,6 +500,13 @@ mark.b-hit { background: rgba(24, 70, 240, .14); color: inherit; border-radius: 
   .b-hero-no { font-size: 160px; }
 }
 
+/* Yêu thích from 900 to 1250: one card a row (02/10/2026, the app's round v6 slice E3a). Two across, a card's text column
+   is (window − 15 scrollbar − 832) / 2 wide, 26.5px at 900, and the size row (four 46px sizes, three 6px gaps, 202px)
+   cannot shrink: it ran into the next card and off the page. The column holds it from 1251. */
+@media (min-width: 900px) and (max-width: 1250.98px) {
+  .b-fcs { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* Pointer hover, where there is one. */
 @media (hover: hover) and (pointer: fine) {
   .b-nrow:hover { background: var(--bg2); }

@@ -8,7 +8,16 @@ import { normalisePhone } from "@/lib/checkout-form";
 import * as book from "@/lib/db/addresses";
 import { takeRate } from "@/lib/db/rate-limit";
 import { requireSession } from "@/lib/db/session";
-import { feedAddressErrors, readAddressId, type AddressField, type AddressResult } from "@/lib/feed-account";
+import {
+  ADDRESS_ANSWER_TEXT,
+  ADDRESS_ERROR_TEXT,
+  feedAddressErrors,
+  readAddressId,
+  type AddressField,
+  type AddressResult,
+} from "@/lib/feed-account";
+import { pickAll } from "@/lib/i18n";
+import { getActionLocale } from "@/lib/locale";
 
 /**
  * The address book's writes.
@@ -30,6 +39,9 @@ import { feedAddressErrors, readAddressId, type AddressField, type AddressResult
  * Slice B4b: each one spends a token of the visitor's `account` limit right
  * after the session check — thirty account writes per ten minutes, shared with
  * "Huỷ đơn" (`lib/db/rate-limit.ts`).
+ *
+ * Round v6 slice E3a: every sentence is in the request's language
+ * (`getActionLocale`), the rate limit's too.
  */
 
 const ADDRESS_PATHS = ["/account/addresses", "/account", "/checkout"] as const;
@@ -59,16 +71,12 @@ function labelOf(raw: string): AddressLabel {
 
 const text = (v: unknown): string => (typeof v === "string" ? v : "");
 
-/** A short sentence for a write the database refused or could not make. */
-const NOT_SAVED = "Chưa lưu được địa chỉ";
-const NOT_REMOVED = "Chưa xoá được địa chỉ";
-const NOT_DEFAULT = "Chưa đặt được mặc định";
-const NOT_FOUND = "Không tìm thấy địa chỉ này";
-const NOT_RESTORED = "Chưa hoàn tác được";
-
 /** "Lưu địa chỉ": a new address (`id` null) or an edit. */
 export async function saveFeedAddress(input: unknown): Promise<AddressResult> {
   await requireSession("/account/addresses");
+  const locale = await getActionLocale();
+  // A short sentence for a write the database refused or could not make.
+  const no = pickAll(ADDRESS_ANSWER_TEXT, locale);
 
   const raw = (typeof input === "object" && input !== null ? input : {}) as Record<string, unknown>;
   const recipient = text(raw.recipient).trim();
@@ -77,19 +85,23 @@ export async function saveFeedAddress(input: unknown): Promise<AddressResult> {
   const wardCode = text(raw.wardCode);
   const street = text(raw.street).trim();
 
-  const errors: Partial<Record<AddressField, string>> = feedAddressErrors({
-    recipient,
-    phone: phoneTyped,
-    provinceCode,
-    wardCode,
-    street,
-  });
+  const errors: Partial<Record<AddressField, string>> = feedAddressErrors(
+    {
+      recipient,
+      phone: phoneTyped,
+      provinceCode,
+      wardCode,
+      street,
+    },
+    locale,
+  );
   // What only the server can check: the codes are real, and the commune is the province's.
-  if (!errors.province && provinceCode && !findProvince(provinceCode)) errors.province = "Chọn tỉnh / thành";
-  if (!errors.province && !errors.ward && wardCode && !findWard(provinceCode, wardCode)) errors.ward = "Chọn phường / xã";
+  const words = pickAll(ADDRESS_ERROR_TEXT, locale);
+  if (!errors.province && provinceCode && !findProvince(provinceCode)) errors.province = words.province;
+  if (!errors.province && !errors.ward && wardCode && !findWard(provinceCode, wardCode)) errors.ward = words.ward;
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
-  const pace = await takeRate("account");
+  const pace = await takeRate("account", 1, locale);
   if (!pace.ok) return { ok: false, message: pace.message };
 
   const draft: AddressDraft = {
@@ -106,12 +118,12 @@ export async function saveFeedAddress(input: unknown): Promise<AddressResult> {
   const id = text(raw.id);
   if (id) {
     const done = await book.updateAddress(id, draft);
-    if (!done) return { ok: false, message: NOT_FOUND };
+    if (!done) return { ok: false, message: no.notFound };
     refreshAddressScreens();
     return { ok: true, id };
   }
   const made = await book.addAddress(draft);
-  if (!made) return { ok: false, message: NOT_SAVED };
+  if (!made) return { ok: false, message: no.notSaved };
   refreshAddressScreens();
   return { ok: true, id: String(made) };
 }
@@ -119,10 +131,11 @@ export async function saveFeedAddress(input: unknown): Promise<AddressResult> {
 /** "Xoá". The database keeps the address aside for "Hoàn tác" (`restoreFeedAddress`). */
 export async function removeFeedAddress(id: unknown): Promise<AddressResult> {
   await requireSession("/account/addresses");
-  const pace = await takeRate("account");
+  const locale = await getActionLocale();
+  const pace = await takeRate("account", 1, locale);
   if (!pace.ok) return { ok: false, message: pace.message };
   const key = text(id);
-  if (!key || !(await book.removeAddress(key))) return { ok: false, message: NOT_REMOVED };
+  if (!key || !(await book.removeAddress(key))) return { ok: false, message: pickAll(ADDRESS_ANSWER_TEXT, locale).notRemoved };
   refreshAddressScreens();
   return { ok: true, id: key };
 }
@@ -139,12 +152,14 @@ export async function removeFeedAddress(id: unknown): Promise<AddressResult> {
  */
 export async function restoreFeedAddress(id: unknown): Promise<AddressResult> {
   await requireSession("/account/addresses");
+  const locale = await getActionLocale();
+  const notRestored = pickAll(ADDRESS_ANSWER_TEXT, locale).notRestored;
   const key = readAddressId(id);
-  if (!key) return { ok: false, message: NOT_RESTORED };
-  const pace = await takeRate("account");
+  if (!key) return { ok: false, message: notRestored };
+  const pace = await takeRate("account", 1, locale);
   if (!pace.ok) return { ok: false, message: pace.message };
   const back = await book.restoreAddress(key);
-  if (!back) return { ok: false, message: NOT_RESTORED };
+  if (!back) return { ok: false, message: notRestored };
   refreshAddressScreens();
   return { ok: true, id: String(back) };
 }
@@ -152,10 +167,11 @@ export async function restoreFeedAddress(id: unknown): Promise<AddressResult> {
 /** "Đặt mặc định". */
 export async function makeFeedDefault(id: unknown): Promise<AddressResult> {
   await requireSession("/account/addresses");
-  const pace = await takeRate("account");
+  const locale = await getActionLocale();
+  const pace = await takeRate("account", 1, locale);
   if (!pace.ok) return { ok: false, message: pace.message };
   const key = text(id);
-  if (!key || !(await book.setDefaultAddress(key))) return { ok: false, message: NOT_DEFAULT };
+  if (!key || !(await book.setDefaultAddress(key))) return { ok: false, message: pickAll(ADDRESS_ANSWER_TEXT, locale).notDefault };
   refreshAddressScreens();
   return { ok: true, id: key };
 }

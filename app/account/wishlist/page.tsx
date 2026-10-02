@@ -4,12 +4,27 @@ import { OutCard } from "@/components/feed/account/OutCard";
 import { WishlistView } from "@/components/feed/account/WishlistView";
 import { FeedFrame } from "@/components/feed/FeedFrame";
 import { loadMe } from "@/lib/db/profiles";
+import { picker, type Pair } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Yêu thích",
-  // Somebody's own list. Nothing here belongs in a search index.
-  robots: { index: false, follow: false },
-};
+/** The page's name: the glossary's "Saved" (round v6 slice E3a). */
+const TITLE: Pair = { vi: "Yêu thích", en: "Saved" };
+
+/**
+ * "Yêu thích" — the layout's template adds "· HIVE" — in the page's language,
+ * with the site's description in it; the link card keeps the layout's
+ * Vietnamese one (QĐ-40).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return {
+    title: t(TITLE),
+    description: t(SITE_DESCRIPTION_TEXT),
+    // Somebody's own list. Nothing here belongs in a search index.
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * Yêu thích, round v4 "Feed" (slice 3b): the approved mock's
@@ -24,20 +39,26 @@ export const metadata: Metadata = {
  * (`MyStateProvider`, read with the root layout).
  */
 export default async function WishlistPage() {
-  const me = await loadMe();
+  const [me, locale] = await Promise.all([loadMe(), getLocale()]);
+  const t = picker(locale);
   return (
     <FeedFrame page="favorites" mainClass="acc-layout">
-      <AccountNav on="favorites" signedIn={me !== null} />
+      <AccountNav on="favorites" signedIn={me !== null} locale={locale} />
       <div className="acc-main b-acc b-favs b-page">
         {me ? (
           <WishlistView />
         ) : (
           <>
             <div className="b-head">
-              <h1 className="b-title disp">Yêu thích</h1>
+              <h1 className="b-title disp">{t(TITLE)}</h1>
             </div>
             <div className="b-gatewrap">
-              <OutCard title="Đăng nhập để xem mẫu đã lưu" id="out-favs" here="/account/wishlist" />
+              <OutCard
+                title={t({ vi: "Đăng nhập để xem mẫu đã lưu", en: "Sign in to see saved styles" })}
+                id="out-favs"
+                here="/account/wishlist"
+                locale={locale}
+              />
             </div>
           </>
         )}

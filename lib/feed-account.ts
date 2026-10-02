@@ -1,4 +1,4 @@
-import { COLORS } from "@/data/colors";
+import { COLORS, colorLabel } from "@/data/colors";
 import {
   ADDRESS_LABELS,
   type AddressLabel,
@@ -14,8 +14,8 @@ import type { Catalog } from "./catalog";
 import { CUSTOMER_CANCEL_REASON, OVERDUE_REASON } from "./customer-orders";
 import { addDaysIso, clockLabel, dateTimeLabel, dayMonth } from "./datetime";
 import { canBuy, photoKeyOf, pictureOf } from "./feed";
-import { FEED_PAYMENTS, feedDelivery } from "./feed-checkout";
-import { pick, pickAll, type Locale, type Pair } from "./i18n";
+import { feedDelivery, feedPayments } from "./feed-checkout";
+import { pick, pickAll, picker, plural, type Locale, type Pair } from "./i18n";
 import { isFixed, onHandOf } from "./inventory";
 import { FIXED_WORD_TEXT, issueLabel } from "./lexicon";
 import { phoneDigits } from "./lookup";
@@ -39,15 +39,29 @@ const capitalise = (s: string) => (s ? s.charAt(0).toLocaleUpperCase("vi") + s.s
 
 // ─────────────────────────────────────────────────────────── the state in words
 
-/** The mock's names for the six states (`ORDER_STATES`): a COD order before the shop's call is "Chờ xác nhận". */
-export const FEED_STATE_LABEL: Readonly<Record<OrderState, string>> = {
-  AWAITING_TRANSFER: "Chờ chuyển khoản",
-  RECEIVED: "Chờ xác nhận",
-  PAID: "Đã thanh toán",
-  SHIPPING: "Đang giao",
-  DELIVERED: "Đã giao",
-  CANCELLED: "Đã huỷ",
+/**
+ * The mock's names for the six states (`ORDER_STATES`): a COD order before the
+ * shop's call is "Chờ xác nhận". In English (round v6 slice E3a) the
+ * glossary's order states, as `stateLabel` has them (`lib/order-labels.ts`),
+ * but for that one: "Awaiting confirmation", what the order waits for, as the
+ * Vietnamese says it. "Order received" is the English of the back office's
+ * "Đã nhận đơn" (`STATE_LABEL`), the state's own name, and stays there.
+ */
+export const FEED_STATE_LABEL_TEXT: Readonly<Record<OrderState, Pair>> = {
+  AWAITING_TRANSFER: { vi: "Chờ chuyển khoản", en: "Awaiting transfer" },
+  RECEIVED: { vi: "Chờ xác nhận", en: "Awaiting confirmation" },
+  PAID: { vi: "Đã thanh toán", en: "Paid" },
+  SHIPPING: { vi: "Đang giao", en: "Shipping" },
+  DELIVERED: { vi: "Đã giao", en: "Delivered" },
+  CANCELLED: { vi: "Đã huỷ", en: "Cancelled" },
 };
+
+export const FEED_STATE_LABEL: Readonly<Record<OrderState, string>> = pickAll(FEED_STATE_LABEL_TEXT, "vi");
+
+/** One state's name in one language. */
+export function feedStateLabel(state: OrderState, locale: Locale = "vi"): string {
+  return pick(FEED_STATE_LABEL_TEXT[state], locale);
+}
 
 /**
  * Every reason the app itself writes into `orders.cancel_reason`, in English
@@ -96,14 +110,18 @@ export function cancelReasonText(reason: string, locale: Locale = "vi"): string 
   return capitalise(r);
 }
 
-/** "Chuyển khoản", "Thanh toán khi nhận (COD)", "Thẻ (nội địa, Visa)": the checkout's names (`PAYMENTS[].label`). */
-export function paymentTitle(method: PaymentMethod): string {
-  return FEED_PAYMENTS.find((p) => p.method === method)?.title ?? "";
+/**
+ * "Chuyển khoản", "Thanh toán khi nhận (COD)", "Thẻ (nội địa, Visa)": the
+ * checkout's names (`PAYMENTS[].label`); in English the checkout's English
+ * ("Bank transfer", "Cash on delivery (COD)", "Card (domestic, Visa)").
+ */
+export function paymentTitle(method: PaymentMethod, locale: Locale = "vi"): string {
+  return feedPayments(locale).find((p) => p.method === method)?.title ?? "";
 }
 
-/** "Giao tiêu chuẩn", "Giao nhanh nội thành" (`DELIVERY[].label`). */
-export function deliveryTitle(method: Order["delivery"]): string {
-  return feedDelivery(method).title;
+/** "Giao tiêu chuẩn", "Giao nhanh nội thành" (`DELIVERY[].label`); in English "Standard delivery", "Express city delivery". */
+export function deliveryTitle(method: Order["delivery"], locale: Locale = "vi"): string {
+  return feedDelivery(method, locale).title;
 }
 
 // ─────────────────────────────────────────────────────────── the two filters
@@ -111,11 +129,19 @@ export function deliveryTitle(method: Order["delivery"]): string {
 /** The orders list's phases (`ORDER_PHASES`): waiting for money, a call or the courier; delivered; cancelled. */
 export type OrderPhase = "active" | "delivered" | "cancelled";
 
-export const ORDER_PHASES: Readonly<Record<OrderPhase, string>> = {
-  active: "Đang xử lý",
-  delivered: "Đã giao",
-  cancelled: "Đã huỷ",
+/** The phases' names in both languages; "Ongoing" for the orders still moving (round v6 slice E3a). */
+export const ORDER_PHASES_TEXT: Readonly<Record<OrderPhase, Pair>> = {
+  active: { vi: "Đang xử lý", en: "Ongoing" },
+  delivered: { vi: "Đã giao", en: "Delivered" },
+  cancelled: { vi: "Đã huỷ", en: "Cancelled" },
 };
+
+export const ORDER_PHASES: Readonly<Record<OrderPhase, string>> = pickAll(ORDER_PHASES_TEXT, "vi");
+
+/** A phase's name in one language. */
+export function orderPhaseLabel(phase: OrderPhase, locale: Locale = "vi"): string {
+  return pick(ORDER_PHASES_TEXT[phase], locale);
+}
 
 export const PHASES: readonly OrderPhase[] = ["active", "delivered", "cancelled"];
 
@@ -232,16 +258,28 @@ export function filterOrders<T extends Order>(catalog: Catalog, orders: readonly
   );
 }
 
-/** "Không có đơn đang xử lý ở Số 05" — the combination that leaves nothing (`none`). */
-export function noneLabel(f: OrdersFilter): string {
+/**
+ * "Không có đơn đang xử lý ở Số 05" — the combination that leaves nothing
+ * (`none`); in English "No ongoing Drop 05 orders", "No Basics orders", "No
+ * cancelled orders": the line it shares with the Vietnamese at 390 ("No
+ * cancelled orders in Drop 05" left "05" alone on a second line).
+ */
+export function noneLabel(f: OrdersFilter, locale: Locale = "vi"): string {
+  if (locale === "en") {
+    const words = ["No"];
+    if (f.phase !== "all") words.push(orderPhaseLabel(f.phase, "en").toLocaleLowerCase("en"));
+    if (f.group !== "all") words.push(groupLabelIn(f.group, "en"));
+    return [...words, "orders"].join(" ");
+  }
   const phase = f.phase === "all" ? "" : ` ${ORDER_PHASES[f.phase].toLocaleLowerCase("vi")}`;
   const group = f.group === "all" ? "" : ` ở ${groupLabel(f.group)}`;
   return `Không có đơn${phase}${group}`;
 }
 
-/** What a screen reader hears after a filter changes: "3 đơn", or the empty line. */
-export function resultLabel(count: number, f: OrdersFilter): string {
-  return count ? `${count} đơn` : noneLabel(f);
+/** What a screen reader hears after a filter changes: "3 đơn", or the empty line; in English "3 orders", "1 order". */
+export function resultLabel(count: number, f: OrdersFilter, locale: Locale = "vi"): string {
+  if (!count) return noneLabel(f, locale);
+  return locale === "en" ? plural(count, "order", "orders") : `${count} đơn`;
 }
 
 /** Newest first. */
@@ -279,17 +317,17 @@ export type TicketNote =
   | { kind: "tracking"; code: string }
   | { kind: "return"; day: string };
 
-export function ticketNote(o: Order, now: Date): TicketNote | null {
+export function ticketNote(o: Order, now: Date, locale: Locale = "vi"): TicketNote | null {
   switch (o.status.state) {
     case "AWAITING_TRANSFER":
       return { kind: "hold", dueAt: o.status.dueAt };
     case "CANCELLED":
-      return { kind: "reason", text: cancelReasonText(o.status.reason) };
+      return { kind: "reason", text: cancelReasonText(o.status.reason, locale) };
     case "SHIPPING":
       return o.status.trackingCode ? { kind: "tracking", code: o.status.trackingCode } : null;
     case "DELIVERED": {
       const until = returnUntil(o);
-      return until && canReturn(o, now) ? { kind: "return", day: dayMonth(until) } : null;
+      return until && canReturn(o, now) ? { kind: "return", day: dayMonth(until, locale) } : null;
     }
     default:
       return null;
@@ -425,9 +463,14 @@ export function linePicture(p: Product | undefined, color: ColorKey): string | n
   return isRealPhotoKey(photoKeyOf(p, color)) ? pictureOf(p, color, "pack").src : null;
 }
 
-/** "SƯƠNG, rêu, size L", "KHÓI, đen, size M, 2 chiếc": a tile's name for a screen reader. */
-export function tileLabel(name: string, color: ColorKey, size: string, qty: number): string {
-  const c = (COLORS[color]?.label ?? color).toLocaleLowerCase("vi");
+/**
+ * "SƯƠNG, rêu, size L", "KHÓI, đen, size M, 2 chiếc": a tile's name for a
+ * screen reader; in English "SƯƠNG, moss, size L", "KHÓI, black, size M, 2
+ * pieces" (round v6 slice E3a). `name` is the one the screen prints.
+ */
+export function tileLabel(name: string, color: ColorKey, size: string, qty: number, locale: Locale = "vi"): string {
+  const c = (COLORS[color] ? colorLabel(color, locale) : color).toLocaleLowerCase(locale);
+  if (locale === "en") return `${name}, ${c}, size ${size}${qty > 1 ? `, ${plural(qty, "piece", "pieces")}` : ""}`;
   return `${name}, ${c}, size ${size}${qty > 1 ? `, ${qty} chiếc` : ""}`;
 }
 
@@ -440,6 +483,23 @@ export function tileLabel(name: string, color: ColorKey, size: string, qty: numb
  */
 export function nextAddressLabel(taken: readonly string[]): AddressLabel {
   return ADDRESS_LABELS.find((l) => !taken.includes(l)) ?? "Khác";
+}
+
+/**
+ * The three names in English (round v6 slice E3a): "Home", "Work", "Other".
+ * The book stores the Vietnamese one (`ADDRESS_LABELS`, `addresses.label`)
+ * and a form sends it; only what is printed changes.
+ */
+export const ADDRESS_LABEL_TEXT: Readonly<Record<AddressLabel, Pair>> = {
+  "Nhà": { vi: "Nhà", en: "Home" },
+  "Công ty": { vi: "Công ty", en: "Work" },
+  "Khác": { vi: "Khác", en: "Other" },
+};
+
+/** An address's name as a screen prints it, in one language; one the app does not know is printed as stored. */
+export function addressLabelText(label: string, locale: Locale = "vi"): string {
+  const pair = (ADDRESS_LABEL_TEXT as Readonly<Record<string, Pair | undefined>>)[label];
+  return pair ? pick(pair, locale) : label;
 }
 
 /** What the address sheet sends: a new address (`id` null) or an edit, in the sheet's own fields. */
@@ -481,19 +541,48 @@ export interface AddressFields {
  * What is wrong with the address sheet, field by field, in the mock's words
  * (`addresses.js`: `check`). The commune is asked for once a province is
  * chosen. A phone number is read the way the rest of the app reads one
- * (`phoneDigits`: spaces, dots, dashes, +84), as the checkout does.
+ * (`phoneDigits`: spaces, dots, dashes, +84), as the checkout does. In
+ * English since round v6 slice E3a, the checkout's English where the checkout
+ * asks the same (`feedFormErrors`).
  */
-export function feedAddressErrors(d: AddressFields): Partial<Record<AddressField, string>> {
+export function feedAddressErrors(d: AddressFields, locale: Locale = "vi"): Partial<Record<AddressField, string>> {
+  const w = pickAll(ADDRESS_ERROR_TEXT, locale);
   const e: Partial<Record<AddressField, string>> = {};
-  if (d.recipient.trim().length < 2) e.recipient = "Nhập tên người nhận";
+  if (d.recipient.trim().length < 2) e.recipient = w.recipient;
   const phone = d.phone.trim();
-  if (!phone) e.phone = "Nhập số điện thoại";
-  else if (!phoneDigits(phone)) e.phone = "Số điện thoại gồm 10 số, bắt đầu bằng 0";
-  if (!d.provinceCode) e.province = "Chọn tỉnh / thành";
-  else if (!d.wardCode) e.ward = "Chọn phường / xã";
-  if (!d.street.trim()) e.street = "Nhập số nhà, đường";
+  if (!phone) e.phone = w.phoneMissing;
+  else if (!phoneDigits(phone)) e.phone = w.phoneShape;
+  if (!d.provinceCode) e.province = w.province;
+  else if (!d.wardCode) e.ward = w.ward;
+  if (!d.street.trim()) e.street = w.street;
   return e;
 }
+
+/**
+ * The address sheet's sentences in both languages; the province's and the
+ * commune's also answer a code the server cannot find (`saveFeedAddress`).
+ */
+export const ADDRESS_ERROR_TEXT = {
+  recipient: { vi: "Nhập tên người nhận", en: "Enter the recipient's name" },
+  phoneMissing: { vi: "Nhập số điện thoại", en: "Enter a phone number" },
+  phoneShape: { vi: "Số điện thoại gồm 10 số, bắt đầu bằng 0", en: "Phone numbers have 10 digits, starting with 0" },
+  province: { vi: "Chọn tỉnh / thành", en: "Choose province / city" },
+  ward: { vi: "Chọn phường / xã", en: "Choose ward / commune" },
+  street: { vi: "Nhập số nhà, đường", en: "Enter house number and street" },
+} as const satisfies Record<string, Pair>;
+
+/**
+ * What an address write answers when it did not happen, in a toast, in both
+ * languages (round v6 slice E3a): the action words it in the request's
+ * language, the sheet falls back on `notSaved`.
+ */
+export const ADDRESS_ANSWER_TEXT = {
+  notSaved: { vi: "Chưa lưu được địa chỉ", en: "Couldn't save the address" },
+  notRemoved: { vi: "Chưa xoá được địa chỉ", en: "Couldn't delete the address" },
+  notDefault: { vi: "Chưa đặt được mặc định", en: "Couldn't set the default" },
+  notFound: { vi: "Không tìm thấy địa chỉ này", en: "Couldn't find this address" },
+  notRestored: { vi: "Chưa hoàn tác được", en: "Couldn't undo" },
+} as const satisfies Record<string, Pair>;
 
 /** The first wrong field, in the sheet's order. */
 export function firstWrongAddress(errors: Partial<Record<AddressField, string>>): AddressField | undefined {

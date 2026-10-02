@@ -66,6 +66,17 @@ export function dayMonthYear(iso: string, locale: Locale = "vi"): string {
   return locale === "en" ? `${dayMonthEn(p)} ${p.year}` : `${p.day}/${p.month}/${p.year}`;
 }
 
+/**
+ * `"03/2026"` — a month of a year, as Tôi says when an account was made; in
+ * English `"Mar 2026"`, the month and its year held together by a no-break
+ * space, as `dayMonthEn` holds a day to its month (round v6 slice E3a).
+ */
+export function monthYear(iso: string, locale: Locale = "vi"): string {
+  const p = partsOf(iso);
+  if (!p) return "";
+  return locale === "en" ? `${MONTHS_EN[Number(p.month) - 1] ?? p.month} ${p.year}` : `${p.month}/${p.year}`;
+}
+
 /** `"06:50 ngày 21/09"` — a moment on the clock AND on the calendar; in English `"06:50, 21 Sep"`. */
 export function dateTimeLabel(iso: string, locale: Locale = "vi"): string {
   const p = partsOf(iso);

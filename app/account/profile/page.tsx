@@ -5,16 +5,33 @@ import { ProfileView } from "@/components/feed/account/ProfileView";
 import { FeedFrame } from "@/components/feed/FeedFrame";
 import type { FeedMbarProps } from "@/components/feed/FeedMbar";
 import { loadMe } from "@/lib/db/profiles";
-import { PROFILE_SIGN_IN } from "@/lib/my-state";
+import { picker, type Locale, type Pair } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { PROFILE_SIGN_IN_TEXT } from "@/lib/my-state";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Hồ sơ",
-  // Somebody's name and phone. Nothing here belongs in a search index.
-  robots: { index: false, follow: false },
-};
+/** The page's name: "Profile" in English (round v6 slice E3a). */
+const TITLE: Pair = { vi: "Hồ sơ", en: "Profile" };
+
+/**
+ * "Hồ sơ" — the layout's template adds "· HIVE" — in the page's language,
+ * with the site's description in it; the link card keeps the layout's
+ * Vietnamese one (QĐ-40).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return {
+    title: t(TITLE),
+    description: t(SITE_DESCRIPTION_TEXT),
+    // Somebody's name and phone. Nothing here belongs in a search index.
+    robots: { index: false, follow: false },
+  };
+}
 
 /** The phone's bar: back to Tôi, the title once the page's own has scrolled away. */
-const MBAR: FeedMbarProps = { title: "Hồ sơ", back: "/account", watch: "[data-ui='feed'] [data-hero]" };
+function mbarOf(locale: Locale): FeedMbarProps {
+  return { title: picker(locale)(TITLE), back: "/account", watch: "[data-ui='feed'] [data-hero]" };
+}
 
 /**
  * Hồ sơ, round v4 "Feed" (slice 3b): the approved mock's
@@ -28,19 +45,20 @@ const MBAR: FeedMbarProps = { title: "Hồ sơ", back: "/account", watch: "[data
  * the server (`loadMe`); its sizes from the root layout's `MyStateProvider`.
  */
 export default async function ProfilePage() {
-  const me = await loadMe();
+  const [me, locale] = await Promise.all([loadMe(), getLocale()]);
+  const t = picker(locale);
   return (
-    <FeedFrame page="profile" foot="lite" mainClass="acc-layout" mbar={MBAR}>
-      <AccountNav on="profile" signedIn={me !== null} />
+    <FeedFrame page="profile" foot="lite" mainClass="acc-layout" mbar={mbarOf(locale)}>
+      <AccountNav on="profile" signedIn={me !== null} locale={locale} />
       <div className="acc-main">
         {me ? (
           <ProfileView me={me} />
         ) : (
           <>
             <h1 className="acc-h1 disp" data-hero>
-              Hồ sơ
+              {t(TITLE)}
             </h1>
-            <OutCard title={PROFILE_SIGN_IN} id="out-pf" here="/account/profile" />
+            <OutCard title={t(PROFILE_SIGN_IN_TEXT)} id="out-pf" here="/account/profile" locale={locale} />
           </>
         )}
       </div>

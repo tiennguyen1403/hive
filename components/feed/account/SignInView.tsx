@@ -3,20 +3,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import { startTransition, useActionState, useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { demoAdminSignIn, demoSignIn, signIn, signUp } from "@/lib/actions/auth";
 import { IDLE, type ActionState } from "@/lib/actions/state";
 import { PICTURE, pictureAlt, pictureOf } from "@/lib/feed";
 import {
-  FORGOT_NOT_SENT,
-  SIGN_TITLES,
+  FORGOT_NOT_SENT_TEXT,
+  SIGN_SENTENCES,
   firstWrongSign,
   signErrors,
   signHref,
+  signTitle,
   type SignField,
   type SignMode,
 } from "@/lib/feed-sign-in";
 import type { DemoAccounts } from "@/lib/demo-sign-in";
+import { picker, reword } from "@/lib/i18n";
 import { FeedIcon } from "../icon/FeedIcon";
 import { cx } from "../useReveal";
 
@@ -51,9 +54,16 @@ const ART_KEY = "shot-suong-black";
  *
  * Rate limits and server failures keep the app's words, on the line where a
  * refused sign-in goes. Every link to another mode carries `next`.
+ *
+ * In the page's language since round v6 slice E3a, by the glossary: "Sign
+ * in", "Sign up", "Try a demo account", "Try the admin". The demo password is
+ * printed as it is. A line the form keeps — its own check's, or the Server
+ * Action's — is worded again at each render (`reword`), so switching language
+ * rewords it in place; the rate limit's carries a wait and stays as sent.
  */
 export function SignInView({ mode, next, demo }: SignInViewProps) {
   const catalog = useCatalog();
+  const locale = useLocale();
   const art = catalog.products.find((p) => p.photoKeys.includes(ART_KEY));
   const artColor = art ? art.colors[art.photoKeys.indexOf(ART_KEY)] : undefined;
   const pic = art && artColor ? pictureOf(art, artColor, "look") : null;
@@ -65,7 +75,7 @@ export function SignInView({ mode, next, demo }: SignInViewProps) {
           <ForgotMode next={next} />
         ) : (
           <>
-            <h1 className="si-title disp">{SIGN_TITLES[mode]}</h1>
+            <h1 className="si-title disp">{signTitle(mode, locale)}</h1>
             <AccountForm mode={mode} next={next} demo={mode === "in" ? (demo ?? null) : null} />
           </>
         )}
@@ -77,7 +87,7 @@ export function SignInView({ mode, next, demo }: SignInViewProps) {
             width={PICTURE.width}
             height={PICTURE.height}
             sizes="(min-width: 1280px) 520px, 40vw"
-            alt={pictureAlt(art, artColor, pic.look)}
+            alt={pictureAlt(art, artColor, pic.look, locale)}
           />
         )}
       </figure>
@@ -111,6 +121,8 @@ interface AccountFormProps {
 
 /** Đăng nhập and Tạo tài khoản: the fields, the refusal line, "hoặc", Google, and the way to the other mode. */
 function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFormProps) {
+  const locale = useLocale();
+  const t = picker(locale);
   const [state, dispatch, pending] = useActionState(mode === "up" ? signUp : signIn, IDLE);
   const [demoState, dispatchDemo, demoPending] = useActionState(demoSignIn, IDLE);
   const [adminState, dispatchAdmin, adminPending] = useActionState(demoAdminSignIn, IDLE);
@@ -140,8 +152,10 @@ function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFo
   }
 
   const busy = pending || demoPending || adminPending;
-  const local = shown ? signErrors(mode, values) : {};
+  const local = shown ? signErrors(mode, values, locale) : {};
   const errors: Partial<Record<SignField, string>> = { ...server, ...local };
+  // What the form was told stays as it came; it is printed in the page's language.
+  const say = (sentence: string | undefined) => (sentence ? reword(sentence, locale, SIGN_SENTENCES) : sentence);
 
   function set(field: SignField, value: string) {
     setValues((v) => ({ ...v, [field]: value }));
@@ -165,11 +179,17 @@ function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFo
   }
 
   const submitLabel =
-    mode === "up" ? (pending ? "Đang tạo tài khoản…" : "Tạo tài khoản") : pending ? "Đang đăng nhập…" : "Đăng nhập";
+    mode === "up"
+      ? pending
+        ? t({ vi: "Đang tạo tài khoản…", en: "Signing up…" })
+        : t({ vi: "Tạo tài khoản", en: "Sign up" })
+      : pending
+        ? t({ vi: "Đang đăng nhập…", en: "Signing in…" })
+        : t({ vi: "Đăng nhập", en: "Sign in" });
   const forgot =
     mode === "in" ? (
       <Link className="link si-forgot" href={signHref("forgot", next)}>
-        Quên mật khẩu?
+        {t({ vi: "Quên mật khẩu?", en: "Forgot password?" })}
       </Link>
     ) : null;
   const submit = (
@@ -201,17 +221,17 @@ function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFo
         {formError && (
           <p className="si-formerr" role="alert">
             <FeedIcon name="warning-circle" />
-            <span>{formError}</span>
+            <span>{say(formError)}</span>
           </p>
         )}
         <input type="hidden" name="next" value={next ?? ""} />
         {mode === "up" && (
           <TextField
             name="name"
-            label="Họ và tên"
+            label={t({ vi: "Họ và tên", en: "Full name" })}
             autoComplete="name"
             value={values.name}
-            error={errors.name}
+            error={say(errors.name)}
             onChange={(v) => set("name", v)}
           />
         )}
@@ -221,14 +241,14 @@ function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFo
           type="email"
           autoComplete="email"
           value={values.email}
-          error={errors.email}
+          error={say(errors.email)}
           onChange={(v) => set("email", v)}
         />
         <PasswordField
-          label="Mật khẩu"
+          label={t({ vi: "Mật khẩu", en: "Password" })}
           autoComplete={mode === "up" ? "new-password" : "current-password"}
           value={values.password}
-          error={errors.password}
+          error={say(errors.password)}
           onChange={(v) => set("password", v)}
         />
         {row ? (
@@ -245,21 +265,21 @@ function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFo
       </form>
       {extras && (
         <>
-          <p className="si-or">hoặc</p>
+          <p className="si-or">{t({ vi: "hoặc", en: "or" })}</p>
           <button className="btn btn-line si-google" type="button" disabled aria-describedby="g-soon">
             <FeedIcon name="google-logo" />
-            Tiếp tục với Google
+            {t({ vi: "Tiếp tục với Google", en: "Continue with Google" })}
             <span className="tag-soon" id="g-soon">
-              Đang chuẩn bị
+              {t({ vi: "Đang chuẩn bị", en: "Coming soon" })}
             </span>
           </button>
           {mode === "up" ? (
             <Link className="link si-switch" href={signHref("in", next)}>
-              Đã có tài khoản? Đăng nhập
+              {t({ vi: "Đã có tài khoản? Đăng nhập", en: "Have an account? Sign in" })}
             </Link>
           ) : (
             <Link className="link si-switch" href={signHref("up", next)}>
-              Chưa có tài khoản? Tạo tài khoản
+              {t({ vi: "Chưa có tài khoản? Tạo tài khoản", en: "No account yet? Sign up" })}
             </Link>
           )}
         </>
@@ -291,6 +311,7 @@ function DemoBox({
   onDemo: (data: FormData) => void;
   onAdmin: (data: FormData) => void;
 }) {
+  const t = picker(useLocale());
   const send = (run: (data: FormData) => void) => (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!busy) run(new FormData(e.currentTarget));
@@ -298,30 +319,56 @@ function DemoBox({
   return (
     <section className="si-demo" aria-labelledby="si-demo-title">
       <h2 className="si-demo-title" id="si-demo-title">
-        Tài khoản thử
+        {t({ vi: "Tài khoản thử", en: "Demo accounts" })}
       </h2>
       <div className="si-demo-lines">
         <p>
           <b>{demo.email}</b>
         </p>
         <p>
-          Quản trị: <b>{demo.adminEmail}</b>
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Quản trị: <b>{demo.adminEmail}</b>
+              </>
+            ),
+            en: (
+              <>
+                Admin: <b>{demo.adminEmail}</b>
+              </>
+            ),
+          })}
         </p>
         <p>
-          Mật khẩu: <b>{demo.password}</b>
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Mật khẩu: <b>{demo.password}</b>
+              </>
+            ),
+            en: (
+              <>
+                Password: <b>{demo.password}</b>
+              </>
+            ),
+          })}
         </p>
       </div>
       <div className="si-demo-acts">
         <form onSubmit={send(onDemo)}>
           <input type="hidden" name="next" value={next ?? ""} />
           <button className="btn btn-line" type="submit" disabled={busy}>
-            {demoPending ? "Đang mở tài khoản thử…" : "Đăng nhập thử"}
+            {demoPending
+              ? t({ vi: "Đang mở tài khoản thử…", en: "Opening the demo account…" })
+              : t({ vi: "Đăng nhập thử", en: "Try a demo account" })}
           </button>
         </form>
         <form onSubmit={send(onAdmin)}>
           <input type="hidden" name="next" value={next ?? ""} />
           <button className="btn btn-line" type="submit" disabled={busy}>
-            {adminPending ? "Đang mở khu quản trị…" : "Vào quản trị thử"}
+            {adminPending
+              ? t({ vi: "Đang mở khu quản trị…", en: "Opening the admin…" })
+              : t({ vi: "Vào quản trị thử", en: "Try the admin" })}
           </button>
         </form>
       </div>
@@ -331,12 +378,15 @@ function DemoBox({
 
 /** Quên mật khẩu: the address, then the honest line (QĐ-35) and the way back. */
 function ForgotMode({ next }: { next: string | undefined }) {
+  const locale = useLocale();
+  const t = picker(locale);
   const [email, setEmail] = useState("");
   const [shown, setShown] = useState(false);
   const [asked, setAsked] = useState<string | null>(null);
   const field = useRef<HTMLInputElement>(null);
   const back = useRef<HTMLAnchorElement>(null);
-  const error = shown ? signErrors("forgot", { email }).email : undefined;
+  const error = shown ? signErrors("forgot", { email }, locale).email : undefined;
+  const notSent = t(FORGOT_NOT_SENT_TEXT);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -352,16 +402,16 @@ function ForgotMode({ next }: { next: string | undefined }) {
 
   return (
     <>
-      <h1 className="si-title disp">{SIGN_TITLES.forgot}</h1>
+      <h1 className="si-title disp">{signTitle("forgot", locale)}</h1>
       {asked !== null ? (
         <div className="si-sent" role="status">
           <p className="si-sent-line">
-            {FORGOT_NOT_SENT.before}
+            {notSent.before}
             <b>{asked}</b>
-            {FORGOT_NOT_SENT.after}
+            {notSent.after}
           </p>
           <Link className="btn btn-line" href={signHref("in", next)} ref={back}>
-            Về đăng nhập
+            {t({ vi: "Về đăng nhập", en: "Back to sign in" })}
           </Link>
         </div>
       ) : (
@@ -369,7 +419,7 @@ function ForgotMode({ next }: { next: string | undefined }) {
           <form className="si-form" noValidate onSubmit={onSubmit}>
             <TextField
               name="email"
-              label="Email đã đăng ký"
+              label={t({ vi: "Email đã đăng ký", en: "Registered email" })}
               type="email"
               autoComplete="email"
               value={email}
@@ -378,11 +428,11 @@ function ForgotMode({ next }: { next: string | undefined }) {
               inputRef={field}
             />
             <button className="btn btn-blue" type="submit">
-              Gửi liên kết
+              {t({ vi: "Gửi liên kết", en: "Send link" })}
             </button>
           </form>
           <Link className="link si-switch" href={signHref("in", next)}>
-            Về đăng nhập
+            {t({ vi: "Về đăng nhập", en: "Back to sign in" })}
           </Link>
         </>
       )}
@@ -443,6 +493,7 @@ function PasswordField({
   error: string | undefined;
   onChange: (value: string) => void;
 }) {
+  const t = picker(useLocale());
   const [visible, setVisible] = useState(false);
   return (
     <div className={cx("field", error && "is-error")} data-f="password">
@@ -462,7 +513,7 @@ function PasswordField({
         <button
           className="si-eye"
           type="button"
-          aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+          aria-label={visible ? t({ vi: "Ẩn mật khẩu", en: "Hide password" }) : t({ vi: "Hiện mật khẩu", en: "Show password" })}
           aria-pressed={visible}
           onClick={() => setVisible((v) => !v)}
         >

@@ -3,12 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { COLORS } from "@/data/colors";
+import { colorLabel } from "@/data/colors";
 import type { ColorKey, Product, ProductId, Size } from "@/data/types";
 import { PICTURE, pictureAlt, pictureOf } from "@/lib/feed";
 import { savedStyles, wishCard, wishSizeLabel, type SavedStyle, type WishCard, type WishStock } from "@/lib/feed-me";
+import { picker, plural } from "@/lib/i18n";
 import { vnd } from "@/lib/money";
+import { nameLang, productText } from "@/lib/product-text";
 import { useFeedToast } from "../FeedToast";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNow } from "../now";
@@ -39,10 +42,16 @@ const OUT_MS = 200;
  * over it, the focus moves to the next style's heart (or the previous one's,
  * or the title), and "Đã bỏ lưu BỤI" offers "Hoàn tác", which puts it back
  * where it stood (`unsaveFavoriteAction`, then `restoreFavoriteAction`).
+ *
+ * In the page's language since round v6 slice E3a: "Saved", "Removed BỤI" ·
+ * "Undo", "N left", "Out of grey", "Closed 25 Sep"; a style's words through
+ * `productText`, its colour through `colorLabel`.
  */
 export function WishlistView() {
   const catalog = useCatalog();
   const now = useNow();
+  const locale = useLocale();
+  const t = picker(locale);
   const keep = useKeep();
   const toast = useFeedToast();
   const { open } = useQuickAdd();
@@ -69,8 +78,8 @@ export function WishlistView() {
       setLeaving((l) => l.filter((id) => id !== s.product.id));
       focusNext.current = next ? `[data-unsave="${next.productId}"]` : "[data-ui='feed'] .b-title";
       void keep.unsave(s.product.id);
-      toast(`Đã bỏ lưu ${s.product.name}`, {
-        label: "Hoàn tác",
+      toast(t({ vi: `Đã bỏ lưu ${s.product.name}`, en: `Removed ${productText(s.product, "en").name} from Saved` }), {
+        label: t({ vi: "Hoàn tác", en: "Undo" }),
         run: () => {
           focusNext.current = `[data-unsave="${s.product.id}"]`;
           void keep.restore(s.fav, at);
@@ -92,9 +101,13 @@ export function WishlistView() {
   const head = (
     <div className="b-head">
       <h1 className="b-title disp" tabIndex={-1}>
-        Yêu thích
+        {t({ vi: "Yêu thích", en: "Saved" })}
       </h1>
-      {saved.length > 0 && <p className="b-count">{saved.length} mẫu</p>}
+      {saved.length > 0 && (
+        <p className="b-count">
+          {t<React.ReactNode>({ vi: <>{saved.length} mẫu</>, en: plural(saved.length, "style", "styles") })}
+        </p>
+      )}
     </div>
   );
 
@@ -106,9 +119,9 @@ export function WishlistView() {
           <span className="empty-ic">
             <FeedIcon name="heart" />
           </span>
-          <p className="empty-title">Chưa lưu mẫu nào</p>
+          <p className="empty-title">{t({ vi: "Chưa lưu mẫu nào", en: "Nothing saved yet" })}</p>
           <Link className="btn btn-blue" href="/products">
-            Xem Cửa hàng
+            {t({ vi: "Xem Cửa hàng", en: "Go to Shop" })}
           </Link>
         </div>
       </>
@@ -118,11 +131,11 @@ export function WishlistView() {
   return (
     <>
       {head}
-      <section className="b-fcs" aria-label="Mẫu đã lưu">
+      <section className="b-fcs" aria-label={t({ vi: "Mẫu đã lưu", en: "Saved styles" })}>
         {saved.map((s, i) => (
           <WishCardView
             key={s.product.id}
-            card={wishCard(catalog, s, now)}
+            card={wishCard(catalog, s, now, locale)}
             index={i}
             leaving={leaving.includes(s.product.id)}
             onRemove={() => remove(s)}
@@ -145,9 +158,19 @@ interface WishCardViewProps {
 /** One saved style (`favorites.js`: `card`). */
 function WishCardView({ card, index, leaving, onRemove, onSize }: WishCardViewProps) {
   const { ref, shown } = useReveal<HTMLElement>();
+  const locale = useLocale();
+  const t = picker(locale);
   const p = card.product;
+  const text = productText(p, locale);
+  const lang = nameLang(p, locale);
   const unsave = (
-    <button className="fav b-fc-fav" type="button" data-unsave={p.id} aria-label={`Bỏ lưu ${p.name}`} onClick={onRemove}>
+    <button
+      className="fav b-fc-fav"
+      type="button"
+      data-unsave={p.id}
+      aria-label={t({ vi: `Bỏ lưu ${p.name}`, en: `Remove ${text.name} from Saved` })}
+      onClick={onRemove}
+    >
       <FeedIcon name="heart-fill" />
     </button>
   );
@@ -157,14 +180,16 @@ function WishCardView({ card, index, leaving, onRemove, onSize }: WishCardViewPr
     return (
       <article ref={ref} className={cx("b-fc is-closed rv", shown && "in", leaving && "b-out")}>
         <div className="b-fc-media">
-          <p className="b-type" aria-hidden="true">
-            {p.name}
+          <p className="b-type" aria-hidden="true" lang={lang}>
+            {text.name}
           </p>
         </div>
         <div className="b-fc-body">
-          <h2 className="b-fc-name disp">{p.name}</h2>
-          <p className="b-fc-meta">{p.kind}</p>
-          <p className="b-fc-price">{vnd(p.priceVnd)}</p>
+          <h2 className="b-fc-name disp" lang={lang}>
+            {text.name}
+          </h2>
+          <p className="b-fc-meta">{text.kind}</p>
+          <p className="b-fc-price">{vnd(p.priceVnd, locale)}</p>
         </div>
         {unsave}
       </article>
@@ -172,7 +197,7 @@ function WishCardView({ card, index, leaving, onRemove, onSize }: WishCardViewPr
   }
 
   const pic = pictureOf(p, card.color, "pack");
-  const colorName = COLORS[card.color].label;
+  const colorName = colorLabel(card.color, locale);
   return (
     <article
       ref={ref}
@@ -193,24 +218,27 @@ function WishCardView({ card, index, leaving, onRemove, onSize }: WishCardViewPr
           height={PICTURE.height}
           sizes={CARD_SIZES}
           loading={index > 2 ? "lazy" : "eager"}
-          alt={pictureAlt(p, card.color, false)}
+          alt={pictureAlt(p, card.color, false, locale)}
         />
-        {card.sold && <span className="plate">ĐÃ HẾT</span>}
+        {card.sold && <span className="plate">{t({ vi: "ĐÃ HẾT", en: "SOLD OUT" })}</span>}
       </Link>
       <div className="b-fc-body">
-        <h2 className="b-fc-name disp">
-          <Link href={card.href}>{p.name}</Link>
+        <h2 className="b-fc-name disp" lang={lang}>
+          <Link href={card.href}>{text.name}</Link>
         </h2>
         <p className="b-fc-meta">
-          {colorName} · {p.kind}
+          {colorName} · {text.kind}
         </p>
-        <p className="b-fc-price">{vnd(p.priceVnd)}</p>
+        <p className="b-fc-price">{vnd(p.priceVnd, locale)}</p>
         <WishStockLine stock={card.stock} />
         {card.sizes && (
           <div
             className="b-fc-sizes"
             role="group"
-            aria-label={`Thêm ${p.name} màu ${colorName.toLocaleLowerCase("vi")}, chọn size`}
+            aria-label={t({
+              vi: `Thêm ${p.name} màu ${colorName.toLocaleLowerCase("vi")}, chọn size`,
+              en: `Add ${text.name} in ${colorName.toLocaleLowerCase("en")}, choose a size`,
+            })}
           >
             {card.sizes.map(({ size, n }) =>
               n > 0 ? (
@@ -218,13 +246,13 @@ function WishCardView({ card, index, leaving, onRemove, onSize }: WishCardViewPr
                   className="b-sz"
                   type="button"
                   key={size}
-                  aria-label={wishSizeLabel(size, n)}
+                  aria-label={wishSizeLabel(size, n, locale)}
                   onClick={(e) => onSize(p, card.color, size, e.currentTarget)}
                 >
                   {size}
                 </button>
               ) : (
-                <button className="b-sz" type="button" key={size} disabled aria-label={wishSizeLabel(size, 0)}>
+                <button className="b-sz" type="button" key={size} disabled aria-label={wishSizeLabel(size, 0, locale)}>
                   {size}
                 </button>
               ),
@@ -237,20 +265,25 @@ function WishCardView({ card, index, leaving, onRemove, onSize }: WishCardViewPr
   );
 }
 
-/** "Còn 1" with the fire, "Còn 5", "Hết màu xám", "Đã đóng 25/09" (`favorites.js`: `stock`). */
+/**
+ * "Còn 1" with the fire, "Còn 5", "Hết màu xám", "Đã đóng 25/09"
+ * (`favorites.js`: `stock`); in English "1 left", "Out of grey", "Closed 25
+ * Sep", as every English stock line has them.
+ */
 function WishStockLine({ stock }: { stock: WishStock | null }) {
+  const t = picker(useLocale());
   if (!stock) return null;
   switch (stock.kind) {
     case "gone":
       return (
         <p className="stock b-fc-stock">
-          <span>Hết màu {stock.color}</span>
+          <span>{t<React.ReactNode>({ vi: <>Hết màu {stock.color}</>, en: `Out of ${stock.color}` })}</span>
         </p>
       );
     case "closed":
       return (
         <p className="stock b-fc-stock">
-          <span>Đã đóng {stock.day}</span>
+          <span>{t<React.ReactNode>({ vi: <>Đã đóng {stock.day}</>, en: `Closed ${stock.day}` })}</span>
         </p>
       );
     case "left":
@@ -258,12 +291,12 @@ function WishStockLine({ stock }: { stock: WishStock | null }) {
         <p className="stock b-fc-stock is-low">
           <b>
             <FeedIcon name="fire-fill" />
-            Còn {stock.n}
+            {t<React.ReactNode>({ vi: <>Còn {stock.n}</>, en: `${stock.n} left` })}
           </b>
         </p>
       ) : (
         <p className="stock b-fc-stock">
-          <span>Còn {stock.n}</span>
+          <span>{t<React.ReactNode>({ vi: <>Còn {stock.n}</>, en: `${stock.n} left` })}</span>
         </p>
       );
   }

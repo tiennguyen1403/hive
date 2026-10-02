@@ -4,6 +4,7 @@ import type { ColorKey, MyState, NotifyKey, ProductId, Size, SizeSlot } from "@/
 import * as keeps from "@/lib/db/my-state";
 import { takeRate } from "@/lib/db/rate-limit";
 import { getSession } from "@/lib/db/session";
+import { getActionLocale } from "@/lib/locale";
 import {
   keepRefusal,
   readColorChoice,
@@ -53,6 +54,10 @@ import {
  * tables on the server yet — re-rendering the whole layout for a heart would
  * buy nothing. Slice 3b decides whether a server-rendered screen needs
  * `refresh()` (`02-guides/server-actions.md`, "Choosing a cache update").
+ *
+ * Round v6 slice E3a: a refusal's sentence is in the request's language
+ * (`getActionLocale`), the rate limit's too. A Feed screen still words a
+ * refusal again from its `reason` (`useKeep`), all but the rate limit's.
  */
 
 type Done<T> = { ok: true; value: T } | KeepRefusal;
@@ -63,19 +68,20 @@ async function keep<I, T>(
   input: I | null,
   run: (input: I) => Promise<Written<T>>,
 ): Promise<Done<T>> {
-  if (!(await getSession())) return keepRefusal("SIGNED_OUT", topic);
-  if (input === null) return keepRefusal("INVALID", topic);
+  const locale = await getActionLocale();
+  if (!(await getSession())) return keepRefusal("SIGNED_OUT", topic, undefined, locale);
+  if (input === null) return keepRefusal("INVALID", topic, undefined, locale);
 
-  const pace = await takeRate("keep");
-  if (!pace.ok) return keepRefusal("RATE_LIMITED", topic, pace.message);
+  const pace = await takeRate("keep", 1, locale);
+  if (!pace.ok) return keepRefusal("RATE_LIMITED", topic, pace.message, locale);
 
   try {
     const done = await run(input);
-    return done.ok ? done : keepRefusal(done.failure, topic);
+    return done.ok ? done : keepRefusal(done.failure, topic, undefined, locale);
   } catch (error) {
     // Plumbing (a missing variable, the network): logged, and a sentence.
     console.error(`keep(${topic}):`, error instanceof Error ? error.message : error);
-    return keepRefusal("UNAVAILABLE", topic);
+    return keepRefusal("UNAVAILABLE", topic, undefined, locale);
   }
 }
 

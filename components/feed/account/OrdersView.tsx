@@ -2,24 +2,26 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Order } from "@/data/types";
 import { dayMonth } from "@/lib/datetime";
 import {
   NO_FILTER,
-  ORDER_PHASES,
   PHASES,
   filterOrders,
-  groupLabel,
+  groupLabelIn,
   groupSlug,
   groupsOfOrders,
   noneLabel,
   orderGroups,
+  orderPhaseLabel,
   resultLabel,
   ticketNote,
   type OrderGroup,
   type OrdersFilter,
 } from "@/lib/feed-account";
+import { picker } from "@/lib/i18n";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd } from "@/lib/orders";
 import { FeedClock } from "../FeedClock";
@@ -43,11 +45,18 @@ interface OrdersViewProps {
  * follows without a round trip. A ticket leaves out the line the list is
  * filtered by; a combination with nothing says so and offers to clear both;
  * a screen reader hears the count after each change.
+ *
+ * In the page's language since round v6 slice E3a: "Orders", "All",
+ * "Ongoing", "Delivered", "Cancelled", "All lines", Drop 05 and Basics. The
+ * count a screen reader hears is kept as the filter it counted and worded at
+ * render, so a switch of language rewords it too.
  */
 export function OrdersView({ orders, initial }: OrdersViewProps) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const [filter, setFilter] = useState<OrdersFilter>(initial);
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState<{ count: number; filter: OrdersFilter } | null>(null);
   const chips = useRef<HTMLDivElement>(null);
   const all = useRef<HTMLButtonElement>(null);
   const groups = useMemo(() => groupsOfOrders(catalog, orders), [catalog, orders]);
@@ -70,7 +79,7 @@ export function OrdersView({ orders, initial }: OrdersViewProps) {
 
   function change(next: OrdersFilter) {
     setFilter(next);
-    setResult(resultLabel(filterOrders(catalog, orders, next).length, next));
+    setResult({ count: filterOrders(catalog, orders, next).length, filter: next });
     writeUrl(next);
   }
 
@@ -87,19 +96,21 @@ export function OrdersView({ orders, initial }: OrdersViewProps) {
     // Once, on arrival: later changes write the URL themselves.
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const title = t({ vi: "Đơn hàng", en: "Orders" });
+
   if (orders.length === 0) {
     return (
       <>
         <h1 className="acc-h1 disp" data-hero>
-          Đơn hàng
+          {title}
         </h1>
         <div className="empty-state">
           <span className="empty-ic">
             <FeedIcon name="package" />
           </span>
-          <p className="empty-title">Chưa có đơn nào</p>
+          <p className="empty-title">{t({ vi: "Chưa có đơn nào", en: "No orders yet" })}</p>
           <Link className="btn btn-blue" href="/products">
-            Xem Cửa hàng
+            {t({ vi: "Xem Cửa hàng", en: "Go to Shop" })}
           </Link>
         </div>
       </>
@@ -109,10 +120,10 @@ export function OrdersView({ orders, initial }: OrdersViewProps) {
   return (
     <>
       <h1 className="acc-h1 disp" data-hero>
-        Đơn hàng
+        {title}
       </h1>
       <div className="of">
-        <div className="seg" role="group" aria-label="Trạng thái">
+        <div className="seg" role="group" aria-label={t({ vi: "Trạng thái", en: "Status" })}>
           <button
             ref={all}
             className="seg-btn"
@@ -120,7 +131,7 @@ export function OrdersView({ orders, initial }: OrdersViewProps) {
             aria-pressed={filter.phase === "all"}
             onClick={() => change({ ...filter, phase: "all" })}
           >
-            Tất cả
+            {t({ vi: "Tất cả", en: "All" })}
           </button>
           {PHASES.map((k) => (
             <button
@@ -130,18 +141,18 @@ export function OrdersView({ orders, initial }: OrdersViewProps) {
               aria-pressed={filter.phase === k}
               onClick={() => change({ ...filter, phase: k })}
             >
-              {ORDER_PHASES[k]}
+              {orderPhaseLabel(k, locale)}
             </button>
           ))}
         </div>
-        <div className="chips" role="group" aria-label="Dòng hàng" ref={chips}>
+        <div className="chips" role="group" aria-label={t({ vi: "Dòng hàng", en: "Line" })} ref={chips}>
           <button
             className="chip"
             type="button"
             aria-pressed={filter.group === "all"}
             onClick={() => change({ ...filter, group: "all" })}
           >
-            Mọi dòng hàng
+            {t({ vi: "Mọi dòng hàng", en: "All lines" })}
           </button>
           {groups.map((g) => (
             <button
@@ -151,13 +162,13 @@ export function OrdersView({ orders, initial }: OrdersViewProps) {
               aria-pressed={filter.group === g}
               onClick={() => change({ ...filter, group: g })}
             >
-              {groupLabel(g)}
+              {groupLabelIn(g, locale)}
             </button>
           ))}
         </div>
       </div>
       <p className="sr-only" aria-live="polite">
-        {result}
+        {result ? resultLabel(result.count, result.filter, locale) : ""}
       </p>
       <div className="og-list">
         {shown.length > 0 ? (
@@ -169,7 +180,7 @@ export function OrdersView({ orders, initial }: OrdersViewProps) {
             <span className="empty-ic">
               <FeedIcon name="package" />
             </span>
-            <p className="empty-title">{noneLabel(filter)}</p>
+            <p className="empty-title">{noneLabel(filter, locale)}</p>
             <button
               className="btn btn-line"
               type="button"
@@ -178,7 +189,7 @@ export function OrdersView({ orders, initial }: OrdersViewProps) {
                 all.current?.focus();
               }}
             >
-              Bỏ lọc
+              {t({ vi: "Bỏ lọc", en: "Clear filters" })}
             </button>
           </div>
         )}
@@ -190,43 +201,71 @@ export function OrdersView({ orders, initial }: OrdersViewProps) {
 /**
  * One order as a ticket (`account.js`: `ticket`): what it was bought from, the
  * code in the display face and the total; the state with what it needs; the
- * pieces as tiles (four at most) and the day it was placed.
+ * pieces as tiles (four at most) and the day it was placed. In English
+ * (round v6 slice E3a) "Reserved for", "Tracking no.", "Returns until",
+ * "Ordered 21 Sep".
  */
 function Ticket({ order: o, groups }: { order: Order; groups: OrderGroup[] }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const now = useNow();
   const nowMs = useNowMs();
-  const note = ticketNote(o, now);
+  const note = ticketNote(o, now, locale);
   const cancelled = o.status.state === "CANCELLED";
 
   return (
     <article className={cx("ticket", cancelled && "is-cancelled")}>
       <Link className="ticket-a" href={`/account/orders/${o.code}`}>
         <div className="ticket-top">
-          {groups.length > 0 && <p className="ticket-grp">{groups.map(groupLabel).join(" · ")}</p>}
+          {groups.length > 0 && <p className="ticket-grp">{groups.map((g) => groupLabelIn(g, locale)).join(" · ")}</p>}
           <h3 className="ticket-code disp">{o.code}</h3>
-          <p className="ticket-total">{vnd(orderTotalVnd(o))}</p>
+          <p className="ticket-total">{vnd(orderTotalVnd(o), locale)}</p>
         </div>
         <div className="ticket-mid">
           <StatusChip state={o.status.state} />
           {note && (
             <span className="ticket-note">
-              {note.kind === "hold" && (
-                <>
-                  Giữ hàng còn <FeedClock until={note.dueAt} now={nowMs} tag="b" className="num" />
-                </>
-              )}
+              {note.kind === "hold" &&
+                t<React.ReactNode>({
+                  vi: (
+                    <>
+                      Giữ hàng còn <FeedClock until={note.dueAt} now={nowMs} tag="b" className="num" />
+                    </>
+                  ),
+                  en: (
+                    <>
+                      Reserved for <FeedClock until={note.dueAt} now={nowMs} tag="b" className="num" />
+                    </>
+                  ),
+                })}
               {note.kind === "reason" && note.text}
-              {note.kind === "tracking" && (
-                <>
-                  Mã vận đơn <b>{note.code}</b>
-                </>
-              )}
-              {note.kind === "return" && (
-                <>
-                  Đổi trả tới <b>{note.day}</b>
-                </>
-              )}
+              {note.kind === "tracking" &&
+                t<React.ReactNode>({
+                  vi: (
+                    <>
+                      Mã vận đơn <b>{note.code}</b>
+                    </>
+                  ),
+                  en: (
+                    <>
+                      Tracking no. <b>{note.code}</b>
+                    </>
+                  ),
+                })}
+              {note.kind === "return" &&
+                t<React.ReactNode>({
+                  vi: (
+                    <>
+                      Đổi trả tới <b>{note.day}</b>
+                    </>
+                  ),
+                  en: (
+                    <>
+                      Returns until <b>{note.day}</b>
+                    </>
+                  ),
+                })}
             </span>
           )}
         </div>
@@ -236,7 +275,12 @@ function Ticket({ order: o, groups }: { order: Order; groups: OrderGroup[] }) {
               <Tile key={`${l.productId}:${l.color}:${l.size}:${i}`} line={l} product={catalog.byId.get(l.productId)} alt />
             ))}
           </div>
-          <p className="ticket-date">Đặt {dayMonth(o.placedAt)}</p>
+          <p className="ticket-date">
+            {t<React.ReactNode>({
+              vi: <>Đặt {dayMonth(o.placedAt)}</>,
+              en: `Ordered ${dayMonth(o.placedAt, "en")}`,
+            })}
+          </p>
         </div>
       </Link>
     </article>

@@ -2,9 +2,10 @@ import Image from "next/image";
 import { useLocale } from "@/components/i18n/LocaleContext";
 import { COLORS } from "@/data/colors";
 import type { Order, OrderLine, OrderState, Product } from "@/data/types";
-import { FEED_STATE_LABEL, linePicture, orderSteps, stepStamp, tileLabel } from "@/lib/feed-account";
+import { feedStateLabel, linePicture, orderSteps, stepStamp, tileLabel } from "@/lib/feed-account";
 import { picker } from "@/lib/i18n";
 import { isFixed } from "@/lib/inventory";
+import { nameLang, productText } from "@/lib/product-text";
 import { FeedIcon, type FeedIconName } from "../icon/FeedIcon";
 import { cx } from "../useReveal";
 
@@ -58,12 +59,17 @@ const STATE_ICON: Readonly<Record<OrderState, FeedIconName>> = {
   CANCELLED: "x",
 };
 
-/** The state in words with its glyph (`statusChip`); blue while a transfer is awaited, the one state that asks for the shopper. */
+/**
+ * The state in words with its glyph (`statusChip`); blue while a transfer is
+ * awaited, the one state that asks for the shopper. In the page's language
+ * since round v6 slice E3a (`feedStateLabel`).
+ */
 export function StatusChip({ state }: { state: OrderState }) {
+  const locale = useLocale();
   return (
     <span className={cx("st-chip", state === "AWAITING_TRANSFER" && "is-act")}>
       <FeedIcon name={STATE_ICON[state]} />
-      {FEED_STATE_LABEL[state]}
+      {feedStateLabel(state, locale)}
     </span>
   );
 }
@@ -86,12 +92,15 @@ interface TileProps {
  * A piece as a tile (`tile`): its photo, a fixed style's flat drawing, or —
  * for a style whose frame is only borrowed (Số 03, Số 04) — its name in the
  * display face with its colour as a dot; beside its own name, that colour as
- * a swatch.
+ * a swatch. In the page's language since round v6 slice E3a: the name through
+ * `productText` (a drop style's Vietnamese one marked `lang="vi"` where it is
+ * set in type), the screen reader's name through `tileLabel`.
  */
 export function Tile({ line, product, size, alt = false, qty = true, named = true }: TileProps) {
-  const name = product?.name ?? "—";
+  const locale = useLocale();
+  const name = product ? productText(product, locale).name : "—";
   const src = linePicture(product, line.color);
-  const label = tileLabel(name, line.color, line.size, line.qty);
+  const label = tileLabel(name, line.color, line.size, line.qty, locale);
   const count = qty && line.qty > 1 ? <span className="tile-qty">×{line.qty}</span> : null;
   const box = cx("tile", size);
   const a11y = alt ? { role: "img" as const, "aria-label": label } : { "aria-hidden": true as const };
@@ -115,7 +124,9 @@ export function Tile({ line, product, size, alt = false, qty = true, named = tru
   return (
     <span className={cx(box, "type")} {...a11y}>
       <span className="tile-dot" style={{ background: hex }} />
-      <span className="tile-name">{name}</span>
+      <span className="tile-name" lang={product ? nameLang(product, locale) : undefined}>
+        {name}
+      </span>
       {count}
     </span>
   );

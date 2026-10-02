@@ -41,12 +41,32 @@ export async function getLocale(): Promise<Locale> {
  * below only ever meets the error of a missing request; and should this be
  * called where Next does throw its signals, `unstable_rethrow` hands them back
  * first ("should be called at the top of the catch block").
+ *
+ * The missing request itself is recognised before that (round v6 slice E3a,
+ * `isOutsideRequest`): it is never one of Next's signals, so there is nothing
+ * to hand back, and a test that replaces `next/navigation` with only what its
+ * action uses — `lib/actions/auth.test.ts` keeps `redirect` alone — has no
+ * `unstable_rethrow` to ask. Every other error still goes through it first.
  */
 export async function getActionLocale(): Promise<Locale> {
   try {
     return await getLocale();
   } catch (error) {
+    if (isOutsideRequest(error)) return DEFAULT_LOCALE;
     unstable_rethrow(error);
     return DEFAULT_LOCALE;
   }
+}
+
+/**
+ * Next's error for a request-time API called with no request at all:
+ * `throwForMissingRequestStore` (`next/dist/server/app-render/
+ * work-unit-async-storage.external.js`) throws a plain `Error` carrying the
+ * code `E251`, "`cookies` was called outside a request scope". Matched by the
+ * code, or by those words should the code ever move.
+ */
+function isOutsideRequest(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const code = (error as Error & { __NEXT_ERROR_CODE?: unknown }).__NEXT_ERROR_CODE;
+  return code === "E251" || /was called outside a request scope/.test(error.message);
 }

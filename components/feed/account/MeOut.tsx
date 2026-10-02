@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { DemoAccounts } from "@/lib/demo-sign-in";
 import { signHref } from "@/lib/feed-sign-in";
+import { picker, type Locale } from "@/lib/i18n";
 import { LookupForm } from "./LookupForm";
 import { OutCard } from "./OutCard";
 import { InlineSignIn } from "./SignInView";
@@ -24,26 +25,31 @@ const HERE = "/account";
  * The mock builds one or the other by the window's width; this draws both
  * once, and `account.css` shows the one for the width (the lookup is shared),
  * so there is no flash and nothing to rebuild when the window turns.
+ *
+ * In the page's language since round v6 slice E3a ("Account", "Have an
+ * account", "No account yet", "Sign up"); the page hands it down.
  */
-export function MeOut({ demo }: { demo: DemoAccounts | null }) {
+export function MeOut({ demo, locale }: { demo: DemoAccounts | null; locale: Locale }) {
+  const t = picker(locale);
+  const title = t({ vi: "Tôi", en: "Account" });
   return (
     <>
-      <h1 className="sr-only">Tôi</h1>
+      <h1 className="sr-only">{title}</h1>
       <div className="out-home">
         <section className="out-in" aria-labelledby="out-in-title">
           <h2 className="out-head disp" id="out-in-title">
-            Đã có tài khoản
+            {t({ vi: "Đã có tài khoản", en: "Have an account" })}
           </h2>
           <InlineSignIn next={HERE} demo={demo} />
         </section>
         <div className="out-side">
-          <OutCard title="Tôi" id="out-title" here={HERE} perks />
+          <OutCard title={title} id="out-title" here={HERE} perks locale={locale} />
           <section className="out-up on-dark" aria-labelledby="out-up-title">
             <h2 className="out-head disp" id="out-up-title">
-              Chưa có tài khoản
+              {t({ vi: "Chưa có tài khoản", en: "No account yet" })}
             </h2>
             <Link className="btn btn-light out-up-go" href={signHref("up", HERE)}>
-              Tạo tài khoản
+              {t({ vi: "Tạo tài khoản", en: "Sign up" })}
             </Link>
           </section>
           <LookupForm id="me" />

@@ -11,15 +11,32 @@ import { loadCatalog } from "@/lib/db/catalog";
 import { listMyOrders } from "@/lib/db/orders";
 import { loadMe } from "@/lib/db/profiles";
 import { groupsOfOrders, newestFirst, parseOrdersFilter, pathWithQuery } from "@/lib/feed-account";
+import { picker, type Locale, type Pair } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Đơn hàng",
-  // Somebody's own orders. Nothing here belongs in a search index.
-  robots: { index: false, follow: false },
-};
+/** The page's name: "Orders" in English (round v6 slice E3a). */
+const TITLE: Pair = { vi: "Đơn hàng", en: "Orders" };
+
+/**
+ * "Đơn hàng" — the layout's template adds "· HIVE" — in the page's language,
+ * with the site's description in it; the link card keeps the layout's
+ * Vietnamese one (QĐ-40).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return {
+    title: t(TITLE),
+    description: t(SITE_DESCRIPTION_TEXT),
+    // Somebody's own orders. Nothing here belongs in a search index.
+    robots: { index: false, follow: false },
+  };
+}
 
 /** The phone's bar: back to Tôi, the title once the page's own has scrolled away. */
-const MBAR: FeedMbarProps = { title: "Đơn hàng", back: "/account", watch: "[data-ui='feed'] [data-hero]" };
+function mbarOf(locale: Locale): FeedMbarProps {
+  return { title: picker(locale)(TITLE), back: "/account", watch: "[data-ui='feed'] [data-hero]" };
+}
 
 /**
  * "Đơn hàng", round v4 "Feed" (slice 3a): the approved mock's
@@ -38,18 +55,25 @@ const MBAR: FeedMbarProps = { title: "Đơn hàng", back: "/account", watch: "[d
  * a promise in Next 16.
  */
 export default async function OrdersPage(props: PageProps<"/account/orders">) {
-  const [me, sp] = await Promise.all([loadMe(), props.searchParams]);
+  const [me, sp, locale] = await Promise.all([loadMe(), props.searchParams, getLocale()]);
   const now = demoNowMs();
+  const t = picker(locale);
+  const mbar = mbarOf(locale);
 
   if (!me) {
     return (
-      <FeedFrame page="orders" foot="lite" footSkip={["/track"]} mainClass="acc-layout" now={now} mbar={MBAR}>
-        <AccountNav on="orders" signedIn={false} />
+      <FeedFrame page="orders" foot="lite" footSkip={["/track"]} mainClass="acc-layout" now={now} mbar={mbar}>
+        <AccountNav on="orders" signedIn={false} locale={locale} />
         <div className="acc-main">
           <h1 className="acc-h1 disp" data-hero>
-            Đơn hàng
+            {t(TITLE)}
           </h1>
-          <OutCard title="Đăng nhập để xem đơn" id="out-orders" here={pathWithQuery("/account/orders", sp)} />
+          <OutCard
+            title={t({ vi: "Đăng nhập để xem đơn", en: "Sign in to see your orders" })}
+            id="out-orders"
+            here={pathWithQuery("/account/orders", sp)}
+            locale={locale}
+          />
           <LookupForm id="orders" />
         </div>
       </FeedFrame>
@@ -62,8 +86,8 @@ export default async function OrdersPage(props: PageProps<"/account/orders">) {
   const initial = parseOrdersFilter(sp, groupsOfOrders(catalog, orders));
 
   return (
-    <FeedFrame page="orders" foot="lite" mainClass="acc-layout" now={now} mbar={MBAR}>
-      <AccountNav on="orders" signedIn />
+    <FeedFrame page="orders" foot="lite" mainClass="acc-layout" now={now} mbar={mbar}>
+      <AccountNav on="orders" signedIn locale={locale} />
       <div className="acc-main">
         <OrdersView orders={orders} initial={initial} />
       </div>

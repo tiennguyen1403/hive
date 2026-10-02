@@ -9,15 +9,33 @@ import { PROVINCES, feedAddressLine, findWard, wardLabel } from "@/data/regions"
 import { listAddresses } from "@/lib/db/addresses";
 import { loadMe } from "@/lib/db/profiles";
 import { pathWithQuery } from "@/lib/feed-account";
+import { picker, type Locale, type Pair } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { formatPhone } from "@/lib/phone";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Địa chỉ",
-  // Somebody's home address. Nothing here belongs in a search index.
-  robots: { index: false, follow: false },
-};
+/** The page's name: "Addresses" in English (round v6 slice E3a). */
+const TITLE: Pair = { vi: "Địa chỉ", en: "Addresses" };
 
-const MBAR: FeedMbarProps = { title: "Địa chỉ", back: "/account", watch: "[data-ui='feed'] [data-hero]" };
+/**
+ * "Địa chỉ" — the layout's template adds "· HIVE" — in the page's language,
+ * with the site's description in it; the link card keeps the layout's
+ * Vietnamese one (QĐ-40).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return {
+    title: t(TITLE),
+    description: t(SITE_DESCRIPTION_TEXT),
+    // Somebody's home address. Nothing here belongs in a search index.
+    robots: { index: false, follow: false },
+  };
+}
+
+/** The phone's bar: back to Tôi, the title once the page's own has scrolled away. */
+function mbarOf(locale: Locale): FeedMbarProps {
+  return { title: picker(locale)(TITLE), back: "/account", watch: "[data-ui='feed'] [data-hero]" };
+}
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 
@@ -34,17 +52,24 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) 
  * `?add=1` opens the add sheet, `?edit=<id>` that address's.
  */
 export default async function AddressesPage(props: PageProps<"/account/addresses">) {
-  const [me, sp] = await Promise.all([loadMe(), props.searchParams]);
+  const [me, sp, locale] = await Promise.all([loadMe(), props.searchParams, getLocale()]);
+  const t = picker(locale);
+  const mbar = mbarOf(locale);
 
   if (!me) {
     return (
-      <FeedFrame page="addresses" foot="lite" mainClass="acc-layout" mbar={MBAR}>
-        <AccountNav on="addresses" signedIn={false} />
+      <FeedFrame page="addresses" foot="lite" mainClass="acc-layout" mbar={mbar}>
+        <AccountNav on="addresses" signedIn={false} locale={locale} />
         <div className="acc-main">
           <h1 className="acc-h1 disp" data-hero>
-            Địa chỉ
+            {t(TITLE)}
           </h1>
-          <OutCard title="Đăng nhập để lưu địa chỉ" id="out-ad" here={pathWithQuery("/account/addresses", sp)} />
+          <OutCard
+            title={t({ vi: "Đăng nhập để lưu địa chỉ", en: "Sign in to save addresses" })}
+            id="out-ad"
+            here={pathWithQuery("/account/addresses", sp)}
+            locale={locale}
+          />
         </div>
       </FeedFrame>
     );
@@ -71,8 +96,8 @@ export default async function AddressesPage(props: PageProps<"/account/addresses
   const open = one(sp.add) === "1" ? ({ kind: "add" } as const) : edit ? ({ kind: "edit", id: edit } as const) : null;
 
   return (
-    <FeedFrame page="addresses" foot="lite" mainClass="acc-layout" mbar={MBAR}>
-      <AccountNav on="addresses" signedIn />
+    <FeedFrame page="addresses" foot="lite" mainClass="acc-layout" mbar={mbar}>
+      <AccountNav on="addresses" signedIn locale={locale} />
       <div className="acc-main">
         <AddressesView
           book={book}

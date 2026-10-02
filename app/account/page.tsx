@@ -11,12 +11,24 @@ import { listMyOrders } from "@/lib/db/orders";
 import { loadMe } from "@/lib/db/profiles";
 import { demoAccounts } from "@/lib/demo-sign-in";
 import { newestFirst } from "@/lib/feed-account";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Tôi",
-  // Somebody's own account. Nothing here belongs in a search index.
-  robots: { index: false, follow: false },
-};
+/**
+ * "Tôi" — the layout's template adds "· HIVE" — in the page's language since
+ * round v6 slice E3a ("Account", the glossary's), with the site's description
+ * in it; the link card keeps the layout's Vietnamese one (QĐ-40).
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return {
+    title: t({ vi: "Tôi", en: "Account" }),
+    description: t(SITE_DESCRIPTION_TEXT),
+    // Somebody's own account. Nothing here belongs in a search index.
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * Tôi, round v4 "Feed" (slice 3b): the approved mock's
@@ -37,15 +49,15 @@ export const metadata: Metadata = {
  * screen reads from the root layout's `MyStateProvider`.
  */
 export default async function AccountPage() {
-  const me = await loadMe();
+  const [me, locale] = await Promise.all([loadMe(), getLocale()]);
   const now = demoNowMs();
 
   if (!me) {
     return (
       <FeedFrame page="account" foot="lite" footSkip={["/track"]} mainClass="acc-layout" now={now}>
-        <AccountNav on="account" signedIn={false} />
+        <AccountNav on="account" signedIn={false} locale={locale} />
         <div className="acc-main">
-          <MeOut demo={demoAccounts()} />
+          <MeOut demo={demoAccounts()} locale={locale} />
         </div>
       </FeedFrame>
     );
@@ -58,7 +70,7 @@ export default async function AccountPage() {
 
   return (
     <FeedFrame page="account" foot="lite" mainClass="acc-layout" now={now}>
-      <AccountNav on="account" signedIn />
+      <AccountNav on="account" signedIn locale={locale} />
       <div className="acc-main">
         <MeView me={me} orders={orders} address={home ? { label: home.label, line: feedAddressLine(home) } : null} />
       </div>

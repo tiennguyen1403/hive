@@ -3,13 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMe } from "@/components/account/MeContext";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { COLORS } from "@/data/colors";
-import type { Order } from "@/data/types";
+import { colorLabel } from "@/data/colors";
+import type { AddressLabel, Order } from "@/data/types";
 import { dayMonth } from "@/lib/datetime";
-import { FEED_STATE_LABEL } from "@/lib/feed-account";
+import { addressLabelText, feedStateLabel } from "@/lib/feed-account";
 import {
   EMPTY_MY_STATE,
+  SIZE_SLOT_TEXT,
   favAlert,
   favThumbs,
   meNow,
@@ -20,9 +22,11 @@ import {
   type SavedStyle,
 } from "@/lib/feed-me";
 import { confirmTransfer } from "@/lib/feed-order";
+import { picker } from "@/lib/i18n";
 import type { Me } from "@/lib/me";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd } from "@/lib/orders";
+import { productText } from "@/lib/product-text";
 import { FeedClock } from "../FeedClock";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNow, useNowMs } from "../now";
@@ -33,8 +37,8 @@ import { SignOutForm } from "./SignOut";
 
 /** The default address (or the first one), as Tôi's tile prints it; the line is built on the server. */
 export interface MeAddress {
-  /** "Nhà", "Công ty", "Khác". */
-  label: string;
+  /** "Nhà", "Công ty", "Khác", as the book stores it; printed through `addressLabelText`. */
+  label: AddressLabel;
   /** "24 Nguyễn Thị Minh Khai, Phường Sài Gòn, TP. Hồ Chí Minh". */
   line: string;
 }
@@ -62,65 +66,84 @@ interface MeViewProps {
  * The saved styles, the reminder and the sizes are the account's as the
  * screen keeps them (`MyStateContext`), so a heart pressed a moment ago on
  * another page is already here.
+ *
+ * In the page's language since round v6 slice E3a ("Member since", "Orders",
+ * "Saved", "My sizes", "Deliver to", "Sign out"). The name, the e-mail and the
+ * address keep their own words, marked `lang="vi"` on an English page; the
+ * address's name ("Nhà") is printed through `addressLabelText` ("Home").
  */
 export function MeView({ me, orders, address }: MeViewProps) {
   const who = useMe() ?? me;
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const now = useNow();
   const keep = useKeep();
   const state = keep.state ?? EMPTY_MY_STATE;
   const saved = savedStyles(catalog, state.favorites);
+  const own = locale === "en" ? ("vi" as const) : undefined;
 
   return (
     <>
       <section className="me-id" aria-labelledby="me-name">
-        <h1 className="me-name disp" id="me-name">
+        <h1 className="me-name disp" id="me-name" lang={own}>
           {who.name}
         </h1>
         <p className="me-meta">
-          {who.email} · Thành viên từ {memberSince(who.joinedAt)}
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                {who.email} · Thành viên từ {memberSince(who.joinedAt)}
+              </>
+            ),
+            en: (
+              <>
+                <span lang="vi">{who.email}</span> · Member since {memberSince(who.joinedAt, "en")}
+              </>
+            ),
+          })}
         </p>
         <Link className="pill me-edit" href="/account/profile">
           <FeedIcon name="pencil-simple" />
-          Sửa hồ sơ
+          {t({ vi: "Sửa hồ sơ", en: "Edit profile" })}
         </Link>
       </section>
 
       <section className="acc-sec" aria-labelledby="me-orders">
         <div className="acc-sec-head">
           <h2 className="acc-sec-title" id="me-orders">
-            Đơn hàng
+            {t({ vi: "Đơn hàng", en: "Orders" })}
           </h2>
           {orders.length > 0 ? (
             <Link className="link" href="/account/orders">
-              Xem tất cả
+              {t({ vi: "Xem tất cả", en: "View all" })}
             </Link>
           ) : (
             <Link className="link" href="/products">
-              Xem Cửa hàng
+              {t({ vi: "Xem Cửa hàng", en: "Go to Shop" })}
             </Link>
           )}
         </div>
         <OrdersNow now={meNow(orders, now)} />
       </section>
 
-      <section className="acc-sec" aria-label="Của tôi">
+      <section className="acc-sec" aria-label={t({ vi: "Của tôi", en: "My things" })}>
         <div className="bento">
-          <FavTile saved={saved} alert={favAlert(catalog, saved, now)} />
+          <FavTile saved={saved} alert={favAlert(catalog, saved, now, locale)} />
           <RemindTileView reminders={state.reminders} />
           <Link className="bt bt-size-tile bt-link" href="/account/profile#size">
-            <span className="bt-label">Size của tôi</span>
+            <span className="bt-label">{t({ vi: "Size của tôi", en: "My sizes" })}</span>
             <FeedIcon name="caret-right" className="bt-go" />
             <span className="bt-sizes">
               <span className="bt-size">
                 <FeedIcon name="t-shirt" />
                 <b>{state.sizes.top ?? "-"}</b>
-                <span>Áo</span>
+                <span>{t(SIZE_SLOT_TEXT.top)}</span>
               </span>
               <span className="bt-size">
                 <FeedIcon name="pants" />
                 <b>{state.sizes.bottom ?? "-"}</b>
-                <span>Quần</span>
+                <span>{t(SIZE_SLOT_TEXT.bottom)}</span>
               </span>
             </span>
           </Link>
@@ -128,19 +151,21 @@ export function MeView({ me, orders, address }: MeViewProps) {
             <Link className="bt bt-addr bt-link" href="/account/addresses">
               <span className="bt-label">
                 <FeedIcon name="map-pin" />
-                Giao tới
+                {t({ vi: "Giao tới", en: "Deliver to" })}
               </span>
               <FeedIcon name="caret-right" className="bt-go" />
-              <span className="bt-addr-name disp">{address.label}</span>
-              <span className="bt-addr-line">{address.line}</span>
+              <span className="bt-addr-name disp">{addressLabelText(address.label, locale)}</span>
+              <span className="bt-addr-line" lang={own}>
+                {address.line}
+              </span>
             </Link>
           ) : (
             <Link className="bt bt-addr bt-link" href="/account/addresses">
               <span className="bt-label">
                 <FeedIcon name="map-pin" />
-                Địa chỉ
+                {t({ vi: "Địa chỉ", en: "Addresses" })}
               </span>
-              <span className="bt-sub">Chưa có địa chỉ</span>
+              <span className="bt-sub">{t({ vi: "Chưa có địa chỉ", en: "No addresses yet" })}</span>
               <FeedIcon name="caret-right" className="bt-go" />
             </Link>
           )}
@@ -150,7 +175,7 @@ export function MeView({ me, orders, address }: MeViewProps) {
       <SignOutForm id="me-signout" />
       <button className="btn btn-line sign-out" type="submit" form="me-signout">
         <FeedIcon name="sign-out" />
-        Đăng xuất
+        {t({ vi: "Đăng xuất", en: "Sign out" })}
       </button>
     </>
   );
@@ -158,8 +183,9 @@ export function MeView({ me, orders, address }: MeViewProps) {
 
 /** "Đơn hàng" under its heading: the cards, or the line that says there is nothing to do. */
 function OrdersNow({ now: n }: { now: MeNow }) {
-  if (n.kind === "none") return <div className="none-card">Chưa có đơn nào</div>;
-  if (n.kind === "quiet") return <div className="none-card">Không có đơn đang xử lý</div>;
+  const t = picker(useLocale());
+  if (n.kind === "none") return <div className="none-card">{t({ vi: "Chưa có đơn nào", en: "No orders yet" })}</div>;
+  if (n.kind === "quiet") return <div className="none-card">{t({ vi: "Không có đơn đang xử lý", en: "No ongoing orders" })}</div>;
   if (n.kind === "return") {
     return (
       <div className="me-now">
@@ -198,24 +224,46 @@ const orderHref = (o: Order) => `/account/orders/${o.code}`;
  */
 function NowCard({ order: o }: { order: Order }) {
   const nowMs = useNowMs();
-  const transfer = confirmTransfer(o);
+  const locale = useLocale();
+  const t = picker(locale);
+  const transfer = confirmTransfer(o, locale);
   if (transfer) {
     return (
-      <article className="now on-dark" aria-label={`${o.code}, ${FEED_STATE_LABEL.AWAITING_TRANSFER.toLocaleLowerCase("vi")}`}>
+      <article
+        className="now on-dark"
+        aria-label={`${o.code}, ${feedStateLabel("AWAITING_TRANSFER", locale).toLocaleLowerCase(locale)}`}
+      >
         <div className="now-top">
           <p className="now-code disp">
             <Link href={orderHref(o)}>{o.code}</Link>
           </p>
-          <p className="now-total">{vnd(orderTotalVnd(o))}</p>
+          <p className="now-total">{vnd(orderTotalVnd(o), locale)}</p>
         </div>
-        <FeedClock until={transfer.dueAt} now={nowMs} tag="p" className="now-cd" label="Thời gian giữ hàng còn lại" />
+        <FeedClock
+          until={transfer.dueAt}
+          now={nowMs}
+          tag="p"
+          className="now-cd"
+          label={t({ vi: "Thời gian giữ hàng còn lại", en: "Reservation time left" })}
+        />
         <p className="now-when">
-          Giữ hàng tới <b>{transfer.until}</b>
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Giữ hàng tới <b>{transfer.until}</b>
+              </>
+            ),
+            en: (
+              <>
+                Reserved until <b>{transfer.until}</b>
+              </>
+            ),
+          })}
         </p>
         <div className="now-foot">
           <Pieces order={o} />
           <Link className="btn btn-light now-cta" href={`${orderHref(o)}#pay`}>
-            Chuyển khoản
+            {t({ vi: "Chuyển khoản", en: "Bank transfer" })}
           </Link>
         </div>
       </article>
@@ -229,10 +277,12 @@ function NowCard({ order: o }: { order: Order }) {
         </p>
         <StatusChip state={o.status.state} />
       </div>
-      <p className="now-when is-first">Cửa hàng gọi xác nhận trước khi giao</p>
+      <p className="now-when is-first">
+        {t({ vi: "Cửa hàng gọi xác nhận trước khi giao", en: "The shop will call to confirm before delivery" })}
+      </p>
       <div className="now-foot">
         <Pieces order={o} />
-        <p className="now-total">{vnd(orderTotalVnd(o))}</p>
+        <p className="now-total">{vnd(orderTotalVnd(o), locale)}</p>
       </div>
     </article>
   );
@@ -240,6 +290,7 @@ function NowCard({ order: o }: { order: Order }) {
 
 /** The parcel on its way (`movingCard`): the code and the total, the journey, the pieces and the tracking code. */
 function MovingCard({ order: o }: { order: Order }) {
+  const locale = useLocale();
   const tracking = o.status.state === "SHIPPING" ? o.status.trackingCode : "";
   return (
     <article className="soon-card" aria-labelledby={`mv-${o.code}`}>
@@ -247,14 +298,25 @@ function MovingCard({ order: o }: { order: Order }) {
         <p className="ticket-code disp" id={`mv-${o.code}`}>
           <Link href={orderHref(o)}>{o.code}</Link>
         </p>
-        <p className="now-total">{vnd(orderTotalVnd(o))}</p>
+        <p className="now-total">{vnd(orderTotalVnd(o), locale)}</p>
       </div>
       <OrderSteps order={o} />
       <div className="soon-card-foot">
         <Pieces order={o} />
         {tracking && (
           <p className="soon-card-line">
-            Mã vận đơn <b>{tracking}</b>
+            {picker(locale)<React.ReactNode>({
+              vi: (
+                <>
+                  Mã vận đơn <b>{tracking}</b>
+                </>
+              ),
+              en: (
+                <>
+                  Tracking no. <b>{tracking}</b>
+                </>
+              ),
+            })}
           </p>
         )}
       </div>
@@ -264,6 +326,7 @@ function MovingCard({ order: o }: { order: Order }) {
 
 /** Nothing running: the delivered order whose return window closes soonest (`returnCard`), to Hỏi đáp's return group (QĐ-34). */
 function ReturnCard({ order: o, until }: { order: Order; until: string }) {
+  const locale = useLocale();
   return (
     <article className="soon-card" aria-labelledby={`rt-${o.code}`}>
       <div className="soon-card-top">
@@ -276,7 +339,10 @@ function ReturnCard({ order: o, until }: { order: Order; until: string }) {
         <Pieces order={o} />
         <Link className="pill" href="/faq#doi-tra">
           <FeedIcon name="arrow-u-up-left" />
-          Đổi trả tới {dayMonth(until)}
+          {picker(locale)<React.ReactNode>({
+            vi: <>Đổi trả tới {dayMonth(until)}</>,
+            en: `Returns until ${dayMonth(until, "en")}`,
+          })}
         </Link>
       </div>
     </article>
@@ -286,17 +352,21 @@ function ReturnCard({ order: o, until }: { order: Order; until: string }) {
 /**
  * The saved styles (`favTile`): four pictures of the colours saved, ĐÃ HẾT on
  * a colour with nothing left, and the one stock fact worth a glance — a saved
- * colour running out while its issue sells. Empty: "Chưa lưu mẫu nào".
+ * colour running out while its issue sells. Empty: "Chưa lưu mẫu nào". In
+ * English "Saved", "SOLD OUT", "Nothing saved yet".
  */
 function FavTile({ saved, alert }: { saved: SavedStyle[]; alert: string | null }) {
+  const locale = useLocale();
+  const tr = picker(locale);
+  const label = tr({ vi: "Yêu thích", en: "Saved" });
   if (saved.length === 0) {
     return (
       <Link className="bt bt-fav-tile bt-link" href="/account/wishlist">
         <span className="bt-label">
           <FeedIcon name="heart" />
-          Yêu thích
+          {label}
         </span>
-        <span className="bt-sub">Chưa lưu mẫu nào</span>
+        <span className="bt-sub">{tr({ vi: "Chưa lưu mẫu nào", en: "Nothing saved yet" })}</span>
         <FeedIcon name="caret-right" className="bt-go" />
       </Link>
     );
@@ -305,7 +375,7 @@ function FavTile({ saved, alert }: { saved: SavedStyle[]; alert: string | null }
     <Link className="bt bt-fav-tile bt-link" href="/account/wishlist">
       <span className="bt-label">
         <FeedIcon name="heart" />
-        Yêu thích
+        {label}
       </span>
       <FeedIcon name="caret-right" className="bt-go" />
       <span className="bt-fav-row">
@@ -317,10 +387,10 @@ function FavTile({ saved, alert }: { saved: SavedStyle[]; alert: string | null }
                 width={120}
                 height={150}
                 sizes="(min-width: 900px) 104px, 80px"
-                alt={`${t.product.name}, ${COLORS[t.color].label.toLocaleLowerCase("vi")}`}
+                alt={`${productText(t.product, locale).name}, ${colorLabel(t.color, locale).toLocaleLowerCase(locale)}`}
               />
             )}
-            {t.sold && <span className="bt-fav-stamp">ĐÃ HẾT</span>}
+            {t.sold && <span className="bt-fav-stamp">{tr({ vi: "ĐÃ HẾT", en: "SOLD OUT" })}</span>}
           </span>
         ))}
       </span>
@@ -346,13 +416,15 @@ function FavTile({ saved, alert }: { saved: SavedStyle[]; alert: string | null }
 function RemindTileView({ reminders }: { reminders: readonly number[] }) {
   const catalog = useCatalog();
   const now = useNow();
-  const r = remindTile(catalog, reminders, now);
+  const locale = useLocale();
+  const t = picker(locale);
+  const r = remindTile(catalog, reminders, now, locale);
   if (r.kind === "none") {
     return (
       <Link className="bt bt-rem bt-link" href="/account/notifications">
         <span className="bt-label">
           <FeedIcon name="bell" />
-          Nhắc
+          {t({ vi: "Nhắc", en: "Reminder" })}
         </span>
         <FeedIcon name="caret-right" className="bt-go" />
         <span className="bt-sub">{r.text}</span>
@@ -368,7 +440,7 @@ function RemindTileView({ reminders }: { reminders: readonly number[] }) {
       <FeedIcon name="caret-right" className="bt-go" />
       <span className="bt-date">
         <span className="bt-dd">{r.dd}</span>
-        <span className="bt-mm disp">Thg {r.mm}</span>
+        <span className="bt-mm disp">{t<React.ReactNode>({ vi: <>Thg {r.mm}</>, en: r.mm })}</span>
       </span>
       <span className="bt-sub">{r.line}</span>
     </Link>

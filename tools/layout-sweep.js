@@ -106,7 +106,7 @@ async (page) => {
   await page.context().clearCookies();
   await page.context().addCookies([{ name: "hive-lang", value: LANG, url: ORIGIN }]);
   await page.goto(ORIGIN + "/sign-in");
-  await page.getByRole("button", { name: "Đăng nhập thử" }).click();
+  await page.getByRole("button", { name: T("Đăng nhập thử", "Try a demo account") }).click();
   await page.waitForURL("**/account", { timeout: 20000 });
 
   // Everything below runs inside the page: only a real viewport knows which
@@ -488,7 +488,7 @@ async (page) => {
   // The back office, as the demo manager ("Vào quản trị thử"), desktop only.
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(ORIGIN + "/sign-in");
-  await page.getByRole("button", { name: "Vào quản trị thử" }).click();
+  await page.getByRole("button", { name: T("Vào quản trị thử", "Try the admin") }).click();
   await page.waitForURL(ORIGIN + "/admin", { timeout: 20000 });
   for (const route of ADMIN_ROUTES) {
     const name = route.replace(/[/?=]+/g, "-").replace(/^-/, "") + "-1280";

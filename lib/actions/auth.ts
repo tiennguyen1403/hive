@@ -6,10 +6,12 @@ import { CUSTOMERS } from "@/data/customers";
 import { takeRate } from "@/lib/db/rate-limit";
 import { getSupabase, supabaseEnv } from "@/lib/db/server";
 import { getSession } from "@/lib/db/session";
-import { DEMO_ACCOUNT_PASSWORD_LOCKED, isDemoEmail } from "@/lib/demo-accounts";
+import { DEMO_ACCOUNT_PASSWORD_LOCKED_TEXT, isDemoEmail } from "@/lib/demo-accounts";
 import { DEMO_ADMIN } from "@/lib/demo-admin";
-import { PASSWORD_WRONG, passwordSheetErrors } from "@/lib/feed-me";
-import { EMAIL_TAKEN, SIGN_IN_WRONG, signErrors } from "@/lib/feed-sign-in";
+import { PASSWORD_FAILED_TEXT, PASSWORD_WRONG_TEXT, passwordSheetErrors } from "@/lib/feed-me";
+import { EMAIL_TAKEN_TEXT, SIGN_IN_WRONG_TEXT, SIGN_UP_FAILED_TEXT, signErrors } from "@/lib/feed-sign-in";
+import { pick, type Locale } from "@/lib/i18n";
+import { getActionLocale } from "@/lib/locale";
 import { safeNext, type ActionState } from "./state";
 
 /**
@@ -40,6 +42,10 @@ import { safeNext, type ActionState } from "./state";
  *     call here comes from this server's address — one visitor hammering the
  *     form would otherwise use it up for everybody;
  *   · the nine shared accounts never change password (`lib/demo-accounts.ts`).
+ *
+ * ROUND V6 SLICE E3A: every sentence is in the request's language
+ * (`getActionLocale`, the `hive-lang` cookie; Vietnamese without a request),
+ * and so is the rate limit's (`takeRate(bucket, 1, locale)`).
  */
 
 /**
@@ -47,16 +53,10 @@ import { safeNext, type ActionState } from "./state";
  * "Không có tài khoản với email này" and "sai mật khẩu" are two answers, and
  * the difference between them is a way to find out which addresses are
  * registered. The words are the Feed mock's (round v4 slice 3a), shown above
- * the form (`lib/feed-sign-in.ts`).
+ * the form (`lib/feed-sign-in.ts`); in English "Email or password is
+ * incorrect".
  */
-const SIGN_IN_FAILED = SIGN_IN_WRONG;
-
-/**
- * A sign-up the auth server refused for a reason other than a taken address,
- * or that came back without a session. The app's own words, kept (the mock
- * draws no such state).
- */
-const SIGN_UP_FAILED = "Không tạo được tài khoản với email này.";
+const signInFailed = (locale: Locale): ActionState => ({ errors: { form: pick(SIGN_IN_WRONG_TEXT, locale) } });
 
 const field = (form: FormData, name: string): string => {
   const value = form.get(name);
@@ -72,21 +72,22 @@ function fieldErrors(errors: Record<string, string | undefined>): ActionState | 
 
 // ──────────────────────────────────────────────────────────────── sign in
 export async function signIn(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const locale = await getActionLocale();
   const email = field(form, "email").trim().toLowerCase();
   const password = field(form, "password");
   const next = safeNext(field(form, "next"));
 
   // The form checks itself before it sends (`signErrors`); a request that did
   // not gets the same answers here.
-  const wrong = fieldErrors(signErrors("in", { email, password }));
+  const wrong = fieldErrors(signErrors("in", { email, password }, locale));
   if (wrong) return wrong;
 
-  const pace = await takeRate("sign_in");
+  const pace = await takeRate("sign_in", 1, locale);
   if (!pace.ok) return { errors: { form: pace.message } };
 
   const supabase = await getSupabase();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { errors: { form: SIGN_IN_FAILED } };
+  if (error) return signInFailed(locale);
 
   // `redirect` throws a framework-handled control-flow exception, so nothing
   // below it runs (`03-api-reference/04-functions/redirect.md`).
@@ -103,10 +104,11 @@ export async function signIn(_prev: ActionState, form: FormData): Promise<Action
  * public — a password in a repository is a habit, not a secret.
  */
 export async function demoSignIn(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const locale = await getActionLocale();
   const password = process.env.DEMO_PASSWORD;
-  if (!password) return { errors: { form: SIGN_IN_FAILED } };
+  if (!password) return signInFailed(locale);
 
-  const pace = await takeRate("sign_in");
+  const pace = await takeRate("sign_in", 1, locale);
   if (!pace.ok) return { errors: { form: pace.message } };
 
   const supabase = await getSupabase();
@@ -114,7 +116,7 @@ export async function demoSignIn(_prev: ActionState, form: FormData): Promise<Ac
     email: CUSTOMERS[0]!.email,
     password,
   });
-  if (error) return { errors: { form: SIGN_IN_FAILED } };
+  if (error) return signInFailed(locale);
 
   redirect(safeNext(field(form, "next")));
 }
@@ -130,15 +132,16 @@ export async function demoSignIn(_prev: ActionState, form: FormData): Promise<Ac
  * office, or on the admin page that sent the visitor here.
  */
 export async function demoAdminSignIn(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const locale = await getActionLocale();
   const password = process.env.DEMO_PASSWORD;
-  if (!password) return { errors: { form: SIGN_IN_FAILED } };
+  if (!password) return signInFailed(locale);
 
-  const pace = await takeRate("sign_in");
+  const pace = await takeRate("sign_in", 1, locale);
   if (!pace.ok) return { errors: { form: pace.message } };
 
   const supabase = await getSupabase();
   const { error } = await supabase.auth.signInWithPassword({ email: DEMO_ADMIN.email, password });
-  if (error) return { errors: { form: SIGN_IN_FAILED } };
+  if (error) return signInFailed(locale);
 
   const next = safeNext(field(form, "next"), "/admin");
   redirect(next === "/admin" || next.startsWith("/admin/") ? next : "/admin");
@@ -165,15 +168,16 @@ export async function demoAdminSignIn(_prev: ActionState, form: FormData): Promi
  * signing in.
  */
 export async function signUp(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const locale = await getActionLocale();
   const name = field(form, "name").trim();
   const email = field(form, "email").trim().toLowerCase();
   const password = field(form, "password");
   const next = safeNext(field(form, "next"));
 
-  const wrong = fieldErrors(signErrors("up", { name, email, password }));
+  const wrong = fieldErrors(signErrors("up", { name, email, password }, locale));
   if (wrong) return wrong;
 
-  const pace = await takeRate("sign_up");
+  const pace = await takeRate("sign_up", 1, locale);
   if (!pace.ok) return { errors: { form: pace.message } };
 
   const supabase = await getSupabase();
@@ -188,10 +192,10 @@ export async function signUp(_prev: ActionState, form: FormData): Promise<Action
   const taken =
     error?.code === "user_already_exists" ||
     (!error && data.user !== null && Array.isArray(data.user.identities) && data.user.identities.length === 0);
-  if (taken) return { errors: { email: EMAIL_TAKEN } };
+  if (taken) return { errors: { email: pick(EMAIL_TAKEN_TEXT, locale) } };
 
   // Confirmations are off, so a successful sign-up comes back with a session.
-  if (error || !data.session) return { errors: { form: SIGN_UP_FAILED } };
+  if (error || !data.session) return { errors: { form: pick(SIGN_UP_FAILED_TEXT, locale) } };
 
   redirect(next);
 }
@@ -265,13 +269,14 @@ export async function changePassword(
   _prev: ActionState,
   form: FormData,
 ): Promise<ActionState> {
+  const locale = await getActionLocale();
   const draft = {
     current: field(form, "current"),
     next: field(form, "next"),
     again: field(form, "again"),
   };
 
-  const wrong = fieldErrors(passwordSheetErrors(draft));
+  const wrong = fieldErrors(passwordSheetErrors(draft, locale));
   if (wrong) return wrong;
 
   const session = await getSession();
@@ -281,20 +286,20 @@ export async function changePassword(
   // screen and has to keep opening it for the next visitor. Refused before
   // the current password is even tried, so no Auth call is made for it.
   if (isDemoEmail(session.email)) {
-    return { errors: { form: DEMO_ACCOUNT_PASSWORD_LOCKED } };
+    return { errors: { form: pick(DEMO_ACCOUNT_PASSWORD_LOCKED_TEXT, locale) } };
   }
 
-  const pace = await takeRate("password");
+  const pace = await takeRate("password", 1, locale);
   if (!pace.ok) return { errors: { form: pace.message } };
 
   if (!(await passwordIsCurrent(session.email, draft.current))) {
-    return { errors: { current: PASSWORD_WRONG } };
+    return { errors: { current: pick(PASSWORD_WRONG_TEXT, locale) } };
   }
 
   const supabase = await getSupabase();
   const { error } = await supabase.auth.updateUser({ password: draft.next });
   if (error) {
-    return { errors: { form: "Chưa đổi được mật khẩu. Thử lại sau ít phút." } };
+    return { errors: { form: pick(PASSWORD_FAILED_TEXT, locale) } };
   }
 
   return { errors: {}, ok: true };

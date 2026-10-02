@@ -14,7 +14,7 @@ import {
   type SizeSlot,
 } from "@/data/types";
 import type { ActionState } from "@/lib/actions/state";
-import { pick, type Locale, type Pair } from "./i18n";
+import { pick, pickAll, type Locale, type Pair } from "./i18n";
 import { LEX, lexicon } from "./lexicon";
 
 /**
@@ -61,8 +61,10 @@ export interface ProfileDraft {
 
 export type ProfileErrors = Partial<Record<keyof ProfileDraft, string>>;
 
-/** The toast after a save, the mock's own words. */
-export const PROFILE_SAVED = "Đã lưu hồ sơ";
+/** The toast after a save, the mock's own words; in English since round v6 slice E3a. */
+export const PROFILE_SAVED_TEXT: Pair = { vi: "Đã lưu hồ sơ", en: "Profile saved" };
+
+export const PROFILE_SAVED = PROFILE_SAVED_TEXT.vi;
 
 /**
  * Signed out: the title of the mock's signed-out Hồ sơ (`profile.js`). In both
@@ -74,7 +76,12 @@ export const PROFILE_SIGN_IN_TEXT: Pair = { vi: "Đăng nhập để sửa hồ 
 export const PROFILE_SIGN_IN = PROFILE_SIGN_IN_TEXT.vi;
 
 /** Anything else that stopped the save — the database, the network. */
-export const PROFILE_FAILED = "Chưa lưu được hồ sơ. Thử lại sau ít phút.";
+export const PROFILE_FAILED_TEXT: Pair = {
+  vi: "Chưa lưu được hồ sơ. Thử lại sau ít phút.",
+  en: "Couldn't save your profile. Try again in a few minutes.",
+};
+
+export const PROFILE_FAILED = PROFILE_FAILED_TEXT.vi;
 
 /**
  * Characters as Postgres counts them (`char_length`, code points), not as
@@ -101,20 +108,40 @@ export function profilePhone(raw: string): string {
   return /^0\d{9}$/.test(digits) ? digits : "";
 }
 
-/** Field → sentence, only for the fields that are wrong. The mock's words. */
-export function validateProfile(d: ProfileDraft): ProfileErrors {
+/**
+ * Field → sentence, only for the fields that are wrong. The mock's words; in
+ * English since round v6 slice E3a, the checkout's English for a name and a
+ * phone number (`feedFormErrors`).
+ */
+export function validateProfile(d: ProfileDraft, locale: Locale = "vi"): ProfileErrors {
+  const w = pickAll(PROFILE_FIELD_TEXT, locale);
   const e: ProfileErrors = {};
 
   const name = d.name.trim();
-  if (charCount(name) < NAME_MIN) e.name = "Nhập họ và tên";
-  else if (charCount(name) > NAME_MAX) e.name = `Họ và tên tối đa ${NAME_MAX} ký tự`;
+  if (charCount(name) < NAME_MIN) e.name = w.nameMissing;
+  else if (charCount(name) > NAME_MAX) e.name = w.nameLong;
 
   const phone = d.phone.trim();
-  if (!phone) e.phone = "Nhập số điện thoại";
-  else if (!profilePhone(phone)) e.phone = "Số điện thoại gồm 10 số, bắt đầu bằng 0";
+  if (!phone) e.phone = w.phoneMissing;
+  else if (!profilePhone(phone)) e.phone = w.phoneShape;
 
   return e;
 }
+
+/** The form's sentences in both languages. */
+const PROFILE_FIELD_TEXT = {
+  nameMissing: { vi: "Nhập họ và tên", en: "Enter your full name" },
+  nameLong: { vi: `Họ và tên tối đa ${NAME_MAX} ký tự`, en: `Full names can have up to ${NAME_MAX} characters` },
+  phoneMissing: { vi: "Nhập số điện thoại", en: "Enter a phone number" },
+  phoneShape: { vi: "Số điện thoại gồm 10 số, bắt đầu bằng 0", en: "Phone numbers have 10 digits, starting with 0" },
+} as const satisfies Record<string, Pair>;
+
+/**
+ * Every fixed sentence Hồ sơ's form shows under a field, for `reword`: what
+ * the server said of a field stands until that field changes, and a switch of
+ * language words it again in place.
+ */
+export const PROFILE_SENTENCES: readonly Pair[] = Object.values(PROFILE_FIELD_TEXT);
 
 /**
  * What `updateProfileAction` hands back to `useActionState`: the form's own
@@ -253,11 +280,11 @@ const SIGN_IN_TO: Readonly<Record<KeepTopic, Pair>> = {
 };
 
 /**
- * A refusal's sentence. In both languages since round v6 slice E1: the
- * actions answer in Vietnamese, as before, and a Feed screen words the
- * refusal again from its `reason` in the page's language (`useKeep`). The rate
- * limit's own sentence (`rateLimitMessage`) is still Vietnamese; it is shared
- * by every action in the app and moves with them.
+ * A refusal's sentence. In both languages since round v6 slice E1: a Feed
+ * screen words the refusal again from its `reason` in the page's language
+ * (`useKeep`). Since slice E3a the actions answer in the request's language
+ * too (`getActionLocale`), the rate limit's own sentence (`rateLimitMessage`,
+ * which carries the wait) included.
  */
 export function keepFailureMessage(reason: KeepFailure, topic: KeepTopic, locale: Locale = "vi"): string {
   switch (reason) {
@@ -281,7 +308,11 @@ export function keepFailureMessage(reason: KeepFailure, topic: KeepTopic, locale
   }
 }
 
-/** The refusal an action returns, in one line. */
-export function keepRefusal(reason: KeepFailure, topic: KeepTopic, message?: string): KeepRefusal {
-  return { ok: false, reason, message: message ?? keepFailureMessage(reason, topic) };
+/**
+ * The refusal an action returns, in one line: `message` when the action has
+ * one of its own (the rate limit's), else the sentence for the reason, in the
+ * request's language since round v6 slice E3a.
+ */
+export function keepRefusal(reason: KeepFailure, topic: KeepTopic, message?: string, locale: Locale = "vi"): KeepRefusal {
+  return { ok: false, reason, message: message ?? keepFailureMessage(reason, topic, locale) };
 }

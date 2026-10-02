@@ -79,6 +79,21 @@ export function pickAll<K extends string, T>(table: Readonly<Record<K, Pair<T>>>
   return out;
 }
 
+/**
+ * A sentence a screen keeps in its state — what its own check said, or what a
+ * Server Action answered, in the language of that moment — written again in
+ * `locale` when it is either side of one of `pairs`; anything else (a rate
+ * limit's wait, which only the server measured) is left as it is. So a switch
+ * of language rewords a line already on screen in place (round v6 slice E3a;
+ * the lookup's `lookupWordIn` of slice E2, for any module's sentences).
+ */
+export function reword(sentence: string, locale: Locale, pairs: Iterable<Pair>): string {
+  for (const pair of pairs) {
+    if (pair.vi === sentence || pair.en === sentence) return pair[locale];
+  }
+  return sentence;
+}
+
 // ─────────────────────────────────────────────────────────── numbers
 
 const THOUSANDS: Pair = { vi: ".", en: "," };

@@ -3486,3 +3486,28 @@ commit trên máy, chưa push.
   - nhãn đã dịch không làm `key`, dùng index;
   - test action theo ngôn ngữ: mock `@/lib/locale` (`getActionLocale`).
 - **Tách E3:** E3a vùng tài khoản (brief `tasks/briefs/v6-lat-e3a.md`), E3b trang trợ giúp và 404, vì Hỏi đáp nhiều chữ.
+
+**02/10, lát E3a ĐẠT (phiên chính duyệt; agent đã sửa ba việc, phiên chính kiểm lại test và ảnh).** Brief
+`tasks/briefs/v6-lat-e3a.md`, agent `ui-implementer`. Người dùng cho commit trên máy (chưa push) rồi làm E3b.
+- **Phạm vi đã dịch:** đăng nhập, đăng ký, quên mật khẩu, Tôi (đăng nhập và chưa), đơn, một đơn, theo dõi, sổ địa chỉ (thêm, sửa,
+  xoá, hoàn tác), hồ sơ, đổi mật khẩu, thông báo, Yêu thích; câu báo của action đăng nhập, sổ địa chỉ, hồ sơ, Keep, mỗi `takeRate`
+  truyền ngôn ngữ. Nhãn địa chỉ in Home/Work/Other, giá trị lưu vẫn là chữ Việt.
+- **Mã mới:** `reword(sentence, locale, pairs)` viết lại câu đang nằm trong state khi đổi ngôn ngữ; hàng hộp thư dựng ở dạng `Pair`,
+  `key` lấy chữ Việt nên hàng đã đọc vẫn là đã đọc; `monthYear`; server component nhận prop `locale` từ trang.
+- **`getActionLocale` sửa thêm:** nhận ra lỗi "outside a request scope" (E251) trước `unstable_rethrow`, vì `auth.test.ts` mock
+  `next/navigation` chỉ có `redirect`. Phiên chính giữ.
+- **Phiên chính kiểm:** tsc sạch, 2.019 test xanh (51 test mới, không test cũ nào bị sửa); xem ảnh tiếng Anh đăng nhập, Tôi, hộp
+  thư ở 390, `/account` chưa đăng nhập ở 1280, Yêu thích ở 900.
+- **Agent đo:** bản VI 137 cặp ảnh không lệch vượt nhiễu; script dò chữ Việt ở bản EN từ 1.182 chỗ xuống 0 trên 137 trạng thái; 6
+  chỗ xuống dòng của bản EN đo phương án rồi sửa; sweep 110 như cũ; JS nén +1,9 đến +2,3 KB.
+- **Quyết định (phiên chính):** "Drop 06 alert" trên ô nhắc (vì "reminder" lấn mũi tên ở 390); hai nút thử xếp hai hàng ở 1280;
+  "FORGOT PASSWORD" hai dòng ở 900 và 1280.
+- **Giao lại agent:** trạng thái `RECEIVED` phía khách ("Chờ xác nhận") là "Awaiting confirmation"; "Order received" chỉ cho nhãn
+  quản trị "Đã nhận đơn" (E4). Hộp thư "Drop 05 is live". **Sửa lỗi có từ trước:** `/account/wishlist` ở dải ~900 tràn ngang và thẻ
+  chồng nhau ở cả hai ngôn ngữ (đang có trên demo).
+- **Lỗi Yêu thích đã sửa:** đo được nguyên nhân: ở hai cột, cột chữ của thẻ rộng (cửa sổ − 15 − 832) / 2, chỉ 26,5px ở 900,
+  mà hàng size (bốn ô 46px, 202px) không co được, nên lấn sang thẻ bên và tràn trang tới 1.187px. Mock Feed vỡ y hệt. Sửa: một thẻ
+  một hàng từ 900 tới 1250,98px (`more.css`); 15 bề rộng đo lại không tràn, không chồng; bản VI ở 390, 600, 1280 không đổi.
+  Phiên chính áp cùng luật vào mock (`prototype/explore/feed/more.css`).
+- **Phiên chính sửa sau duyệt:** `tools/layout-sweep.js` cho "Đăng nhập thử" và "Vào quản trị thử" qua `T(vi, en)`.
+- **Để lượt rà cuối:** trang một đơn ở 900 (mốc giờ bước, meta món, ô tài khoản ngân hàng), hộp thư ở 900 (bản VI đã 3 dòng, EN 4).

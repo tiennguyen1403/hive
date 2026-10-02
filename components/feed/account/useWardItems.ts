@@ -2,7 +2,9 @@
 
 import { useCallback, useRef, useState } from "react";
 import { wardOptionLabel } from "@/components/checkout/wards";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import type { Ward } from "@/data/regions";
+import { picker } from "@/lib/i18n";
 import type { PickItem } from "../FeedPicker";
 
 type WardStatus = "loading" | "error";
@@ -13,9 +15,12 @@ type WardStatus = "loading" | "error";
  * (`?order=official`), named "Phường Sài Gòn" — the checkout's way
  * (`CheckoutView`), for the address book's sheet. `waiting` is the line the
  * picker shows while a list is on its way or could not be fetched; a failed
- * province is asked again the next time.
+ * province is asked again the next time. In the page's language since round v6
+ * slice E3a, the checkout's English ("Loading…", "Couldn't load"); the
+ * communes keep their Vietnamese names.
  */
 export function useWardItems() {
+  const t = picker(useLocale());
   const [wards, setWards] = useState<Record<string, PickItem[]>>({});
   const [status, setStatus] = useState<Record<string, WardStatus>>({});
   const asked = useRef(new Set<string>());
@@ -40,7 +45,8 @@ export function useWardItems() {
       });
   }, []);
 
-  const waiting = (code: string) => (status[code] === "error" ? "Không tải được" : "Đang tải…");
+  const waiting = (code: string) =>
+    status[code] === "error" ? t({ vi: "Không tải được", en: "Couldn't load" }) : t({ vi: "Đang tải…", en: "Loading…" });
 
   return { wards, fetchWards, waiting };
 }

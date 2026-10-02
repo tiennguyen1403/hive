@@ -1,5 +1,6 @@
 import { CUSTOMERS } from "@/data/customers";
 import { DEMO_ADMIN } from "./demo-admin";
+import type { Pair } from "./i18n";
 
 /**
  * The nine SHARED accounts of the public demo (slice B4b).
@@ -74,7 +75,12 @@ export function demoPasswordState(error: { code?: string | undefined } | null): 
 
 /**
  * What "Đổi mật khẩu" answers on a shared account (B4b §2.7), under "Mật khẩu
- * hiện tại": why not, and what to do instead.
+ * hiện tại": why not, and what to do instead. In English since round v6 slice
+ * E3a, the glossary's "Sign up" for "Tạo tài khoản".
  */
-export const DEMO_ACCOUNT_PASSWORD_LOCKED =
-  "Tài khoản thử dùng chung nên không đổi được mật khẩu. Tạo tài khoản riêng để thử việc này.";
+export const DEMO_ACCOUNT_PASSWORD_LOCKED_TEXT: Pair = {
+  vi: "Tài khoản thử dùng chung nên không đổi được mật khẩu. Tạo tài khoản riêng để thử việc này.",
+  en: "Demo accounts are shared, so their password can't be changed. Sign up for your own account to try this.",
+};
+
+export const DEMO_ACCOUNT_PASSWORD_LOCKED = DEMO_ACCOUNT_PASSWORD_LOCKED_TEXT.vi;

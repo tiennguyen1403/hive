@@ -16,15 +16,15 @@ import {
   canReturn,
   cancelReasonText,
   deliveryTitle,
-  groupLabel,
+  groupLabelIn,
   linePicture,
   orderGroups,
   paymentTitle,
   returnUntil,
 } from "@/lib/feed-account";
 import { feedSentence } from "@/lib/feed-checkout";
-import { confirmRows, confirmTransfer } from "@/lib/feed-order";
-import { picker } from "@/lib/i18n";
+import { BACK_IN_STOCK_EN, confirmRows, confirmTransfer } from "@/lib/feed-order";
+import { picker, plural } from "@/lib/i18n";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd, orderUnits } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
@@ -66,9 +66,17 @@ interface OrderViewProps {
  * toast, the focus back on the code. "Mua lại" puts what is still sold back
  * in the basket, in the colour, size and number bought (the basket clamps to
  * what is left), and opens it.
+ *
+ * In the page's language since round v6 slice E3a, in the words of the
+ * lookup's result where the two say the same (`TrackView`): "Reserved until",
+ * "Amount", "Reference", "Tracking no.", "Returns until", "Buy again",
+ * "Cancel order". The recipient and the address keep their Vietnamese, marked
+ * `lang="vi"` on an English page.
  */
 export function OrderView({ order, addressLine }: OrderViewProps) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const now = useNow();
   const nowMs = useNowMs();
   const toast = useFeedToast();
@@ -83,7 +91,9 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
   const s = order.status;
   const units = orderUnits(order);
   const again = buyAgainLines(catalog, order, now);
-  const transfer = confirmTransfer(order);
+  const transfer = confirmTransfer(order, locale);
+  // A name, a phone number, an address: Vietnamese on an English page (QĐ-40).
+  const placeLang = locale === "en" ? ("vi" as const) : undefined;
 
   function openCancel(e: React.MouseEvent<HTMLButtonElement>) {
     opener.current = e.currentTarget;
@@ -110,7 +120,7 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
       toast(feedSentence(result.message));
       return;
     }
-    toast(`Đã huỷ ${order.code}`);
+    toast(t({ vi: `Đã huỷ ${order.code}`, en: `${order.code} cancelled` }));
     window.scrollTo(0, 0);
     code.current?.focus({ preventScroll: true });
   }
@@ -125,52 +135,90 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
     again.length > 0 ? (
       <button className="btn btn-blue" type="button" onClick={buyAgain}>
         <FeedIcon name="arrows-clockwise" />
-        Mua lại
+        {t({ vi: "Mua lại", en: "Buy again" })}
       </button>
     ) : null;
+
+  const cancelLabel = t({ vi: "Huỷ đơn", en: "Cancel order" });
 
   let act: React.ReactNode = null;
   if (s.state === "AWAITING_TRANSFER" && transfer) {
     act = (
-      <section className="od-act" id="pay" aria-label="Chuyển khoản">
+      <section className="od-act" id="pay" aria-label={t({ vi: "Chuyển khoản", en: "Bank transfer" })}>
         <p className="od-hold">
-          <FeedClock until={transfer.dueAt} now={nowMs} tag="span" label="Thời gian giữ hàng còn lại" />
+          <FeedClock
+            until={transfer.dueAt}
+            now={nowMs}
+            tag="span"
+            label={t({ vi: "Thời gian giữ hàng còn lại", en: "Reservation time left" })}
+          />
         </p>
         <p className="od-act-line">
-          Giữ hàng tới <b>{transfer.until}</b>. {transfer.note}
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Giữ hàng tới <b>{transfer.until}</b>. {transfer.note}
+              </>
+            ),
+            en: (
+              <>
+                Reserved until <b>{transfer.until}</b>. {transfer.note}
+              </>
+            ),
+          })}
         </p>
         <div className="od-pay">
-          <CopyRow k="Số tiền" shown={vnd(transfer.amountVnd)} value={String(transfer.amountVnd)} />
-          <CopyRow k="Nội dung" shown={transfer.memo} value={transfer.memo} />
+          <CopyRow k={t({ vi: "Số tiền", en: "Amount" })} shown={vnd(transfer.amountVnd, locale)} value={String(transfer.amountVnd)} />
+          <CopyRow k={t({ vi: "Nội dung", en: "Reference" })} shown={transfer.memo} value={transfer.memo} />
           <div className="copyrow is-pending">
-            <span className="copy-k">Tài khoản</span>
-            <span className="copy-v">Số tài khoản và tên ngân hàng đang chuẩn bị</span>
+            <span className="copy-k">{t({ vi: "Tài khoản", en: "Account" })}</span>
+            <span className="copy-v">
+              {t({ vi: "Số tài khoản và tên ngân hàng đang chuẩn bị", en: "Account number and bank name coming soon" })}
+            </span>
           </div>
-          <div className="qr-slot" role="img" aria-label="Chỗ của mã QR nhận tiền, hiện khi có tài khoản ngân hàng thật">
-            <b>Mã QR nhận tiền</b>
-            <span>Hiện khi có tài khoản ngân hàng thật</span>
+          <div
+            className="qr-slot"
+            role="img"
+            aria-label={t({
+              vi: "Chỗ của mã QR nhận tiền, hiện khi có tài khoản ngân hàng thật",
+              en: "Space for the payment QR code, shown once there is a real bank account",
+            })}
+          >
+            <b>{t({ vi: "Mã QR nhận tiền", en: "Payment QR code" })}</b>
+            <span>{t({ vi: "Hiện khi có tài khoản ngân hàng thật", en: "Shown once there is a real bank account" })}</span>
           </div>
         </div>
         <button className="btn btn-line od-cancel" type="button" onClick={openCancel}>
-          Huỷ đơn
+          {cancelLabel}
         </button>
       </section>
     );
   } else if (s.state === "RECEIVED") {
     act = (
-      <section className="od-act" aria-label="Xác nhận đơn">
+      <section className="od-act" aria-label={t({ vi: "Xác nhận đơn", en: "Order confirmation" })}>
         <p className="od-act-line">
-          Cửa hàng gọi <b>{formatPhone(order.shipTo.phone)}</b> để xác nhận trước khi giao.
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Cửa hàng gọi <b>{formatPhone(order.shipTo.phone)}</b> để xác nhận trước khi giao.
+              </>
+            ),
+            en: (
+              <>
+                The shop will call <b>{formatPhone(order.shipTo.phone)}</b> to confirm before delivery.
+              </>
+            ),
+          })}
         </p>
         <button className="btn btn-line od-cancel" type="button" onClick={openCancel}>
-          Huỷ đơn
+          {cancelLabel}
         </button>
       </section>
     );
   } else if (s.state === "SHIPPING" && s.trackingCode) {
     act = (
-      <section className="od-act" aria-label="Vận đơn">
-        <CopyRow k="Mã vận đơn" shown={s.trackingCode} value={s.trackingCode} />
+      <section className="od-act" aria-label={t({ vi: "Vận đơn", en: "Shipment" })}>
+        <CopyRow k={t({ vi: "Mã vận đơn", en: "Tracking no." })} shown={s.trackingCode} value={s.trackingCode} />
       </section>
     );
   } else if (s.state === "DELIVERED") {
@@ -179,7 +227,10 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
       until && canReturn(order, now) ? (
         <Link className="btn btn-line" href="/faq#doi-tra">
           <FeedIcon name="arrow-u-up-left" />
-          Đổi trả tới {dayMonth(until)}
+          {t<React.ReactNode>({
+            vi: <>Đổi trả tới {dayMonth(until)}</>,
+            en: `Returns until ${dayMonth(until, "en")}`,
+          })}
         </Link>
       ) : null;
     if (ret || againBtn) {
@@ -195,7 +246,12 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
       <>
         <p className="od-why">
           <FeedIcon name="x" />
-          <span>{cancelReasonText(s.reason)}. Hàng đã về kệ.</span>
+          <span>
+            {t<React.ReactNode>({
+              vi: <>{cancelReasonText(s.reason)}. Hàng đã về kệ.</>,
+              en: `${cancelReasonText(s.reason, "en")}. ${BACK_IN_STOCK_EN}`,
+            })}
+          </span>
         </p>
         {againBtn && <div className="od-again">{againBtn}</div>}
       </>
@@ -211,7 +267,7 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
         <div className="od-meta">
           {orderGroups(catalog, order).map((g) => (
             <span className="chip-tag" key={String(g)}>
-              {groupLabel(g)}
+              {groupLabelIn(g, locale)}
             </span>
           ))}
         </div>
@@ -225,7 +281,7 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
         <section className="acc-sec" aria-labelledby="h-items">
           <div className="acc-sec-head">
             <h2 className="acc-sec-title" id="h-items">
-              {units} món
+              {t<React.ReactNode>({ vi: <>{units} món</>, en: plural(units, "item", "items") })}
             </h2>
           </div>
           <OrderItems lines={order.lines} />
@@ -236,7 +292,7 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
         <section className="acc-sec od-sum" aria-labelledby="h-sum">
           <div className="acc-sec-head">
             <h2 className="acc-sec-title" id="h-sum">
-              Tóm tắt
+              {t({ vi: "Tóm tắt", en: "Summary" })}
             </h2>
           </div>
           <OrderSums order={order} />
@@ -244,27 +300,27 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
         <section className="acc-sec" aria-labelledby="h-ship">
           <div className="acc-sec-head">
             <h2 className="acc-sec-title" id="h-ship">
-              Giao tới
+              {t({ vi: "Giao tới", en: "Deliver to" })}
             </h2>
           </div>
           <dl className="facts od-facts">
             <div>
-              <dt>Người nhận</dt>
-              <dd>
+              <dt>{t({ vi: "Người nhận", en: "Recipient" })}</dt>
+              <dd lang={placeLang}>
                 {order.shipTo.recipient}, {formatPhone(order.shipTo.phone)}
               </dd>
             </div>
             <div>
-              <dt>Địa chỉ</dt>
-              <dd>{addressLine}</dd>
+              <dt>{t({ vi: "Địa chỉ", en: "Address" })}</dt>
+              <dd lang={placeLang}>{addressLine}</dd>
             </div>
             <div>
-              <dt>Cách giao</dt>
-              <dd>{deliveryTitle(order.delivery)}</dd>
+              <dt>{t({ vi: "Cách giao", en: "Delivery" })}</dt>
+              <dd>{deliveryTitle(order.delivery, locale)}</dd>
             </div>
             <div>
-              <dt>Thanh toán</dt>
-              <dd>{paymentTitle(order.payment)}</dd>
+              <dt>{t({ vi: "Thanh toán", en: "Payment" })}</dt>
+              <dd>{paymentTitle(order.payment, locale)}</dd>
             </div>
           </dl>
         </section>
@@ -283,19 +339,25 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
           <div className="grab" aria-hidden="true" />
           <div className="sh-head plain">
             <h2 className="sh-title" id="cancel-title">
-              Huỷ đơn {order.code}?
+              {t<React.ReactNode>({ vi: <>Huỷ đơn {order.code}?</>, en: `Cancel ${order.code}?` })}
             </h2>
-            <button className="sh-x" type="button" data-close aria-label="Đóng">
+            <button className="sh-x" type="button" data-close aria-label={t({ vi: "Đóng", en: "Close" })}>
               <FeedIcon name="x" />
             </button>
           </div>
-          <p className="cancel-line">{units} chiếc về kệ ngay, không hoàn tác.</p>
+          <p className="cancel-line">
+            {t<React.ReactNode>({
+              vi: <>{units} chiếc về kệ ngay, không hoàn tác.</>,
+              // Measured: one line from 390 up, twelve pieces included, as the Vietnamese.
+              en: `${plural(units, "piece goes", "pieces go")} back on the shelf at once. No undo.`,
+            })}
+          </p>
           <div className="stack">
             <button className="btn btn-blue" type="button" data-close data-autofocus>
-              Giữ đơn
+              {t({ vi: "Giữ đơn", en: "Keep order" })}
             </button>
             <button className="btn btn-line" type="button" onClick={confirmCancel} disabled={cancelling}>
-              {cancelling ? "Đang huỷ…" : "Huỷ đơn"}
+              {cancelling ? t({ vi: "Đang huỷ…", en: "Cancelling…" }) : cancelLabel}
             </button>
           </div>
         </div>

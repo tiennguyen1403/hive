@@ -2,21 +2,24 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { SIZES, type Size, type SizeSlot } from "@/data/types";
 import { changePassword } from "@/lib/actions/auth";
 import { updateProfileAction } from "@/lib/actions/profile";
 import { IDLE } from "@/lib/actions/state";
 import {
   EMPTY_MY_STATE,
-  PASSWORD_CHANGED,
+  PASSWORD_CHANGED_TEXT,
+  SIZE_SLOT_TEXT,
   firstWrongPassword,
   passwordSheetErrors,
   sizeToast,
   type PasswordField,
   type PasswordSheet,
 } from "@/lib/feed-me";
+import { picker, reword, type Pair } from "@/lib/i18n";
 import type { Me } from "@/lib/me";
-import { PROFILE_SAVED, validateProfile, type ProfileDraft } from "@/lib/my-state";
+import { PROFILE_SAVED_TEXT, PROFILE_SENTENCES, validateProfile, type ProfileDraft } from "@/lib/my-state";
 import { formatPhone } from "@/lib/phone";
 import { FeedSheet } from "../FeedSheet";
 import { useFeedToast } from "../FeedToast";
@@ -43,8 +46,14 @@ const spaced = (digits: string) => (digits ? formatPhone(digits).replace(/ /g, 
  *   brings the section into view.
  * · "Đổi mật khẩu" in a sheet, "Cài đặt thông báo", "Đăng xuất" (the phone;
  *   from 900px the menu carries it), and "Xoá tài khoản", being prepared.
+ *
+ * In the page's language since round v6 slice E3a ("Profile", "Details", "My
+ * sizes", "Change password", "Notification settings", "Sign out", "Delete
+ * account" · "Coming soon"). Switching language while editing keeps what was
+ * typed: the form's values are its own state, and the page redraws in place.
  */
 export function ProfileView({ me }: { me: Me }) {
+  const t = picker(useLocale());
   const [pwOpen, setPwOpen] = useState(false);
   const pwOpener = useRef<HTMLButtonElement | null>(null);
 
@@ -58,24 +67,24 @@ export function ProfileView({ me }: { me: Me }) {
   return (
     <>
       <h1 className="acc-h1 disp" data-hero>
-        Hồ sơ
+        {t({ vi: "Hồ sơ", en: "Profile" })}
       </h1>
       <div className="pf">
         <section className="pf-sec" aria-labelledby="pf-info">
           <h2 className="acc-sec-title" id="pf-info">
-            Thông tin
+            {t({ vi: "Thông tin", en: "Details" })}
           </h2>
           <DetailsForm me={me} />
         </section>
         <section className="pf-sec" id="size" aria-labelledby="pf-size">
           <h2 className="acc-sec-title" id="pf-size">
-            Size của tôi
+            {t({ vi: "Size của tôi", en: "My sizes" })}
           </h2>
           <SizeRows />
         </section>
         <section className="pf-sec" aria-labelledby="pf-more">
           <h2 className="sr-only" id="pf-more">
-            Khác
+            {t({ vi: "Khác", en: "More" })}
           </h2>
           <div className="me-rows">
             <button
@@ -87,24 +96,24 @@ export function ProfileView({ me }: { me: Me }) {
               }}
             >
               <FeedIcon name="lock-simple" />
-              <span>Đổi mật khẩu</span>
+              <span>{t({ vi: "Đổi mật khẩu", en: "Change password" })}</span>
               <FeedIcon name="caret-right" className="i-caret-right" />
             </button>
             <Link className="me-row" href="/account/notifications">
               <FeedIcon name="bell" />
-              <span>Cài đặt thông báo</span>
+              <span>{t({ vi: "Cài đặt thông báo", en: "Notification settings" })}</span>
               <FeedIcon name="caret-right" className="i-caret-right" />
             </Link>
             <button className="me-row pf-out" type="submit" form="pf-signout">
               <FeedIcon name="sign-out" />
-              <span>Đăng xuất</span>
+              <span>{t({ vi: "Đăng xuất", en: "Sign out" })}</span>
             </button>
           </div>
           <div className="me-rows pf-danger">
             <div className="me-row" aria-disabled="true">
               <FeedIcon name="trash" />
-              <span>Xoá tài khoản</span>
-              <span className="me-row-sub">Đang chuẩn bị</span>
+              <span>{t({ vi: "Xoá tài khoản", en: "Delete account" })}</span>
+              <span className="me-row-sub">{t({ vi: "Đang chuẩn bị", en: "Coming soon" })}</span>
             </div>
           </div>
         </section>
@@ -127,13 +136,15 @@ type DetailField = keyof ProfileDraft;
  */
 function DetailsForm({ me }: { me: Me }) {
   const toast = useFeedToast();
+  const locale = useLocale();
+  const t = picker(locale);
   const [values, setValues] = useState<ProfileDraft>({ name: me.name, phone: spaced(me.phone) });
   const [submitted, setSubmitted] = useState(false);
   const [server, setServer] = useState<Partial<Record<DetailField, string>>>({});
   const [saving, startSaving] = useTransition();
   const form = useRef<HTMLFormElement>(null);
 
-  const local = submitted ? validateProfile(values) : {};
+  const local = submitted ? validateProfile(values, locale) : {};
   const errors: Partial<Record<DetailField, string>> = { ...server, ...local };
 
   function set(field: DetailField, value: string) {
@@ -155,7 +166,7 @@ function DetailsForm({ me }: { me: Me }) {
     startSaving(async () => {
       const r = await updateProfileAction({ errors: {} }, data);
       if (r.ok) {
-        toast(r.message ?? PROFILE_SAVED);
+        toast(r.message ?? t(PROFILE_SAVED_TEXT));
         return;
       }
       const { form: whole, ...fields } = r.errors;
@@ -166,35 +177,40 @@ function DetailsForm({ me }: { me: Me }) {
     });
   }
 
-  const field = (name: DetailField, label: string, attrs: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <label className={cx("field", errors[name] && "is-error")} data-f={name}>
-      <span className="lbl">{label}</span>
-      <input
-        name={name}
-        value={values[name]}
-        onChange={(e) => set(name, e.target.value)}
-        {...attrs}
-        {...(errors[name] ? { "aria-invalid": true as const, "aria-describedby": `e-${name}` } : {})}
-      />
-      {errors[name] && (
-        <span className="err" id={`e-${name}`}>
-          <FeedIcon name="warning-circle" />
-          <span>{errors[name]}</span>
-        </span>
-      )}
-    </label>
-  );
+  const field = (name: DetailField, label: string, attrs: React.InputHTMLAttributes<HTMLInputElement>) => {
+    // What the server said of a field stays as it came; it is printed in the page's language.
+    const said = errors[name];
+    const error = said ? reword(said, locale, PROFILE_SENTENCES) : undefined;
+    return (
+      <label className={cx("field", error && "is-error")} data-f={name}>
+        <span className="lbl">{label}</span>
+        <input
+          name={name}
+          value={values[name]}
+          onChange={(e) => set(name, e.target.value)}
+          {...attrs}
+          {...(error ? { "aria-invalid": true as const, "aria-describedby": `e-${name}` } : {})}
+        />
+        {error && (
+          <span className="err" id={`e-${name}`}>
+            <FeedIcon name="warning-circle" />
+            <span>{error}</span>
+          </span>
+        )}
+      </label>
+    );
+  };
 
   return (
     <form className="pf-form" noValidate onSubmit={onSubmit} ref={form}>
-      {field("name", "Họ và tên", { autoComplete: "name" })}
-      {field("phone", "Số điện thoại", { type: "tel", inputMode: "tel", autoComplete: "tel" })}
+      {field("name", t({ vi: "Họ và tên", en: "Full name" }), { autoComplete: "name" })}
+      {field("phone", t({ vi: "Số điện thoại", en: "Phone number" }), { type: "tel", inputMode: "tel", autoComplete: "tel" })}
       <label className="field" data-f="email">
         <span className="lbl">Email</span>
         <input name="email" type="email" autoComplete="email" value={me.email} readOnly />
       </label>
       <button className="btn btn-blue pf-save" type="submit" disabled={saving}>
-        {saving ? "Đang lưu…" : "Lưu"}
+        {saving ? t({ vi: "Đang lưu…", en: "Saving…" }) : t({ vi: "Lưu", en: "Save" })}
       </button>
     </form>
   );
@@ -202,30 +218,36 @@ function DetailsForm({ me }: { me: Me }) {
 
 // ─────────────────────────────────────────────────────────── Size của tôi
 
-const ROWS: readonly [SizeSlot, string, FeedIconName][] = [
-  ["top", "Áo", "t-shirt"],
-  ["bottom", "Quần", "pants"],
+const ROWS: readonly [SizeSlot, FeedIconName][] = [
+  ["top", "t-shirt"],
+  ["bottom", "pants"],
 ];
 
-/** Two rows of sizes, each a native radio group; picking one keeps it on the account at once, and says so. */
+/**
+ * Two rows of sizes, each a native radio group; picking one keeps it on the
+ * account at once, and says so. "Tops" and "Bottoms" in English
+ * (`SIZE_SLOT_TEXT`), the toast by `sizeToast`.
+ */
 function SizeRows() {
   const keep = useKeep();
   const toast = useFeedToast();
+  const locale = useLocale();
+  const t = picker(locale);
   const sizes = (keep.state ?? EMPTY_MY_STATE).sizes;
 
   function pick(slot: SizeSlot, size: Size | null) {
-    toast(sizeToast(slot, size));
+    toast(sizeToast(slot, size, locale));
     void keep.setSize(slot, size);
   }
 
   return (
     <div className="pf-size">
-      {ROWS.map(([slot, label, icon]) => (
+      {ROWS.map(([slot, icon]) => (
         <div className="pf-size-row" key={slot}>
           <div className="pf-size-head">
             <p className="pf-size-label" id={`sz-${slot}`}>
               <FeedIcon name={icon} />
-              {label}
+              {t(SIZE_SLOT_TEXT[slot])}
             </p>
             {sizes[slot] && (
               <button
@@ -237,7 +259,7 @@ function SizeRows() {
                   pick(slot, null);
                 }}
               >
-                Bỏ chọn
+                {t({ vi: "Bỏ chọn", en: "Clear" })}
               </button>
             )}
           </div>
@@ -263,10 +285,11 @@ function SizeRows() {
 
 // ─────────────────────────────────────────────────────────── Đổi mật khẩu
 
-const PW_LABELS: Readonly<Record<PasswordField, [string, string]>> = {
-  current: ["Mật khẩu hiện tại", "current-password"],
-  next: ["Mật khẩu mới", "new-password"],
-  again: ["Nhập lại mật khẩu mới", "new-password"],
+/** Each field's name, in both languages, and its `autocomplete`. */
+const PW_LABELS: Readonly<Record<PasswordField, [Pair, string]>> = {
+  current: [{ vi: "Mật khẩu hiện tại", en: "Current password" }, "current-password"],
+  next: [{ vi: "Mật khẩu mới", en: "New password" }, "new-password"],
+  again: [{ vi: "Nhập lại mật khẩu mới", en: "Repeat new password" }, "new-password"],
 };
 
 const EMPTY_PW: PasswordSheet = { current: "", next: "", again: "" };
@@ -279,9 +302,16 @@ const EMPTY_PW: PasswordSheet = { current: "", next: "", again: "" };
  * (B4b), the rate limit or a refusal of the whole thing is said above the
  * fields; a wrong current password under its own. Done, the sheet closes and
  * the toast says so. Each opening starts empty.
+ *
+ * In the page's language since round v6 slice E3a; the Server Action answers
+ * in it too. The sheet is modal — the language cannot change while it is
+ * open — and each opening starts empty, so what it was told needs no
+ * rewording.
  */
 function PasswordSheetView({ open, onClose, back }: { open: boolean; onClose: () => void; back: HTMLElement | null }) {
   const toast = useFeedToast();
+  const locale = useLocale();
+  const t = picker(locale);
   const [values, setValues] = useState<PasswordSheet>(EMPTY_PW);
   const [errors, setErrors] = useState<Partial<Record<PasswordField, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -310,7 +340,7 @@ function PasswordSheetView({ open, onClose, back }: { open: boolean; onClose: ()
     e.preventDefault();
     if (changing) return;
     setFormError(null);
-    const found = passwordSheetErrors(values);
+    const found = passwordSheetErrors(values, locale);
     setErrors(found);
     const wrong = firstWrongPassword(found);
     if (wrong) {
@@ -342,7 +372,7 @@ function PasswordSheetView({ open, onClose, back }: { open: boolean; onClose: ()
       onClosed={() => {
         if (!done.current) return;
         done.current = false;
-        toast(PASSWORD_CHANGED);
+        toast(t(PASSWORD_CHANGED_TEXT));
       }}
       labelledBy="pw-title"
       back={back}
@@ -351,9 +381,9 @@ function PasswordSheetView({ open, onClose, back }: { open: boolean; onClose: ()
         <div className="grab" aria-hidden="true" />
         <div className="sh-head plain">
           <h2 className="sh-title" id="pw-title">
-            Đổi mật khẩu
+            {t({ vi: "Đổi mật khẩu", en: "Change password" })}
           </h2>
-          <button className="sh-x" type="button" data-close aria-label="Đóng">
+          <button className="sh-x" type="button" data-close aria-label={t({ vi: "Đóng", en: "Close" })}>
             <FeedIcon name="x" />
           </button>
         </div>
@@ -371,7 +401,7 @@ function PasswordSheetView({ open, onClose, back }: { open: boolean; onClose: ()
             return (
               <div className={cx("field", err && "is-error")} data-f={name} key={name}>
                 <span className="lbl" id={`l-pw-${name}`}>
-                  {label}
+                  {t(label)}
                 </span>
                 <span className="si-pass">
                   <input
@@ -387,7 +417,9 @@ function PasswordSheetView({ open, onClose, back }: { open: boolean; onClose: ()
                   <button
                     className="si-eye"
                     type="button"
-                    aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    aria-label={
+                      visible ? t({ vi: "Ẩn mật khẩu", en: "Hide password" }) : t({ vi: "Hiện mật khẩu", en: "Show password" })
+                    }
                     aria-pressed={visible}
                     onClick={() => setShown((s) => ({ ...s, [name]: !visible }))}
                   >
@@ -404,7 +436,9 @@ function PasswordSheetView({ open, onClose, back }: { open: boolean; onClose: ()
             );
           })}
           <button className="btn btn-blue" type="submit" disabled={changing}>
-            {changing ? "Đang đổi mật khẩu…" : "Đổi mật khẩu"}
+            {changing
+              ? t({ vi: "Đang đổi mật khẩu…", en: "Changing password…" })
+              : t({ vi: "Đổi mật khẩu", en: "Change password" })}
           </button>
         </form>
       </div>

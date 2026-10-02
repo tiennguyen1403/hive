@@ -1,4 +1,4 @@
-import { COLORS } from "@/data/colors";
+import { colorLabel } from "@/data/colors";
 import type {
   ColorKey,
   Favorite,
@@ -11,15 +11,17 @@ import type {
   SizeSlot,
 } from "@/data/types";
 import type { Catalog } from "./catalog";
-import { dayMonth, dayMonthYear } from "./datetime";
+import { dayMonth, monthYear } from "./datetime";
 import { dropCalendar, dropState } from "./drop";
 import { canBuy, firstColor, isGone, isLive, isOver, sizesIn } from "./feed";
 import { canReturn, linePicture, returnUntil } from "./feed-account";
 import { dateParts } from "./feed-home";
 import { PASSWORD_LENGTH } from "./feed-sign-in";
+import { pick, pickAll, picker, type Locale, type Pair } from "./i18n";
 import { isFixed, isSoldOut, onHandByColor, LOW_STOCK_AT } from "./inventory";
 import { issueLabel } from "./lexicon";
 import { DEFAULT_NOTIFY } from "./my-state";
+import { productText } from "./product-text";
 
 /**
  * What the Feed prints about the shopper's own things (round v4 slice 3b):
@@ -122,16 +124,33 @@ export function mySizeOf(state: MyState | null, p: Pick<Product, "family">): Siz
 /** "áo" · "quần", as Hồ sơ's toasts say them. */
 export const SIZE_SLOT_WORD: Readonly<Record<SizeSlot, string>> = { top: "áo", bottom: "quần" };
 
-/** The toast after a size is picked or cleared on Hồ sơ: "Size áo: L", "Đã bỏ size quần" (`profile.js`). */
-export function sizeToast(slot: SizeSlot, size: Size | null): string {
+/**
+ * The two rows' names, as Hồ sơ and Tôi's size tile print them: "Áo", "Quần";
+ * in English (round v6 slice E3a) "Tops", "Bottoms", the glossary's word for
+ * the trousers family.
+ */
+export const SIZE_SLOT_TEXT: Readonly<Record<SizeSlot, Pair>> = {
+  top: { vi: "Áo", en: "Tops" },
+  bottom: { vi: "Quần", en: "Bottoms" },
+};
+
+/**
+ * The toast after a size is picked or cleared on Hồ sơ: "Size áo: L", "Đã bỏ
+ * size quần" (`profile.js`); in English "Top size: L", "Bottom size cleared".
+ */
+export function sizeToast(slot: SizeSlot, size: Size | null, locale: Locale = "vi"): string {
+  if (locale === "en") {
+    const word = slot === "top" ? "Top" : "Bottom";
+    return size ? `${word} size: ${size}` : `${word} size cleared`;
+  }
   return size ? `Size ${SIZE_SLOT_WORD[slot]}: ${size}` : `Đã bỏ size ${SIZE_SLOT_WORD[slot]}`;
 }
 
 // ─────────────────────────────────────────────────────────── Tôi: who
 
-/** "03/2026": the month the account was made (`monthYear`). */
-export function memberSince(iso: string): string {
-  return dayMonthYear(iso).slice(3);
+/** "03/2026": the month the account was made (`monthYear`); in English "Mar 2026". */
+export function memberSince(iso: string, locale: Locale = "vi"): string {
+  return monthYear(iso, locale);
 }
 
 // ─────────────────────────────────────────────────────────── Tôi: the order that needs the shopper now
@@ -218,9 +237,11 @@ export function favThumbs(saved: readonly SavedStyle[]): FavThumb[] {
 /**
  * The one stock fact worth a glance on the tile: among the styles it shows, the
  * saved colour of a style still selling with three or fewer left, fewest first
- * — "BỤI đen còn 1" (`favTile`'s `alert`). Nothing otherwise.
+ * — "BỤI đen còn 1" (`favTile`'s `alert`). Nothing otherwise. In English
+ * (round v6 slice E3a) "BỤI in black: 1 left": the name by `productText`, the
+ * colour by `colorLabel`, "N left" as every English stock line has it.
  */
-export function favAlert(catalog: Catalog, saved: readonly SavedStyle[], now: Date): string | null {
+export function favAlert(catalog: Catalog, saved: readonly SavedStyle[], now: Date, locale: Locale = "vi"): string | null {
   const low = saved
     .slice(0, FAV_TILE_MAX)
     .filter(({ product }) => !isFixed(product) && isLive(catalog, product, now))
@@ -228,26 +249,46 @@ export function favAlert(catalog: Catalog, saved: readonly SavedStyle[], now: Da
     .filter((x) => x.n > 0 && x.n <= LOW_STOCK_AT)
     .sort((a, b) => a.n - b.n)[0];
   if (!low) return null;
-  return `${low.product.name} ${COLORS[low.color].label.toLocaleLowerCase("vi")} còn ${low.n}`;
+  const name = productText(low.product, locale).name;
+  const colour = colorLabel(low.color, locale).toLocaleLowerCase(locale);
+  return picker(locale)({ vi: `${name} ${colour} còn ${low.n}`, en: `${name} in ${colour}: ${low.n} left` });
 }
 
 /**
  * The Nhắc tile (`remindTile`): the first issue asked about, as a date block
  * and "20:00 thứ Sáu, qua app" — the app is the one channel there is
- * (QĐ-35) — or, with none, whether there is an issue to ask about at all.
+ * (QĐ-35) — or, with none, whether there is an issue to ask about at all. In
+ * English (round v6 slice E3a) "Drop 06 alert", "13" · "Oct", "20:00 Tue, in
+ * the app"; "No reminder set", "No new drop yet". The title is "alert" and the
+ * weekday three letters because the tile is narrow: measured at 390, "Drop 06
+ * reminder" ran 13px under the tile's caret and "20:00 Wednesday, in the app"
+ * took two lines where the Vietnamese takes one.
  */
 export type RemindTile =
   | { kind: "set"; no: number; title: string; dd: string; mm: string; line: string }
   | { kind: "none"; text: string };
 
-export function remindTile(catalog: Catalog, reminders: readonly number[], now: Date): RemindTile {
+export function remindTile(catalog: Catalog, reminders: readonly number[], now: Date, locale: Locale = "vi"): RemindTile {
+  const t = picker(locale);
   for (const no of reminders) {
     const drop = catalog.dropByNo.get(no);
     if (!drop || dropState(drop, now) !== "UPCOMING") continue;
-    const p = dateParts(drop.opensAt);
-    return { kind: "set", no, title: `Nhắc ${issueLabel(no)}`, dd: p.dd, mm: p.mm, line: `${p.time} ${p.dow}, qua app` };
+    const p = dateParts(drop.opensAt, locale);
+    return {
+      kind: "set",
+      no,
+      title: t({ vi: `Nhắc ${issueLabel(no)}`, en: `${issueLabel(no, "en")} alert` }),
+      dd: p.dd,
+      mm: p.mm,
+      line: t({ vi: `${p.time} ${p.dow}, qua app`, en: `${p.time} ${p.dow.slice(0, 3)}, in the app` }),
+    };
   }
-  return { kind: "none", text: dropCalendar(catalog, now).upcoming ? "Chưa bật nhắc" : "Chưa có Số mới" };
+  return {
+    kind: "none",
+    text: dropCalendar(catalog, now).upcoming
+      ? t({ vi: "Chưa bật nhắc", en: "No reminder set" })
+      : t({ vi: "Chưa có Số mới", en: "No new drop yet" }),
+  };
 }
 
 // ─────────────────────────────────────────────────────────── Yêu thích
@@ -265,13 +306,19 @@ export type WishStock =
   | { kind: "gone"; color: string }
   | { kind: "closed"; day: string };
 
-export function wishStock(catalog: Catalog, p: Product, color: ColorKey, now: Date): WishStock | null {
+export function wishStock(
+  catalog: Catalog,
+  p: Product,
+  color: ColorKey,
+  now: Date,
+  locale: Locale = "vi",
+): WishStock | null {
   const left = onHandByColor(p, color);
-  if (!left) return isSoldOut(p) ? null : { kind: "gone", color: COLORS[color].label.toLocaleLowerCase("vi") };
+  if (!left) return isSoldOut(p) ? null : { kind: "gone", color: colorLabel(color, locale).toLocaleLowerCase(locale) };
   if (isFixed(p)) return null;
   if (!isLive(catalog, p, now)) {
     const drop = p.dropNo === null ? undefined : catalog.dropByNo.get(p.dropNo);
-    return drop && dropState(drop, now) === "CLOSED" ? { kind: "closed", day: dayMonth(drop.closesAt) } : null;
+    return drop && dropState(drop, now) === "CLOSED" ? { kind: "closed", day: dayMonth(drop.closesAt, locale) } : null;
   }
   return { kind: "left", n: left, low: left <= LOW_STOCK_AT };
 }
@@ -301,7 +348,7 @@ export type WishCard =
       sizes: { size: Size; n: number }[] | null;
     };
 
-export function wishCard(catalog: Catalog, s: SavedStyle, now: Date): WishCard {
+export function wishCard(catalog: Catalog, s: SavedStyle, now: Date, locale: Locale = "vi"): WishCard {
   const { product: p, fav, color } = s;
   const fixed = isFixed(p);
   if (!fixed && linePicture(p, color) === null) return { kind: "type", product: p, fav };
@@ -315,15 +362,19 @@ export function wishCard(catalog: Catalog, s: SavedStyle, now: Date): WishCard {
     fixed,
     sold: isGone(p),
     closed: isOver(catalog, p, now),
-    stock: wishStock(catalog, p, color, now),
+    stock: wishStock(catalog, p, color, now, locale),
     sizes: buyable ? sizesIn(p, color) : null,
   };
 }
 
-/** "Size L", "Size M, còn 2", "Size S, hết": a size button's name for a screen reader (`sizes`). */
-export function wishSizeLabel(size: Size, n: number): string {
-  if (n === 0) return `Size ${size}, hết`;
-  return n <= 2 ? `Size ${size}, còn ${n}` : `Size ${size}`;
+/**
+ * "Size L", "Size M, còn 2", "Size S, hết": a size button's name for a screen
+ * reader (`sizes`); in English "Size M, 2 left", "Size S, sold out".
+ */
+export function wishSizeLabel(size: Size, n: number, locale: Locale = "vi"): string {
+  const t = picker(locale);
+  if (n === 0) return t({ vi: `Size ${size}, hết`, en: `Size ${size}, sold out` });
+  return n <= 2 ? t({ vi: `Size ${size}, còn ${n}`, en: `Size ${size}, ${n} left` }) : `Size ${size}`;
 }
 
 // ─────────────────────────────────────────────────────────── Hồ sơ: the password sheet
@@ -345,15 +396,26 @@ export const PASSWORD_FIELDS: readonly PasswordField[] = ["current", "next", "ag
  * tại", "Mật khẩu mới từ 8 ký tự", "Hai mật khẩu mới chưa khớp". The length
  * alone is asked of the new password, as the sign-up asks it — the v3 rules
  * "có cả chữ và số" and "khác mật khẩu cũ" are gone. Passwords are read as
- * typed, spaces and all.
+ * typed, spaces and all. In English since round v6 slice E3a (`SHEET_TEXT`).
  */
-export function passwordSheetErrors(d: PasswordSheet): Partial<Record<PasswordField, string>> {
+export function passwordSheetErrors(d: PasswordSheet, locale: Locale = "vi"): Partial<Record<PasswordField, string>> {
+  const w = pickAll(SHEET_TEXT, locale);
   const e: Partial<Record<PasswordField, string>> = {};
-  if (!d.current) e.current = "Nhập mật khẩu hiện tại";
-  if (d.next.length < PASSWORD_LENGTH) e.next = `Mật khẩu mới từ ${PASSWORD_LENGTH} ký tự`;
-  if (!d.again || d.again !== d.next) e.again = "Hai mật khẩu mới chưa khớp";
+  if (!d.current) e.current = w.current;
+  if (d.next.length < PASSWORD_LENGTH) e.next = w.next;
+  if (!d.again || d.again !== d.next) e.again = w.again;
   return e;
 }
+
+/** The sheet's sentences in both languages. */
+const SHEET_TEXT = {
+  current: { vi: "Nhập mật khẩu hiện tại", en: "Enter your current password" },
+  next: {
+    vi: `Mật khẩu mới từ ${PASSWORD_LENGTH} ký tự`,
+    en: `The new password needs at least ${PASSWORD_LENGTH} characters`,
+  },
+  again: { vi: "Hai mật khẩu mới chưa khớp", en: "The new passwords don't match" },
+} as const satisfies Record<string, Pair>;
 
 /** The first wrong field, in the sheet's order. */
 export function firstWrongPassword(errors: Partial<Record<PasswordField, string>>): PasswordField | undefined {
@@ -361,7 +423,21 @@ export function firstWrongPassword(errors: Partial<Record<PasswordField, string>
 }
 
 /** The line after a current password the auth server refused (the mock draws none; the shortest words). */
-export const PASSWORD_WRONG = "Mật khẩu hiện tại chưa đúng";
+export const PASSWORD_WRONG_TEXT: Pair = { vi: "Mật khẩu hiện tại chưa đúng", en: "The current password is incorrect" };
+
+export const PASSWORD_WRONG = PASSWORD_WRONG_TEXT.vi;
+
+/**
+ * A change the auth server would not make, above the fields — the app's own
+ * words (the mock draws none). Here since round v6 slice E3a, beside its
+ * English, so the sheet can word it again in the page's language.
+ */
+export const PASSWORD_FAILED_TEXT: Pair = {
+  vi: "Chưa đổi được mật khẩu. Thử lại sau ít phút.",
+  en: "Couldn't change the password. Try again in a few minutes.",
+};
 
 /** The toast once the password has changed (`profile.js`). */
-export const PASSWORD_CHANGED = "Đã đổi mật khẩu";
+export const PASSWORD_CHANGED_TEXT: Pair = { vi: "Đã đổi mật khẩu", en: "Password changed" };
+
+export const PASSWORD_CHANGED = PASSWORD_CHANGED_TEXT.vi;

@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore } from "react";
 import { useMe } from "@/components/account/MeContext";
 import { useMyState } from "@/components/account/MyStateContext";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Order } from "@/data/types";
 import { effectiveOrder } from "@/lib/customer-orders";
@@ -17,6 +18,7 @@ import {
   serializeInboxRead,
   type InboxItem,
 } from "@/lib/feed-inbox";
+import { picker } from "@/lib/i18n";
 import { FeedIcon } from "./icon/FeedIcon";
 import { useNow } from "./now";
 
@@ -97,6 +99,9 @@ const NONE: ReadonlySet<string> = new Set();
  * the frame read on the server (`read`), so the first HTML already has the
  * right bell and the right bold rows; after that the browser's own copy is
  * the one read.
+ *
+ * The rows are written in the page's language since round v6 slice E3a; their
+ * keys, and so the read marks, are the same in both (`inboxItems`).
  */
 export function InboxProvider({
   orders,
@@ -112,6 +117,7 @@ export function InboxProvider({
   const me = useMe();
   const { state } = useMyState();
   const now = useNow();
+  const locale = useLocale();
   const raw = useSyncExternalStore(subscribe, readCookie, () => read);
   const [held, setHeld] = useState<ReadonlySet<string>>(NONE);
 
@@ -120,16 +126,19 @@ export function InboxProvider({
   const all = useMemo(
     () =>
       state
-        ? inboxItems({
-            catalog,
-            orders: orders.map((o) => effectiveOrder(o, now)),
-            favorites: state.favorites,
-            reminders: state.reminders,
-            joinedAt: me?.joinedAt ?? null,
-            now,
-          })
+        ? inboxItems(
+            {
+              catalog,
+              orders: orders.map((o) => effectiveOrder(o, now)),
+              favorites: state.favorites,
+              reminders: state.reminders,
+              joinedAt: me?.joinedAt ?? null,
+              now,
+            },
+            locale,
+          )
         : [],
-    [catalog, orders, state, me, now],
+    [catalog, orders, state, me, now, locale],
   );
   const shown = useMemo(() => (state ? bySwitches(all, state.notify) : []), [all, state]);
 
@@ -180,6 +189,7 @@ export function useInbox(): InboxApi {
  */
 export function ReadAllButton({ className }: { className?: string }) {
   const { rows, markAllRead } = useInbox();
+  const t = picker(useLocale());
   if (!rows.some((r) => r.unread)) return null;
   return (
     <button
@@ -193,7 +203,7 @@ export function ReadAllButton({ className }: { className?: string }) {
       }}
     >
       <FeedIcon name="checks" />
-      Đánh dấu đã đọc
+      {t({ vi: "Đánh dấu đã đọc", en: "Mark all as read" })}
     </button>
   );
 }

@@ -70,12 +70,11 @@ export interface Keep {
  * nhắc"). Signed in, a refusal takes the drawing back and says the action's
  * own sentence; one that says the session has gone offers the way in too.
  *
- * In the page's language since round v6 slice E1: the actions answer in
- * Vietnamese, so a refusal is worded again here from its `reason` and the
- * write's topic (`keepFailureMessage`) — the same sentence in Vietnamese, its
- * English on an English page. The rate limit's sentence carries a wait the
- * action measured, so it is shown as the action wrote it (still Vietnamese,
- * like every action's rate limit until its slice).
+ * In the page's language since round v6 slice E1: a refusal is worded again
+ * here from its `reason` and the write's topic (`keepFailureMessage`) — the
+ * same sentence in Vietnamese, its English on an English page. The rate
+ * limit's sentence carries a wait the action measured, so it is shown as the
+ * action wrote it — in the request's language since slice E3a.
  */
 export function useKeep(): Keep {
   const { state, signedIn, keep } = useMyState();

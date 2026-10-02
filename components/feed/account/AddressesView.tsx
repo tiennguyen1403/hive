@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { ADDRESS_LABELS, type AddressLabel } from "@/data/types";
 import { makeFeedDefault, removeFeedAddress, restoreFeedAddress, saveFeedAddress } from "@/lib/actions/addresses";
 import {
+  ADDRESS_ANSWER_TEXT,
+  addressLabelText,
   defaultFirst,
   feedAddressErrors,
   firstWrongAddress,
@@ -11,6 +14,7 @@ import {
   type AddressField,
   type AddressInput,
 } from "@/lib/feed-account";
+import { picker } from "@/lib/i18n";
 import { formatPhone } from "@/lib/phone";
 import type { ProvinceName } from "../checkout/CheckoutView";
 import { FeedPicker, type PickItem } from "../FeedPicker";
@@ -61,8 +65,6 @@ interface Draft {
   stayDefault: boolean;
 }
 
-const NOT_SAVED = "Chưa lưu được địa chỉ";
-
 /** "0912 345 678": a phone as the field shows it (`formatPhone`, its gaps as plain spaces for typing). */
 const spaced = (digits: string) => (digits ? formatPhone(digits).replace(/ /g, " ") : "");
 
@@ -78,8 +80,19 @@ const spaced = (digits: string) => (digits ? formatPhone(digits).replace(/ /g, 
  * (slice B10: the database kept it aside, so only its id is sent) — or, when
  * the server refuses, one short sentence saying so. The page re-reads the
  * book in the same response as each write (`revalidatePath`).
+ *
+ * In the page's language since round v6 slice E3a, the checkout's English for
+ * the fields and pickers. An address's name is printed "Home", "Work",
+ * "Other" (`addressLabelText`) but stored, and sent, as the book has it
+ * ("Nhà"…); the recipient, the street, the commune and the province keep
+ * their Vietnamese, marked `lang="vi"` on an English page.
  */
 export function AddressesView({ book, provinces, seed, open }: AddressesViewProps) {
+  const locale = useLocale();
+  const t = picker(locale);
+  const notSaved = t(ADDRESS_ANSWER_TEXT.notSaved);
+  // A person's and a place's own words: Vietnamese on an English page (QĐ-40).
+  const placeLang = locale === "en" ? ("vi" as const) : undefined;
   const toast = useFeedToast();
   const [writing, startWrite] = useTransition();
   const [saving, startSaving] = useTransition();
@@ -166,13 +179,16 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!draft || saving) return;
-    const found = feedAddressErrors({
-      recipient: draft.recipient,
-      phone: draft.phone,
-      provinceCode: draft.provinceCode,
-      wardCode: draft.ward?.value ?? "",
-      street: draft.street,
-    });
+    const found = feedAddressErrors(
+      {
+        recipient: draft.recipient,
+        phone: draft.phone,
+        provinceCode: draft.provinceCode,
+        wardCode: draft.ward?.value ?? "",
+        street: draft.street,
+      },
+      locale,
+    );
     setErrors(found);
     const wrong = firstWrongAddress(found);
     if (wrong) {
@@ -194,7 +210,10 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
       const r = await saveFeedAddress(input);
       startSaving(() => {
         if (r.ok) {
-          saved.current = { id: r.id, text: added ? "Đã thêm địa chỉ" : "Đã lưu địa chỉ" };
+          saved.current = {
+            id: r.id,
+            text: added ? t({ vi: "Đã thêm địa chỉ", en: "Address added" }) : t({ vi: "Đã lưu địa chỉ", en: "Address saved" }),
+          };
           setSheet(false);
         } else if (r.errors) {
           setErrors(r.errors);
@@ -222,11 +241,16 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
       const r = await makeFeedDefault(a.id);
       startWrite(() => {
         if (!r.ok) {
-          toast(r.message ?? NOT_SAVED);
+          toast(r.message ?? notSaved);
           return;
         }
         focusAfter(`[data-edit="${a.id}"]`);
-        toast(`${a.label} là địa chỉ mặc định`);
+        toast(
+          t({
+            vi: `${a.label} là địa chỉ mặc định`,
+            en: `${addressLabelText(a.label, "en")} is now the default address`,
+          }),
+        );
       });
     });
   }
@@ -237,7 +261,7 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
       const r = await restoreFeedAddress(a.id);
       startWrite(() => {
         if (!r.ok) {
-          toast(r.message ?? NOT_SAVED);
+          toast(r.message ?? notSaved);
           return;
         }
         focusAfter(`[data-edit="${r.id}"]`);
@@ -251,11 +275,14 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
       const r = await removeFeedAddress(a.id);
       startWrite(() => {
         if (!r.ok) {
-          toast(r.message ?? NOT_SAVED);
+          toast(r.message ?? notSaved);
           return;
         }
         focusAfter("[data-edit]", "[data-add]");
-        toast(`Đã xoá ${a.label}`, { label: "Hoàn tác", run: () => restore(a) });
+        toast(t({ vi: `Đã xoá ${a.label}`, en: `${addressLabelText(a.label, "en")} address deleted` }), {
+          label: t({ vi: "Hoàn tác", en: "Undo" }),
+          run: () => restore(a),
+        });
       });
     });
   }
@@ -290,58 +317,71 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
   };
   const aria = (f: AddressField) => (errors[f] ? { "aria-invalid": true as const, "aria-describedby": `e-${f}` } : {});
 
+  const addLabel = t({ vi: "Thêm địa chỉ", en: "Add address" });
+
   return (
     <>
       <h1 className="acc-h1 disp" data-hero>
-        Địa chỉ
+        {t({ vi: "Địa chỉ", en: "Addresses" })}
       </h1>
       {list.length > 0 ? (
         <>
           <div className="ad-list">
-            {list.map((a) => (
-              <article className={cx("ad", a.isDefault && "is-default")} key={a.id} aria-labelledby={`ad-${a.id}`}>
-                <div className="ad-top">
-                  <h2 className="ad-label disp" id={`ad-${a.id}`}>
-                    {a.label}
-                  </h2>
-                  {a.isDefault && (
-                    <span className="chip-ink">
-                      <FeedIcon name="check" />
-                      Mặc định
-                    </span>
-                  )}
-                </div>
-                <p className="ad-who">
-                  {a.recipient}, {formatPhone(a.phone)}
-                </p>
-                <p className="ad-where">{a.line}</p>
-                <div className="ad-acts">
-                  <button
-                    className="pill"
-                    type="button"
-                    data-edit={a.id}
-                    aria-label={`Sửa địa chỉ ${a.label}`}
-                    onClick={(e) => openForm(a, e.currentTarget)}
-                  >
-                    <FeedIcon name="pencil-simple" />
-                    Sửa
-                  </button>
-                  {!a.isDefault && (
-                    <button className="pill" type="button" onClick={() => setDefault(a)}>
-                      Đặt mặc định
+            {list.map((a) => {
+              const name = addressLabelText(a.label, locale);
+              return (
+                <article className={cx("ad", a.isDefault && "is-default")} key={a.id} aria-labelledby={`ad-${a.id}`}>
+                  <div className="ad-top">
+                    <h2 className="ad-label disp" id={`ad-${a.id}`}>
+                      {name}
+                    </h2>
+                    {a.isDefault && (
+                      <span className="chip-ink">
+                        <FeedIcon name="check" />
+                        {t({ vi: "Mặc định", en: "Default" })}
+                      </span>
+                    )}
+                  </div>
+                  <p className="ad-who" lang={placeLang}>
+                    {a.recipient}, {formatPhone(a.phone)}
+                  </p>
+                  <p className="ad-where" lang={placeLang}>
+                    {a.line}
+                  </p>
+                  <div className="ad-acts">
+                    <button
+                      className="pill"
+                      type="button"
+                      data-edit={a.id}
+                      aria-label={t({ vi: `Sửa địa chỉ ${a.label}`, en: `Edit ${name} address` })}
+                      onClick={(e) => openForm(a, e.currentTarget)}
+                    >
+                      <FeedIcon name="pencil-simple" />
+                      {t({ vi: "Sửa", en: "Edit" })}
                     </button>
-                  )}
-                  <button className="pill" type="button" aria-label={`Xoá địa chỉ ${a.label}`} onClick={() => remove(a)}>
-                    <FeedIcon name="trash" />
-                    Xoá
-                  </button>
-                </div>
-              </article>
-            ))}
+                    {!a.isDefault && (
+                      <button className="pill" type="button" onClick={() => setDefault(a)}>
+                        {/* "Set default": measured, the card's three pills stay on one row at 390, as in Vietnamese. */}
+                        {t({ vi: "Đặt mặc định", en: "Set default" })}
+                      </button>
+                    )}
+                    <button
+                      className="pill"
+                      type="button"
+                      aria-label={t({ vi: `Xoá địa chỉ ${a.label}`, en: `Delete ${name} address` })}
+                      onClick={() => remove(a)}
+                    >
+                      <FeedIcon name="trash" />
+                      {t({ vi: "Xoá", en: "Delete" })}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
           <button className="btn btn-line ad-add" type="button" data-add onClick={(e) => openForm(null, e.currentTarget)}>
             <FeedIcon name="plus" />
-            Thêm địa chỉ
+            {addLabel}
           </button>
         </>
       ) : (
@@ -349,9 +389,9 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
           <span className="empty-ic">
             <FeedIcon name="map-pin" />
           </span>
-          <p className="empty-title">Chưa có địa chỉ</p>
+          <p className="empty-title">{t({ vi: "Chưa có địa chỉ", en: "No addresses yet" })}</p>
           <button className="btn btn-blue" type="button" data-add onClick={(e) => openForm(null, e.currentTarget)}>
-            Thêm địa chỉ
+            {addLabel}
           </button>
         </div>
       )}
@@ -370,16 +410,16 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
             <div className="grab" aria-hidden="true" />
             <div className="sh-head plain">
               <h2 className="sh-title" id="ad-title">
-                {draft.id ? "Sửa địa chỉ" : "Thêm địa chỉ"}
+                {draft.id ? t({ vi: "Sửa địa chỉ", en: "Edit address" }) : addLabel}
               </h2>
-              <button className="sh-x" type="button" data-close aria-label="Đóng">
+              <button className="sh-x" type="button" data-close aria-label={t({ vi: "Đóng", en: "Close" })}>
                 <FeedIcon name="x" />
               </button>
             </div>
             <form className="sheet-form" noValidate onSubmit={onSubmit}>
               <div className="field">
                 <span className="lbl" id="l-label">
-                  Tên địa chỉ
+                  {t({ vi: "Tên địa chỉ", en: "Address name" })}
                 </span>
                 <div className="lbl-chips" role="radiogroup" aria-labelledby="l-label">
                   {ADDRESS_LABELS.map((l) => (
@@ -391,12 +431,12 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
                         checked={draft.label === l}
                         onChange={() => setDraft((d) => (d ? { ...d, label: l } : d))}
                       />
-                      {l}
+                      {addressLabelText(l, locale)}
                     </label>
                   ))}
                 </div>
               </div>
-              <Field id="recipient" label="Người nhận" error={errors.recipient}>
+              <Field id="recipient" label={t({ vi: "Người nhận", en: "Recipient" })} error={errors.recipient}>
                 <input
                   id="f-recipient"
                   name="recipient"
@@ -406,7 +446,7 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
                   {...aria("recipient")}
                 />
               </Field>
-              <Field id="phone" label="Số điện thoại" error={errors.phone}>
+              <Field id="phone" label={t({ vi: "Số điện thoại", en: "Phone number" })} error={errors.phone}>
                 <input
                   id="f-phone"
                   name="phone"
@@ -421,35 +461,41 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
               <div className="co-pair">
                 <PickField
                   id="province"
-                  label="Tỉnh / thành"
+                  label={t({ vi: "Tỉnh / thành", en: "Province / city" })}
                   value={provinceName(draft.provinceCode)}
-                  empty="Chọn tỉnh / thành"
+                  valueLang={placeLang}
+                  empty={t({ vi: "Chọn tỉnh / thành", en: "Choose province / city" })}
                   error={errors.province}
                   onOpen={(el) => openPicker("province", el)}
                 />
                 <PickField
                   id="ward"
-                  label="Phường / xã"
+                  label={t({ vi: "Phường / xã", en: "Ward / commune" })}
                   value={draft.ward?.label ?? ""}
-                  empty={draft.provinceCode ? "Chọn phường / xã" : "Chọn tỉnh trước"}
+                  valueLang={placeLang}
+                  empty={
+                    draft.provinceCode
+                      ? t({ vi: "Chọn phường / xã", en: "Choose ward / commune" })
+                      : t({ vi: "Chọn tỉnh trước", en: "Choose a province first" })
+                  }
                   disabled={!draft.provinceCode}
                   error={errors.ward}
                   onOpen={(el) => openPicker("ward", el)}
                 />
               </div>
-              <Field id="street" label="Số nhà, đường" error={errors.street}>
+              <Field id="street" label={t({ vi: "Số nhà, đường", en: "House number, street" })} error={errors.street}>
                 <input
                   id="f-street"
                   name="street"
                   autoComplete="address-line1"
-                  placeholder="VD: 12 Nguyễn Huệ"
+                  placeholder={t({ vi: "VD: 12 Nguyễn Huệ", en: "e.g. 12 Nguyễn Huệ" })}
                   value={draft.street}
                   onChange={set("street")}
                   {...aria("street")}
                 />
               </Field>
               <label className="toggle-row">
-                <span>Đặt làm mặc định</span>
+                <span>{t({ vi: "Đặt làm mặc định", en: "Set as default" })}</span>
                 <span className="switch">
                   <input
                     type="checkbox"
@@ -464,7 +510,7 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
                 </span>
               </label>
               <button className="btn btn-blue" type="submit" disabled={saving}>
-                {saving ? "Đang lưu…" : "Lưu địa chỉ"}
+                {saving ? t({ vi: "Đang lưu…", en: "Saving…" }) : t({ vi: "Lưu địa chỉ", en: "Save address" })}
               </button>
             </form>
           </div>
@@ -474,12 +520,17 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
       <FeedPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        title={pickerKind === "ward" ? "Phường / xã" : "Tỉnh / thành"}
+        title={pickerKind === "ward" ? t({ vi: "Phường / xã", en: "Ward / commune" }) : t({ vi: "Tỉnh / thành", en: "Province / city" })}
         sub={pickerKind === "ward" && draft ? provinceName(draft.provinceCode) : undefined}
-        placeholder={pickerKind === "ward" ? "Tìm phường / xã" : "Tìm tỉnh / thành"}
+        placeholder={
+          pickerKind === "ward"
+            ? t({ vi: "Tìm phường / xã", en: "Search ward / commune" })
+            : t({ vi: "Tìm tỉnh / thành", en: "Search province / city" })
+        }
         items={pickerKind === "ward" && draft ? (wards[draft.provinceCode] ?? NO_ITEMS) : provinceItems}
         value={pickerKind === "ward" ? (draft?.ward?.value ?? null) : draft?.provinceCode || null}
         waiting={pickerKind === "ward" && draft ? waiting(draft.provinceCode) : null}
+        lang={placeLang}
         onPick={(it) => (pickerKind === "ward" ? chooseWard(it) : chooseProvince(it.value))}
         back={pickerBack.current}
       />
@@ -509,6 +560,8 @@ interface PickFieldProps {
   id: "province" | "ward";
   label: string;
   value: string;
+  /** The choice's language when it is not the page's: a place's Vietnamese name on an English page. */
+  valueLang?: "vi" | undefined;
   empty: string;
   disabled?: boolean;
   error: string | undefined;
@@ -516,7 +569,7 @@ interface PickFieldProps {
 }
 
 /** A field whose value is picked in a sheet (`addresses.js`: `pick`, the checkout's `pickField`). */
-function PickField({ id, label, value, empty, disabled = false, error, onOpen }: PickFieldProps) {
+function PickField({ id, label, value, valueLang, empty, disabled = false, error, onOpen }: PickFieldProps) {
   return (
     <div className={cx("field", error && "is-error")} data-f={id}>
       <span className="lbl" id={`l-${id}`}>
@@ -532,7 +585,7 @@ function PickField({ id, label, value, empty, disabled = false, error, onOpen }:
         onClick={(e) => onOpen(e.currentTarget)}
         {...(error ? { "aria-invalid": true as const, "aria-describedby": `e-${id}` } : {})}
       >
-        <span className={cx("pick-v", !value && "is-empty")} id={`v-${id}`}>
+        <span className={cx("pick-v", !value && "is-empty")} id={`v-${id}`} lang={value ? valueLang : undefined}>
           {value || empty}
         </span>
         <FeedIcon name="caret-down" />

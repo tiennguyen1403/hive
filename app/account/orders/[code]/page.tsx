@@ -10,19 +10,36 @@ import { demoNowMs } from "@/lib/clock";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { findMyOrder } from "@/lib/db/orders";
 import { loadMe } from "@/lib/db/profiles";
+import { picker, type Pair } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 import { isOrderCode } from "@/lib/lookup";
+import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
 
 const NO_INDEX = { index: false, follow: false } as const;
+
+/** "Đơn hàng": signed out, the tab's title and the phone bar's; "Orders" in English (round v6 slice E3a). */
+const ORDERS: Pair = { vi: "Đơn hàng", en: "Orders" };
 
 /** The code as the page reads it: the mock upper-cases what the address carries (`order.js`). */
 const codeOf = (raw: string) => raw.trim().toUpperCase();
 
-/** The tab's title as the mock sets it: the order's code, "Không tìm thấy đơn", or "Đơn hàng" signed out. */
+/**
+ * The tab's title as the mock sets it: the order's code, "Không tìm thấy đơn",
+ * or "Đơn hàng" signed out; in the page's language since round v6 slice E3a
+ * ("Order not found", "Orders"), with the site's description in it — the link
+ * card keeps the layout's Vietnamese one (QĐ-40).
+ */
 export async function generateMetadata(props: PageProps<"/account/orders/[code]">): Promise<Metadata> {
-  const { code } = await props.params;
-  if (!(await loadMe())) return { title: "Đơn hàng", robots: NO_INDEX };
+  const [{ code }, locale] = await Promise.all([props.params, getLocale()]);
+  const t = picker(locale);
+  const description = t(SITE_DESCRIPTION_TEXT);
+  if (!(await loadMe())) return { title: t(ORDERS), description, robots: NO_INDEX };
   const found = await findMyOrder(codeOf(code));
-  return { title: found ? found.code : "Không tìm thấy đơn", robots: NO_INDEX };
+  return {
+    title: found ? found.code : t({ vi: "Không tìm thấy đơn", en: "Order not found" }),
+    description,
+    robots: NO_INDEX,
+  };
 }
 
 /**
@@ -46,10 +63,11 @@ export async function generateMetadata(props: PageProps<"/account/orders/[code]"
  * commune list stays on the server. `params` is a promise in Next 16.
  */
 export default async function OrderPage(props: PageProps<"/account/orders/[code]">) {
-  const { code: raw } = await props.params;
+  const [{ code: raw }, locale] = await Promise.all([props.params, getLocale()]);
   const code = codeOf(raw);
   const now = demoNowMs();
   const me = await loadMe();
+  const t = picker(locale);
 
   if (!me) {
     return (
@@ -59,15 +77,20 @@ export default async function OrderPage(props: PageProps<"/account/orders/[code]
         footSkip={["/track"]}
         mainClass="acc-layout"
         now={now}
-        mbar={{ title: "Đơn hàng", back: "/account/orders" }}
+        mbar={{ title: t(ORDERS), back: "/account/orders" }}
       >
-        <AccountNav on="orders" signedIn={false} />
+        <AccountNav on="orders" signedIn={false} locale={locale} />
         <div className="acc-main">
-          <h1 className="sr-only">Đơn {code}</h1>
+          <h1 className="sr-only">{t({ vi: `Đơn ${code}`, en: `Order ${code}` })}</h1>
           <OutCard
-            title={code ? `Đăng nhập để xem đơn ${code}` : "Đăng nhập để xem đơn"}
+            title={
+              code
+                ? t({ vi: `Đăng nhập để xem đơn ${code}`, en: `Sign in to see order ${code}` })
+                : t({ vi: "Đăng nhập để xem đơn", en: "Sign in to see your orders" })
+            }
             id="out-order"
             here={`/account/orders/${encodeURIComponent(code)}`}
+            locale={locale}
           />
           <LookupForm id="od" code={isOrderCode(code) ? code : ""} />
         </div>
@@ -87,7 +110,7 @@ export default async function OrderPage(props: PageProps<"/account/orders/[code]
       now={now}
       mbar={{ title: order.code, back: "/account/orders", watch: "[data-ui='feed'] .od-hero" }}
     >
-      <AccountNav on="orders" signedIn />
+      <AccountNav on="orders" signedIn locale={locale} />
       <div className="acc-main">
         <OrderView order={order} addressLine={feedAddressLine(order.shipTo)} />
       </div>
