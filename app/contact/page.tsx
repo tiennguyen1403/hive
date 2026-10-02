@@ -2,14 +2,28 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { FeedFrame } from "@/components/feed/FeedFrame";
 import type { FeedMbarProps } from "@/components/feed/FeedMbar";
+import { picker, type Locale, type Pair } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 
-export const metadata: Metadata = {
-  title: "Liên hệ",
-  description: "Tra cứu đơn bằng mã và số điện thoại, không cần đăng nhập.",
-};
+/** The page's name: the glossary's "Contact" in English (round v6 slice E3b). */
+const TITLE: Pair = { vi: "Liên hệ", en: "Contact" };
+
+/** "Liên hệ" — the layout's template adds "· HIVE" — and what the page offers, in the page's language. */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = picker(await getLocale());
+  return {
+    title: t(TITLE),
+    description: t({
+      vi: "Tra cứu đơn bằng mã và số điện thoại, không cần đăng nhập.",
+      en: "Track an order with its code and phone number, no sign-in needed.",
+    }),
+  };
+}
 
 /** The phone's bar: back to Hỏi đáp (the mock's `data-back`); the title once the page's own has scrolled away. */
-const MBAR: FeedMbarProps = { title: "Liên hệ", back: "/faq", watch: "[data-ui='feed'] .b-title" };
+function mbarOf(locale: Locale): FeedMbarProps {
+  return { title: picker(locale)(TITLE), back: "/faq", watch: "[data-ui='feed'] .b-title" };
+}
 
 /**
  * Contact, round v4 "Feed" (slice 4b). The mock's `contact.html` is a message
@@ -29,24 +43,41 @@ const MBAR: FeedMbarProps = { title: "Liên hệ", back: "/faq", watch: "[data-u
  * where somebody can look their own order up without asking anyone, so that
  * goes first; it answers most of why people write in. Hỏi đáp's "Gửi tin
  * nhắn" leads here (the user, 30/09).
+ *
+ * In the page's language since round v6 slice E3b; the slot is still empty in
+ * English ("Shop phone and email" · "Coming soon").
  */
-export default function ContactPage() {
+export default async function ContactPage() {
+  const locale = await getLocale();
+  const t = picker(locale);
   return (
-    <FeedFrame page="contact" foot="lite" footSkip={["/contact"]} mainClass="b-wrap b-page" mbar={MBAR}>
+    <FeedFrame page="contact" foot="lite" footSkip={["/contact"]} mainClass="b-wrap b-page" mbar={mbarOf(locale)}>
       <div className="b-head">
-        <h1 className="b-title disp">Liên hệ</h1>
+        <h1 className="b-title disp">{t(TITLE)}</h1>
       </div>
       <div className="b-contact">
         <div className="b-read">
           <p>
-            Về đơn hàng: <Link href="/track">tra cứu đơn</Link> bằng mã đơn và số điện thoại, không cần đăng nhập.
-            Phần lớn câu hỏi có trong <Link href="/faq">Hỏi đáp</Link>.
+            {t<React.ReactNode>({
+              vi: (
+                <>
+                  Về đơn hàng: <Link href="/track">tra cứu đơn</Link> bằng mã đơn và số điện thoại, không cần đăng nhập.
+                  Phần lớn câu hỏi có trong <Link href="/faq">Hỏi đáp</Link>.
+                </>
+              ),
+              en: (
+                <>
+                  About an order: <Link href="/track">track it</Link> with the order code and phone number, no sign-in
+                  needed. Most questions are answered in the <Link href="/faq">FAQ</Link>.
+                </>
+              ),
+            })}
           </p>
         </div>
-        <aside className="b-cside" aria-label="Kênh khác">
+        <aside className="b-cside" aria-label={t({ vi: "Kênh khác", en: "Other channels" })}>
           <div className="b-slot" role="note">
-            <b>Số điện thoại và email cửa hàng</b>
-            <span>Đang chuẩn bị</span>
+            <b>{t({ vi: "Số điện thoại và email cửa hàng", en: "Shop phone and email" })}</b>
+            <span>{t({ vi: "Đang chuẩn bị", en: "Coming soon" })}</span>
           </div>
         </aside>
       </div>

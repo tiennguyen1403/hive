@@ -1,17 +1,20 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import {
   GUIDE_HEIGHTS,
   GUIDE_HEIGHT_STORAGE_KEY,
-  heightName,
+  guideMeasure,
+  heightNameIn,
   parseGuideHeight,
   sizeGuide,
   sizesForHeight,
   type GuideChart,
   type GuideHeight,
 } from "@/lib/feed-size-guide";
+import { picker } from "@/lib/i18n";
 import type { Size } from "@/data/types";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNow } from "../now";
@@ -46,11 +49,18 @@ function keepHeight(cm: GuideHeight | null): void {
  *
  * The kept height comes back once the page is on screen: the server has no
  * storage to read it from, so it draws the charts unmarked first.
+ *
+ * In the page's language since round v6 slice E3b: "Size guide", the heights
+ * in centimetres ("175 cm"), "Matches size L or XL", the charts of
+ * `sizeGuide(catalog, now, locale)` — an issue's styles keep their Vietnamese
+ * names, marked as such for a screen reader.
  */
 export function SizeGuideView() {
   const catalog = useCatalog();
   const now = useNow();
-  const guide = useMemo(() => sizeGuide(catalog, now), [catalog, now]);
+  const locale = useLocale();
+  const t = picker(locale);
+  const guide = useMemo(() => sizeGuide(catalog, now, locale), [catalog, now, locale]);
   const [height, setHeight] = useState<GuideHeight | null>(null);
 
   useEffect(() => {
@@ -68,12 +78,12 @@ export function SizeGuideView() {
   return (
     <>
       <div className="b-head">
-        <h1 className="b-title disp">Bảng size</h1>
+        <h1 className="b-title disp">{t({ vi: "Bảng size", en: "Size guide" })}</h1>
       </div>
-      <p className="b-sg-cap">Số đo mô phỏng, cm</p>
+      <p className="b-sg-cap">{t({ vi: "Số đo mô phỏng, cm", en: "Simulated measurements, cm" })}</p>
       <section className="b-hpick" aria-labelledby="h-height">
         <p className="sh-label" id="h-height">
-          Chiều cao của bạn
+          {t({ vi: "Chiều cao của bạn", en: "Your height" })}
         </p>
         <div className="chips" role="group" aria-labelledby="h-height">
           {GUIDE_HEIGHTS.map((h) => (
@@ -84,41 +94,60 @@ export function SizeGuideView() {
               aria-pressed={height === h}
               onClick={() => pick(height === h ? null : h)}
             >
-              {heightName(h)}
+              {heightNameIn(h, locale)}
             </button>
           ))}
         </div>
         <p className="b-hres" aria-live="polite">
-          {sizes.length > 0 && (
-            <>
-              Hợp size{" "}
-              {sizes.map((z, i) => (
-                <Fragment key={z}>
-                  {i > 0 && " hoặc "}
-                  <b>{z}</b>
-                </Fragment>
-              ))}
-            </>
-          )}
+          {sizes.length > 0 &&
+            t<React.ReactNode>({
+              vi: (
+                <>
+                  Hợp size{" "}
+                  {sizes.map((z, i) => (
+                    <Fragment key={z}>
+                      {i > 0 && " hoặc "}
+                      <b>{z}</b>
+                    </Fragment>
+                  ))}
+                </>
+              ),
+              en: (
+                <>
+                  Matches size{" "}
+                  {sizes.map((z, i) => (
+                    <Fragment key={z}>
+                      {i > 0 && " or "}
+                      <b>{z}</b>
+                    </Fragment>
+                  ))}
+                </>
+              ),
+            })}
         </p>
       </section>
       <div className="b-fits">
         {guide.tops.map((c) => (
           <Chart key={c.id} chart={c} sizes={sizes} />
         ))}
-        <Measure text="Trải phẳng một chiếc áo đang mặc vừa, đo ngang ngực rồi so với cột Ngang ngực." />
+        <Measure text={guideMeasure("tops", locale)} />
       </div>
       <div className="b-fits">
         {guide.pants.map((c) => (
           <Chart key={c.id} chart={c} sizes={sizes} />
         ))}
-        <Measure text="Trải phẳng một chiếc quần đang mặc vừa: đo ngang cạp rồi nhân đôi để so với cột Vòng eo, đo từ cạp tới gấu để so với cột Dài quần." />
+        <Measure text={guideMeasure("pants", locale)} />
       </div>
       <section className="b-tips" aria-labelledby="h-tips">
         <h2 className="sect-title" id="h-tips">
-          Giữa hai size
+          {t({ vi: "Giữa hai size", en: "Between two sizes" })}
         </h2>
-        <p>Muốn vừa người, lấy size nhỏ. Muốn rộng, lấy size lớn.</p>
+        <p>
+          {t({
+            vi: "Muốn vừa người, lấy size nhỏ. Muốn rộng, lấy size lớn.",
+            en: "For a closer fit, take the smaller size. For more room, take the larger.",
+          })}
+        </p>
       </section>
     </>
   );
@@ -131,14 +160,27 @@ function Chart({ chart: c, sizes }: { chart: GuideChart; sizes: readonly Size[] 
       <h2 className="b-fit-title disp" id={`fit-${c.id}`}>
         {c.title}
       </h2>
-      {c.names.length > 0 && <p className="b-fit-names">{c.names.join(", ")}</p>}
+      {c.names.length > 0 && (
+        <p className="b-fit-names">
+          {/* English: each name its own element, an issue's style marked as Vietnamese (`nameLangs`). */}
+          {c.nameLangs
+            ? c.names.map((name, i) => (
+                <Fragment key={i}>
+                  {i > 0 && ", "}
+                  <span lang={c.nameLangs?.[i]}>{name}</span>
+                </Fragment>
+              ))
+            : c.names.join(", ")}
+        </p>
+      )}
       <table className={cx("fit-table", c.pants && "b-pants")}>
         <caption className="sr-only">{c.caption}</caption>
         <thead>
           <tr>
             <th scope="col">Size</th>
-            {c.head.map((h) => (
-              <th scope="col" key={h}>
+            {/* Keyed by place: a column's name changes with the language. */}
+            {c.head.map((h, i) => (
+              <th scope="col" key={i}>
                 {h}
               </th>
             ))}

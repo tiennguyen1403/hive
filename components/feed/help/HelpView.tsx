@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import {
   helpGroups,
@@ -16,6 +17,7 @@ import {
   type HelpGroupId,
   type HelpItem,
 } from "@/lib/feed-help";
+import { picker } from "@/lib/i18n";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNow } from "../now";
 import { cx } from "../useReveal";
@@ -55,11 +57,18 @@ function openFor(groups: readonly HelpGroup[], words: readonly string[], group: 
  * and `/returns`) opens with all its answers, the search cleared, and comes
  * into view — on arrival and whenever the hash changes (the chips are plain
  * anchors, so the browser's own jump comes back through `hashchange`).
+ *
+ * In the page's language since round v6 slice E3b ("FAQ", "Search
+ * questions", the answers of `helpGroups(next, locale)`). The answers' ids
+ * are the same in both languages, so an answer open before a switch of
+ * language is still open after it; a search runs over the words on screen.
  */
 export function HelpView({ initial }: { initial: string }) {
   const catalog = useCatalog();
   const now = useNow();
-  const groups = useMemo(() => helpGroups(helpNext(catalog, now)), [catalog, now]);
+  const locale = useLocale();
+  const t = picker(locale);
+  const groups = useMemo(() => helpGroups(helpNext(catalog, now), locale), [catalog, now, locale]);
 
   const [value, setValue] = useState(initial);
   const [shown, setShown] = useState<Shown>({ q: initial.trim(), filled: initial !== "" });
@@ -143,10 +152,12 @@ export function HelpView({ initial }: { initial: string }) {
     if (jump) document.getElementById(jump.id)?.scrollIntoView({ block: "start" });
   }, [jump]);
 
+  const fieldName = t({ vi: "Tìm câu hỏi", en: "Search questions" });
+
   return (
     <>
       <div className="b-head">
-        <h1 className="b-title disp">Hỏi đáp</h1>
+        <h1 className="b-title disp">{t({ vi: "Hỏi đáp", en: "FAQ" })}</h1>
       </div>
       <div className="b-help-top">
         {/* Without script the form still searches: a GET to this page with `q`, which the server draws. */}
@@ -160,21 +171,21 @@ export function HelpView({ initial }: { initial: string }) {
             autoComplete="off"
             enterKeyHint="search"
             spellCheck={false}
-            placeholder="Tìm câu hỏi"
-            aria-label="Tìm câu hỏi"
+            placeholder={fieldName}
+            aria-label={fieldName}
             aria-controls="help-body"
             value={value}
             onChange={(e) => onInput(e.target.value)}
           />
           {shown.filled && (
-            <button className="sclear" type="button" aria-label="Xoá chữ" onClick={clear}>
+            <button className="sclear" type="button" aria-label={t({ vi: "Xoá chữ", en: "Clear" })} onClick={clear}>
               <FeedIcon name="x" />
             </button>
           )}
         </form>
       </div>
       <div className={cx("b-help", words.length > 0 && "is-search")}>
-        <nav className="chips b-cats" aria-label="Nhóm câu hỏi">
+        <nav className="chips b-cats" aria-label={t({ vi: "Nhóm câu hỏi", en: "Question groups" })}>
           {groups.map((g) => (
             <a key={g.id} className="chip" href={`#${g.id}`}>
               {g.title}
@@ -196,21 +207,21 @@ export function HelpView({ initial }: { initial: string }) {
           ) : (
             <div className="b-help-none">
               <p className="snone-line" aria-live="polite">
-                Không có câu nào khớp “{shown.q}”
+                {t<React.ReactNode>({ vi: <>Không có câu nào khớp “{shown.q}”</>, en: `No questions match “${shown.q}”` })}
               </p>
               <button className="btn btn-line" type="button" onClick={clear}>
-                Xoá tìm
+                {t({ vi: "Xoá tìm", en: "Clear search" })}
               </button>
             </div>
           )}
         </div>
         <section className="b-help-more" aria-labelledby="h-more">
           <h2 className="sect-title" id="h-more">
-            Không thấy câu cần tìm?
+            {t({ vi: "Không thấy câu cần tìm?", en: "Can't find your question?" })}
           </h2>
           <Link className="btn btn-blue" href="/contact">
             <FeedIcon name="chat-circle-text" />
-            Gửi tin nhắn
+            {t({ vi: "Gửi tin nhắn", en: "Send a message" })}
           </Link>
         </section>
       </div>

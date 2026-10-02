@@ -1,3 +1,5 @@
+import { pick, type Locale, type Pair } from "./i18n";
+
 /**
  * The return and exchange rules the user settled on 27/09/2026 (round 4 of
  * the Feed mock, `prototype/explore/feed/BRIEF.md`, "Settled by the user"),
@@ -15,6 +17,26 @@
 /** Why a piece goes back, in the order the mock offers them. */
 export const RETURN_REASONS = ["Không vừa size", "Khác với ảnh", "Lỗi may hoặc in", "Giao nhầm món", "Đổi ý"] as const;
 export type ReturnReason = (typeof RETURN_REASONS)[number];
+
+/**
+ * Each reason in both languages (round v6 slice E3b): the Vietnamese is the
+ * reason itself, the value the request flow will store, so `RETURN_REASONS`
+ * keeps it; the English is how a screen prints it, the way a return form
+ * offers a choice. "Đổi ý" is "Change of mind", as the shopper's cancel
+ * reason "Khách đổi ý" reads in English (`lib/feed-account.ts`).
+ */
+const RETURN_REASON_TEXT: Readonly<Record<ReturnReason, Pair>> = {
+  "Không vừa size": { vi: "Không vừa size", en: "Doesn't fit" },
+  "Khác với ảnh": { vi: "Khác với ảnh", en: "Not as pictured" },
+  "Lỗi may hoặc in": { vi: "Lỗi may hoặc in", en: "Sewing or print fault" },
+  "Giao nhầm món": { vi: "Giao nhầm món", en: "Wrong item sent" },
+  "Đổi ý": { vi: "Đổi ý", en: "Change of mind" },
+};
+
+/** A reason as a screen prints it, in one language: in Vietnamese the reason as it is. */
+export function returnReasonLabel(reason: ReturnReason, locale: Locale = "vi"): string {
+  return pick(RETURN_REASON_TEXT[reason], locale);
+}
 
 /**
  * The reasons that are the shop's fault: a whole order sent back for one of

@@ -3511,3 +3511,16 @@ commit trên máy, chưa push.
   Phiên chính áp cùng luật vào mock (`prototype/explore/feed/more.css`).
 - **Phiên chính sửa sau duyệt:** `tools/layout-sweep.js` cho "Đăng nhập thử" và "Vào quản trị thử" qua `T(vi, en)`.
 - **Để lượt rà cuối:** trang một đơn ở 900 (mốc giờ bước, meta món, ô tài khoản ngân hàng), hộp thư ở 900 (bản VI đã 3 dòng, EN 4).
+
+**02/10, lát E3b ĐẠT (phiên chính duyệt).** Brief `tasks/briefs/v6-lat-e3b.md`, agent `ui-implementer`. Người dùng cho commit trên
+máy (chưa push) rồi làm E4.
+- **Phạm vi đã dịch:** `/faq` (26 câu, 6 nhóm: Ordering, Payment, Delivery, Returns, Sizing, Account), `/size-guide`, `/about`,
+  `/contact`, trang 404. Mọi con số trong câu lấy từ `lib/`; test đổi hằng rồi nạp lại module để chặn số gõ tay.
+- **Phiên chính kiểm:** tsc sạch, 2.045 test xanh (26 test mới); xem ảnh tiếng Anh Giới thiệu, Hỏi đáp (mở hết), Bảng size ở 390.
+- **Agent đo:** bản VI 22 cặp trùng tuyệt đối; script dò chữ Việt ở bản EN từ 952 xuống 0; 6 chỗ xuống dòng đo phương án rồi sửa.
+- **Người dùng duyệt câu giọng shop (02/10):** lời dẫn Giới thiệu, bốn quy tắc, câu hết size ở Hỏi đáp, câu khuyên ở Bảng size, đúng
+  như đề xuất. Phiên chính sửa một chữ trước khi đưa duyệt: luật 2 "announced in advance".
+- **Quyết định (phiên chính):** ô 404 "TRACK AN / ORDER" hai dòng ở 900 (giữ, như "FORGOT PASSWORD"); tìm "cod" ở bản Anh khớp
+  cả "code" (tìm theo chuỗi con như mock); lý do đổi trả trong ngoặc khi gọi tên.
+- **Lỗi có từ trước, để lượt rà cuối:** `/faq#doi-tra` dừng khi nhóm ở 172px, chưa sát dưới thanh trên (cả bản VI).
+- **Phần cửa hàng đã dịch xong.** Kế: E4, E5 quản trị.

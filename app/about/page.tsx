@@ -1,15 +1,23 @@
 import type { Metadata } from "next";
 import { FeedFrame } from "@/components/feed/FeedFrame";
 import type { FeedMbarProps } from "@/components/feed/FeedMbar";
-import { ABOUT_LEAD, FOUR_RULES, FOUR_RULES_SCOPE } from "@/lib/lexicon";
+import { picker, type Locale, type Pair } from "@/lib/i18n";
+import { aboutLead, fourRules, fourRulesScope } from "@/lib/lexicon";
+import { getLocale } from "@/lib/locale";
 
-export const metadata: Metadata = {
-  title: "Giới thiệu",
-  description: ABOUT_LEAD,
-};
+/** The page's name: the glossary's "About" in English (round v6 slice E3b). */
+const TITLE: Pair = { vi: "Giới thiệu", en: "About" };
+
+/** "Giới thiệu" — the layout's template adds "· HIVE" — and the page's opening sentence, in the page's language. */
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: picker(locale)(TITLE), description: aboutLead(locale) };
+}
 
 /** The phone's bar: back to the home page; the title once the page's own has scrolled away. */
-const MBAR: FeedMbarProps = { title: "Giới thiệu", back: "/", watch: "[data-ui='feed'] .b-title" };
+function mbarOf(locale: Locale): FeedMbarProps {
+  return { title: picker(locale)(TITLE), back: "/", watch: "[data-ui='feed'] .b-title" };
+}
 
 /**
  * What this shop is, round v4 "Feed" (slice 4b). The mock has no such page:
@@ -26,28 +34,35 @@ const MBAR: FeedMbarProps = { title: "Giới thiệu", back: "/", watch: "[data-
  * marked "Đang chuẩn bị" — the way the Feed says a thing is not there yet, as
  * on its Google button and on "Xoá tài khoản" — rather than something warm
  * and untrue.
+ *
+ * In the page's language since round v6 slice E3b: the sentence and the rules
+ * from `lib/lexicon.ts` (`aboutLead`, `fourRules`), the slot "Brand story" ·
+ * "Coming soon", still empty.
  */
-export default function AboutPage() {
+export default async function AboutPage() {
+  const locale = await getLocale();
+  const t = picker(locale);
   return (
-    <FeedFrame page="about" foot="lite" mainClass="b-wrap b-page" mbar={MBAR}>
+    <FeedFrame page="about" foot="lite" mainClass="b-wrap b-page" mbar={mbarOf(locale)}>
       <div className="b-head">
-        <h1 className="b-title disp">Giới thiệu</h1>
+        <h1 className="b-title disp">{t(TITLE)}</h1>
       </div>
       <div className="b-read">
-        <p>{ABOUT_LEAD}</p>
+        <p>{aboutLead(locale)}</p>
         <div className="b-slot" role="note">
-          <b>Câu chuyện thương hiệu</b>
-          <span>Đang chuẩn bị</span>
+          <b>{t({ vi: "Câu chuyện thương hiệu", en: "Brand story" })}</b>
+          <span>{t({ vi: "Đang chuẩn bị", en: "Coming soon" })}</span>
         </div>
       </div>
       <section className="b-rules" aria-labelledby="h-rules">
         <h2 className="sect-title" id="h-rules">
-          Bốn quy tắc
+          {t({ vi: "Bốn quy tắc", en: "Four rules" })}
         </h2>
-        <p className="b-rules-sub">{FOUR_RULES_SCOPE}</p>
+        <p className="b-rules-sub">{fourRulesScope(locale)}</p>
         <dl>
-          {FOUR_RULES.map((r) => (
-            <div className="b-rule" key={r.title}>
+          {/* Keyed by place: a rule's title changes with the language. */}
+          {fourRules(locale).map((r, i) => (
+            <div className="b-rule" key={i}>
               <dt>{r.title}</dt>
               <dd>{r.body}</dd>
             </div>

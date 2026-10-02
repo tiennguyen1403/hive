@@ -94,6 +94,22 @@ export const HOME_COVER = {
  */
 export const HOME_HEADLINE: Pair = { vi: HOME_COVER.headline, en: "Cut once. No restocks." };
 
+/** The lexicon in English, for the shop's sentences below. */
+const LEX_EN: Lexicon = lexicon("en");
+
+/**
+ * The v3 cover's lead in both languages (round v6 slice E3b). No screen
+ * prints it (see `HOME_COVER`); it is translated with the rest of the shop's
+ * voice so that it is ready the day a screen does. The Vietnamese side IS
+ * `HOME_COVER.lead`.
+ */
+export const HOME_COVER_LEAD_TEXT: Pair = {
+  vi: HOME_COVER.lead,
+  en:
+    "Each style is cut exactly once from the fabric ordered. The count left for each style shows just below. " +
+    "Once a size is gone, it's gone: no more are made.",
+};
+
 /**
  * The one sentence `/about` opens with.
  *
@@ -112,10 +128,27 @@ export const HOME_HEADLINE: Pair = { vi: HOME_COVER.headline, en: "Cut once. No 
  * "Số" capitalised inside the sentence since round v4 slice 4b: the Feed
  * writes it so wherever it names an issue ("Số mới", "Các Số đã đóng"), not
  * the v3 lower case `LEX.tl`. `/about` is the only screen that reads it.
+ *
+ * In English since round v6 slice E3b, as close to the Vietnamese as English
+ * allows, in its length and rhythm: an issue is a "drop", in lower case
+ * inside a sentence (`LEX_EN.tl`) — the capital is a Vietnamese Feed habit
+ * English does not share — and "hết là hết" is the idiom English has for it.
+ * `ABOUT_LEAD` stays the Vietnamese side.
  */
-export const ABOUT_LEAD =
-  `HIVE bán streetwear unisex theo ${LEX.t}: mỗi ${LEX.t} mở đúng giờ, ` +
-  `mỗi mẫu trong ${LEX.t} cắt đúng một lần, hết là hết.`;
+export const ABOUT_LEAD_TEXT: Pair = {
+  vi:
+    `HIVE bán streetwear unisex theo ${LEX.t}: mỗi ${LEX.t} mở đúng giờ, ` +
+    `mỗi mẫu trong ${LEX.t} cắt đúng một lần, hết là hết.`,
+  en:
+    `HIVE sells unisex streetwear in ${LEX_EN.tl}s: each ${LEX_EN.tl} opens on time, ` +
+    `each style in a ${LEX_EN.tl} is cut exactly once, and when it's gone, it's gone.`,
+};
+export const ABOUT_LEAD = ABOUT_LEAD_TEXT.vi;
+
+/** The sentence `/about` opens with, in one language. */
+export function aboutLead(locale: Locale = "vi"): string {
+  return pick(ABOUT_LEAD_TEXT, locale);
+}
 
 /**
  * The four rules `/about` states under its opening sentence, and the line
@@ -126,14 +159,54 @@ export const ABOUT_LEAD =
  * itself rather than wearing the v3 component. "Số" is capitalised where it
  * names an issue, as the Feed writes it; "Số còn lại là số thật" and "số đo"
  * are a count and a measurement, not an issue, and keep their words.
+ *
+ * In English since round v6 slice E3b, rule for rule, as short as the
+ * Vietnamese: "drop" where the Vietnamese names an issue, and a count where it
+ * counts ("Stock counts are real"). `FOUR_RULES_SCOPE` and `FOUR_RULES` stay
+ * the Vietnamese side.
  */
-export const FOUR_RULES_SCOPE = `áp dụng cho mọi ${LEX.t}`;
-export const FOUR_RULES: readonly { title: string; body: string }[] = [
-  { title: "Cắt đúng một lần", body: `Mỗi mẫu cắt từ khổ vải đã đặt. Không may thêm giữa ${LEX.t}.` },
-  { title: "Có giờ mở, giờ đóng", body: "Mở theo lịch công bố trước. Đóng khi hết hàng hoặc hết giờ." },
-  { title: "Số còn lại là số thật", body: "Còn bao nhiêu chiếc hiện ngay trên lưới, không đợi bấm vào mới biết." },
-  { title: "Một dải size cho tất cả", body: "Không chia nam nữ. Chọn theo form và số đo." },
+export const FOUR_RULES_SCOPE_TEXT: Pair = { vi: `áp dụng cho mọi ${LEX.t}`, en: `applies to every ${LEX_EN.tl}` };
+export const FOUR_RULES_SCOPE = FOUR_RULES_SCOPE_TEXT.vi;
+
+const FOUR_RULES_TEXT: readonly { title: Pair; body: Pair }[] = [
+  {
+    title: { vi: "Cắt đúng một lần", en: "Cut exactly once" },
+    body: {
+      vi: `Mỗi mẫu cắt từ khổ vải đã đặt. Không may thêm giữa ${LEX.t}.`,
+      en: `Each style is cut from fabric already ordered. Nothing more is made mid-${LEX_EN.tl}.`,
+    },
+  },
+  {
+    title: { vi: "Có giờ mở, giờ đóng", en: "Fixed opening and closing times" },
+    body: {
+      vi: "Mở theo lịch công bố trước. Đóng khi hết hàng hoặc hết giờ.",
+      en: "Opens on a schedule announced in advance. Closes when stock or time runs out.",
+    },
+  },
+  {
+    title: { vi: "Số còn lại là số thật", en: "Stock counts are real" },
+    body: {
+      vi: "Còn bao nhiêu chiếc hiện ngay trên lưới, không đợi bấm vào mới biết.",
+      en: "How many are left shows right on the grid, without tapping in to find out.",
+    },
+  },
+  {
+    title: { vi: "Một dải size cho tất cả", en: "One size range for everyone" },
+    body: { vi: "Không chia nam nữ. Chọn theo form và số đo.", en: "No men's or women's sizes. Choose by fit and measurements." },
+  },
 ];
+
+/** The four rules in one language. */
+export function fourRules(locale: Locale = "vi"): readonly { title: string; body: string }[] {
+  return FOUR_RULES_TEXT.map((r) => ({ title: pick(r.title, locale), body: pick(r.body, locale) }));
+}
+
+export const FOUR_RULES: readonly { title: string; body: string }[] = fourRules("vi");
+
+/** The line under "Bốn quy tắc", in one language. */
+export function fourRulesScope(locale: Locale = "vi"): string {
+  return pick(FOUR_RULES_SCOPE_TEXT, locale);
+}
 
 /**
  * `"Số 05"` — the issue, named the way every screen names it.
