@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-01T12:00:00+07:00",
+  "generatedAt": "2026-10-07T12:00:00+07:00",
   "title": "Design System: HIVE — Feed",
   "extensions": {
     "colorMeta": {
@@ -233,13 +233,14 @@
   ],
   "narrative": {
     "northStar": "Ứng dụng lướt",
-    "overview": "Cửa hàng như một ứng dụng lướt: mỗi mẫu là một khung ảnh tràn màn, lịch mở bán và đếm ngược luôn trong tầm mắt. Phần khách chạy Feed; khu quản trị chạy bộ Arc (xám trung tính, Mona Sans 100%), tả ở DESIGN.md §7, không có trong sidecar này.",
+    "overview": "Cửa hàng như một ứng dụng lướt: mỗi mẫu là một khung ảnh tràn màn, lịch mở bán và đếm ngược luôn trong tầm mắt. Phần khách chạy Feed; khu quản trị chạy bộ Arc (xám trung tính, Mona Sans 100%), tả ở DESIGN.md §7, không có trong sidecar này. Từ đợt v6 cả hai bề mặt song ngữ Việt và Anh (QĐ-40), tả ở DESIGN.md §1 \"Ngôn ngữ\" và §3 \"Tiếng Anh\".",
     "keyCharacteristics": [
       "Trên điện thoại là một app: thanh trên, tab chia đoạn, tab đáy năm mục, sheet trượt từ đáy. Trên máy tính là web app gọn.",
       "Ảnh tràn viền, góc vuông. Chữ hiển thị to, hẹp (Mona Sans 75%), viết hoa; chữ giao diện gọn (100%).",
       "Thời gian tổ chức cửa hàng: đang mở, sắp mở, đã đóng.",
       "Một màu nhấn xanh; đỏ chỉ cho lỗi; mọi điều khiển bo tròn hẳn.",
-      "Quản trị: Arc xám trung tính, chỉ nền sáng, Mona Sans 100%, chỉ máy tính."
+      "Quản trị: Arc xám trung tính, chỉ nền sáng, Mona Sans 100%, chỉ máy tính.",
+      "Hai thứ tiếng, một địa chỉ: ngôn ngữ nằm ở cookie, không ở đường dẫn; thêm bản EN không đổi một pixel nào của bản VI."
     ],
     "rules": [
       {
@@ -276,7 +277,8 @@
       "Do cho điều khiển dưới 44px một lớp phủ `::after` tới 46.",
       "Do khai chuyển động trong `prefers-reduced-motion: no-preference`.",
       "Do dựng màn quản trị bằng item Arc và CSS Module chỉ đọc token Arc (`var(--space-*)`, `--text-*`, `--radius-*`).",
-      "Do cho mọi Dialog và Drawer của vùng Arc `onInteractOutside={keepOpenForToasts}` và trả focus về chỗ đã mở."
+      "Do cho mọi Dialog và Drawer của vùng Arc `onInteractOutside={keepOpenForToasts}` và trả focus về chỗ đã mở.",
+      "Do viết chữ mới thành cặp `{ vi, en }` ngay tại chỗ dùng (`picker`); gắn `lang=\"vi\"` cho chữ Việt đã lưu, chỉ khi trang là EN."
     ],
     "donts": [
       "Don't dùng đỏ cho gì khác ngoài lỗi, kể cả còn ít hay hết size.",
@@ -286,7 +288,8 @@
       "Don't thêm phần marketing, tiêu đề giữa trên gradient, ba thẻ tính năng bằng nhau, khối chữ dài (`BRIEF.md`, *Not in this direction*).",
       "Don't trộn token Feed vào vùng Arc hay token Arc vào Feed.",
       "Don't chạy `shadcn init` hay để CLI ghi đè `registry/foundation.css`; cài item Arc bằng tay (§1).",
-      "Don't viết hoa bằng `text-transform` trong vùng Arc; nâng giá trị bằng `useCapitals`."
+      "Don't viết hoa bằng `text-transform` trong vùng Arc; nâng giá trị bằng `useCapitals`.",
+      "Don't để bản EN đổi một pixel nào của bản VI; luật CSS chỉ cho EN viết `[data-ui=\"feed\"]:lang(en)`, không `html[lang]`."
     ]
   }
 }

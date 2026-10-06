@@ -3702,3 +3702,7 @@ commit trên máy (chưa push) rồi làm DESIGN.md.
    - tên tài khoản quản trị mẫu "Quản lý cửa hàng" ở chân thanh bên.
 3. **Ảnh chia sẻ (OG)** giữ tiếng Việt (QĐ-40).
 4. **Nút "Tiếng Việt"** của công tắc ngôn ngữ, mang `lang="vi"`, đúng thiết kế.
+
+**07/10, DESIGN.md đợt v6 ĐẠT** (agent `impeccable-documenter`, brief `tasks/briefs/v6-design-md.md`; phiên chính đối chiếu mục
+"Ngôn ngữ" với code). +189/−21 dòng, frontmatter và token không đổi, máy dò 8 trước và 8 sau. Người dùng cho commit rồi đưa phần
+tiếng Anh lên demo.

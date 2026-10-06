@@ -383,11 +383,14 @@ components:
 
 # DESIGN.md — hệ thiết kế, đọc ra từ code đã dựng
 
-**Đợt v5, ghi 01/10/2026, theo commit `dc6db0a`.** Phần khách (mọi route trừ `/admin`) chạy hệ **Feed** (QĐ-32 đến
-QĐ-36). Khu quản trị chạy toàn bộ trên bộ **Arc** (uiarc.dev, bản free, MIT; QĐ-37 đến QĐ-39). Mã, CSS, icon và font của
-quản trị v3 "NHÃN" đã xoá ở lát 6.
+**Đợt v6, ghi 07/10/2026, theo commit `bea062e`.** App nay **song ngữ Việt và Anh, cả cửa hàng lẫn quản trị** (QĐ-40),
+qua các lát E0, B15, E1, E2, E3a, E3b, E4, E5. Hệ thị giác không đổi: phần khách (mọi route trừ `/admin`) chạy hệ **Feed**
+(QĐ-32 đến QĐ-36), khu quản trị chạy toàn bộ trên bộ **Arc** (uiarc.dev, bản free, MIT; QĐ-37 đến QĐ-39). Mã, CSS, icon và
+font của quản trị v3 "NHÃN" đã xoá ở lát 6 đợt v5. Phần ngôn ngữ nằm ở §1 "Ngôn ngữ", §3 "Tiếng Anh", §7 (nút đổi), §8 (chỗ
+vá Arc theo ngôn ngữ) và §10.
 
 Các bản trước:
+- bản v5 cuối (Feed cộng Arc, chỉ tiếng Việt): `git show b3e8cff:DESIGN.md`;
 - tài liệu v3 đầy đủ: `git show c018134:DESIGN.md`;
 - bản v4 (Feed cộng quản trị v3 tả gọn): `git show dc6db0a:DESIGN.md`;
 - mã quản trị v3: `git show 17060a1:<đường dẫn>`.
@@ -406,6 +409,7 @@ adidas CONFIRMED, StockX, GOAT. Khu quản trị không mang North Star này: n�
 - Thời gian tổ chức cửa hàng: đang mở, sắp mở, đã đóng.
 - Một màu nhấn xanh; đỏ chỉ cho lỗi; mọi điều khiển bo tròn hẳn.
 - Quản trị: Arc xám trung tính, chỉ nền sáng, Mona Sans 100%, chỉ máy tính.
+- Hai thứ tiếng, một địa chỉ: ngôn ngữ nằm ở cookie, không ở đường dẫn; thêm bản EN không đổi một pixel nào của bản VI.
 
 ---
 
@@ -415,7 +419,7 @@ adidas CONFIRMED, StockX, GOAT. Khu quản trị không mang North Star này: n�
 | Thứ | Ở đâu |
 |---|---|
 | Token Feed `--f-*` | `app/globals.css`, khối `[data-ui="feed"]` (và `--f-g` 32px từ 900px). Không ở `@theme`, không ở `:root` |
-| CSS Feed | `app/styles/feed/feed.css`, `flow.css`, `account.css`, `more.css` (4 tệp, 2.575 dòng). Mỗi tệp chép rule của tệp cùng tên trong mock, cùng thứ tự |
+| CSS Feed | `app/styles/feed/feed.css`, `flow.css`, `account.css`, `more.css` (4 tệp, 2.593 dòng). Mỗi tệp chép rule của tệp cùng tên trong mock, cùng thứ tự; ba khối ngoài mock có chú giải "Not in the mock" (nút đổi ngôn ngữ, cỡ `.b-issue-no` bản EN, Yêu thích 900–1250px) |
 | Luật vùng | `app/styles/feed/scope.test.ts` |
 | Vùng và font | `components/feed/FeedScope.tsx` (`FEED_ZONE`, `feedFontClass`), `components/feed/font.ts` (`monaSans`) |
 | Khung trang | `components/feed/FeedFrame.tsx`, `FeedChrome.tsx`, `FeedMbar.tsx` |
@@ -435,7 +439,7 @@ adidas CONFIRMED, StockX, GOAT. Khu quản trị không mang North Star này: n�
 | Token Arc | `registry/foundation.css` (đã vá), import ở `app/admin/layout.tsx`, không ở root layout |
 | Item Arc đã cài | `registry/components/<id>/<id>.tsx` + `.module.css`, 23 item (§8) |
 | Chỗ vá, cách cài lại | `registry/PATCHES.md`; mỗi chỗ vá có chú giải `HIVE patch` trong mã |
-| Test canh vá | `components/admin-arc/arc-registry.test.ts`, chuỗi gốc ở `components/admin-arc/arc-english-strings.ts`; lớp nổi ở `components/admin-arc/arc-overlays.test.ts` |
+| Test canh vá | `components/admin-arc/arc-registry.test.ts`; `components/admin-arc/arc-english-strings.ts` giữ `ARC_ENGLISH` (mảnh cú pháp gốc của Arc quanh chữ Anh, thứ cặp `{ vi, en }` không bao giờ tái tạo) và `ARC_ENGLISH_SIDE` (62 bản `en` phải còn trong tệp đã vá); lớp nổi ở `components/admin-arc/arc-overlays.test.ts` |
 | Vùng, khung | `components/admin-arc/ArcAdminFrame.tsx` (`data-ui="admin"`), `ArcSidebar.tsx`, `ArcPage.module.css` |
 | CSS của màn | `components/admin-arc/*.module.css` (CSS Modules, chỉ đọc token Arc) |
 | Chuyển động | `lib/motion-tokens.ts` (xuất lại `registry/motion-tokens.ts`); `--ease-*`, `--duration-*` trong `foundation.css` |
@@ -446,6 +450,71 @@ adidas CONFIRMED, StockX, GOAT. Khu quản trị không mang North Star này: n�
 | Cột hiện/ẩn | `components/admin-arc/useAdminCols.ts` (`ADMIN_COLS_KEY` = `brand.adminCols`) |
 | Form, CSV | `lib/*-form.ts` (`lib/teaser-form.ts`…), `lib/*-csv.ts` |
 | Tài liệu Arc | uiarc.dev (`skill-design.md`, `skill-components.md`, `skill-accessibility.md`) |
+
+### Ngôn ngữ (đợt v6, QĐ-40)
+| Thứ | Ở đâu |
+|---|---|
+| Kiểu, cặp, cookie | `lib/i18n.ts` — `Locale`, `Pair`, `pick`, `picker`, `pickAll`, `reword`, `groupDigits`, `plural`, `chooseLocale`, `withoutParam`; `LOCALE_COOKIE` `hive-lang`, `LOCALE_PARAM` `lang`, `LOCALE_COOKIE_OPTIONS` |
+| Chọn ngôn ngữ mỗi request | `proxy.ts` |
+| Đọc ở server | `lib/locale.ts` — `getLocale()` (trang, layout, `generateMetadata`), `getActionLocale()` (chỉ Server Action) |
+| Đọc ở client | `components/i18n/LocaleContext.tsx` — `LocaleProvider` (layout gốc `app/layout.tsx`, cấp lại trong `ArcAdminFrame` cho lớp portal), `useLocale()` (ngoài mọi provider trả `"vi"`) |
+| Đổi ngôn ngữ | `lib/actions/locale.ts` — Server Action `setLocale` |
+| Chữ của DB | `lib/product-text.ts` — `productText`, `teaserText`, `nameLang`; cột `*_en` ở `supabase/migrations/20261001150000_catalog_english.sql` |
+| Chữ đã lưu giữa câu (quản trị) | `lib/admin-text.ts` — `Phrase`, `Stored`, `phrase`, `plainText`, `storedLang`; `components/admin-arc/ArcPhrase.tsx` — `phraseNode` |
+| Bảng in chữ Việt đã lưu | `lib/feed-account.ts` (`cancelReasonLabel`, nhãn địa chỉ Home / Work / Other), `lib/carrier.ts` (`carrierLabel`, `carrierPiece`), `lib/inventory-adjust.ts` (`STOCK_REASON_EN`) |
+| Tiền, ngày, mã Số | `lib/money.ts` (`vnd`, `compactVnd`), `lib/datetime.ts` (`dayMonth`, `dayMonthYear`, `monthYear`, `dateTimeLabel`…), `lib/lexicon.ts` (`issueCode`) |
+| Giới hạn tần suất | `lib/db/rate-limit.ts` — `takeRate(bucket, cost, locale)` |
+| Bảng thuật ngữ | `tasks/plan.md`, mục "Thuật ngữ tiếng Anh" (§3) |
+
+**Chọn ngôn ngữ.**
+- Cookie `hive-lang`, một năm, `SameSite=Lax`, cả site.
+- Thứ tự (`chooseLocale`, chạy trong `proxy.ts`): `?lang=` hợp lệ, rồi cookie, rồi `Accept-Language` (thẻ trọng số cao nhất;
+  `vi` hay `vi-*` là VI, còn lại EN), rồi VI. **Không có header thì VI** và không ghi cookie, nên bot xem trước link nhận trang
+  tiếng Việt.
+- `?lang=vi` hay `?lang=en` trên GET/HEAD ghi cookie rồi **chuyển hướng 307 về URL sạch**: cùng địa chỉ, bỏ `lang`, mọi tham số
+  khác giữ nguyên chữ và thứ tự (`withoutParam`, QĐ-8). Giá trị lạ bị bỏ khỏi địa chỉ, không ghi gì.
+- Lần đầu chọn theo header: `proxy.ts` ghi cookie lên cả request lẫn response, nên lượt dựng đầu đã đúng ngôn ngữ.
+- **Không có `/en/` trong đường dẫn**: một màn, một địa chỉ. Link chép từ thanh địa chỉ không mang ngôn ngữ (đánh đổi đã nói ở
+  QĐ-40).
+- **Ảnh chia sẻ `/opengraph-image` giữ tiếng Việt**: câu bìa in thành nét vẽ, không đổi theo cookie.
+- Giá vẫn là VND, địa chỉ vẫn theo đơn vị hành chính Việt Nam; chỉ cách viết đổi (§3).
+
+**Chữ đặt tại chỗ.** Không có tệp từ điển: chữ của một màn nằm trong tệp của màn, thành cặp `{ vi, en }` (`Pair`); thiếu một
+bên là lỗi `tsc`.
+- `const t = picker(locale)`, rồi `t({ vi: "…", en: "…" })`. Server: `picker(await getLocale())`. Client:
+  `picker(useLocale())`, gọi hook vô điều kiện.
+- Server Action gọi `getActionLocale()` rồi truyền `locale` xuống câu báo và `takeRate(…, locale)`. Ngoài request (test gọi action
+  như hàm thường) nó trả `"vi"`; tín hiệu dựng động của Next được ném lại (`unstable_rethrow`).
+- Câu phải đổi tại chỗ khi đổi ngôn ngữ thì giữ dữ liệu thô (mã đã gõ, loại lỗi) và viết câu lúc render; câu đã nằm trong state
+  viết lại bằng `reword`.
+- Hàm `lib/` nhận tham số cuối `locale: Locale = "vi"`. Bảng cũ đọc bằng tiếng Việt (`LEX`…) giữ tên và hình, suy từ bên `vi`.
+  Hàm bị gọi kiểu `.map(fn)` có hàm anh em nhận `locale`.
+- Chữ đã dịch không làm `key` của React.
+- Câu có giá trị chen giữa: bên `vi` giữ đúng JSX cũ (`t<React.ReactNode>({ vi: <>…</>, en: … })`), vì gộp thành một chuỗi làm
+  glyph lệch dưới 1px.
+
+**Chữ của DB.**
+- Mẫu và mẫu hé lộ có cột tiếng Anh: `name_en`, `kind_en`, `material_en`, `details_en` ở `products`; `name_en`, `kind_en` ở
+  `teasers`. Null là "dùng bản Việt". Mọi chỗ in tên, loại, chất liệu, chi tiết đọc qua `productText` / `teaserText`, bắt buộc
+  truyền `locale`.
+- Tên 21 mẫu của các Số giữ tiếng Việt (KHÓI, BỤI, SÓNG…); tên 8 mẫu Basics và tên màu thì dịch.
+- **Sửa ở quản trị thì xoá bản Anh của trường đó**: `admin_update_product` đặt `*_en` về null khi tên, loại hay chất liệu đổi,
+  nên bản EN hiện đúng chữ vừa sửa. Form mẫu không có ô tiếng Anh; mẫu tạo trong quản trị không có bản Anh.
+- Giá trị lưu bằng chữ Việt (lý do huỷ, đơn vị vận chuyển, lý do chỉnh tồn, nhãn địa chỉ) in qua **bảng tiếng Anh khoá bằng chữ
+  Việt đã chuẩn hoá** (NFC, bỏ khoảng trắng hai đầu, chữ thường); giá trị lạ in nguyên. DB vẫn nhận chữ Việt.
+
+**Luật `lang`.**
+- `<html lang>` theo ngôn ngữ (`app/layout.tsx`).
+- Ở bản EN, phần tử chứa chữ Việt đã lưu (tên mẫu của Số, tên người, tỉnh, phường, loại mẫu gõ tay…) mang `lang="vi"`, ví dụ
+  `nameLang` trên tên mẫu. **Chỉ gắn khi trang là EN**, để DOM bản VI không đổi.
+- Chữ đã lưu nằm giữa câu của code: `Phrase` (chuỗi, hoặc mảng chuỗi và `Stored`), dựng bằng `phrase()`, vẽ bằng `phraseNode`.
+  Bản VI vẫn là một chuỗi như cũ; bản EN bọc mảnh đã lưu trong `<span lang="vi">`. `plainText` cho chỗ chỉ nhận chuỗi.
+- Ô nhập và chữ gõ tự do: `storedLang(text, locale)` trả `"vi"` khi chữ có dấu tiếng Việt và trang là EN.
+- Chỗ Arc vẽ từ một chuỗi thì không bọc được `<span>`: bốn chỗ vá nhận `lang` (§8).
+- Nút đổi ngôn ngữ mang `lang` của ngôn ngữ nó gọi tên (§7).
+
+**Luật hai ngôn ngữ.** Thêm bản EN **không được đổi một pixel nào của bản VI**. Mỗi lát đo bằng so ảnh bản VI trước và sau
+(số cặp ở §10). Lệch được nhận chỉ là nút đổi ngôn ngữ mới của lát E0 và chữ chạy theo đồng hồ.
 
 ### Luật vùng Feed
 - Mọi selector Feed bắt đầu bằng `[data-ui="feed"]` (hoặc `html:has([data-ui="feed"] …)` cho luật cần chạm tài liệu:
@@ -468,7 +537,8 @@ adidas CONFIRMED, StockX, GOAT. Khu quản trị không mang North Star này: n�
 - `ArcAdminFrame` mang `data-ui="admin"`; `app/admin/layout.tsx` vẽ khung này quanh mọi màn quản trị.
 - Luật `:root:has([data-ui="admin"]) body` đặt chữ và màu chữ của vùng cho lớp portal.
 - **Vá Arc chỉ khi prop có sẵn không làm được**: vá nhỏ nhất, ghi ở `registry/PATCHES.md`, có test ở `arc-registry.test.ts`.
-  Chuỗi tiếng Anh gốc ghi ở `arc-english-strings.ts`; quay lại thì test đỏ.
+  Từ lát E0 mỗi chuỗi đã vá là cặp `{ vi, en }` theo `useLocale()`, bản `en` là đúng chữ gốc của Arc. `arc-english-strings.ts`
+  giữ cú pháp gốc quanh các chữ đó (chữ Anh trần, không ngôn ngữ nào chọn), nên cài lại một item thì test đỏ.
 - **Cài item mới bằng tay** (lát 5b): CLI nay ghi vào `components/arc/` kèm `foundation.css` gốc chưa vá. Tải
   `https://uiarc.dev/r/<id>.json`, chép `files[].content` vào `registry/components/<id>/`, đổi import
   `../lib/motion-tokens` thành `@/lib/motion-tokens`. Không bao giờ `shadcn init`, không ghi đè `foundation.css`.
@@ -500,6 +570,8 @@ Chữ HIVE nghiêng và ô chữ H của mock **không** dùng.
 ### Kho trên thiết bị
 - Khoá còn đọc: `brand.cart`, `brand.promo`, `brand.searches`, `brand.height`, `brand.adminCols`.
 - Cookie `inbox_read`: dấu đã đọc của hộp thư (mã băm ngắn, tối đa 64, gắn tài khoản), để số trên chuông có ngay trong HTML đầu.
+  Hàng hộp thư lấy chữ Việt làm khoá, nên hàng đã đọc vẫn là đã đọc khi đổi ngôn ngữ.
+- Cookie `hive-lang`: ngôn ngữ, một năm (§1 "Ngôn ngữ").
 - `lib/device-storage.ts` (`RETIRED_KEYS`, `forgetRetiredKeys`) xoá 10 khoá đã nghỉ khỏi `localStorage` và `sessionStorage`,
   một lần mỗi lượt vào, gọi từ `CartProvider`.
 - Yêu thích, nhắc mở bán, Size của tôi và bốn công tắc thông báo lưu **theo tài khoản** (B9): `MyStateProvider`
@@ -603,7 +675,7 @@ Feed **không có thang modular**: mock đặt cỡ cho từng phần tử, và 
 | Nhãn tab đáy, bong bóng, ghi chú size | 11 | — | `.tb`, `.badge`, `.size small`, `.tile-qty` |
 | Nhãn nhỏ, chip trạng thái | 12 | — | `.chip-live`, `.chip-line`, `.ostep-label`, `.gcard-stock` |
 | Chữ phụ, nhãn ô, lỗi | 13 | 13–14 | `.card-meta`, `.lbl`, `.err`, `.stock`, `.b-ntime` |
-| Chữ điều khiển | 14 | 14–15 | `.pill`, `.chip`, `.link`, `.seg-btn`, `.copy` |
+| Chữ điều khiển | 14 | 14–15 | `.pill`, `.chip`, `.link`, `.seg-btn`, `.copy`, `.ib-lang` (650) |
 | Chữ nền, dòng đọc | 15 | 15–16 | vùng Feed, `.details li`, `.facts`, `.b-qa-a` |
 | Nút, ô nhập, size | 16 | 17 | `.btn`, `.field input`, `.size`, `.sort-opt` |
 | Tiêu đề thanh, câu hỏi | 17 | 17 | `.mbar-title`, `.b-qa summary` (máy tính) |
@@ -653,13 +725,34 @@ Trọng lượng: 400 và 500. Không viết hoa bằng CSS.
 đếm giữ bề rộng từng chữ số bằng `.dg` (`width: 1ch`). Vùng Arc thì ngược lại: số luôn `tabular-nums`.
 
 ### Chữ trên màn
-- Xưng "tôi/bạn" (QĐ-36 #9); "ĐÃ HẾT" thay "SOLD OUT" (#13); tên mẫu trần, không kèm "S05 –" (#3), kể cả tiêu đề tab.
+- Xưng "tôi/bạn" (QĐ-36 #9); "ĐÃ HẾT" thay "SOLD OUT" (#13; bản EN in "SOLD OUT"); tên mẫu trần, không kèm "S05 –" (#3), kể
+  cả tiêu đề tab.
 - Nhãn trên tiêu đề (#4) là luật của Feed: chip "Số 05", "SẮP MỞ" đứng trên tên.
 - Nhãn ngắn, không giải thích khái niệm; không in một con số hai lần (cả khách lẫn quản trị).
 - Khoảng ngày và khoảng số dùng gạch nối thường, **không ngắt dòng** (NBSP/WJ; luật giữ, lát 1a/1b).
-- Câu bìa: "Cắt 1 lần. Không tái bản." (`HOME_COVER.headline`).
+- Câu bìa: "Cắt 1 lần. Không tái bản." (`HOME_COVER.headline`); bản EN "Cut once. No restocks.", cùng hai dòng.
 - Chưa có email (QĐ-35): chữ "email" ở màn Feed thành "Thông báo" hoặc bỏ.
-- Quản trị: mọi chuỗi Arc đã Việt hoá (`PATCHES.md` mục 2); số in kiểu `vi-VN`, sắp xếp `Intl.Collator("vi")`.
+- Quản trị: mọi chuỗi Arc đã vá thành cặp `{ vi, en }` theo `useLocale()` (`PATCHES.md` mục 2). `bar-chart` có một
+  `Intl.NumberFormat` mỗi ngôn ngữ (`vi-VN`, `en-US`); `sortable-data-table` có một `Intl.Collator` mỗi ngôn ngữ (`vi`, `en`) và
+  sắp lại khi đổi ngôn ngữ.
+
+### Tiếng Anh (đợt v6)
+- **Tiếng Anh kiểu Anh**: colour, cancelled, trousers, gilet.
+- **Ngày** "1 Oct", có năm "6 Oct 2026", tháng "Mar 2026" (`dayMonth`, `dayMonthYear`, `monthYear`; ngày giữ với tháng bằng
+  khoảng trắng không ngắt). **Giờ** 24 tiếng "18:50" như bản VI (`clockLabel`); giờ kèm ngày "06:50, 21 Sep" (`dateTimeLabel`).
+- **Giá** `390,000₫` (`vnd`: chỉ đổi dấu chấm thành dấu phẩy). **Tiền gọn** `1.2M₫` (`compactVnd`; bản VI "1,2tr₫").
+- **Mã Số trước tên mẫu**: "S05" ở bản VI, "D05" ở bản EN (`issueCode`). Slug và URL không đổi (`s05-khoi`). Mã giảm giá nhân bản
+  giữ "SO06" ở cả hai ngôn ngữ, vì mã là dữ liệu.
+- **Thuật ngữ**: bảng đầy đủ ở `tasks/plan.md`, mục "Thuật ngữ tiếng Anh"; người dùng sửa ở đó, tài liệu này không chép. Từ khoá:
+  **Drop** (Số), **Basics** (dòng Cố định), **Styles** (Mẫu), **Discount codes** (Mã giảm giá), **Bag** (Giỏ), **Saved** (Yêu
+  thích), **Account** (Tôi).
+- Chỗ bản EN xuống dòng mà bản VI không thì đo phương án ngay trên trang rồi rút chữ (ví dụ "Tracking no.", "paid …" thay
+  "received …" ở cột thanh toán của sổ đơn); không đổi cỡ chữ, trừ luật CSS dưới. Phiên chính nhận vài tiêu đề hiển thị hai dòng
+  ở bản EN: "DROP 04" ở `/so` 1280, "FORGOT PASSWORD" ở 900 và 1280, "TRACK AN / ORDER" của 404 ở 900.
+- **CSS chỉ cho EN** viết `[data-ui="feed"]:lang(en) …`, vì `scope.test.ts` chỉ nhận selector bắt đầu bằng vùng (hoặc
+  `html[data-pointer]`, `html:has(…)`), nên `html[lang]` bị chặn. Hiện có **đúng một** luật:
+  `[data-ui="feed"]:lang(en) .b-issue-no { font-size: min(168px, 14vw); }` từ 900px (`more.css`), vì "DROP" ở 168px rộng 319px
+  trong cột 255px ở 900. Vùng Arc không có luật CSS nào theo ngôn ngữ.
 
 ---
 
@@ -853,10 +946,17 @@ Mã màn trong `components/admin-arc` không khai `z-index`. Lớp mới chọn 
 - **Màn đẩy vào** có thanh riêng `.mbar` (`FeedMbar.tsx`): quay lại hoặc đóng, tiêu đề.
 - **Chân trang** `.foot`: 5 link (có "Bảng size"), nền `bg2`, chạm đáy cửa sổ ở trang ngắn.
 - **Tài khoản trên máy tính**: menu trái 220px `.acc-nav`.
+- **Nút đổi ngôn ngữ** `LangSwitch` (`FeedChrome.tsx`; CSS `.lang-form`, `.ib-lang` ở `feed.css`): ô `.ib` 44px đứng **đầu các
+  icon** của thanh trên, in mã ngôn ngữ nó chuyển sang ("EN" khi trang là VI), 14px / 650; `aria-label` và `lang` là tên ngôn ngữ
+  đó viết bằng chính nó ("English", "Tiếng Việt"). Máy tính: mọi trang. **Điện thoại: chỉ ở thanh trên `.top`**, tức 5 trang chính
+  (Trang chủ, Cửa hàng, Giỏ, Yêu thích, Tôi; người dùng giữ, 01/10) và thanh riêng của thanh toán; thanh màn đẩy `.mbar`, `.pbar`,
+  `.sbar` không có nút. Nút là một form gửi `setLocale`; không có script thì form gửi thường và trang trả về ở ngôn ngữ mới. Sheet
+  là modal, nên khi sheet mở thì không bấm được nút (nhận ở lát E1).
 
 ### Quản trị — Arc
 Mọi route `app/admin/**` vẽ trong `ArcAdminFrame`. Bản free không có sidebar, Data grid hay Settings (Pro), nên khung và thanh
-bên ghép từ item free bằng token Arc (QĐ-37).
+bên ghép từ item free bằng token Arc (QĐ-37). Quản trị **song ngữ** như cửa hàng (lát E4, E5): chữ của màn, chữ của Arc, câu báo
+của action, `<title>`, CSV đều theo ngôn ngữ của trang.
 
 **Khung.** Lưới 240px + phần còn lại, `min-width: 1180px`, nền `--background`, chữ `--font-body`. `.main` đệm 32px, là
 gutter duy nhất. Khi in (phiếu giao), khung bỏ lưới, thanh bên và toast.
@@ -865,8 +965,17 @@ gutter duy nhất. Khi in (phiếu giao), khung bỏ lưới, thanh bên và toa
 - Logo cao 28px.
 - Liên kết cao 36px, icon trái, chữ `--text-sm` `--text-secondary`; trang đang mở (`aria-current="page"`) nền `--surface`, chữ
   `--foreground` 500. "Đơn hàng" mang số đơn đang chờ ở cuối dòng, `tabular-nums`.
-- Chân: badge "Dữ liệu mẫu", dòng "Đồng hồ thật · dữ liệu mẫu" kèm lúc đặt lại gần nhất, người đang dùng, nút ghost
-  "Đặt lại dữ liệu mẫu" mở `ArcResetDialog`; đóng hộp thì focus về nút này.
+- Chân, theo thứ tự trong mã: badge "Dữ liệu mẫu", dòng "Đồng hồ thật · dữ liệu mẫu" kèm lúc đặt lại gần nhất, nút ghost
+  "Đặt lại dữ liệu mẫu" mở `ArcResetDialog` (đóng hộp thì focus về nút này), **nút đổi ngôn ngữ**, người đang dùng (tên mang
+  `storedLang`), nút "Đăng xuất".
+- **Nút đổi ngôn ngữ** `LanguageControl` (`ArcSidebar.tsx`): `SegmentedControl` hai mục "Tiếng Việt" / "English", mỗi mục viết
+  bằng chính ngôn ngữ của nó và mang `lang` riêng (`Segment.lang`, chỗ vá E0). Đổi lạc quan bằng `useOptimistic`, rồi gọi
+  `setLocale`.
+
+**Đổi ngôn ngữ dựng lại tại chỗ** (cả hai bề mặt). `setLocale` chỉ đặt cookie; không `refresh()`, `revalidatePath()` hay
+`redirect()`. Next dựng lại trang và layout hiện tại trên server trong cùng lượt và giữ state phía client (chú giải của
+`lib/actions/locale.ts`, trích tài liệu Next), nên giỏ, chữ đã gõ dở, menu hay hộp đang mở giữ nguyên. Thứ đo theo bề rộng chữ
+(vạch tab) phải đo lại khi đổi ngôn ngữ.
 
 **Đầu trang.** Màn danh sách: `h1` `--text-2xl` 500, dòng phụ `--text-sm` `--text-secondary` `tabular-nums`, nút việc bên
 phải (`ArcOrdersScreen.module.css`, `.header`). Màn con (một đơn, phiếu): `ArcPage.module.css` — `Breadcrumb` / đường quay lại,
@@ -895,7 +1004,7 @@ liên kết gạch chân `--border-strong`. Menu dòng chỉ icon (`MoreHorizont
 
 **Cột** hiện/ẩn lưu ở `brand.adminCols` (`useAdminCols.ts`).
 
-**Số hiện tại.** Mọi chữ "Số NN" của quản trị (Tổng quan, panel khách ở chi tiết đơn, danh sách và hồ sơ khách, nhãn "mới")
+**Số hiện tại.** Mọi chữ "Số NN" (bản EN "Drop NN") của quản trị (Tổng quan, panel khách ở chi tiết đơn, danh sách và hồ sơ khách, nhãn "mới")
 tính bằng `currentIssueNo(catalog, now)` (`lib/current-issue.ts`): số đang bán; giữa hai số thì số vừa đóng gần nhất. Không
 đọc `currentDropNo`; một test chặn mã Arc đọc nó.
 
@@ -915,6 +1024,7 @@ doanh thu thì không vẽ biểu đồ.
 |---|---|---|---|
 | Vùng, font | `FeedScope.tsx`, `font.ts` | `[data-ui="feed"]` | — |
 | Khung trang | `FeedFrame.tsx`, `FeedChrome.tsx`, `FeedMbar.tsx` | `.feed-frame`, `.top`, `.tabs`, `.tabbar`, `.mbar`, `.foot` | `.has-tabbar`, `.has-buybar`, `data-tab` |
+| Nút đổi ngôn ngữ | `FeedChrome.tsx` (`LangSwitch`) | `.lang-form`, `.ib.ib-lang` | in mã ngôn ngữ sẽ chuyển sang |
 | Logo | `FeedLogo.tsx` | `.logo` | sáng / tối |
 | Icon | `icon/FeedIcon.tsx` | `.i` | thường / đặc khi đang mở |
 | Thẻ | `FeedCards.tsx` | `.card` (`.wide`, `.flip`, `.card-flat`), `.gcard`, `.mini`, `.fav`, `.plate` | `.is-sold`, `.fav.pop` |
@@ -952,27 +1062,37 @@ Trạng thái dùng chung:
 |---|---|---|
 | `button` | mọi nút; `primary`, `secondary`, `ghost`, `danger`; cỡ `sm` | — (`ArcButtonLink`, `ArcPhotoRow` mượn class) |
 | `badge` | nhãn trạng thái, "Dữ liệu mẫu" | — |
-| `avatar` | ô khách, panel khách | Việt hoá trạng thái |
-| `tabs` | tab trạng thái có số đếm | Việt hoá |
-| `search-field` | `ArcSearchBox` | `hideLabel`, `cursor: pointer` nút xoá, Việt hoá |
-| `filter-toolbar` | `FilterMenu` và chip lọc | Việt hoá |
-| `sortable-data-table` | mọi bảng | `selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, Việt hoá |
-| `pagination` | dưới bảng | Việt hoá |
-| `segmented-control` | kỳ xem, nhóm ngắn | — |
+| `avatar` | ô khách, panel khách | song ngữ (trạng thái) |
+| `tabs` | tab trạng thái có số đếm | song ngữ |
+| `search-field` | `ArcSearchBox` | `hideLabel`, `cursor: pointer` nút xoá, song ngữ |
+| `filter-toolbar` | `FilterMenu` và chip lọc | song ngữ |
+| `sortable-data-table` | mọi bảng | `selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, song ngữ |
+| `pagination` | dưới bảng | song ngữ |
+| `segmented-control` | kỳ xem, nhóm ngắn, nút đổi ngôn ngữ | `Segment.lang` (E0) |
 | `dropdown-menu` | menu dòng, "Cột" | `iconOnly` |
 | `popover` | một chỗ | — |
-| `checkbox` | chọn dòng | Việt hoá |
-| `dialog` | hộp quyết định, form ngắn | Việt hoá; bề rộng đè ở `ArcCropDialog.module.css` |
-| `drawer` | form dài | Việt hoá, vòng focus nút đóng; `--drawer-size` đè |
-| `select` | chọn trong form | vòng focus, `note` cuối dòng, Việt hoá |
-| `input` | ô nhập | `hideLabel`, `prefix` ("S06 –") |
+| `checkbox` | chọn dòng | song ngữ |
+| `dialog` | hộp quyết định, form ngắn | song ngữ; bề rộng đè ở `ArcCropDialog.module.css` |
+| `drawer` | form dài | song ngữ, vòng focus nút đóng; `--drawer-size` đè |
+| `select` | chọn trong form | vòng focus, `note` cuối dòng, song ngữ, `options[].lang` (E5) |
+| `input` | ô nhập | `hideLabel`, `prefix` ("S06 –", bản EN "D06 –") |
 | `textarea` | form mẫu | — (cài tay, lát 5b) |
-| `toast-stack` | `ArcAdminFrame` | Việt hoá |
-| `breadcrumb` | đầu màn con | Việt hoá |
-| `stepper` | hành trình đơn | Việt hoá |
-| `combobox` | một chỗ | Việt hoá |
+| `toast-stack` | `ArcAdminFrame` | song ngữ |
+| `breadcrumb` | đầu màn con | song ngữ, `BreadcrumbItem.lang` (E4) |
+| `stepper` | hành trình đơn | song ngữ |
+| `combobox` | một chỗ | song ngữ, `optionsLang` (E4) |
 | `empty-state` | bảng rỗng | — |
-| `bar-chart` | `ArcRevenueChart` | `formatTick`, Việt hoá |
+| `bar-chart` | `ArcRevenueChart` | `formatTick`, song ngữ |
+
+"song ngữ" trong bảng: chỗ Việt hoá của đợt v5, từ lát E0 mỗi chuỗi đã vá thành cặp `{ vi, en }` chọn bằng `useLocale()` (15 item), bản
+`en` là chữ gốc của Arc; default prop có chữ chuyển vào thân component (`labelProp ?? t({ vi, en })`). Bốn chỗ vá nhận `lang` cho
+chữ Việt đã lưu mà Arc vẽ từ một chuỗi:
+- **E0** `segmented-control`: `Segment.lang`, cho hai mục của nút đổi ngôn ngữ;
+- **E4** `combobox`: `optionsLang`, cho danh sách tỉnh và phường (`ArcAddressForm.tsx`); `breadcrumb`: `BreadcrumbItem.lang`,
+  cho tên khách (`ArcCustomerScreen.tsx`);
+- **E5** `select`: `options[].lang`, cho loại mẫu đã lưu ở form mẫu và hộp mẫu hé lộ (`kindOptions` chỉ đặt khi trang là EN).
+
+Không có `lang` thì cả bốn y như Arc gốc. Chi tiết và test: `registry/PATCHES.md`, các mục đợt v6 và mục 3.
 
 ### Arc — phần dự án tự dựng (`components/admin-arc/`)
 | Thành phần | Tệp | Vì sao tự dựng |
@@ -989,6 +1109,8 @@ Trạng thái dùng chung:
 | Hộp | `ArcResetDialog.tsx`, `ArcCancelOrderDialog.tsx`, `ArcCloseDropDialog.tsx`, `ArcDropFormDialog.tsx`, `ArcTeaserDialog.tsx` (thân chung `ArcDialog.module.css`) | bọc `Dialog` |
 | Drawer | `ArcPromoDrawer.tsx`, `ArcStockDrawer.tsx` (680px) | bọc `Drawer` |
 | Ô của bảng đơn | `ArcOrderCells.tsx` (`TONE`, `TAG_TONE`, `monogramName`) | — |
+| Chữ đã lưu giữa câu | `ArcPhrase.tsx` (`phraseNode`) | Arc chỉ nhận chuỗi; bản EN cần `<span lang="vi">` |
+| Nút đổi ngôn ngữ | `ArcSidebar.tsx` (`LanguageControl`) | bọc `SegmentedControl` |
 | Biểu đồ | `ArcRevenueChart.tsx` | bọc `BarChart` |
 | Form | `ArcProductForm.tsx`, `ArcAddressForm.tsx`, `ArcHandoverForm.tsx` | — |
 | Màn | `ArcOverviewScreen`, `ArcOrdersScreen`, `ArcOrderScreen`, `ArcSlipScreen`, `ArcProductsScreen`, `ArcProductScreen`, `ArcDropsScreen`, `ArcCustomersScreen`, `ArcCustomerScreen`, `ArcPromotionsScreen`, `ArcLogScreen` | — |
@@ -1018,6 +1140,7 @@ thanh công cụ; nút và lỗi gọi tên thứ còn thiếu (hộp tạo số
 - Khoảng ngày không ngắt dòng.
 - "Không tìm thấy đơn" và 404 trả HTTP 404 thật.
 - Vòng focus bàn phím có ở cả hai vùng, tắt khi dùng chuột (QĐ-39).
+- Không có `Accept-Language` thì VI; `?lang=` về URL sạch; ảnh chia sẻ giữ tiếng Việt (QĐ-40).
 
 ### Do's and Don'ts
 
@@ -1030,6 +1153,7 @@ thanh công cụ; nút và lỗi gọi tên thứ còn thiếu (hộp tạo số
 - **Do** khai chuyển động trong `prefers-reduced-motion: no-preference`.
 - **Do** dựng màn quản trị bằng item Arc và CSS Module chỉ đọc token Arc (`var(--space-*)`, `--text-*`, `--radius-*`).
 - **Do** cho mọi Dialog và Drawer của vùng Arc `onInteractOutside={keepOpenForToasts}` và trả focus về chỗ đã mở.
+- **Do** viết chữ mới thành cặp `{ vi, en }` ngay tại chỗ dùng (`picker`); gắn `lang="vi"` cho chữ Việt đã lưu, chỉ khi trang là EN.
 
 **Don't:**
 - **Don't** dùng đỏ cho gì khác ngoài lỗi, kể cả còn ít hay hết size.
@@ -1040,6 +1164,7 @@ thanh công cụ; nút và lỗi gọi tên thứ còn thiếu (hộp tạo số
 - **Don't** trộn token Feed vào vùng Arc hay token Arc vào Feed.
 - **Don't** chạy `shadcn init` hay để CLI ghi đè `registry/foundation.css`; cài item Arc bằng tay (§1).
 - **Don't** viết hoa bằng `text-transform` trong vùng Arc; nâng giá trị bằng `useCapitals`.
+- **Don't** để bản EN đổi một pixel nào của bản VI; luật CSS chỉ cho EN viết `[data-ui="feed"]:lang(en)`, không `html[lang]`.
 
 ### Luật cũ đã nhường cho Feed (QĐ-36)
 | Luật cũ | Feed làm gì | Ai quyết, ngày |
@@ -1097,6 +1222,9 @@ Các mục trên là **luật của hệ**, người dùng đã chốt theo tên
 | Hộp giữa 680px cho form mã | `Drawer` 680px bên phải | phiên chính, lát 3, 01/10 |
 | Viết hoa bằng CSS | `useCapitals` nâng giá trị | lát 4–6, 01/10 |
 
+**Đợt v6 đảo:** "Không xây i18n" của `PRODUCT.md` thành song ngữ cả hai bề mặt (QĐ-40, người dùng, 01/10); mã "S05" thành "D05"
+ở bản EN (phiên chính, lát E4).
+
 ---
 
 ## 10. Đã đo, không phải đã tin
@@ -1127,6 +1255,29 @@ Các mục trên là **luật của hệ**, người dùng đã chốt theo tên
   một bảng (frontmatter + sidecar), nên vùng Arc bị chấm theo bảng Feed; token Arc không vào frontmatter (§1). Không thêm ignore:
   phiên chính quyết sau khi hỏi người dùng.
 
+**Đợt v6** (01–07/10/2026), ghi trong `tasks/plan.md`, mục "Đợt v6". Bản VI so ảnh trước/sau mỗi lát; script dò chữ Việt ở bản
+EN; sweep chạy ở cả hai ngôn ngữ (hằng `LANG` và `T(vi, en)` trong `tools/layout-sweep.js`).
+
+| Lát | Cặp ảnh VI | JS nén thêm mỗi route | Test xanh |
+|---|---|---|---|
+| E0 (01/10, `e363ab3`) | lệch chỉ ở nút mới: 31 trang cửa hàng (ô 20×11px chữ `EN`), 33 trang quản trị (chân thanh bên dâng lên) | +3,0 đến +3,4 KB | 1.861 |
+| B15 (01/10, `a00c5ea`) | không pixel nào đổi; HTML nén +1,1 KB mỗi trang | — | 1.886 |
+| E1 (01/10, `da8114e`) | 58 cặp không lệch vượt nhiễu, so lại 40 cặp sau sửa | +3,4 đến +3,9 KB | 1.919 |
+| E2 (02/10, `2cff7ca`) | 84 cặp không lệch vượt nhiễu | +1,2 đến +1,3 KB | 1.968 |
+| E3a (02/10, `8822bc0`) | 137 cặp không lệch vượt nhiễu | +1,9 đến +2,3 KB | 2.019 |
+| E3b (02/10, `c578545`) | 22 cặp trùng tuyệt đối | không ghi | 2.045 |
+| E4 (02–06/10, `b3e8cff`) | 82 cặp: mọi dải lệch là chữ chạy theo đồng hồ, chiều cao bằng nhau | +1,7 đến +3,9 KB | 2.107 |
+| E5 (07/10, `bea062e`) | 81 cặp: 67 trùng, 9 nhiễu, 5 lệch do đồng hồ hoặc nhiễu giải mã | +1,0 đến +3,1 KB | 2.139 |
+
+- **Chữ Việt ở bản EN** (script dò): 0 ở mọi lát, trên 60 (E1), 84 (E2), 137 (E3a), 83 (E4), 78 (E5) trạng thái; ngoại lệ đã biết ở
+  "Khiếm khuyết" dưới.
+- **Sweep**: VI 110 phát hiện như đợt v5; EN 109 (E4, E5 kiểm 07/10: inlineBox 72, smallTarget 12, tinyText 25); 0 tràn, 0 bị cắt.
+- **Cửa sổ thật** 1280×800 và 1440×900: quản trị bản EN không cuộn ngang (92 lượt ở E4, lại ở E5).
+- **Máy dò thiết kế** (`impeccable detect --json app components registry`, 07/10): trước lần viết lại này **8** phát hiện, sau
+  **8**, cùng bộ: `components/admin-arc` 2 (`design-system-radius`, góc đồng tâm của `ArcCountField`), `registry/foundation.css` 6
+  (`design-system-color`, dải `--arc-gradient-*`). Feed 0. Từ 23 của đợt v5 xuống 8 vì `.impeccable/config.json` bỏ ba luật
+  design-system ở `registry/components/**` (người dùng duyệt 01/10), không vì mã đổi. E4 và E5 cũng đo 8 trước, 8 sau.
+
 Cách đo không đổi: `tools/layout-sweep.js` quét route × 390/1280 — console, tràn ngang, chữ < 11px, ảnh lệch tỉ lệ, phần tử bị
 cắt, con trỏ, vùng chạm bằng `elementFromPoint`; lớp nổi **mở ra rồi mới đo**; ảnh chụp so mock từng hộp trước khi ghi vào đây.
 
@@ -1135,6 +1286,23 @@ cắt, con trỏ, vùng chạm bằng `elementFromPoint`; lớp nổi **mở ra 
   `aria-hidden`, tên in cạnh. Không dùng làm cỡ chữ cho màn mới.
 - `ArcOrderCells.tsx` nhập `data/regions` (3.321 phường, 28,9 KB nén) vào 4 trang quản trị, có từ lát 0; người dùng chọn để sau
   (01/10).
-- Advisory `design-system-radius`: 13 chỗ trong ruột Arc (bo số cứng 2–22px) và góc `calc(var(--radius-control) - 1px)` của
-  `ArcCountField.module.css`. Ghi nhận, không phải bậc bo mới.
+- Advisory `design-system-radius`: góc `calc(var(--radius-control) - 1px)` của `ArcCountField.module.css` (2 phát hiện). Bo số
+  cứng 2–22px trong ruột Arc vẫn còn trong mã, máy dò nay bỏ qua `registry/components/**`. Ghi nhận, không phải bậc bo mới.
 - Bo 22px và 18px của `drawer.module.css`, dải `--arc-gradient-*`: ruột Arc, mã dự án không đọc.
+
+**Đợt v6, để lượt rà cuối** (bảng kiểm ở `tasks/plan.md`, mục "Chữ Việt còn ở bản EN sau cả đợt tiếng Anh" và các mục "Để lượt rà
+cuối" của từng lát). Đây là khiếm khuyết, **không** phải mẫu cho màn mới:
+- **Chữ Việt ở bản EN không mang được `lang`**: tên mẫu của Số nằm trong một chuỗi (tiêu đề Drawer và Dialog của Arc như "Adjust
+  stock · D05 – KHÓI", 37 `aria-label` "Actions for <tên>", toast, ô CSV, placeholder "e.g. KHÓI"). Chỗ vá `select` gắn `lang`
+  lên cả dòng option, nên chữ phụ tiếng Anh trong dòng ("12 styles", "Jackets") cũng mang `lang="vi"`; gắn vào `ItemText` mới
+  chính xác. Từ mượn không dấu ("Form", "Size", "oversize", "VD") lọt máy dò chữ Việt ở quản trị, chưa grep.
+- **Chữ Việt in như đã lưu, có chủ ý (QĐ-40)**: tên mẫu của Số, mẫu hé lộ; loại và tên mẫu tạo trong quản trị; ghi chú đơn, lý do
+  huỷ gõ tự do, lý do sửa địa chỉ, tên trong payload của Nhật ký; tên và địa chỉ khách; ảnh chia sẻ; nút "Tiếng Việt".
+- **Bản EN xuống dòng nhiều hơn bản VI** (không tràn, không lệch lưới): trang chủ dải 900 (dòng tồn của BỤI, `.soon-note`); ô
+  `/so/4`, `/so/3` ở 390 và 900 (`.b-tile-meta`, `.b-tile-kind`); tiêu đề `/so/5` ở 390; trang một đơn của khách ở 900; hộp thư ở
+  900 (VI 3 dòng, EN 4); cột "Style" bảng món của một đơn quản trị ra 3 dòng ở 1280; câu thứ tự màu ở form mẫu ra 2 dòng; ô loại ·
+  fit và ô màu của bảng Mẫu ở 1280.
+- **Hai kiểu ngày cạnh nhau** ở quản trị bản EN: hàng chờ Tổng quan "Paid 07:52 30 Sep" và "due 08:05, 3 Oct"; sổ đơn "due 08:05 ·
+  3 Oct" và "due 08:05 3 Oct" (theo đúng bản VI).
+- **Có từ trước, cả bản VI**: không có script thì lưới Cửa hàng trống (giả thuyết chưa đo: `[data-ui="feed"] .rv:not(.in)` thắng
+  luật dự phòng trong `<noscript>`); `/faq#doi-tra` dừng khi nhóm ở 172px, chưa sát dưới thanh trên.
