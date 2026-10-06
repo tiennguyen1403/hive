@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { ArcLogScreen } from "@/components/admin-arc/ArcLogScreen";
 import { queryOf } from "@/lib/admin-url";
@@ -5,8 +6,13 @@ import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import { listAllOrders, listEvents } from "@/lib/db/admin";
 import { requireAdmin } from "@/lib/db/session";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 
-export const metadata = { title: "Nhật ký thao tác" };
+/** The screen's name in the title, in the page's language (round v6 slice E4); the layout adds "· Admin · HIVE". */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: picker(await getLocale())({ vi: "Nhật ký thao tác", en: "Activity" }) };
+}
 
 /**
  * The log: every event the database recorded — the orders since slice B3a,

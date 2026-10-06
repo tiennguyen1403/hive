@@ -82,3 +82,22 @@ export function paymentLabel(method: PaymentMethod, locale: Locale = "vi"): stri
 }
 
 export const PAYMENT_LABEL: Record<PaymentMethod, string> = pickAll(PAYMENT_TEXT, "vi");
+
+/**
+ * A way to pay as the back office prints it (round v6 slice E4), in the
+ * glossary's admin words: "Bank transfer", "Card", "COD". COD keeps its short
+ * name in English, as the Vietnamese does and as the shop's footer does
+ * (`FOOT_COD`, `lib/feed-home.ts`): a table cell and a filter chip have no room
+ * for the checkout's "Cash on delivery (COD)". The Vietnamese side is
+ * `PAYMENT_LABEL`, word for word.
+ */
+const ADMIN_PAYMENT_TEXT: Record<PaymentMethod, Pair> = {
+  BANK_TRANSFER: PAYMENT_TEXT.BANK_TRANSFER,
+  CARD: PAYMENT_TEXT.CARD,
+  COD: { vi: PAYMENT_TEXT.COD.vi, en: "COD" },
+};
+
+/** A way to pay, as the back office names it, in one language. */
+export function adminPaymentLabel(method: PaymentMethod, locale: Locale = "vi"): string {
+  return pick(ADMIN_PAYMENT_TEXT[method], locale);
+}

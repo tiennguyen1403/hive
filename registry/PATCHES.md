@@ -142,6 +142,19 @@ n
   test: mọi tệp đã vá đọc `useLocale()`, mỗi bản `en` là chữ gốc, và `Segment.lang`. Test `formatTick` đổi một dòng
   (`formatTick = formatValue` thành `formatTick = formatTickProp ?? formatValue`), vì default nay đặt trong thân.
 
+## Lần sửa 02/10/2026 (đợt v6, lát E4): tên người và nơi chốn tiếng Việt trên trang tiếng Anh
+
+- **Không cài item mới.** `package.json`, `package-lock.json`, `registry/foundation.css` không đổi.
+- Brief E4 §3: ở bản tiếng Anh, phần tử chứa tên, địa chỉ tiếng Việt mang `lang="vi"` (tên người và nơi chốn in như đã lưu,
+  QĐ-40), như danh sách `FeedPicker` của cửa hàng (lát E2). Hai chỗ Arc vẽ chữ đó từ một chuỗi, nên không gói được
+  `<span lang>` mà không vá (mục 3):
+  - **`combobox`:** prop `optionsLang`, cho danh sách tỉnh và phường của hộp sửa địa chỉ đơn
+    (`components/admin-arc/ArcAddressForm.tsx`);
+  - **`breadcrumb`:** `BreadcrumbItem.lang`, cho mục cuối của đường dẫn trên trang một khách (tên khách,
+    `components/admin-arc/ArcCustomerScreen.tsx`).
+- **Test:** `arc-registry.test.ts` thêm hai test: kiểu có `optionsLang`, prop được tách khỏi `...inputProps`, mỗi
+  `role="option"` mang `lang={optionsLang}`; kiểu có `lang`, và cả ba dạng mục (link, nút, span) mang `lang={item.lang}`.
+
 ## 1. `registry/foundation.css`: khoanh vùng
 
 Arc đặt mọi luật ở `:root`, nên tệp là toàn cục: tiêu đề v3 mất Unbounded vì trùng tên `--font-display`, luật cuối xoá vòng
@@ -238,12 +251,15 @@ Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không p
 | `select/select.tsx` + `.module.css` (lát 4, brief yêu cầu) | Kiểu `options` thêm `note?: string`. Mỗi dòng in `note` trong một `<span className={styles.note}>` sau `ItemText` và trước `ItemIndicator`, chỉ khi có `note`: không có thì dòng y như Arc gốc. CSS `.note`: `margin-left: auto` (dồn về cuối dòng; phần đệm phải 34px của `.item` vẫn giữ chỗ cho dấu chọn), `padding-left: var(--space-3)`, `color: var(--text-secondary)`, `font-size: var(--text-xs)` (cỡ Arc dùng cho chữ phụ cuối dòng, `.itemMeta` của `filter-toolbar`), `white-space: nowrap` | Hộp "Thêm mẫu hé lộ" (lát 4): v3 in họ của từng loại bên phải dòng ("Áo khoác dù" · "Áo khoác"). Nằm ngoài `ItemText` nên ô chọn và giá trị Radix đọc cho máy đọc màn hình chỉ có nhãn; tên của dòng (`aria-labelledby` trỏ vào `ItemText`) cũng chỉ là nhãn. Không mất gì: họ luôn là một phần của tên loại (`FAMILY_LABELS`, `data/types.ts`) |
 | `drawer/drawer.module.css` (lát 3) | Thêm `.close:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }`, đúng luật của nút đóng trong `dialog.module.css` | QĐ-39: giữ vòng focus bàn phím. Nút đóng của Drawer bản gốc không có luật `:focus-visible` nào (Arc dựa vào luật `outline: none !important` toàn cục mà dự án đã xoá, mục 1), nên đi bằng Tab thì Chrome vẽ vòng mặc định của nó, khác vòng 2–3px `--focus-ring` của mọi điều khiển Arc khác. Radix đưa focus vào nút này đầu tiên khi Drawer mở, nên vòng đó là thứ đầu tiên người dùng bàn phím thấy. Bấm chuột thì `--focus-ring` trong suốt như mọi vòng khác |
 | `segmented-control/segmented-control.tsx` (đợt v6, lát E0, brief yêu cầu) | Kiểu `Segment` thêm `lang?: string`; nút của mỗi mục mang `lang={option.lang}`. Không có `lang` thì nút y như Arc gốc (React bỏ thuộc tính `undefined`). Không đổi CSS | Nút đổi ngôn ngữ ở chân thanh bên quản trị: hai mục "Tiếng Việt" và "English", mỗi mục viết bằng chính ngôn ngữ của nó nên cần `lang` riêng để máy đọc màn hình đọc đúng giọng (brief lát E0, §2.5). `Segment.label` là chuỗi, nên không gói được `<span lang>` mà không vá |
+| `breadcrumb/breadcrumb.tsx` (đợt v6, lát E4) | Kiểu `BreadcrumbItem` thêm `lang?: string`; link, nút hay span của mục mang `lang={item.lang}`. Không có `lang` thì mục y như Arc gốc (React bỏ thuộc tính `undefined`). Không đổi CSS | Trang một khách ở bản tiếng Anh: mục cuối của đường dẫn là tên khách tiếng Việt in như đã lưu ("Trần Minh Anh"), phải mang `lang="vi"` như tiêu đề trang (brief E4 §3). `BreadcrumbItem.label` là chuỗi. Mất chỗ vá thì `npm run typecheck` đỏ ở `ArcCustomerScreen.tsx` (thuộc tính lạ trong object literal) |
+| `combobox/combobox.tsx` (đợt v6, lát E4) | Prop `optionsLang?: string`, tách khỏi `...inputProps` (không xuống `<input>`); mỗi phần tử `role="option"` mang `lang={optionsLang}`. Không có prop thì dòng y như Arc gốc (React bỏ thuộc tính `undefined`). Câu "Không có mục nào khớp" nằm ngoài các dòng nên giữ ngôn ngữ của trang. Không đổi CSS | Hộp sửa địa chỉ đơn ở bản tiếng Anh: danh sách tỉnh ("Bắc Ninh", "Cà Mau"…) và phường ("Phường Bến Nghé", "Xã Vạn Ninh"…) là tên tiếng Việt giữ nguyên, phải mang `lang="vi"` để máy đọc màn hình đọc đúng giọng (brief E4 §3; `FeedPicker` của cửa hàng làm vậy với danh sách của nó). `ComboboxOption.label` là chuỗi, nên không gói được `<span lang>` mà không vá. Mất chỗ vá thì `npm run typecheck` đỏ ở `ArcAddressForm.tsx` (prop lạ) |
 | `input/input.tsx` + `.module.css` (lát 5b, brief yêu cầu) | Prop `prefix` (chuỗi). Có `prefix` thì ô nằm trong một khung `.affix` cùng một đoạn `.prefix` đứng đầu: nền `--surface-muted`, ngăn với phần gõ bằng viền phải 1px `--border`, chữ `--text-sm` đậm 500. Đoạn có id `{id}-prefix`, và ô nhập có `aria-describedby` trỏ tới nó (trước câu mô tả và câu lỗi), như v3. Khung nhận viền, bo góc, hover, vòng focus, viền lỗi và trạng thái vô hiệu của ô; ô bên trong bỏ viền và vòng của nó. Bấm vào đoạn thì con trỏ vào ô (v3 làm được nhờ `pointer-events: none`). Không có `prefix` thì Input y như Arc gốc | Form mẫu (lát 5b): ô tên mẫu của một số mang mã số ở đầu ("S06 –", `stylePrefix`), gõ quanh nó chứ không gõ nó. Arc `Input` không có phần đầu ô |
 
 Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, `iconOnly`, `hideLabel` của
-`SearchField` và của `Input`, `formatTick` của `BarChart`) đều có mặc định giữ hành vi gốc. Cài lại bản mới mà quên vá thì
-`npm run typecheck` đỏ ở `components/admin-arc/ArcOrdersScreen.tsx`, `components/admin-arc/ArcOrderScreen.tsx` và
-`components/admin-arc/ArcRevenueChart.tsx`, nơi dùng chúng. Chỗ vá CSS của `search-field`, prop `formatTick`, vòng focus
+`SearchField` và của `Input`, `formatTick` của `BarChart`, `optionsLang` của `Combobox`, `lang` của `BreadcrumbItem`) đều có
+mặc định giữ hành vi gốc. Cài lại bản mới mà quên vá thì `npm run typecheck` đỏ ở `components/admin-arc/ArcOrdersScreen.tsx`,
+`components/admin-arc/ArcOrderScreen.tsx`, `components/admin-arc/ArcRevenueChart.tsx`, `components/admin-arc/ArcAddressForm.tsx`
+và `components/admin-arc/ArcCustomerScreen.tsx`, nơi dùng chúng. Chỗ vá CSS của `search-field`, prop `formatTick`, vòng focus
 của nút đóng `drawer` và của `select` (lát 3) còn có test riêng trong `components/admin-arc/arc-registry.test.ts`.
 
 Trường `note` của option `Select` (lát 4) thì `npm run typecheck` **không** bắt được khi mất: `ArcTeaserDialog.tsx` đưa vào

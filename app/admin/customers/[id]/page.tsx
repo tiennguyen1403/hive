@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { ArcCustomerScreen } from "@/components/admin-arc/ArcCustomerScreen";
@@ -6,8 +7,13 @@ import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import { findCustomer, listAllOrders } from "@/lib/db/admin";
 import { requireAdmin } from "@/lib/db/session";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 
-export const metadata = { title: "Hồ sơ khách" };
+/** The screen's name in the title, in the page's language (round v6 slice E4); the layout adds "· Admin · HIVE". */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: picker(await getLocale())({ vi: "Hồ sơ khách", en: "Customer profile" }) };
+}
 
 /**
  * One customer, by the key the back office's links use: a demo shopper's

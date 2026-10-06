@@ -18,6 +18,7 @@ import { useOptimistic, useRef, useState, useTransition } from "react";
 import { FeedLogo } from "@/components/feed/FeedLogo";
 import { useLocale } from "@/components/i18n/LocaleContext";
 import { signOut } from "@/lib/actions/auth";
+import { storedLang } from "@/lib/admin-text";
 import { setLocale } from "@/lib/actions/locale";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { LOCALE_PARAM, parseLocale, picker, plural, type Pair } from "@/lib/i18n";
@@ -146,7 +147,9 @@ export function ArcSidebar({
         </Button>
         <LanguageControl />
         <p>
-          <strong>{me.name}</strong> · {me.email}
+          {/* Who is signed in, as their profile has it (round v6 slice E4): the
+              demo manager's name is Vietnamese, said so on an English page. */}
+          <strong lang={storedLang(me.name, locale)}>{me.name}</strong> · {me.email}
         </p>
         <form action={signOut}>
           <Button variant="ghost" size="sm" type="submit" className={styles.edge}>

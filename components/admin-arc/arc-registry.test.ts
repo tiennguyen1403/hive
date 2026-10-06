@@ -305,4 +305,18 @@ describe("registry/components (both languages, round v6 slice E0)", () => {
     expect(source).toMatch(/lang\?: string;/);
     expect(source).toContain("lang={option.lang}");
   });
+
+  it("lets a breadcrumb's crumb carry its own lang, on its link, button or span", () => {
+    const source = readFileSync(join(COMPONENTS, "breadcrumb", "breadcrumb.tsx"), "utf8");
+    expect(source).toMatch(/lang\?: string;/);
+    expect(source.match(/lang=\{item\.lang\}/g)).toHaveLength(3);
+  });
+
+  it("lets a combobox's options carry their own lang, on each option and never on the input", () => {
+    const source = readFileSync(join(COMPONENTS, "combobox", "combobox.tsx"), "utf8");
+    expect(source).toMatch(/optionsLang\?: string;/);
+    // Taken out of the props before the rest go onto the <input>.
+    expect(source).toMatch(/optionsLang,\s*\.\.\.inputProps/);
+    expect(source).toMatch(/role="option"[\s\S]{0,200}lang=\{optionsLang\}/);
+  });
 });

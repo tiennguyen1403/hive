@@ -2,7 +2,8 @@ import type { Catalog } from "./catalog";
 import type { Order } from "@/data/types";
 import { BOOKED_STATES } from "./admin-metrics";
 import { effectiveOrder } from "./customer-orders";
-import { LEX, issueLabel } from "./lexicon";
+import { picker, plural, type Locale } from "./i18n";
+import { LEX, issueLabel, lexicon } from "./lexicon";
 import { orderTotalVnd } from "./orders";
 
 /**
@@ -21,6 +22,9 @@ import { orderTotalVnd } from "./orders";
  *     separates a habit from three purchases that happen to be three.
  *   · **quay lại** — two or more orders. Came back once.
  *   · **mới** — their first order is in the issue that is open right now.
+ *
+ * In English (round v6 slice E4) the labels read "3 drops in a row",
+ * "returning", "new", and their reasons the same way; the keys stay.
  *
  * Strongest wins: somebody with four orders across three straight issues is
  * "thân thiết" and not "quay lại", because the weaker label would be the
@@ -109,6 +113,7 @@ export function customerFacts(
   placed: Order[],
   openIssueNo: number | null,
   now: Date,
+  locale: Locale = "vi",
 ): CustomerFacts {
   const orders = placed
     .map((o) => effectiveOrder(o, now))
@@ -137,7 +142,7 @@ export function customerFacts(
         o.status.state === "RECEIVED" ||
         o.status.state === "PAID",
     ),
-    tag: tagOf(catalog, booked.length, streak, oldest, openIssueNo),
+    tag: tagOf(catalog, booked.length, streak, oldest, openIssueNo, locale),
   };
 }
 
@@ -147,15 +152,21 @@ function tagOf(
   streak: number,
   oldest: Order | undefined,
   openIssueNo: number | null,
+  locale: Locale,
 ): CustomerTag | null {
+  const t = picker(locale);
   if (streak >= LOYAL_ISSUES) {
-    return { key: "loyal", label: `${streak} ${LEX.tl} liên tiếp`, tone: "" };
+    return {
+      key: "loyal",
+      label: t({ vi: `${streak} ${LEX.tl} liên tiếp`, en: `${plural(streak, "drop", "drops")} in a row` }),
+      tone: "",
+    };
   }
   if (bookedCount >= RETURNING_ORDERS) {
-    return { key: "returning", label: "quay lại", tone: "back" };
+    return { key: "returning", label: t({ vi: "quay lại", en: "returning" }), tone: "back" };
   }
   if (oldest && openIssueNo !== null && issueOf(catalog, oldest) === openIssueNo) {
-    return { key: "new", label: "mới", tone: "new" };
+    return { key: "new", label: t({ vi: "mới", en: "new" }), tone: "new" };
   }
   return null;
 }
@@ -180,10 +191,10 @@ export function customerGroup(raw: string | string[] | undefined): CustomerGroup
   return v === "loyal" || v === "returning" || v === "new" || v === "pending" ? v : "all";
 }
 
-/** "Số 03 · 04 · 05" — which issues this person has bought in. */
-export function issuesLabel(issues: number[]): string {
+/** "Số 03 · 04 · 05" — which issues this person has bought in; in English "Drop 03 · 04 · 05". */
+export function issuesLabel(issues: number[], locale: Locale = "vi"): string {
   if (issues.length === 0) return "—";
-  return `${LEX.t} ${issues.map((n) => String(n).padStart(2, "0")).join(" · ")}`;
+  return `${lexicon(locale).t} ${issues.map((n) => String(n).padStart(2, "0")).join(" · ")}`;
 }
 
 /**
@@ -197,13 +208,30 @@ export function issuesLabel(issues: number[]): string {
  * "trong số đang bán" were wrong there. Pass the number the facts were read
  * with, so the line and the label cannot name two issues.
  */
-export function tagReason(key: CustomerTagKey, facts: CustomerFacts, current: number | null): string {
+export function tagReason(
+  key: CustomerTagKey,
+  facts: CustomerFacts,
+  current: number | null,
+  locale: Locale = "vi",
+): string {
+  const t = picker(locale);
   if (key === "loyal") {
-    return `mua ở ${facts.streak} ${LEX.tl} liên tiếp (${issuesLabel(facts.issues)})`;
+    const issues = issuesLabel(facts.issues, locale);
+    return t({
+      vi: `mua ở ${facts.streak} ${LEX.tl} liên tiếp (${issues})`,
+      en: `bought in ${plural(facts.streak, "drop", "drops")} in a row (${issues})`,
+    });
   }
-  if (key === "returning") return `${facts.booked.length} đơn đã thanh toán`;
+  if (key === "returning") {
+    return t({
+      vi: `${facts.booked.length} đơn đã thanh toán`,
+      en: plural(facts.booked.length, "paid order", "paid orders"),
+    });
+  }
   // "mới" holds exactly one paid order: the first is the only one.
-  return `đơn đầu là ${facts.booked[0]?.code ?? "—"}, trong ${currentIssueWords(current)}`;
+  const first = facts.booked[0]?.code ?? "—";
+  const words = currentIssueWords(current, locale);
+  return t({ vi: `đơn đầu là ${first}, trong ${words}`, en: `first order ${first}, in ${words}` });
 }
 
 /**
@@ -211,14 +239,19 @@ export function tagReason(key: CustomerTagKey, facts: CustomerFacts, current: nu
  * "Chưa đủ để gắn nhãn nào: cần ≥ 2 đơn đã thanh toán, hoặc đơn đầu trong
  * Số 05." (the user, 01/10/2026), with the issue "mới" is read against.
  */
-export function untaggedReason(current: number | null): string {
-  return `Chưa đủ để gắn nhãn nào: cần ≥ ${RETURNING_ORDERS} đơn đã thanh toán, hoặc đơn đầu trong ${currentIssueWords(current)}.`;
+export function untaggedReason(current: number | null, locale: Locale = "vi"): string {
+  const words = currentIssueWords(current, locale);
+  return picker(locale)({
+    vi: `Chưa đủ để gắn nhãn nào: cần ≥ ${RETURNING_ORDERS} đơn đã thanh toán, hoặc đơn đầu trong ${words}.`,
+    en: `Not enough for a label yet: needs ≥ ${RETURNING_ORDERS} paid orders, or a first order in ${words}.`,
+  });
 }
 
 /**
  * "Số 05". A catalogue with no issue at all has no number to name, and no
  * customer can be "mới" in it: the line keeps the words it had before 01/10.
  */
-function currentIssueWords(current: number | null): string {
-  return current === null ? `${LEX.tl} đang bán` : issueLabel(current);
+function currentIssueWords(current: number | null, locale: Locale): string {
+  if (current === null) return picker(locale)({ vi: `${LEX.tl} đang bán`, en: "the live drop" });
+  return issueLabel(current, locale);
 }

@@ -36,6 +36,8 @@ export interface ComboboxProps
   placeholder?: string;
   emptyMessage?: string;
   className?: string;
+  /** HIVE patch (registry/PATCHES.md): the language of the options' words when it is not the page's, on each option. */
+  optionsLang?: string;
 }
 
 /** Follows the listbox height with a critically damped spring, so filtering never snaps the menu. */
@@ -67,6 +69,8 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
     className,
     disabled,
     onFocus,
+    // HIVE patch (registry/PATCHES.md): kept off the input, read by each option.
+    optionsLang,
     ...inputProps
   },
   forwardedRef,
@@ -275,6 +279,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
                   role="option"
                   aria-selected={option.value === selectedValue}
                   aria-disabled={option.disabled || undefined}
+                  lang={optionsLang}
                   onMouseDown={(event) => event.preventDefault()}
                   onMouseEnter={() => !option.disabled && setActiveIndex(index)}
                   onClick={() => choose(option)}

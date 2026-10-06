@@ -2,6 +2,7 @@ import type { Order, OrderState, Product } from "@/data/types";
 import type { AdminOrder } from "./admin-orders";
 import type { Catalog } from "./catalog";
 import { toVnIso } from "./datetime";
+import { picker, type Locale } from "./i18n";
 import {
   LOW_STOCK_AT,
   isSoldOut,
@@ -263,7 +264,9 @@ export function stockAlerts(
   catalog: Catalog,
   dropNo: number,
   products?: readonly Product[],
+  locale: Locale = "vi",
 ): StockAlert[] {
+  const t = picker(locale);
   return productsInDrop(catalog, dropNo, products)
     .map((product) => {
       const left = onHand(product);
@@ -272,11 +275,13 @@ export function stockAlerts(
         product,
         left,
         tone: (isSoldOut(product) ? "hot" : "warn") as StockAlert["tone"],
+        // In English (round v6 slice E4) "every size sold out", "out of S · M",
+        // "4 left, no size sold out yet": the shop's words for a size run out.
         note: isSoldOut(product)
-          ? "hết toàn bộ size"
+          ? t({ vi: "hết toàn bộ size", en: "every size sold out" })
           : gone.length > 0
-            ? `hết ${gone.join(" · ")}`
-            : `còn ${left} chiếc, chưa hết size nào`,
+            ? t({ vi: `hết ${gone.join(" · ")}`, en: `out of ${gone.join(" · ")}` })
+            : t({ vi: `còn ${left} chiếc, chưa hết size nào`, en: `${left} left, no size sold out yet` }),
       };
     })
     .filter((r) => r.left <= LOW_STOCK_AT)

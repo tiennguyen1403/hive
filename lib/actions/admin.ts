@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { findWard } from "@/data/regions";
 import {
+  adminDoneMessage,
   adminFailureMessage,
   adminFailureOf,
   bulkPaidMessage,
@@ -18,11 +19,11 @@ import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import type { Json } from "@/lib/db/database.types";
 import { purgeUploadedPhotos } from "@/lib/db/photos";
-import { takeRates, tidyRateHits } from "@/lib/db/rate-limit";
+import { takeRate, tidyRateHits } from "@/lib/db/rate-limit";
 import { getSupabase } from "@/lib/db/server";
 import { requireAdmin } from "@/lib/db/session";
 import { pick, plural, type Locale } from "@/lib/i18n";
-import { getLocale } from "@/lib/locale";
+import { getActionLocale } from "@/lib/locale";
 import { isOrderCode } from "@/lib/lookup";
 import type { RateBucket } from "@/lib/rate-limit";
 import type { ActionState } from "./state";
@@ -59,6 +60,13 @@ import type { ActionState } from "./state";
  *      back — only the sentence (`02-guides/data-security.md`, "Controlling
  *      return values").
  *
+ * Every sentence is in the visitor's language since round v6 slice E4: each
+ * action reads it once (`getActionLocale()`, `lib/locale.ts`) and hands it to
+ * the rate limit (`takeRate(…, locale)`), the refusal (`adminFailureMessage`)
+ * and the toast (`adminDoneMessage`, `bulkPaidMessage`). What it writes to the
+ * database never changes with the language: a cancel reason is one of the four
+ * Vietnamese ones, a carrier the service's Vietnamese label.
+ *
  * The clock is the real one (`toVnIso(demoNow())`), which is the only
  * instant the database accepts from a signed-in caller.
  */
@@ -82,10 +90,17 @@ const text = (value: unknown): string => (typeof value === "string" ? value.trim
  * Slice B4b: the visitor's back-office limits — `admin`, and whatever else the
  * move spends. Null when every token was there; the refusal, as the toast's
  * sentence, when one was not.
+ *
+ * One `takeRate` per bucket, in order, the first refusal answering and a token
+ * already spent staying spent — `takeRates`' rule — each with the visitor's
+ * language, so the refusal is in it too (round v6 slice E4).
  */
-async function overLimit(...extra: RateBucket[]): Promise<ActionState | null> {
-  const verdict = await takeRates("admin", ...extra);
-  return verdict.ok ? null : { errors: { form: verdict.message } };
+async function overLimit(locale: Locale, ...extra: RateBucket[]): Promise<ActionState | null> {
+  for (const bucket of ["admin", ...extra] as RateBucket[]) {
+    const verdict = await takeRate(bucket, 1, locale);
+    if (!verdict.ok) return { errors: { form: verdict.message } };
+  }
+  return null;
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -128,7 +143,8 @@ function orderMoved(): void {
  */
 export async function markPaid(codes: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
-  const limited = await overLimit();
+  const locale = await getActionLocale();
+  const limited = await overLimit(locale);
   if (limited) return limited;
 
   if (
@@ -137,7 +153,7 @@ export async function markPaid(codes: unknown): Promise<ActionState> {
     codes.length > MAX_BULK ||
     !codes.every((c) => typeof c === "string" && isOrderCode(c))
   ) {
-    return refused("MARK_PAID", "BAD_INPUT");
+    return refused("MARK_PAID", "BAD_INPUT", "", locale);
   }
 
   const unique = [...new Set(codes as string[])];
@@ -154,9 +170,9 @@ export async function markPaid(codes: unknown): Promise<ActionState> {
 
   if (unique.length === 1) {
     const code = unique[0]!;
-    return failure ? refused("MARK_PAID", failure, code) : done(`${code} → đã thanh toán · đã lưu`);
+    return failure ? refused("MARK_PAID", failure, code, locale) : done(adminDoneMessage("MARK_PAID", code, locale));
   }
-  const message = bulkPaidMessage(paid, unique.length - paid);
+  const message = bulkPaidMessage(paid, unique.length - paid, locale);
   return paid > 0 ? done(message) : { errors: { form: message } };
 }
 
@@ -167,16 +183,17 @@ export async function markPaid(codes: unknown): Promise<ActionState> {
  */
 export async function handOver(code: unknown, form: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
-  const limited = await overLimit();
+  const locale = await getActionLocale();
+  const limited = await overLimit(locale);
   if (limited) return limited;
-  if (typeof code !== "string" || !isOrderCode(code)) return refused("HAND_OVER", "NOT_FOUND");
+  if (typeof code !== "string" || !isOrderCode(code)) return refused("HAND_OVER", "NOT_FOUND", "", locale);
 
   const fields = record(form);
   const carrier = text(fields.carrier);
   const tracking = normaliseTrackingCode(text(fields.trackingCode));
   const note = text(fields.note);
   if (!isCarrier(carrier) || !isTrackingCode(tracking) || note.length > MAX_NOTE) {
-    return refused("HAND_OVER", "BAD_INPUT", code);
+    return refused("HAND_OVER", "BAD_INPUT", code, locale);
   }
 
   const failure = await run("admin_hand_over", {
@@ -186,24 +203,25 @@ export async function handOver(code: unknown, form: unknown): Promise<ActionStat
     p_note: note,
     p_now: now(),
   });
-  if (failure) return refused("HAND_OVER", failure, code);
+  if (failure) return refused("HAND_OVER", failure, code, locale);
 
   orderMoved();
-  return done(`${code} → đang giao · ${tracking} · khách thấy mã này ở tra cứu đơn và Đơn hàng`);
+  return done(adminDoneMessage("HAND_OVER", code, locale, { tracking }));
 }
 
 /** "Đã giao": the parcel arrived. No courier reports it, so the shop does. */
 export async function markDelivered(code: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
-  const limited = await overLimit();
+  const locale = await getActionLocale();
+  const limited = await overLimit(locale);
   if (limited) return limited;
-  if (typeof code !== "string" || !isOrderCode(code)) return refused("MARK_DELIVERED", "NOT_FOUND");
+  if (typeof code !== "string" || !isOrderCode(code)) return refused("MARK_DELIVERED", "NOT_FOUND", "", locale);
 
   const failure = await run("admin_mark_delivered", { p_code: code, p_now: now() });
-  if (failure) return refused("MARK_DELIVERED", failure, code);
+  if (failure) return refused("MARK_DELIVERED", failure, code, locale);
 
   orderMoved();
-  return done(`${code} → đã giao · đã lưu`);
+  return done(adminDoneMessage("MARK_DELIVERED", code, locale));
 }
 
 // ─────────────────────────────────────────────────────────── calling off
@@ -219,13 +237,16 @@ export async function cancelOrderAdmin(
   note: unknown,
 ): Promise<ActionState> {
   await requireAdmin("/admin/orders");
-  const limited = await overLimit();
+  const locale = await getActionLocale();
+  const limited = await overLimit(locale);
   if (limited) return limited;
-  if (typeof code !== "string" || !isOrderCode(code)) return refused("CANCEL", "NOT_FOUND");
+  if (typeof code !== "string" || !isOrderCode(code)) return refused("CANCEL", "NOT_FOUND", "", locale);
 
+  // The reason arrives as the dialog's value, one of the four Vietnamese ones,
+  // whatever language its label was shown in; it is stored as it is.
   const why = text(reason);
   const internal = text(note);
-  if (!isCancelReason(why) || internal.length > MAX_NOTE) return refused("CANCEL", "BAD_INPUT", code);
+  if (!isCancelReason(why) || internal.length > MAX_NOTE) return refused("CANCEL", "BAD_INPUT", code, locale);
 
   const failure = await run("admin_cancel_order", {
     p_code: code,
@@ -233,28 +254,29 @@ export async function cancelOrderAdmin(
     p_note: internal,
     p_now: now(),
   });
-  if (failure) return refused("CANCEL", failure, code);
+  if (failure) return refused("CANCEL", failure, code, locale);
 
   revalidatePath("/", "layout");
-  return done(`${code} đã huỷ · lý do: ${why.toLocaleLowerCase("vi")} · hàng về kệ`);
+  return done(adminDoneMessage("CANCEL", code, locale, { reason: why }));
 }
 
 // ─────────────────────────────────────────────────────────────── the notes
 /** "Thêm" under the internal notes. Nothing about the order changes. */
 export async function noteOrder(code: unknown, body: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
-  const limited = await overLimit();
+  const locale = await getActionLocale();
+  const limited = await overLimit(locale);
   if (limited) return limited;
-  if (typeof code !== "string" || !isOrderCode(code)) return refused("NOTE", "NOT_FOUND");
+  if (typeof code !== "string" || !isOrderCode(code)) return refused("NOTE", "NOT_FOUND", "", locale);
 
   const note = text(body);
-  if (note === "" || note.length > MAX_NOTE) return refused("NOTE", "BAD_INPUT", code);
+  if (note === "" || note.length > MAX_NOTE) return refused("NOTE", "BAD_INPUT", code, locale);
 
   const failure = await run("admin_note_order", { p_code: code, p_text: note, p_now: now() });
-  if (failure) return refused("NOTE", failure, code);
+  if (failure) return refused("NOTE", failure, code, locale);
 
   revalidatePath("/admin", "layout");
-  return done("Đã thêm ghi chú · đã lưu");
+  return done(adminDoneMessage("NOTE", code, locale));
 }
 
 // ───────────────────────────────────────────────────────────── the address
@@ -265,9 +287,10 @@ export async function noteOrder(code: unknown, body: unknown): Promise<ActionSta
  */
 export async function editAddress(code: unknown, form: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
-  const limited = await overLimit();
+  const locale = await getActionLocale();
+  const limited = await overLimit(locale);
   if (limited) return limited;
-  if (typeof code !== "string" || !isOrderCode(code)) return refused("EDIT_ADDRESS", "NOT_FOUND");
+  if (typeof code !== "string" || !isOrderCode(code)) return refused("EDIT_ADDRESS", "NOT_FOUND", "", locale);
 
   const fields = record(form);
   const shipTo = {
@@ -288,7 +311,7 @@ export async function editAddress(code: unknown, form: unknown): Promise<ActionS
     reason === "" ||
     reason.length > MAX_REASON
   ) {
-    return refused("EDIT_ADDRESS", "BAD_INPUT", code);
+    return refused("EDIT_ADDRESS", "BAD_INPUT", code, locale);
   }
 
   const failure = await run("admin_edit_address", {
@@ -297,10 +320,10 @@ export async function editAddress(code: unknown, form: unknown): Promise<ActionS
     p_reason: reason,
     p_now: now(),
   });
-  if (failure) return refused("EDIT_ADDRESS", failure, code);
+  if (failure) return refused("EDIT_ADDRESS", failure, code, locale);
 
   orderMoved();
-  return done(`Đã sửa địa chỉ giao ${code} · đã lưu`);
+  return done(adminDoneMessage("EDIT_ADDRESS", code, locale));
 }
 
 // ─────────────────────────────────────────────────────────────── the reset
@@ -318,12 +341,11 @@ export async function editAddress(code: unknown, form: unknown): Promise<ActionS
  */
 export async function resetDemo(): Promise<ActionState> {
   await requireAdmin("/admin");
-  const limited = await overLimit("reset");
-  if (limited) return limited;
   // Round v6 slice E0: the toast speaks the visitor's language (the
-  // `hive-lang` cookie). The rate limit's refusal above is still Vietnamese:
-  // every action in the app shares it, so it moves with them.
-  const locale = await getLocale();
+  // `hive-lang` cookie); since slice E4 the rate limit's refusal does too.
+  const locale = await getActionLocale();
+  const limited = await overLimit(locale, "reset");
+  if (limited) return limited;
 
   const supabase = await getSupabase();
   const anchor = await supabase.rpc("demo_anchor");

@@ -2,8 +2,11 @@
 
 import { ArrowLeft, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import type { Order } from "@/data/types";
 import { CANCEL_REASONS } from "@/lib/admin-orders";
+import { cancelReasonLabel } from "@/lib/feed-account";
+import { picker, type Locale } from "@/lib/i18n";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd } from "@/lib/orders";
 import { Button } from "@/registry/components/button/button";
@@ -13,8 +16,15 @@ import { Select } from "@/registry/components/select/select";
 import styles from "./ArcDialog.module.css";
 import { keepOpenForToasts } from "./arc-toasts";
 
-/** The four reasons, fixed (user, 22/09), from the list the Server Action checks against. */
-const REASON_OPTIONS = CANCEL_REASONS.map((r) => ({ value: r, label: r }));
+/**
+ * The four reasons, fixed (user, 22/09), from the list the Server Action checks
+ * against. The value sent is always the Vietnamese reason, which the database
+ * stores; the label is in the page's language (round v6 slice E4), in the
+ * shop's English for them (`cancelReasonLabel`, slice E2).
+ */
+function reasonOptions(locale: Locale) {
+  return CANCEL_REASONS.map((r) => ({ value: r, label: cancelReasonLabel(r, locale) }));
+}
 
 /**
  * "Huỷ đơn", with the reason the shopper will be given: the v3 sheet
@@ -30,6 +40,10 @@ const REASON_OPTIONS = CANCEL_REASONS.map((r) => ({ value: r, label: r }));
  * from a row menu (the order book) or from "Thao tác khác" (an order's
  * page), so the screen says where focus goes when it shuts
  * (`onCloseAutoFocus`, slice 5b), as the issues' dialogs do (slice 4).
+ *
+ * Every word follows the page's language (round v6 slice E4), and is written
+ * at render, so switching the language with the dialog open rewords it in
+ * place and keeps the reason and the note.
  */
 export function ArcCancelOrderDialog({
   order,
@@ -47,6 +61,8 @@ export function ArcCancelOrderDialog({
   /** Where focus goes when the dialog shuts: the menu that opened it. */
   onCloseAutoFocus: (event: Event) => void;
 }) {
+  const locale = useLocale();
+  const t = picker(locale);
   const [reason, setReason] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState(false);
@@ -55,13 +71,19 @@ export function ArcCancelOrderDialog({
   const [shown, setShown] = useState<Order | null>(order);
   if (order && order !== shown) setShown(order);
 
-  // Reopening on another order must not show the last one's reason.
+  // Reopening on another order must not show the last one's reason. Keyed by
+  // the order's CODE, not the object: the order's page hands a new object in
+  // whenever the server renders it again — a switch of language does (round v6
+  // slice E4) — and the reason and the note somebody had chosen must stay.
+  // Closing passes through null, so reopening on the same order still starts
+  // empty.
+  const openCode = order ? String(order.code) : null;
   useEffect(() => {
-    if (!order) return;
+    if (!openCode) return;
     setReason(null);
     setNote("");
     setError(false);
-  }, [order]);
+  }, [openCode]);
 
   // Money has arrived only on a PAID order: a transfer still waiting and a
   // COD or card order the shop has merely taken have nothing to refund.
@@ -78,19 +100,26 @@ export function ArcCancelOrderDialog({
       <DialogContent
         onInteractOutside={keepOpenForToasts}
         onCloseAutoFocus={onCloseAutoFocus}
-        title={`Huỷ đơn ${shown?.code ?? ""}?`}
-        description={`${
-          paid
-            ? `Đơn đã thanh toán ${vnd(total)}. Huỷ thì phải hoàn tiền tay.`
-            : `Đơn ${vnd(total)} chưa nhận được tiền. Huỷ là đóng lại, không có gì phải hoàn.`
-        } Khách thấy lý do ở màn đơn của họ. Hàng về kệ ngay.`}
+        title={t({ vi: `Huỷ đơn ${shown?.code ?? ""}?`, en: `Cancel order ${shown?.code ?? ""}?` })}
+        description={t({
+          vi: `${
+            paid
+              ? `Đơn đã thanh toán ${vnd(total)}. Huỷ thì phải hoàn tiền tay.`
+              : `Đơn ${vnd(total)} chưa nhận được tiền. Huỷ là đóng lại, không có gì phải hoàn.`
+          } Khách thấy lý do ở màn đơn của họ. Hàng về kệ ngay.`,
+          en: `${
+            paid
+              ? `Paid ${vnd(total, "en")}, so cancelling means a refund by hand.`
+              : `This ${vnd(total, "en")} order is unpaid, so there is nothing to refund.`
+          } The customer sees the reason on their order. Items go back in stock at once.`,
+        })}
       >
         <div className={styles.fields}>
           <div className={styles.field}>
             <Select
-              label="Lý do"
-              placeholder="Chọn lý do"
-              options={REASON_OPTIONS}
+              label={t({ vi: "Lý do", en: "Reason" })}
+              placeholder={t({ vi: "Chọn lý do", en: "Choose a reason" })}
+              options={reasonOptions(locale)}
               value={reason ?? ""}
               onValueChange={(v) => {
                 setReason(v);
@@ -99,13 +128,13 @@ export function ArcCancelOrderDialog({
             />
             {error && (
               <p className={styles.error} role="alert">
-                Chọn một lý do trước khi huỷ.
+                {t({ vi: "Chọn một lý do trước khi huỷ.", en: "Choose a reason before cancelling." })}
               </p>
             )}
           </div>
           <Input
-            label="Ghi chú nội bộ · không bắt buộc"
-            placeholder="Khách không thấy dòng này"
+            label={t({ vi: "Ghi chú nội bộ · không bắt buộc", en: "Internal note · optional" })}
+            placeholder={t({ vi: "Khách không thấy dòng này", en: "The customer won't see this" })}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
@@ -113,7 +142,7 @@ export function ArcCancelOrderDialog({
         <div className={styles.actions}>
           <Button variant="secondary" size="sm" disabled={pending} onClick={onClose}>
             {pending ? null : <ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />}
-            Giữ đơn
+            {t({ vi: "Giữ đơn", en: "Keep order" })}
           </Button>
           <Button
             variant="danger"
@@ -126,7 +155,11 @@ export function ArcCancelOrderDialog({
             }}
           >
             {reason && !pending ? <X size={16} strokeWidth={1.75} aria-hidden="true" /> : null}
-            {pending ? "Đang huỷ…" : reason ? "Huỷ đơn" : "Chọn lý do"}
+            {pending
+              ? t({ vi: "Đang huỷ…", en: "Cancelling…" })
+              : reason
+                ? t({ vi: "Huỷ đơn", en: "Cancel order" })
+                : t({ vi: "Chọn lý do", en: "Choose a reason" })}
           </Button>
         </div>
       </DialogContent>

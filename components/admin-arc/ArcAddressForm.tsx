@@ -3,9 +3,12 @@
 import { ArrowLeft, Check } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { wardOptionLabel } from "@/components/checkout/wards";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { provincesByName, type Ward } from "@/data/regions";
 import type { ShipTo } from "@/lib/admin-orders";
+import { storedLang } from "@/lib/admin-text";
 import { fold } from "@/lib/catalog-query";
+import { picker } from "@/lib/i18n";
 import { Button } from "@/registry/components/button/button";
 import { Combobox, type ComboboxOption } from "@/registry/components/combobox/combobox";
 import { Input } from "@/registry/components/input/input";
@@ -83,6 +86,13 @@ function useWards(provinceCode: string) {
  * icon, until the form is whole; then "Lưu địa chỉ". It is the panel's own
  * primary button (brief, §2), and shows Arc's spinner with "Đang lưu…" while
  * the address is on its way.
+ *
+ * In the page's language since round v6 slice E4, in the shop's address words
+ * (slice E3a: "Province / city", "Ward / commune"). Every sentence is written at
+ * render — the form keeps whether a save was refused, not the sentence — so a
+ * switch of language rewords it in place. The places keep their Vietnamese
+ * names (QĐ-40), and the fields and the lists holding them say `lang="vi"` on
+ * an English page (the lists through Arc's `optionsLang`, `registry/PATCHES.md`).
  */
 export function ArcAddressForm({
   value,
@@ -102,7 +112,12 @@ export function ArcAddressForm({
   const [provinceCode, setProvinceCode] = useState(value.provinceCode);
   const [wardCode, setWardCode] = useState(value.wardCode);
   const [reason, setReason] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  /** A save was pressed with a field still empty: the reason field says so. */
+  const [error, setError] = useState(false);
+  const locale = useLocale();
+  const t = picker(locale);
+  /** A Vietnamese place or name typed in a field, on an English page. */
+  const place = locale === "en" ? ("vi" as const) : undefined;
   const { wards, state } = useWards(provinceCode);
   const wardOptions = useMemo(() => wards.map((w) => option(w.code, wardOptionLabel(w))), [wards]);
 
@@ -114,32 +129,44 @@ export function ArcAddressForm({
     reason.trim() !== "";
   /** The first thing still missing, so the button can name it. */
   const blocker = !recipient.trim()
-    ? "Nhập người nhận"
+    ? t({ vi: "Nhập người nhận", en: "Enter the recipient" })
     : !phone.trim()
-      ? "Nhập số điện thoại"
+      ? t({ vi: "Nhập số điện thoại", en: "Enter the phone number" })
       : !line.trim()
-        ? "Nhập số nhà, đường"
+        ? t({ vi: "Nhập số nhà, đường", en: "Enter the house number, street" })
         : !wardCode
-          ? "Chọn phường / xã"
+          ? t({ vi: "Chọn phường / xã", en: "Choose the ward / commune" })
           : !reason.trim()
-            ? "Ghi lý do sửa"
+            ? t({ vi: "Ghi lý do sửa", en: "Give a reason" })
             : null;
 
   return (
     <div className={styles.form}>
-      <Input label="Người nhận" value={recipient} onChange={(e) => setRecipient(e.target.value)} />
       <Input
-        label="Số điện thoại"
+        label={t({ vi: "Người nhận", en: "Recipient" })}
+        value={recipient}
+        lang={place}
+        onChange={(e) => setRecipient(e.target.value)}
+      />
+      <Input
+        label={t({ vi: "Số điện thoại", en: "Phone number" })}
         inputMode="tel"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
-      <Input label="Số nhà, đường" value={line} onChange={(e) => setLine(e.target.value)} />
+      <Input
+        label={t({ vi: "Số nhà, đường", en: "House number, street" })}
+        value={line}
+        lang={place}
+        onChange={(e) => setLine(e.target.value)}
+      />
       <Combobox
-        label="Tỉnh / thành"
+        label={t({ vi: "Tỉnh / thành", en: "Province / city" })}
         options={PROVINCE_OPTIONS}
+        optionsLang={place}
         value={provinceCode}
-        placeholder="Chọn"
+        lang={provinceCode ? place : undefined}
+        placeholder={t({ vi: "Chọn", en: "Choose" })}
         onValueChange={(next) => {
           setProvinceCode(next);
           // The old commune belongs to the old province; keeping it would
@@ -149,42 +176,48 @@ export function ArcAddressForm({
       />
       <div className={styles.field}>
         <Combobox
-          label="Phường / xã"
+          label={t({ vi: "Phường / xã", en: "Ward / commune" })}
           options={wardOptions}
+          optionsLang={place}
           value={wardCode}
+          lang={wardCode ? place : undefined}
           onValueChange={setWardCode}
           disabled={!provinceCode || state === "loading"}
           placeholder={
             !provinceCode
-              ? "Chọn tỉnh trước"
+              ? t({ vi: "Chọn tỉnh trước", en: "Choose a province first" })
               : state === "loading"
-                ? "Đang tải…"
+                ? t({ vi: "Đang tải…", en: "Loading…" })
                 : state === "error"
-                  ? "Không tải được"
-                  : "Chọn phường / xã"
+                  ? t({ vi: "Không tải được", en: "Couldn't load" })
+                  : t({ vi: "Chọn phường / xã", en: "Choose a ward / commune" })
           }
         />
         {state === "error" && (
           <p className={styles.fieldError} role="alert">
-            Không tải được danh sách phường / xã. Thử chọn lại tỉnh.
+            {t({
+              vi: "Không tải được danh sách phường / xã. Thử chọn lại tỉnh.",
+              en: "Couldn't load the wards and communes. Try choosing the province again.",
+            })}
           </p>
         )}
       </div>
       <Input
-        label="Lý do sửa"
-        placeholder="VD: khách nhắn đổi số nhà"
-        description="Chỉ sửa được trước khi bàn giao."
-        error={error ?? undefined}
+        label={t({ vi: "Lý do sửa", en: "Reason for the change" })}
+        placeholder={t({ vi: "VD: khách nhắn đổi số nhà", en: "E.g. the customer asked to change the house number" })}
+        description={t({ vi: "Chỉ sửa được trước khi bàn giao.", en: "Can only be changed before handover." })}
+        error={error ? t({ vi: "Điền đủ các ô trước khi lưu.", en: "Fill in every field before saving." }) : undefined}
         value={reason}
+        lang={storedLang(reason, locale)}
         onChange={(e) => {
           setReason(e.target.value);
-          setError(null);
+          setError(false);
         }}
       />
       <div className={styles.formActions}>
         <Button variant="secondary" size="sm" disabled={pending} onClick={onCancel}>
           {pending ? null : <ArrowLeft {...ICON} />}
-          Huỷ
+          {t({ vi: "Huỷ", en: "Cancel" })}
         </Button>
         <Button
           variant="primary"
@@ -192,7 +225,7 @@ export function ArcAddressForm({
           disabled={!ready}
           loading={pending}
           onClick={() => {
-            if (!ready) return setError("Điền đủ các ô trước khi lưu.");
+            if (!ready) return setError(true);
             onSave(
               {
                 recipient: recipient.trim(),
@@ -206,7 +239,7 @@ export function ArcAddressForm({
           }}
         >
           {ready && !pending ? <Check {...ICON} /> : null}
-          {pending ? "Đang lưu…" : (blocker ?? "Lưu địa chỉ")}
+          {pending ? t({ vi: "Đang lưu…", en: "Saving…" }) : (blocker ?? t({ vi: "Lưu địa chỉ", en: "Save address" }))}
         </Button>
       </div>
     </div>

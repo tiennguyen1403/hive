@@ -1,6 +1,9 @@
 import type { Order } from "@/data/types";
 import { HANDOVER_LATE_DAYS } from "./admin-rows";
+import { carrierLabel } from "./carrier";
 import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "./datetime";
+import { cancelReasonLabel } from "./feed-account";
+import { picker, type Locale, type Pair } from "./i18n";
 
 /**
  * "Hành trình", the back office's reading of one order, and the shape Arc's
@@ -25,26 +28,35 @@ export interface Milestone {
  * So the middle step is "Chờ bàn giao" with the age on it, and it turns red
  * at the shop's own promise (`HANDOVER_LATE_DAYS` counts the row's red in the
  * queue for the same reason).
+ *
+ * In both languages since round v6 slice E4: the words below, the dates the
+ * English way, the carrier by `carrierLabel` and a cancel reason by the shop's
+ * table (`cancelReasonLabel`). The Vietnamese is the v3 screen's, unchanged.
  */
-export function timelineOf(order: Order, now: Date, carrier?: string): Milestone[] {
+export function timelineOf(order: Order, now: Date, carrier?: string, locale: Locale = "vi"): Milestone[] {
+  const t = picker(locale);
+  const at = (iso: string) => `${clockLabel(iso)} · ${dayMonth(iso, locale)}`;
+  const W = TIMELINE_WORDS;
   const placed: Milestone = {
-    title: "Đã nhận đơn",
-    detail: `${clockLabel(order.placedAt)} · ${dayMonth(order.placedAt)}`,
+    title: t(W.placed),
+    detail: at(order.placedAt),
     state: "done",
   };
+  const shipping = (detail: string, state: Milestone["state"]): Milestone => ({ title: t(W.shipping), detail, state });
+  const delivered = (detail: string, state: Milestone["state"]): Milestone => ({ title: t(W.delivered), detail, state });
 
   switch (order.status.state) {
     case "AWAITING_TRANSFER":
       return [
         { ...placed, state: "now" },
         {
-          title: "Chờ chuyển khoản",
-          detail: `hạn ${dateTimeLabel(order.status.dueAt)}`,
+          title: t(W.awaitingTransfer),
+          detail: t({ vi: `hạn ${dateTimeLabel(order.status.dueAt)}`, en: `due ${dateTimeLabel(order.status.dueAt, "en")}` }),
           state: "todo",
         },
-        { title: "Chờ bàn giao", detail: "sau khi tiền về", state: "todo" },
-        { title: "Đang giao", detail: "sau khi bàn giao", state: "todo" },
-        { title: "Đã giao", detail: "2–4 ngày", state: "todo" },
+        { title: t(W.awaitingHandover), detail: t(W.afterPayment), state: "todo" },
+        shipping(t(W.afterHandover), "todo"),
+        delivered(t(W.leadDays), "todo"),
       ];
     // A COD or card order the shop has taken, with nothing paid — every one
     // checkout places since slice B2, and the back office reads them since
@@ -52,26 +64,30 @@ export function timelineOf(order: Order, now: Date, carrier?: string): Milestone
     case "RECEIVED":
       return [
         { ...placed, state: "now" },
-        { title: "Chờ bàn giao", detail: "", state: "todo" },
-        { title: "Đang giao", detail: "sau khi bàn giao", state: "todo" },
-        { title: "Đã giao", detail: "2–4 ngày", state: "todo" },
+        { title: t(W.awaitingHandover), detail: "", state: "todo" },
+        shipping(t(W.afterHandover), "todo"),
+        delivered(t(W.leadDays), "todo"),
       ];
     case "PAID": {
       const days = Math.floor((now.getTime() - Date.parse(order.status.paidAt)) / 86_400_000);
+      const since = sinceLabel(order.status.paidAt, now, locale);
       return [
         placed,
         {
-          title: "Đã thanh toán",
-          detail: `${clockLabel(order.status.paidAt)} · ${dayMonth(order.status.paidAt)}`,
+          title: t(W.paid),
+          detail: at(order.status.paidAt),
           state: "done",
         },
         {
-          title: "Chờ bàn giao",
-          detail: `${sinceLabel(order.status.paidAt, now)} · mục tiêu bàn giao trong 1 ngày sau thanh toán`,
+          title: t(W.awaitingHandover),
+          detail: t({
+            vi: `${since} · mục tiêu bàn giao trong 1 ngày sau thanh toán`,
+            en: `${since} · target: hand over within 1 day of payment`,
+          }),
           state: days >= HANDOVER_LATE_DAYS ? "late" : "now",
         },
-        { title: "Đang giao", detail: "sau khi bàn giao", state: "todo" },
-        { title: "Đã giao", detail: "2–4 ngày", state: "todo" },
+        shipping(t(W.afterHandover), "todo"),
+        delivered(t(W.leadDays), "todo"),
       ];
     }
     case "SHIPPING":
@@ -80,26 +96,21 @@ export function timelineOf(order: Order, now: Date, carrier?: string): Milestone
         // A COD parcel on the road has collected nothing yet: no "paid" step.
         ...(order.payment === "COD"
           ? []
-          : [{ title: "Đã thanh toán", detail: "", state: "done" as const }]),
-        { title: "Đã bàn giao", detail: "", state: "done" },
-        {
-          title: "Đang giao",
-          detail: `${clockLabel(order.status.shippedAt)} · ${dayMonth(order.status.shippedAt)} · ${carrier ? `${carrier} · ` : ""}${order.status.trackingCode}`,
-          state: "now",
-        },
-        { title: "Đã giao", detail: "2–4 ngày", state: "todo" },
+          : [{ title: t(W.paid), detail: "", state: "done" as const }]),
+        { title: t(W.handedOver), detail: "", state: "done" },
+        shipping(
+          `${at(order.status.shippedAt)} · ${carrier ? `${carrierLabel(carrier, locale)} · ` : ""}${order.status.trackingCode}`,
+          "now",
+        ),
+        delivered(t(W.leadDays), "todo"),
       ];
     case "DELIVERED":
       return [
         placed,
-        { title: "Đã thanh toán", detail: "", state: "done" },
-        { title: "Đã bàn giao", detail: "", state: "done" },
-        { title: "Đang giao", detail: "", state: "done" },
-        {
-          title: "Đã giao",
-          detail: `${clockLabel(order.status.deliveredAt)} · ${dayMonth(order.status.deliveredAt)}`,
-          state: "now",
-        },
+        { title: t(W.paid), detail: "", state: "done" },
+        { title: t(W.handedOver), detail: "", state: "done" },
+        shipping("", "done"),
+        delivered(at(order.status.deliveredAt), "now"),
       ];
     case "CANCELLED":
       // A cancelled order does not show the steps it never reached: drawing
@@ -107,13 +118,35 @@ export function timelineOf(order: Order, now: Date, carrier?: string): Milestone
       return [
         placed,
         {
-          title: `Đã huỷ · ${order.status.reason}`,
-          detail: `${clockLabel(order.status.cancelledAt)} · ${dayMonth(order.status.cancelledAt)}`,
+          title: t({
+            vi: `Đã huỷ · ${order.status.reason}`,
+            en: `Cancelled · ${cancelReasonLabel(order.status.reason, "en")}`,
+          }),
+          detail: at(order.status.cancelledAt),
           state: "late",
         },
       ];
   }
 }
+
+/**
+ * The milestones' words, in both languages (round v6 slice E4). The states are
+ * the glossary's ("Order received", "Awaiting transfer", "Paid", "Shipping",
+ * "Delivered"); the steps between them name the shop's own move, "Awaiting
+ * handover", "Handed over". "2–4 ngày" is the standard service's promise.
+ */
+const TIMELINE_WORDS = {
+  placed: { vi: "Đã nhận đơn", en: "Order received" },
+  awaitingTransfer: { vi: "Chờ chuyển khoản", en: "Awaiting transfer" },
+  awaitingHandover: { vi: "Chờ bàn giao", en: "Awaiting handover" },
+  paid: { vi: "Đã thanh toán", en: "Paid" },
+  handedOver: { vi: "Đã bàn giao", en: "Handed over" },
+  shipping: { vi: "Đang giao", en: "Shipping" },
+  delivered: { vi: "Đã giao", en: "Delivered" },
+  afterPayment: { vi: "sau khi tiền về", en: "after payment arrives" },
+  afterHandover: { vi: "sau khi bàn giao", en: "after handover" },
+  leadDays: { vi: "2–4 ngày", en: "2–4 days" },
+} as const satisfies Record<string, Pair>;
 
 /** One step as Arc's `Stepper` takes it (`registry/components/stepper/stepper.tsx`). */
 export interface TimelineStep {

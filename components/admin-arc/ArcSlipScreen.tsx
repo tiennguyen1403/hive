@@ -2,16 +2,21 @@
 
 import { FileText, Printer, ShoppingBag } from "lucide-react";
 import { FeedLogo } from "@/components/feed/FeedLogo";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { COLORS } from "@/data/colors";
+import { COLORS, colorLabel } from "@/data/colors";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
 import { isPaidFor, type AdminOrder } from "@/lib/admin-orders";
+import { storedLang } from "@/lib/admin-text";
+import { carrierLabel } from "@/lib/carrier";
 import { issueOf } from "@/lib/customer-tags";
 import { clockLabel, dayMonth } from "@/lib/datetime";
-import { LEX, issueNo, styleName } from "@/lib/lexicon";
+import { picker, plural } from "@/lib/i18n";
+import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd, orderUnits } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
+import { nameLang, productText } from "@/lib/product-text";
 import { COD_SURCHARGE_VND, deliveryOption, EXPRESS_FEE_VND } from "@/lib/shipping";
 import { Badge } from "@/registry/components/badge/badge";
 import { Breadcrumb } from "@/registry/components/breadcrumb/breadcrumb";
@@ -40,6 +45,12 @@ const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
  * shopper's note for the courier is on the slip where the courier reads it.
  * COD is stated in full, surcharge included, because it is what the courier
  * collects (`lib/shipping.ts`). The QR slot is empty and says so.
+ *
+ * In the page's language since round v6 slice E4, on screen and on paper: the
+ * glossary's "Delivery slip", each style by `productText` with the English
+ * code, the carrier by `carrierLabel`, the amounts the English way. The
+ * recipient, the address, the phone number and the customer's note are printed
+ * as stored, said in Vietnamese on an English page.
  */
 export function ArcSlipScreen({
   orders,
@@ -53,31 +64,52 @@ export function ArcSlipScreen({
   nowIso: string;
 }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
+  /** A Vietnamese name or place on an English page. */
+  const own = locale === "en" ? ("vi" as const) : undefined;
   const count = orders.length;
 
   return (
     <div className={page.page}>
       <div className={page.masthead}>
         <Breadcrumb
-          ariaLabel="Đường dẫn"
-          items={[{ label: "Đơn hàng", href: "/admin/orders" }, { label: "Phiếu giao" }]}
+          ariaLabel={t({ vi: "Đường dẫn", en: "Breadcrumb" })}
+          items={[
+            { label: t({ vi: "Đơn hàng", en: "Orders" }), href: "/admin/orders" },
+            { label: t({ vi: "Phiếu giao", en: count > 1 ? "Delivery slips" : "Delivery slip" }) },
+          ]}
         />
         <header className={page.header}>
           <div className={page.headRow}>
-            <h1 className={page.title}>{count > 1 ? `Phiếu giao · ${count} đơn` : "Phiếu giao"}</h1>
+            <h1 className={page.title}>
+              {count > 1
+                ? t({ vi: `Phiếu giao · ${count} đơn`, en: `Delivery slips · ${count} orders` })
+                : t({ vi: "Phiếu giao", en: "Delivery slip" })}
+            </h1>
             <div className={page.actions}>
-              <Badge size="sm">Dữ liệu mẫu</Badge>
+              <Badge size="sm">{t({ vi: "Dữ liệu mẫu", en: "Demo data" })}</Badge>
               {count > 0 && (
                 <Button variant="primary" size="sm" onClick={() => window.print()}>
                   <Printer {...ICON} />
-                  In {count > 1 ? `${count} phiếu` : "phiếu"}
+                  {t<React.ReactNode>({
+                    vi: <>In {count > 1 ? `${count} phiếu` : "phiếu"}</>,
+                    en: count > 1 ? `Print ${count} slips` : "Print slip",
+                  })}
                 </Button>
               )}
             </div>
           </div>
           {count > 0 && (
             <p className={page.sub}>
-              {orders.map((o) => o.code).join(" · ")} · {count} phiếu
+              {t<React.ReactNode>({
+                vi: (
+                  <>
+                    {orders.map((o) => o.code).join(" · ")} · {count} phiếu
+                  </>
+                ),
+                en: `${orders.map((o) => o.code).join(" · ")} · ${plural(count, "slip", "slips")}`,
+              })}
             </p>
           )}
         </header>
@@ -86,12 +118,15 @@ export function ArcSlipScreen({
       {count === 0 ? (
         <EmptyState
           icon={<FileText size={24} strokeWidth={1.75} aria-hidden="true" />}
-          title="Không có đơn nào để in"
-          description="Địa chỉ này in phiếu cho những mã đơn được chọn ở danh sách đơn hàng."
+          title={t({ vi: "Không có đơn nào để in", en: "No orders to print" })}
+          description={t({
+            vi: "Địa chỉ này in phiếu cho những mã đơn được chọn ở danh sách đơn hàng.",
+            en: "This page prints slips for the orders chosen in the order list.",
+          })}
           action={
             <ArcButtonLink variant="secondary" size="md" href="/admin/orders">
               <ShoppingBag {...ICON} />
-              Xem danh sách đơn
+              {t({ vi: "Xem danh sách đơn", en: "View the orders" })}
             </ArcButtonLink>
           }
         />
@@ -124,23 +159,37 @@ export function ArcSlipScreen({
 
                 <div className={styles.body}>
                   <div className={styles.recipient}>
-                    <p className={styles.label}>Người nhận</p>
+                    <p className={styles.label}>{t({ vi: "Người nhận", en: "Recipient" })}</p>
                     <p>
-                      <strong>{o.shipTo.recipient}</strong> · {formatPhone(o.shipTo.phone)}
+                      <strong lang={storedLang(o.shipTo.recipient, locale)}>{o.shipTo.recipient}</strong> · {formatPhone(o.shipTo.phone)}
                     </p>
-                    <p>
+                    <p lang={own}>
                       {o.shipTo.line}
                       {ward ? `, ${wardLabel(ward)}` : ""}
                       {province ? `, ${provinceLabel(province)}` : ""}
                     </p>
-                    <p className={styles.muted}>{carrier ?? delivery.label}</p>
-                    {edited && <p className={styles.muted}>Địa chỉ đã sửa · {edited}</p>}
-                    {o.note && <p className={styles.muted}>Ghi chú của khách: {o.note}</p>}
+                    <p className={styles.muted}>{carrierLabel(carrier ?? delivery.label, locale)}</p>
+                    {edited &&
+                      (locale === "vi" ? (
+                        <p className={styles.muted}>Địa chỉ đã sửa · {edited}</p>
+                      ) : (
+                        <p className={styles.muted}>
+                          Address changed · <span lang={storedLang(edited, locale)}>{edited}</span>
+                        </p>
+                      ))}
+                    {o.note &&
+                      (locale === "vi" ? (
+                        <p className={styles.muted}>Ghi chú của khách: {o.note}</p>
+                      ) : (
+                        <p className={styles.muted}>
+                          Customer&rsquo;s note: <span lang={storedLang(o.note, locale)}>{o.note}</span>
+                        </p>
+                      ))}
                   </div>
                   <div className={styles.qr}>
                     <span className={styles.qrBox} aria-hidden="true" />
                     {/* "· chờ" stays on the word before it (v3 slice 13). */}
-                    <span className={styles.qrText}>{"QR tra cứu đơn · chờ"}</span>
+                    <span className={styles.qrText}>{t({ vi: "QR tra cứu đơn · chờ", en: "Order lookup QR · pending" })}</span>
                   </div>
                 </div>
 
@@ -148,13 +197,16 @@ export function ArcSlipScreen({
                   <tbody>
                     {o.lines.map((l, i) => {
                       const p = catalog.byId.get(l.productId);
+                      const words = p ? productText(p, locale) : null;
                       return (
                         <tr key={`${l.productId}-${l.size}-${l.color}-${i}`}>
                           <td>
-                            <strong>{p ? styleName(p.name, p.dropNo) : "—"}</strong> · {p?.kind ?? ""}
+                            <strong lang={p ? nameLang(p, locale) : undefined}>
+                              {p && words ? styleName(words.name, p.dropNo, locale) : "—"}
+                            </strong> · {words?.kind ?? ""}
                           </td>
                           <td className={styles.nowrap}>
-                            {COLORS[l.color].label} · {l.size}
+                            {locale === "vi" ? COLORS[l.color].label : colorLabel(l.color, locale)} · {l.size}
                           </td>
                           <td className={styles.qty}>×{l.qty}</td>
                         </tr>
@@ -165,25 +217,41 @@ export function ArcSlipScreen({
 
                 <div className={styles.total}>
                   <span>
-                    {orderUnits(o)} chiếc ·{" "}
-                    {cod ? "thu khi giao" : isPaidFor(o) ? "đã thanh toán" : "chưa thanh toán"}
+                    {locale === "vi" ? (
+                      <>
+                        {orderUnits(o)} chiếc ·{" "}
+                        {cod ? "thu khi giao" : isPaidFor(o) ? "đã thanh toán" : "chưa thanh toán"}
+                      </>
+                    ) : (
+                      `${plural(orderUnits(o), "unit", "units")} · ${
+                        cod ? "collect on delivery" : isPaidFor(o) ? "paid" : "not paid"
+                      }`
+                    )}
                   </span>
-                  <strong>{vnd(orderTotalVnd(o))}</strong>
+                  <strong>{vnd(orderTotalVnd(o), locale)}</strong>
                 </div>
 
                 {cod && (
                   <div className={styles.cod}>
-                    <span>Thu hộ khi giao</span>
-                    <span>{vnd(collect)}</span>
+                    <span>{t({ vi: "Thu hộ khi giao", en: "Cash to collect" })}</span>
+                    <span>{vnd(collect, locale)}</span>
                   </div>
                 )}
 
-                <p className={styles.foot}>
-                  Mã vận đơn: {tracking ?? "chờ bàn giao"}
-                  {/* An order of fixed styles only (slice B5) belongs to no issue. */}
-                  {issue !== undefined ? ` · ${LEX.t} ${issueNo(issue)}` : ""} · in {clockLabel(nowIso)} ·{" "}
-                  {dayMonth(nowIso)}
-                </p>
+                {locale === "vi" ? (
+                  <p className={styles.foot}>
+                    Mã vận đơn: {tracking ?? "chờ bàn giao"}
+                    {/* An order of fixed styles only (slice B5) belongs to no issue. */}
+                    {issue !== undefined ? ` · ${LEX.t} ${issueNo(issue)}` : ""} · in {clockLabel(nowIso)} ·{" "}
+                    {dayMonth(nowIso)}
+                  </p>
+                ) : (
+                  <p className={styles.foot}>
+                    Tracking no.: {tracking ?? "awaiting handover"}
+                    {issue !== undefined ? ` · ${issueLabel(issue, locale)}` : ""} · printed {clockLabel(nowIso)} ·{" "}
+                    {dayMonth(nowIso, locale)}
+                  </p>
+                )}
               </section>
             );
           })}

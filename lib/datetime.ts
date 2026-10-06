@@ -20,7 +20,7 @@
  * never breaks.
  */
 
-import type { Locale } from "./i18n";
+import { plural, type Locale } from "./i18n";
 
 /** The months as British English abbreviates them, January first. */
 const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
@@ -225,23 +225,36 @@ export function isoDayFromInput(raw: string): string | null {
  * stamp says WHEN, this says HOW LONG, and the second is what decides
  * whether an order is late. Same two-unit rule as the drop countdown
  * (`closesInLabel`), and it floors at zero rather than counting a future
- * instant backwards.
+ * instant backwards. In English (round v6 slice E4) "1 day 11 hours ago".
  */
-export function sinceLabel(iso: string, now: Date): string {
+export function sinceLabel(iso: string, now: Date, locale: Locale = "vi"): string {
   const ms = Math.max(0, now.getTime() - Date.parse(iso));
   const minutes = Math.floor(ms / 60_000);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
+  if (locale === "en") return sinceEn(days, hours % 24, hours, minutes);
   if (days > 0) return `${days} ngày ${hours % 24} giờ trước`;
   if (hours > 0) return `${hours} giờ ${minutes % 60} phút trước`;
   if (minutes > 0) return `${minutes} phút trước`;
   return "vừa xong";
 }
 
-/** `"21/09 – 23/09/2026"` — an estimated delivery window. */
-export function rangeLabel(fromIso: string, toIso: string): string {
-  const a = dayMonth(fromIso);
-  const b = dayMonthYear(toIso);
+/**
+ * `sinceLabel` in English (round v6 slice E4): "1 day 11 hours ago", "3 hours
+ * 5 minutes ago", "5 minutes ago", "just now" — the same two units, each noun
+ * singular or plural by its own count.
+ */
+function sinceEn(days: number, dayHours: number, hours: number, minutes: number): string {
+  if (days > 0) return `${plural(days, "day", "days")} ${plural(dayHours, "hour", "hours")} ago`;
+  if (hours > 0) return `${plural(hours, "hour", "hours")} ${plural(minutes % 60, "minute", "minutes")} ago`;
+  if (minutes > 0) return `${plural(minutes, "minute", "minutes")} ago`;
+  return "just now";
+}
+
+/** `"21/09 – 23/09/2026"` — an estimated delivery window; in English `"21 Sep – 23 Sep 2026"`. */
+export function rangeLabel(fromIso: string, toIso: string, locale: Locale = "vi"): string {
+  const a = dayMonth(fromIso, locale);
+  const b = dayMonthYear(toIso, locale);
   return a && b ? `${a}${DASH}${b}` : "";
 }
 

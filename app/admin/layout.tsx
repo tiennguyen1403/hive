@@ -6,18 +6,28 @@ import { effectiveOrder } from "@/lib/customer-orders";
 import { lastReset, listAllOrders } from "@/lib/db/admin";
 import { loadMe } from "@/lib/db/profiles";
 import { requireAdmin } from "@/lib/db/session";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 // Arc's tokens (round v5, QĐ-37), here and not in the root layout. Every rule
 // in the file is scoped `:root:has([data-ui="admin"])`, so it acts only while
 // the Arc frame is in the page: the shop, which keeps the stylesheet after a
 // client navigation, never matches it.
 import "@/registry/foundation.css";
 
-export const metadata: Metadata = {
-  title: { default: "Quản trị", template: "%s · Quản trị · HIVE" },
-  // A back office belongs in no search index, and the rule has to sit on the
-  // layout so a screen added later cannot forget it.
-  robots: { index: false, follow: false },
-};
+/**
+ * The back office's name in every title, in the page's language since round v6
+ * slice E4: "Quản trị", and "Admin" in English (the glossary's "Try the admin").
+ * Each screen names itself in front of it ("Orders · Admin · HIVE").
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const name = picker(await getLocale())({ vi: "Quản trị", en: "Admin" });
+  return {
+    title: { default: name, template: `%s · ${name} · HIVE` },
+    // A back office belongs in no search index, and the rule has to sit on the
+    // layout so a screen added later cannot forget it.
+    robots: { index: false, follow: false },
+  };
+}
 
 /**
  * The admin shell: a fixed sidebar and the screen beside it.

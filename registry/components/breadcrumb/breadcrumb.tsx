@@ -13,6 +13,8 @@ export interface BreadcrumbItem {
   href?: string;
   /** Runs when the crumb is chosen. Without an href the crumb renders as a button, for paths that live in local state. */
   onClick?: (event: MouseEvent<HTMLElement>) => void;
+  /** HIVE patch (registry/PATCHES.md): the crumb's language when it is not the page's, on its link, button or span. */
+  lang?: string;
 }
 export interface BreadcrumbProps { items: BreadcrumbItem[]; ariaLabel?: string }
 /** Crumbs present on first render stay still; crumbs added later slide in from the path before them. */
@@ -31,9 +33,9 @@ export function Breadcrumb({ items, ariaLabel: ariaLabelProp }: BreadcrumbProps)
       exit={reduced ? { opacity: 0, transition: still } : { opacity: 0, x: -4, filter: `blur(${motionTokens.blur.subtle}px)`, transition: { duration: motionTokens.duration.instant, ease: [...motionTokens.ease.standard] } }}
       transition={reduced ? still : { duration: motionTokens.duration.standard, ease: [...motionTokens.ease.enter], layout: motionTokens.spring.smooth }}>
       {index > 0 && <NavArrowRight width={14} height={14} aria-hidden="true"/>}
-      {!current && item.href ? <Link href={item.href} data-label={item.label} onClick={item.onClick}>{item.label}</Link>
-        : !current && item.onClick ? <button type="button" data-label={item.label} onClick={item.onClick}>{item.label}</button>
-        : <span aria-current={current ? "page" : undefined} data-label={item.label}>{item.label}</span>}
+      {!current && item.href ? <Link href={item.href} data-label={item.label} lang={item.lang} onClick={item.onClick}>{item.label}</Link>
+        : !current && item.onClick ? <button type="button" data-label={item.label} lang={item.lang} onClick={item.onClick}>{item.label}</button>
+        : <span aria-current={current ? "page" : undefined} data-label={item.label} lang={item.lang}>{item.label}</span>}
     </motion.li>;
   })}</AnimatePresence></ol></nav>;
 }

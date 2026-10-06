@@ -2,6 +2,10 @@
 
 import { ArrowLeft, Check } from "lucide-react";
 import { useId, useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { storedLang } from "@/lib/admin-text";
+import { carrierLabel } from "@/lib/carrier";
+import { picker, type Locale } from "@/lib/i18n";
 import { DELIVERY_OPTIONS } from "@/lib/shipping";
 import { Button } from "@/registry/components/button/button";
 import { Input } from "@/registry/components/input/input";
@@ -19,8 +23,14 @@ const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
  * `CARRIER_OPTIONS` (`components/admin/HandoverForm.tsx`) also carried each
  * service's note for the right of its menu row; Arc's `Select` has no place
  * for one.
+ *
+ * The value stays the Vietnamese label in both languages — it is what the
+ * database stores and checks — and the label shown is the page's language
+ * (`carrierLabel`, round v6 slice E4): "Standard delivery · 2–4 days".
  */
-const CARRIER_OPTIONS = DELIVERY_OPTIONS.map((o) => ({ value: o.label, label: o.label }));
+function carrierOptions(locale: Locale) {
+  return DELIVERY_OPTIONS.map((o) => ({ value: o.label, label: carrierLabel(o.label, locale) }));
+}
 
 /** What the shopper paid for, read back off the fee on the order: the field's default. */
 function carrierFromFee(shippingFeeVnd: number): string {
@@ -38,6 +48,8 @@ function carrierFromFee(shippingFeeVnd: number): string {
  * `/track` print this exact string, and `admin_hand_over()` refuses an empty
  * one as well. It is typed in capitals, as couriers print it. While the
  * handover is on its way the button shows Arc's spinner with "Đang lưu…".
+ *
+ * In the page's language since round v6 slice E4, every word written at render.
  */
 export function ArcHandoverForm({
   shippingFeeVnd,
@@ -55,6 +67,8 @@ export function ArcHandoverForm({
   onConfirm: (carrier: string, trackingCode: string, note: string) => void;
   onCancel: () => void;
 }) {
+  const locale = useLocale();
+  const t = picker(locale);
   const titleId = useId();
   const [carrier, setCarrier] = useState(() => carrierFromFee(shippingFeeVnd));
   const [code, setCode] = useState("");
@@ -69,22 +83,32 @@ export function ArcHandoverForm({
     <section id="handover" className={styles.handover} aria-labelledby={titleId}>
       <div className={styles.panelHeading}>
         <h2 id={titleId} className={styles.panelTitle}>
-          Bàn giao
+          {t({ vi: "Bàn giao", en: "Hand over" })}
         </h2>
-        <p className={styles.panelSub}>mã vận đơn bắt buộc</p>
+        <p className={styles.panelSub}>{t({ vi: "mã vận đơn bắt buộc", en: "tracking number required" })}</p>
       </div>
       <div className={styles.pair}>
         <Select
-          label="Hình thức giao"
-          options={CARRIER_OPTIONS}
+          label={t({ vi: "Hình thức giao", en: "Delivery service" })}
+          options={carrierOptions(locale)}
           value={carrier}
           onValueChange={setCarrier}
         />
         <Input
-          label="Mã vận đơn"
+          label={t({ vi: "Mã vận đơn", en: "Tracking number" })}
           placeholder={placeholder}
-          description="Khách thấy mã này ở tra cứu đơn và Đơn hàng."
-          error={error ? "Nhập mã vận đơn để khách tra được đơn." : undefined}
+          description={t({
+            vi: "Khách thấy mã này ở tra cứu đơn và Đơn hàng.",
+            en: "The customer sees this number in Track an order and Orders.",
+          })}
+          error={
+            error
+              ? t({
+                  vi: "Nhập mã vận đơn để khách tra được đơn.",
+                  en: "Enter a tracking number so the customer can track the order.",
+                })
+              : undefined
+          }
           value={code}
           onChange={(e) => {
             setCode(e.target.value.toUpperCase());
@@ -93,15 +117,17 @@ export function ArcHandoverForm({
         />
       </div>
       <Input
-        label="Ghi chú nội bộ khi bàn giao · không bắt buộc"
-        placeholder="VD: gửi 2 kiện"
+        label={t({ vi: "Ghi chú nội bộ khi bàn giao · không bắt buộc", en: "Internal note on handover · optional" })}
+        placeholder={t({ vi: "VD: gửi 2 kiện", en: "E.g. sent as 2 parcels" })}
         value={note}
+        // What is being typed, said in Vietnamese on an English page when it is (as the order's note).
+        lang={storedLang(note, locale)}
         onChange={(e) => setNote(e.target.value)}
       />
       <div className={styles.formActions}>
         <Button variant="secondary" size="sm" disabled={pending} onClick={onCancel}>
           {pending ? null : <ArrowLeft {...ICON} />}
-          Để sau
+          {t({ vi: "Để sau", en: "Later" })}
         </Button>
         <Button
           variant="primary"
@@ -114,7 +140,11 @@ export function ArcHandoverForm({
           }}
         >
           {ready && !pending ? <Check {...ICON} /> : null}
-          {pending ? "Đang lưu…" : ready ? "Xác nhận bàn giao" : "Nhập mã vận đơn"}
+          {pending
+            ? t({ vi: "Đang lưu…", en: "Saving…" })
+            : ready
+              ? t({ vi: "Xác nhận bàn giao", en: "Confirm handover" })
+              : t({ vi: "Nhập mã vận đơn", en: "Enter tracking number" })}
         </Button>
       </div>
     </section>

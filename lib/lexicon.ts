@@ -225,12 +225,23 @@ export function issueNo(no: number): string {
 }
 
 /**
+ * The letter in front of an issue's code: "S" for "Số", and in English "D" for
+ * "Drop" (round v6 slice E4, the main session's decision of 02/10/2026, to
+ * match the glossary's "Drop 05").
+ */
+const ISSUE_CODE_LETTER: Pair = { vi: "S", en: "D" };
+
+/**
  * `"S05"` — an issue as a CODE, the prefix a style of that issue wears in
  * front of its name (slice B5, approved on the fixed-styles board, round 4).
  * Its lower case is also the prefix of the style's address: `s05-khoi`.
+ *
+ * In English `"D05"` (round v6 slice E4). The address never changes with the
+ * language: every caller that builds one (`lib/catalog.ts`,
+ * `lib/catalog-admin.ts`) asks for the Vietnamese code, the default.
  */
-export function issueCode(no: number): string {
-  return `S${issueNo(no)}`;
+export function issueCode(no: number, locale: Locale = "vi"): string {
+  return `${pick(ISSUE_CODE_LETTER, locale)}${issueNo(no)}`;
 }
 
 /**
@@ -243,9 +254,13 @@ export function issueCode(no: number): string {
  * and the dash is a NO-BREAK space (U+00A0), so "S05 –" never splits across
  * two lines; after the en dash (U+2013) an ordinary space, so a long name may
  * wrap there.
+ *
+ * In English the code is the English one, `"D05 – KHÓI"` (round v6 slice E4);
+ * the name is whatever the caller hands in — `productText(…).name` on an
+ * English screen, so a fixed style reads "PLAIN TEE".
  */
-export function styleName(name: string, dropNo: number | null): string {
-  return dropNo === null ? name : `${stylePrefix(dropNo)} ${name}`;
+export function styleName(name: string, dropNo: number | null, locale: Locale = "vi"): string {
+  return dropNo === null ? name : `${stylePrefix(dropNo, locale)} ${name}`;
 }
 
 /**
@@ -275,10 +290,10 @@ export function styleInList(shown: string, qty?: number): string {
  * back office's name field shows as a fixed segment in front of the typed
  * name (v3 slice 12, the fixed-styles board, round 4). The same no-break
  * space and en dash as the shown name, so the segment and the name the shop
- * prints can never drift apart.
+ * prints can never drift apart. In English `"D06 –"`.
  */
-export function stylePrefix(no: number): string {
-  return `${issueCode(no)} –`;
+export function stylePrefix(no: number, locale: Locale = "vi"): string {
+  return `${issueCode(no, locale)} –`;
 }
 
 /**

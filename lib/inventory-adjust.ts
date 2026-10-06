@@ -1,5 +1,6 @@
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
 import { onHandOf } from "./inventory";
+import type { Locale } from "./i18n";
 
 /**
  * "Điều chỉnh tồn kho" — the rules behind the size × colour grid.
@@ -145,6 +146,35 @@ export const STOCK_REASONS: readonly string[] = [
 
 export function isStockReason(value: string): boolean {
   return STOCK_REASONS.includes(value);
+}
+
+/**
+ * Every reason the shelf can move for, in English (round v6 slice E4): the
+ * sheet's four, "Sửa mẫu" and "Nhập thêm". The database keeps the Vietnamese
+ * (`admin_adjust_stock()` checks it, the log stores it); it is translated where
+ * it is printed, through a table keyed by the stored words composed, trimmed and
+ * in lower case, as the cancel reasons are (`cancelReasonLabel`, slice E2).
+ */
+const STOCK_REASON_EN: Readonly<Record<string, string>> = {
+  "hàng trả về": "Returned",
+  "kiểm kê lệch": "Stocktake mismatch",
+  "hư hỏng": "Damaged",
+  "khác": "Other",
+  "sửa mẫu": "Style edit",
+  "nhập thêm": "Restock",
+};
+
+const reasonKey = (reason: string) => reason.normalize("NFC").trim().toLocaleLowerCase("vi");
+
+/** A stored reason in one language: as stored in Vietnamese; in English the table's words, or as stored. */
+export function stockReasonLabel(reason: string, locale: Locale = "vi"): string {
+  if (locale === "vi") return reason;
+  return STOCK_REASON_EN[reasonKey(reason)] ?? reason;
+}
+
+/** True when the reason is one of the app's own, so its English is the table's and not the stored words. */
+export function isKnownStockReason(reason: string): boolean {
+  return reasonKey(reason) in STOCK_REASON_EN;
 }
 
 /**

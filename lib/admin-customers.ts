@@ -3,6 +3,7 @@ import type { AdminOrder } from "./admin-orders";
 import type { Catalog } from "./catalog";
 import { customerFacts, type CustomerFacts } from "./customer-tags";
 import { DEMO_ADMIN } from "./demo-admin";
+import type { Locale } from "./i18n";
 
 /**
  * Who the shop's customers are, since slice B3a: the rows of
@@ -73,10 +74,11 @@ export function customerRows(
   orders: AdminOrder[],
   openIssueNo: number | null,
   now: Date,
+  locale: Locale = "vi",
 ): CustomerRow[] {
   return customers.filter(isShopper).map((customer) => ({
     customer,
-    facts: customerFacts(catalog, ordersOfCustomer(orders, customer), openIssueNo, now),
+    facts: customerFacts(catalog, ordersOfCustomer(orders, customer), openIssueNo, now, locale),
   }));
 }
 

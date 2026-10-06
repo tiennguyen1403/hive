@@ -4,8 +4,9 @@ import { Check, MoreHorizontal, Package, Pencil, Printer, Send, X } from "lucide
 import Image from "next/image";
 import Link from "next/link";
 import { useId, useMemo, useRef, useState, useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { COLORS } from "@/data/colors";
+import { COLORS, colorLabel } from "@/data/colors";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
 import type { Order } from "@/data/types";
 import {
@@ -19,8 +20,9 @@ import {
 import type { ActionState } from "@/lib/actions/state";
 import { customerKey, isShopper } from "@/lib/admin-customers";
 import { canCancel, canEditAddress, isPaidFor, nextMove, type AdminOrder } from "@/lib/admin-orders";
-import { HANDOVER_LATE_DAYS, orderItemsLabel } from "@/lib/admin-rows";
+import { HANDOVER_LATE_DAYS, orderItemsLabel, orderItemsLang } from "@/lib/admin-rows";
 import { timelineOf, timelineSteps } from "@/lib/admin-timeline";
+import { carrierLabel } from "@/lib/carrier";
 import type { Catalog } from "@/lib/catalog";
 import { currentIssueNo } from "@/lib/current-issue";
 import { effectiveOrder } from "@/lib/customer-orders";
@@ -28,13 +30,16 @@ import { customerFacts, issueOf } from "@/lib/customer-tags";
 import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "@/lib/datetime";
 import type { AdminEvent } from "@/lib/db/event-dto";
 import { codFeeRow } from "@/lib/feed-order";
-import { LEX, issueNo, styleName } from "@/lib/lexicon";
+import { picker, plural, type Locale } from "@/lib/i18n";
+import { LEX, issueLabel, issueNo, lexicon, styleName } from "@/lib/lexicon";
 import { plainVnd, vnd } from "@/lib/money";
-import { PAYMENT_LABEL, STATE_LABEL } from "@/lib/order-labels";
+import { adminPaymentLabel, stateLabel } from "@/lib/order-labels";
 import { addressEditReason, internalNotes } from "@/lib/order-notes";
 import { orderSubtotalVnd, orderTotalVnd, orderUnits, transferReference } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
+import { storedLang } from "@/lib/admin-text";
 import { photoUrl } from "@/lib/photos";
+import { nameLang, productText } from "@/lib/product-text";
 import { deliveryOption, EXPRESS_FEE_VND } from "@/lib/shipping";
 import { Avatar } from "@/registry/components/avatar/avatar";
 import { Badge } from "@/registry/components/badge/badge";
@@ -50,6 +55,7 @@ import { ArcHandoverForm } from "./ArcHandoverForm";
 import { monogramName, TAG_TONE, TONE } from "./ArcOrderCells";
 import styles from "./ArcOrderScreen.module.css";
 import page from "./ArcPage.module.css";
+import { phraseNode } from "./ArcPhrase";
 import { useArcToast } from "./useArcToast";
 
 /** Lucide at 16, Arc's stroke (skill-design.md). Decorative: every icon sits beside its label. */
@@ -77,6 +83,13 @@ type Busy = "PAY" | "HANDOVER" | "DELIVER" | "CANCEL" | "NOTE" | "ADDRESS" | nul
  * The next move sits in the one muted block, with the page's one primary
  * button; "Bàn giao" opens its form in the same place. A delivered or a
  * cancelled order has no next step, and no block.
+ *
+ * In the page's language since round v6 slice E4 (`useLocale()`): the
+ * glossary's states and ways of paying, a style by `productText` with the
+ * English code ("D05 – MUỐI"), the carrier by `carrierLabel`, the amounts the
+ * English way. What somebody typed or the customer is called is printed as
+ * stored, and on an English page its element says `lang="vi"`. The Vietnamese
+ * markup is unchanged.
  */
 export function ArcOrderScreen({
   order: base,
@@ -96,6 +109,14 @@ export function ArcOrderScreen({
   openHandover: boolean;
 }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
+  /**
+   * The delivery address on an English page: printed as stored, said in
+   * Vietnamese (QĐ-40), as the shop's own pages mark it. A name or a typed
+   * reason is marked only when it is Vietnamese (`storedLang`).
+   */
+  const own = locale === "en" ? ("vi" as const) : undefined;
   const say = useArcToast();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const order = effectiveOrder(base, now);
@@ -130,10 +151,10 @@ export function ArcOrderScreen({
   }
 
   const owner = order.owner && isShopper(order.owner) ? order.owner : null;
-  const state = STATE_LABEL[order.status.state];
+  const state = stateLabel(order.status.state, locale);
   const issue = issueOf(catalog, order);
   const subtotal = orderSubtotalVnd(order);
-  const codFee = codFeeRow(order);
+  const codFee = codFeeRow(order, locale);
   const total = orderTotalVnd(order);
   const province = findProvince(order.shipTo.provinceCode);
   const ward = findWard(order.shipTo.provinceCode, order.shipTo.wardCode);
@@ -144,17 +165,22 @@ export function ArcOrderScreen({
   // the customer's own page (slice 5a): the one selling, else the one that
   // closed last; 0, a catalogue without issues, is none.
   const facts = owner
-    ? customerFacts(catalog, customerOrders, currentIssueNo(catalog, now) || null, now)
+    ? customerFacts(catalog, customerOrders, currentIssueNo(catalog, now) || null, now, locale)
     : null;
-  const notes = internalNotes(events, order);
-  const journey = timelineSteps(timelineOf(order, now, carrier));
+  const notes = internalNotes(events, order, locale);
+  const journey = timelineSteps(timelineOf(order, now, carrier, locale));
 
   /** Before handover, the address can still be changed. After, it cannot. */
   const beforeHandover = canEditAddress(order, now);
 
   function addNote() {
     const text = note.trim();
-    if (!text) return say("Ghi chú trống thì chưa có gì để lưu", "error");
+    if (!text) {
+      return say(
+        t({ vi: "Ghi chú trống thì chưa có gì để lưu", en: "The note is empty, nothing to save" }),
+        "error",
+      );
+    }
     act("NOTE", () => noteOrder(code, text), () => setNote(""));
   }
 
@@ -162,8 +188,8 @@ export function ArcOrderScreen({
     <div className={page.page}>
       <div className={page.masthead}>
         <Breadcrumb
-          ariaLabel="Đường dẫn"
-          items={[{ label: "Đơn hàng", href: "/admin/orders" }, { label: code }]}
+          ariaLabel={t({ vi: "Đường dẫn", en: "Breadcrumb" })}
+          items={[{ label: t({ vi: "Đơn hàng", en: "Orders" }), href: "/admin/orders" }, { label: code }]}
         />
         <header className={page.header}>
           <div className={page.headRow}>
@@ -174,25 +200,25 @@ export function ArcOrderScreen({
               </Badge>
             </div>
             <div className={page.actions} ref={actions}>
-              <Badge size="sm">Dữ liệu mẫu</Badge>
+              <Badge size="sm">{t({ vi: "Dữ liệu mẫu", en: "Demo data" })}</Badge>
               {/* No mail server is connected, so nothing can be sent: the
                   button says so rather than pretending (DESIGN.md §9 rule 3).
                   Disabled, so no icon. */}
               <Button variant="secondary" size="sm" disabled>
-                Gửi lại xác nhận · đang chuẩn bị
+                {t({ vi: "Gửi lại xác nhận · đang chuẩn bị", en: "Resend confirmation · coming soon" })}
               </Button>
               <ArcButtonLink variant="secondary" size="sm" href={`/admin/slips?codes=${code}`}>
                 <Printer {...ICON} />
-                In phiếu giao
+                {t({ vi: "In phiếu giao", en: "Print delivery slip" })}
               </ArcButtonLink>
               {canCancel(order, now) && (
                 <DropdownMenu
                   iconOnly
-                  label="Thao tác khác"
+                  label={t({ vi: "Thao tác khác", en: "More actions" })}
                   icon={<MoreHorizontal {...ICON} />}
                   items={[
                     {
-                      label: "Huỷ đơn",
+                      label: t({ vi: "Huỷ đơn", en: "Cancel order" }),
                       icon: <X {...ICON} />,
                       destructive: true,
                       onSelect: () => setCancelling(true),
@@ -202,13 +228,30 @@ export function ArcOrderScreen({
               )}
             </div>
           </div>
-          <p className={page.sub}>
-            Đặt {clockLabel(order.placedAt)} · {dayMonth(order.placedAt)}
-            {owner ? ` · ${owner.name} · ${formatPhone(order.shipTo.phone)}` : ""} ·{" "}
-            {PAYMENT_LABEL[order.payment]}
-            {/* An order of fixed styles only (slice B5) belongs to no issue. */}
-            {issue !== undefined ? ` · ${LEX.t} ${issueNo(issue)}` : ""}
-          </p>
+          {locale === "vi" ? (
+            <p className={page.sub}>
+              Đặt {clockLabel(order.placedAt)} · {dayMonth(order.placedAt)}
+              {owner ? ` · ${owner.name} · ${formatPhone(order.shipTo.phone)}` : ""} ·{" "}
+              {adminPaymentLabel(order.payment)}
+              {/* An order of fixed styles only (slice B5) belongs to no issue. */}
+              {issue !== undefined ? ` · ${LEX.t} ${issueNo(issue)}` : ""}
+            </p>
+          ) : (
+            <p className={page.sub}>
+              Placed {clockLabel(order.placedAt)} · {dayMonth(order.placedAt, locale)}
+              {owner ? (
+                <>
+                  {" · "}
+                  <span lang={storedLang(owner.name, locale)}>{owner.name}</span>
+                  {` · ${formatPhone(order.shipTo.phone)}`}
+                </>
+              ) : (
+                ""
+              )}{" "}
+              · {adminPaymentLabel(order.payment, locale)}
+              {issue !== undefined ? ` · ${issueLabel(issue, locale)}` : ""}
+            </p>
+          )}
         </header>
       </div>
 
@@ -231,6 +274,7 @@ export function ArcOrderScreen({
           catalog={catalog}
           order={order}
           now={now}
+          locale={locale}
           busy={busy}
           onPaid={() => act("PAY", () => markPaid([code]))}
           onHandover={() => setHanding(true)}
@@ -244,30 +288,36 @@ export function ArcOrderScreen({
             <div className={styles.panelHead}>
               <div className={styles.panelHeading}>
                 <h2 id={ids.lines} className={styles.panelTitle}>
-                  Món trong đơn
+                  {t({ vi: "Món trong đơn", en: "Items in this order" })}
                 </h2>
-                <p className={styles.panelSub}>{orderUnits(order)} chiếc</p>
+                <p className={styles.panelSub}>
+                  {t<React.ReactNode>({
+                    vi: <>{orderUnits(order)} chiếc</>,
+                    en: plural(orderUnits(order), "unit", "units"),
+                  })}
+                </p>
               </div>
             </div>
             <table className={styles.lines}>
               <thead>
                 <tr>
-                  <th scope="col">Mẫu</th>
-                  <th scope="col">Màu · size</th>
+                  <th scope="col">{t({ vi: "Mẫu", en: "Style" })}</th>
+                  <th scope="col">{t({ vi: "Màu · size", en: "Colour · size" })}</th>
                   <th scope="col" className={styles.num}>
-                    <abbr title="Số lượng">SL</abbr>
+                    <abbr title={t({ vi: "Số lượng", en: "Quantity" })}>{t({ vi: "SL", en: "Qty" })}</abbr>
                   </th>
                   <th scope="col" className={styles.num}>
-                    Đơn giá
+                    {t({ vi: "Đơn giá", en: "Price" })}
                   </th>
                   <th scope="col" className={styles.num}>
-                    Thành tiền
+                    {t({ vi: "Thành tiền", en: "Amount" })}
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {order.lines.map((l, i) => {
                   const p = catalog.byId.get(l.productId);
+                  const words = p ? productText(p, locale) : null;
                   return (
                     <tr key={`${l.productId}-${l.size}-${l.color}-${i}`}>
                       <td>
@@ -280,17 +330,19 @@ export function ArcOrderScreen({
                             height={45}
                           />
                           <span>
-                            <span className={styles.itemName}>{p ? styleName(p.name, p.dropNo) : "—"}</span>{" "}
-                            <span className={styles.itemKind}>· {p?.kind ?? ""}</span>
+                            <span className={styles.itemName} lang={p ? nameLang(p, locale) : undefined}>
+                              {p && words ? styleName(words.name, p.dropNo, locale) : "—"}
+                            </span>{" "}
+                            <span className={styles.itemKind}>· {words?.kind ?? ""}</span>
                           </span>
                         </span>
                       </td>
                       <td className={styles.nowrap}>
-                        {COLORS[l.color].label} · {l.size}
+                        {locale === "vi" ? COLORS[l.color].label : colorLabel(l.color, locale)} · {l.size}
                       </td>
                       <td className={styles.num}>{l.qty}</td>
-                      <td className={styles.num}>{plainVnd(l.unitPriceVnd)}</td>
-                      <td className={styles.num}>{plainVnd(l.unitPriceVnd * l.qty)}</td>
+                      <td className={styles.num}>{plainVnd(l.unitPriceVnd, locale)}</td>
+                      <td className={styles.num}>{plainVnd(l.unitPriceVnd * l.qty, locale)}</td>
                     </tr>
                   );
                 })}
@@ -298,18 +350,21 @@ export function ArcOrderScreen({
             </table>
             <dl className={styles.sums}>
               <div className={styles.sumRow}>
-                <dt>Tạm tính</dt>
-                <dd>{vnd(subtotal)}</dd>
+                <dt>{t({ vi: "Tạm tính", en: "Subtotal" })}</dt>
+                <dd>{vnd(subtotal, locale)}</dd>
               </div>
               {order.discountVnd > 0 && (
                 <div className={styles.sumRow}>
-                  <dt>Giảm giá{order.promo ? ` · ${order.promo}` : ""}</dt>
-                  <dd>−{vnd(order.discountVnd)}</dd>
+                  <dt>
+                    {t({ vi: "Giảm giá", en: "Discount" })}
+                    {order.promo ? ` · ${order.promo}` : ""}
+                  </dt>
+                  <dd>−{vnd(order.discountVnd, locale)}</dd>
                 </div>
               )}
               <div className={styles.sumRow}>
-                <dt>Phí giao</dt>
-                <dd>{vnd(order.shippingFeeVnd)}</dd>
+                <dt>{t({ vi: "Phí giao", en: "Delivery" })}</dt>
+                <dd>{vnd(order.shippingFeeVnd, locale)}</dd>
               </div>
               {/* An order placed COD since slice B2 carries the surcharge in
                   its total; without its line the sums would not add up.
@@ -326,12 +381,12 @@ export function ArcOrderScreen({
                     money came, is the screen inventing a payment. */}
                 <dt>
                   {order.status.state === "CANCELLED"
-                    ? "Tổng đơn đã huỷ"
+                    ? t({ vi: "Tổng đơn đã huỷ", en: "Cancelled order total" })
                     : isPaidFor(order)
-                      ? "Tổng đã thanh toán"
-                      : "Tổng cần thu"}
+                      ? t({ vi: "Tổng đã thanh toán", en: "Total paid" })
+                      : t({ vi: "Tổng cần thu", en: "Total to collect" })}
                 </dt>
-                <dd>{vnd(total)}</dd>
+                <dd>{vnd(total, locale)}</dd>
               </div>
             </dl>
           </section>
@@ -340,9 +395,9 @@ export function ArcOrderScreen({
             <div className={styles.panelHead}>
               <div className={styles.panelHeading}>
                 <h2 id={ids.notes} className={styles.panelTitle}>
-                  Ghi chú nội bộ
+                  {t({ vi: "Ghi chú nội bộ", en: "Internal notes" })}
                 </h2>
-                <p className={styles.panelSub}>khách không thấy</p>
+                <p className={styles.panelSub}>{t({ vi: "khách không thấy", en: "hidden from the customer" })}</p>
               </div>
             </div>
             {notes.length > 0 && (
@@ -350,19 +405,21 @@ export function ArcOrderScreen({
                 {notes.map((n, i) => (
                   <li className={n.system ? `${styles.note} ${styles.noteSystem}` : styles.note} key={`${n.at}-${i}`}>
                     <span className={styles.noteMeta}>
-                      {n.author || "Hệ thống"} · {clockLabel(n.at)} · {dayMonth(n.at)}
+                      {n.author || t({ vi: "Hệ thống", en: "System" })} · {clockLabel(n.at)} · {dayMonth(n.at, locale)}
                     </span>
-                    {n.text}
+                    {phraseNode(n.text)}
                   </li>
                 ))}
               </ul>
             )}
             <div className={styles.addNote}>
               <Input
-                label="Ghi chú nội bộ"
+                label={t({ vi: "Ghi chú nội bộ", en: "Internal note" })}
                 hideLabel
-                placeholder="Thêm ghi chú…"
+                placeholder={t({ vi: "Thêm ghi chú…", en: "Add a note…" })}
                 value={note}
+                // What is being typed, said in Vietnamese on an English page when it is (as the address form's reason).
+                lang={storedLang(note, locale)}
                 disabled={busy === "NOTE"}
                 onChange={(e) => setNote(e.target.value)}
                 onKeyDown={(e) => {
@@ -377,7 +434,7 @@ export function ArcOrderScreen({
                 onClick={addNote}
               >
                 {busy === null ? <Send {...ICON} /> : null}
-                {busy === "NOTE" ? "Đang lưu…" : "Thêm"}
+                {busy === "NOTE" ? t({ vi: "Đang lưu…", en: "Saving…" }) : t({ vi: "Thêm", en: "Add" })}
               </Button>
             </div>
           </section>
@@ -387,7 +444,7 @@ export function ArcOrderScreen({
           <section className={styles.panel} aria-labelledby={ids.address}>
             <div className={styles.panelHead}>
               <h2 id={ids.address} className={styles.panelTitle}>
-                Giao tới
+                {t({ vi: "Giao tới", en: "Deliver to" })}
               </h2>
               {beforeHandover && !editingAddress && (
                 <Button
@@ -397,7 +454,7 @@ export function ArcOrderScreen({
                   onClick={() => setEditingAddress(true)}
                 >
                   <Pencil {...ICON} />
-                  Sửa
+                  {t({ vi: "Sửa", en: "Edit" })}
                 </Button>
               )}
             </div>
@@ -418,21 +475,28 @@ export function ArcOrderScreen({
               <>
                 <div className={styles.address}>
                   <p>
-                    <strong>{order.shipTo.recipient}</strong> · {formatPhone(order.shipTo.phone)}
+                    <strong lang={storedLang(order.shipTo.recipient, locale)}>{order.shipTo.recipient}</strong> · {formatPhone(order.shipTo.phone)}
                   </p>
-                  <p>
+                  <p lang={own}>
                     {order.shipTo.line}
                     {ward ? `, ${wardLabel(ward)}` : ""}
                     {province ? `, ${provinceLabel(province)}` : ""}
                   </p>
-                  <p className={styles.muted}>{delivery.label}</p>
+                  <p className={styles.muted}>{carrierLabel(delivery.label, locale)}</p>
                 </div>
-                {editReason && <p className={styles.fine}>Đã sửa địa chỉ · lý do: {editReason}</p>}
+                {editReason &&
+                  (locale === "vi" ? (
+                    <p className={styles.fine}>Đã sửa địa chỉ · lý do: {editReason}</p>
+                  ) : (
+                    <p className={styles.fine}>
+                      Address changed · reason: <span lang={storedLang(editReason, locale)}>{editReason}</span>
+                    </p>
+                  ))}
                 {!beforeHandover && (
                   <p className={styles.fine}>
                     {order.status.state === "CANCELLED"
-                      ? "Đơn đã huỷ, không sửa được."
-                      : "Đã bàn giao, không sửa được."}
+                      ? t({ vi: "Đơn đã huỷ, không sửa được.", en: "The order is cancelled and can't be changed." })
+                      : t({ vi: "Đã bàn giao, không sửa được.", en: "Handed over, so it can't be changed." })}
                   </p>
                 )}
               </>
@@ -442,15 +506,15 @@ export function ArcOrderScreen({
           <section className={styles.panel} aria-labelledby={ids.journey}>
             <div className={styles.panelHead}>
               <h2 id={ids.journey} className={styles.panelTitle}>
-                Hành trình
+                {t({ vi: "Hành trình", en: "Timeline" })}
               </h2>
             </div>
             <Stepper
               orientation="vertical"
               steps={journey.steps}
               current={journey.current}
-              label="Hành trình"
-              completeLabel="Đã xong mọi mốc"
+              label={t({ vi: "Hành trình", en: "Timeline" })}
+              completeLabel={t({ vi: "Đã xong mọi mốc", en: "All steps complete" })}
             />
           </section>
 
@@ -458,16 +522,21 @@ export function ArcOrderScreen({
             <section className={styles.panel} aria-labelledby={ids.customer}>
               <div className={styles.panelHead}>
                 <h2 id={ids.customer} className={styles.panelTitle}>
-                  Khách
+                  {t({ vi: "Khách", en: "Customer" })}
                 </h2>
                 <Link className={styles.textLink} href={`/admin/customers/${customerKey(owner)}`}>
-                  Hồ sơ
+                  {t({ vi: "Hồ sơ", en: "Profile" })}
                 </Link>
               </div>
               <div className={styles.who}>
-                <Avatar name={monogramName(owner.name)} size="md" aria-hidden="true" />
+                <Avatar
+                  name={monogramName(owner.name)}
+                  size="md"
+                  aria-hidden="true"
+                  lang={storedLang(owner.name, locale)}
+                />
                 <p className={styles.whoName}>
-                  {owner.name}
+                  {storedLang(owner.name, locale) ? <span lang="vi">{owner.name}</span> : owner.name}
                   {facts.tag && (
                     <Badge tone={TAG_TONE[facts.tag.tone]} size="sm">
                       {facts.tag.label}
@@ -475,11 +544,23 @@ export function ArcOrderScreen({
                   )}
                 </p>
                 <p className={styles.whoFacts}>
-                  {facts.orders.length} đơn · {vnd(facts.spentVnd)} ·{" "}
-                  {facts.issues.length > 0
-                    ? `mua ${LEX.tl} ${facts.issues.map((n) => issueNo(n)).join(", ")}`
-                    : "chưa có đơn đã thanh toán"}{" "}
-                  · {owner.email}
+                  {locale === "vi" ? (
+                    <>
+                      {facts.orders.length} đơn · {vnd(facts.spentVnd)} ·{" "}
+                      {facts.issues.length > 0
+                        ? `mua ${LEX.tl} ${facts.issues.map((n) => issueNo(n)).join(", ")}`
+                        : "chưa có đơn đã thanh toán"}{" "}
+                      · {owner.email}
+                    </>
+                  ) : (
+                    <>
+                      {plural(facts.orders.length, "order", "orders")} · {vnd(facts.spentVnd, locale)} ·{" "}
+                      {facts.issues.length > 0
+                        ? `bought in ${lexicon(locale).t} ${facts.issues.map((n) => issueNo(n)).join(", ")}`
+                        : "no paid orders yet"}{" "}
+                      · {owner.email}
+                    </>
+                  )}
                 </p>
               </div>
             </section>
@@ -526,6 +607,7 @@ function NextStep({
   catalog,
   order,
   now,
+  locale,
   busy,
   onPaid,
   onHandover,
@@ -534,12 +616,24 @@ function NextStep({
   catalog: Catalog;
   order: Order;
   now: Date;
+  locale: Locale;
   busy: Busy;
   onPaid: () => void;
   onHandover: () => void;
   onDelivered: () => void;
 }) {
   const move = nextMove(order, now);
+  const t = picker(locale);
+  const total = vnd(orderTotalVnd(order), locale);
+  const items = orderItemsLabel(catalog, order, locale);
+  /** The items, said in Vietnamese on an English page when every name in them is (`orderItemsLang`). */
+  const itemsNode = (
+    <span lang={orderItemsLang(catalog, order, locale)}>{items}</span>
+  );
+  const late = (days: number) =>
+    days >= HANDOVER_LATE_DAYS
+      ? t({ vi: ` · trễ ${days} ngày`, en: ` · ${plural(days, "day", "days")} late` })
+      : "";
   const payButton = (
     <Button
       variant="primary"
@@ -549,21 +643,31 @@ function NextStep({
       onClick={onPaid}
     >
       {busy === null ? <Check {...ICON} /> : null}
-      {busy === "PAY" ? "Đang lưu…" : "Đã nhận tiền"}
+      {busy === "PAY" ? t({ vi: "Đang lưu…", en: "Saving…" }) : t({ vi: "Đã nhận tiền", en: "Mark as paid" })}
     </Button>
   );
   const handoverButton = (
     <Button variant="primary" size="sm" disabled={busy !== null} onClick={onHandover}>
       {busy === null ? <Package {...ICON} /> : null}
-      Bàn giao
+      {t({ vi: "Bàn giao", en: "Hand over" })}
     </Button>
   );
+  const confirmPaid = t({ vi: "Bước tiếp theo: xác nhận đã nhận tiền", en: "Next step: confirm the payment" });
+  const packAndHand = t({ vi: "Bước tiếp theo: đóng gói và bàn giao", en: "Next step: pack and hand over" });
 
   if (order.status.state === "AWAITING_TRANSFER" && move === "MARK_PAID") {
     return (
-      <Block title="Bước tiếp theo: xác nhận đã nhận tiền" button={payButton}>
-        Hạn {dateTimeLabel(order.status.dueAt)} · {vnd(orderTotalVnd(order))} · nội dung{" "}
-        {transferReference(order.code)}
+      <Block title={confirmPaid} button={payButton}>
+        {locale === "vi" ? (
+          <>
+            Hạn {dateTimeLabel(order.status.dueAt)} · {vnd(orderTotalVnd(order))} · nội dung{" "}
+            {transferReference(order.code)}
+          </>
+        ) : (
+          <>
+            Due {dateTimeLabel(order.status.dueAt, locale)} · {total} · reference {transferReference(order.code)}
+          </>
+        )}
       </Block>
     );
   }
@@ -572,25 +676,48 @@ function NextStep({
   // because no payment gateway is connected to confirm it.
   if (order.status.state === "RECEIVED") {
     const days = Math.floor((now.getTime() - Date.parse(order.placedAt)) / 86_400_000);
+    if (locale === "vi") {
+      return move === "HAND_OVER" ? (
+        <Block title={packAndHand} button={handoverButton}>
+          Đã nhận đơn {sinceLabel(order.placedAt, now)} · COD, thu {vnd(orderTotalVnd(order))} khi giao ·{" "}
+          {orderUnits(order)} chiếc {orderItemsLabel(catalog, order)}
+          {days >= HANDOVER_LATE_DAYS ? ` · trễ ${days} ngày` : ""}
+        </Block>
+      ) : (
+        <Block title={confirmPaid} button={payButton}>
+          {adminPaymentLabel(order.payment)} · đối chiếu tay · {vnd(orderTotalVnd(order))}
+        </Block>
+      );
+    }
     return move === "HAND_OVER" ? (
-      <Block title="Bước tiếp theo: đóng gói và bàn giao" button={handoverButton}>
-        Đã nhận đơn {sinceLabel(order.placedAt, now)} · COD, thu {vnd(orderTotalVnd(order))} khi giao ·{" "}
-        {orderUnits(order)} chiếc {orderItemsLabel(catalog, order)}
-        {days >= HANDOVER_LATE_DAYS ? ` · trễ ${days} ngày` : ""}
+      <Block title={packAndHand} button={handoverButton}>
+        Order received {sinceLabel(order.placedAt, now, locale)} · COD, collect {total} on delivery ·{" "}
+        {plural(orderUnits(order), "unit", "units")}: {itemsNode}
+        {late(days)}
       </Block>
     ) : (
-      <Block title="Bước tiếp theo: xác nhận đã nhận tiền" button={payButton}>
-        {PAYMENT_LABEL[order.payment]} · đối chiếu tay · {vnd(orderTotalVnd(order))}
+      <Block title={confirmPaid} button={payButton}>
+        {adminPaymentLabel(order.payment, locale)} · checked by hand · {total}
       </Block>
     );
   }
   if (order.status.state === "PAID") {
     const days = Math.floor((now.getTime() - Date.parse(order.status.paidAt)) / 86_400_000);
     return (
-      <Block title="Bước tiếp theo: đóng gói và bàn giao" button={handoverButton}>
-        Đã thanh toán {sinceLabel(order.status.paidAt, now)} · {orderUnits(order)} chiếc{" "}
-        {orderItemsLabel(catalog, order)}
-        {days >= HANDOVER_LATE_DAYS ? ` · trễ ${days} ngày` : ""}
+      <Block title={packAndHand} button={handoverButton}>
+        {locale === "vi" ? (
+          <>
+            Đã thanh toán {sinceLabel(order.status.paidAt, now)} · {orderUnits(order)} chiếc{" "}
+            {orderItemsLabel(catalog, order)}
+            {days >= HANDOVER_LATE_DAYS ? ` · trễ ${days} ngày` : ""}
+          </>
+        ) : (
+          <>
+            Paid {sinceLabel(order.status.paidAt, now, locale)} · {plural(orderUnits(order), "unit", "units")}:{" "}
+            {itemsNode}
+            {late(days)}
+          </>
+        )}
       </Block>
     );
   }
@@ -599,7 +726,7 @@ function NextStep({
   if (order.status.state === "SHIPPING") {
     return (
       <Block
-        title="Bước tiếp theo: chờ khách nhận"
+        title={t({ vi: "Bước tiếp theo: chờ khách nhận", en: "Next step: wait for delivery" })}
         button={
           <Button
             variant="primary"
@@ -609,13 +736,25 @@ function NextStep({
             onClick={onDelivered}
           >
             {busy === null ? <Check {...ICON} /> : null}
-            {busy === "DELIVER" ? "Đang lưu…" : "Đã giao"}
+            {busy === "DELIVER"
+              ? t({ vi: "Đang lưu…", en: "Saving…" })
+              : t({ vi: "Đã giao", en: "Mark as delivered" })}
           </Button>
         }
       >
-        Bàn giao {clockLabel(order.status.shippedAt)} · {dayMonth(order.status.shippedAt)} ·{" "}
-        {order.status.carrier ? `${order.status.carrier} · ` : ""}
-        {order.status.trackingCode} · khách thấy mã này ở tra cứu đơn và Đơn hàng
+        {locale === "vi" ? (
+          <>
+            Bàn giao {clockLabel(order.status.shippedAt)} · {dayMonth(order.status.shippedAt)} ·{" "}
+            {order.status.carrier ? `${order.status.carrier} · ` : ""}
+            {order.status.trackingCode} · khách thấy mã này ở tra cứu đơn và Đơn hàng
+          </>
+        ) : (
+          <>
+            Handed over {clockLabel(order.status.shippedAt)} · {dayMonth(order.status.shippedAt, locale)} ·{" "}
+            {order.status.carrier ? `${carrierLabel(order.status.carrier, locale)} · ` : ""}
+            {order.status.trackingCode} · the customer sees this number in Track an order and Orders
+          </>
+        )}
       </Block>
     );
   }

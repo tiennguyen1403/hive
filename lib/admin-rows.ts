@@ -10,7 +10,8 @@ import { orderTotalVnd } from "./orders";
 import { vnd } from "./money";
 import { STANDARD_FEE_VND } from "./shipping";
 import { demoNow } from "./clock";
-import { pick, pickAll, type Locale, type Pair } from "./i18n";
+import { pick, pickAll, picker, pluralNoun, type Locale, type Pair } from "./i18n";
+import { nameLang, productText } from "./product-text";
 
 /**
  * The rows behind the admin tables.
@@ -29,17 +30,36 @@ import { pick, pickAll, type Locale, type Pair } from "./i18n";
  */
 
 // ───────────────────────────────────────────────────────────────── orders
-/** What the "Khách" column adds to an order placed signed out. */
-export const GUEST_SUFFIX = "vãng lai";
+/**
+ * What the "Khách" column adds to an order placed signed out; in English
+ * "guest" (round v6 slice E4). `GUEST_SUFFIX` stays the Vietnamese side.
+ */
+const GUEST_SUFFIX_TEXT: Pair = { vi: "vãng lai", en: "guest" };
+export const GUEST_SUFFIX = GUEST_SUFFIX_TEXT.vi;
 
 /**
  * Who an order is for, as the "Khách" column says it: the account's name, or
  * — for an order placed signed out, which has no account — the name it is
  * addressed to with "· vãng lai" after it (slice B3b). Only an order with an
  * account links to a profile; a guest has none to link to.
+ *
+ * The name is printed as stored in both languages; in English the suffix is
+ * "guest". `orderCustomerName` gives the two apart, for a screen that marks
+ * the name `lang="vi"`.
  */
-export function orderCustomer(o: AdminOrder): string {
-  return o.owner ? o.owner.name : `${o.shipTo.recipient} · ${GUEST_SUFFIX}`;
+export function orderCustomer(o: AdminOrder, locale: Locale = "vi"): string {
+  const { name, guest } = orderCustomerName(o);
+  return guest ? `${name} · ${guestSuffix(locale)}` : name;
+}
+
+/** The name `orderCustomer` prints, and whether the order was placed signed out. */
+export function orderCustomerName(o: AdminOrder): { name: string; guest: boolean } {
+  return o.owner ? { name: o.owner.name, guest: false } : { name: o.shipTo.recipient, guest: true };
+}
+
+/** The suffix of a guest's name in one language: "vãng lai", "guest". */
+export function guestSuffix(locale: Locale = "vi"): string {
+  return pick(GUEST_SUFFIX_TEXT, locale);
 }
 
 /**
@@ -47,14 +67,32 @@ export function orderCustomer(o: AdminOrder): string {
  * characters, each style as the back office names it (v3 slice 12). Each
  * entry is held together (`styleInList`, v3 slice 13) so the list breaks at
  * its commas: the table printed "S05 – GIÓ ×1, S05 –" over "KHÓI ×1".
+ *
+ * In English (round v6 slice E4) each name comes through `productText` and
+ * the code is the English one: "D05 – MUỐI ×2, PLAIN TEE ×1".
  */
-export function orderItemsLabel(catalog: Catalog, o: Order): string {
+export function orderItemsLabel(catalog: Catalog, o: Order, locale: Locale = "vi"): string {
   return o.lines
     .map((l) => {
       const p = catalog.byId.get(l.productId);
-      return styleInList(p ? styleName(p.name, p.dropNo) : "?", l.qty);
+      return styleInList(p ? styleName(productText(p, locale).name, p.dropNo, locale) : "?", l.qty);
     })
     .join(", ");
+}
+
+/**
+ * The `lang` of the element holding `orderItemsLabel`: `"vi"` on an English
+ * page when every name in it is the Vietnamese one — an issue's styles keep
+ * theirs — as the shop marks a list of names (`namesLang`, slice E1); nothing
+ * when the list mixes in an English name, and nothing on a Vietnamese page.
+ */
+export function orderItemsLang(catalog: Catalog, o: Order, locale: Locale = "vi"): "vi" | undefined {
+  if (locale === "vi" || o.lines.length === 0) return undefined;
+  const allVi = o.lines.every((l) => {
+    const p = catalog.byId.get(l.productId);
+    return p !== undefined && nameLang(p, locale) === "vi";
+  });
+  return allVi ? "vi" : undefined;
 }
 
 /**
@@ -80,21 +118,24 @@ export interface OrderNote {
  * settled states — delivered, cancelled — say nothing, because there is
  * nothing left to do about them.
  */
-export function orderNote(o: Order, now: Date): OrderNote | null {
+export function orderNote(o: Order, now: Date, locale: Locale = "vi"): OrderNote | null {
+  const t = picker(locale);
   switch (o.status.state) {
     // The hour and the day are one moment: a no-break space between them, or
     // the table printed "hạn 08:05" over "26/09" (v3 slice 13).
-    case "AWAITING_TRANSFER":
+    case "AWAITING_TRANSFER": {
+      const due = `${clockLabel(o.status.dueAt)}\u00a0${dayMonth(o.status.dueAt, locale)}`;
       return {
-        text: `hạn ${clockLabel(o.status.dueAt)}\u00a0${dayMonth(o.status.dueAt)}`,
+        text: t({ vi: `hạn ${due}`, en: `due ${due}` }),
         late: now.getTime() > Date.parse(o.status.dueAt),
       };
+    }
     // A count and its unit never part: the queue broke "2" over "ngày"
     // (v3 slice 13).
     case "PAID": {
       const days = Math.floor((now.getTime() - Date.parse(o.status.paidAt)) / 86_400_000);
       return {
-        text: days >= 1 ? `chưa bàn giao · ${days}\u00a0ngày` : "chưa bàn giao",
+        text: notHandedOver(days, locale),
         late: days >= HANDOVER_LATE_DAYS,
       };
     }
@@ -104,10 +145,10 @@ export function orderNote(o: Order, now: Date): OrderNote | null {
     // before slice B7, when card orders were RECEIVED; a card pays by
     // transfer now, so it waits for one, like every card order.
     case "RECEIVED": {
-      if (o.payment !== "COD") return { text: "chờ chuyển khoản", late: false };
+      if (o.payment !== "COD") return { text: t({ vi: "chờ chuyển khoản", en: "awaiting transfer" }), late: false };
       const days = Math.floor((now.getTime() - Date.parse(o.placedAt)) / 86_400_000);
       return {
-        text: days >= 1 ? `chưa bàn giao · ${days}\u00a0ngày` : "chưa bàn giao",
+        text: notHandedOver(days, locale),
         late: days >= HANDOVER_LATE_DAYS,
       };
     }
@@ -116,6 +157,21 @@ export function orderNote(o: Order, now: Date): OrderNote | null {
     default:
       return null;
   }
+}
+
+/**
+ * "2 ngày", "2 days": a count of whole days and its unit, held together by a
+ * no-break space (v3 slice 13); the English noun by its count (round v6 slice
+ * E4).
+ */
+function daysHeld(days: number, locale: Locale): string {
+  return locale === "en" ? `${days}\u00a0${pluralNoun(days, "day", "days")}` : `${days}\u00a0ngày`;
+}
+
+/** "chưa bàn giao · 2 ngày", or bare "chưa bàn giao" inside the first day; in English "not handed over · 2 days". */
+function notHandedOver(days: number, locale: Locale): string {
+  const words = pick({ vi: "chưa bàn giao", en: "not handed over" }, locale);
+  return days >= 1 ? `${words} · ${daysHeld(days, locale)}` : words;
 }
 
 export interface QueueRow {
@@ -144,52 +200,64 @@ export interface QueueRow {
  * were just told about. The lateness is on the row rather than in the
  * ordering, so nothing jumps position while somebody is reading it.
  */
-export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date): QueueRow[] {
+export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date, locale: Locale = "vi"): QueueRow[] {
+  const t = picker(locale);
   return needsAction(orders)
     .slice()
     .sort((a, b) => b.placedAt.localeCompare(a.placedAt))
     .map((o) => {
-      const note = orderNote(o, now);
-      const customer = orderCustomer(o);
+      const note = orderNote(o, now, locale);
+      const customer = orderCustomer(o, locale);
+      const items = orderItemsLabel(catalog, o, locale);
       if (o.status.state === "AWAITING_TRANSFER") {
+        const due = dateTimeLabel(o.status.dueAt, locale);
         return {
           code: o.code,
           customer,
           totalVnd: orderTotalVnd(o),
           // A card order pays by transfer (slice B7) and waits like one; the
           // row names the card, or it would pass for a plain transfer.
-          standing: o.payment === "CARD" ? "Chờ chuyển khoản · thẻ" : "Chờ chuyển khoản",
-          due: `hạn ${dateTimeLabel(o.status.dueAt)}`,
+          standing:
+            o.payment === "CARD"
+              ? t({ vi: "Chờ chuyển khoản · thẻ", en: "Awaiting transfer · card" })
+              : t({ vi: "Chờ chuyển khoản", en: "Awaiting transfer" }),
+          due: t({ vi: `hạn ${due}`, en: `due ${due}` }),
           late: note?.late ?? false,
           action: "MARK_PAID" as const,
-          items: orderItemsLabel(catalog, o),
+          items,
         };
       }
+      // The red part of a late row: the days alone, without the words the
+      // standing already says ("2 ngày" out of "chưa bàn giao · 2 ngày").
+      const lateDays = (from: string) =>
+        daysHeld(Math.floor((now.getTime() - Date.parse(from)) / 86_400_000), locale);
       if (o.status.state === "RECEIVED") {
         const cod = o.payment === "COD";
+        const at = `${clockLabel(o.placedAt)} ${dayMonth(o.placedAt, locale)}`;
         return {
           code: o.code,
           customer,
           totalVnd: orderTotalVnd(o),
           standing: cod
-            ? `Đã nhận đơn ${clockLabel(o.placedAt)} ${dayMonth(o.placedAt)} · COD, thu khi giao`
-            : `Đã nhận đơn ${clockLabel(o.placedAt)} ${dayMonth(o.placedAt)} · thẻ, chờ chuyển khoản`,
-          due: cod && note?.late ? note.text.replace("chưa bàn giao · ", "") : null,
+            ? t({ vi: `Đã nhận đơn ${at} · COD, thu khi giao`, en: `Order received ${at} · COD, collect on delivery` })
+            : t({ vi: `Đã nhận đơn ${at} · thẻ, chờ chuyển khoản`, en: `Order received ${at} · card, awaiting transfer` }),
+          due: cod && note?.late ? lateDays(o.placedAt) : null,
           late: cod ? (note?.late ?? false) : false,
           action: cod ? ("HAND_OVER" as const) : ("MARK_PAID" as const),
-          items: orderItemsLabel(catalog, o),
+          items,
         };
       }
       const paidAt = o.status.state === "PAID" ? o.status.paidAt : o.placedAt;
+      const at = `${clockLabel(paidAt)} ${dayMonth(paidAt, locale)}`;
       return {
         code: o.code,
         customer,
         totalVnd: orderTotalVnd(o),
-        standing: `Đã thanh toán ${clockLabel(paidAt)} ${dayMonth(paidAt)} · chưa bàn giao`,
-        due: note?.late ? note.text.replace("chưa bàn giao · ", "") : null,
+        standing: t({ vi: `Đã thanh toán ${at} · chưa bàn giao`, en: `Paid ${at} · not handed over` }),
+        due: note?.late ? lateDays(paidAt) : null,
         late: note?.late ?? false,
         action: "HAND_OVER" as const,
-        items: orderItemsLabel(catalog, o),
+        items,
       };
     });
 }

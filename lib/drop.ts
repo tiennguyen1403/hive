@@ -1,6 +1,7 @@
 import type { Catalog } from "./catalog";
 import type { Drop, DropState } from "@/data/types";
 import { demoNow } from "./clock";
+import { plural, type Locale } from "./i18n";
 
 /**
  * A drop's state is never stored — it is read off the clock. A stored flag is
@@ -55,8 +56,10 @@ export function timeLeft(closesAt: string, now: Date = demoNow()): TimeLeft {
  * information the shopper acts on, so it is stated plainly, not padded with
  * zeros they have to read past.
  */
-export function closesInLabel(closesAt: string, now: Date = demoNow()): string {
-  const { days, hours, minutes, totalMs } = timeLeft(closesAt, now);
+export function closesInLabel(closesAt: string, now: Date = demoNow(), locale: Locale = "vi"): string {
+  const left = timeLeft(closesAt, now);
+  if (locale === "en") return left.totalMs === 0 ? "closed" : `closes in ${twoUnitsEn(left)}`;
+  const { days, hours, minutes, totalMs } = left;
   if (totalMs === 0) return "đã đóng";
   if (days > 0) return `đóng sau ${days} ngày ${hours} giờ`;
   if (hours > 0) return `đóng sau ${hours} giờ ${minutes} phút`;
@@ -64,12 +67,26 @@ export function closesInLabel(closesAt: string, now: Date = demoNow()): string {
 }
 
 /** Shown before a drop opens. Same shape, other direction. */
-export function opensInLabel(opensAt: string, now: Date = demoNow()): string {
-  const { days, hours, minutes, totalMs } = timeLeft(opensAt, now);
+export function opensInLabel(opensAt: string, now: Date = demoNow(), locale: Locale = "vi"): string {
+  const left = timeLeft(opensAt, now);
+  if (locale === "en") return left.totalMs === 0 ? "live" : `opens in ${twoUnitsEn(left)}`;
+  const { days, hours, minutes, totalMs } = left;
   if (totalMs === 0) return "đang mở";
   if (days > 0) return `mở sau ${days} ngày ${hours} giờ`;
   if (hours > 0) return `mở sau ${hours} giờ ${minutes} phút`;
   return `mở sau ${minutes} phút`;
+}
+
+/**
+ * The two units of the countdowns above, in English (round v6 slice E4): "3
+ * days 7 hours", "5 hours 12 minutes", "12 minutes", each noun by its own
+ * count. A drop that has opened is "live", the glossary's word for an open
+ * issue.
+ */
+function twoUnitsEn({ days, hours, minutes }: TimeLeft): string {
+  if (days > 0) return `${plural(days, "day", "days")} ${plural(hours, "hour", "hours")}`;
+  if (hours > 0) return `${plural(hours, "hour", "hours")} ${plural(minutes, "minute", "minutes")}`;
+  return plural(minutes, "minute", "minutes");
 }
 
 // ────────────────────────────────────────────────── which drop the page shows

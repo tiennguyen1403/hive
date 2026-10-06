@@ -1,16 +1,30 @@
 "use client";
 
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { hasSales, type DayPoint } from "@/lib/admin-metrics";
 import { dayMonth } from "@/lib/datetime";
+import { picker, type Locale } from "@/lib/i18n";
 import { compactVnd, plainVnd, vnd } from "@/lib/money";
 import { BarChart, type BarChartDatum } from "@/registry/components/bar-chart/bar-chart";
 import panel from "./ArcOrderScreen.module.css";
 import styles from "./ArcRevenueChart.module.css";
 
-/** `2026-09-11` → `11/09`, without going through Date (v3's `RevenueChart`). */
-function label(day: string): string {
-  return dayMonth(`${day}T12:00:00+07:00`);
+/** `2026-09-11` → `11/09`, without going through Date (v3's `RevenueChart`); in English `11 Sep`. */
+function label(day: string, locale: Locale = "vi"): string {
+  return dayMonth(`${day}T12:00:00+07:00`, locale);
 }
+
+/**
+ * The chart's two formatters in each language, made once at the module's level
+ * so each keeps its identity between renders, as Arc's default does
+ * (`registry/PATCHES.md`, round v6 slice E0): the Vietnamese ones are `vnd` and
+ * `compactVnd` themselves, as before; the English ones write "1,018,286₫" and
+ * "1.2M₫" (round v6 slice E4).
+ */
+const FORMAT: Readonly<Record<Locale, { value: (n: number) => string; tick: (n: number) => string }>> = {
+  vi: { value: vnd, tick: compactVnd },
+  en: { value: (n) => vnd(n, "en"), tick: (n) => compactVnd(n, "en") },
+};
 
 /**
  * Which days name themselves under the bars: five evenly spaced, first and
@@ -44,6 +58,9 @@ function axisIndexes(n: number): number[] {
  *
  * The table under "Xem dạng bảng" prints every day in full, as v3's did;
  * Arc's chart also carries its own table for screen readers.
+ *
+ * In the page's language since round v6 slice E4: the days the English way
+ * ("11 Sep"), the amounts with commas, Arc's own words for its parts.
  */
 export function ArcRevenueChart({
   points,
@@ -54,24 +71,32 @@ export function ArcRevenueChart({
   totalVnd: number;
   peak: DayPoint | null;
 }) {
+  const locale = useLocale();
+  const t = picker(locale);
   const first = points[0];
   const last = points.at(-1);
-  const period = first && last ? `${label(first.day)} → ${label(last.day)}` : "";
+  const period = first && last ? `${label(first.day, locale)} → ${label(last.day, locale)}` : "";
   const ticks = new Set(axisIndexes(points.length));
   const data: BarChartDatum[] = points.map((p, i) => ({
     key: p.day,
-    label: label(p.day),
-    axisLabel: ticks.has(i) ? label(p.day) : undefined,
+    label: label(p.day, locale),
+    axisLabel: ticks.has(i) ? label(p.day, locale) : undefined,
     value: p.vnd,
   }));
+  const revenue = t({ vi: "Doanh thu", en: "Revenue" });
 
   return (
     <div className={styles.body}>
       <p className={styles.total}>
-        <span className={styles.sum}>{vnd(totalVnd)}</span>
+        <span className={styles.sum}>{vnd(totalVnd, locale)}</span>
         <span className={styles.detail}>
           {period}
-          {peak ? ` · ngày cao nhất ${label(peak.day)} · ${vnd(peak.vnd)}` : " · chưa có đơn nào"}
+          {peak
+            ? t({
+                vi: ` · ngày cao nhất ${label(peak.day)} · ${vnd(peak.vnd)}`,
+                en: ` · best day ${label(peak.day, locale)} · ${vnd(peak.vnd, locale)}`,
+              })
+            : t({ vi: " · chưa có đơn nào", en: " · no orders yet" })}
         </span>
       </p>
 
@@ -79,37 +104,37 @@ export function ArcRevenueChart({
         <div className={styles.chart}>
           <BarChart
             data={data}
-            label="Doanh thu"
+            label={revenue}
             period={period}
-            formatValue={vnd}
-            formatTick={compactVnd}
-            averageLabel="Trung bình mỗi ngày"
-            valueLabel="Doanh thu"
-            categoryLabel="Ngày"
+            formatValue={FORMAT[locale].value}
+            formatTick={FORMAT[locale].tick}
+            averageLabel={t({ vi: "Trung bình mỗi ngày", en: "Daily average" })}
+            valueLabel={revenue}
+            categoryLabel={t({ vi: "Ngày", en: "Day" })}
           />
         </div>
       )}
 
       <details className={styles.days}>
-        <summary>Xem dạng bảng</summary>
+        <summary>{t({ vi: "Xem dạng bảng", en: "View as table" })}</summary>
         <table className={panel.lines}>
           <thead>
             <tr>
-              <th scope="col">Ngày</th>
+              <th scope="col">{t({ vi: "Ngày", en: "Day" })}</th>
               <th scope="col" className={panel.num}>
-                Đơn
+                {t({ vi: "Đơn", en: "Orders" })}
               </th>
               <th scope="col" className={panel.num}>
-                Doanh thu
+                {revenue}
               </th>
             </tr>
           </thead>
           <tbody>
             {points.map((p) => (
               <tr key={p.day}>
-                <td className={panel.nowrap}>{label(p.day)}</td>
+                <td className={panel.nowrap}>{label(p.day, locale)}</td>
                 <td className={panel.num}>{p.orders}</td>
-                <td className={panel.num}>{plainVnd(p.vnd)}</td>
+                <td className={panel.num}>{plainVnd(p.vnd, locale)}</td>
               </tr>
             ))}
           </tbody>

@@ -499,45 +499,45 @@ async (page) => {
   // measure like pages that have none.
   const ADMIN_OVERLAYS = [
     ["/admin/orders/DH-2429#more", "admin-order-more-menu-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác khác" }).click();
+      await page.getByRole("button", { name: T("Thao tác khác", "More actions") }).click();
     }],
     ["/admin/orders/DH-2429#cancel", "admin-order-cancel-sheet-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác khác" }).click();
+      await page.getByRole("button", { name: T("Thao tác khác", "More actions") }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("menuitem", { name: "Huỷ đơn" }).click();
+      await page.getByRole("menuitem", { name: T("Huỷ đơn", "Cancel order") }).click();
       await page.waitForTimeout(350);
-      await page.getByRole("dialog").getByRole("combobox", { name: "Lý do" }).click();
+      await page.getByRole("dialog").getByRole("combobox", { name: T("Lý do", "Reason") }).click();
     }],
     ["/admin/orders/DH-2429#handover", "admin-order-handover-1280", async () => {
-      await page.getByRole("button", { name: "Bàn giao" }).click();
+      await page.getByRole("button", { name: T("Bàn giao", "Hand over") }).click();
     }],
     ["/admin/orders/DH-2429#carrier", "admin-order-carrier-select-1280", async () => {
-      await page.getByRole("button", { name: "Bàn giao" }).click();
+      await page.getByRole("button", { name: T("Bàn giao", "Hand over") }).click();
       await page.waitForTimeout(300);
-      await page.getByRole("combobox", { name: "Hình thức giao" }).click();
+      await page.getByRole("combobox", { name: T("Hình thức giao", "Delivery service") }).click();
     }],
     ["/admin/orders/DH-2431#address", "admin-order-address-form-1280", async () => {
-      await page.getByRole("button", { name: "Sửa" }).click();
+      await page.getByRole("button", { name: T("Sửa", "Edit") }).click();
     }],
     ["/admin/orders/DH-2431#province", "admin-order-address-province-1280", async () => {
-      await page.getByRole("button", { name: "Sửa" }).click();
+      await page.getByRole("button", { name: T("Sửa", "Edit") }).click();
       await page.waitForTimeout(300);
-      await page.getByRole("combobox", { name: "Tỉnh / thành" }).click();
+      await page.getByRole("combobox", { name: T("Tỉnh / thành", "Province / city") }).click();
     }],
     ["/admin/orders/DH-2431#ward", "admin-order-address-ward-1280", async () => {
-      await page.getByRole("button", { name: "Sửa" }).click();
+      await page.getByRole("button", { name: T("Sửa", "Edit") }).click();
       await page.waitForTimeout(300);
-      await page.getByRole("combobox", { name: "Phường / xã" }).click();
+      await page.getByRole("combobox", { name: T("Phường / xã", "Ward / commune") }).click();
     }],
     ["/admin/orders#rowmenu", "admin-orders-row-menu-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác DH-2431" }).click();
+      await page.getByRole("button", { name: T("Thao tác DH-2431", "Actions for DH-2431") }).click();
     }],
     ["/admin#reset", "admin-reset-sheet-1280", async () => {
       await page.locator("aside").getByRole("button", { name: T("Đặt lại dữ liệu mẫu", "Reset demo data") }).click();
     }],
     // round v5 slice 2: the overview's day table, the log's filter menu at both steps
     ["/admin#days", "admin-overview-day-table-1280", async () => {
-      await page.getByText("Xem dạng bảng").click();
+      await page.getByText(T("Xem dạng bảng", "View as table")).click();
     }],
     ["/admin/log#filter", "admin-log-filter-fields-1280", async () => {
       await page.getByRole("button", { name: T("Thêm bộ lọc", "Add filter") }).click();
@@ -545,7 +545,7 @@ async (page) => {
     ["/admin/log#filter-values", "admin-log-filter-values-1280", async () => {
       await page.getByRole("button", { name: T("Thêm bộ lọc", "Add filter") }).click();
       await page.waitForTimeout(400);
-      await page.getByRole("menuitem", { name: /Loại thao tác/ }).click();
+      await page.getByRole("menuitem", { name: LANG === "en" ? /Action type/ : /Loại thao tác/ }).click();
     }],
     // slice B3b: the sheets and menus that now write to the database
 
@@ -660,7 +660,7 @@ async (page) => {
       await page.getByRole("dialog").getByRole("button", { name: "Lưu" }).click();
     }],
     ["/admin/customers#rowmenu", "admin-customers-row-menu-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác Trần Minh Anh", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác Trần Minh Anh", "Actions for Trần Minh Anh"), exact: true }).click();
     }],
     // round v5 slice 5b: the style form is Arc's. Its fields are found by
     // role and label, not by v3's `.field3`, `button.selbtn`, `.colorpick`,

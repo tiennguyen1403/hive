@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { ArcOrderScreen } from "@/components/admin-arc/ArcOrderScreen";
@@ -6,8 +7,13 @@ import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import { findOrderAdmin, listAllOrders, orderEvents } from "@/lib/db/admin";
 import { requireAdmin } from "@/lib/db/session";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 
-export const metadata = { title: "Chi tiết đơn" };
+/** The screen's name in the title, in the page's language (round v6 slice E4); the layout adds "· Admin · HIVE". */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: picker(await getLocale())({ vi: "Chi tiết đơn", en: "Order details" }) };
+}
 
 /**
  * One order.

@@ -3,6 +3,7 @@
 import { Check, Columns3, Download, Eye, MoreHorizontal, Printer, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Catalog } from "@/lib/catalog";
 import type { Order, OrderState, PaymentMethod } from "@/data/types";
@@ -10,16 +11,17 @@ import { cancelOrderAdmin, markPaid } from "@/lib/actions/admin";
 import type { ActionState } from "@/lib/actions/state";
 import { needsAction, recentOrders } from "@/lib/admin-metrics";
 import { canCancel, nextMove, type AdminOrder } from "@/lib/admin-orders";
-import { orderCustomer, orderItemsLabel } from "@/lib/admin-rows";
+import { orderItemsLabel, orderItemsLang } from "@/lib/admin-rows";
 import { hrefWith, pageOf, paginate, patched, PER_PAGE_CHOICES, perPageOf, type Query } from "@/lib/admin-url";
 import { downloadCsv } from "@/lib/csv";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { issueOf } from "@/lib/customer-tags";
-import { clockLabel, dayMonth } from "@/lib/datetime";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { picker, plural, type Locale, type Pair } from "@/lib/i18n";
+import { issueLabel, lexicon } from "@/lib/lexicon";
 import { plainVnd } from "@/lib/money";
-import { PAYMENT_LABEL, STATE_LABEL } from "@/lib/order-labels";
+import { adminPaymentLabel, stateLabel } from "@/lib/order-labels";
 import { orderTotalVnd } from "@/lib/orders";
+import { ordersCsvName, ordersCsvRows } from "@/lib/orders-csv";
 import { Badge } from "@/registry/components/badge/badge";
 import { Button } from "@/registry/components/button/button";
 import { Checkbox } from "@/registry/components/checkbox/checkbox";
@@ -61,31 +63,43 @@ const PATH = "/admin/orders";
 /** The Tabs value of "Tất cả": a tab needs a string, the address needs no `state`. */
 const ALL = "all";
 
-/** The tabs, in the order an order passes through them (v3). */
-const TABS: Array<{ value: OrderState | null; label: string }> = [
-  { value: null, label: "Tất cả" },
-  { value: "AWAITING_TRANSFER", label: STATE_LABEL.AWAITING_TRANSFER.text },
+/**
+ * The tabs, in the order an order passes through them (v3), named in the page's
+ * language: the glossary's states (`stateLabel`).
+ */
+const TAB_STATES: Array<OrderState | null> = [
+  null,
+  "AWAITING_TRANSFER",
   // A COD order checkout took, waiting on the shop, and a card order taken
   // before slice B7, when card orders were RECEIVED.
-  { value: "RECEIVED", label: STATE_LABEL.RECEIVED.text },
-  { value: "PAID", label: STATE_LABEL.PAID.text },
-  { value: "SHIPPING", label: STATE_LABEL.SHIPPING.text },
-  { value: "DELIVERED", label: STATE_LABEL.DELIVERED.text },
-  { value: "CANCELLED", label: STATE_LABEL.CANCELLED.text },
+  "RECEIVED",
+  "PAID",
+  "SHIPPING",
+  "DELIVERED",
+  "CANCELLED",
 ];
 
-/** "Thanh toán" in the Add filter menu: v3's three methods, in v3's order. */
-const PAY_OPTIONS: FilterOption[] = (["BANK_TRANSFER", "COD", "CARD"] as PaymentMethod[]).map(
-  (value) => ({ value, label: PAYMENT_LABEL[value] }),
-);
+/** "Tất cả": every tab but the states'. */
+const ALL_WORD: Pair = { vi: "Tất cả", en: "All" };
+
+/** "Thanh toán" in the Add filter menu: v3's three methods, in v3's order, the glossary's words. */
+function payOptions(locale: Locale): FilterOption[] {
+  return (["BANK_TRANSFER", "COD", "CARD"] as PaymentMethod[]).map((value) => ({
+    value,
+    label: adminPaymentLabel(value, locale),
+  }));
+}
 
 /** The optional columns, and the two v3 leaves ticked. */
-const COLS = [
-  { key: "items", label: "Món" },
-  { key: "payment", label: "Thanh toán" },
-  { key: "address", label: "Địa chỉ" },
-  { key: "promo", label: "Mã giảm giá" },
+const COLS: Array<{ key: string; label: Pair }> = [
+  { key: "items", label: { vi: "Món", en: "Items" } },
+  { key: "payment", label: { vi: "Thanh toán", en: "Payment" } },
+  { key: "address", label: { vi: "Địa chỉ", en: "Address" } },
+  { key: "promo", label: { vi: "Mã giảm giá", en: "Discount code" } },
 ];
+
+/** "Thanh toán", the payment column and filter; "Mã giảm giá", the code column. */
+const PAYMENT_WORD: Pair = { vi: "Thanh toán", en: "Payment" };
 const COLS_DEFAULT = ["items", "payment"];
 
 const PER_OPTIONS = PER_PAGE_CHOICES.map((n) => ({ value: String(n), label: String(n) }));
@@ -118,6 +132,11 @@ type Row = { code: string; total: number; order: AdminOrder };
  * v3's one-line rules on v3's 12px of padding (`density="compact"`), so the
  * default columns fit the card at 1280; with an optional column on, or at
  * 1180, the table scrolls inside its card.
+ *
+ * In the page's language since round v6 slice E4 (`useLocale()`): every word,
+ * the tabs and filters in the glossary's terms, the amounts the English way
+ * ("1,272,000"), the file "orders.csv" (`lib/orders-csv.ts`). The address and
+ * the values the filters send do not change with it.
  */
 export function ArcOrdersScreen({
   orders: book,
@@ -130,6 +149,10 @@ export function ArcOrdersScreen({
   query: Query;
 }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
+  /** "Số" in the issue filter: "Drop" in English (the glossary). */
+  const issueWord = lexicon(locale).t;
   const say = useArcToast();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
@@ -227,19 +250,6 @@ export function ArcOrdersScreen({
 
   const chosen = page.rows.filter((o) => picked.includes(String(o.code)));
 
-  const csvRows = (list: AdminOrder[]) => [
-    ["Mã đơn", "Khách", "Điện thoại", "Thời gian", "Món", "Giá trị (VND)", "Thanh toán", "Trạng thái"],
-    ...list.map((o) => [
-      String(o.code),
-      orderCustomer(o),
-      o.shipTo.phone,
-      `${dayMonth(o.placedAt)} ${clockLabel(o.placedAt)}`,
-      orderItemsLabel(catalog, o),
-      orderTotalVnd(o),
-      PAYMENT_LABEL[o.payment],
-      STATE_LABEL[o.status.state].text,
-    ]),
-  ];
 
   /** The orders the shop could print a slip for right now. */
   const readyToPack = all.filter((o) => o.status.state === "PAID").map((o) => String(o.code));
@@ -247,21 +257,21 @@ export function ArcOrdersScreen({
   // ── the filter chips: Thanh toán and Số, each with its own key ─────────
   const chips = useMemo<FilterChip[]>(
     () => [
-      ...(pay ? [{ id: "pay", label: "Thanh toán", value: PAYMENT_LABEL[pay] }] : []),
-      ...(dropNo !== null ? [{ id: "drop", label: LEX.t, value: `${LEX.t} ${issueNo(dropNo)}` }] : []),
+      ...(pay ? [{ id: "pay", label: picker(locale)(PAYMENT_WORD), value: adminPaymentLabel(pay, locale) }] : []),
+      ...(dropNo !== null ? [{ id: "drop", label: issueWord, value: issueLabel(dropNo, locale) }] : []),
     ],
-    [pay, dropNo],
+    [pay, dropNo, locale, issueWord],
   );
   const fields = useMemo<FilterField[]>(
     () => [
-      { id: "pay", label: "Thanh toán", options: PAY_OPTIONS },
+      { id: "pay", label: picker(locale)(PAYMENT_WORD), options: payOptions(locale) },
       {
         id: "drop",
-        label: LEX.t,
-        options: issues.map((n) => ({ value: String(n), label: `${LEX.t} ${issueNo(n)}` })),
+        label: issueWord,
+        options: issues.map((n) => ({ value: String(n), label: issueLabel(n, locale) })),
       },
     ],
-    [issues],
+    [issues, locale, issueWord],
   );
 
   /** The menu hands back the label it showed; the address wants the value behind it. */
@@ -294,31 +304,42 @@ export function ArcOrdersScreen({
   // move and the row menu's callbacks. Arc holds the column widths by the
   // columns' keys, which only change when "Cột" does.
   const columnList: Array<DataColumn<Row> | false> = [
-    { key: "code", label: "Mã đơn", render: (_v, r) => <CodeCell code={r.code} /> },
-    { key: "customer", label: "Khách", render: (_v, r) => <CustomerCell order={r.order} /> },
-    { key: "placedAt", label: "Thời gian", render: (_v, r) => <PlacedCell order={r.order} /> },
+    { key: "code", label: t({ vi: "Mã đơn", en: "Order" }), render: (_v, r) => <CodeCell code={r.code} /> },
+    { key: "customer", label: t({ vi: "Khách", en: "Customer" }), render: (_v, r) => <CustomerCell order={r.order} /> },
+    { key: "placedAt", label: t({ vi: "Thời gian", en: "Placed" }), render: (_v, r) => <PlacedCell order={r.order} /> },
     cols.includes("items") && {
       key: "items",
-      label: "Món",
-      render: (_v, r) => <ItemsCell label={orderItemsLabel(catalog, r.order)} />,
+      label: t(COLS[0]!.label),
+      render: (_v, r) => (
+        <ItemsCell label={orderItemsLabel(catalog, r.order, locale)} lang={orderItemsLang(catalog, r.order, locale)} />
+      ),
     },
-    { key: "total", label: "Giá trị", numeric: true, render: (_v, r) => <AmountCell text={plainVnd(r.total)} /> },
+    {
+      key: "total",
+      label: t({ vi: "Giá trị", en: "Total" }),
+      numeric: true,
+      render: (_v, r) => <AmountCell text={plainVnd(r.total, locale)} />,
+    },
     cols.includes("payment") && {
       key: "payment",
-      label: "Thanh toán",
+      label: t(COLS[1]!.label),
       render: (_v, r) => <PaymentCell order={r.order} />,
     },
     cols.includes("address") && {
       key: "address",
-      label: "Địa chỉ",
+      label: t(COLS[2]!.label),
       render: (_v, r) => <AddressCell order={r.order} />,
     },
     cols.includes("promo") && {
       key: "promo",
-      label: "Mã giảm giá",
+      label: t(COLS[3]!.label),
       render: (_v, r) => <ItemsCell label={r.order.promo ?? "—"} />,
     },
-    { key: "status", label: "Trạng thái", render: (_v, r) => <StatusCell order={r.order} now={now} /> },
+    {
+      key: "status",
+      label: t({ vi: "Trạng thái", en: "Status" }),
+      render: (_v, r) => <StatusCell order={r.order} now={now} />,
+    },
     // v3 names this column for assistive tech only; each menu names its order.
     // 60: the 36px trigger and the compact cell's 12px either side.
     { key: "actions", label: "", width: 60, render: (_v, r) => rowMenu(r.order) },
@@ -332,12 +353,22 @@ export function ArcOrdersScreen({
   function rowMenu(o: AdminOrder) {
     const code = String(o.code);
     const items: DropdownItem[] = [
-      { label: "Mở chi tiết", icon: <Eye {...ICON} />, onSelect: () => router.push(`/admin/orders/${code}`) },
+      {
+        label: t({ vi: "Mở chi tiết", en: "Open details" }),
+        icon: <Eye {...ICON} />,
+        onSelect: () => router.push(`/admin/orders/${code}`),
+      },
       ...(nextMove(o, now) === "MARK_PAID"
-        ? [{ label: "Đã nhận tiền", icon: <Check {...ICON} />, onSelect: () => act(() => markPaid([code])) }]
+        ? [
+            {
+              label: t({ vi: "Đã nhận tiền", en: "Mark as paid" }),
+              icon: <Check {...ICON} />,
+              onSelect: () => act(() => markPaid([code])),
+            },
+          ]
         : []),
       {
-        label: "In phiếu giao",
+        label: t({ vi: "In phiếu giao", en: "Print delivery slip" }),
         icon: <Printer {...ICON} />,
         onSelect: () => router.push(`/admin/slips?codes=${code}`),
       },
@@ -346,7 +377,7 @@ export function ArcOrdersScreen({
       ...(canCancel(o, now)
         ? [
             {
-              label: "Huỷ đơn",
+              label: t({ vi: "Huỷ đơn", en: "Cancel order" }),
               icon: <X {...ICON} />,
               destructive: true,
               separatorBefore: true,
@@ -366,7 +397,12 @@ export function ArcOrdersScreen({
           else menus.current.delete(code);
         }}
       >
-        <DropdownMenu iconOnly label={`Thao tác ${code}`} icon={<MoreHorizontal {...ICON} />} items={items} />
+        <DropdownMenu
+          iconOnly
+          label={t({ vi: `Thao tác ${code}`, en: `Actions for ${code}` })}
+          icon={<MoreHorizontal {...ICON} />}
+          items={items}
+        />
       </span>
     );
   }
@@ -396,8 +432,8 @@ export function ArcOrdersScreen({
           rows={rows}
           columns={columns}
           rowKey="code"
-          caption="Đơn hàng"
-          emptyMessage="Không có đơn nào khớp."
+          caption={t({ vi: "Đơn hàng", en: "Orders" })}
+          emptyMessage={t({ vi: "Không có đơn nào khớp.", en: "No orders match." })}
           selectable
           holdWidths={false}
           density="compact"
@@ -413,10 +449,17 @@ export function ArcOrdersScreen({
       {page.total > 0 && (
         <div className={styles.foot}>
           <p className={styles.shown}>
-            Hiện {page.rows.length} / {page.total} đơn
+            {t<React.ReactNode>({
+              vi: (
+                <>
+                  Hiện {page.rows.length} / {page.total} đơn
+                </>
+              ),
+              en: `Showing ${page.rows.length} of ${plural(page.total, "order", "orders")}`,
+            })}
           </p>
           <SegmentedControl
-            label="Số dòng mỗi trang"
+            label={t({ vi: "Số dòng mỗi trang", en: "Rows per page" })}
             options={PER_OPTIONS}
             value={String(perPageOf(view.per))}
             onValueChange={(v) => go({ per: v, page: null })}
@@ -441,14 +484,20 @@ export function ArcOrdersScreen({
     <div className={styles.page} ref={root}>
       <header className={styles.header}>
         <div className={styles.heading}>
-          <h1 className={styles.title}>Đơn hàng</h1>
-          <p className={styles.sub}>{waiting} cần xử lý</p>
+          <h1 className={styles.title}>{t({ vi: "Đơn hàng", en: "Orders" })}</h1>
+          <p className={styles.sub}>
+            {t<React.ReactNode>({ vi: <>{waiting} cần xử lý</>, en: `${waiting} to process` })}
+          </p>
         </div>
         <div className={styles.actions}>
-          <Badge size="sm">Dữ liệu mẫu</Badge>
-          <Button variant="secondary" size="sm" onClick={() => downloadCsv("don-hang.csv", csvRows(shown))}>
+          <Badge size="sm">{t({ vi: "Dữ liệu mẫu", en: "Demo data" })}</Badge>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => downloadCsv(ordersCsvName(locale), ordersCsvRows(catalog, shown, locale))}
+          >
             <Download {...ICON} />
-            Tải CSV
+            {t({ vi: "Tải CSV", en: "Download CSV" })}
           </Button>
           {readyToPack.length > 0 && (
             <ArcButtonLink
@@ -457,7 +506,7 @@ export function ArcOrdersScreen({
               href={`/admin/slips?codes=${readyToPack.join(",")}`}
             >
               <Printer {...ICON} />
-              In phiếu giao
+              {t({ vi: "In phiếu giao", en: "Print delivery slips" })}
             </ArcButtonLink>
           )}
         </div>
@@ -467,12 +516,12 @@ export function ArcOrdersScreen({
         value={tab ?? ALL}
         onValueChange={(v) => go({ state: v === ALL ? null : v, page: null }, "replace")}
       >
-        <TabsList aria-label="Trạng thái">
-          {TABS.map((t) => (
-            <TabsTrigger key={t.value ?? ALL} value={t.value ?? ALL}>
-              {t.label}{" "}
+        <TabsList aria-label={t({ vi: "Trạng thái", en: "Status" })}>
+          {TAB_STATES.map((state) => (
+            <TabsTrigger key={state ?? ALL} value={state ?? ALL}>
+              {state ? stateLabel(state, locale).text : t(ALL_WORD)}{" "}
               <span className={styles.tabCount}>
-                {t.value ? filtered.filter((o) => o.status.state === t.value).length : filtered.length}
+                {state ? filtered.filter((o) => o.status.state === state).length : filtered.length}
               </span>
             </TabsTrigger>
           ))}
@@ -482,8 +531,8 @@ export function ArcOrdersScreen({
           <div className={styles.toolbar} inert={bulk || undefined}>
             <div className={styles.search}>
               <ArcSearchBox
-                label="Tìm đơn"
-                placeholder="Tìm mã đơn, tên, số điện thoại"
+                label={t({ vi: "Tìm đơn", en: "Search orders" })}
+                placeholder={t({ vi: "Tìm mã đơn, tên, số điện thoại", en: "Search order code, name, phone" })}
                 value={view.q ?? ""}
                 onSubmit={(v) => go({ q: v || null, page: null }, "replace")}
               />
@@ -507,14 +556,14 @@ export function ArcOrdersScreen({
                 <PopoverTrigger asChild>
                   <Button variant="secondary" size="sm">
                     <Columns3 {...ICON} />
-                    Cột
+                    {t({ vi: "Cột", en: "Columns" })}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" aria-label="Cột" className={styles.columns}>
+                <PopoverContent align="end" aria-label={t({ vi: "Cột", en: "Columns" })} className={styles.columns}>
                   {COLS.map((c) => (
                     <Checkbox
                       key={c.key}
-                      label={c.label}
+                      label={t(c.label)}
                       checked={cols.includes(c.key)}
                       onCheckedChange={() => toggle(c.key)}
                     />
@@ -526,7 +575,12 @@ export function ArcOrdersScreen({
 
           {bulk && (
             <div className={styles.bulk}>
-              <p className={styles.bulkCount}>{picked.length} đơn đã chọn</p>
+              <p className={styles.bulkCount}>
+                {t<React.ReactNode>({
+                  vi: <>{picked.length} đơn đã chọn</>,
+                  en: `${plural(picked.length, "order", "orders")} selected`,
+                })}
+              </p>
               <Button
                 variant="secondary"
                 size="sm"
@@ -539,7 +593,10 @@ export function ArcOrdersScreen({
                   const unpaid = chosen.filter((o) => nextMove(o, now) === "MARK_PAID");
                   if (unpaid.length === 0) {
                     return say(
-                      "Chỉ đơn đang chờ tiền mới đánh dấu được — chưa chọn đơn nào như vậy",
+                      t({
+                        vi: "Chỉ đơn đang chờ tiền mới đánh dấu được — chưa chọn đơn nào như vậy",
+                        en: "Only orders awaiting payment can be marked as paid, and none of these are",
+                      }),
                       "error",
                     );
                   }
@@ -550,7 +607,7 @@ export function ArcOrdersScreen({
                 }}
               >
                 {pending ? null : <Check {...ICON} />}
-                {pending ? "Đang lưu…" : "Đã nhận tiền"}
+                {pending ? t({ vi: "Đang lưu…", en: "Saving…" }) : t({ vi: "Đã nhận tiền", en: "Mark as paid" })}
               </Button>
               <ArcButtonLink
                 variant="secondary"
@@ -558,18 +615,18 @@ export function ArcOrdersScreen({
                 href={`/admin/slips?codes=${picked.join(",")}`}
               >
                 <Printer {...ICON} />
-                In phiếu giao
+                {t({ vi: "In phiếu giao", en: "Print delivery slips" })}
               </ArcButtonLink>
               <Button variant="ghost" size="sm" onClick={() => setPicked([])}>
                 <X {...ICON} />
-                Bỏ chọn
+                {t({ vi: "Bỏ chọn", en: "Clear selection" })}
               </Button>
             </div>
           )}
         </div>
 
-        {TABS.map((t) => (
-          <TabsContent key={t.value ?? ALL} value={t.value ?? ALL}>
+        {TAB_STATES.map((state) => (
+          <TabsContent key={state ?? ALL} value={state ?? ALL}>
             {table}
           </TabsContent>
         ))}

@@ -3,9 +3,11 @@
 import { Copy, Download, MoreHorizontal, ShoppingBag, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useOptimistic, useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { customerKey, customerRows, type AdminCustomer, type CustomerRow } from "@/lib/admin-customers";
 import type { AdminOrder } from "@/lib/admin-orders";
+import { storedLang } from "@/lib/admin-text";
 import { hrefWith, pageOf, paginate, patched, PER_PAGE_CHOICES, perPageOf, type Query } from "@/lib/admin-url";
 import { downloadCsv } from "@/lib/csv";
 import { currentIssueNo } from "@/lib/current-issue";
@@ -17,9 +19,10 @@ import {
   type CustomerGroup,
 } from "@/lib/customer-tags";
 import { dayMonth } from "@/lib/datetime";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { picker, plural, type Locale } from "@/lib/i18n";
+import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import { plainVnd } from "@/lib/money";
-import { STATE_LABEL } from "@/lib/order-labels";
+import { stateLabel } from "@/lib/order-labels";
 import { formatPhone } from "@/lib/phone";
 import { Avatar } from "@/registry/components/avatar/avatar";
 import { Badge } from "@/registry/components/badge/badge";
@@ -66,6 +69,11 @@ type Row = { id: string; customer: AdminCustomer; facts: CustomerFacts };
  * (`useOptimistic`) and the address follows in a transition. The group and
  * the search replace the address, as the order book's tab and search do; the
  * page and the rows per page push, as v3's links did.
+ *
+ * In the page's language since round v6 slice E4 (`useLocale()`): the labels
+ * and their tabs ("Loyal", "Returning", "New in Drop 05"), the figures the
+ * English way, the file "customers.csv". A name is printed as stored, said in
+ * Vietnamese on an English page.
  */
 export function ArcCustomersScreen({
   customers,
@@ -80,6 +88,8 @@ export function ArcCustomersScreen({
   query: Query;
 }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const say = useArcToast();
   const router = useRouter();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
@@ -100,8 +110,8 @@ export function ArcCustomersScreen({
   // customer panel; 0, a catalogue without issues, is none.
   const current = currentIssueNo(catalog, now) || null;
   const all = useMemo<CustomerRow[]>(
-    () => customerRows(catalog, customers, orders, current, now),
-    [catalog, customers, orders, current, now],
+    () => customerRows(catalog, customers, orders, current, now, locale),
+    [catalog, customers, orders, current, now, locale],
   );
 
   const group = customerGroup(view.group);
@@ -120,15 +130,23 @@ export function ArcCustomersScreen({
 
   /** v3's five groups, in v3's order, with v3's names. "Tất cả" is the address with no `group`. */
   const tabs: Array<{ value: CustomerGroup; label: string }> = [
-    { value: "all", label: "Tất cả" },
-    { value: "loyal", label: "Thân thiết" },
-    { value: "returning", label: "Quay lại" },
-    { value: "new", label: current ? `Mới trong ${LEX.tl} ${issueNo(current)}` : "Mới" },
-    { value: "pending", label: "Có đơn chờ" },
+    { value: "all", label: t({ vi: "Tất cả", en: "All" }) },
+    { value: "loyal", label: t({ vi: "Thân thiết", en: "Loyal" }) },
+    { value: "returning", label: t({ vi: "Quay lại", en: "Returning" }) },
+    {
+      value: "new",
+      label: current
+        ? t({ vi: `Mới trong ${LEX.tl} ${issueNo(current)}`, en: `New in ${issueLabel(current, locale)}` })
+        : t({ vi: "Mới", en: "New" }),
+    },
+    { value: "pending", label: t({ vi: "Có đơn chờ", en: "Pending orders" }) },
   ];
 
   const csvRows = [
-    ["Khách", "Điện thoại", "Email", "Đơn", "Tổng chi (VND)", "Đã mua", "Nhãn", "Đơn gần nhất"],
+    t({
+      vi: ["Khách", "Điện thoại", "Email", "Đơn", "Tổng chi (VND)", "Đã mua", "Nhãn", "Đơn gần nhất"],
+      en: ["Customer", "Phone", "Email", "Orders", "Total spent (VND)", "Bought in", "Label", "Latest order"],
+    }),
     ...all.map(({ customer, facts }) => [
       customer.name,
       customer.phone,
@@ -144,11 +162,17 @@ export function ArcCustomersScreen({
   async function copyEmail(email: string) {
     try {
       await navigator.clipboard.writeText(email);
-      say(`Đã chép ${email}`);
+      say(t({ vi: `Đã chép ${email}`, en: `Copied ${email}` }));
     } catch {
       // An insecure origin or a permission policy refuses. Say what happened
       // rather than claiming a copy that did not take place.
-      say(`Trình duyệt không cho chép tự động — email là ${email}`, "error");
+      say(
+        t({
+          vi: `Trình duyệt không cho chép tự động — email là ${email}`,
+          en: `The browser won't copy it for you. The email is ${email}`,
+        }),
+        "error",
+      );
     }
   }
 
@@ -157,21 +181,21 @@ export function ArcCustomersScreen({
     return (
       <DropdownMenu
         iconOnly
-        label={`Thao tác ${customer.name}`}
+        label={t({ vi: `Thao tác ${customer.name}`, en: `Actions for ${customer.name}` })}
         icon={<MoreHorizontal {...ICON} />}
         items={[
           {
-            label: "Hồ sơ",
+            label: t({ vi: "Hồ sơ", en: "Profile" }),
             icon: <User {...ICON} />,
             onSelect: () => router.push(`/admin/customers/${key}`),
           },
           {
-            label: "Đơn của khách",
+            label: t({ vi: "Đơn của khách", en: "Customer's orders" }),
             icon: <ShoppingBag {...ICON} />,
             onSelect: () => router.push(`/admin/orders?customer=${key}`),
           },
           {
-            label: "Chép email",
+            label: t({ vi: "Chép email", en: "Copy email" }),
             icon: <Copy {...ICON} />,
             onSelect: () => void copyEmail(customer.email),
           },
@@ -181,23 +205,27 @@ export function ArcCustomersScreen({
   }
 
   const columnList: DataColumn<Row>[] = [
-    { key: "customer", label: "Khách", render: (_v, r) => <WhoCell customer={r.customer} /> },
-    { key: "contact", label: "Liên hệ", render: (_v, r) => <ContactCell customer={r.customer} /> },
-    { key: "orders", label: "Đơn", numeric: true, render: (_v, r) => r.facts.orders.length },
+    {
+      key: "customer",
+      label: t({ vi: "Khách", en: "Customer" }),
+      render: (_v, r) => <WhoCell customer={r.customer} locale={locale} />,
+    },
+    { key: "contact", label: t({ vi: "Liên hệ", en: "Contact" }), render: (_v, r) => <ContactCell customer={r.customer} /> },
+    { key: "orders", label: t({ vi: "Đơn", en: "Orders" }), numeric: true, render: (_v, r) => r.facts.orders.length },
     {
       key: "spent",
-      label: "Tổng chi",
+      label: t({ vi: "Tổng chi", en: "Total spent" }),
       numeric: true,
-      render: (_v, r) => <span className={book.nowrap}>{plainVnd(r.facts.spentVnd)}</span>,
+      render: (_v, r) => <span className={book.nowrap}>{plainVnd(r.facts.spentVnd, locale)}</span>,
     },
     {
       key: "issues",
-      label: "Đã mua",
-      render: (_v, r) => <span className={book.nowrap}>{issuesLabel(r.facts.issues)}</span>,
+      label: t({ vi: "Đã mua", en: "Bought in" }),
+      render: (_v, r) => <span className={book.nowrap}>{issuesLabel(r.facts.issues, locale)}</span>,
     },
     {
       key: "tag",
-      label: "Nhãn",
+      label: t({ vi: "Nhãn", en: "Label" }),
       render: (_v, r) =>
         r.facts.tag ? (
           <Badge tone={TAG_TONE[r.facts.tag.tone]} size="sm">
@@ -207,7 +235,11 @@ export function ArcCustomersScreen({
           "—"
         ),
     },
-    { key: "last", label: "Đơn gần nhất", render: (_v, r) => <LastOrderCell facts={r.facts} /> },
+    {
+      key: "last",
+      label: t({ vi: "Đơn gần nhất", en: "Latest order" }),
+      render: (_v, r) => <LastOrderCell facts={r.facts} locale={locale} />,
+    },
     // v3 names this column for assistive tech only; each menu names its customer.
     // 60: the 36px trigger and the compact cell's 12px either side.
     { key: "actions", label: "", width: 60, render: (_v, r) => rowMenu(r.customer) },
@@ -224,8 +256,8 @@ export function ArcCustomersScreen({
         rows={rows}
         columns={columns}
         rowKey="id"
-        caption="Khách hàng"
-        emptyMessage="Không có khách nào khớp."
+        caption={t({ vi: "Khách hàng", en: "Customers" })}
+        emptyMessage={t({ vi: "Không có khách nào khớp.", en: "No customers match." })}
         holdWidths={false}
         density="compact"
         showCount={false}
@@ -233,11 +265,18 @@ export function ArcCustomersScreen({
       {paged.total > 0 && (
         <div className={book.foot}>
           <p className={book.shown}>
-            Hiện {paged.rows.length} / {paged.total} khách · tổng chi tính từ đơn đã thanh toán, chưa
-            trừ hoàn tiền
+            {t<React.ReactNode>({
+              vi: (
+                <>
+                  Hiện {paged.rows.length} / {paged.total} khách · tổng chi tính từ đơn đã thanh toán, chưa
+                  trừ hoàn tiền
+                </>
+              ),
+              en: `Showing ${paged.rows.length} of ${plural(paged.total, "customer", "customers")} · total spent counts paid orders, before refunds`,
+            })}
           </p>
           <SegmentedControl
-            label="Số dòng mỗi trang"
+            label={t({ vi: "Số dòng mỗi trang", en: "Rows per page" })}
             options={PER_OPTIONS}
             value={String(perPageOf(view.per))}
             onValueChange={(v) => go({ per: v, page: null })}
@@ -260,12 +299,16 @@ export function ArcCustomersScreen({
     <div className={page.page}>
       <header className={page.header}>
         <div className={page.headRow}>
-          <h1 className={page.title}>Khách hàng</h1>
+          <h1 className={page.title}>{t({ vi: "Khách hàng", en: "Customers" })}</h1>
           <div className={page.actions}>
-            <Badge size="sm">Dữ liệu mẫu</Badge>
-            <Button variant="secondary" size="sm" onClick={() => downloadCsv("khach-hang.csv", csvRows)}>
+            <Badge size="sm">{t({ vi: "Dữ liệu mẫu", en: "Demo data" })}</Badge>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => downloadCsv(t({ vi: "khach-hang.csv", en: "customers.csv" }), csvRows)}
+            >
               <Download {...ICON} />
-              Tải CSV
+              {t({ vi: "Tải CSV", en: "Download CSV" })}
             </Button>
           </div>
         </div>
@@ -275,7 +318,7 @@ export function ArcCustomersScreen({
         value={group}
         onValueChange={(v) => go({ group: v === "all" ? null : v, page: null }, "replace")}
       >
-        <TabsList aria-label="Nhóm">
+        <TabsList aria-label={t({ vi: "Nhóm", en: "Group" })}>
           {tabs.map((t) => (
             <TabsTrigger key={t.value} value={t.value}>
               {t.label} <span className={book.tabCount}>{count(t.value)}</span>
@@ -287,8 +330,8 @@ export function ArcCustomersScreen({
           <div className={book.toolbar}>
             <div className={book.search}>
               <ArcSearchBox
-                label="Tìm khách"
-                placeholder="Tìm tên, số điện thoại, email"
+                label={t({ vi: "Tìm khách", en: "Search customers" })}
+                placeholder={t({ vi: "Tìm tên, số điện thoại, email", en: "Search name, phone, email" })}
                 value={view.q ?? ""}
                 onSubmit={(v) => go({ q: v || null, page: null }, "replace")}
               />
@@ -306,12 +349,15 @@ export function ArcCustomersScreen({
   );
 }
 
-/** The monogram and the name, the row's key: 500, on one line. */
-function WhoCell({ customer }: { customer: AdminCustomer }) {
+/** The monogram and the name, the row's key: 500, on one line; said in Vietnamese on an English page. */
+function WhoCell({ customer, locale }: { customer: AdminCustomer; locale: Locale }) {
+  const own = storedLang(customer.name, locale);
   return (
     <span className={book.who}>
-      <Avatar name={monogramName(customer.name)} size="sm" aria-hidden="true" />
-      <span className={styles.name}>{customer.name}</span>
+      <Avatar name={monogramName(customer.name)} size="sm" aria-hidden="true" lang={own} />
+      <span className={styles.name} lang={own}>
+        {customer.name}
+      </span>
     </span>
   );
 }
@@ -326,14 +372,14 @@ function ContactCell({ customer }: { customer: AdminCustomer }) {
   );
 }
 
-/** "20/09 · DH-2431" with the state it is in under it, or nothing yet. */
-function LastOrderCell({ facts }: { facts: CustomerFacts }) {
+/** "20/09 · DH-2431" with the state it is in under it, or nothing yet; "20 Sep · DH-2431" in English. */
+function LastOrderCell({ facts, locale }: { facts: CustomerFacts; locale: Locale }) {
   if (!facts.last) return <>—</>;
-  const s = STATE_LABEL[facts.last.status.state];
+  const s = stateLabel(facts.last.status.state, locale);
   return (
     <span className={book.stack}>
       <span className={`${book.nowrap} ${book.num}`}>
-        {dayMonth(facts.last.placedAt)} · <CodeCell code={String(facts.last.code)} />
+        {dayMonth(facts.last.placedAt, locale)} · <CodeCell code={String(facts.last.code)} />
       </span>
       <span className={`${book.line} ${book.nowrap}`}>{s.text}</span>
     </span>

@@ -2,16 +2,20 @@
 
 import { ShoppingBag } from "lucide-react";
 import { useId, useMemo } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { findProvince, findWard, provinceLabel, wardLabel } from "@/data/regions";
 import { customerKey, type AdminCustomerDetail } from "@/lib/admin-customers";
+import { storedLang } from "@/lib/admin-text";
 import type { AdminOrder } from "@/lib/admin-orders";
 import { customerFacts, issueOf, issuesLabel, tagReason, untaggedReason } from "@/lib/customer-tags";
 import { currentIssueNo } from "@/lib/current-issue";
 import { clockLabel, dayMonth, dayMonthYear } from "@/lib/datetime";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { addressLabelText } from "@/lib/feed-account";
+import { picker, plural } from "@/lib/i18n";
+import { LEX, issueNo, lexicon } from "@/lib/lexicon";
 import { plainVnd, vnd } from "@/lib/money";
-import { STATE_LABEL } from "@/lib/order-labels";
+import { STATE_LABEL, stateLabel } from "@/lib/order-labels";
 import { orderTotalVnd } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
 import { Avatar } from "@/registry/components/avatar/avatar";
@@ -43,6 +47,11 @@ const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
  * The person is a row of `public.profiles` (a demo shopper or somebody who
  * signed up), their address book is theirs in the database, and the orders
  * are theirs by account (slice B3a).
+ *
+ * In the page's language since round v6 slice E4 (`useLocale()`): the label and
+ * why it holds, the figures the English way, the address book's name for the
+ * address ("Home", slice E3a). The name, the address and the email are printed
+ * as stored; the name and the address said in Vietnamese on an English page.
  */
 export function ArcCustomerScreen({
   customer,
@@ -55,6 +64,11 @@ export function ArcCustomerScreen({
   nowIso: string;
 }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
+  /** The customer's name on an English page, said in Vietnamese when it is; the address always is (QĐ-40). */
+  const own = storedLang(customer.name, locale);
+  const place = locale === "en" ? ("vi" as const) : undefined;
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const ids = { orders: useId(), contact: useId(), address: useId(), tag: useId() };
 
@@ -63,7 +77,7 @@ export function ArcCustomerScreen({
   // 0, a catalogue without issues, is none. The label's line names the same
   // issue (slice 5b, `tagReason`).
   const current = currentIssueNo(catalog, now) || null;
-  const facts = customerFacts(catalog, orders, current, now);
+  const facts = customerFacts(catalog, orders, current, now, locale);
   const home = customer.addresses.find((a) => a.isDefault) ?? customer.addresses[0];
   const province = home ? findProvince(home.provinceCode) : undefined;
   const ward = home ? findWard(home.provinceCode, home.wardCode) : undefined;
@@ -72,13 +86,19 @@ export function ArcCustomerScreen({
     <div className={page.page}>
       <div className={page.masthead}>
         <Breadcrumb
-          ariaLabel="Đường dẫn"
-          items={[{ label: "Khách hàng", href: "/admin/customers" }, { label: customer.name }]}
+          ariaLabel={t({ vi: "Đường dẫn", en: "Breadcrumb" })}
+          items={[
+            { label: t({ vi: "Khách hàng", en: "Customers" }), href: "/admin/customers" },
+            // The name as stored, said in Vietnamese on an English page (Arc's `lang`, registry/PATCHES.md).
+            { label: customer.name, lang: own },
+          ]}
         />
         <header className={page.header}>
           <div className={page.headRow}>
             <div className={page.titleRow}>
-              <h1 className={page.title}>{customer.name}</h1>
+              <h1 className={page.title} lang={own}>
+                {customer.name}
+              </h1>
               {facts.tag && (
                 <Badge tone={TAG_TONE[facts.tag.tone]} size="sm">
                   {facts.tag.label}
@@ -86,41 +106,67 @@ export function ArcCustomerScreen({
               )}
             </div>
             <div className={page.actions}>
-              <Badge size="sm">Dữ liệu mẫu</Badge>
+              <Badge size="sm">{t({ vi: "Dữ liệu mẫu", en: "Demo data" })}</Badge>
               <ArcButtonLink
                 variant="secondary"
                 size="sm"
                 href={`/admin/orders?customer=${customerKey(customer)}`}
               >
                 <ShoppingBag {...ICON} />
-                Đơn của khách
+                {t({ vi: "Đơn của khách", en: "Customer's orders" })}
               </ArcButtonLink>
             </div>
           </div>
           <p className={page.sub}>
-            {facts.orders.length} đơn · {vnd(facts.spentVnd)} · đã mua {issuesLabel(facts.issues)} · tham
-            gia {dayMonthYear(customer.joinedAt)}
+            {t<React.ReactNode>({
+              vi: (
+                <>
+                  {facts.orders.length} đơn · {vnd(facts.spentVnd)} · đã mua {issuesLabel(facts.issues)} · tham
+                  gia {dayMonthYear(customer.joinedAt)}
+                </>
+              ),
+              en: `${plural(facts.orders.length, "order", "orders")} · ${vnd(facts.spentVnd, locale)} · bought in ${issuesLabel(facts.issues, locale)} · joined ${dayMonthYear(customer.joinedAt, locale)}`,
+            })}
           </p>
         </header>
       </div>
 
       <div className={styles.kpis}>
-        <ArcKpi label="Đơn đã đặt" value={String(facts.orders.length)}>
-          {facts.booked.length} đơn đã thanh toán · {facts.orders.length - facts.booked.length} đơn huỷ
-          hoặc đang chờ
+        <ArcKpi label={t({ vi: "Đơn đã đặt", en: "Orders placed" })} value={String(facts.orders.length)}>
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                {facts.booked.length} đơn đã thanh toán · {facts.orders.length - facts.booked.length} đơn huỷ
+                hoặc đang chờ
+              </>
+            ),
+            en: `${facts.booked.length} paid · ${facts.orders.length - facts.booked.length} cancelled or pending`,
+          })}
         </ArcKpi>
-        <ArcKpi label="Tổng chi" value={`${plainVnd(facts.spentVnd)}₫`}>
-          chỉ tính đơn đã thanh toán, chưa trừ hoàn tiền
+        <ArcKpi label={t({ vi: "Tổng chi", en: "Total spent" })} value={`${plainVnd(facts.spentVnd, locale)}₫`}>
+          {t({ vi: "chỉ tính đơn đã thanh toán, chưa trừ hoàn tiền", en: "paid orders only, before refunds" })}
         </ArcKpi>
-        <ArcKpi label="Đã mua" value={`${facts.issues.length} ${LEX.tl}`}>
+        <ArcKpi
+          label={t({ vi: "Đã mua", en: "Bought in" })}
+          value={t({ vi: `${facts.issues.length} ${LEX.tl}`, en: plural(facts.issues.length, "drop", "drops") })}
+        >
           {facts.issues.length > 0
-            ? `${issuesLabel(facts.issues)}${facts.streak > 1 ? ` · dài nhất ${facts.streak} ${LEX.tl} liên tiếp` : ""}`
-            : "chưa có đơn đã thanh toán"}
+            ? t({
+                vi: `${issuesLabel(facts.issues)}${facts.streak > 1 ? ` · dài nhất ${facts.streak} ${LEX.tl} liên tiếp` : ""}`,
+                en: `${issuesLabel(facts.issues, locale)}${facts.streak > 1 ? ` · ${facts.streak} in a row` : ""}`,
+              })
+            : t({ vi: "chưa có đơn đã thanh toán", en: "no paid orders yet" })}
         </ArcKpi>
-        <ArcKpi label="Đơn gần nhất" value={facts.last ? dayMonth(facts.last.placedAt) : "—"}>
+        <ArcKpi
+          label={t({ vi: "Đơn gần nhất", en: "Latest order" })}
+          value={facts.last ? dayMonth(facts.last.placedAt, locale) : "—"}
+        >
           {facts.last
-            ? `${facts.last.code} · ${STATE_LABEL[facts.last.status.state].text.toLocaleLowerCase("vi")}`
-            : "chưa đặt đơn nào"}
+            ? t({
+                vi: `${facts.last.code} · ${STATE_LABEL[facts.last.status.state].text.toLocaleLowerCase("vi")}`,
+                en: `${facts.last.code} · ${stateLabel(facts.last.status.state, "en").text.toLocaleLowerCase("en")}`,
+              })
+            : t({ vi: "chưa đặt đơn nào", en: "no orders yet" })}
         </ArcKpi>
       </div>
 
@@ -132,40 +178,45 @@ export function ArcCustomerScreen({
             <div className={panel.panelHead}>
               <div className={panel.panelHeading}>
                 <h2 id={ids.orders} className={panel.panelTitle}>
-                  Đơn đã đặt
+                  {t({ vi: "Đơn đã đặt", en: "Orders placed" })}
                 </h2>
-                <p className={panel.panelSub}>{facts.orders.length} đơn</p>
+                <p className={panel.panelSub}>
+                  {t<React.ReactNode>({
+                    vi: <>{facts.orders.length} đơn</>,
+                    en: plural(facts.orders.length, "order", "orders"),
+                  })}
+                </p>
               </div>
             </div>
             {facts.orders.length === 0 ? (
-              <p className={styles.none}>Chưa đặt đơn nào.</p>
+              <p className={styles.none}>{t({ vi: "Chưa đặt đơn nào.", en: "No orders yet." })}</p>
             ) : (
               <table className={panel.lines}>
                 <thead>
                   <tr>
-                    <th scope="col">Mã đơn</th>
-                    <th scope="col">Thời gian</th>
-                    <th scope="col">{LEX.t}</th>
+                    <th scope="col">{t({ vi: "Mã đơn", en: "Order" })}</th>
+                    <th scope="col">{t({ vi: "Thời gian", en: "Placed" })}</th>
+                    <th scope="col">{lexicon(locale).t}</th>
                     <th scope="col" className={panel.num}>
-                      Giá trị
+                      {t({ vi: "Giá trị", en: "Total" })}
                     </th>
-                    <th scope="col">Trạng thái</th>
+                    <th scope="col">{t({ vi: "Trạng thái", en: "Status" })}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {facts.orders.map((o) => {
-                    const s = STATE_LABEL[o.status.state];
+                    const s = stateLabel(o.status.state, locale);
                     return (
                       <tr key={o.code}>
                         <td>
                           <CodeCell code={String(o.code)} />
                         </td>
                         <td className={panel.nowrap}>
-                          {dayMonth(o.placedAt)} · {clockLabel(o.placedAt)}
+                          {dayMonth(o.placedAt, locale)} · {clockLabel(o.placedAt)}
                         </td>
                         {/* Empty for an order of fixed styles only (slice B5). */}
                         <td>{issueCell(issueOf(catalog, o))}</td>
-                        <td className={panel.num}>{plainVnd(orderTotalVnd(o))}</td>
+                        <td className={panel.num}>{plainVnd(orderTotalVnd(o), locale)}</td>
                         <td>
                           <Badge tone={TONE[s.tone]} size="sm">
                             {s.text}
@@ -184,12 +235,14 @@ export function ArcCustomerScreen({
           <section className={panel.panel} aria-labelledby={ids.contact}>
             <div className={panel.panelHead}>
               <h2 id={ids.contact} className={panel.panelTitle}>
-                Liên hệ
+                {t({ vi: "Liên hệ", en: "Contact" })}
               </h2>
             </div>
             <div className={panel.who}>
-              <Avatar name={monogramName(customer.name)} size="md" aria-hidden="true" />
-              <p className={panel.whoName}>{customer.name}</p>
+              <Avatar name={monogramName(customer.name)} size="md" aria-hidden="true" lang={own} />
+              <p className={panel.whoName} lang={own}>
+                {customer.name}
+              </p>
               <p className={panel.whoFacts}>
                 {/* A sign-up gives no number (the form does not ask). */}
                 {customer.phone ? `${formatPhone(customer.phone)} · ` : ""}
@@ -203,23 +256,28 @@ export function ArcCustomerScreen({
               <div className={panel.panelHead}>
                 <div className={panel.panelHeading}>
                   <h2 id={ids.address} className={panel.panelTitle}>
-                    Địa chỉ mặc định
+                    {t({ vi: "Địa chỉ mặc định", en: "Default address" })}
                   </h2>
-                  <p className={panel.panelSub}>{home.label}</p>
+                  <p className={panel.panelSub}>{addressLabelText(home.label, locale)}</p>
                 </div>
               </div>
               <div className={panel.address}>
                 <p>
-                  <strong>{home.recipient}</strong> · {formatPhone(home.phone)}
+                  <strong lang={storedLang(home.recipient, locale)}>{home.recipient}</strong> · {formatPhone(home.phone)}
                 </p>
-                <p>
+                <p lang={place}>
                   {home.line}
                   {ward ? `, ${wardLabel(ward)}` : ""}
                   {province ? `, ${provinceLabel(province)}` : ""}
                 </p>
               </div>
               {customer.addresses.length > 1 && (
-                <p className={panel.fine}>Sổ địa chỉ của khách có {customer.addresses.length} địa chỉ.</p>
+                <p className={panel.fine}>
+                  {t<React.ReactNode>({
+                    vi: <>Sổ địa chỉ của khách có {customer.addresses.length} địa chỉ.</>,
+                    en: `The customer's address book has ${plural(customer.addresses.length, "address", "addresses")}.`,
+                  })}
+                </p>
               )}
             </section>
           )}
@@ -227,7 +285,7 @@ export function ArcCustomerScreen({
           <section className={panel.panel} aria-labelledby={ids.tag}>
             <div className={panel.panelHead}>
               <h2 id={ids.tag} className={panel.panelTitle}>
-                Nhãn
+                {t({ vi: "Nhãn", en: "Label" })}
               </h2>
             </div>
             {facts.tag ? (
@@ -235,10 +293,10 @@ export function ArcCustomerScreen({
                 <Badge tone={TAG_TONE[facts.tag.tone]} size="sm">
                   {facts.tag.label}
                 </Badge>
-                <span>— {tagReason(facts.tag.key, facts, current)}</span>
+                <span>— {tagReason(facts.tag.key, facts, current, locale)}</span>
               </p>
             ) : (
-              <p className={styles.none}>{untaggedReason(current)}</p>
+              <p className={styles.none}>{untaggedReason(current, locale)}</p>
             )}
           </section>
         </div>

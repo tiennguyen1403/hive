@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { ArcSlipScreen } from "@/components/admin-arc/ArcSlipScreen";
 import { demoNow } from "@/lib/clock";
@@ -6,8 +7,13 @@ import { toVnIso } from "@/lib/datetime";
 import { listAllOrders, listEvents } from "@/lib/db/admin";
 import { requireAdmin } from "@/lib/db/session";
 import { addressEditReason } from "@/lib/order-notes";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 
-export const metadata = { title: "Phiếu giao" };
+/** The screen's name in the title, in the page's language (round v6 slice E4); the layout adds "· Admin · HIVE". */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: picker(await getLocale())({ vi: "Phiếu giao", en: "Delivery slips" }) };
+}
 
 /**
  * The delivery slips for one order or for a selection.

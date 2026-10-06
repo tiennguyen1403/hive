@@ -1,6 +1,7 @@
 import type { Order, OrderState } from "@/data/types";
 import { effectiveStatus } from "./customer-orders";
-import { picker, type Locale } from "./i18n";
+import { cancelReasonLabel } from "./feed-account";
+import { picker, plural, type Locale } from "./i18n";
 import { DELIVERY_OPTIONS } from "./shipping";
 
 /**
@@ -255,11 +256,67 @@ export function adminFailureMessage(move: AdminMove, failure: AdminFailure, code
  *
  * The bulk bar confirms each order on its own (one `admin_mark_paid()` per
  * code), so the sentence has to say how many went through and how many did
- * not — a single "đã lưu" over a half-failed batch would be a lie.
+ * not — a single "đã lưu" over a half-failed batch would be a lie. In English
+ * since round v6 slice E4.
  */
-export function bulkPaidMessage(done: number, failed: number): string {
+export function bulkPaidMessage(done: number, failed: number, locale: Locale = "vi"): string {
+  if (locale === "en") return bulkPaidMessageEn(done, failed);
   if (done === 0) return `Chưa đánh dấu được đơn nào · ${failed} đơn không còn chờ tiền`;
   return failed === 0
     ? `${done} đơn → đã thanh toán · đã lưu`
     : `${done} đơn → đã thanh toán · đã lưu · ${failed} đơn không đổi được, tải lại để xem`;
+}
+
+/**
+ * The same three sentences in English (round v6 slice E4): "3 orders → paid ·
+ * saved", the state in the glossary's word, each count with its own noun.
+ */
+function bulkPaidMessageEn(done: number, failed: number): string {
+  const orders = (n: number) => plural(n, "order", "orders");
+  if (done === 0) return `No order marked as paid · ${orders(failed)} no longer awaiting payment`;
+  return failed === 0
+    ? `${orders(done)} → paid · saved`
+    : `${orders(done)} → paid · saved · ${orders(failed)} couldn't change, reload to check`;
+}
+
+/**
+ * The toast of a move that went through, in the page's language (round v6 slice
+ * E4). The Vietnamese sentences are the ones the actions have always said,
+ * word for word; `reason` is the stored Vietnamese cancel reason, which the
+ * English side names by the shop's table (`cancelReasonLabel`, slice E2).
+ */
+export function adminDoneMessage(
+  move: "MARK_PAID" | "HAND_OVER" | "MARK_DELIVERED" | "CANCEL" | "NOTE" | "EDIT_ADDRESS",
+  code: string,
+  locale: Locale = "vi",
+  detail: { tracking?: string; reason?: string } = {},
+): string {
+  const t = picker(locale);
+  switch (move) {
+    case "MARK_PAID":
+      return t({ vi: `${code} → đã thanh toán · đã lưu`, en: `${code} → paid · saved` });
+    case "HAND_OVER":
+      return t({
+        vi: `${code} → đang giao · ${detail.tracking} · khách thấy mã này ở tra cứu đơn và Đơn hàng`,
+        en: `${code} → shipping · ${detail.tracking} · the customer sees this number in Track an order and Orders`,
+      });
+    case "MARK_DELIVERED":
+      return t({ vi: `${code} → đã giao · đã lưu`, en: `${code} → delivered · saved` });
+    case "CANCEL": {
+      const reason = detail.reason ?? "";
+      return t({
+        vi: `${code} đã huỷ · lý do: ${reason.toLocaleLowerCase("vi")} · hàng về kệ`,
+        en: `${code} cancelled · reason: ${lowerFirst(cancelReasonLabel(reason, "en"))} · items back in stock`,
+      });
+    }
+    case "NOTE":
+      return t({ vi: "Đã thêm ghi chú · đã lưu", en: "Note added · saved" });
+    case "EDIT_ADDRESS":
+      return t({ vi: `Đã sửa địa chỉ giao ${code} · đã lưu`, en: `Delivery address of ${code} changed · saved` });
+  }
+}
+
+/** "Change of mind" → "change of mind": a label set inside a sentence. */
+function lowerFirst(s: string): string {
+  return s ? s.charAt(0).toLocaleLowerCase("en") + s.slice(1) : s;
 }

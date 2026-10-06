@@ -81,20 +81,30 @@ export function moneyInitial(amountVnd: number): string {
  * Truncated toward zero, not rounded. 999.960₫ is not a million, and a tile
  * that rounds up to `1tr₫` overstates by exactly the amount somebody would
  * later have to explain.
+ *
+ * In English (round v6 slice E4) `"18.8M₫"`: "M" for a million instead of
+ * "tr", and a decimal point; "k" is the same in both.
  */
-export function compactVnd(amount: number): string {
+export function compactVnd(amount: number, locale: Locale = "vi"): string {
   const sign = amount < 0 ? "-" : "";
   const n = Math.abs(Math.round(amount));
+  const { point, million } = COMPACT[locale] ?? COMPACT.vi;
 
   const scale = (unit: number, suffix: string) => {
     // One decimal, cut rather than rounded, so the figure never grows.
     const tenths = Math.floor((n / unit) * 10);
     const whole = Math.floor(tenths / 10);
     const rest = tenths % 10;
-    return `${sign}${whole}${rest ? `,${rest}` : ""}${suffix}₫`;
+    return `${sign}${whole}${rest ? `${point}${rest}` : ""}${suffix}₫`;
   };
 
-  if (n >= 1_000_000) return scale(1_000_000, "tr");
+  if (n >= 1_000_000) return scale(1_000_000, million);
   if (n >= 1_000) return scale(1_000, "k");
   return `${sign}${n}₫`;
 }
+
+/** How each language writes a compact figure: its decimal mark and its word for a million. */
+const COMPACT: Readonly<Record<Locale, { point: string; million: string }>> = {
+  vi: { point: ",", million: "tr" },
+  en: { point: ".", million: "M" },
+};

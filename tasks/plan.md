@@ -3524,3 +3524,44 @@ máy (chưa push) rồi làm E4.
   cả "code" (tìm theo chuỗi con như mock); lý do đổi trả trong ngoặc khi gọi tên.
 - **Lỗi có từ trước, để lượt rà cuối:** `/faq#doi-tra` dừng khi nhóm ở 172px, chưa sát dưới thanh trên (cả bản VI).
 - **Phần cửa hàng đã dịch xong.** Kế: E4, E5 quản trị.
+
+**06/10, lát E4 ĐẠT (phiên chính duyệt).** Brief `tasks/briefs/v6-lat-e4.md`, agent `ui-implementer`, chạy 02/10. Người dùng cho
+commit trên máy (chưa push) rồi làm E5. Phiên chính quyết thêm: mã viết tắt "S05" trước tên mẫu ở bản Anh là "D05" (`issueCode`), slug và URL không đổi. Agent đầu tiên dừng vì **đầy ngữ
+cảnh** sau khi đã sửa 36 tệp, chụp đủ ảnh "trước" và một lượt "sau". Phiên chính giao một agent mới làm nốt trên cây làm việc, không
+chụp lại ảnh "trước", và dặn giữ đầu ra gọn (kết quả script ghi ra tệp, xem tối đa khoảng 8 ảnh). Brief E5 thêm cùng lời dặn.
+- **Phạm vi đã dịch:** Tổng quan (thẻ số, biểu đồ, hàng chờ), Nhật ký (câu dựng từ `kind` và payload, bộ lọc), sổ đơn (tab, tìm, lọc,
+  cột, chọn nhiều), một đơn và các hộp (đã trả, bàn giao, đã giao, huỷ, địa chỉ, ghi chú), phiếu giao in, Khách hàng, một khách;
+  CSV đơn, nhật ký, khách, doanh thu; câu báo của action quản trị, mỗi `takeRate` truyền ngôn ngữ. `<title>` theo ngôn ngữ.
+- **Mã mới:**
+  - `Phrase` / `Stored` / `phrase()` / `plainText()` (`lib/admin-text.ts`) và `phraseNode` (`ArcPhrase.tsx`): chữ Việt đã lưu nằm
+    giữa câu của code. Bản VI vẫn là một chuỗi như cũ; bản EN bọc mảnh đã lưu trong `<span lang="vi">`;
+  - `storedLang(text, locale)`: `lang="vi"` cho chữ gõ tự do có dấu Việt, chỉ ở bản EN;
+  - bảng tiếng Anh khoá bằng chữ Việt đã chuẩn hoá cho đơn vị vận chuyển (`lib/carrier.ts`) và lý do chỉnh tồn
+    (`STOCK_REASON_EN`), giá trị lạ in nguyên; DB vẫn nhận chữ Việt;
+  - `compactVnd` bản EN "1.2M₫"; CSV đơn tách ra `lib/orders-csv.ts`.
+- **Hai chỗ vá Arc mới (phiên chính nhận):** `optionsLang` của `combobox` (danh sách tỉnh, phường) và `BreadcrumbItem.lang` (tên
+  khách ở đường dẫn), để tên tiếng Việt mang `lang="vi"`. Đây không phải chữ của Arc, nhưng Arc vẽ hai chỗ này từ một chuỗi nên không
+  gói được `<span lang>`. Ghi ở `registry/PATCHES.md`, có test.
+- **Phiên chính kiểm:** tsc sạch, 2.107 test xanh (62 test mới; test cũ chỉ `arc-registry.test.ts` thêm dòng, không sửa dòng nào);
+  xem ảnh tiếng Anh sổ đơn và một đơn đã huỷ ở 1280.
+- **Agent đo:**
+  - bản VI 82 cặp ảnh: mọi dải lệch là chữ chạy theo đồng hồ (giờ đặt lại, "… giờ trước", "đóng sau…", giờ in phiếu), chiều cao
+    bằng nhau;
+  - script dò chữ Việt ở bản EN ra 0 trên 83 trạng thái, ở 1280 và 1440, trừ 37 `aria-label` "Actions for <tên khách>". CSV bản EN
+    0 chỗ, trừ chữ tự do do lượt kiểm hành vi gõ vào;
+  - sweep VI 110 phát hiện như cũ, EN 109; JS nén +1,7 đến +3,9 KB; `impeccable detect` 8 trước, 8 sau, trùng từng dòng.
+- **Agent sửa thêm:** khung chụp cao bằng trang làm mất thanh cuộn dọc 15px. Đo trong cửa sổ thật 1280×800 thì sổ đơn bản EN hiện
+  thanh cuộn ngang (bảng 972px trong thẻ 959px; cột Thanh toán "received 07:52 · 30 Sep" rộng 124px). Đổi thành "paid …"; 92 lượt dò
+  (23 route, hai cửa sổ, hai ngôn ngữ) không còn cuộn ngang.
+- **Quyết định (phiên chính):** giữ "Actions for <tên khách>": một thuộc tính không mang được `lang` cho một phần chữ, và tên là thứ
+  phân biệt các nút.
+- **Phiên chính sửa sau duyệt:** `tools/layout-sweep.js` lấy các dòng `T(vi, en)` của quản trị (nút, menu, ô) từ bản sao của agent;
+  đoạn "Các prop mới" của `PATCHES.md` thêm hai prop.
+- **Để lượt rà cuối:**
+  - cột "Style" của bảng món trên trang một đơn ra 3 dòng ở bản EN ở 1280 (DH-2418, DH-2311), vì tiêu đề "Colour · size" và "Qty"
+    rộng hơn bản Việt. Có thể đổi tiêu đề ngắn hơn, ví dụ "Variant";
+  - hai kiểu ngày cạnh nhau: hàng chờ Tổng quan "Paid 07:52 30 Sep" và "due 08:05, 3 Oct"; sổ đơn "due 08:05 · 3 Oct" ở cột Thanh
+    toán và "due 08:05 3 Oct" ở cột Trạng thái (theo đúng bản Việt);
+  - chân thanh bên in tên tài khoản quản trị mẫu "Quản lý cửa hàng" (chữ đã lưu).
+- **Mẫu thêm cho E5:** `Phrase` / `Stored` cho chữ đã lưu giữa câu; `storedLang` cho ô nhập; muốn biết bảng có vừa thẻ không thì đo
+  trong cửa sổ thật 1280×800.
