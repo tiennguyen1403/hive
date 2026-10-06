@@ -51,9 +51,9 @@ export function parseVnd(raw: string): number {
  * gets miscounted. Empty stays empty rather than becoming a zero nobody
  * typed.
  */
-export function moneyInput(raw: string): string {
+export function moneyInput(raw: string, locale: Locale = "vi"): string {
   const digits = raw.replace(/\D/g, "");
-  return digits === "" ? "" : plainVnd(Number(digits));
+  return digits === "" ? "" : plainVnd(Number(digits), locale);
 }
 
 /**

@@ -2,8 +2,11 @@
 
 import { ArrowLeft, Plus } from "lucide-react";
 import { useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { storedLang } from "@/lib/admin-text";
+import { picker } from "@/lib/i18n";
+import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import {
   kindOptions,
   photoKeys,
@@ -60,6 +63,8 @@ export function ArcTeaserDialog({
   /** Where focus goes when the dialog shuts: the button that opened it. */
   onCloseAutoFocus: (event: Event) => void;
 }) {
+  // The page's language (round v6 slice E5).
+  const t = picker(useLocale());
   return (
     <Dialog
       open={open}
@@ -68,7 +73,7 @@ export function ArcTeaserDialog({
       }}
     >
       <DialogContent
-        title={`Thêm mẫu hé lộ cho ${LEX.tl} ${issueNo(no)}`}
+        title={t({ vi: `Thêm mẫu hé lộ cho ${LEX.tl} ${issueNo(no)}`, en: `Add a teaser for ${issueLabel(no, "en")}` })}
         onCloseAutoFocus={onCloseAutoFocus}
         onInteractOutside={keepOpenForToasts}
       >
@@ -91,12 +96,14 @@ function TeaserForm({
   onConfirm: (draft: TeaserDraft) => void;
 }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const [name, setName] = useState("");
   const [kind, setKind] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
 
   const clean = teaserName(name);
-  const blocker = teaserBlocker(clean, kind, photo);
+  const blocker = teaserBlocker(clean, kind, photo, locale);
   const ready = blocker === null;
 
   // A style's name is written in capitals, as the shop prints it: v3 drew the
@@ -109,25 +116,31 @@ function TeaserForm({
       <div className={box.fields}>
         <Input
           {...capitals}
-          label="Tên mẫu"
-          placeholder="VIẾT HOA, một từ"
+          label={t({ vi: "Tên mẫu", en: "Style name" })}
+          placeholder={t({ vi: "VIẾT HOA, một từ", en: "CAPITALS, one word" })}
           autoComplete="off"
           spellCheck={false}
           value={name}
+          lang={storedLang(name, locale)}
         />
         <Select
-          label="Loại"
-          placeholder="Chọn loại"
-          options={kindOptions(catalog)}
+          label={t({ vi: "Loại", en: "Type" })}
+          placeholder={t({ vi: "Chọn loại", en: "Choose a type" })}
+          options={kindOptions(catalog, locale)}
           value={kind ?? ""}
           onValueChange={setKind}
         />
-        <ArcPhotoPicker label="Ảnh" keys={photoKeys(catalog)} value={photo} onValueChange={setPhoto} />
+        <ArcPhotoPicker
+          label={t({ vi: "Ảnh", en: "Photo" })}
+          keys={photoKeys(catalog)}
+          value={photo}
+          onValueChange={setPhoto}
+        />
       </div>
       <div className={box.actions}>
         <Button variant="secondary" size="sm" disabled={pending} onClick={onCancel}>
           {pending ? null : <ArrowLeft {...ICON} />}
-          Huỷ
+          {t({ vi: "Huỷ", en: "Cancel" })}
         </Button>
         <Button
           variant="primary"
@@ -140,7 +153,7 @@ function TeaserForm({
           }}
         >
           {ready && !pending ? <Plus {...ICON} /> : null}
-          {pending ? "Đang lưu…" : (blocker ?? "Thêm")}
+          {pending ? t({ vi: "Đang lưu…", en: "Saving…" }) : (blocker ?? t({ vi: "Thêm", en: "Add" }))}
         </Button>
       </div>
     </>

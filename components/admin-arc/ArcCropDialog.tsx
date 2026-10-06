@@ -2,8 +2,9 @@
 
 import { ArrowLeft, Check, TriangleAlert } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { COLORS } from "@/data/colors";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { colorLabel } from "@/data/colors";
 import type { ColorKey } from "@/data/types";
 import {
   defaultCrop,
@@ -15,9 +16,11 @@ import {
   outputSize,
   previewBox,
   resizeFromHandle,
+  SHARP_WIDTH,
   type Crop,
   type Handle,
 } from "@/lib/photo-crop";
+import { picker } from "@/lib/i18n";
 import { Button } from "@/registry/components/button/button";
 import { Dialog, DialogContent } from "@/registry/components/dialog/dialog";
 import styles from "./ArcCropDialog.module.css";
@@ -88,6 +91,9 @@ export function ArcCropDialog({
   // The dialog animates out after `target` is gone: it keeps drawing the last
   // photo until then, or its title would lose the colour on the way out.
   const [shown, setShown] = useState<CropTarget | null>(target);
+  // The page's language (round v6 slice E5).
+  const locale = useLocale();
+  const t = picker(locale);
   if (target && target !== shown) setShown(target);
 
   return (
@@ -99,8 +105,8 @@ export function ArcCropDialog({
     >
       <DialogContent
         className={styles.dialog}
-        title={shown ? `Chọn vùng cắt · ${COLORS[shown.color].label}` : ""}
-        description="Kéo khung để dời, kéo góc để đổi cỡ."
+        title={shown ? t({ vi: "Chọn vùng cắt", en: "Choose the crop" }) + ` · ${colorLabel(shown.color, locale)}` : ""}
+        description={t({ vi: "Kéo khung để dời, kéo góc để đổi cỡ.", en: "Drag the frame to move it, a corner to resize it." })}
         onInteractOutside={keepOpenForToasts}
         onCloseAutoFocus={onCloseAutoFocus}
       >
@@ -134,6 +140,8 @@ function CropBody({
   onApply: (crop: Crop) => void;
   onCancel: () => void;
 }) {
+  const locale = useLocale();
+  const t = picker(locale);
   const { nw, nh, src } = target;
   const [crop, setCrop] = useState<Crop>(target.crop);
   const [stage, setStage] = useState<Stage | null>(null);
@@ -218,8 +226,11 @@ function CropBody({
             className={styles.frame}
             role="group"
             tabIndex={0}
-            aria-roledescription="khung cắt"
-            aria-label="Khung cắt 4:5 · phím mũi tên để dời, cộng và trừ để đổi cỡ"
+            aria-roledescription={t({ vi: "khung cắt", en: "crop frame" })}
+            aria-label={t({
+              vi: "Khung cắt 4:5 · phím mũi tên để dời, cộng và trừ để đổi cỡ",
+              en: "4:5 crop frame · arrow keys move it, plus and minus resize it",
+            })}
             // Where the frame sits is the photo's own numbers times the scale
             // it is drawn at: it can only be written inline.
             style={
@@ -255,29 +266,48 @@ function CropBody({
             }}
           />
           <p className={styles.facts}>
-            Vùng chọn <strong>{dims(crop.w, crop.h)}</strong>
-            <br />
-            lưu {dims(out.w, out.h)}
+            {/* The Vietnamese is the JSX it always was, text node for text node. */}
+            {t<ReactNode>({
+              vi: (
+                <>
+                  Vùng chọn <strong>{dims(crop.w, crop.h)}</strong>
+                  <br />
+                  lưu {dims(out.w, out.h)}
+                </>
+              ),
+              en: (
+                <>
+                  Selected <strong>{dims(crop.w, crop.h, locale)}</strong>
+                  <br />
+                  saved at {dims(out.w, out.h, locale)}
+                </>
+              ),
+            })}
           </p>
           {isSoft(crop) && (
             <p className={styles.warning}>
               <TriangleAlert {...ICON} />
-              <span>Hẹp hơn 800px, ảnh trên trang sẽ mờ</span>
+              <span>
+                {t({
+                  vi: `Hẹp hơn ${SHARP_WIDTH}px, ảnh trên trang sẽ mờ`,
+                  en: `Under ${SHARP_WIDTH}px wide, the photo will look soft in the shop`,
+                })}
+              </span>
             </p>
           )}
           <button type="button" className={form.link} onClick={() => setCrop(defaultCrop(nw, nh))}>
-            Toàn ảnh
+            {t({ vi: "Toàn ảnh", en: "Whole photo" })}
           </button>
         </div>
       </div>
       <div className={styles.actions}>
         <Button type="button" variant="secondary" size="sm" onClick={onCancel}>
           <ArrowLeft {...ICON} />
-          Huỷ
+          {t({ vi: "Huỷ", en: "Cancel" })}
         </Button>
         <Button type="button" variant="primary" size="sm" onClick={() => onApply(crop)}>
           <Check {...ICON} />
-          Dùng vùng này
+          {t({ vi: "Dùng vùng này", en: "Use this crop" })}
         </Button>
       </div>
     </>

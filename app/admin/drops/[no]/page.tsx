@@ -1,12 +1,18 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { ArcDropsScreen } from "@/components/admin-arc/ArcDropsScreen";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import { listAllOrders } from "@/lib/db/admin";
 import { requireAdmin } from "@/lib/db/session";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 
-export const metadata = { title: "Chi tiết số" };
+/** The screen's name in the title, in the page's language (round v6 slice E5); the layout adds "· Admin · HIVE". */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: picker(await getLocale())({ vi: "Chi tiết số", en: "Drop details" }) };
+}
 
 /**
  * The same table, with one issue open underneath it.

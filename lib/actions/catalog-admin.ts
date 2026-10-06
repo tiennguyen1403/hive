@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { COLORS } from "@/data/colors";
+import { colorLabel } from "@/data/colors";
 import { productId, type ColorKey } from "@/data/types";
 import {
-  NO_CHANGE_MESSAGE,
+  NO_CHANGE_TEXT,
   calendarRefusal,
   catalogFailureMessage,
   catalogFailureOf,
@@ -47,12 +47,16 @@ import {
   removeUploadedPhotos,
   storeUploadedPhoto,
 } from "@/lib/db/photos";
-import { takeRates } from "@/lib/db/rate-limit";
+import { takeRate, takeRates, type RateVerdict } from "@/lib/db/rate-limit";
 import { getSupabase } from "@/lib/db/server";
 import { requireAdmin } from "@/lib/db/session";
 import { dropState } from "@/lib/drop";
 import { PRODUCT_EDIT_REASON, RESTOCK_REASON, cellDelta } from "@/lib/inventory-adjust";
-import { LEX, issueNo, styleName } from "@/lib/lexicon";
+import { picker, plural, pluralNoun, type Locale } from "@/lib/i18n";
+import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
+import { getActionLocale } from "@/lib/locale";
+import { productText } from "@/lib/product-text";
+import type { RateBucket } from "@/lib/rate-limit";
 import {
   MAX_UPLOAD_BYTES,
   isRealPhotoKey,
@@ -105,8 +109,31 @@ const now = () => toVnIso(demoNow());
 
 const done = (message: string): ActionState => ({ errors: {}, ok: true, message });
 const refused = (message: string): ActionState => ({ errors: { form: message } });
-const failed = (move: CatalogMove, failure: CatalogFailure, subject = ""): ActionState =>
-  refused(catalogFailureMessage(move, failure, subject));
+const failed = (move: CatalogMove, failure: CatalogFailure, subject = "", locale: Locale = "vi"): ActionState =>
+  refused(catalogFailureMessage(move, failure, subject, locale));
+
+/**
+ * The visitor's back-office limits for one move, in order, the first refusal
+ * answering — `takeRates`' rule — with the refusal in the request's language
+ * (round v6 slice E5). Vietnamese is `takeRates` itself, as before; English
+ * spends the same buckets one by one through `takeRate(…, locale)`.
+ */
+async function pace(locale: Locale, ...buckets: RateBucket[]): Promise<RateVerdict> {
+  if (locale === "vi") return takeRates(...buckets);
+  for (const bucket of buckets) {
+    const verdict = await takeRate(bucket, 1, locale);
+    if (!verdict.ok) return verdict;
+  }
+  return { ok: true };
+}
+
+/** A style as the back office names it, "S05 – KHÓI", in the page's language (`productText`). */
+const styleShown = (product: Parameters<typeof productText>[0] & { dropNo: number | null }, locale: Locale) =>
+  styleName(productText(product, locale).name, product.dropNo, locale);
+
+/** "+3 chiếc", "+3 pieces": a signed count of pieces. */
+const signedPieces = (n: number, locale: Locale) =>
+  picker(locale)({ vi: `${signed(n)} chiếc`, en: `${signed(n)} ${pluralNoun(Math.abs(n), "piece", "pieces")}` });
 
 const text = (value: unknown): string => (typeof value === "string" ? value.trim() : "");
 
@@ -174,20 +201,23 @@ export async function adjustStock(
   note: unknown,
 ): Promise<ActionState> {
   await requireAdmin("/admin/products");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
-  if (typeof id !== "string") return failed("ADJUST_STOCK", "NOT_FOUND");
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
+  if (typeof id !== "string") return failed("ADJUST_STOCK", "NOT_FOUND", "", locale);
 
   const catalog = await loadCatalog();
   const product = catalog.byId.get(productId(id));
-  if (!product) return failed("ADJUST_STOCK", "NOT_FOUND");
+  if (!product) return failed("ADJUST_STOCK", "NOT_FOUND", "", locale);
 
   const moved = readCells(cells);
-  if (!moved) return failed("ADJUST_STOCK", "BAD_INPUT");
+  if (!moved) return failed("ADJUST_STOCK", "BAD_INPUT", "", locale);
+  // The reason is stored in Vietnamese whatever the page's language: the sheet
+  // shows its English and sends the stored words (round v6 slices E4, E5).
   const why = text(reason);
   const reference = text(ref);
   const remark = text(note);
-  const blocked = checkAdjustment(product, moved, why, reference, remark);
+  const blocked = checkAdjustment(product, moved, why, reference, remark, locale);
   if (blocked) return refused(blocked);
 
   const failure = await run("admin_adjust_stock", {
@@ -199,11 +229,16 @@ export async function adjustStock(
     p_now: now(),
   });
   // The style as the back office names it (v3 slice 12): "S05 – KHÓI".
-  const shown = styleName(product.name, product.dropNo);
-  if (failure) return failed("ADJUST_STOCK", failure, shown);
+  const shown = styleShown(product, locale);
+  if (failure) return failed("ADJUST_STOCK", failure, shown, locale);
 
   catalogMoved();
-  return done(`Đã điều chỉnh tồn kho ${shown} · ${signed(cellDelta(moved))} chiếc · đã lưu`);
+  return done(
+    picker(locale)({
+      vi: `Đã điều chỉnh tồn kho ${shown} · ${signed(cellDelta(moved))} chiếc · đã lưu`,
+      en: `Stock adjusted for ${shown} · ${signedPieces(cellDelta(moved), "en")} · saved`,
+    }),
+  );
 }
 
 /**
@@ -223,18 +258,19 @@ export async function adjustStock(
  */
 export async function restockProduct(id: unknown, cells: unknown, note?: unknown): Promise<ActionState> {
   await requireAdmin("/admin/products");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
-  if (typeof id !== "string") return failed("RESTOCK", "NOT_FOUND");
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
+  if (typeof id !== "string") return failed("RESTOCK", "NOT_FOUND", "", locale);
 
   const catalog = await loadCatalog();
   const product = catalog.byId.get(productId(id));
-  if (!product) return failed("RESTOCK", "NOT_FOUND");
+  if (!product) return failed("RESTOCK", "NOT_FOUND", "", locale);
 
   const moved = readRestockCells(cells);
-  if (!moved) return failed("RESTOCK", "BAD_INPUT");
+  if (!moved) return failed("RESTOCK", "BAD_INPUT", "", locale);
   const remark = text(note);
-  const blocked = checkAdjustment(product, moved, RESTOCK_REASON, "", remark);
+  const blocked = checkAdjustment(product, moved, RESTOCK_REASON, "", remark, locale);
   if (blocked) return refused(blocked);
 
   const failure = await run("admin_adjust_stock", {
@@ -245,11 +281,16 @@ export async function restockProduct(id: unknown, cells: unknown, note?: unknown
     p_note: remark,
     p_now: now(),
   });
-  const shown = styleName(product.name, product.dropNo);
-  if (failure) return failed("RESTOCK", failure, shown);
+  const shown = styleShown(product, locale);
+  if (failure) return failed("RESTOCK", failure, shown, locale);
 
   catalogMoved();
-  return done(`Đã nhập thêm ${shown} · ${signed(cellDelta(moved))} chiếc · đã lưu`);
+  return done(
+    picker(locale)({
+      vi: `Đã nhập thêm ${shown} · ${signed(cellDelta(moved))} chiếc · đã lưu`,
+      en: `Restocked ${shown} · ${signedPieces(cellDelta(moved), "en")} · saved`,
+    }),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────── the issues
@@ -264,21 +305,22 @@ export async function restockProduct(id: unknown, cells: unknown, note?: unknown
  */
 export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
-  const pace = await takeRates("admin", "admin_create");
-  if (!pace.ok) return refused(pace.message);
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin", "admin_create");
+  if (!limit.ok) return refused(limit.message);
   const n = readDropNo(no);
-  if (n === null) return failed("ADD_DROP", "BAD_INPUT");
-  const window = readWindow(opensAt, closesAt);
+  if (n === null) return failed("ADD_DROP", "BAD_INPUT", "", locale);
+  const window = readWindow(opensAt, closesAt, locale);
   if (!window.ok) return refused(window.error);
 
   const catalog = await loadCatalog();
-  if (n !== nextDropNo(catalog.drops)) return failed("ADD_DROP", "NOT_ALLOWED", dropSubject(n));
+  if (n !== nextDropNo(catalog.drops)) return failed("ADD_DROP", "NOT_ALLOWED", dropSubject(n, locale), locale);
   // Slice B3c: one issue at a time — the database refuses an overlap too, and
   // names the issue in the way the same way.
   const clash = overlappingDrop(catalog.drops, window.value);
-  if (clash) return refused(overlapMessage(clash.no));
+  if (clash) return refused(overlapMessage(clash.no, locale));
   const order = orderClash(catalog.drops, n, window.value);
-  if (order) return refused(orderMessage(n, order.side, order.drop.no));
+  if (order) return refused(orderMessage(n, order.side, order.drop.no, locale));
 
   const result = await call("admin_add_drop", {
     p_no: n,
@@ -287,12 +329,17 @@ export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown):
     p_now: now(),
   });
   if (!result.ok) {
-    const said = calendarRefusal(n, result.failure, result.detail, result.hint);
-    return said ? refused(said) : failed("ADD_DROP", result.failure, dropSubject(n));
+    const said = calendarRefusal(n, result.failure, result.detail, result.hint, locale);
+    return said ? refused(said) : failed("ADD_DROP", result.failure, dropSubject(n, locale), locale);
   }
 
   catalogMoved();
-  return done(`Đã tạo ${LEX.tl} ${issueNo(n)} (sắp mở) · đã lưu`);
+  return done(
+    picker(locale)({
+      vi: `Đã tạo ${LEX.tl} ${issueNo(n)} (sắp mở) · đã lưu`,
+      en: `${issueLabel(n, "en")} created (coming soon) · saved`,
+    }),
+  );
 }
 
 /**
@@ -314,20 +361,21 @@ export async function addDrop(no: unknown, opensAt: unknown, closesAt: unknown):
  */
 export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
   const n = readDropNo(no);
-  if (n === null) return failed("SCHEDULE_DROP", "NOT_FOUND");
-  const window = readWindow(opensAt, closesAt);
+  if (n === null) return failed("SCHEDULE_DROP", "NOT_FOUND", "", locale);
+  const window = readWindow(opensAt, closesAt, locale);
   if (!window.ok) return refused(window.error);
 
   const catalog = await loadCatalog();
   const drop = catalog.dropByNo.get(n);
-  if (!drop) return failed("SCHEDULE_DROP", "NOT_FOUND", dropSubject(n));
+  if (!drop) return failed("SCHEDULE_DROP", "NOT_FOUND", dropSubject(n, locale), locale);
   const clash = scheduleClash(catalog.drops, drop, window.value);
-  if (clash) return refused(overlapMessage(clash.no));
+  if (clash) return refused(overlapMessage(clash.no, locale));
   const order = orderClash(catalog.drops, n, window.value);
-  if (order) return refused(orderMessage(n, order.side, order.drop.no));
+  if (order) return refused(orderMessage(n, order.side, order.drop.no, locale));
 
   const result = await call("admin_schedule_drop", {
     p_no: n,
@@ -336,13 +384,16 @@ export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unkn
     p_now: now(),
   });
   if (!result.ok) {
-    const said = calendarRefusal(n, result.failure, result.detail, result.hint);
-    return said ? refused(said) : failed("SCHEDULE_DROP", result.failure, dropSubject(n));
+    const said = calendarRefusal(n, result.failure, result.detail, result.hint, locale);
+    return said ? refused(said) : failed("SCHEDULE_DROP", result.failure, dropSubject(n, locale), locale);
   }
 
   catalogMoved();
   return done(
-    `${dropSubject(n)}: lịch đổi thành ${dayMonthYear(window.value.opensAt)} → ${dayMonthYear(window.value.closesAt)} · đã lưu`,
+    picker(locale)({
+      vi: `${dropSubject(n)}: lịch đổi thành ${dayMonthYear(window.value.opensAt)} → ${dayMonthYear(window.value.closesAt)} · đã lưu`,
+      en: `${dropSubject(n, "en")}: dates changed to ${dayMonthYear(window.value.opensAt, "en")} → ${dayMonthYear(window.value.closesAt, "en")} · saved`,
+    }),
   );
 }
 
@@ -353,17 +404,20 @@ export async function scheduleDrop(no: unknown, opensAt: unknown, closesAt: unkn
  */
 export async function closeDropNow(no: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
   const n = readDropNo(no);
-  if (n === null) return failed("CLOSE_DROP", "NOT_FOUND");
+  if (n === null) return failed("CLOSE_DROP", "NOT_FOUND", "", locale);
 
   const catalog = await loadCatalog();
   const drop = catalog.dropByNo.get(n);
-  if (!drop) return failed("CLOSE_DROP", "NOT_FOUND", dropSubject(n));
+  if (!drop) return failed("CLOSE_DROP", "NOT_FOUND", dropSubject(n, locale), locale);
 
   const at = now();
-  if (dropState(drop, new Date(at)) !== "OPEN") return failed("CLOSE_DROP", "NOT_ALLOWED", dropSubject(n));
+  if (dropState(drop, new Date(at)) !== "OPEN") {
+    return failed("CLOSE_DROP", "NOT_ALLOWED", dropSubject(n, locale), locale);
+  }
 
   const failure = await run("admin_schedule_drop", {
     p_no: n,
@@ -371,10 +425,15 @@ export async function closeDropNow(no: unknown): Promise<ActionState> {
     p_closes_at: at,
     p_now: at,
   });
-  if (failure) return failed("CLOSE_DROP", failure, dropSubject(n));
+  if (failure) return failed("CLOSE_DROP", failure, dropSubject(n, locale), locale);
 
   catalogMoved();
-  return done(`Đã đóng ${LEX.tl} ${issueNo(n)} lúc ${dateTimeLabel(at)} · đã lưu`);
+  return done(
+    picker(locale)({
+      vi: `Đã đóng ${LEX.tl} ${issueNo(n)} lúc ${dateTimeLabel(at)} · đã lưu`,
+      en: `${issueLabel(n, "en")} closed at ${dateTimeLabel(at, "en")} · saved`,
+    }),
+  );
 }
 
 // ────────────────────────────────────────────────────────────── the teasers
@@ -385,13 +444,14 @@ export async function closeDropNow(no: unknown): Promise<ActionState> {
  */
 export async function addTeaser(draft: unknown): Promise<ActionState> {
   await requireAdmin("/admin/drops");
-  const pace = await takeRates("admin", "admin_create");
-  if (!pace.ok) return refused(pace.message);
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin", "admin_create");
+  if (!limit.ok) return refused(limit.message);
   const catalog = await loadCatalog();
-  const read = readTeaser(draft, catalog);
+  const read = readTeaser(draft, catalog, locale);
   if (!read.ok) return refused(read.error);
   const t = read.value;
-  if (!catalog.dropByNo.has(t.dropNo)) return failed("ADD_TEASER", "NOT_FOUND", dropSubject(t.dropNo));
+  if (!catalog.dropByNo.has(t.dropNo)) return failed("ADD_TEASER", "NOT_FOUND", dropSubject(t.dropNo, locale), locale);
 
   const failure = await run("admin_add_teaser", {
     p_slug: t.slug,
@@ -402,11 +462,14 @@ export async function addTeaser(draft: unknown): Promise<ActionState> {
     p_photo_key: t.photoKey,
     p_now: now(),
   });
-  const shown = styleName(t.name, t.dropNo);
-  if (failure) return failed("ADD_TEASER", failure, failure === "NOT_FOUND" ? dropSubject(t.dropNo) : shown);
+  // The teaser's name as typed: a new teaser has no English of its own (B15).
+  const shown = styleName(t.name, t.dropNo, locale);
+  if (failure) {
+    return failed("ADD_TEASER", failure, failure === "NOT_FOUND" ? dropSubject(t.dropNo, locale) : shown, locale);
+  }
 
   catalogMoved();
-  return done(`Đã thêm mẫu hé lộ ${shown} · đã lưu`);
+  return done(picker(locale)({ vi: `Đã thêm mẫu hé lộ ${shown} · đã lưu`, en: `Teaser ${shown} added · saved` }));
 }
 
 // ──────────────────────────────────────────────────────────────── the codes
@@ -416,26 +479,28 @@ export async function addTeaser(draft: unknown): Promise<ActionState> {
  */
 export async function addPromo(draft: unknown, copyOf?: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
-  const pace = await takeRates("admin", "admin_create");
-  if (!pace.ok) return refused(pace.message);
-  const read = readPromoDraft(draft);
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin", "admin_create");
+  if (!limit.ok) return refused(limit.message);
+  const read = readPromoDraft(draft, locale);
   if (!read.ok) return refused(read.error);
   const { code, terms } = read.value;
 
   const catalog = await loadCatalog();
-  if (catalog.promoByCode.has(code as never)) return failed("ADD_PROMO", "NOT_ALLOWED", code);
+  if (catalog.promoByCode.has(code as never)) return failed("ADD_PROMO", "NOT_ALLOWED", code, locale);
 
   const failure = await run("admin_add_promo", {
     p_terms: { code, ...terms } as unknown as Json,
     p_now: now(),
   });
-  if (failure) return failed("ADD_PROMO", failure, code);
+  if (failure) return failed("ADD_PROMO", failure, code, locale);
 
   catalogMoved();
+  const t = picker(locale);
   return done(
     typeof copyOf === "string" && copyOf !== ""
-      ? `Đã nhân bản thành ${code} · đã lưu`
-      : `Đã tạo mã ${code} · đã lưu`,
+      ? t({ vi: `Đã nhân bản thành ${code} · đã lưu`, en: `Duplicated as ${code} · saved` })
+      : t({ vi: `Đã tạo mã ${code} · đã lưu`, en: `Code ${code} created · saved` }),
   );
 }
 
@@ -446,46 +511,61 @@ export async function addPromo(draft: unknown, copyOf?: unknown): Promise<Action
  */
 export async function editPromo(code: unknown, draft: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
+  const locale = await getActionLocale();
+  const t = picker(locale);
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
   const key = normalisePromoCode(text(code));
   const catalog = await loadCatalog();
   const current = catalog.promoByCode.get(key as never);
-  if (!current) return failed("EDIT_PROMO", "NOT_FOUND", key);
+  if (!current) return failed("EDIT_PROMO", "NOT_FOUND", key, locale);
 
-  const read = readPromoDraft(draft);
+  const read = readPromoDraft(draft, locale);
   if (!read.ok) return refused(read.error);
-  if (read.value.code !== key) return refused("Mã không đổi được — dùng “Nhân bản” để tạo mã mới.");
-  if (sameTerms(termsOf(current), read.value.terms)) return refused("Chưa có thay đổi nào để lưu.");
+  if (read.value.code !== key) {
+    return refused(t({
+      vi: "Mã không đổi được — dùng “Nhân bản” để tạo mã mới.",
+      en: "The code itself can't change. Use “Duplicate” to make a new one.",
+    }));
+  }
+  if (sameTerms(termsOf(current), read.value.terms)) return refused(t(NO_CHANGE_TEXT));
 
   const failure = await run("admin_edit_promo", {
     p_code: key,
     p_terms: read.value.terms as unknown as Json,
     p_now: now(),
   });
-  if (failure) return failed("EDIT_PROMO", failure, key);
+  if (failure) return failed("EDIT_PROMO", failure, key, locale);
 
   catalogMoved();
-  return done(`Đã sửa ${key} · đã lưu`);
+  return done(t({ vi: `Đã sửa ${key} · đã lưu`, en: `${key} edited · saved` }));
 }
 
 /** "Tạm dừng" / "Tiếp tục". Checkout refuses a paused code from the next order on. */
 export async function pausePromo(code: unknown, paused: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
   const key = normalisePromoCode(text(code));
-  if (key === "") return failed("PAUSE_PROMO", "NOT_FOUND");
-  if (typeof paused !== "boolean") return failed("PAUSE_PROMO", "BAD_INPUT", key);
+  if (key === "") return failed("PAUSE_PROMO", "NOT_FOUND", "", locale);
+  if (typeof paused !== "boolean") return failed("PAUSE_PROMO", "BAD_INPUT", key, locale);
 
   const failure = await run("admin_pause_promo", { p_code: key, p_paused: paused, p_now: now() });
-  if (failure) return failed("PAUSE_PROMO", failure, key);
+  if (failure) return failed("PAUSE_PROMO", failure, key, locale);
 
   catalogMoved();
+  const t = picker(locale);
   return done(
     paused
-      ? `${key} đã tạm dừng · trang thanh toán từ chối từ giờ`
-      : `${key} chạy lại · trang thanh toán nhận mã từ giờ`,
+      ? t({
+          vi: `${key} đã tạm dừng · trang thanh toán từ chối từ giờ`,
+          en: `${key} paused · checkout turns it down from now on`,
+        })
+      : t({
+          vi: `${key} chạy lại · trang thanh toán nhận mã từ giờ`,
+          en: `${key} running again · checkout takes it from now on`,
+        }),
   );
 }
 
@@ -496,37 +576,46 @@ export async function pausePromo(code: unknown, paused: unknown): Promise<Action
  */
 export async function raisePromoLimit(code: unknown, after: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
   const key = normalisePromoCode(text(code));
   const catalog = await loadCatalog();
   const current = catalog.promoByCode.get(key as never);
-  if (!current) return failed("RAISE_LIMIT", "NOT_FOUND", key);
+  if (!current) return failed("RAISE_LIMIT", "NOT_FOUND", key, locale);
   if (typeof after !== "number" || !Number.isInteger(after) || after < 1) {
-    return failed("RAISE_LIMIT", "BAD_INPUT", key);
+    return failed("RAISE_LIMIT", "BAD_INPUT", key, locale);
   }
 
   const failure = await run("admin_raise_promo_limit", { p_code: key, p_after: after, p_now: now() });
-  if (failure) return failed("RAISE_LIMIT", failure, key);
+  if (failure) return failed("RAISE_LIMIT", failure, key, locale);
 
   catalogMoved();
-  const before = current.usageLimit === null ? "không giới hạn" : String(current.usageLimit);
-  return done(`${key}: giới hạn ${before} → ${after} lượt · đã lưu`);
+  const t = picker(locale);
+  const before =
+    current.usageLimit === null ? t({ vi: "không giới hạn", en: "no limit" }) : String(current.usageLimit);
+  return done(t({ vi: `${key}: giới hạn ${before} → ${after} lượt · đã lưu`, en: `${key}: limit ${before} → ${after} uses · saved` }));
 }
 
 /** "Kết thúc sớm": the closing hour becomes now. Only a code that is running. */
 export async function endPromo(code: unknown): Promise<ActionState> {
   await requireAdmin("/admin/promotions");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
   const key = normalisePromoCode(text(code));
-  if (key === "") return failed("END_PROMO", "NOT_FOUND");
+  if (key === "") return failed("END_PROMO", "NOT_FOUND", "", locale);
 
   const failure = await run("admin_end_promo", { p_code: key, p_now: now() });
-  if (failure) return failed("END_PROMO", failure, key);
+  if (failure) return failed("END_PROMO", failure, key, locale);
 
   catalogMoved();
-  return done(`Đã kết thúc sớm ${key} · giờ kết thúc = bây giờ · đã lưu`);
+  return done(
+    picker(locale)({
+      vi: `Đã kết thúc sớm ${key} · giờ kết thúc = bây giờ · đã lưu`,
+      en: `${key} ended early · end time = now · saved`,
+    }),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────── the styles
@@ -562,15 +651,17 @@ export async function endPromo(code: unknown): Promise<ActionState> {
  */
 export async function updateProduct(id: unknown, form: unknown): Promise<ActionState> {
   await requireAdmin("/admin/products");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
-  if (typeof id !== "string") return failed("UPDATE_PRODUCT", "NOT_FOUND");
+  const locale = await getActionLocale();
+  const t = picker(locale);
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
+  if (typeof id !== "string") return failed("UPDATE_PRODUCT", "NOT_FOUND", "", locale);
 
   const catalog = await loadCatalog();
   const product = catalog.byId.get(productId(id));
-  if (!product) return failed("UPDATE_PRODUCT", "NOT_FOUND");
+  if (!product) return failed("UPDATE_PRODUCT", "NOT_FOUND", "", locale);
 
-  const read = productPatch(product, form, catalog);
+  const read = productPatch(product, form, catalog, locale);
   if (!read.ok) return refused(read.error);
   const patch = read.value;
 
@@ -578,24 +669,24 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
   // the shelf was not touched; anything else has to read as cells.
   const fields = form as Record<string, unknown>;
   const sent = fields.cells;
-  if (sent !== undefined && !Array.isArray(sent)) return failed("ADJUST_STOCK", "BAD_INPUT");
+  if (sent !== undefined && !Array.isArray(sent)) return failed("ADJUST_STOCK", "BAD_INPUT", "", locale);
   const cells = Array.isArray(sent) && sent.length > 0 ? readCells(sent) : [];
-  if (cells === null) return failed("ADJUST_STOCK", "BAD_INPUT");
+  if (cells === null) return failed("ADJUST_STOCK", "BAD_INPUT", "", locale);
   if (cells.length > 0) {
-    const blocked = checkAdjustment(product, cells, PRODUCT_EDIT_REASON, "", "");
+    const blocked = checkAdjustment(product, cells, PRODUCT_EDIT_REASON, "", "", locale);
     if (blocked) return refused(blocked);
   }
 
   // The band order, when one was sent and it is not the one the style has.
   let order: ColorKey[] | null = null;
   if (fields.colors !== undefined) {
-    const band = readColorOrder(fields.colors, product.colors);
+    const band = readColorOrder(fields.colors, product.colors, locale);
     if (!band.ok) return refused(band.error);
     if (!sameOrder(band.value, product.colors)) order = band.value;
   }
 
   // The photos that change: a key equal to the colour's own is not a change.
-  const sentPhotos = readPhotoMap(fields.photos, product.colors, catalog);
+  const sentPhotos = readPhotoMap(fields.photos, product.colors, catalog, locale);
   if (!sentPhotos.ok) return refused(sentPhotos.error);
   const photos = product.colors.flatMap((color, i) => {
     const after = sentPhotos.value[color];
@@ -604,18 +695,34 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
   });
 
   if (isEmptyPatch(patch) && cells.length === 0 && order === null && photos.length === 0) {
-    return refused(NO_CHANGE_MESSAGE);
+    return refused(t(NO_CHANGE_TEXT));
   }
 
   const at = now();
   // The style as the back office names it, with its issue's code — the issue
   // the patch moves it to, if it moves (v3 slice 12).
-  const name = styleName(patch.name ?? product.name, patch.dropNo ?? product.dropNo);
+  // In English the name as the shop prints it, or the one just typed: a new
+  // name has no English of its own (B15).
+  const name = styleName(
+    patch.name ?? productText(product, locale).name,
+    patch.dropNo ?? product.dropNo,
+    locale,
+  );
   // What went through, in the words the answer uses.
   const saved: string[] = [];
   const stop = (step: string, why: string): ActionState => {
     if (saved.length > 0) catalogMoved();
-    return refused(saved.length > 0 ? `Đã lưu ${saved.join(", ")} ${name}; ${step} CHƯA lưu: ${why}` : why);
+    if (saved.length === 0) return refused(why);
+    return refused(t({
+      vi: `Đã lưu ${saved.join(", ")} ${name}; ${step} CHƯA lưu: ${why}`,
+      en: `Saved the ${saved.join(", ")} of ${name}; the ${step} is NOT saved: ${why}`,
+    }));
+  };
+  const words = {
+    details: t({ vi: "thông tin", en: "details" }),
+    stock: t({ vi: "tồn kho", en: "stock" }),
+    order: t({ vi: "thứ tự dải màu", en: "colour order" }),
+    photo: (label: string) => t({ vi: `ảnh ${label}`, en: `${label} photo` }),
   };
 
   if (!isEmptyPatch(patch)) {
@@ -628,10 +735,11 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
       return failed(
         "UPDATE_PRODUCT",
         failure,
-        failure === "NOT_ALLOWED" ? (patch.slug ?? product.slug) : styleName(product.name, product.dropNo),
+        failure === "NOT_ALLOWED" ? (patch.slug ?? product.slug) : styleShown(product, locale),
+        locale,
       );
     }
-    saved.push("thông tin");
+    saved.push(words.details);
   }
 
   if (cells.length > 0) {
@@ -643,8 +751,8 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
       p_note: "",
       p_now: at,
     });
-    if (failure) return stop("tồn kho", catalogFailureMessage("ADJUST_STOCK", failure, name));
-    saved.push("tồn kho");
+    if (failure) return stop(words.stock, catalogFailureMessage("ADJUST_STOCK", failure, name, locale));
+    saved.push(words.stock);
   }
 
   if (order !== null) {
@@ -653,15 +761,15 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
       p_colors: order,
       p_now: at,
     });
-    if (failure) return stop("thứ tự dải màu", catalogFailureMessage("REORDER_COLORS", failure, name));
-    saved.push("thứ tự dải màu");
+    if (failure) return stop(words.order, catalogFailureMessage("REORDER_COLORS", failure, name, locale));
+    saved.push(words.order);
   }
 
   // Each photo, then the uploads they replaced — only once none of them is
   // shown anywhere any more (another style or a teaser may use the same one).
   const replaced: string[] = [];
   for (const p of photos) {
-    const label = COLORS[p.color].label;
+    const label = colorLabel(p.color, locale);
     const result = await call<string>("admin_set_product_photo", {
       p_id: product.id,
       p_color: p.color,
@@ -670,20 +778,21 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
     });
     if (!result.ok) {
       await removeLoosePhotos(replaced);
-      return stop(`ảnh ${label}`, catalogFailureMessage("SET_PHOTO", result.failure, label));
+      return stop(words.photo(label), catalogFailureMessage("SET_PHOTO", result.failure, label, locale));
     }
-    saved.push(`ảnh ${label}`);
+    saved.push(words.photo(label));
     replaced.push(result.data);
   }
   await removeLoosePhotos(replaced);
 
   catalogMoved();
   const parts = [
-    ...(cells.length > 0 ? [`tồn kho ${signed(cellDelta(cells))} chiếc`] : []),
-    ...(order !== null ? ["thứ tự dải màu"] : []),
-    ...(photos.length > 0 ? [photoSummary(photos)] : []),
+    ...(cells.length > 0 ? [`${words.stock} ${signedPieces(cellDelta(cells), locale)}`] : []),
+    ...(order !== null ? [words.order] : []),
+    ...(photos.length > 0 ? [photoSummary(photos, locale)] : []),
   ];
-  return done(`Đã sửa mẫu ${name}${parts.map((p) => ` · ${p}`).join("")} · đã lưu`);
+  const tail = parts.map((p) => ` · ${p}`).join("");
+  return done(t({ vi: `Đã sửa mẫu ${name}${tail} · đã lưu`, en: `${name} edited${tail} · saved` }));
 }
 
 /**
@@ -691,16 +800,17 @@ export async function updateProduct(id: unknown, form: unknown): Promise<ActionS
  * save amounted to, by what each colour went from and to. A photo that ships
  * with the app (`shot-…`, v3 slice 14) is as real as an upload.
  */
-function photoSummary(photos: ReadonlyArray<{ before: string; after: string }>): string {
+function photoSummary(photos: ReadonlyArray<{ before: string; after: string }>, locale: Locale): string {
   const count = (test: (p: { before: string; after: string }) => boolean) => photos.filter(test).length;
   const real = (key: string) => isRealPhotoKey(key);
-  return [
-    [count((p) => real(p.after) && !real(p.before)), "ảnh thật thay ảnh mượn"],
-    [count((p) => real(p.after) && real(p.before)), "ảnh thật mới"],
-    [count((p) => !real(p.after)), "ảnh mượn tạm"],
-  ]
-    .filter(([n]) => (n as number) > 0)
-    .map(([n, what]) => `${n} ${what}`)
+  const kinds: ReadonlyArray<readonly [number, string, string, string]> = [
+    [count((p) => real(p.after) && !real(p.before)), "ảnh thật thay ảnh mượn", "real photo for a borrowed one", "real photos for borrowed ones"],
+    [count((p) => real(p.after) && real(p.before)), "ảnh thật mới", "new real photo", "new real photos"],
+    [count((p) => !real(p.after)), "ảnh mượn tạm", "borrowed photo", "borrowed photos"],
+  ];
+  return kinds
+    .filter(([n]) => n > 0)
+    .map(([n, vi, one, other]) => (locale === "vi" ? `${n} ${vi}` : plural(n, one, other)))
     .join(", ");
 }
 
@@ -722,10 +832,11 @@ function photoSummary(photos: ReadonlyArray<{ before: string; after: string }>):
  */
 export async function createProduct(draft: unknown): Promise<ActionState & { id?: string }> {
   await requireAdmin("/admin/products/new");
-  const pace = await takeRates("admin", "admin_create");
-  if (!pace.ok) return refused(pace.message);
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin", "admin_create");
+  if (!limit.ok) return refused(limit.message);
   const catalog = await loadCatalog();
-  const read = readNewProduct(draft, catalog);
+  const read = readNewProduct(draft, catalog, locale);
   if (!read.ok) return refused(read.error);
   const input = read.value;
 
@@ -734,9 +845,9 @@ export async function createProduct(draft: unknown): Promise<ActionState & { id?
   const issue = input.dropNo;
   if (issue !== null) {
     const drop = catalog.dropByNo.get(issue);
-    if (!drop) return failed("ADD_PRODUCT", "NOT_FOUND", dropSubject(issue));
+    if (!drop) return failed("ADD_PRODUCT", "NOT_FOUND", dropSubject(issue, locale), locale);
     if (dropState(drop, new Date(at)) === "CLOSED") {
-      return failed("ADD_PRODUCT", "DROP_CLOSED", dropSubject(issue));
+      return failed("ADD_PRODUCT", "DROP_CLOSED", dropSubject(issue, locale), locale);
     }
   }
 
@@ -747,21 +858,23 @@ export async function createProduct(draft: unknown): Promise<ActionState & { id?
   if (!result.ok) {
     const subject =
       (result.failure === "NOT_FOUND" || result.failure === "DROP_CLOSED") && issue !== null
-        ? dropSubject(issue)
-        : colorLabelOf(result.detail);
-    return failed("ADD_PRODUCT", result.failure, subject);
+        ? dropSubject(issue, locale)
+        : colorLabelOf(result.detail, locale);
+    return failed("ADD_PRODUCT", result.failure, subject, locale);
   }
 
   catalogMoved();
   const uploaded = input.colors.filter((c) => isUploadedKey(c.photoKey)).length;
-  return {
-    ...done(
-      `Đã tạo ${styleName(input.name, input.dropNo)} · ${input.colors.length} màu · ${cutTotal(input.cells)} chiếc` +
+  const message =
+    locale === "vi"
+      ? `Đã tạo ${styleName(input.name, input.dropNo)} · ${input.colors.length} màu · ${cutTotal(input.cells)} chiếc` +
         (uploaded > 0 ? ` · ${uploaded} ảnh tải lên` : "") +
-        " · đã lưu",
-    ),
-    id: result.data,
-  };
+        " · đã lưu"
+      : `${styleName(input.name, input.dropNo, "en")} created · ${plural(input.colors.length, "colour", "colours")} · ` +
+        plural(cutTotal(input.cells), "piece", "pieces") +
+        (uploaded > 0 ? ` · ${plural(uploaded, "photo", "photos")} uploaded` : "") +
+        " · saved";
+  return { ...done(message), id: result.data };
 }
 
 // ────────────────────────────────────────────────────────── photos (B3c)
@@ -779,24 +892,33 @@ export async function createProduct(draft: unknown): Promise<ActionState & { id?
  */
 export async function uploadProductPhoto(form: FormData): Promise<ActionState & { key?: string }> {
   await requireAdmin("/admin/products");
-  const pace = await takeRates("admin", "upload", "upload_global");
-  if (!pace.ok) return refused(pace.message);
-  if (!(form instanceof FormData)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD");
+  const locale = await getActionLocale();
+  const limit = await pace(locale, "admin", "upload", "upload_global");
+  if (!limit.ok) return refused(limit.message);
+  if (!(form instanceof FormData)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", "", locale);
   const color = form.get("color");
-  const label = typeof color === "string" ? colorLabelOf(color) : "";
+  const label = typeof color === "string" ? colorLabelOf(color, locale) : "";
 
   const file = form.get("file");
-  if (!(file instanceof Blob)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", label);
+  if (!(file instanceof Blob)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", label, locale);
   // The size before the bytes: a file over the limit is not worth reading.
-  if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", label);
+  if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", label, locale);
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (uploadProblem(file.type, bytes.byteLength, bytes)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", label);
+  if (uploadProblem(file.type, bytes.byteLength, bytes)) return failed("UPLOAD_PHOTO", "UPLOAD_BAD", label, locale);
 
   const type = file.type as UploadType;
   const key = uploadKey(crypto.randomUUID(), type);
-  if (!(await storeUploadedPhoto(key, bytes, type))) return failed("UPLOAD_PHOTO", "UNAVAILABLE", label);
+  if (!(await storeUploadedPhoto(key, bytes, type))) return failed("UPLOAD_PHOTO", "UNAVAILABLE", label, locale);
 
-  return { ...done(label ? `Đã tải ảnh ${label} lên` : "Đã tải ảnh lên"), key };
+  const t = picker(locale);
+  return {
+    ...done(
+      label
+        ? t({ vi: `Đã tải ảnh ${label} lên`, en: `Photo for ${label} uploaded` })
+        : t({ vi: "Đã tải ảnh lên", en: "Photo uploaded" }),
+    ),
+    key,
+  };
 }
 
 /**
@@ -807,12 +929,28 @@ export async function uploadProductPhoto(form: FormData): Promise<ActionState & 
  */
 export async function removeUploadedPhoto(key: unknown): Promise<ActionState> {
   await requireAdmin("/admin/products");
-  const pace = await takeRates("admin");
-  if (!pace.ok) return refused(pace.message);
-  if (!isUploadedKey(key)) return failed("UPLOAD_PHOTO", "BAD_INPUT");
-  if (await photoKeyInUse(key)) return refused("Ảnh này đang dùng cho một mẫu — giữ lại, không xoá.");
+  const locale = await getActionLocale();
+  const t = picker(locale);
+  const limit = await pace(locale, "admin");
+  if (!limit.ok) return refused(limit.message);
+  if (!isUploadedKey(key)) return failed("UPLOAD_PHOTO", "BAD_INPUT", "", locale);
+  if (await photoKeyInUse(key)) {
+    return refused(t({
+      vi: "Ảnh này đang dùng cho một mẫu — giữ lại, không xoá.",
+      en: "This photo is in use on a style, so it stays.",
+    }));
+  }
 
   const { removed, failed: broke } = await removeUploadedPhotos([key]);
-  if (broke) return refused("Chưa xoá được ảnh. Thử lại sau ít phút.");
-  return done(removed > 0 ? "Đã bỏ ảnh vừa tải lên" : "Ảnh này đã không còn trên kho");
+  if (broke) {
+    return refused(t({
+      vi: "Chưa xoá được ảnh. Thử lại sau ít phút.",
+      en: "Couldn't delete the photo. Try again in a few minutes.",
+    }));
+  }
+  return done(
+    removed > 0
+      ? t({ vi: "Đã bỏ ảnh vừa tải lên", en: "The photo just uploaded is removed" })
+      : t({ vi: "Ảnh này đã không còn trên kho", en: "This photo is no longer stored" }),
+  );
 }

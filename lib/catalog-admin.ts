@@ -1,4 +1,4 @@
-import { COLORS } from "@/data/colors";
+import { COLORS, colorLabel } from "@/data/colors";
 import {
   COLOR_KEYS,
   SIZES,
@@ -12,10 +12,13 @@ import {
 } from "@/data/types";
 import type { Catalog } from "./catalog";
 import { toVnIso } from "./datetime";
+import { picker, type Locale, type Pair } from "./i18n";
 import { isFixed, onHandOf } from "./inventory";
 import { RESTOCK_REASON, isStockReason, type InventoryCell } from "./inventory-adjust";
 import { LEX, issueCode, issueLabel, styleName } from "./lexicon";
+import { vnd } from "./money";
 import { isUploadedKey } from "./photos";
+import { productText } from "./product-text";
 import { normalisePromoCode } from "./promotions";
 import { asciiSlug } from "./teasers";
 
@@ -101,9 +104,9 @@ export function failureHint(error: { hint?: string | null } | null): string {
   return typeof error?.hint === "string" ? error.hint : "";
 }
 
-/** "Đen" for `black` — how a message names a colour the database named. */
-export function colorLabelOf(key: string): string {
-  return (COLOR_KEYS as readonly string[]).includes(key) ? COLORS[key as ColorKey].label : "";
+/** "Đen" for `black` ("Black" in English) — how a message names a colour the database named. */
+export function colorLabelOf(key: string, locale: Locale = "vi"): string {
+  return (COLOR_KEYS as readonly string[]).includes(key) ? colorLabel(key as ColorKey, locale) : "";
 }
 
 /** Every move the back office makes on the catalogue. */
@@ -126,7 +129,11 @@ export type CatalogMove =
   | "UPLOAD_PHOTO";
 
 /** The sentence the brief fixed for a shelf that moved under the form. */
-export const STALE_STOCK_MESSAGE = "Tồn kho đã đổi ở nơi khác — tải lại rồi sửa tiếp";
+export const STALE_STOCK_TEXT: Pair = {
+  vi: "Tồn kho đã đổi ở nơi khác — tải lại rồi sửa tiếp",
+  en: "Stock changed elsewhere. Reload, then edit again.",
+};
+export const STALE_STOCK_MESSAGE = STALE_STOCK_TEXT.vi;
 
 /**
  * The same refusal said by the "Nhập thêm" sheet (v3 slice 12 fix): that
@@ -135,7 +142,11 @@ export const STALE_STOCK_MESSAGE = "Tồn kho đã đổi ở nơi khác — t�
  * is to look at the new numbers and send again. The adjustment sheet keeps
  * `STALE_STOCK_MESSAGE`.
  */
-export const RESTOCK_STALE_MESSAGE = "Tồn kho vừa đổi ở nơi khác — kiểm lại số rồi gửi";
+export const RESTOCK_STALE_TEXT: Pair = {
+  vi: "Tồn kho vừa đổi ở nơi khác — kiểm lại số rồi gửi",
+  en: "Stock just changed elsewhere. Check the numbers, then send again.",
+};
+export const RESTOCK_STALE_MESSAGE = RESTOCK_STALE_TEXT.vi;
 
 /**
  * The sentence for a move that did not go through, naming what to do next.
@@ -155,117 +166,227 @@ export function catalogFailureMessage(
   move: CatalogMove,
   failure: CatalogFailure,
   subject = "",
+  locale: Locale = "vi",
 ): string {
+  // Round v6 slice E5: every sentence in the page's language; `subject` comes
+  // already written in it ("Drop 07", "Black", a style's name as the shop prints it).
+  const t = picker(locale);
   switch (failure) {
     case "NOT_ADMIN":
-      return "Phiên quản trị đã hết — đăng nhập lại bằng tài khoản quản trị.";
+      return t({
+        vi: "Phiên quản trị đã hết — đăng nhập lại bằng tài khoản quản trị.",
+        en: "Your admin session has ended. Sign in again with an admin account.",
+      });
     case "UNAVAILABLE":
       if (move === "UPLOAD_PHOTO") {
         return subject
-          ? `Không tải được ảnh ${subject}. Thử lại sau ít phút.`
-          : "Không tải được ảnh. Thử lại sau ít phút.";
+          ? t({
+              vi: `Không tải được ảnh ${subject}. Thử lại sau ít phút.`,
+              en: `Couldn't upload the photo for ${subject}. Try again in a few minutes.`,
+            })
+          : t({
+              vi: "Không tải được ảnh. Thử lại sau ít phút.",
+              en: "Couldn't upload the photo. Try again in a few minutes.",
+            });
       }
-      return "Chưa lưu được. Thử lại sau ít phút.";
+      return t({ vi: "Chưa lưu được. Thử lại sau ít phút.", en: "Couldn't save. Try again in a few minutes." });
     case "STALE":
-      return move === "RESTOCK" ? RESTOCK_STALE_MESSAGE : STALE_STOCK_MESSAGE;
+      return t(move === "RESTOCK" ? RESTOCK_STALE_TEXT : STALE_STOCK_TEXT);
     case "UPLOAD_BAD":
       return subject
-        ? `Không tải được ảnh ${subject}: tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB`
-        : "Tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB";
+        ? t({
+            vi: `Không tải được ảnh ${subject}: tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB`,
+            en: `Couldn't upload the photo for ${subject}: the file isn't WebP/JPEG, or is over 1.5 MB`,
+          })
+        : t({
+            vi: "Tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB",
+            en: "The file isn't WebP/JPEG, or is over 1.5 MB",
+          });
     case "DROP_CLOSED":
-      return `${subject || LEX.t} đã đóng, không thêm mẫu vào đó`;
+      return t({
+        vi: `${subject || LEX.t} đã đóng, không thêm mẫu vào đó`,
+        en: `${subject || "The drop"} has closed, so no styles can be added to it`,
+      });
     case "NO_COLORS":
-      return "Chọn ít nhất một màu";
+      return t({ vi: "Chọn ít nhất một màu", en: "Choose at least one colour" });
     case "COLOR_EMPTY":
-      return `Điền số cắt cho ${subject || "từng màu"}`;
+      return t({ vi: `Điền số cắt cho ${subject || "từng màu"}`, en: `Enter the cut for ${subject || "each colour"}` });
     case "PHOTO_MISSING":
-      return `Chọn ảnh cho ${subject || "từng màu"}`;
+      return t({ vi: `Chọn ảnh cho ${subject || "từng màu"}`, en: `Choose a photo for ${subject || "each colour"}` });
     case "PHOTO_UNKNOWN":
-      return subject ? `Ảnh ${subject} không còn trên kho, chọn lại` : "Ảnh không còn trên kho, chọn lại";
+      return subject
+        ? t({
+            vi: `Ảnh ${subject} không còn trên kho, chọn lại`,
+            en: `The photo for ${subject} is no longer stored, choose it again`,
+          })
+        : t({ vi: "Ảnh không còn trên kho, chọn lại", en: "The photo is no longer stored, choose it again" });
     case "NOT_FOUND":
       switch (move) {
         case "ADJUST_STOCK":
         case "RESTOCK":
         case "UPDATE_PRODUCT":
         case "REORDER_COLORS":
-          return subject ? `Không tìm thấy mẫu ${subject}.` : "Không tìm thấy mẫu này.";
+          return subject
+            ? t({ vi: `Không tìm thấy mẫu ${subject}.`, en: `Style ${subject} not found.` })
+            : t({ vi: "Không tìm thấy mẫu này.", en: "Style not found." });
         case "SET_PHOTO":
-          return subject ? `Mẫu này không có màu ${subject}.` : "Không tìm thấy mẫu hoặc màu này.";
+          return subject
+            ? t({ vi: `Mẫu này không có màu ${subject}.`, en: `This style doesn't come in ${subject}.` })
+            : t({ vi: "Không tìm thấy mẫu hoặc màu này.", en: "Style or colour not found." });
         case "ADD_PRODUCT":
-          return subject ? `Chưa có ${subject} — chọn số khác.` : `Chưa có ${LEX.tl} này — chọn ${LEX.tl} khác.`;
+          return subject
+            ? t({ vi: `Chưa có ${subject} — chọn số khác.`, en: `${subject} doesn't exist yet. Choose another drop.` })
+            : t({
+                vi: `Chưa có ${LEX.tl} này — chọn ${LEX.tl} khác.`,
+                en: "That drop doesn't exist yet. Choose another drop.",
+              });
         case "SCHEDULE_DROP":
         case "CLOSE_DROP":
-          return subject ? `Không tìm thấy ${subject}.` : "Không tìm thấy số này.";
+          return subject
+            ? t({ vi: `Không tìm thấy ${subject}.`, en: `${subject} not found.` })
+            : t({ vi: "Không tìm thấy số này.", en: "Drop not found." });
         case "ADD_TEASER":
-          return subject ? `Chưa có ${subject} để hé lộ mẫu.` : "Chưa có số này để hé lộ mẫu.";
+          return subject
+            ? t({ vi: `Chưa có ${subject} để hé lộ mẫu.`, en: `${subject} doesn't exist yet, so it can't have teasers.` })
+            : t({ vi: "Chưa có số này để hé lộ mẫu.", en: "That drop doesn't exist yet, so it can't have teasers." });
         default:
-          return subject ? `Không tìm thấy mã ${subject}.` : "Không tìm thấy mã này.";
+          return subject
+            ? t({ vi: `Không tìm thấy mã ${subject}.`, en: `Code ${subject} not found.` })
+            : t({ vi: "Không tìm thấy mã này.", en: "Code not found." });
       }
     case "NOT_ALLOWED":
       switch (move) {
         case "ADD_DROP":
-          return `${subject || "Số này"} đã có — tải lại trang để lấy số kế tiếp.`;
+          return t({
+            vi: `${subject || "Số này"} đã có — tải lại trang để lấy số kế tiếp.`,
+            en: `${subject || "This drop"} already exists. Reload the page for the next number.`,
+          });
         case "CLOSE_DROP":
-          return `${subject || "Số này"} không còn mở — tải lại trang để xem.`;
+          return t({
+            vi: `${subject || "Số này"} không còn mở — tải lại trang để xem.`,
+            en: `${subject || "This drop"} is no longer live. Reload the page to check.`,
+          });
         case "ADD_TEASER":
-          return `Mẫu hé lộ ${subject} đã có trong số này.`;
+          return t({ vi: `Mẫu hé lộ ${subject} đã có trong số này.`, en: `Teaser ${subject} is already in this drop.` });
         case "ADD_PROMO":
-          return `Mã ${subject} đã có rồi.`;
+          return t({ vi: `Mã ${subject} đã có rồi.`, en: `Code ${subject} already exists.` });
         case "PAUSE_PROMO":
-          return `${subject} đã đổi trạng thái ở nơi khác — tải lại trang để xem.`;
+          return t({
+            vi: `${subject} đã đổi trạng thái ở nơi khác — tải lại trang để xem.`,
+            en: `${subject} changed status elsewhere. Reload the page to check.`,
+          });
         case "RAISE_LIMIT":
-          return `Giới hạn của ${subject} đã đổi ở nơi khác — tải lại trang để xem.`;
+          return t({
+            vi: `Giới hạn của ${subject} đã đổi ở nơi khác — tải lại trang để xem.`,
+            en: `The limit of ${subject} changed elsewhere. Reload the page to check.`,
+          });
         case "END_PROMO":
-          return `${subject} không còn đang chạy — tải lại trang để xem.`;
+          return t({
+            vi: `${subject} không còn đang chạy — tải lại trang để xem.`,
+            en: `${subject} is no longer running. Reload the page to check.`,
+          });
         case "UPDATE_PRODUCT":
-          return `Mã trên địa chỉ "${subject}" đã dùng cho mẫu khác.`;
+          return t({
+            vi: `Mã trên địa chỉ "${subject}" đã dùng cho mẫu khác.`,
+            en: `The URL slug "${subject}" is already used by another style.`,
+          });
         case "ADD_PRODUCT":
-          return SLUG_TAKEN_MESSAGE;
+          return t(SLUG_TAKEN_TEXT);
         default:
-          return "Thao tác này không còn làm được — tải lại trang để xem.";
+          return t({
+            vi: "Thao tác này không còn làm được — tải lại trang để xem.",
+            en: "This can no longer be done. Reload the page to check.",
+          });
       }
     case "BAD_INPUT":
       switch (move) {
         case "ADJUST_STOCK":
-          return "Tồn kho gửi lên chưa hợp lệ — mỗi ô từ 0 trở lên, tổng không vượt số đã cắt, và cần một lý do.";
+          return t({
+            vi: "Tồn kho gửi lên chưa hợp lệ — mỗi ô từ 0 trở lên, tổng không vượt số đã cắt, và cần một lý do.",
+            en: "The stock sent isn't valid. Each cell is 0 or more, the total stays within the cut, and a reason is needed.",
+          });
         case "RESTOCK":
-          return RESTOCK_BAD_MESSAGE;
+          return t(RESTOCK_BAD_TEXT);
         case "ADD_DROP":
         case "SCHEDULE_DROP":
-          return "Ngày đóng phải sau ngày mở.";
+          return t(CLOSES_AFTER_OPENS_TEXT);
         case "CLOSE_DROP":
-          return "Chưa đóng được: giờ mở của số này chưa tới.";
+          return t({
+            vi: "Chưa đóng được: giờ mở của số này chưa tới.",
+            en: "Can't close yet: this drop hasn't opened.",
+          });
         case "ADD_TEASER":
-          return "Cần tên, loại và một ảnh trong bộ ảnh mượn.";
+          return t({
+            vi: "Cần tên, loại và một ảnh trong bộ ảnh mượn.",
+            en: "A name, a type and one of the borrowed photos are needed.",
+          });
         case "ADD_PROMO":
         case "EDIT_PROMO":
-          return "Điều kiện mã chưa hợp lệ — kiểm lại các ô.";
+          return t(PROMO_BAD_TEXT);
         case "RAISE_LIMIT":
-          return "Giới hạn mới phải lớn hơn giới hạn hiện có.";
+          return t({
+            vi: "Giới hạn mới phải lớn hơn giới hạn hiện có.",
+            en: "The new limit must be higher than the current one.",
+          });
         case "UPDATE_PRODUCT":
         case "ADD_PRODUCT":
-          return "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.";
+          return t(PRODUCT_BAD_TEXT);
         case "SET_PHOTO":
           // The only thing the form can send that the database calls a bad
           // input: the photo the colour already has.
-          return NO_CHANGE_MESSAGE;
+          return t(NO_CHANGE_TEXT);
         case "REORDER_COLORS":
-          return "Thứ tự màu đã đổi ở nơi khác — tải lại trang để xem.";
+          return t({
+            vi: "Thứ tự màu đã đổi ở nơi khác — tải lại trang để xem.",
+            en: "The colour order changed elsewhere. Reload the page to check.",
+          });
         default:
-          return "Thông tin gửi lên chưa hợp lệ.";
+          return t({ vi: "Thông tin gửi lên chưa hợp lệ.", en: "The submitted data isn't valid." });
       }
   }
 }
 
 /** A taken address segment, for a new style — the brief's `SLUG_TAKEN`. */
-export const SLUG_TAKEN_MESSAGE = "Mã địa chỉ đã có mẫu khác dùng";
+export const SLUG_TAKEN_TEXT: Pair = {
+  vi: "Mã địa chỉ đã có mẫu khác dùng",
+  en: "Another style already uses this URL slug",
+};
+export const SLUG_TAKEN_MESSAGE = SLUG_TAKEN_TEXT.vi;
 
 /** A save that would change nothing — the brief's `NO_CHANGE`. */
-export const NO_CHANGE_MESSAGE = "Chưa có thay đổi nào để lưu.";
+export const NO_CHANGE_TEXT: Pair = { vi: "Chưa có thay đổi nào để lưu.", en: "No changes to save." };
+export const NO_CHANGE_MESSAGE = NO_CHANGE_TEXT.vi;
 
-/** A new or moved issue whose window runs into another one's (slice B14: "Sửa giờ" too). */
-export function overlapMessage(no: number): string {
-  return `Lịch chồng lên ${issueLabel(no)}`;
+/** A window that closes before it opens. */
+const CLOSES_AFTER_OPENS_TEXT: Pair = {
+  vi: "Ngày đóng phải sau ngày mở.",
+  en: "The closing day must be after the opening day.",
+};
+
+/** A code's form that does not read. */
+const PROMO_BAD_TEXT: Pair = {
+  vi: "Điều kiện mã chưa hợp lệ — kiểm lại các ô.",
+  en: "The code's terms aren't valid. Check the fields.",
+};
+
+/** A style's form that does not read. */
+const PRODUCT_BAD_TEXT: Pair = {
+  vi: "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.",
+  en: "The style's details aren't valid. Check the fields.",
+};
+
+/** Words more than one check says. */
+const NAME_TEXT: Pair = { vi: "Nhập tên mẫu.", en: "Enter the style name." };
+const KIND_TEXT: Pair = { vi: "Chọn loại.", en: "Choose a type." };
+const FIT_TEXT: Pair = { vi: "Chọn form.", en: "Choose a fit." };
+const MATERIAL_TEXT: Pair = { vi: "Nhập chất liệu.", en: "Enter the material." };
+
+/**
+ * A new or moved issue whose window runs into another one's (slice B14: "Sửa
+ * giờ" too). In English "Overlaps Drop 06" (round v6 slice E5).
+ */
+export function overlapMessage(no: number, locale: Locale = "vi"): string {
+  return picker(locale)({ vi: `Lịch chồng lên ${issueLabel(no)}`, en: `Overlaps ${issueLabel(no, "en")}` });
 }
 
 /**
@@ -274,10 +395,17 @@ export function overlapMessage(no: number): string {
  * when it opens before the previous issue `other` closes, "Số 06 phải đóng
  * trước khi Số 07 mở" when it closes after the next issue `other` opens.
  */
-export function orderMessage(no: number, side: OrderSide, other: number): string {
+export function orderMessage(no: number, side: OrderSide, other: number, locale: Locale = "vi"): string {
+  const t = picker(locale);
   return side === "PREVIOUS"
-    ? `${issueLabel(no)} phải mở sau khi ${issueLabel(other)} đóng`
-    : `${issueLabel(no)} phải đóng trước khi ${issueLabel(other)} mở`;
+    ? t({
+        vi: `${issueLabel(no)} phải mở sau khi ${issueLabel(other)} đóng`,
+        en: `${issueLabel(no, "en")} must open after ${issueLabel(other, "en")} closes`,
+      })
+    : t({
+        vi: `${issueLabel(no)} phải đóng trước khi ${issueLabel(other)} mở`,
+        en: `${issueLabel(no, "en")} must close before ${issueLabel(other, "en")} opens`,
+      });
 }
 
 /**
@@ -298,16 +426,17 @@ export function calendarRefusal(
   failure: CatalogFailure,
   detail: string,
   hint: string,
+  locale: Locale = "vi",
 ): string | null {
   if (failure !== "NOT_ALLOWED" || !/^[1-9][0-9]*$/.test(detail)) return null;
   const other = Number(detail);
   switch (hint) {
     case "":
     case "OVERLAP":
-      return overlapMessage(other);
+      return overlapMessage(other, locale);
     case "PREVIOUS":
     case "NEXT":
-      return orderMessage(no, hint, other);
+      return orderMessage(no, hint, other, locale);
     default:
       return null;
   }
@@ -388,18 +517,27 @@ export function checkAdjustment(
   reason: string,
   ref: string,
   note: string,
+  locale: Locale = "vi",
 ): string | null {
-  if (!isStockReason(reason)) return "Chọn lý do.";
-  if (ref.length > MAX_REF) return `Tham chiếu tối đa ${MAX_REF} ký tự.`;
-  if (note.length > MAX_NOTE) return `Ghi chú tối đa ${MAX_NOTE} ký tự.`;
+  const t = picker(locale);
+  if (!isStockReason(reason)) return t({ vi: "Chọn lý do.", en: "Choose a reason." });
+  if (ref.length > MAX_REF) {
+    return t({ vi: `Tham chiếu tối đa ${MAX_REF} ký tự.`, en: `Reference: ${MAX_REF} characters at most.` });
+  }
+  if (note.length > MAX_NOTE) {
+    return t({ vi: `Ghi chú tối đa ${MAX_NOTE} ký tự.`, en: `Note: ${MAX_NOTE} characters at most.` });
+  }
   if (cells.some((c) => !product.colors.includes(c.color))) {
-    return `${styleName(product.name, product.dropNo)} không có màu này.`;
+    return t({
+      vi: `${styleName(product.name, product.dropNo)} không có màu này.`,
+      en: `${styleName(productText(product, "en").name, product.dropNo, "en")} doesn't come in this colour.`,
+    });
   }
   if (reason === RESTOCK_REASON && (!isFixed(product) || cells.some((c) => c.after <= c.before))) {
-    return RESTOCK_BAD_MESSAGE;
+    return t(RESTOCK_BAD_TEXT);
   }
   if (product.cutUnits !== null && shelfAfter(product, cells) > product.cutUnits) {
-    return `Không vượt ${product.cutUnits} đã cắt`;
+    return t({ vi: `Không vượt ${product.cutUnits} đã cắt`, en: `Keep within the ${product.cutUnits} cut` });
   }
   return null;
 }
@@ -409,8 +547,11 @@ export function checkAdjustment(
 export const MAX_RESTOCK_PER_CELL = 999;
 
 /** A restock refused: not a fixed style, or a cell that does not go up by 1–999. */
-export const RESTOCK_BAD_MESSAGE =
-  "Nhập thêm chỉ cho mẫu cố định, mỗi ô thêm từ 1 đến 999 chiếc.";
+export const RESTOCK_BAD_TEXT: Pair = {
+  vi: "Nhập thêm chỉ cho mẫu cố định, mỗi ô thêm từ 1 đến 999 chiếc.",
+  en: `Restocking is for Basics only, adding 1 to ${MAX_RESTOCK_PER_CELL} pieces per cell.`,
+};
+export const RESTOCK_BAD_MESSAGE = RESTOCK_BAD_TEXT.vi;
 
 /**
  * "Nhập thêm", as the sheet sends it — `{ color, size, before, add }` per
@@ -463,11 +604,15 @@ export function nextDropNo(drops: readonly Pick<Drop, "no">[]): number {
 }
 
 /** Two instants in the app's shape, the closing one after the opening one. */
-export function readWindow(opensAt: unknown, closesAt: unknown): Checked<Omit<Drop, "no">> {
+export function readWindow(opensAt: unknown, closesAt: unknown, locale: Locale = "vi"): Checked<Omit<Drop, "no">> {
+  const t = picker(locale);
   if (!isVnInstant(opensAt) || !isVnInstant(closesAt)) {
-    return no("Nhập ngày mở và ngày đóng theo dạng dd/mm/yyyy.");
+    return no(t({
+      vi: "Nhập ngày mở và ngày đóng theo dạng dd/mm/yyyy.",
+      en: "Enter the opening and closing days as dd/mm/yyyy.",
+    }));
   }
-  if (Date.parse(closesAt) <= Date.parse(opensAt)) return no("Ngày đóng phải sau ngày mở.");
+  if (Date.parse(closesAt) <= Date.parse(opensAt)) return no(t(CLOSES_AFTER_OPENS_TEXT));
   return ok({ opensAt, closesAt });
 }
 
@@ -677,17 +822,18 @@ export function familyOfKind(catalog: Catalog, kind: string): Family | undefined
  * every fixture teaser has, not a second one. The same teaser announced twice
  * is the same address, which the database refuses as taken.
  */
-export function readTeaser(value: unknown, catalog: Catalog): Checked<TeaserRow> {
-  if (!isRecord(value)) return no("Cần tên, loại và một ảnh.");
+export function readTeaser(value: unknown, catalog: Catalog, locale: Locale = "vi"): Checked<TeaserRow> {
+  const t = picker(locale);
+  if (!isRecord(value)) return no(t({ vi: "Cần tên, loại và một ảnh.", en: "A name, a type and a photo are needed." }));
   const dropNo = readDropNo(value.dropNo);
-  if (dropNo === null) return no("Chọn số cho mẫu hé lộ.");
+  if (dropNo === null) return no(t({ vi: "Chọn số cho mẫu hé lộ.", en: "Choose a drop for the teaser." }));
   const name = text(value.name).toLocaleUpperCase("vi");
-  if (name === "" || name.length > MAX_TEASER_NAME) return no("Nhập tên mẫu.");
+  if (name === "" || name.length > MAX_TEASER_NAME) return no(t(NAME_TEXT));
   const garment = text(value.garment);
   const family = familyOfKind(catalog, garment);
-  if (garment === "" || garment.length > MAX_KIND || !family) return no("Chọn loại.");
+  if (garment === "" || garment.length > MAX_KIND || !family) return no(t(KIND_TEXT));
   const photoKey = text(value.photoKey);
-  if (!borrowedPhotoKeys(catalog).includes(photoKey)) return no("Chọn một ảnh.");
+  if (!borrowedPhotoKeys(catalog).includes(photoKey)) return no(t({ vi: "Chọn một ảnh.", en: "Choose a photo." }));
   return ok({ slug: slugFor(name, dropNo), name, garment, family, dropNo, photoKey });
 }
 
@@ -741,37 +887,53 @@ export function sameTerms(a: PromoTerms, b: PromoTerms): boolean {
  * the sheet keeps an amount in its state while the percentage tab is open,
  * and the table's check constraint would refuse a PERCENT row carrying one.
  */
-export function readPromoDraft(value: unknown): Checked<{ code: string; terms: PromoTerms }> {
-  if (!isRecord(value)) return no("Điều kiện mã chưa hợp lệ — kiểm lại các ô.");
+export function readPromoDraft(value: unknown, locale: Locale = "vi"): Checked<{ code: string; terms: PromoTerms }> {
+  const t = picker(locale);
+  if (!isRecord(value)) return no(t(PROMO_BAD_TEXT));
   const code = normalisePromoCode(typeof value.code === "string" ? value.code : "");
   if (code === "" || code.length > MAX_PROMO_CODE) {
-    return no("Nhập mã — đây là thứ khách gõ ở ô giảm giá.");
+    return no(t({
+      vi: "Nhập mã — đây là thứ khách gõ ở ô giảm giá.",
+      en: "Enter the code. It's what shoppers type in the discount box.",
+    }));
   }
 
   const kind = value.promoKind;
   if (typeof kind !== "string" || !(PROMO_KINDS as readonly string[]).includes(kind)) {
-    return no("Chọn loại mã.");
+    return no(t({ vi: "Chọn loại mã.", en: "Choose the code's type." }));
   }
 
   const { percent, amountVnd, maxDiscountVnd, minOrderVnd, usageLimit, startsAt, endsAt } = value;
   if (![percent, amountVnd, maxDiscountVnd, minOrderVnd].every(isCount)) {
-    return no("Số tiền và phần trăm phải là số nguyên, không âm.");
+    return no(t({
+      vi: "Số tiền và phần trăm phải là số nguyên, không âm.",
+      en: "Amounts and percentages must be whole numbers, not negative.",
+    }));
   }
   if (usageLimit !== null && !(isCount(usageLimit) && usageLimit >= 1)) {
-    return no("Giới hạn lượt để trống, hoặc từ 1 trở lên.");
+    return no(t({
+      vi: "Giới hạn lượt để trống, hoặc từ 1 trở lên.",
+      en: "Leave the use limit empty, or make it 1 or more.",
+    }));
   }
   if (!isVnInstant(startsAt) || !isVnInstant(endsAt)) {
-    return no("Nhập thời gian theo dạng 20:00 11/09/2026.");
+    return no(t({ vi: "Nhập thời gian theo dạng 20:00 11/09/2026.", en: "Enter times as 20:00 11/09/2026." }));
   }
-  if (Date.parse(endsAt) <= Date.parse(startsAt)) return no("Giờ kết thúc phải sau giờ bắt đầu.");
+  if (Date.parse(endsAt) <= Date.parse(startsAt)) {
+    return no(t({ vi: "Giờ kết thúc phải sau giờ bắt đầu.", en: "The end must be after the start." }));
+  }
 
   const pct = percent as number;
   const amount = amountVnd as number;
   const cap = maxDiscountVnd as number;
   const min = minOrderVnd as number;
 
-  if (kind === "PERCENT" && (pct < 1 || pct > 100)) return no("Phần trăm phải nằm giữa 1 và 100.");
-  if (kind === "AMOUNT" && amount < 1) return no("Số tiền giảm phải lớn hơn 0.");
+  if (kind === "PERCENT" && (pct < 1 || pct > 100)) {
+    return no(t({ vi: "Phần trăm phải nằm giữa 1 và 100.", en: "The percentage must be between 1 and 100." }));
+  }
+  if (kind === "AMOUNT" && amount < 1) {
+    return no(t({ vi: "Số tiền giảm phải lớn hơn 0.", en: "The discount must be more than 0." }));
+  }
 
   return ok({
     code,
@@ -824,14 +986,16 @@ export function productPatch(
   product: Product,
   value: unknown,
   catalog: Catalog,
+  locale: Locale = "vi",
 ): Checked<ProductPatch> {
-  if (!isRecord(value)) return no("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
+  const t = picker(locale);
+  if (!isRecord(value)) return no(t(PRODUCT_BAD_TEXT));
 
   const name = text(value.name).toLocaleUpperCase("vi");
-  if (name === "" || name.length > MAX_PRODUCT_NAME) return no("Nhập tên mẫu.");
+  if (name === "" || name.length > MAX_PRODUCT_NAME) return no(t(NAME_TEXT));
 
   const kind = text(value.kind);
-  if (kind === "" || kind.length > MAX_KIND) return no("Chọn loại.");
+  if (kind === "" || kind.length > MAX_KIND) return no(t(KIND_TEXT));
 
   // A style keeps its kind for good (slice B5): an issue's style may move to
   // another issue, a fixed style stays fixed and its form sends no issue.
@@ -840,29 +1004,32 @@ export function productPatch(
   let dropNo: number | null = null;
   if (isFixed(product)) {
     if (value.dropNo !== null && value.dropNo !== undefined) {
-      return no(catalogFailureMessage("UPDATE_PRODUCT", "BAD_INPUT"));
+      return no(catalogFailureMessage("UPDATE_PRODUCT", "BAD_INPUT", "", locale));
     }
   } else {
     dropNo = readDropNo(value.dropNo);
-    if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no("Chọn một số.");
+    if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no(t({ vi: "Chọn một số.", en: "Choose a drop." }));
   }
 
   const slug = text(value.slug) || slugFor(name, dropNo);
   if (!isSlug(slug)) {
-    return no("Mã trên địa chỉ chỉ gồm chữ thường không dấu, số và gạch ngang.");
+    return no(t({
+      vi: "Mã trên địa chỉ chỉ gồm chữ thường không dấu, số và gạch ngang.",
+      en: "The URL slug takes only plain lower-case letters, digits and hyphens.",
+    }));
   }
   if (catalog.products.some((p) => p.slug === slug && p.id !== product.id)) {
-    return no(`Mã trên địa chỉ "${slug}" đã dùng cho mẫu khác.`);
+    return no(catalogFailureMessage("UPDATE_PRODUCT", "NOT_ALLOWED", slug, locale));
   }
 
   const priceVnd = value.priceVnd;
-  if (!isCount(priceVnd) || priceVnd < 1) return no("Nhập giá bán lớn hơn 0.");
+  if (!isCount(priceVnd) || priceVnd < 1) return no(t({ vi: "Nhập giá bán lớn hơn 0.", en: "Enter a price above 0." }));
 
   const material = text(value.material);
-  if (material === "" || material.length > MAX_MATERIAL) return no("Nhập chất liệu.");
+  if (material === "" || material.length > MAX_MATERIAL) return no(t(MATERIAL_TEXT));
 
   const fit = value.fit === undefined ? product.fit : value.fit;
-  if (fit !== "OVERSIZE" && fit !== "REGULAR") return no("Chọn form.");
+  if (fit !== "OVERSIZE" && fit !== "REGULAR") return no(t(FIT_TEXT));
 
   const patch: ProductPatch = {};
   if (name !== product.name) patch.name = name;
@@ -881,7 +1048,7 @@ export function isEmptyPatch(patch: ProductPatch): boolean {
 }
 
 /** "Số 07" — how the messages above name an issue. */
-export const dropSubject = (no: number): string => issueLabel(no);
+export const dropSubject = (no: number, locale: Locale = "vi"): string => issueLabel(no, locale);
 
 // ───────────────────────────────────────────────────────────── a new style
 /**
@@ -975,21 +1142,22 @@ export function readPhotoMap(
   value: unknown,
   colors: readonly ColorKey[],
   catalog: Catalog,
+  locale: Locale = "vi",
 ): Checked<Partial<Record<ColorKey, string>>> {
   if (value === undefined || value === null) return ok({});
-  if (!isRecord(value)) return no(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT"));
+  if (!isRecord(value)) return no(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT", "", locale));
   const photos: Partial<Record<ColorKey, string>> = {};
   for (const [color, raw] of Object.entries(value)) {
     if (!(colors as readonly string[]).includes(color)) {
-      return no(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT"));
+      return no(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT", "", locale));
     }
     if (raw !== undefined && raw !== null && typeof raw !== "string") {
-      return no(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT"));
+      return no(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT", "", locale));
     }
     const key = text(raw);
     if (key === "") continue;
     if (!isPickablePhoto(key, catalog)) {
-      return no(catalogFailureMessage("ADD_PRODUCT", "PHOTO_UNKNOWN", colorLabelOf(color)));
+      return no(catalogFailureMessage("ADD_PRODUCT", "PHOTO_UNKNOWN", colorLabelOf(color, locale), locale));
     }
     photos[color as ColorKey] = key;
   }
@@ -1001,8 +1169,15 @@ export function readPhotoMap(
  * once, in any order. Colours are fixed when the cloth is cut (QĐ-27) — this
  * never adds or drops one.
  */
-export function readColorOrder(value: unknown, current: readonly ColorKey[]): Checked<ColorKey[]> {
-  const bad = no<ColorKey[]>("Thứ tự màu phải gồm đúng các màu của mẫu — màu chốt lúc cắt.");
+export function readColorOrder(
+  value: unknown,
+  current: readonly ColorKey[],
+  locale: Locale = "vi",
+): Checked<ColorKey[]> {
+  const bad = no<ColorKey[]>(picker(locale)({
+    vi: "Thứ tự màu phải gồm đúng các màu của mẫu — màu chốt lúc cắt.",
+    en: "The colour order must hold exactly the style's colours, fixed when it was cut.",
+  }));
   if (!Array.isArray(value) || value.length !== current.length) return bad;
   const seen = new Set<string>();
   for (const c of value) {
@@ -1056,40 +1231,44 @@ export interface NewProductInput {
  * one that belongs to no issue; its grid is the stock it opens with, and its
  * empty address box becomes the bare name's segment (`slugFor`).
  */
-export function readNewProduct(value: unknown, catalog: Catalog): Checked<NewProductInput> {
-  const bad = no<NewProductInput>(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT"));
+export function readNewProduct(value: unknown, catalog: Catalog, locale: Locale = "vi"): Checked<NewProductInput> {
+  const t = picker(locale);
+  const bad = no<NewProductInput>(catalogFailureMessage("ADD_PRODUCT", "BAD_INPUT", "", locale));
   if (!isRecord(value)) return bad;
 
   const name = text(value.name).toLocaleUpperCase("vi");
-  if (name === "" || name.length > MAX_PRODUCT_NAME) return no("Nhập tên mẫu.");
+  if (name === "" || name.length > MAX_PRODUCT_NAME) return no(t(NAME_TEXT));
 
   const kind = text(value.kind);
-  if (kind === "" || kind.length > MAX_KIND) return no("Chọn loại.");
+  if (kind === "" || kind.length > MAX_KIND) return no(t(KIND_TEXT));
   const family = familyOfKind(catalog, kind);
-  if (!family) return no("Loại chưa có trong mục lục");
+  if (!family) return no(t({ vi: "Loại chưa có trong mục lục", en: "That type isn't in the catalogue" }));
 
   const fit = value.fit;
-  if (fit !== "OVERSIZE" && fit !== "REGULAR") return no("Chọn form.");
+  if (fit !== "OVERSIZE" && fit !== "REGULAR") return no(t(FIT_TEXT));
 
   let dropNo: number | null = null;
   if (value.dropNo !== null) {
     dropNo = readDropNo(value.dropNo);
-    if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no(`Chọn một ${LEX.tl}.`);
+    if (dropNo === null || !catalog.dropByNo.has(dropNo)) return no(t({ vi: `Chọn một ${LEX.tl}.`, en: "Choose a drop." }));
   }
 
   const priceVnd = value.priceVnd;
   if (!isCount(priceVnd) || priceVnd < MIN_PRICE_VND || priceVnd > MAX_PRICE_VND) {
-    return no("Nhập giá bán từ 1.000₫ đến 99.999.999₫.");
+    return no(t({
+      vi: "Nhập giá bán từ 1.000₫ đến 99.999.999₫.",
+      en: `Enter a price from ${vnd(MIN_PRICE_VND, "en")} to ${vnd(MAX_PRICE_VND, "en")}.`,
+    }));
   }
 
   const material = text(value.material);
-  if (material === "" || material.length > MAX_MATERIAL) return no("Nhập chất liệu.");
+  if (material === "" || material.length > MAX_MATERIAL) return no(t(MATERIAL_TEXT));
 
   // ── the colours, in band order
   const sent = value.colors;
   if (sent !== undefined && !Array.isArray(sent)) return bad;
   const colors = (Array.isArray(sent) ? sent : []) as unknown[];
-  if (colors.length === 0) return no(catalogFailureMessage("ADD_PRODUCT", "NO_COLORS"));
+  if (colors.length === 0) return no(catalogFailureMessage("ADD_PRODUCT", "NO_COLORS", "", locale));
   if (colors.length > MAX_COLORS) return bad;
   for (const [i, c] of colors.entries()) {
     if (typeof c !== "string" || !(COLOR_KEYS as readonly string[]).includes(c)) return bad;
@@ -1108,20 +1287,22 @@ export function readNewProduct(value: unknown, catalog: Catalog): Checked<NewPro
     let pieces = 0;
     for (const size of SIZES) {
       const n = isRecord(sizes) && sizes[size] !== undefined ? sizes[size] : 0;
-      if (!isCount(n) || n > MAX_CUT_PER_CELL) return no(`Số cắt mỗi ô từ 0 đến ${MAX_CUT_PER_CELL}.`);
+      if (!isCount(n) || n > MAX_CUT_PER_CELL) {
+        return no(t({ vi: `Số cắt mỗi ô từ 0 đến ${MAX_CUT_PER_CELL}.`, en: `The cut per cell is 0 to ${MAX_CUT_PER_CELL}.` }));
+      }
       row[size] = n;
       pieces += n;
     }
-    if (pieces === 0) return no(catalogFailureMessage("ADD_PRODUCT", "COLOR_EMPTY", COLORS[color].label));
+    if (pieces === 0) return no(catalogFailureMessage("ADD_PRODUCT", "COLOR_EMPTY", colorLabel(color, locale), locale));
     cells[color] = row;
   }
 
   // ── a photo for every colour
-  const photos = readPhotoMap(value.photos, keys, catalog);
+  const photos = readPhotoMap(value.photos, keys, catalog, locale);
   if (!photos.ok) return no(photos.error);
   for (const color of keys) {
     if (!photos.value[color]) {
-      return no(catalogFailureMessage("ADD_PRODUCT", "PHOTO_MISSING", COLORS[color].label));
+      return no(catalogFailureMessage("ADD_PRODUCT", "PHOTO_MISSING", colorLabel(color, locale), locale));
     }
   }
 
@@ -1132,9 +1313,12 @@ export function readNewProduct(value: unknown, catalog: Catalog): Checked<NewPro
     slug = uniqueSlug(slugFor(name, dropNo), catalog);
   } else {
     if (!isNewSlug(typed)) {
-      return no("Mã trên địa chỉ gồm 2–40 chữ thường không dấu, số và gạch ngang.");
+      return no(t({
+        vi: "Mã trên địa chỉ gồm 2–40 chữ thường không dấu, số và gạch ngang.",
+        en: `The URL slug is 2 to ${MAX_NEW_SLUG} plain lower-case letters, digits and hyphens.`,
+      }));
     }
-    if (slugTaken(typed, catalog)) return no(SLUG_TAKEN_MESSAGE);
+    if (slugTaken(typed, catalog)) return no(t(SLUG_TAKEN_TEXT));
     slug = typed;
   }
 

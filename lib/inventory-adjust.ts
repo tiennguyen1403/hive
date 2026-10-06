@@ -1,6 +1,6 @@
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
 import { onHandOf } from "./inventory";
-import type { Locale } from "./i18n";
+import { picker, type Locale } from "./i18n";
 
 /**
  * "Điều chỉnh tồn kho" — the rules behind the size × colour grid.
@@ -188,10 +188,14 @@ export function saveBlocker(
   product: Product,
   draft: StockDraft,
   reason: string | null,
+  locale: Locale = "vi",
 ): string | null {
-  if (changedCells(product, draft).length === 0) return "Chưa có thay đổi";
-  if (!reason) return "Chọn lý do";
-  if (overCutBy(product, draft) > 0) return `Không vượt ${product.cutUnits} đã cắt`;
+  const t = picker(locale);
+  if (changedCells(product, draft).length === 0) return t({ vi: "Chưa có thay đổi", en: "No changes yet" });
+  if (!reason) return t({ vi: "Chọn lý do", en: "Choose a reason" });
+  if (overCutBy(product, draft) > 0) {
+    return t({ vi: `Không vượt ${product.cutUnits} đã cắt`, en: `Keep within the ${product.cutUnits} cut` });
+  }
   return null;
 }
 
@@ -201,9 +205,11 @@ export function saveBlocker(
  * The reference is part of the sentence when there is one, because a return
  * without an order number is a claim nobody can check later.
  */
-export function deltaLabel(cell: InventoryCell, reason: string | null, ref: string): string {
+export function deltaLabel(cell: InventoryCell, reason: string | null, ref: string, locale: Locale = "vi"): string {
   const delta = cell.after - cell.before;
   const sign = delta > 0 ? `+${delta}` : String(delta);
-  const tail = [reason?.toLowerCase(), ref.trim()].filter(Boolean).join(" ");
+  // The stored reason, printed in the page's language (English: `stockReasonLabel`'s table).
+  const said = reason === null ? null : locale === "vi" ? reason : stockReasonLabel(reason, locale);
+  const tail = [said?.toLowerCase(), ref.trim()].filter(Boolean).join(" ");
   return tail ? `${sign} · ${tail}` : sign;
 }

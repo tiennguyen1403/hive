@@ -2,10 +2,12 @@
 
 import { ArrowLeft, Check, PackagePlus } from "lucide-react";
 import { useId, useState } from "react";
-import { COLORS } from "@/data/colors";
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { COLORS, colorLabel } from "@/data/colors";
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
 import { stepCell, typeCell } from "@/lib/adjust-cell";
 import { MAX_RESTOCK_PER_CELL } from "@/lib/catalog-admin";
+import { picker, plural, type Locale } from "@/lib/i18n";
 import { onHand, onHandByColor, onHandOf } from "@/lib/inventory";
 import {
   ADJUST_REASONS,
@@ -16,10 +18,12 @@ import {
   draftOf,
   draftTotal,
   saveBlocker,
+  stockReasonLabel,
   type InventoryCell,
   type StockDraft,
 } from "@/lib/inventory-adjust";
 import { styleName } from "@/lib/lexicon";
+import { productText } from "@/lib/product-text";
 import {
   addOf,
   colorAdds,
@@ -45,7 +49,16 @@ import { keepOpenForToasts } from "./arc-toasts";
 const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
 
 /** The four reasons the sheet offers (`ADJUST_REASONS`), in v3's order. */
-const REASON_OPTIONS = ADJUST_REASONS.map((r) => ({ value: r, label: r }));
+/**
+ * The four reasons as the menu offers them: the value is the stored
+ * Vietnamese whatever the page's language (the database checks it and the log
+ * keeps it), the label is the page's (round v6 slice E5, `stockReasonLabel`).
+ */
+const reasonOptions = (locale: Locale) => ADJUST_REASONS.map((r) => ({ value: r, label: stockReasonLabel(r, locale) }));
+
+/** "Điều chỉnh tồn kho · S05 – KHÓI": the style as the shop prints it in the page's language. */
+const drawerName = (product: Product, locale: Locale) =>
+  styleName(productText(product, locale).name, product.dropNo, locale);
 
 /**
  * The shelf of one style, colour by size, in an Arc `Drawer` from the right,
@@ -105,6 +118,8 @@ export function ArcAdjustDrawer({
   /** A raise the cut refuses, for the screen to say in a toast. */
   onBlocked: (message: string) => void;
 }) {
+  const locale = useLocale();
+  const t = picker(locale);
   return (
     <Drawer
       open={open}
@@ -116,11 +131,23 @@ export function ArcAdjustDrawer({
         onInteractOutside={keepOpenForToasts}
         onCloseAutoFocus={onCloseAutoFocus}
         className={promo.drawer}
-        title={product ? `Điều chỉnh tồn kho · ${styleName(product.name, product.dropNo)}` : ""}
+        title={
+          product
+            ? t({
+                vi: `Điều chỉnh tồn kho · ${styleName(product.name, product.dropNo)}`,
+                en: `Adjust stock · ${drawerName(product, "en")}`,
+              })
+            : ""
+        }
         // The ceiling is the one line left (v3 slice 13). A fixed style (slice
         // B5) has no cut and so no ceiling: its drawer has no line at all.
         description={
-          product?.cutUnits != null ? `Tăng quá ${product.cutUnits} chiếc đã cắt thì bị chặn.` : undefined
+          product?.cutUnits != null
+            ? t({
+                vi: `Tăng quá ${product.cutUnits} chiếc đã cắt thì bị chặn.`,
+                en: `Raising stock past the ${product.cutUnits} pieces cut is blocked.`,
+              })
+            : undefined
         }
       >
         {product && (
@@ -153,13 +180,16 @@ function AdjustForm({
   onBlocked: (message: string) => void;
 }) {
   const id = useId();
+  const locale = useLocale();
+  const t = picker(locale);
   const [draft, setDraft] = useState<StockDraft>(() => draftOf(product));
+  // The stored reason (Vietnamese), whatever the menu shows.
   const [reason, setReason] = useState<string | null>(null);
   const [ref, setRef] = useState("");
   const [note, setNote] = useState("");
 
   const changed = changedCells(product, draft);
-  const blocker = saveBlocker(product, draft, reason);
+  const blocker = saveBlocker(product, draft, reason, locale);
   const ready = blocker === null;
   const total = draftTotal(product, draft);
   const delta = total - onHand(product);
@@ -176,7 +206,7 @@ function AdjustForm({
         <GridHead />
         <tbody>
           {product.colors.map((color) => {
-            const label = COLORS[color].label;
+            const label = colorLabel(color, locale);
             const rowTotal = colorTotal(product, draft, color);
             const rowWas = onHandByColor(product, color);
             return (
@@ -192,18 +222,18 @@ function AdjustForm({
                       <span className={styles.cell}>
                         <ArcCountField
                           label={`${label} ${size}`}
-                          decrementLabel={`Bớt ${label} ${size}`}
-                          incrementLabel={`Thêm ${label} ${size}`}
+                          decrementLabel={t({ vi: `Bớt ${label} ${size}`, en: `Decrease ${label} ${size}` })}
+                          incrementLabel={t({ vi: `Thêm ${label} ${size}`, en: `Increase ${label} ${size}` })}
                           value={now}
                           changed={moved}
                           canDecrement={now > 0}
                           describedBy={moved ? lineId : undefined}
-                          onStep={(by) => move(stepCell(product, draft, color, size, by))}
-                          onType={(raw) => move(typeCell(product, draft, color, size, raw))}
+                          onStep={(by) => move(stepCell(product, draft, color, size, by, locale))}
+                          onType={(raw) => move(typeCell(product, draft, color, size, raw, locale))}
                         />
                         {moved && (
                           <span id={lineId} className={styles.delta}>
-                            {deltaLabel({ color, size, before: was, after: now }, reason, ref)}
+                            {deltaLabel({ color, size, before: was, after: now }, reason, ref, locale)}
                           </span>
                         )}
                       </span>
@@ -219,23 +249,23 @@ function AdjustForm({
 
       <div className={styles.fields}>
         <Select
-          label="Lý do"
-          placeholder="Chọn lý do"
-          options={REASON_OPTIONS}
+          label={t({ vi: "Lý do", en: "Reason" })}
+          placeholder={t({ vi: "Chọn lý do", en: "Choose a reason" })}
+          options={reasonOptions(locale)}
           value={reason ?? ""}
           onValueChange={setReason}
         />
         <Input
-          label="Tham chiếu · đơn, biên bản"
-          placeholder="VD: DH-2419"
+          label={t({ vi: "Tham chiếu · đơn, biên bản", en: "Reference · order, report" })}
+          placeholder={t({ vi: "VD: DH-2419", en: "e.g. DH-2419" })}
           autoComplete="off"
           value={ref}
           onChange={(e) => setRef(e.target.value)}
         />
         <div className={styles.wide}>
           <Input
-            label="Ghi chú · không bắt buộc"
-            placeholder="VD: khách trả size L, còn nguyên tag"
+            label={t({ vi: "Ghi chú · không bắt buộc", en: "Note · optional" })}
+            placeholder={t({ vi: "VD: khách trả size L, còn nguyên tag", en: "e.g. customer returned an L, tags still on" })}
             autoComplete="off"
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -244,15 +274,29 @@ function AdjustForm({
       </div>
 
       <p className={styles.total}>
-        Trên kệ sau khi lưu: <b>{total}</b>
-        {product.cutUnits === null ? "" : ` / ${product.cutUnits} đã cắt`}
-        {delta !== 0 ? ` (${delta > 0 ? "+" : ""}${delta})` : ""} · {changed.length} ô đổi.
+        {t<React.ReactNode>({
+          vi: (
+            <>
+              Trên kệ sau khi lưu: <b>{total}</b>
+              {product.cutUnits === null ? "" : ` / ${product.cutUnits} đã cắt`}
+              {delta !== 0 ? ` (${delta > 0 ? "+" : ""}${delta})` : ""} · {changed.length} ô đổi.
+            </>
+          ),
+          en: (
+            <>
+              On the shelf after saving: <b>{total}</b>
+              {product.cutUnits === null ? "" : ` / ${product.cutUnits} cut`}
+              {delta !== 0 ? ` (${delta > 0 ? "+" : ""}${delta})` : ""} · {plural(changed.length, "cell", "cells")}{" "}
+              changed.
+            </>
+          ),
+        })}
       </p>
 
       <div className={styles.actions}>
         <Button variant="secondary" size="sm" disabled={pending} onClick={onCancel}>
           {pending ? null : <ArrowLeft {...ICON} />}
-          Huỷ
+          {t({ vi: "Huỷ", en: "Cancel" })}
         </Button>
         <Button
           variant="primary"
@@ -265,7 +309,7 @@ function AdjustForm({
           }}
         >
           {ready && !pending ? <Check {...ICON} /> : null}
-          {pending ? "Đang lưu…" : (blocker ?? "Lưu điều chỉnh")}
+          {pending ? t({ vi: "Đang lưu…", en: "Saving…" }) : (blocker ?? t({ vi: "Lưu điều chỉnh", en: "Save adjustment" }))}
         </Button>
       </div>
     </div>
@@ -296,6 +340,7 @@ export function ArcRestockDrawer({
   product: Product | null;
   onRestock: (cells: RestockCell[], note: string) => void;
 }) {
+  const locale = useLocale();
   return (
     <Drawer
       open={open}
@@ -307,7 +352,14 @@ export function ArcRestockDrawer({
         onInteractOutside={keepOpenForToasts}
         onCloseAutoFocus={onCloseAutoFocus}
         className={promo.drawer}
-        title={product ? `Nhập thêm · ${styleName(product.name, product.dropNo)}` : ""}
+        title={
+          product
+            ? picker(locale)({
+                vi: `Nhập thêm · ${styleName(product.name, product.dropNo)}`,
+                en: `Restock · ${drawerName(product, "en")}`,
+              })
+            : ""
+        }
       >
         {product && (
           <RestockForm
@@ -335,11 +387,13 @@ function RestockForm({
   onCancel: () => void;
   onRestock: (cells: RestockCell[], note: string) => void;
 }) {
+  const locale = useLocale();
+  const t = picker(locale);
   const [draft, setDraft] = useState<RestockDraft>({});
   const [note, setNote] = useState("");
 
   const cells = restockCells(product, draft);
-  const button = restockButton(restockTotal(product, draft));
+  const button = restockButton(restockTotal(product, draft), locale);
 
   const set = (color: ColorKey, size: Size, value: number) => setDraft((d) => withAdd(d, color, size, value));
 
@@ -349,7 +403,7 @@ function RestockForm({
         <GridHead />
         <tbody>
           {product.colors.map((color) => {
-            const label = COLORS[color].label;
+            const label = colorLabel(color, locale);
             const rowWas = onHandByColor(product, color);
             const rowAdds = colorAdds(product, draft, color);
             return (
@@ -362,12 +416,15 @@ function RestockForm({
                     <td key={size}>
                       <span className={styles.cell}>
                         <span className={styles.left} data-thin={isThin(left) ? "" : undefined}>
-                          còn {left}
+                          {t<React.ReactNode>({ vi: <>còn {left}</>, en: <>{left} left</> })}
                         </span>
                         <ArcCountField
-                          label={`Nhập thêm ${label} ${size}, đang còn ${left}`}
-                          decrementLabel={`Bớt ${label} ${size}`}
-                          incrementLabel={`Thêm ${label} ${size}`}
+                          label={t({
+                            vi: `Nhập thêm ${label} ${size}, đang còn ${left}`,
+                            en: `Restock ${label} ${size}, ${left} left now`,
+                          })}
+                          decrementLabel={t({ vi: `Bớt ${label} ${size}`, en: `Decrease ${label} ${size}` })}
+                          incrementLabel={t({ vi: `Thêm ${label} ${size}`, en: `Increase ${label} ${size}` })}
                           value={add}
                           changed={add > 0}
                           canDecrement={add > 0}
@@ -389,8 +446,8 @@ function RestockForm({
       <div className={styles.fields}>
         <div className={styles.wide}>
           <Input
-            label="Ghi chú · không bắt buộc"
-            placeholder="VD: về lại size M"
+            label={t({ vi: "Ghi chú · không bắt buộc", en: "Note · optional" })}
+            placeholder={t({ vi: "VD: về lại size M", en: "e.g. size M back in" })}
             autoComplete="off"
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -401,7 +458,7 @@ function RestockForm({
       <div className={styles.actions}>
         <Button variant="secondary" size="sm" disabled={pending} onClick={onCancel}>
           {pending ? null : <ArrowLeft {...ICON} />}
-          Huỷ
+          {t({ vi: "Huỷ", en: "Cancel" })}
         </Button>
         <Button
           variant="primary"
@@ -414,7 +471,7 @@ function RestockForm({
           }}
         >
           {button.ready && !pending ? <PackagePlus {...ICON} /> : null}
-          {pending ? "Đang lưu…" : button.label}
+          {pending ? t({ vi: "Đang lưu…", en: "Saving…" }) : button.label}
         </Button>
       </div>
     </div>
@@ -423,16 +480,17 @@ function RestockForm({
 
 /** "Màu · S · M · L · XL · Cộng", the grid's columns. */
 function GridHead() {
+  const t = picker(useLocale());
   return (
     <thead>
       <tr>
-        <th scope="col">Màu</th>
+        <th scope="col">{t({ vi: "Màu", en: "Colour" })}</th>
         {SIZES.map((s) => (
           <th key={s} scope="col">
             {s}
           </th>
         ))}
-        <th scope="col">Cộng</th>
+        <th scope="col">{t({ vi: "Cộng", en: "Total" })}</th>
       </tr>
     </thead>
   );
@@ -444,11 +502,12 @@ function GridHead() {
  * a hairline keeps a pale one (Kem, Trắng) visible on the white drawer.
  */
 function ColourCell({ color }: { color: ColorKey }) {
+  const locale = useLocale();
   return (
     <th scope="row">
       <span className={styles.colour}>
         <span className={styles.swatch} style={{ background: COLORS[color].hex }} aria-hidden="true" />
-        {COLORS[color].label}
+        {colorLabel(color, locale)}
       </span>
     </th>
   );

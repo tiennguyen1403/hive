@@ -3,8 +3,9 @@
 import { ArrowLeft, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { COLORS } from "@/data/colors";
+import { COLORS, colorLabel } from "@/data/colors";
 import { COLOR_KEYS, SIZES, type ColorKey, type Fit, type Size } from "@/data/types";
 import {
   createProduct,
@@ -25,8 +26,10 @@ import {
   slugFor,
   uniqueSlug,
 } from "@/lib/catalog-admin";
-import { FITS, FIT_LABELS } from "@/lib/catalog-query";
-import { FIXED_WORD, LEX, stylePrefix } from "@/lib/lexicon";
+import { storedLang } from "@/lib/admin-text";
+import { FITS, fitLabel } from "@/lib/catalog-query";
+import { picker, plural, type Locale } from "@/lib/i18n";
+import { FIXED_WORD_TEXT, LEX, stylePrefix } from "@/lib/lexicon";
 import { moneyInitial, moneyInput, parseVnd, plainVnd } from "@/lib/money";
 import { defaultCrop, sameCrop, type Crop } from "@/lib/photo-crop";
 import { PhotoEncodeError, encodeCrop } from "@/lib/photo-encode";
@@ -88,9 +91,12 @@ interface Option {
   value: string;
   label: string;
   note?: string;
+  /** `"vi"` for a kind the database keeps in Vietnamese, on an English page (`kindOptions`). */
+  lang?: string;
 }
 
-const FIT_OPTIONS = FITS.map((f) => ({ value: f, label: FIT_LABELS[f] }));
+/** The fits in the page's language: "Oversize" / "Regular", or "Oversized" / "Regular". */
+const fitOptions = (locale: Locale) => FITS.map((f) => ({ value: f, label: fitLabel(f, locale) }));
 
 const NONE: SlotPhoto = { kind: "none" };
 
@@ -172,6 +178,10 @@ export function ArcProductForm({
   const say = useArcToast();
   const router = useRouter();
   const catalog = useCatalog();
+  // The page's language (round v6 slice E5). The boxes keep the stored words
+  // whatever it is: the form saves what it shows, and has no English fields (B15).
+  const locale = useLocale();
+  const t = picker(locale);
   const chipLabel = useId();
   const ids = { basics: useId(), grid: useId(), photos: useId() };
 
@@ -242,7 +252,7 @@ export function ArcProductForm({
     [],
   );
 
-  const loans = useMemo(() => loanPhotos(catalog), [catalog]);
+  const loans = useMemo(() => loanPhotos(catalog, locale), [catalog, locale]);
   const kinds = useMemo(() => {
     const out: Partial<Record<ColorKey, PhotoKind>> = {};
     for (const c of order) out[c] = (photos[c] ?? NONE).kind;
@@ -253,7 +263,7 @@ export function ArcProductForm({
   const priceVnd = price === "" ? 0 : Number(price);
   const blocker =
     mode === "new"
-      ? newStyleBlocker({ name, kind, fit, dropNo, priceVnd, material, colors: order, cells, photos: kinds })
+      ? newStyleBlocker({ name, kind, fit, dropNo, priceVnd, material, colors: order, cells, photos: kinds }, locale)
       : null;
   // What an empty address box becomes: the action's own rule (`slugFor`: the
   // issue's code in front for an issue's style), so the placeholder is the
@@ -269,7 +279,7 @@ export function ArcProductForm({
 
   /** A colour dropped (toggle or "Bỏ màu"): its typed pieces and its photo go with it. */
   function unpick(color: ColorKey) {
-    const message = droppedColorMessage(color, rowTotal(cells, color));
+    const message = droppedColorMessage(color, rowTotal(cells, color), locale);
     if (message) say(message);
     setOrder(order.filter((c) => c !== color));
     const nextCells = { ...cells };
@@ -324,13 +334,13 @@ export function ArcProductForm({
   /** A file picked or dropped: checked, measured, then straight into the crop dialog. */
   async function pickFile(color: ColorKey, file: File | undefined) {
     if (!file) return;
-    const problem = pickProblem(file);
+    const problem = pickProblem(file, locale);
     if (problem) return say(problem, "error");
     const src = URL.createObjectURL(file);
     const size = await naturalSize(src);
     if (!size) {
       URL.revokeObjectURL(src);
-      return say("Không đọc được ảnh này · chọn tệp khác", "error");
+      return say(t({ vi: "Không đọc được ảnh này · chọn tệp khác", en: "Couldn't read this photo · choose another file" }), "error");
     }
     setPicking(null);
     openCropDialog({
@@ -454,7 +464,7 @@ export function ArcProductForm({
   }
 
   async function uploadOne(color: ColorKey, photo: FilePhoto): Promise<string | null> {
-    const label = COLORS[color].label;
+    const label = colorLabel(color, locale);
     try {
       const { blob, type } = await encodeCrop(photo.file, photo.crop);
       const form = new FormData();
@@ -462,14 +472,17 @@ export function ArcProductForm({
       form.set("color", color);
       const answer = await uploadProductPhoto(form);
       if (answer.ok && answer.key) return answer.key;
-      say(answer.errors.form ?? catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", label), "error");
+      say(answer.errors.form ?? catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", label, locale), "error");
     } catch (e) {
       // A refusal of the encoder has its own words; anything else (the
       // request never answered, a body over the limit) is "không tải được".
       say(
         e instanceof PhotoEncodeError
-          ? `Không tải được ảnh ${label}: ${lowerFirst(e.message)}`
-          : catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", label),
+          ? t({
+              vi: `Không tải được ảnh ${label}: ${lowerFirst(e.message)}`,
+              en: `Couldn't upload the photo for ${label}: ${lowerFirst(e.english)}`,
+            })
+          : catalogFailureMessage("UPLOAD_PHOTO", "UNAVAILABLE", label, locale),
         "error",
       );
     }
@@ -528,7 +541,7 @@ export function ArcProductForm({
         photos: changed,
       });
     } catch {
-      return { errors: { form: catalogFailureMessage("ADD_PRODUCT", "UNAVAILABLE") } };
+      return { errors: { form: catalogFailureMessage("ADD_PRODUCT", "UNAVAILABLE", "", locale) } };
     }
   }
 
@@ -551,7 +564,7 @@ export function ArcProductForm({
       let answer = await sendInTransition(snapshot, keys);
       // "Đặt lại dữ liệu mẫu" empties the bucket, uploads this form still
       // holds included: send those files again, once.
-      const stale = staleUploads(answer.errors.form, order).filter(
+      const stale = staleUploads(answer.errors.form, order, locale).filter(
         (c) => snapshot[c]?.kind === "file",
       );
       if (!answer.ok && stale.length > 0) {
@@ -560,7 +573,7 @@ export function ArcProductForm({
         answer = await sendInTransition(snapshot, keys);
       }
       if (!answer.ok) {
-        say(answer.errors.form ?? catalogFailureMessage("ADD_PRODUCT", "UNAVAILABLE"), "error");
+        say(answer.errors.form ?? catalogFailureMessage("ADD_PRODUCT", "UNAVAILABLE", "", locale), "error");
         return;
       }
       say(answer.message ?? "");
@@ -580,43 +593,83 @@ export function ArcProductForm({
 
   // ──────────────────────────────────────────────────────────────── render
   const uploading = upload !== null && upload.done.length < upload.total;
-  const shownPrice = priceVnd > 0 ? `${plainVnd(priceVnd)}₫` : "chưa nhập";
-  const bar = uploading ? (
-    <>
-      Đang tải ảnh lên… <b>{upload.index}</b> / {upload.total}
-    </>
-  ) : mode === "new" ? (
-    <>
-      Giá đang nhập: <b>{shownPrice}</b> · <b>{order.length}</b> màu · lưới <b>{total}</b> chiếc
-      {tally.missing.length > 0 ? (
+  const shownPrice =
+    priceVnd > 0 ? `${plainVnd(priceVnd, locale)}₫` : t({ vi: "chưa nhập", en: "not set" });
+  // The line above the buttons. Vietnamese is the JSX it always was; English
+  // says the same in the same places (round v6 slice E5).
+  const bar =
+    locale === "vi" ? (
+      uploading ? (
         <>
-          {" · "}
-          <b>{tally.missing.length}</b> ảnh chưa có
+          Đang tải ảnh lên… <b>{upload.index}</b> / {upload.total}
         </>
-      ) : tally.loans.length > 0 ? (
+      ) : mode === "new" ? (
         <>
-          {" · "}
-          <b>{tally.loans.length}</b> ảnh mượn tạm
+          Giá đang nhập: <b>{shownPrice}</b> · <b>{order.length}</b> màu · lưới <b>{total}</b> chiếc
+          {tally.missing.length > 0 ? (
+            <>
+              {" · "}
+              <b>{tally.missing.length}</b> ảnh chưa có
+            </>
+          ) : tally.loans.length > 0 ? (
+            <>
+              {" · "}
+              <b>{tally.loans.length}</b> ảnh mượn tạm
+            </>
+          ) : null}
         </>
-      ) : null}
-    </>
-  ) : (
-    <>
-      Giá: <b>{shownPrice}</b> · còn <b>{total}</b>
-      {fixed ? " chiếc" : ` / ${cutUnits ?? total} chiếc`}
-      {tally.loans.length > 0 && (
+      ) : (
         <>
-          {" · "}
-          <b>{tally.loans.length}</b> ảnh mượn tạm
+          Giá: <b>{shownPrice}</b> · còn <b>{total}</b>
+          {fixed ? " chiếc" : ` / ${cutUnits ?? total} chiếc`}
+          {tally.loans.length > 0 && (
+            <>
+              {" · "}
+              <b>{tally.loans.length}</b> ảnh mượn tạm
+            </>
+          )}
         </>
-      )}
-    </>
-  );
+      )
+    ) : uploading ? (
+      <>
+        Uploading photos… <b>{upload.index}</b> / {upload.total}
+      </>
+    ) : mode === "new" ? (
+      <>
+        Price: <b>{shownPrice}</b> · <b>{order.length}</b> {order.length === 1 ? "colour" : "colours"} · grid{" "}
+        <b>{total}</b> {total === 1 ? "piece" : "pieces"}
+        {tally.missing.length > 0 ? (
+          <>
+            {" · "}
+            <b>{tally.missing.length}</b> {tally.missing.length === 1 ? "photo" : "photos"} missing
+          </>
+        ) : tally.loans.length > 0 ? (
+          <>
+            {" · "}
+            <b>{tally.loans.length}</b> borrowed
+          </>
+        ) : null}
+      </>
+    ) : (
+      <>
+        Price: <b>{shownPrice}</b> · <b>{total}</b>
+        {fixed ? " left" : ` / ${cutUnits ?? total} left`}
+        {tally.loans.length > 0 && (
+          <>
+            {" · "}
+            <b>{tally.loans.length}</b> borrowed
+          </>
+        )}
+      </>
+    );
 
   const ready = blocker === null;
   const saveLabel = saving
-    ? "Đang lưu…"
-    : (blocker ?? (mode === "new" ? `Tạo mẫu · ${total} chiếc` : "Lưu thay đổi"));
+    ? t({ vi: "Đang lưu…", en: "Saving…" })
+    : (blocker ??
+      (mode === "new"
+        ? t({ vi: `Tạo mẫu · ${total} chiếc`, en: `Create style · ${plural(total, "piece", "pieces")}` })
+        : t({ vi: "Lưu thay đổi", en: "Save changes" })));
 
   const progressOf = (c: ColorKey): "run" | "done" | null =>
     upload?.done.includes(c) ? "done" : upload?.color === c ? "run" : null;
@@ -628,7 +681,7 @@ export function ArcProductForm({
           <section className={panel.panel} aria-labelledby={ids.basics}>
             <div className={panel.panelHead}>
               <h2 id={ids.basics} className={panel.panelTitle}>
-                Thông tin cơ bản
+                {t({ vi: "Thông tin cơ bản", en: "Basic details" })}
               </h2>
             </div>
             <div className={styles.fields}>
@@ -636,37 +689,38 @@ export function ArcProductForm({
                   the muted ground; typed around, never typed. */}
               <Input
                 {...capitals}
-                label="Tên mẫu"
-                prefix={issue === null ? undefined : stylePrefix(issue)}
-                placeholder={fixed ? "VD: ÁO THUN TRƠN" : "VD: KHÓI"}
+                label={t({ vi: "Tên mẫu", en: "Style name" })}
+                prefix={issue === null ? undefined : stylePrefix(issue, locale)}
+                placeholder={fixed ? t({ vi: "VD: ÁO THUN TRƠN", en: "e.g. PLAIN TEE" }) : t({ vi: "VD: KHÓI", en: "e.g. KHÓI" })}
                 maxLength={MAX_PRODUCT_NAME}
                 autoComplete="off"
                 spellCheck={false}
                 value={name}
+                lang={storedLang(name, locale)}
               />
               <div className={styles.pair}>
                 <Select
-                  label="Loại"
-                  placeholder="Chọn loại"
+                  label={t({ vi: "Loại", en: "Type" })}
+                  placeholder={t({ vi: "Chọn loại", en: "Choose a type" })}
                   options={kindOptions}
                   value={kind}
                   onValueChange={setKind}
                 />
                 <Select
-                  label="Form"
-                  placeholder="Chọn form"
-                  options={FIT_OPTIONS}
+                  label={t({ vi: "Form", en: "Fit" })}
+                  placeholder={t({ vi: "Chọn form", en: "Choose a fit" })}
+                  options={fitOptions(locale)}
                   value={fit ?? ""}
                   onValueChange={(v) => setFit(v as Fit)}
                 />
                 {/* A fixed style being edited can never join an issue: its
                     issue field says so, read-only. */}
                 {mode === "edit" && fixed ? (
-                  <Input label={LEX.t} readOnly value={FIXED_WORD} className={styles.readOnly} />
+                  <Input label={t({ vi: LEX.t, en: "Drop" })} readOnly value={t(FIXED_WORD_TEXT)} className={styles.readOnly} />
                 ) : (
                   <Select
-                    label={LEX.t}
-                    placeholder={`Chọn ${LEX.tl}`}
+                    label={t({ vi: LEX.t, en: "Drop" })}
+                    placeholder={t({ vi: `Chọn ${LEX.tl}`, en: "Choose a drop" })}
                     options={dropOptions}
                     value={dropNo}
                     onValueChange={setDropNo}
@@ -677,22 +731,32 @@ export function ArcProductForm({
                     shape a paste arrives in. A new style starts EMPTY, not at
                     0: nobody has decided a price yet. */}
                 <Input
-                  label="Giá bán (₫)"
+                  label={t({ vi: "Giá bán (₫)", en: "Price (₫)" })}
                   inputMode="numeric"
                   autoComplete="off"
-                  placeholder="VD: 390.000"
-                  value={moneyInput(price)}
+                  placeholder={t({ vi: "VD: 390.000", en: "e.g. 390,000" })}
+                  value={moneyInput(price, locale)}
                   onChange={(e) => setPrice(String(parseVnd(e.target.value) || ""))}
                 />
               </div>
               <Input
-                label={mode === "new" ? "Mã trên địa chỉ · không bắt buộc" : "Mã trên địa chỉ"}
+                label={
+                  mode === "new"
+                    ? t({ vi: "Mã trên địa chỉ · không bắt buộc", en: "URL slug · optional" })
+                    : t({ vi: "Mã trên địa chỉ", en: "URL slug" })
+                }
                 description={
                   mode === "new"
                     ? autoSlug
-                      ? `Tự sinh từ tên nếu để trống: /products/${autoSlug}.`
-                      : "Tự sinh từ tên nếu để trống."
-                    : `Đổi mã thì đường dẫn cũ /products/${values.slug} không còn mở được.`
+                      ? t({
+                          vi: `Tự sinh từ tên nếu để trống: /products/${autoSlug}.`,
+                          en: `Made from the name if left empty: /products/${autoSlug}.`,
+                        })
+                      : t({ vi: "Tự sinh từ tên nếu để trống.", en: "Made from the name if left empty." })
+                    : t({
+                        vi: `Đổi mã thì đường dẫn cũ /products/${values.slug} không còn mở được.`,
+                        en: `A new slug stops the old link /products/${values.slug} from opening.`,
+                      })
                 }
                 placeholder={autoSlug || undefined}
                 maxLength={mode === "new" ? MAX_NEW_SLUG : MAX_SLUG}
@@ -702,11 +766,12 @@ export function ArcProductForm({
                 onChange={(e) => setSlug(e.target.value)}
               />
               <Textarea
-                label="Chất liệu & form"
+                label={t({ vi: "Chất liệu & form", en: "Material & fit" })}
                 rows={4}
                 maxLength={MAX_MATERIAL}
-                placeholder="Chất liệu, form dáng, cách bảo quản"
+                placeholder={t({ vi: "Chất liệu, form dáng, cách bảo quản", en: "Material, cut, care" })}
                 value={material}
+                lang={storedLang(material, locale)}
                 onChange={(e) => setMaterial(e.target.value)}
               />
             </div>
@@ -716,30 +781,35 @@ export function ArcProductForm({
             <div className={panel.panelHead}>
               <div className={panel.panelHeading}>
                 <h2 id={ids.grid} className={panel.panelTitle}>
-                  {mode === "new" && !fixed ? "Số lượng sẽ cắt" : "Tồn kho"}
+                  {mode === "new" && !fixed ? t({ vi: "Số lượng sẽ cắt", en: "Pieces to cut" }) : t({ vi: "Tồn kho", en: "Stock" })}
                 </h2>
                 <p className={panel.panelSub}>
                   {mode === "new"
-                    ? `tổng ${total} chiếc`
+                    ? t({ vi: `tổng ${total} chiếc`, en: `${plural(total, "piece", "pieces")} in all` })
                     : fixed
-                      ? `còn ${total}`
-                      : `đã cắt ${cutUnits ?? total} · còn ${total}`}
+                      ? t({ vi: `còn ${total}`, en: `${total} left` })
+                      : t({ vi: `đã cắt ${cutUnits ?? total} · còn ${total}`, en: `${cutUnits ?? total} cut · ${total} left` })}
                 </p>
               </div>
             </div>
             {order.length === 0 ? (
-              <p className={styles.quiet}>Chọn màu trước thì lưới size mới có hàng để điền.</p>
+              <p className={styles.quiet}>
+                {t({
+                  vi: "Chọn màu trước thì lưới size mới có hàng để điền.",
+                  en: "Choose the colours first, and the size grid gets rows to fill.",
+                })}
+              </p>
             ) : (
               <table className={stock.grid}>
                 <thead>
                   <tr>
-                    <th scope="col">Màu</th>
+                    <th scope="col">{t({ vi: "Màu", en: "Colour" })}</th>
                     {SIZES.map((s) => (
                       <th key={s} scope="col">
                         {s}
                       </th>
                     ))}
-                    <th scope="col">Cộng</th>
+                    <th scope="col">{t({ vi: "Cộng", en: "Total" })}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -748,7 +818,7 @@ export function ArcProductForm({
                       <th scope="row">
                         <span className={stock.colour}>
                           <span className={stock.swatch} style={{ background: COLORS[c].hex }} aria-hidden="true" />
-                          {COLORS[c].label}
+                          {colorLabel(c, locale)}
                         </span>
                       </th>
                       {SIZES.map((s) => (
@@ -757,7 +827,7 @@ export function ArcProductForm({
                             className={styles.count}
                             inputMode="numeric"
                             autoComplete="off"
-                            aria-label={`${COLORS[c].label} ${s}`}
+                            aria-label={`${colorLabel(c, locale)} ${s}`}
                             value={cells[c]?.[s] ?? 0}
                             onChange={(e) => setCell(c, s, e.target.value)}
                           />
@@ -779,15 +849,15 @@ export function ArcProductForm({
             <div className={panel.panelHead}>
               <div className={panel.panelHeading}>
                 <h2 id={ids.photos} className={panel.panelTitle}>
-                  Màu và ảnh
+                  {t({ vi: "Màu và ảnh", en: "Colours and photos" })}
                 </h2>
-                <p className={panel.panelSub}>{panelMeta(order, tally)}</p>
+                <p className={panel.panelSub}>{panelMeta(order, tally, locale)}</p>
               </div>
             </div>
             {mode === "new" ? (
               <div className={styles.colorField}>
                 <span className={styles.label} id={chipLabel}>
-                  {fixed ? "Màu" : "Màu sẽ cắt"}
+                  {fixed ? t({ vi: "Màu", en: "Colours" }) : t({ vi: "Màu sẽ cắt", en: "Colours to cut" })}
                 </span>
                 <div className={styles.chips} role="group" aria-labelledby={chipLabel}>
                   {COLOR_KEYS.map((c) => {
@@ -802,16 +872,21 @@ export function ArcProductForm({
                         onClick={() => toggleColor(c)}
                       >
                         <span className={styles.dot} style={{ background: COLORS[c].hex }} aria-hidden="true" />
-                        {COLORS[c].label}
+                        {colorLabel(c, locale)}
                         {on && <span className={styles.place}>{place + 1}</span>}
                       </button>
                     );
                   })}
                 </div>
-                <p className={styles.help}>Thứ tự chọn là thứ tự dải màu trên thẻ; màu đầu là ảnh đại diện.</p>
+                <p className={styles.help}>
+                  {t({
+                    vi: "Thứ tự chọn là thứ tự dải màu trên thẻ; màu đầu là ảnh đại diện.",
+                    en: "The pick order is the card's colour band; the first is the cover photo.",
+                  })}
+                </p>
               </div>
             ) : (
-              <p className={styles.quiet}>{values.colors.map((c) => COLORS[c].label).join(" · ")}.</p>
+              <p className={styles.quiet}>{values.colors.map((c) => colorLabel(c, locale)).join(" · ")}.</p>
             )}
             {order.length > 0 && (
               <div className={styles.rows}>
@@ -848,7 +923,7 @@ export function ArcProductForm({
         <p className={styles.barText}>{bar}</p>
         <ArcButtonLink variant="secondary" size="sm" href="/admin/products">
           <ArrowLeft {...ICON} />
-          Huỷ
+          {t({ vi: "Huỷ", en: "Cancel" })}
         </ArcButtonLink>
         <Button variant="primary" size="sm" disabled={!ready} loading={saving} onClick={() => void save()}>
           {ready && !saving ? <Check {...ICON} /> : null}
@@ -900,7 +975,7 @@ async function naturalSize(src: string): Promise<{ w: number; h: number } | null
     : null;
 }
 
-/** "Ảnh quá nặng sau khi thu" → "ảnh quá nặng…", after a colon. */
+/** "Ảnh quá nặng sau khi thu" → "ảnh quá nặng…", after a colon ("The photo…" → "the photo…" in English). */
 function lowerFirst(text: string): string {
   return text.charAt(0).toLocaleLowerCase("vi") + text.slice(1);
 }

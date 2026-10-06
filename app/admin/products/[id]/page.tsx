@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/db/session";
@@ -5,11 +6,17 @@ import { ArcProductScreen } from "@/components/admin-arc/ArcProductScreen";
 import { SIZES, productId } from "@/data/types";
 import { loadCatalog } from "@/lib/db/catalog";
 import { dropOptions, kindOptions } from "@/lib/admin-options";
+import { picker, plural } from "@/lib/i18n";
 import { onHandOf } from "@/lib/inventory";
 import { issueLabel, styleName } from "@/lib/lexicon";
+import { getLocale } from "@/lib/locale";
+import { nameLang, productText } from "@/lib/product-text";
 import { demoNow } from "@/lib/clock";
 
-export const metadata = { title: "Sửa mẫu" };
+/** The screen's name in the title, in the page's language (round v6 slice E5); the layout adds "· Admin · HIVE". */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: picker(await getLocale())({ vi: "Sửa mẫu", en: "Edit style" }) };
+}
 
 /**
  * One style, editable — and since slice B3b, saved (`updateProduct`).
@@ -41,6 +48,8 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
   const product = catalog.byId.get(productId(id));
   if (!product) notFound();
 
+  const locale = await getLocale();
+  const t = picker(locale);
   const now = demoNow();
   const stock: Record<string, Record<string, number>> = {};
   for (const c of product.colors) {
@@ -49,7 +58,9 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
   }
 
   // The style as the back office names it (v3 slice 12): "S05 – KHÓI".
-  const shown = styleName(product.name, product.dropNo);
+  // In English the name the shop prints (`productText`); the form below keeps
+  // the stored words (brief v6 slice E5, B15).
+  const shown = styleName(productText(product, locale).name, product.dropNo, locale);
 
   const values = {
     name: product.name,
@@ -68,17 +79,21 @@ export default async function AdminEditProductPage(props: PageProps<"/admin/prod
     <ArcProductScreen
       mode="edit"
       title={shown}
+      titleLang={nameLang(product, locale)}
       // An issue's style says how much of it was cut; a fixed style (slice
       // B5) was cut for no issue and has no line (v3 slice 13).
       sub={
         product.dropNo !== null && product.cutUnits !== null
-          ? `${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc.`
+          ? t({
+              vi: `${issueLabel(product.dropNo)} đã cắt ${product.cutUnits} chiếc.`,
+              en: `${plural(product.cutUnits, "piece", "pieces")} cut for ${issueLabel(product.dropNo, "en")}.`,
+            })
           : undefined
       }
       shopHref={`/products/${product.slug}`}
       productId={product.id}
-      kindOptions={kindOptions(catalog)}
-      dropOptions={dropOptions(catalog, now)}
+      kindOptions={kindOptions(catalog, locale)}
+      dropOptions={dropOptions(catalog, now, {}, locale)}
       cutUnits={product.cutUnits ?? undefined}
       values={values}
     />

@@ -1,3 +1,5 @@
+import { groupDigits, type Locale } from "./i18n";
+
 /**
  * The crop frame of the style form (v3 slice 7, QĐ-27): a 4:5 region of a
  * photo the manager picked, chosen by dragging a frame over it.
@@ -162,14 +164,14 @@ export function isSoft(c: Pick<Crop, "w">): boolean {
   return c.w < SHARP_WIDTH;
 }
 
-/** `1860.4` → `"1.860"`: whole pixels, grouped the Vietnamese way. */
-function grouped(n: number): string {
-  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+/** `1860.4` → `"1.860"`: whole pixels, grouped the Vietnamese way ("1,860" in English, `groupDigits`). */
+function grouped(n: number, locale: Locale): string {
+  return groupDigits(Math.round(n), locale);
 }
 
-/** `"1.860×2.325"` — a width and a height as the form prints them. */
-export function dims(w: number, h: number): string {
-  return `${grouped(w)}×${grouped(h)}`;
+/** `"1.860×2.325"` — a width and a height as the form prints them; `"1,860×2,325"` in English. */
+export function dims(w: number, h: number, locale: Locale = "vi"): string {
+  return `${grouped(w, locale)}×${grouped(h, locale)}`;
 }
 
 /** Whether two frames are the same region. */

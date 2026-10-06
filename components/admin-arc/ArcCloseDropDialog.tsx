@@ -1,8 +1,10 @@
 "use client";
 
 import { ArrowLeft, Clock } from "lucide-react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { dateTimeLabel } from "@/lib/datetime";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { picker, plural } from "@/lib/i18n";
+import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import { Button } from "@/registry/components/button/button";
 import { Dialog, DialogContent } from "@/registry/components/dialog/dialog";
 import box from "./ArcDialog.module.css";
@@ -49,6 +51,8 @@ export function ArcCloseDropDialog({
   /** Where focus goes when the dialog shuts: the button or the row menu that opened it. */
   onCloseAutoFocus: (event: Event) => void;
 }) {
+  // The page's language (round v6 slice E5).
+  const t = picker(useLocale());
   return (
     <Dialog
       open={open}
@@ -57,10 +61,16 @@ export function ArcCloseDropDialog({
       }}
     >
       <DialogContent
-        title={`Đóng ${LEX.tl} ${issueNo(target?.no ?? 0)} sớm?`}
+        title={t({
+          vi: `Đóng ${LEX.tl} ${issueNo(target?.no ?? 0)} sớm?`,
+          en: `Close ${issueLabel(target?.no ?? 0, "en")} early?`,
+        })}
         description={
           target
-            ? `Giờ đóng đổi từ ${dateTimeLabel(target.closesAt)} thành bây giờ. ${target.onHand} chiếc còn lại rời kệ; đơn đã đặt không bị ảnh hưởng.`
+            ? t({
+                vi: `Giờ đóng đổi từ ${dateTimeLabel(target.closesAt)} thành bây giờ. ${target.onHand} chiếc còn lại rời kệ; đơn đã đặt không bị ảnh hưởng.`,
+                en: `The closing time moves from ${dateTimeLabel(target.closesAt, "en")} to now. The ${plural(target.onHand, "piece", "pieces")} left come off the shelf; orders already placed are not affected.`,
+              })
             : undefined
         }
         onCloseAutoFocus={onCloseAutoFocus}
@@ -69,11 +79,11 @@ export function ArcCloseDropDialog({
         <div className={box.actions}>
           <Button variant="secondary" size="sm" disabled={pending} onClick={onClose}>
             {pending ? null : <ArrowLeft {...ICON} />}
-            Giữ lịch
+            {t({ vi: "Giữ lịch", en: "Keep schedule" })}
           </Button>
           <Button variant="danger" size="sm" loading={pending} onClick={onConfirm}>
             {pending ? null : <Clock {...ICON} />}
-            {pending ? "Đang lưu…" : "Đóng bây giờ"}
+            {pending ? t({ vi: "Đang lưu…", en: "Saving…" }) : t({ vi: "Đóng bây giờ", en: "Close now" })}
           </Button>
         </div>
       </DialogContent>

@@ -12,8 +12,9 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { COLORS } from "@/data/colors";
+import { colorLabel } from "@/data/colors";
 import { SIZES, type DropState, type Product, type ProductId, type Teaser } from "@/data/types";
 import { adjustStock, restockProduct } from "@/lib/actions/catalog-admin";
 import {
@@ -26,10 +27,12 @@ import {
   type FixedStatus,
 } from "@/lib/admin-products";
 import { hrefWith, patched, type Query } from "@/lib/admin-url";
-import { RESTOCK_STALE_MESSAGE } from "@/lib/catalog-admin";
+import { RESTOCK_STALE_TEXT } from "@/lib/catalog-admin";
+import { phrase, stored } from "@/lib/admin-text";
 import { styleNameHas } from "@/lib/catalog-query";
 import { downloadCsv } from "@/lib/csv";
 import { dropState } from "@/lib/drop";
+import { picker, plural, type Locale } from "@/lib/i18n";
 import {
   LOW_STOCK_AT,
   isFixed,
@@ -42,11 +45,12 @@ import {
   type IssueStyle,
 } from "@/lib/inventory";
 import type { InventoryCell } from "@/lib/inventory-adjust";
-import { FIXED_WORD, LEX, issueNo, styleName } from "@/lib/lexicon";
+import { FIXED_WORD_TEXT, LEX, issueLabel, styleName } from "@/lib/lexicon";
 import { plainVnd } from "@/lib/money";
 import type { StatusTone } from "@/lib/order-labels";
 import { photoUrl } from "@/lib/photos";
-import { PRODUCTS_CSV_NAME, productsCsvRows } from "@/lib/products-csv";
+import { nameLang, productText, teaserText } from "@/lib/product-text";
+import { productsCsvName, productsCsvRows } from "@/lib/products-csv";
 import type { RestockCell } from "@/lib/restock";
 import { Badge } from "@/registry/components/badge/badge";
 import { Button } from "@/registry/components/button/button";
@@ -65,6 +69,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/registry/components/tabs/tabs";
 import { ArcButtonLink } from "./ArcButtonLink";
 import { ArcMeter } from "./ArcMeter";
+import { phraseNode } from "./ArcPhrase";
 import { TONE } from "./ArcOrderCells";
 import panel from "./ArcOrderScreen.module.css";
 import book from "./ArcOrdersScreen.module.css";
@@ -80,7 +85,7 @@ const PATH = "/admin/products";
 const FIXED_TAB = "fixed";
 
 /** The one field of "Thêm bộ lọc", and its chip's label (v3's `ChipMenu` "Loại"). */
-const KIND = "Loại";
+const KIND = { vi: "Loại", en: "Type" } as const;
 
 /**
  * The stock segment: v3's two toggle chips "Sắp hết N" and "Hết N" as one
@@ -101,10 +106,10 @@ type Row = { id: string; product: Product };
 type TeaserRow = { slug: string; teaser: Teaser };
 
 /** A fixed style's badge, v3's words in v3's tones, through `TONE`. */
-const FIXED_BADGE: Record<FixedStatus, { text: string; tone: StatusTone }> = {
-  OUT: { text: "Hết", tone: "shut" },
-  LOW: { text: "Sắp hết", tone: "hot" },
-  OK: { text: "Đang bán", tone: "ok" },
+const FIXED_BADGE: Record<FixedStatus, { text: { vi: string; en: string }; tone: StatusTone }> = {
+  OUT: { text: { vi: "Hết", en: "Sold out" }, tone: "shut" },
+  LOW: { text: { vi: "Sắp hết", en: "Low stock" }, tone: "hot" },
+  OK: { text: { vi: "Đang bán", en: "Live" }, tone: "ok" },
 };
 
 /**
@@ -138,6 +143,9 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
   const catalog = useCatalog();
   const say = useArcToast();
   const router = useRouter();
+  // The page's language (round v6 slice E5); a style's words through `productText`.
+  const locale = useLocale();
+  const t = picker(locale);
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [view, setView] = useOptimistic(query);
   const [, startNavigation] = useTransition();
@@ -213,7 +221,7 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
     .filter((p) => (kind ? p.kind === kind : true))
     .filter((p) => (stock === "low" ? isLow(p) : stock === "gone" ? isSoldOut(p) : true))
     // The name as it is shown: "s05", "khoi" and "S05 – KHÓI" all find KHÓI.
-    .filter((p) => (text ? styleNameHas(p, text) : true));
+    .filter((p) => (text ? styleNameHas(p, text, locale) : true));
 
   const lowCount = tab.fixed ? fixedTally.low : inIssue.filter(isLow).length;
   const goneCount = tab.fixed ? fixedTally.out : inIssue.filter(isSoldOut).length;
@@ -224,29 +232,40 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
   const issue = drops.find((d) => d.no === dropNo);
   const issueState: DropState = issue ? dropState(issue, now) : "CLOSED";
 
-  const lowLabel = `${fixedTally.low} mẫu sắp hết`;
+  const lowLabel = t({ vi: `${fixedTally.low} mẫu sắp hết`, en: `${plural(fixedTally.low, "style", "styles")} running low` });
   const tabValue = tab.fixed ? FIXED_TAB : String(tab.no);
-  const tabLabel = tab.fixed ? FIXED_WORD : `${LEX.t} ${issueNo(tab.no)}`;
+  const tabLabel = tab.fixed ? t(FIXED_WORD_TEXT) : issueLabel(tab.no, locale);
+
+  /**
+   * A kind as this page prints it: the stored words in Vietnamese; in English
+   * the kind of the first style that wears it, through `productText` — the
+   * table's own column — so the menu, the chip and the column agree.
+   */
+  const kindShown = (kind: string) => {
+    const wearer = inTab.find((p) => p.kind === kind);
+    return wearer ? productText(wearer, locale).kind : kind;
+  };
   const tabValues = [FIXED_TAB, ...issueTabs.map((t) => String(t.no))];
 
   // ── "Thêm bộ lọc": one field, the kinds of this tab with their counts ───
   const fields: FilterField[] = [
     {
       id: "kind",
-      label: KIND,
-      options: kinds.map((k) => ({ value: k, label: k, hint: inTab.filter((p) => p.kind === k).length })),
+      label: t(KIND),
+      options: kinds.map((k) => ({ value: k, label: kindShown(k), hint: inTab.filter((p) => p.kind === k).length })),
     },
   ];
   // Held by identity: Arc's toolbar compares the list it is given with the
   // last one to announce what changed.
+  const shownKind = kind ? kindShown(kind) : null;
   const chips = useMemo<FilterChip[]>(
-    () => (kind ? [{ id: "kind", label: KIND, value: kind }] : []),
-    [kind],
+    () => (kind && shownKind ? [{ id: "kind", label: pickKind(locale), value: shownKind }] : []),
+    [kind, shownKind, locale],
   );
 
-  /** The menu hands back the label it showed, which is the kind itself. */
+  /** The menu hands back the label it showed: the kind itself, or in English its English. */
   function addFilter(chip: FilterChip) {
-    const picked = kinds.find((k) => k === chip.value);
+    const picked = kinds.find((k) => k === chip.value || kindShown(k) === chip.value);
     if (picked) go({ kind: picked });
   }
 
@@ -268,9 +287,17 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
   }, [chips.length]);
 
   const stockSegments = [
-    { value: "all", label: "Tất cả" },
-    { value: "low", label: "Sắp hết", accessory: <span className={styles.segmentCount}>{lowCount}</span> },
-    { value: "gone", label: "Hết", accessory: <span className={styles.segmentCount}>{goneCount}</span> },
+    { value: "all", label: t({ vi: "Tất cả", en: "All" }) },
+    {
+      value: "low",
+      label: t({ vi: "Sắp hết", en: "Low stock" }),
+      accessory: <span className={styles.segmentCount}>{lowCount}</span>,
+    },
+    {
+      value: "gone",
+      label: t({ vi: "Hết", en: "Sold out" }),
+      accessory: <span className={styles.segmentCount}>{goneCount}</span>,
+    },
   ];
 
   // ── the drawers ──────────────────────────────────────────────────────────
@@ -337,7 +364,9 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
       startSaving(() => {
         if (result.ok) setRestockOpen(false);
         say(result.message ?? result.errors.form ?? "", result.ok ? "ok" : "error");
-        if (!result.ok && result.errors.form === RESTOCK_STALE_MESSAGE) router.refresh();
+        // The refusal comes back in the page's language: either side of the pair is the same news.
+        const stale = result.errors.form;
+        if (!result.ok && (stale === RESTOCK_STALE_TEXT.vi || stale === RESTOCK_STALE_TEXT.en)) router.refresh();
       });
     });
   }
@@ -348,17 +377,21 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
     const items: DropdownItem[] = [
       // First on every fixed style, whatever its stock (the board, round 4).
       ...(isFixed(p)
-        ? [{ label: "Nhập thêm", icon: <PackagePlus {...ICON} />, onSelect: () => openRestock(p) }]
+        ? [{ label: t({ vi: "Nhập thêm", en: "Restock" }), icon: <PackagePlus {...ICON} />, onSelect: () => openRestock(p) }]
         : []),
       {
-        label: "Sửa mẫu",
+        label: t({ vi: "Sửa mẫu", en: "Edit style" }),
         icon: <Pencil {...ICON} />,
         onSelect: () => router.push(`/admin/products/${p.id}`),
       },
-      { label: "Điều chỉnh tồn kho", icon: <ArrowLeftRight {...ICON} />, onSelect: () => openAdjust(p) },
+      {
+        label: t({ vi: "Điều chỉnh tồn kho", en: "Adjust stock" }),
+        icon: <ArrowLeftRight {...ICON} />,
+        onSelect: () => openAdjust(p),
+      },
       {
         // Leaving the back office: a tab of its own, as v3's link was.
-        label: "Xem ở cửa hàng",
+        label: t({ vi: "Xem ở cửa hàng", en: "View in shop" }),
         icon: <ExternalLink {...ICON} />,
         onSelect: () => window.open(`/products/${p.slug}`, "_blank", "noreferrer"),
       },
@@ -373,7 +406,10 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
       >
         <DropdownMenu
           iconOnly
-          label={`Thao tác ${styleName(p.name, p.dropNo)}`}
+          label={t({
+            vi: `Thao tác ${styleName(p.name, p.dropNo)}`,
+            en: `Actions for ${styleName(productText(p, "en").name, p.dropNo, "en")}`,
+          })}
           icon={<MoreHorizontal {...ICON} />}
           items={items}
         />
@@ -384,42 +420,60 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
   const columnList: DataColumn<Row>[] = [
     {
       key: "name",
-      label: "Mẫu",
+      label: t({ vi: "Mẫu", en: "Style" }),
       render: (_v, r) => (
-        <StyleCell photoKey={r.product.photoKeys[0]!} name={styleName(r.product.name, r.product.dropNo)} />
+        <StyleCell
+          photoKey={r.product.photoKeys[0]!}
+          name={styleName(productText(r.product, locale).name, r.product.dropNo, locale)}
+          lang={nameLang(r.product, locale)}
+        />
       ),
     },
-    { key: "kind", label: "Loại · form", render: (_v, r) => <span className={book.text}>{kindAndFit(r.product)}</span> },
+    {
+      key: "kind",
+      label: t({ vi: "Loại · form", en: "Type · fit" }),
+      render: (_v, r) => <span className={book.text}>{phraseNode(kindAndFit(r.product, locale))}</span>,
+    },
     {
       key: "price",
-      label: "Giá",
+      label: t({ vi: "Giá", en: "Price" }),
       numeric: true,
-      render: (_v, r) => <span className={book.nowrap}>{plainVnd(r.product.priceVnd)}</span>,
+      render: (_v, r) => <span className={book.nowrap}>{plainVnd(r.product.priceVnd, locale)}</span>,
     },
-    { key: "colours", label: "Màu", render: (_v, r) => <span className={book.text}>{colourList(r.product)}</span> },
+    {
+      key: "colours",
+      label: t({ vi: "Màu", en: "Colours" }),
+      render: (_v, r) => <span className={book.text}>{colourList(r.product, locale)}</span>,
+    },
     {
       key: "stock",
-      label: "Tồn kho",
+      label: t({ vi: "Tồn kho", en: "Stock" }),
       render: (_v, r) =>
-        isIssueStyle(r.product) ? <IssueStock p={r.product} /> : <FixedStock p={r.product} />,
+        isIssueStyle(r.product) ? (
+          <IssueStock p={r.product} locale={locale} />
+        ) : (
+          <FixedStock p={r.product} locale={locale} />
+        ),
     },
     {
       key: "out",
-      label: "Size hết",
+      label: t({ vi: "Size hết", en: "Sizes out" }),
       render: (_v, r) => {
         // A fixed style missing a size has something to bring back: said in
         // the danger colour, as v3's `.hotsize`.
         const hot = isFixed(r.product) && soldOutSizes(r.product).length > 0;
-        return <span className={hot ? `${book.nowrap} ${styles.hot}` : book.nowrap}>{goneSizes(r.product)}</span>;
+        return (
+          <span className={hot ? `${book.nowrap} ${styles.hot}` : book.nowrap}>{goneSizes(r.product, locale)}</span>
+        );
       },
     },
     {
       key: "state",
-      label: "Trạng thái",
+      label: t({ vi: "Trạng thái", en: "Status" }),
       render: (_v, r) => {
         const s = isIssueStyle(r.product)
-          ? issueStanding(r.product, issueState)
-          : FIXED_BADGE[fixedStatus(r.product)];
+          ? issueStanding(r.product, issueState, locale)
+          : { text: t(FIXED_BADGE[fixedStatus(r.product)].text), tone: FIXED_BADGE[fixedStatus(r.product)].tone };
         return (
           <Badge tone={TONE[s.tone]} size="sm">
             {s.text}
@@ -443,7 +497,11 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
             columns={columns}
             rowKey="id"
             caption={tabLabel}
-            emptyMessage={inTab.length === 0 ? "Chưa có mẫu nào." : "Không có mẫu nào khớp."}
+            emptyMessage={
+              inTab.length === 0
+                ? t({ vi: "Chưa có mẫu nào.", en: "No styles yet." })
+                : t({ vi: "Không có mẫu nào khớp.", en: "No styles match." })
+            }
             holdWidths={false}
             density="compact"
             showCount={false}
@@ -453,39 +511,51 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
         {inIssue.length > 0 && rows.length > 0 && (
           <div className={book.foot}>
             <p className={book.shown}>
-              {inIssue.length} mẫu · {cut} đã cắt · {left} còn · tồn kho là số còn trên kệ, đã bán là đã cắt
-              trừ tồn kho
+              {t<React.ReactNode>({
+                vi: (
+                  <>
+                    {inIssue.length} mẫu · {cut} đã cắt · {left} còn · tồn kho là số còn trên kệ, đã bán là đã cắt
+                    trừ tồn kho
+                  </>
+                ),
+                en: (
+                  <>
+                    {plural(inIssue.length, "style", "styles")} · {cut} cut · {left} left · stock is what is on the
+                    shelf, sold is cut minus stock
+                  </>
+                ),
+              })}
             </p>
           </div>
         )}
       </div>
     ) : (
-      <TeaserTable teasers={issueTeasers} caption={tabLabel} />
+      <TeaserTable teasers={issueTeasers} caption={tabLabel} locale={locale} />
     );
 
   return (
     <div className={page.page} ref={root}>
       <header className={page.header}>
         <div className={page.headRow}>
-          <h1 className={page.title}>Mẫu</h1>
+          <h1 className={page.title}>{t({ vi: "Mẫu", en: "Styles" })}</h1>
           <div className={page.actions}>
-            <Badge size="sm">Dữ liệu mẫu</Badge>
+            <Badge size="sm">{t({ vi: "Dữ liệu mẫu", en: "Demo data" })}</Badge>
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => downloadCsv(PRODUCTS_CSV_NAME, productsCsvRows(catalog))}
+              onClick={() => downloadCsv(productsCsvName(locale), productsCsvRows(catalog, catalog.products, locale))}
             >
               <Download {...ICON} />
-              Tải CSV
+              {t({ vi: "Tải CSV", en: "Download CSV" })}
             </Button>
             {/* The form is in the Arc frame too since slice 5b: the frame stays on the way. */}
             <ArcButtonLink variant="primary" size="sm" href="/admin/products/new">
               <Plus {...ICON} />
-              Thêm mẫu
+              {t({ vi: "Thêm mẫu", en: "Add style" })}
             </ArcButtonLink>
           </div>
         </div>
-        <p className={page.sub}>{stylesLine(catalog, now)}</p>
+        <p className={page.sub}>{stylesLine(catalog, now, locale)}</p>
       </header>
 
       <Tabs
@@ -499,18 +569,18 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
           )
         }
       >
-        <TabsList aria-label={`${FIXED_WORD} và các ${LEX.tl}`}>
+        <TabsList aria-label={t({ vi: `${FIXED_WORD_TEXT.vi} và các ${LEX.tl}`, en: "Basics and drops" })}>
           <TabsTrigger value={FIXED_TAB}>
-            {FIXED_WORD} <span className={book.tabCount}>{fixed.length}</span>
+            {t(FIXED_WORD_TEXT)} <span className={book.tabCount}>{fixed.length}</span>
             {/* Seen from any tab: there is restocking to do. */}
             {fixedTally.low > 0 && (
               <span className={styles.lowDot} role="img" aria-label={lowLabel} title={lowLabel} />
             )}
           </TabsTrigger>
-          {issueTabs.map((t) => (
-            <TabsTrigger key={t.no} value={String(t.no)}>
-              {`${LEX.t} ${issueNo(t.no)}${t.styles === 0 && t.teasers > 0 ? " · hé lộ" : ""}`}{" "}
-              <span className={book.tabCount}>{t.styles || t.teasers}</span>
+          {issueTabs.map((x) => (
+            <TabsTrigger key={x.no} value={String(x.no)}>
+              {`${issueLabel(x.no, locale)}${x.styles === 0 && x.teasers > 0 ? t({ vi: " · hé lộ", en: " · teasers" }) : ""}`}{" "}
+              <span className={book.tabCount}>{x.styles || x.teasers}</span>
             </TabsTrigger>
           ))}
         </TabsList>
@@ -523,8 +593,8 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
           <div className={styles.toolbar}>
             <div className={styles.search}>
               <ArcSearchBox
-                label="Tìm mẫu"
-                placeholder="Tìm tên mẫu"
+                label={t({ vi: "Tìm mẫu", en: "Search styles" })}
+                placeholder={t({ vi: "Tìm tên mẫu", en: "Search by style name" })}
                 value={view.q ?? ""}
                 onSubmit={(v) => go({ q: v || null }, "replace")}
               />
@@ -539,7 +609,7 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
             )}
             <div className={styles.stockSlot}>
               <SegmentedControl
-                label="Tồn kho"
+                label={t({ vi: "Tồn kho", en: "Stock" })}
                 options={stockSegments}
                 value={stock}
                 onValueChange={(v) => go({ low: v === "low" ? "1" : null, gone: v === "gone" ? "1" : null })}
@@ -586,15 +656,24 @@ export function ArcProductsScreen({ nowIso, query }: { nowIso: string; query: Qu
   );
 }
 
-/** "Áo hoodie · oversize". */
-function kindAndFit(p: Product): string {
-  return `${p.kind} · ${p.fit === "OVERSIZE" ? "oversize" : "regular"}`;
+/** The "Loại · form" column's words in either language, as `pickKind` names the column. */
+function pickKind(locale: Locale): string {
+  return KIND[locale];
+}
+
+/**
+ * "Áo hoodie · oversize"; in English "Hoodie · oversized", the kind through
+ * `productText` and marked as Vietnamese when that is what the database has.
+ */
+function kindAndFit(p: Product, locale: Locale) {
+  const fit = p.fit === "OVERSIZE" ? (locale === "vi" ? "oversize" : "oversized") : "regular";
+  return phrase(stored(productText(p, locale).kind, locale), ` · ${fit}`);
 }
 
 /** The size column: the sizes gone in every colour, "tất cả", or a dash. */
-function goneSizes(p: Product): string {
+function goneSizes(p: Product, locale: Locale): string {
   const out = soldOutSizes(p);
-  return out.length === SIZES.length ? "tất cả" : out.join(" · ") || "—";
+  return out.length === SIZES.length ? picker(locale)({ vi: "tất cả", en: "all" }) : out.join(" · ") || "—";
 }
 
 /**
@@ -602,26 +681,32 @@ function goneSizes(p: Product): string {
  * it), the " · " between two colours the place a line may break. The table
  * broke "Xanh" over "than" (v3 slice 13).
  */
-function colourList(p: Product): string {
-  return p.colors.map((c) => COLORS[c].label.replace(/ /g, " ")).join(" · ");
+function colourList(p: Product, locale: Locale): string {
+  return p.colors.map((c) => colorLabel(c, locale).replace(/ /g, " ")).join(" · ");
 }
 
 /** An issue's style, in v3's words and v3's tones (`TONE` reads them as Arc's). */
-function issueStanding(p: IssueStyle, state: DropState): { text: string; tone: StatusTone } {
+function issueStanding(p: IssueStyle, state: DropState, locale: Locale): { text: string; tone: StatusTone } {
+  const t = picker(locale);
   const left = onHand(p);
-  if (left === 0) return { text: "Hết", tone: "shut" };
-  if (state === "UPCOMING") return { text: "Sắp mở", tone: "info" };
-  if (state !== "OPEN") return { text: "Đã đóng", tone: "shut" };
-  if (left <= LOW_STOCK_AT) return { text: "Sắp hết", tone: "hot" };
-  return { text: "Đang bán", tone: "ok" };
+  if (left === 0) return { text: t({ vi: "Hết", en: "Sold out" }), tone: "shut" };
+  if (state === "UPCOMING") return { text: t({ vi: "Sắp mở", en: "Coming soon" }), tone: "info" };
+  if (state !== "OPEN") return { text: t({ vi: "Đã đóng", en: "Closed" }), tone: "shut" };
+  if (left <= LOW_STOCK_AT) return { text: t({ vi: "Sắp hết", en: "Low stock" }), tone: "hot" };
+  return { text: t({ vi: "Đang bán", en: "Live" }), tone: "ok" };
 }
 
-/** A style's photo, 36×45 with the zone's 6px corner, and its name at 500 on one line. */
-function StyleCell({ photoKey, name }: { photoKey: string; name: string }) {
+/**
+ * A style's photo, 36×45 with the zone's 6px corner, and its name at 500 on
+ * one line; `lang="vi"` on an English page when the name has no English.
+ */
+function StyleCell({ photoKey, name, lang }: { photoKey: string; name: string; lang?: string }) {
   return (
     <span className={styles.style}>
       <Image className={panel.thumb} src={photoUrl(photoKey, 120)} alt="" width={36} height={45} />
-      <span className={styles.name}>{name}</span>
+      <span className={styles.name} lang={lang}>
+        {name}
+      </span>
     </span>
   );
 }
@@ -633,7 +718,7 @@ function StyleCell({ photoKey, name }: { photoKey: string; name: string }) {
  * count is a box of one width on every row, flush right, so the bars start
  * and end at the same x down the column, as the codes' "Lượt" (slice 3).
  */
-function IssueStock({ p }: { p: IssueStyle }) {
+function IssueStock({ p, locale }: { p: IssueStyle; locale: Locale }) {
   const left = onHand(p);
   const percent = p.cutUnits === 0 ? 0 : Math.round((left / p.cutUnits) * 100);
   const reading = left === 0 ? "gone" : left <= LOW_STOCK_AT ? "hot" : undefined;
@@ -641,7 +726,18 @@ function IssueStock({ p }: { p: IssueStyle }) {
     <span className={styles.stock}>
       <ArcMeter percent={percent} reading={reading} className={styles.stockBar} />
       <span className={styles.stockCount}>
-        {left === 0 ? "hết · 0" : `còn ${left}`} / {p.cutUnits}
+        {picker(locale)<React.ReactNode>({
+          vi: (
+            <>
+              {left === 0 ? "hết · 0" : `còn ${left}`} / {p.cutUnits}
+            </>
+          ),
+          en: (
+            <>
+              {left === 0 ? "sold out · 0" : `${left} left`} / {p.cutUnits}
+            </>
+          ),
+        })}
       </span>
     </span>
   );
@@ -652,11 +748,13 @@ function IssueStock({ p }: { p: IssueStyle }) {
  * and under it, in the danger colour, which sizes need bringing back
  * (`lowNote`).
  */
-function FixedStock({ p }: { p: Product }) {
-  const note = lowNote(p);
+function FixedStock({ p, locale }: { p: Product; locale: Locale }) {
+  const note = lowNote(p, locale);
   return (
     <span className={book.stack}>
-      <span className={book.nowrap}>còn {onHand(p)}</span>
+      <span className={book.nowrap}>
+        {picker(locale)<React.ReactNode>({ vi: <>còn {onHand(p)}</>, en: <>{onHand(p)} left</> })}
+      </span>
       {note && <span className={styles.lowNote}>{note}</span>}
     </span>
   );
@@ -667,22 +765,42 @@ function FixedStock({ p }: { p: Product }) {
  * no stock and no menu: a teaser carries a name, a kind and a borrowed photo,
  * and the two missing numbers are published at the hour the issue opens.
  */
-function TeaserTable({ teasers, caption }: { teasers: Teaser[]; caption: string }) {
+function TeaserTable({ teasers, caption, locale }: { teasers: Teaser[]; caption: string; locale: Locale }) {
+  const t = picker(locale);
   const columnList: DataColumn<TeaserRow>[] = [
     {
       key: "name",
-      label: "Mẫu",
-      render: (_v, r) => <StyleCell photoKey={r.teaser.photoKey} name={styleName(r.teaser.name, r.teaser.dropNo)} />,
+      label: t({ vi: "Mẫu", en: "Style" }),
+      render: (_v, r) => (
+        <StyleCell
+          photoKey={r.teaser.photoKey}
+          name={styleName(teaserText(r.teaser, locale).name, r.teaser.dropNo, locale)}
+          lang={nameLang(r.teaser, locale)}
+        />
+      ),
     },
-    { key: "kind", label: "Loại", render: (_v, r) => <span className={book.text}>{r.teaser.kind}</span> },
-    { key: "price", label: "Giá", numeric: true, render: () => <span className={book.nowrap}>công bố khi mở</span> },
-    { key: "stock", label: "Tồn kho", render: () => <span className={book.nowrap}>chưa cắt</span> },
+    {
+      key: "kind",
+      label: t({ vi: "Loại", en: "Type" }),
+      render: (_v, r) => <span className={book.text}>{phraseNode(phrase(stored(teaserText(r.teaser, locale).kind, locale)))}</span>,
+    },
+    {
+      key: "price",
+      label: t({ vi: "Giá", en: "Price" }),
+      numeric: true,
+      render: () => <span className={book.nowrap}>{t({ vi: "công bố khi mở", en: "set at opening" })}</span>,
+    },
+    {
+      key: "stock",
+      label: t({ vi: "Tồn kho", en: "Stock" }),
+      render: () => <span className={book.nowrap}>{t({ vi: "chưa cắt", en: "not cut yet" })}</span>,
+    },
     {
       key: "state",
-      label: "Trạng thái",
+      label: t({ vi: "Trạng thái", en: "Status" }),
       render: () => (
         <Badge tone="info" size="sm">
-          Hé lộ
+          {t({ vi: "Hé lộ", en: "Teaser" })}
         </Badge>
       ),
     },
@@ -695,7 +813,7 @@ function TeaserTable({ teasers, caption }: { teasers: Teaser[]; caption: string 
         columns={columns}
         rowKey="slug"
         caption={caption}
-        emptyMessage={`${LEX.t} này chưa có mẫu nào.`}
+        emptyMessage={t({ vi: `${LEX.t} này chưa có mẫu nào.`, en: "This drop has no styles yet." })}
         holdWidths={false}
         density="compact"
         showCount={false}

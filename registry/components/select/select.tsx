@@ -18,8 +18,8 @@ export interface SelectProps extends Omit<ComponentPropsWithoutRef<typeof Select
   placeholder?: string;
   id?: string;
   className?: string;
-  /** HIVE patch (registry/PATCHES.md): `note` is secondary text at the end of the option's row in the list, before the tick. It stays outside the item text, so the trigger shows the label alone. */
-  options: { value: string; label: string; disabled?: boolean; note?: string }[];
+  /** HIVE patch (registry/PATCHES.md): `note` is secondary text at the end of the option's row in the list, before the tick. It stays outside the item text, so the trigger shows the label alone. `lang` is the label's language when it is not the page's: on the option, and on the trigger while it is the value. */
+  options: { value: string; label: string; disabled?: boolean; note?: string; lang?: string }[];
 }
 
 /** The shown value rolls in the direction of the list: a later option rises from below, an earlier one drops from above. */
@@ -46,6 +46,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
   const currentValue = rootProps.value ?? uncontrolledValue;
   const index = options.findIndex((option) => option.value === currentValue);
   const shown = currentValue ? options[index]?.label ?? "" : placeholder;
+  // HIVE patch (registry/PATCHES.md): the chosen option's language, for both copies of the value.
+  const shownLang = currentValue ? options[index]?.lang : undefined;
   const [previousIndex, setPreviousIndex] = useState(index);
   const [direction, setDirection] = useState(1);
   if (previousIndex !== index) { setPreviousIndex(index); setDirection(index > previousIndex ? 1 : -1); }
@@ -61,10 +63,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
           className={[styles.trigger, className].filter(Boolean).join(" ")}
         >
           {/* Radix keeps the real value for assistive tech; the visible copy below animates between values. */}
-          <span className={styles.srOnly}><SelectPrimitive.Value placeholder={placeholder} /></span>
+          <span className={styles.srOnly} lang={shownLang}><SelectPrimitive.Value placeholder={placeholder} /></span>
           <span className={styles.valueText} aria-hidden="true">
             <AnimatePresence initial={false} custom={direction}>
-              <motion.span key={currentValue ? `value-${currentValue}` : "placeholder"} data-placeholder={currentValue ? undefined : ""} custom={direction} variants={reduceMotion ? valueFade : valueRoll} initial="enter" animate="center" exit="exit">{shown}</motion.span>
+              <motion.span key={currentValue ? `value-${currentValue}` : "placeholder"} data-placeholder={currentValue ? undefined : ""} custom={direction} variants={reduceMotion ? valueFade : valueRoll} initial="enter" animate="center" exit="exit" lang={shownLang}>{shown}</motion.span>
             </AnimatePresence>
           </span>
           <SelectPrimitive.Icon className={styles.chevron}>
@@ -78,7 +80,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
             </SelectPrimitive.ScrollUpButton>
             <SelectPrimitive.Viewport className={styles.viewport}>
               {options.map((option) => (
-                <SelectPrimitive.Item key={option.value} value={option.value} disabled={option.disabled} className={styles.item}>
+                <SelectPrimitive.Item key={option.value} value={option.value} disabled={option.disabled} className={styles.item} lang={option.lang}>
                   <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
                   {/* HIVE patch (registry/PATCHES.md): the option's note. Outside ItemText, so neither the trigger nor the value read to assistive tech carries it. */}
                   {option.note ? <span className={styles.note}>{option.note}</span> : null}

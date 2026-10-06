@@ -24,7 +24,18 @@ import { MAX_UPLOAD_BYTES, type UploadType } from "./photos";
  */
 
 /** A refusal this module words itself — shown after "Không tải được ảnh {màu}: ". */
-export class PhotoEncodeError extends Error {}
+export class PhotoEncodeError extends Error {
+  /**
+   * The same refusal in English (round v6 slice E5): the message is the
+   * Vietnamese, as it always was; a screen in English says this one.
+   */
+  constructor(
+    message: string,
+    readonly english: string,
+  ) {
+    super(message);
+  }
+}
 
 /** The photo the form uploads, and the type the server is told it is. */
 export interface EncodedPhoto {
@@ -40,7 +51,7 @@ export async function encodeCrop(file: Blob, crop: Crop): Promise<EncodedPhoto> 
     canvas.width = size.w;
     canvas.height = size.h;
     const ctx = canvas.getContext("2d");
-    if (!ctx) throw new PhotoEncodeError("Trình duyệt không vẽ được ảnh này");
+    if (!ctx) throw new PhotoEncodeError("Trình duyệt không vẽ được ảnh này", "The browser couldn't draw this photo");
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(source.image, crop.x, crop.y, crop.w, crop.h, 0, 0, size.w, size.h);
@@ -52,8 +63,8 @@ export async function encodeCrop(file: Blob, crop: Crop): Promise<EncodedPhoto> 
       blob = await toBlob(canvas, type, 0.85);
     }
     if (blob && blob.size > MAX_UPLOAD_BYTES) blob = await toBlob(canvas, type, 0.7);
-    if (!blob || blob.type !== type) throw new PhotoEncodeError("Trình duyệt không thu được ảnh này");
-    if (blob.size > MAX_UPLOAD_BYTES) throw new PhotoEncodeError("Ảnh quá nặng sau khi thu");
+    if (!blob || blob.type !== type) throw new PhotoEncodeError("Trình duyệt không thu được ảnh này", "The browser couldn't shrink this photo");
+    if (blob.size > MAX_UPLOAD_BYTES) throw new PhotoEncodeError("Ảnh quá nặng sau khi thu", "The photo is still too heavy once shrunk");
     return { blob, type };
   } finally {
     source.release();
@@ -82,7 +93,7 @@ async function decode(file: Blob): Promise<Decoded> {
     await img.decode();
   } catch {
     URL.revokeObjectURL(url);
-    throw new PhotoEncodeError("Không đọc được ảnh này");
+    throw new PhotoEncodeError("Không đọc được ảnh này", "Couldn't read this photo");
   }
   return { image: img, release: () => URL.revokeObjectURL(url) };
 }

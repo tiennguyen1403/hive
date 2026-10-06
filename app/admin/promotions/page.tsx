@@ -1,11 +1,17 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/db/session";
 import { ArcPromotionsScreen } from "@/components/admin-arc/ArcPromotionsScreen";
 import { queryOf } from "@/lib/admin-url";
 import { toVnIso } from "@/lib/datetime";
 import { demoNow } from "@/lib/clock";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 
-export const metadata = { title: "Mã giảm giá" };
+/** The screen's name in the title, in the page's language (round v6 slice E5); the layout adds "· Admin · HIVE". */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: picker(await getLocale())({ vi: "Mã giảm giá", en: "Discount codes" }) };
+}
 
 /**
  * The discount codes.

@@ -1,4 +1,5 @@
 import type { ColorKey, Product, Size } from "@/data/types";
+import { picker, type Locale } from "./i18n";
 import { canRaise, cellValue, draftTotal, withCell, type StockDraft } from "./inventory-adjust";
 
 /**
@@ -21,8 +22,8 @@ export interface CellMove {
 }
 
 /** "Không vượt số đã cắt: 35", v3's toast. */
-export function cutRefusal(cut: number): string {
-  return `Không vượt số đã cắt: ${cut}`;
+export function cutRefusal(cut: number, locale: Locale = "vi"): string {
+  return picker(locale)({ vi: `Không vượt số đã cắt: ${cut}`, en: `Can't go past the cut: ${cut}` });
 }
 
 /**
@@ -36,9 +37,10 @@ export function stepCell(
   color: ColorKey,
   size: Size,
   by: number,
+  locale: Locale = "vi",
 ): CellMove {
   if (by > 0 && !canRaise(product, draft)) {
-    return { draft, refused: cutRefusal(product.cutUnits ?? 0) };
+    return { draft, refused: cutRefusal(product.cutUnits ?? 0, locale) };
   }
   return { draft: withCell(draft, color, size, cellValue(draft, color, size) + by), refused: null };
 }
@@ -54,12 +56,13 @@ export function typeCell(
   color: ColorKey,
   size: Size,
   raw: string,
+  locale: Locale = "vi",
 ): CellMove {
   const wanted = Math.max(0, Number(raw.replace(/\D/g, "")) || 0);
   const others = draftTotal(product, draft) - cellValue(draft, color, size);
   const cut = product.cutUnits;
   if (cut !== null && others + wanted > cut) {
-    return { draft: withCell(draft, color, size, cut - others), refused: cutRefusal(cut) };
+    return { draft: withCell(draft, color, size, cut - others), refused: cutRefusal(cut, locale) };
   }
   return { draft: withCell(draft, color, size, wanted), refused: null };
 }

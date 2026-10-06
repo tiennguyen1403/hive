@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Check, Plus } from "lucide-react";
 import { useState } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { dayInput, dayMonthYear, isoDayFromInput } from "@/lib/datetime";
 import {
@@ -13,7 +14,8 @@ import {
   span,
   spanDays,
 } from "@/lib/drop-form";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { picker, plural } from "@/lib/i18n";
+import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import { Button } from "@/registry/components/button/button";
 import { Dialog, DialogContent } from "@/registry/components/dialog/dialog";
 import { Input } from "@/registry/components/input/input";
@@ -79,6 +81,9 @@ export function ArcDropFormDialog({
   onCloseAutoFocus: (event: Event) => void;
 }) {
   const no = target?.no ?? 0;
+  // The page's language (round v6 slice E5): a switch while the dialog is open
+  // rewords it in place; the form below keeps what was typed.
+  const t = picker(useLocale());
   return (
     <Dialog
       open={open}
@@ -88,7 +93,9 @@ export function ArcDropFormDialog({
     >
       <DialogContent
         title={
-          target?.mode === "edit" ? `Sửa giờ ${LEX.tl} ${issueNo(no)}` : `Tạo ${LEX.tl} ${issueNo(no)}`
+          target?.mode === "edit"
+            ? t({ vi: `Sửa giờ ${LEX.tl} ${issueNo(no)}`, en: `Reschedule ${issueLabel(no, "en")}` })
+            : t({ vi: `Tạo ${LEX.tl} ${issueNo(no)}`, en: `Create ${issueLabel(no, "en")}` })
         }
         onCloseAutoFocus={onCloseAutoFocus}
         onInteractOutside={keepOpenForToasts}
@@ -124,6 +131,8 @@ function DropForm({
   onConfirm: (opensAt: string, closesAt: string) => void;
 }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const hour = dropHour(catalog);
   const [from, setFrom] = useState(dayValue(target.opensAt));
   const [to, setTo] = useState(dayValue(target.closesAt));
@@ -132,22 +141,32 @@ function DropForm({
   // Both days typed, the closing one not after the opening one.
   const backwards = days !== null && Date.parse(days.to) <= Date.parse(days.from);
   const ready = days !== null && !backwards;
-  const verb = target.mode === "create" ? `Tạo ${LEX.tl}` : "Lưu giờ";
+  const verb =
+    target.mode === "create"
+      ? t({ vi: `Tạo ${LEX.tl}`, en: "Create drop" })
+      : t({ vi: "Lưu giờ", en: "Save schedule" });
 
   const opensDay = isoDayFromInput(from);
   const closesDay = isoDayFromInput(to);
-  const preview = `Xem trước: ${LEX.t} ${issueNo(target.no)} mở ${hour} ngày ${
-    opensDay ? dayMonthYear(atDropHour(catalog, opensDay)) : "—"
-  }, đóng ${hour} ngày ${closesDay ? dayMonthYear(atDropHour(catalog, closesDay)) : "—"}${
-    ready ? ` · ${spanDays(days)} ngày` : ""
-  }.`;
+  const preview = t({
+    vi: `Xem trước: ${LEX.t} ${issueNo(target.no)} mở ${hour} ngày ${
+      opensDay ? dayMonthYear(atDropHour(catalog, opensDay)) : "—"
+    }, đóng ${hour} ngày ${closesDay ? dayMonthYear(atDropHour(catalog, closesDay)) : "—"}${
+      ready ? ` · ${spanDays(days)} ngày` : ""
+    }.`,
+    en: `Preview: ${issueLabel(target.no, "en")} opens ${hour} on ${
+      opensDay ? dayMonthYear(atDropHour(catalog, opensDay), "en") : "—"
+    }, closes ${hour} on ${closesDay ? dayMonthYear(atDropHour(catalog, closesDay), "en") : "—"}${
+      ready ? ` · ${plural(spanDays(days), "day", "days")}` : ""
+    }.`,
+  });
 
   return (
     <>
       <div className={box.fields}>
         <div className={styles.pair}>
           <Input
-            label={`Mở lúc ${hour} ngày`}
+            label={t({ vi: `Mở lúc ${hour} ngày`, en: `Opens at ${hour} on` })}
             inputMode="numeric"
             placeholder="dd/mm/yyyy"
             autoComplete="off"
@@ -159,12 +178,16 @@ function DropForm({
             }}
           />
           <Input
-            label={`Đóng lúc ${hour} ngày`}
+            label={t({ vi: `Đóng lúc ${hour} ngày`, en: `Closes at ${hour} on` })}
             inputMode="numeric"
             placeholder="dd/mm/yyyy"
             autoComplete="off"
             value={to}
-            error={backwards ? "Ngày đóng phải sau ngày mở." : undefined}
+            error={
+              backwards
+                ? t({ vi: "Ngày đóng phải sau ngày mở.", en: "The closing day must be after the opening day." })
+                : undefined
+            }
             onChange={(e) => setTo(dayInput(e.target.value))}
           />
         </div>
@@ -173,7 +196,7 @@ function DropForm({
       <div className={box.actions}>
         <Button variant="secondary" size="sm" disabled={pending} onClick={onCancel}>
           {pending ? null : <ArrowLeft {...ICON} />}
-          Huỷ
+          {t({ vi: "Huỷ", en: "Cancel" })}
         </Button>
         <Button
           variant="primary"
@@ -186,7 +209,11 @@ function DropForm({
           }}
         >
           {ready && !pending ? target.mode === "create" ? <Plus {...ICON} /> : <Check {...ICON} /> : null}
-          {pending ? "Đang lưu…" : days === null ? "Nhập hai ngày" : verb}
+          {pending
+            ? t({ vi: "Đang lưu…", en: "Saving…" })
+            : days === null
+              ? t({ vi: "Nhập hai ngày", en: "Enter both days" })
+              : verb}
         </Button>
       </div>
     </>

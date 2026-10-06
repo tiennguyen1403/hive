@@ -1,9 +1,11 @@
-import { COLORS } from "@/data/colors";
+import { COLORS, colorLabel } from "@/data/colors";
 import { SIZES, type Product } from "@/data/types";
 import type { Catalog } from "./catalog";
 import type { CsvRow } from "./csv";
 import { onHandOf, productsInDrop, soldUnits } from "./inventory";
+import { pick, type Locale } from "./i18n";
 import { issueNo, styleName } from "./lexicon";
+import { productText } from "./product-text";
 
 /**
  * One issue as a spreadsheet: a row per style, colour and size ("Tải CSV số
@@ -29,20 +31,36 @@ export const ISSUE_CSV_HEADER: readonly string[] = [
   "Doanh thu mẫu (VND)",
 ];
 
+/** The same columns in English (round v6 slice E5). */
+const ISSUE_CSV_HEADER_EN: readonly string[] = [
+  "Style",
+  "Type",
+  "Colour",
+  "Size",
+  "Left (size × colour)",
+  "Cut (style)",
+  "Sold (style)",
+  "Style revenue (VND)",
+];
+
 /** The header, then one row per style × colour × size, in catalogue order. */
 export function issueCsvRows(
   catalog: Catalog,
   no: number,
   products: readonly Product[] = catalog.products,
+  locale: Locale = "vi",
 ): CsvRow[] {
-  const rows: CsvRow[] = [[...ISSUE_CSV_HEADER]];
+  const en = locale === "en";
+  const rows: CsvRow[] = [[...(en ? ISSUE_CSV_HEADER_EN : ISSUE_CSV_HEADER)]];
   for (const p of productsInDrop(catalog, no, products)) {
+    // English: the style's words through `productText`, as the shop prints them.
+    const words = en ? productText(p, "en") : null;
     for (const color of p.colors) {
       for (const size of SIZES) {
         rows.push([
-          styleName(p.name, p.dropNo),
-          p.kind,
-          COLORS[color].label,
+          words ? styleName(words.name, p.dropNo, "en") : styleName(p.name, p.dropNo),
+          words ? words.kind : p.kind,
+          en ? colorLabel(color, "en") : COLORS[color].label,
           size,
           onHandOf(p, color, size),
           p.cutUnits,
@@ -56,6 +74,6 @@ export function issueCsvRows(
 }
 
 /** `so-05.csv`: the file's name, the issue's number as the shop writes it. */
-export function issueCsvName(no: number): string {
-  return `so-${issueNo(no)}.csv`;
+export function issueCsvName(no: number, locale: Locale = "vi"): string {
+  return pick({ vi: `so-${issueNo(no)}.csv`, en: `drop-${issueNo(no)}.csv` }, locale);
 }

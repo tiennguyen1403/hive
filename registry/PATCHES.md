@@ -155,6 +155,19 @@ n
 - **Test:** `arc-registry.test.ts` thêm hai test: kiểu có `optionsLang`, prop được tách khỏi `...inputProps`, mỗi
   `role="option"` mang `lang={optionsLang}`; kiểu có `lang`, và cả ba dạng mục (link, nút, span) mang `lang={item.lang}`.
 
+## Lần sửa 06/10/2026 (đợt v6, lát E5): loại mẫu tiếng Việt trong menu của trang tiếng Anh
+
+- **Không cài item mới.** `package.json`, `package-lock.json`, `registry/foundation.css` không đổi.
+- Brief E5 §3: form mẫu hiện **giá trị đang lưu**, và loại mẫu (`kind`, chữ người quản trị gõ) lưu bằng tiếng Việt. Ở bản
+  tiếng Anh, menu "Type" của form mẫu và của hộp "Add a teaser" in loại như đã lưu ("Áo hoodie"), nên dòng đó phải mang
+  `lang="vi"`. Arc vẽ dòng và giá trị đã chọn từ một chuỗi (`options[].label`), nên không gói được `<span lang>` mà không vá
+  (mục 3):
+  - **`select`:** `options[].lang`, trên dòng của option và trên hai bản của giá trị đã chọn (bản cho máy đọc và bản vẽ ra).
+    `kindOptions` (`lib/admin-options.ts`, `lib/teaser-form.ts`) chỉ đặt `lang` khi trang là tiếng Anh và loại có dấu tiếng
+    Việt (`storedLang`), nên trang tiếng Việt không đổi.
+- **Test:** `arc-registry.test.ts` thêm một test: kiểu option có `lang`, dòng mang `lang={option.lang}`, hai bản của giá trị
+  mang `lang={shownLang}`.
+
 ## 1. `registry/foundation.css`: khoanh vùng
 
 Arc đặt mọi luật ở `:root`, nên tệp là toàn cục: tiêu đề v3 mất Unbounded vì trùng tên `--font-display`, luật cuối xoá vòng
@@ -253,10 +266,12 @@ Giá trị `aria-sort` ("ascending", "descending") là từ khoá ARIA, không p
 | `segmented-control/segmented-control.tsx` (đợt v6, lát E0, brief yêu cầu) | Kiểu `Segment` thêm `lang?: string`; nút của mỗi mục mang `lang={option.lang}`. Không có `lang` thì nút y như Arc gốc (React bỏ thuộc tính `undefined`). Không đổi CSS | Nút đổi ngôn ngữ ở chân thanh bên quản trị: hai mục "Tiếng Việt" và "English", mỗi mục viết bằng chính ngôn ngữ của nó nên cần `lang` riêng để máy đọc màn hình đọc đúng giọng (brief lát E0, §2.5). `Segment.label` là chuỗi, nên không gói được `<span lang>` mà không vá |
 | `breadcrumb/breadcrumb.tsx` (đợt v6, lát E4) | Kiểu `BreadcrumbItem` thêm `lang?: string`; link, nút hay span của mục mang `lang={item.lang}`. Không có `lang` thì mục y như Arc gốc (React bỏ thuộc tính `undefined`). Không đổi CSS | Trang một khách ở bản tiếng Anh: mục cuối của đường dẫn là tên khách tiếng Việt in như đã lưu ("Trần Minh Anh"), phải mang `lang="vi"` như tiêu đề trang (brief E4 §3). `BreadcrumbItem.label` là chuỗi. Mất chỗ vá thì `npm run typecheck` đỏ ở `ArcCustomerScreen.tsx` (thuộc tính lạ trong object literal) |
 | `combobox/combobox.tsx` (đợt v6, lát E4) | Prop `optionsLang?: string`, tách khỏi `...inputProps` (không xuống `<input>`); mỗi phần tử `role="option"` mang `lang={optionsLang}`. Không có prop thì dòng y như Arc gốc (React bỏ thuộc tính `undefined`). Câu "Không có mục nào khớp" nằm ngoài các dòng nên giữ ngôn ngữ của trang. Không đổi CSS | Hộp sửa địa chỉ đơn ở bản tiếng Anh: danh sách tỉnh ("Bắc Ninh", "Cà Mau"…) và phường ("Phường Bến Nghé", "Xã Vạn Ninh"…) là tên tiếng Việt giữ nguyên, phải mang `lang="vi"` để máy đọc màn hình đọc đúng giọng (brief E4 §3; `FeedPicker` của cửa hàng làm vậy với danh sách của nó). `ComboboxOption.label` là chuỗi, nên không gói được `<span lang>` mà không vá. Mất chỗ vá thì `npm run typecheck` đỏ ở `ArcAddressForm.tsx` (prop lạ) |
+| `select/select.tsx` (đợt v6, lát E5) | Kiểu `options` thêm `lang?: string`. Dòng của option (`SelectPrimitive.Item`) mang `lang={option.lang}`; khi option đó đang được chọn, cả bản giá trị cho máy đọc (`span.srOnly` quanh `SelectPrimitive.Value`) lẫn bản vẽ ra (`motion.span`) mang `lang={shownLang}`. Không có `lang` thì dòng y như Arc gốc (React bỏ thuộc tính `undefined`). Không đổi CSS | Form mẫu và hộp thêm mẫu hé lộ ở bản tiếng Anh: loại mẫu in như đã lưu, bằng tiếng Việt ("Áo hoodie"), phải mang `lang="vi"` (brief E5 §3). `options[].label` là chuỗi, nên không gói được `<span lang>` mà không vá. Mất chỗ vá thì `npm run typecheck` **không** bắt được (các mảng option là biến, không phải object literal), nên test "lets a select option carry its own lang…" trong `arc-registry.test.ts` canh chỗ này |
 | `input/input.tsx` + `.module.css` (lát 5b, brief yêu cầu) | Prop `prefix` (chuỗi). Có `prefix` thì ô nằm trong một khung `.affix` cùng một đoạn `.prefix` đứng đầu: nền `--surface-muted`, ngăn với phần gõ bằng viền phải 1px `--border`, chữ `--text-sm` đậm 500. Đoạn có id `{id}-prefix`, và ô nhập có `aria-describedby` trỏ tới nó (trước câu mô tả và câu lỗi), như v3. Khung nhận viền, bo góc, hover, vòng focus, viền lỗi và trạng thái vô hiệu của ô; ô bên trong bỏ viền và vòng của nó. Bấm vào đoạn thì con trỏ vào ô (v3 làm được nhờ `pointer-events: none`). Không có `prefix` thì Input y như Arc gốc | Form mẫu (lát 5b): ô tên mẫu của một số mang mã số ở đầu ("S06 –", `stylePrefix`), gõ quanh nó chứ không gõ nó. Arc `Input` không có phần đầu ô |
 
 Các prop mới (`selectOnRowClick`, `showCount`, `rowAttributes`, `holdWidths`, `density`, `iconOnly`, `hideLabel` của
-`SearchField` và của `Input`, `formatTick` của `BarChart`, `optionsLang` của `Combobox`, `lang` của `BreadcrumbItem`) đều có
+`SearchField` và của `Input`, `formatTick` của `BarChart`, `optionsLang` của `Combobox`, `lang` của `BreadcrumbItem`, `lang` của
+option `Select`) đều có
 mặc định giữ hành vi gốc. Cài lại bản mới mà quên vá thì `npm run typecheck` đỏ ở `components/admin-arc/ArcOrdersScreen.tsx`,
 `components/admin-arc/ArcOrderScreen.tsx`, `components/admin-arc/ArcRevenueChart.tsx`, `components/admin-arc/ArcAddressForm.tsx`
 và `components/admin-arc/ArcCustomerScreen.tsx`, nơi dùng chúng. Chỗ vá CSS của `search-field`, prop `formatTick`, vòng focus

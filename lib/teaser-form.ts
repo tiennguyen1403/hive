@@ -1,4 +1,6 @@
-import { FAMILY_LABELS, type Family } from "@/data/types";
+import { familyLabel, type Family } from "@/data/types";
+import { storedLang } from "./admin-text";
+import { picker, type Locale } from "./i18n";
 import type { Catalog } from "./catalog";
 import { PHOTO_KEYS, isUploadedKey } from "./photos";
 
@@ -30,17 +32,19 @@ export interface KindOption {
   value: string;
   label: string;
   note: string;
+  /** `"vi"` for a kind kept in Vietnamese, on an English page (round v6 slice E5). */
+  lang?: string;
 }
 
 /** The kinds the catalogue actually uses, so the menu cannot invent one. */
-export function kindOptions(catalog: Catalog): KindOption[] {
+export function kindOptions(catalog: Catalog, locale: Locale = "vi"): KindOption[] {
   const seen = new Map<string, Family>();
   for (const p of catalog.products) seen.set(p.kind, p.family);
-  return [...seen].sort((a, b) => a[0].localeCompare(b[0], "vi")).map(([kind, family]) => ({
-    value: kind,
-    label: kind,
-    note: FAMILY_LABELS[family],
-  }));
+  return [...seen].sort((a, b) => a[0].localeCompare(b[0], "vi")).map(([kind, family]) => {
+    const option: KindOption = { value: kind, label: kind, note: familyLabel(family, locale) };
+    const lang = storedLang(kind, locale);
+    return lang ? { ...option, lang } : option;
+  });
 }
 
 /**
@@ -69,6 +73,18 @@ export function teaserName(typed: string): string {
 }
 
 /** The first thing still missing, in v3's words, so the button can name it; null when nothing is. */
-export function teaserBlocker(name: string, kind: string | null, photo: string | null): string | null {
-  return !name ? "Nhập tên mẫu" : !kind ? "Chọn loại" : !photo ? "Chọn ảnh" : null;
+export function teaserBlocker(
+  name: string,
+  kind: string | null,
+  photo: string | null,
+  locale: Locale = "vi",
+): string | null {
+  const t = picker(locale);
+  return !name
+    ? t({ vi: "Nhập tên mẫu", en: "Enter the style name" })
+    : !kind
+      ? t({ vi: "Chọn loại", en: "Choose a type" })
+      : !photo
+        ? t({ vi: "Chọn ảnh", en: "Choose a photo" })
+        : null;
 }

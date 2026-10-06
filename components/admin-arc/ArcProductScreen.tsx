@@ -1,6 +1,8 @@
 "use client";
 
 import { Eye } from "lucide-react";
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker } from "@/lib/i18n";
 import { Badge } from "@/registry/components/badge/badge";
 import { Breadcrumb } from "@/registry/components/breadcrumb/breadcrumb";
 import { ArcButtonLink } from "./ArcButtonLink";
@@ -28,6 +30,7 @@ const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
 export function ArcProductScreen({
   mode,
   title,
+  titleLang,
   sub,
   shopHref,
   productId,
@@ -39,34 +42,42 @@ export function ArcProductScreen({
   mode: "new" | "edit";
   /** "Thêm mẫu", or the style as the back office names it: "S05 – KHÓI". */
   title: string;
+  /** `"vi"` on an English page when the style's name has no English (round v6 slice E5, `nameLang`). */
+  titleLang?: string;
   /** The line under the heading, when there is one. */
   sub?: string;
   /** The style's page on the shop, for a style being edited. */
   shopHref?: string;
   productId?: string;
   values: ProductFormValues;
-  kindOptions: { value: string; label: string; note?: string }[];
+  kindOptions: { value: string; label: string; note?: string; lang?: string }[];
   dropOptions: { value: string; label: string; note?: string }[];
   cutUnits?: number;
 }) {
+  const t = picker(useLocale());
   return (
     <div className={page.page}>
       <div className={page.masthead}>
         <Breadcrumb
-          ariaLabel="Đường dẫn"
-          items={[{ label: "Mẫu", href: "/admin/products" }, { label: title }]}
+          ariaLabel={t({ vi: "Đường dẫn", en: "Breadcrumb" })}
+          items={[
+            { label: t({ vi: "Mẫu", en: "Styles" }), href: "/admin/products" },
+            { label: title, lang: titleLang },
+          ]}
         />
         <header className={page.header}>
           <div className={page.headRow}>
             <div className={page.titleRow}>
-              <h1 className={page.title}>{title}</h1>
+              <h1 className={page.title} lang={titleLang}>
+                {title}
+              </h1>
             </div>
             <div className={page.actions}>
-              <Badge size="sm">Dữ liệu mẫu</Badge>
+              <Badge size="sm">{t({ vi: "Dữ liệu mẫu", en: "Demo data" })}</Badge>
               {shopHref && (
                 <ArcButtonLink variant="secondary" size="sm" href={shopHref}>
                   <Eye {...ICON} />
-                  Xem trên cửa hàng
+                  {t({ vi: "Xem trên cửa hàng", en: "View in shop" })}
                 </ArcButtonLink>
               )}
             </div>

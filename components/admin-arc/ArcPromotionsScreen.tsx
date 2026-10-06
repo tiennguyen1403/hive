@@ -3,6 +3,7 @@
 import { Copy, Download, MoreHorizontal, Pause, Pencil, Play, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useOptimistic, useRef, useState, useTransition } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Promotion } from "@/data/types";
 import {
@@ -13,12 +14,13 @@ import {
   raisePromoLimit,
 } from "@/lib/actions/catalog-admin";
 import type { ActionState } from "@/lib/actions/state";
-import { PROMO_KIND_LABEL, promoState, promoValueLabel, type PromoState } from "@/lib/admin-rows";
+import { promoKindLabel, promoState, promoValueLabel, type PromoState } from "@/lib/admin-rows";
 import { hrefWith, patched, type Query } from "@/lib/admin-url";
 import { downloadCsv } from "@/lib/csv";
 import { clockLabel, dayMonth, dayMonthYear } from "@/lib/datetime";
 import { dropState } from "@/lib/drop";
-import { LEX, issueNo } from "@/lib/lexicon";
+import { picker, type Locale, type Pair } from "@/lib/i18n";
+import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import { vnd } from "@/lib/money";
 import { Badge, type BadgeTone } from "@/registry/components/badge/badge";
 import { Button } from "@/registry/components/button/button";
@@ -44,16 +46,16 @@ const RAISE_BY = 50;
 const ALL = "all";
 
 /** What a code is doing, in v3's words, with Arc's tones (brief v5 slice 3, §3.4). */
-const STANDING: Record<PromoState, { label: string; tone: BadgeTone }> = {
-  LIVE: { label: "Đang chạy", tone: "success" },
-  UPCOMING: { label: "Sắp chạy", tone: "info" },
-  PAUSED: { label: "Tạm dừng", tone: "neutral" },
-  ENDED: { label: "Hết hạn", tone: "neutral" },
-  USED_UP: { label: "Hết lượt", tone: "danger" },
+const STANDING: Record<PromoState, { label: Pair; tone: BadgeTone }> = {
+  LIVE: { label: { vi: "Đang chạy", en: "Active" }, tone: "success" },
+  UPCOMING: { label: { vi: "Sắp chạy", en: "Scheduled" }, tone: "info" },
+  PAUSED: { label: { vi: "Tạm dừng", en: "Paused" }, tone: "neutral" },
+  ENDED: { label: { vi: "Hết hạn", en: "Expired" }, tone: "neutral" },
+  USED_UP: { label: { vi: "Hết lượt", en: "Used up" }, tone: "danger" },
 };
 
-const TABS: Array<{ value: PromoState | null; label: string }> = [
-  { value: null, label: "Tất cả" },
+const TABS: Array<{ value: PromoState | null; label: Pair }> = [
+  { value: null, label: { vi: "Tất cả", en: "All" } },
   { value: "LIVE", label: STANDING.LIVE.label },
   { value: "UPCOMING", label: STANDING.UPCOMING.label },
   { value: "PAUSED", label: STANDING.PAUSED.label },
@@ -97,6 +99,9 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
   const catalog = useCatalog();
   const say = useArcToast();
   const router = useRouter();
+  // The page's language (round v6 slice E5). The codes themselves are typed, and printed as typed.
+  const locale = useLocale();
+  const t = picker(locale);
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [pending, startAction] = useTransition();
   const [, startNavigation] = useTransition();
@@ -157,27 +162,30 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
           code: `SO${issueNo(nextIssue.no)}`,
           startsAt: nextIssue.opensAt,
           endsAt: nextIssue.closesAt,
-          label: `${LEX.tl} ${issueNo(nextIssue.no)}`,
+          label: t({ vi: `${LEX.tl} ${issueNo(nextIssue.no)}`, en: issueLabel(nextIssue.no, "en") }),
         }
       : {
           code: `${p.code}-2`,
           startsAt: p.startsAt,
           endsAt: p.endsAt,
-          label: "cùng khoảng thời gian",
+          label: t({ vi: "cùng khoảng thời gian", en: "the same dates" }),
         };
 
   const csvRows = [
-    ["Mã", "Loại", "Giảm", "Điều kiện", "Bắt đầu", "Kết thúc", "Đã dùng", "Giới hạn", "Trạng thái"],
+    t({
+      vi: ["Mã", "Loại", "Giảm", "Điều kiện", "Bắt đầu", "Kết thúc", "Đã dùng", "Giới hạn", "Trạng thái"],
+      en: ["Code", "Type", "Discount", "Condition", "Starts", "Ends", "Used", "Limit", "Status"],
+    }),
     ...rows.map(({ promo, standing }) => [
       String(promo.code),
-      PROMO_KIND_LABEL[promo.kind],
-      promoValueLabel(promo),
-      promo.minOrderVnd ? `Đơn từ ${promo.minOrderVnd}` : "—",
-      dayMonthYear(promo.startsAt),
-      dayMonthYear(promo.endsAt),
+      promoKindLabel(promo.kind, locale),
+      promoValueLabel(promo, locale),
+      promo.minOrderVnd ? t({ vi: `Đơn từ ${promo.minOrderVnd}`, en: `Orders from ${promo.minOrderVnd}` }) : "—",
+      dayMonthYear(promo.startsAt, locale),
+      dayMonthYear(promo.endsAt, locale),
       promo.usedCount,
-      promo.usageLimit ?? "không giới hạn",
-      STANDING[standing].label,
+      promo.usageLimit ?? t({ vi: "không giới hạn", en: "no limit" }),
+      t(STANDING[standing].label),
     ]),
   ];
 
@@ -187,11 +195,11 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
     const code = String(p.code);
     const edit = () => openForm(p, menus.current.get(code)?.querySelector("button") ?? null);
     const items: DropdownItem[] = [
-      { label: "Sửa", icon: <Pencil {...ICON} />, onSelect: edit },
+      { label: t({ vi: "Sửa", en: "Edit" }), icon: <Pencil {...ICON} />, onSelect: edit },
       ...(p.usageLimit !== null
         ? [
             {
-              label: `Nâng giới hạn thêm ${RAISE_BY}`,
+              label: t({ vi: `Nâng giới hạn thêm ${RAISE_BY}`, en: `Raise limit by ${RAISE_BY}` }),
               icon: <Plus {...ICON} />,
               onSelect: () => act(() => raisePromoLimit(code, p.usageLimit! + RAISE_BY)),
             },
@@ -199,14 +207,22 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
         : []),
       // v3: a copy is made from the code's own form, whose "Nhân bản thành …"
       // names the copy and its window before anything is written.
-      { label: "Nhân bản", icon: <Copy {...ICON} />, onSelect: edit },
+      { label: t({ vi: "Nhân bản", en: "Duplicate" }), icon: <Copy {...ICON} />, onSelect: edit },
       p.paused
-        ? { label: "Tiếp tục", icon: <Play {...ICON} />, onSelect: () => act(() => pausePromo(code, false)) }
-        : { label: "Tạm dừng", icon: <Pause {...ICON} />, onSelect: () => act(() => pausePromo(code, true)) },
+        ? {
+            label: t({ vi: "Tiếp tục", en: "Resume" }),
+            icon: <Play {...ICON} />,
+            onSelect: () => act(() => pausePromo(code, false)),
+          }
+        : {
+            label: t({ vi: "Tạm dừng", en: "Pause" }),
+            icon: <Pause {...ICON} />,
+            onSelect: () => act(() => pausePromo(code, true)),
+          },
       ...(standing === "LIVE"
         ? [
             {
-              label: "Kết thúc sớm",
+              label: t({ vi: "Kết thúc sớm", en: "End early" }),
               icon: <X {...ICON} />,
               destructive: true,
               separatorBefore: true,
@@ -223,39 +239,46 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
           else menus.current.delete(code);
         }}
       >
-        <DropdownMenu iconOnly label={`Thao tác ${code}`} icon={<MoreHorizontal {...ICON} />} items={items} />
+        <DropdownMenu
+          iconOnly
+          label={t({ vi: `Thao tác ${code}`, en: `Actions for ${code}` })}
+          icon={<MoreHorizontal {...ICON} />}
+          items={items}
+        />
       </span>
     );
   }
 
   const columnList: DataColumn<Row>[] = [
-    { key: "code", label: "Mã", render: (_v, r) => <span className={styles.code}>{r.code}</span> },
+    { key: "code", label: t({ vi: "Mã", en: "Code" }), render: (_v, r) => <span className={styles.code}>{r.code}</span> },
     {
       key: "value",
-      label: "Giảm",
-      render: (_v, r) => <span className={book.text}>{promoValueLabel(r.promo)}</span>,
+      label: t({ vi: "Giảm", en: "Discount" }),
+      render: (_v, r) => <span className={book.text}>{promoValueLabel(r.promo, locale)}</span>,
     },
     {
       key: "condition",
-      label: "Điều kiện",
+      label: t({ vi: "Điều kiện", en: "Condition" }),
       render: (_v, r) => (
         <span className={book.text}>
-          {r.promo.minOrderVnd ? `Đơn từ ${vnd(r.promo.minOrderVnd)}` : "Không điều kiện"}
+          {r.promo.minOrderVnd
+            ? t({ vi: `Đơn từ ${vnd(r.promo.minOrderVnd)}`, en: `Orders from ${vnd(r.promo.minOrderVnd, "en")}` })
+            : t({ vi: "Không điều kiện", en: "No minimum" })}
         </span>
       ),
     },
     {
       key: "window",
-      label: "Hiệu lực",
-      render: (_v, r) => <span className={`${book.nowrap} ${book.num}`}>{windowLabel(r.promo)}</span>,
+      label: t({ vi: "Hiệu lực", en: "Valid" }),
+      render: (_v, r) => <span className={`${book.nowrap} ${book.num}`}>{windowLabel(r.promo, locale)}</span>,
     },
-    { key: "uses", label: "Lượt", render: (_v, r) => <UsesCell promo={r.promo} /> },
+    { key: "uses", label: t({ vi: "Lượt", en: "Uses" }), render: (_v, r) => <UsesCell promo={r.promo} locale={locale} /> },
     {
       key: "standing",
-      label: "Trạng thái",
+      label: t({ vi: "Trạng thái", en: "Status" }),
       render: (_v, r) => (
         <Badge tone={STANDING[r.standing].tone} size="sm">
-          {STANDING[r.standing].label}
+          {t(STANDING[r.standing].label)}
         </Badge>
       ),
     },
@@ -274,8 +297,8 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
         rows={tableRows}
         columns={columns}
         rowKey="code"
-        caption="Mã giảm giá"
-        emptyMessage="Không có mã nào trong nhóm này."
+        caption={t({ vi: "Mã giảm giá", en: "Discount codes" })}
+        emptyMessage={t({ vi: "Không có mã nào trong nhóm này.", en: "No codes in this group." })}
         holdWidths={false}
         density="compact"
         showCount={false}
@@ -292,32 +315,36 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
     <div className={page.page}>
       <header className={page.header}>
         <div className={page.headRow}>
-          <h1 className={page.title}>Mã giảm giá</h1>
+          <h1 className={page.title}>{t({ vi: "Mã giảm giá", en: "Discount codes" })}</h1>
           <div className={page.actions}>
-            <Badge size="sm">Dữ liệu mẫu</Badge>
-            <Button variant="secondary" size="sm" onClick={() => downloadCsv("ma-giam-gia.csv", csvRows)}>
+            <Badge size="sm">{t({ vi: "Dữ liệu mẫu", en: "Demo data" })}</Badge>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => downloadCsv(t({ vi: "ma-giam-gia.csv", en: "discount-codes.csv" }), csvRows)}
+            >
               <Download {...ICON} />
-              Tải CSV
+              {t({ vi: "Tải CSV", en: "Download CSV" })}
             </Button>
             <Button variant="primary" size="sm" onClick={(e) => openForm(null, e.currentTarget)}>
               <Plus {...ICON} />
-              Tạo mã
+              {t({ vi: "Tạo mã", en: "Create code" })}
             </Button>
           </div>
         </div>
       </header>
 
       <Tabs value={tab ?? ALL} onValueChange={(v) => go({ state: v === ALL ? null : v })}>
-        <TabsList aria-label="Trạng thái">
-          {TABS.map((t) => (
-            <TabsTrigger key={t.value ?? ALL} value={t.value ?? ALL}>
-              {t.label}{" "}
-              <span className={book.tabCount}>{t.value ? counts(t.value) : rows.length}</span>
+        <TabsList aria-label={t({ vi: "Trạng thái", en: "Status" })}>
+          {TABS.map((x) => (
+            <TabsTrigger key={x.value ?? ALL} value={x.value ?? ALL}>
+              {t(x.label)}{" "}
+              <span className={book.tabCount}>{x.value ? counts(x.value) : rows.length}</span>
             </TabsTrigger>
           ))}
         </TabsList>
-        {TABS.map((t) => (
-          <TabsContent key={t.value ?? ALL} value={t.value ?? ALL}>
+        {TABS.map((x) => (
+          <TabsContent key={x.value ?? ALL} value={x.value ?? ALL}>
             {table}
           </TabsContent>
         ))}
@@ -330,9 +357,9 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
         promo={editing}
         standing={
           editing
-            ? `${STANDING[promoState(editing, now)].label} · ${editing.usedCount}${
+            ? `${t(STANDING[promoState(editing, now)].label)} · ${editing.usedCount}${
                 editing.usageLimit === null ? "" : ` / ${editing.usageLimit}`
-              } lượt`
+              } ${t({ vi: "lượt", en: editing.usedCount === 1 && editing.usageLimit === null ? "use" : "uses" })}`
             : undefined
         }
         taken={taken}
@@ -372,9 +399,16 @@ export function ArcPromotionsScreen({ nowIso, query }: { nowIso: string; query: 
  * is full, as the overview's sellers read (slice 2). A code without a cap has
  * nothing to fill: "N · không giới hạn", as v3.
  */
-function UsesCell({ promo: p }: { promo: Promotion }) {
+function UsesCell({ promo: p, locale }: { promo: Promotion; locale: Locale }) {
   if (p.usageLimit === null || p.usageLimit === 0) {
-    return <span className={`${book.nowrap} ${book.num}`}>{p.usedCount} · không giới hạn</span>;
+    return (
+      <span className={`${book.nowrap} ${book.num}`}>
+        {picker(locale)<React.ReactNode>({
+          vi: <>{p.usedCount} · không giới hạn</>,
+          en: <>{p.usedCount} · no limit</>,
+        })}
+      </span>
+    );
   }
   const percent = Math.min(100, Math.round((p.usedCount / p.usageLimit) * 100));
   return (
@@ -392,9 +426,9 @@ function UsesCell({ promo: p }: { promo: Promotion }) {
  * two-hour opening promotion and a fortnight-long one are different offers,
  * and printing both as "11/09 → 11/09" would hide the one that matters.
  */
-function windowLabel(p: Promotion): string {
+function windowLabel(p: Promotion, locale: Locale): string {
   const sameDay = p.startsAt.slice(0, 10) === p.endsAt.slice(0, 10);
   return sameDay
-    ? `${dayMonth(p.startsAt)} ${clockLabel(p.startsAt)} → ${clockLabel(p.endsAt)}`
-    : `${dayMonth(p.startsAt)} → ${dayMonth(p.endsAt)}`;
+    ? `${dayMonth(p.startsAt, locale)} ${clockLabel(p.startsAt)} → ${clockLabel(p.endsAt)}`
+    : `${dayMonth(p.startsAt, locale)} → ${dayMonth(p.endsAt, locale)}`;
 }

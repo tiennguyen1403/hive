@@ -551,25 +551,25 @@ async (page) => {
 
     // v3 slice 12: the default tab is Cố định; an issue's style is named with its code
     ["/admin/products#rowmenu", "admin-products-row-menu-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác HOODIE TRƠN", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác HOODIE TRƠN", "Actions for PLAIN HOODIE"), exact: true }).click();
     }],
     ["/admin/products#restock", "admin-products-restock-sheet-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác HOODIE TRƠN", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác HOODIE TRƠN", "Actions for PLAIN HOODIE"), exact: true }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("menuitem", { name: "Nhập thêm" }).click();
+      await page.getByRole("menuitem", { name: T("Nhập thêm", "Restock") }).click();
       await page.waitForTimeout(350);
-      await page.getByRole("dialog").getByLabel(/^Nhập thêm Xám M,/).fill("4");
+      await page.getByRole("dialog").getByLabel(LANG === "en" ? /^Restock Grey M,/ : /^Nhập thêm Xám M,/).fill("4");
     }],
     ["/admin/products?drop=5#rowmenu", "admin-products-so05-row-menu-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác S05\u00a0\u2013 KHÓI", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác S05\u00a0\u2013 KHÓI", "Actions for D05\u00a0\u2013 KHÓI"), exact: true }).click();
     }],
     ["/admin/products?drop=5#adjust", "admin-products-adjust-sheet-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác S05\u00a0\u2013 KHÓI", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác S05\u00a0\u2013 KHÓI", "Actions for D05\u00a0\u2013 KHÓI"), exact: true }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("menuitem", { name: "Điều chỉnh tồn kho" }).click();
+      await page.getByRole("menuitem", { name: T("Điều chỉnh tồn kho", "Adjust stock") }).click();
       await page.waitForTimeout(350);
       // round v5 slice 5a: Arc Select, by role and label.
-      await page.getByRole("dialog").getByRole("combobox", { name: "Lý do" }).click();
+      await page.getByRole("dialog").getByRole("combobox", { name: T("Lý do", "Reason") }).click();
     }],
     // round v5 slice 5a: the filter menu at both steps, the drawers in use
     ["/admin/products?drop=5#filter", "admin-products-filter-fields-1280", async () => {
@@ -578,86 +578,86 @@ async (page) => {
     ["/admin/products?drop=5#filter-values", "admin-products-filter-values-1280", async () => {
       await page.getByRole("button", { name: T("Thêm bộ lọc", "Add filter") }).click();
       await page.waitForTimeout(400);
-      await page.getByRole("menuitem", { name: /Loại/ }).click();
+      await page.getByRole("menuitem", { name: LANG === "en" ? /Type/ : /Loại/ }).click();
     }],
     ["/admin/products?drop=5#adjust-ready", "admin-products-adjust-ready-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác S05 – KHÓI", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác S05 – KHÓI", "Actions for D05 – KHÓI"), exact: true }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("menuitem", { name: "Điều chỉnh tồn kho" }).click();
+      await page.getByRole("menuitem", { name: T("Điều chỉnh tồn kho", "Adjust stock") }).click();
       await page.waitForTimeout(500);
-      await page.getByRole("dialog").getByRole("button", { name: "Bớt Đen M" }).click();
-      await page.getByRole("dialog").getByRole("combobox", { name: "Lý do" }).click();
+      await page.getByRole("dialog").getByRole("button", { name: T("Bớt Đen M", "Decrease Black M") }).click();
+      await page.getByRole("dialog").getByRole("combobox", { name: T("Lý do", "Reason") }).click();
       await page.waitForTimeout(300);
-      await page.getByRole("option", { name: "Hư hỏng" }).click();
+      await page.getByRole("option", { name: T("Hư hỏng", "Damaged") }).click();
     }],
     ["/admin/products#adjust-fixed", "admin-products-adjust-fixed-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác HOODIE TRƠN", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác HOODIE TRƠN", "Actions for PLAIN HOODIE"), exact: true }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("menuitem", { name: "Điều chỉnh tồn kho" }).click();
+      await page.getByRole("menuitem", { name: T("Điều chỉnh tồn kho", "Adjust stock") }).click();
     }],
     ["/admin/drops#rowmenu", "admin-drops-row-menu-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác Số 05", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác Số 05", "Actions for Drop 05"), exact: true }).click();
     }],
     ["/admin/drops#create", "admin-drops-create-sheet-1280", async () => {
       // round v5 slice 4: the Arc heading has no v3 `.top`; the page's own "Tạo số".
-      await page.getByRole("button", { name: "Tạo số" }).first().click();
+      await page.getByRole("button", { name: T("Tạo số", "Create drop") }).first().click();
     }],
     ["/admin/drops#edit", "admin-drops-edit-sheet-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác Số 06", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác Số 06", "Actions for Drop 06"), exact: true }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("menuitem", { name: "Sửa giờ" }).click();
+      await page.getByRole("menuitem", { name: T("Sửa giờ", "Reschedule") }).click();
     }],
     ["/admin/drops#close", "admin-drops-close-sheet-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác Số 05", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác Số 05", "Actions for Drop 05"), exact: true }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("menuitem", { name: "Đóng sớm" }).click();
+      await page.getByRole("menuitem", { name: T("Đóng sớm", "Close early") }).click();
     }],
     ["/admin/drops/05#teaser", "admin-drops-teaser-sheet-1280", async () => {
-      await page.getByRole("button", { name: "Thêm mẫu hé lộ" }).click();
+      await page.getByRole("button", { name: T("Thêm mẫu hé lộ", "Add teaser") }).click();
       await page.waitForTimeout(700);
       // round v5 slice 4: Arc's Select, found by its role and label, not v3's `.field3 button.selbtn`.
-      await page.getByRole("dialog").getByRole("combobox", { name: "Loại" }).click();
+      await page.getByRole("dialog").getByRole("combobox", { name: T("Loại", "Type") }).click();
     }],
     // round v5 slice 4: the other states of the three Arc dialogs
     ["/admin/drops#create-backwards", "admin-drops-create-backwards-1280", async () => {
-      await page.getByRole("button", { name: "Tạo số" }).first().click();
+      await page.getByRole("button", { name: T("Tạo số", "Create drop") }).first().click();
       await page.waitForTimeout(700);
-      await page.getByRole("dialog").getByLabel("Đóng lúc 20:00 ngày").fill("01/10/2026");
+      await page.getByRole("dialog").getByLabel(T("Đóng lúc 20:00 ngày", "Closes at 20:00 on")).fill("01/10/2026");
     }],
     ["/admin/drops/05#close-detail", "admin-drops-close-detail-1280", async () => {
-      await page.locator("#detail").getByRole("button", { name: "Đóng sớm" }).click();
+      await page.locator("#detail").getByRole("button", { name: T("Đóng sớm", "Close early") }).click();
     }],
     ["/admin/drops/05#teaser-ready", "admin-drops-teaser-ready-1280", async () => {
-      await page.getByRole("button", { name: "Thêm mẫu hé lộ" }).click();
+      await page.getByRole("button", { name: T("Thêm mẫu hé lộ", "Add teaser") }).click();
       await page.waitForTimeout(700);
-      await page.getByRole("dialog").getByLabel("Tên mẫu").fill("SỎI");
-      await page.getByRole("dialog").getByRole("combobox", { name: "Loại" }).click();
+      await page.getByRole("dialog").getByLabel(T("Tên mẫu", "Style name")).fill("SỎI");
+      await page.getByRole("dialog").getByRole("combobox", { name: T("Loại", "Type") }).click();
       await page.waitForTimeout(400);
       await page.getByRole("option", { name: "Áo khoác dù", exact: true }).click();
       await page.waitForTimeout(300);
       await page.getByRole("dialog").getByRole("radio", { name: "Ảnh tro" }).click();
     }],
     ["/admin/drops/04#rowmenu", "admin-drops-04-row-menu-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác Số 04", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác Số 04", "Actions for Drop 04"), exact: true }).click();
     }],
     ["/admin/promotions#rowmenu", "admin-promotions-row-menu-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác DOT05", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác DOT05", "Actions for DOT05"), exact: true }).click();
     }],
     // round v5 slice 3: the same passes for the Arc screens
     ["/admin/promotions#create-arc", "admin-promotions-create-drawer-1280", async () => {
-      await page.getByRole("button", { name: "Tạo mã" }).click();
+      await page.getByRole("button", { name: T("Tạo mã", "Create code") }).click();
       await page.waitForTimeout(700);
-      await page.getByRole("dialog").getByRole("combobox", { name: "Loại" }).click();
+      await page.getByRole("dialog").getByRole("combobox", { name: T("Loại", "Type") }).click();
     }],
     ["/admin/promotions#edit-arc", "admin-promotions-edit-drawer-1280", async () => {
-      await page.getByRole("button", { name: "Thao tác DOT05", exact: true }).click();
+      await page.getByRole("button", { name: T("Thao tác DOT05", "Actions for DOT05"), exact: true }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("menuitem", { name: "Sửa", exact: true }).click();
+      await page.getByRole("menuitem", { name: T("Sửa", "Edit"), exact: true }).click();
     }],
     ["/admin/promotions#error-arc", "admin-promotions-create-error-1280", async () => {
-      await page.getByRole("button", { name: "Tạo mã" }).click();
+      await page.getByRole("button", { name: T("Tạo mã", "Create code") }).click();
       await page.waitForTimeout(700);
-      await page.getByRole("dialog").getByRole("button", { name: "Lưu" }).click();
+      await page.getByRole("dialog").getByRole("button", { name: T("Lưu", "Save") }).click();
     }],
     ["/admin/customers#rowmenu", "admin-customers-row-menu-1280", async () => {
       await page.getByRole("button", { name: T("Thao tác Trần Minh Anh", "Actions for Trần Minh Anh"), exact: true }).click();
@@ -666,37 +666,37 @@ async (page) => {
     // role and label, not by v3's `.field3`, `button.selbtn`, `.colorpick`,
     // `.cslot` and `.sheetwrap`.
     ["/admin/products/new#issue-menu", "admin-product-new-issue-menu-1280", async () => {
-      await page.getByRole("combobox", { name: "Số", exact: true }).click();
+      await page.getByRole("combobox", { name: T("Số", "Drop"), exact: true }).click();
     }],
     ["/admin/products/new#fixed", "admin-product-new-fixed-1280", async () => {
-      await page.getByRole("combobox", { name: "Số", exact: true }).click();
+      await page.getByRole("combobox", { name: T("Số", "Drop"), exact: true }).click();
       await page.waitForTimeout(250);
-      await page.getByRole("option", { name: "Cố định" }).click();
+      await page.getByRole("option", { name: T("Cố định", "Basics") }).click();
     }],
     ["/admin/products/p-khoi#kind", "admin-product-form-kind-menu-1280", async () => {
-      await page.getByRole("combobox", { name: "Loại" }).click();
+      await page.getByRole("combobox", { name: T("Loại", "Type") }).click();
     }],
     // v3 slice 7: the crop dialog after a picked file, and the borrowed-photo grid open
     ["/admin/products/new#crop", "admin-product-new-crop-sheet-1280", async () => {
-      await page.getByRole("group", { name: "Màu sẽ cắt" }).getByRole("button", { name: "Đen", exact: true }).click();
-      await page.getByLabel("Chọn tệp cho Đen").setInputFiles("tools/fixtures/soi-den.png");
-      await page.getByRole("dialog").getByRole("group", { name: /^Khung cắt/ }).waitFor({ state: "visible", timeout: 8000 });
+      await page.getByRole("group", { name: T("Màu sẽ cắt", "Colours to cut") }).getByRole("button", { name: T("Đen", "Black"), exact: true }).click();
+      await page.getByLabel(T("Chọn tệp cho Đen", "Choose file for Black")).setInputFiles("tools/fixtures/soi-den.png");
+      await page.getByRole("dialog").getByRole("group", { name: LANG === "en" ? /^4:5 crop frame/ : /^Khung cắt/ }).waitFor({ state: "visible", timeout: 8000 });
     }],
     ["/admin/products/new#photopick", "admin-product-new-photopick-1280", async () => {
-      await page.getByRole("group", { name: "Màu sẽ cắt" }).getByRole("button", { name: "Đen", exact: true }).click();
-      await page.getByRole("button", { name: "Mượn tạm" }).first().click();
+      await page.getByRole("group", { name: T("Màu sẽ cắt", "Colours to cut") }).getByRole("button", { name: T("Đen", "Black"), exact: true }).click();
+      await page.getByRole("button", { name: T("Mượn tạm", "Borrow") }).first().click();
     }],
     ["/admin/products/p-khoi#photopick", "admin-product-edit-photopick-1280", async () => {
-      await page.getByRole("button", { name: "Mượn tạm" }).first().click();
+      await page.getByRole("button", { name: T("Mượn tạm", "Borrow") }).first().click();
     }],
     // round v5 slice 5b: three colours with their rows and grid, a fixed style's loan grid
     ["/admin/products/new#colours", "admin-product-new-colours-1280", async () => {
-      for (const c of ["Đen", "Trắng", "Xám"]) {
-        await page.getByRole("group", { name: "Màu sẽ cắt" }).getByRole("button", { name: c, exact: true }).click();
+      for (const c of LANG === "en" ? ["Black", "White", "Grey"] : ["Đen", "Trắng", "Xám"]) {
+        await page.getByRole("group", { name: T("Màu sẽ cắt", "Colours to cut") }).getByRole("button", { name: c, exact: true }).click();
       }
     }],
     ["/admin/products/p-ao-thun-tron#photopick", "admin-product-fixed-photopick-1280", async () => {
-      await page.getByRole("button", { name: "Đổi ảnh mượn" }).first().click();
+      await page.getByRole("button", { name: T("Đổi ảnh mượn", "Change borrowed photo") }).first().click();
     }],
   ];
   for (const [route, name, open] of ADMIN_OVERLAYS) await visit(route, 1280, name, open);

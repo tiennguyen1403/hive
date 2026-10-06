@@ -1,6 +1,7 @@
 import { SIZES, type ColorKey, type Product, type Size } from "@/data/types";
 import { MAX_RESTOCK_PER_CELL } from "./catalog-admin";
 import { FIXED_LOW_AT, onHandOf } from "./inventory";
+import { picker, plural, type Locale } from "./i18n";
 
 /**
  * "Nhập thêm" — the rules behind the restock grid (v3 slice 12).
@@ -76,10 +77,11 @@ export function colorAdds(product: Product, draft: RestockDraft, color: ColorKey
  * and while there is nothing to add it is disabled and says the job left,
  * "Nhập số cần thêm" (DESIGN.md §9 rule 3).
  */
-export function restockButton(total: number): { ready: boolean; label: string } {
+export function restockButton(total: number, locale: Locale = "vi"): { ready: boolean; label: string } {
+  const t = picker(locale);
   return total > 0
-    ? { ready: true, label: `Nhập thêm ${total} chiếc` }
-    : { ready: false, label: "Nhập số cần thêm" };
+    ? { ready: true, label: t({ vi: `Nhập thêm ${total} chiếc`, en: `Restock ${plural(total, "piece", "pieces")}` }) }
+    : { ready: false, label: t({ vi: "Nhập số cần thêm", en: "Enter how many to add" }) };
 }
 
 /** A cell the grid prints in red: two or fewer left, the fixed style's own line (`FIXED_LOW_AT`). */

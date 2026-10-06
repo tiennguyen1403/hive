@@ -3,8 +3,11 @@
 import { ArrowDown, ArrowUp, ImageIcon, ImageUp, X } from "lucide-react";
 import Image from "next/image";
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { COLORS } from "@/data/colors";
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { COLORS, colorLabel } from "@/data/colors";
 import type { ColorKey } from "@/data/types";
+import { phrase, stored } from "@/lib/admin-text";
+import { picker } from "@/lib/i18n";
 import { styleInList } from "@/lib/lexicon";
 import { dims, outputSize, previewBox, type Crop } from "@/lib/photo-crop";
 import { photoUrl } from "@/lib/photos";
@@ -12,6 +15,7 @@ import { PICK_TYPES, fileSizeLabel, savedPhotoCaption, type LoanPhoto } from "@/
 import { Badge } from "@/registry/components/badge/badge";
 import { Button } from "@/registry/components/button/button";
 import buttonStyles from "@/registry/components/button/button.module.css";
+import { phraseNode } from "./ArcPhrase";
 import { ArcPhotoPicker } from "./ArcPhotoPicker";
 import form from "./ArcProductForm.module.css";
 import styles from "./ArcPhotoRow.module.css";
@@ -113,7 +117,10 @@ export function ArcPhotoRow({
   onCommitLoan: (key: string) => void;
 }) {
   const [over, setOver] = useState(false);
-  const label = COLORS[color].label;
+  // The page's language (round v6 slice E5).
+  const locale = useLocale();
+  const t = picker(locale);
+  const label = colorLabel(color, locale);
 
   const filePicker = (text: string, look: "button" | "link", first: boolean) => (
     <label
@@ -129,7 +136,7 @@ export function ArcPhotoRow({
         type="file"
         accept={ACCEPT}
         className={styles.file}
-        aria-label={`${text} cho ${label}`}
+        aria-label={t({ vi: `${text} cho ${label}`, en: `${text} for ${label}` })}
         // Where focus goes back to when the crop dialog shuts with no "Khung cắt" on the row.
         data-pick={first ? color : undefined}
         onChange={(e) => {
@@ -164,8 +171,18 @@ export function ArcPhotoRow({
     };
     caption = (
       <>
-        <strong>{photo.name}</strong> · {fileSizeLabel(photo.bytes)} · vùng cắt {dims(photo.crop.w, photo.crop.h)}{" "}
-        · lưu {dims(out.w, out.h)}
+        <strong>{photo.name}</strong>
+        {t<ReactNode>({
+          // The Vietnamese is the JSX it always was, text node for text node.
+          vi: (
+            <> · {fileSizeLabel(photo.bytes)} · vùng cắt {dims(photo.crop.w, photo.crop.h)}{" "}
+              · lưu {dims(out.w, out.h)}</>
+          ),
+          en: (
+            <> · {fileSizeLabel(photo.bytes, locale)} · crop {dims(photo.crop.w, photo.crop.h, locale)} · saved at{" "}
+              {dims(out.w, out.h, locale)}</>
+          ),
+        })}
       </>
     );
     // No icon on "Khung cắt", as in v3 (brief v5 slice 5b, §3.5): the label
@@ -173,10 +190,10 @@ export function ArcPhotoRow({
     actions = (
       <>
         <Button type="button" variant="secondary" size="sm" data-crop={color} onClick={onCrop}>
-          Khung cắt
+          {t({ vi: "Khung cắt", en: "Crop" })}
         </Button>
-        {filePicker("Đổi ảnh", "link", false)}
-        {loanToggle("Mượn tạm")}
+        {filePicker(t({ vi: "Đổi ảnh", en: "Change photo" }), "link", false)}
+        {loanToggle(t({ vi: "Mượn tạm", en: "Borrow" }))}
       </>
     );
   } else if (photo.kind === "loan" || photo.kind === "saved") {
@@ -186,33 +203,43 @@ export function ArcPhotoRow({
       photo.kind === "loan" ? (
         <>
           <Badge tone="neutral" size="sm" className={styles.badge}>
-            mượn tạm
+            {t({ vi: "mượn tạm", en: "borrowed" })}
           </Badge>
-          {/* The name held whole: "S04 –" never over "RÊU" (v3 slice 13). */}
-          {owner ? ` ảnh của mẫu ${styleInList(owner)}` : ""}
+          {/* The name held whole: "S04 –" never over "RÊU" (v3 slice 13). In
+              English a Vietnamese name says so (`stored`). */}
+          {owner
+            ? phraseNode(
+                locale === "vi"
+                  ? ` ảnh của mẫu ${styleInList(owner)}`
+                  : phrase(" photo of ", stored(styleInList(owner), locale)),
+              )
+            : ""}
         </>
       ) : (
-        savedPhotoCaption(photo.key)
+        savedPhotoCaption(photo.key, locale)
       );
     actions =
       photo.kind === "loan" ? (
         <>
-          {filePicker("Tải ảnh thật", "button", true)}
-          {loanToggle("Đổi ảnh mượn")}
+          {filePicker(t({ vi: "Tải ảnh thật", en: "Upload a real photo" }), "button", true)}
+          {loanToggle(t({ vi: "Đổi ảnh mượn", en: "Change borrowed photo" }))}
         </>
       ) : (
         <>
-          {filePicker("Đổi ảnh", "button", true)}
-          {loanToggle("Mượn tạm")}
+          {filePicker(t({ vi: "Đổi ảnh", en: "Change photo" }), "button", true)}
+          {loanToggle(t({ vi: "Mượn tạm", en: "Borrow" }))}
         </>
       );
   } else {
     shotBody = <ImageIcon size={24} strokeWidth={1.75} aria-hidden="true" />;
-    caption = "Chưa có ảnh · JPG, PNG hoặc WebP, tối đa 10 MB · kéo thả vào ô hoặc chọn tệp";
+    caption = t({
+      vi: "Chưa có ảnh · JPG, PNG hoặc WebP, tối đa 10 MB · kéo thả vào ô hoặc chọn tệp",
+      en: "No photo yet · JPG, PNG or WebP, 10 MB at most · drop it on the box or choose a file",
+    });
     actions = (
       <>
-        {filePicker("Chọn tệp", "button", true)}
-        {loanToggle("Mượn tạm")}
+        {filePicker(t({ vi: "Chọn tệp", en: "Choose file" }), "button", true)}
+        {loanToggle(t({ vi: "Mượn tạm", en: "Borrow" }))}
       </>
     );
   }
@@ -262,7 +289,7 @@ export function ArcPhotoRow({
               className={styles.iconButton}
               data-move={color}
               data-dir="-1"
-              aria-label={`Đưa ${label} lên trước`}
+              aria-label={t({ vi: `Đưa ${label} lên trước`, en: `Move ${label} up` })}
               disabled={index === 0}
               onClick={() => onMove(-1)}
             >
@@ -275,7 +302,7 @@ export function ArcPhotoRow({
               className={styles.iconButton}
               data-move={color}
               data-dir="1"
-              aria-label={`Đưa ${label} xuống sau`}
+              aria-label={t({ vi: `Đưa ${label} xuống sau`, en: `Move ${label} down` })}
               disabled={index === count - 1}
               onClick={() => onMove(1)}
             >
@@ -287,7 +314,7 @@ export function ArcPhotoRow({
                 variant="ghost"
                 size="sm"
                 className={styles.iconButton}
-                aria-label={`Bỏ màu ${label}`}
+                aria-label={t({ vi: `Bỏ màu ${label}`, en: `Remove ${label}` })}
                 onClick={onUnpick}
               >
                 <X {...ICON} />
@@ -296,18 +323,21 @@ export function ArcPhotoRow({
           </span>
         </div>
         <p className={styles.caption}>
-          {index === 0 && "Ảnh đại diện · "}
+          {index === 0 && t({ vi: "Ảnh đại diện · ", en: "Cover photo · " })}
           {caption}
         </p>
         <div className={styles.actions}>{actions}</div>
         {picking && (
           <div className={styles.loans}>
             <ArcPhotoPicker
-              label={`Ảnh mượn tạm cho ${label}`}
+              label={t({ vi: `Ảnh mượn tạm cho ${label}`, en: `Borrowed photo for ${label}` })}
               hideLabel
               keys={loans.map((l) => l.key)}
               value={photo.kind === "loan" ? photo.key : null}
-              nameOf={(key) => `Ảnh của ${loans.find((l) => l.key === key)?.name ?? ""}`}
+              nameOf={(key) => {
+                const owner = loans.find((l) => l.key === key)?.name ?? "";
+                return t({ vi: `Ảnh của ${owner}`, en: `Photo of ${owner}` });
+              }}
               onValueChange={onChooseLoan}
               onCommit={onCommitLoan}
             />

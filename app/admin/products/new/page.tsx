@@ -1,11 +1,19 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { requireAdmin } from "@/lib/db/session";
 import { ArcProductScreen } from "@/components/admin-arc/ArcProductScreen";
 import { loadCatalog } from "@/lib/db/catalog";
 import { kindOptions, dropOptions } from "@/lib/admin-options";
 import { demoNow } from "@/lib/clock";
+import { picker } from "@/lib/i18n";
+import { getLocale } from "@/lib/locale";
 
-export const metadata = { title: "Thêm mẫu" };
+const TITLE = { vi: "Thêm mẫu", en: "Add style" };
+
+/** The screen's name in the title, in the page's language (round v6 slice E5); the layout adds "· Admin · HIVE". */
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: picker(await getLocale())(TITLE) };
+}
 
 /**
  * A blank style — created since v3 slice 7 (`createProduct`, slice B3c).
@@ -26,6 +34,7 @@ export const metadata = { title: "Thêm mẫu" };
 export default async function AdminNewProductPage() {
   await requireAdmin("/admin/products/new");
   await connection();
+  const locale = await getLocale();
   const now = demoNow();
   const catalog = await loadCatalog();
   const issues = dropOptions(catalog, now, { hideClosed: true });
@@ -33,9 +42,9 @@ export default async function AdminNewProductPage() {
   return (
     <ArcProductScreen
       mode="new"
-      title="Thêm mẫu"
-      kindOptions={kindOptions(catalog)}
-      dropOptions={dropOptions(catalog, now, { hideClosed: true, withFixed: true })}
+      title={picker(locale)(TITLE)}
+      kindOptions={kindOptions(catalog, locale)}
+      dropOptions={dropOptions(catalog, now, { hideClosed: true, withFixed: true }, locale)}
       values={{
         name: "",
         kind: "",

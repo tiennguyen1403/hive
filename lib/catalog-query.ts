@@ -1,6 +1,7 @@
 import type { Fit, Product } from "@/data/types";
 import { pick, pickAll, type Locale, type Pair } from "./i18n";
 import { styleName } from "./lexicon";
+import { productText } from "./product-text";
 
 /**
  * The fits' labels, and how a typed term is held against a style's name:
@@ -69,7 +70,10 @@ export function foldName(s: string): string {
  * "S05 KHÓI" and "S05 – KHÓI" all find KHÓI of Số 05 (v3 slice 11). A fixed
  * style's shown name is its name, so for it this asks nothing new.
  */
-export function styleNameHas(p: Product, term: string): boolean {
+export function styleNameHas(p: Product, term: string, locale: Locale = "vi"): boolean {
   const needle = foldName(term);
-  return needle !== "" && foldName(styleName(p.name, p.dropNo)).includes(needle);
+  if (needle === "") return false;
+  if (foldName(styleName(p.name, p.dropNo)).includes(needle)) return true;
+  // An English page finds the name it prints too: "plain", "D05 KHOI" (round v6 slice E5).
+  return locale === "en" && foldName(styleName(productText(p, "en").name, p.dropNo, "en")).includes(needle);
 }

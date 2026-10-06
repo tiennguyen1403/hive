@@ -1,4 +1,4 @@
-import { COLORS } from "@/data/colors";
+import { COLORS, colorLabel } from "@/data/colors";
 import { SIZES, type ColorKey, type Fit, type Size } from "@/data/types";
 import { FIXED_CHOICE } from "./admin-options";
 import type { Catalog } from "./catalog";
@@ -8,7 +8,9 @@ import {
   borrowedPhotoKeys,
   catalogFailureMessage,
 } from "./catalog-admin";
+import { picker, plural, type Locale } from "./i18n";
 import { LEX, styleName } from "./lexicon";
+import { productText } from "./product-text";
 import { vnd } from "./money";
 import { PHOTO_KEYS, isRealPhotoKey, isUploadedKey } from "./photos";
 
@@ -51,8 +53,9 @@ export function storedPhotoKind(key: string): "saved" | "loan" {
  * uploaded, "Ảnh thật" for one that ships with the app — nobody uploaded it,
  * and it is not borrowed.
  */
-export function savedPhotoCaption(key: string): string {
-  return isUploadedKey(key) ? "Ảnh đã tải lên" : "Ảnh thật";
+export function savedPhotoCaption(key: string, locale: Locale = "vi"): string {
+  const t = picker(locale);
+  return isUploadedKey(key) ? t({ vi: "Ảnh đã tải lên", en: "Uploaded photo" }) : t({ vi: "Ảnh thật", en: "Real photo" });
 }
 
 /** Pieces per colour and size, as the form's grid holds them. */
@@ -91,12 +94,21 @@ export function photoTally(
  * The meta beside "Màu và ảnh": "chưa chọn màu", "3 màu · thiếu 1 ảnh",
  * "2 màu · 2 ảnh mượn tạm", "3 màu · đủ ảnh" — in that order of urgency.
  */
-export function panelMeta(colors: readonly ColorKey[], tally: PhotoTally): string {
+export function panelMeta(colors: readonly ColorKey[], tally: PhotoTally, locale: Locale = "vi"): string {
+  const t = picker(locale);
   const n = colors.length;
-  if (n === 0) return "chưa chọn màu";
-  if (tally.missing.length > 0) return `${n} màu · thiếu ${tally.missing.length} ảnh`;
-  if (tally.loans.length > 0) return `${n} màu · ${tally.loans.length} ảnh mượn tạm`;
-  return `${n} màu · đủ ảnh`;
+  if (n === 0) return t({ vi: "chưa chọn màu", en: "no colours yet" });
+  const shown = plural(n, "colour", "colours");
+  if (tally.missing.length > 0) {
+    return t({
+      vi: `${n} màu · thiếu ${tally.missing.length} ảnh`,
+      en: `${shown} · ${plural(tally.missing.length, "photo", "photos")} missing`,
+    });
+  }
+  if (tally.loans.length > 0) {
+    return t({ vi: `${n} màu · ${tally.loans.length} ảnh mượn tạm`, en: `${shown} · ${tally.loans.length} borrowed` });
+  }
+  return t({ vi: `${n} màu · đủ ảnh`, en: `${shown} · every photo in` });
 }
 
 /** A new style as the form holds it while it is being filled in. */
@@ -130,20 +142,30 @@ export interface NewStyleState {
  * A fixed style (v3 slice 12) is never cut: its grid is headed "Tồn kho",
  * and the button asks for stock, not for a cut.
  */
-export function newStyleBlocker(s: NewStyleState): string | null {
-  if (s.name.trim() === "") return "Nhập tên mẫu";
-  if (s.kind === "") return "Chọn loại";
-  if (s.fit === null) return "Chọn form";
-  if (s.dropNo === "") return `Chọn ${LEX.tl}`;
-  if (s.priceVnd <= 0) return "Nhập giá bán";
-  if (s.priceVnd < MIN_PRICE_VND) return `Giá tối thiểu ${vnd(MIN_PRICE_VND)}`;
-  if (s.priceVnd > MAX_PRICE_VND) return `Giá tối đa ${vnd(MAX_PRICE_VND)}`;
-  if (s.material.trim() === "") return "Nhập chất liệu";
-  if (s.colors.length === 0) return "Chọn màu";
+export function newStyleBlocker(s: NewStyleState, locale: Locale = "vi"): string | null {
+  const t = picker(locale);
+  if (s.name.trim() === "") return t({ vi: "Nhập tên mẫu", en: "Enter the style name" });
+  if (s.kind === "") return t({ vi: "Chọn loại", en: "Choose a type" });
+  if (s.fit === null) return t({ vi: "Chọn form", en: "Choose a fit" });
+  if (s.dropNo === "") return t({ vi: `Chọn ${LEX.tl}`, en: "Choose a drop" });
+  if (s.priceVnd <= 0) return t({ vi: "Nhập giá bán", en: "Enter the price" });
+  if (s.priceVnd < MIN_PRICE_VND) {
+    return t({ vi: `Giá tối thiểu ${vnd(MIN_PRICE_VND)}`, en: `Minimum price ${vnd(MIN_PRICE_VND, "en")}` });
+  }
+  if (s.priceVnd > MAX_PRICE_VND) {
+    return t({ vi: `Giá tối đa ${vnd(MAX_PRICE_VND)}`, en: `Maximum price ${vnd(MAX_PRICE_VND, "en")}` });
+  }
+  if (s.material.trim() === "") return t({ vi: "Nhập chất liệu", en: "Enter the material" });
+  if (s.colors.length === 0) return t({ vi: "Chọn màu", en: "Choose the colours" });
   const empty = s.colors.find((c) => rowTotal(s.cells, c) === 0);
-  if (empty) return `Điền ${s.dropNo === FIXED_CHOICE ? "tồn kho" : "số cắt"} cho ${COLORS[empty].label}`;
+  if (empty) {
+    return t({
+      vi: `Điền ${s.dropNo === FIXED_CHOICE ? "tồn kho" : "số cắt"} cho ${COLORS[empty].label}`,
+      en: `Enter ${s.dropNo === FIXED_CHOICE ? "the stock" : "the cut"} for ${colorLabel(empty, "en")}`,
+    });
+  }
   const bare = s.colors.find((c) => (s.photos[c] ?? "none") === "none");
-  if (bare) return `Chọn ảnh cho ${COLORS[bare].label}`;
+  if (bare) return t({ vi: `Chọn ảnh cho ${COLORS[bare].label}`, en: `Choose a photo for ${colorLabel(bare, "en")}` });
   return null;
 }
 
@@ -157,16 +179,22 @@ export const PICK_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export const MAX_PICK_BYTES = 10 * 1_048_576;
 
 /** Why a picked file is refused, in the mock's words, or null when it is taken. */
-export function pickProblem(file: { type: string; size: number }): string | null {
-  if (!(PICK_TYPES as readonly string[]).includes(file.type)) return "Chỉ nhận JPG, PNG hoặc WebP";
-  if (file.size > MAX_PICK_BYTES) return "Tệp quá 10 MB · chọn ảnh nhỏ hơn";
+export function pickProblem(file: { type: string; size: number }, locale: Locale = "vi"): string | null {
+  const t = picker(locale);
+  if (!(PICK_TYPES as readonly string[]).includes(file.type)) {
+    return t({ vi: "Chỉ nhận JPG, PNG hoặc WebP", en: "JPG, PNG or WebP only" });
+  }
+  if (file.size > MAX_PICK_BYTES) {
+    return t({ vi: "Tệp quá 10 MB · chọn ảnh nhỏ hơn", en: "File over 10 MB · choose a smaller one" });
+  }
   return null;
 }
 
 /** `2516582` → `"2,4 MB"`, `48000` → `"47 KB"` — a picked file's size on its row. */
-export function fileSizeLabel(bytes: number): string {
+export function fileSizeLabel(bytes: number, locale: Locale = "vi"): string {
+  // The decimal mark of the page's language: "1,2 MB", or "1.2 MB" in English.
   return bytes >= 1_048_576
-    ? `${(bytes / 1_048_576).toFixed(1).replace(".", ",")} MB`
+    ? `${(bytes / 1_048_576).toFixed(1).replace(".", locale === "vi" ? "," : ".")} MB`
     : `${Math.round(bytes / 1024)} KB`;
 }
 
@@ -174,8 +202,12 @@ export function fileSizeLabel(bytes: number): string {
  * The toast when a colour is dropped with pieces already typed for it —
  * "Đã bỏ Rêu · 12 chiếc đã điền xoá theo" — or null when the row was empty.
  */
-export function droppedColorMessage(color: ColorKey, pieces: number): string | null {
-  return pieces > 0 ? `Đã bỏ ${COLORS[color].label} · ${pieces} chiếc đã điền xoá theo` : null;
+export function droppedColorMessage(color: ColorKey, pieces: number, locale: Locale = "vi"): string | null {
+  if (pieces <= 0) return null;
+  return picker(locale)({
+    vi: `Đã bỏ ${COLORS[color].label} · ${pieces} chiếc đã điền xoá theo`,
+    en: `${colorLabel(color, "en")} removed · the ${plural(pieces, "piece", "pieces")} entered went with it`,
+  });
 }
 
 /** A borrowed stand-in the form can offer, and the style it is the photo of. */
@@ -201,28 +233,31 @@ export interface LoanPhoto {
  * carry `flat-…` keys whose drawings do not exist yet, and until they do
  * each would show the hero frame under another style's name.
  */
-export function loanPhotos(catalog: Catalog): LoanPhoto[] {
+export function loanPhotos(catalog: Catalog, locale: Locale = "vi"): LoanPhoto[] {
   const rank = (key: string) => {
     const i = PHOTO_KEYS.indexOf(key);
     return i < 0 ? PHOTO_KEYS.length : i;
   };
   return borrowedPhotoKeys(catalog)
     .filter((key) => !isUploadedKey(key) && PHOTO_KEYS.includes(key))
-    .map((key) => ({ key, name: loanOwner(catalog, key) }))
+    .map((key) => ({ key, name: loanOwner(catalog, key, locale) }))
     .sort((a, b) => rank(a.key) - rank(b.key));
 }
 
-function loanOwner(catalog: Catalog, key: string): string {
+function loanOwner(catalog: Catalog, key: string, locale: Locale): string {
+  // A style's name as the shop prints it in the page's language (`productText`).
+  const named = (p: (typeof catalog.products)[number]) => styleName(productText(p, locale).name, p.dropNo, locale);
   const first = catalog.products.find((p) => p.photoKeys[0] === key);
-  if (first) return styleName(first.name, first.dropNo);
+  if (first) return named(first);
   const other = catalog.products.find((p) => p.photoKeys.includes(key));
   if (other) {
     const color = other.colors[other.photoKeys.indexOf(key)];
-    const shown = styleName(other.name, other.dropNo);
-    return color ? `${shown}, màu ${COLORS[color].label}` : shown;
+    const shown = named(other);
+    if (!color) return shown;
+    return picker(locale)({ vi: `${shown}, màu ${COLORS[color].label}`, en: `${shown}, ${colorLabel(color, "en")}` });
   }
   const teaser = catalog.teasers.find((t) => t.photoKey === key);
-  return teaser ? styleName(teaser.name, teaser.dropNo) : "";
+  return teaser ? styleName(teaser.name, teaser.dropNo, locale) : "";
 }
 
 /**
@@ -232,11 +267,16 @@ function loanOwner(catalog: Catalog, key: string): string {
  * dữ liệu mẫu" empties the bucket, keys the form is still holding included —
  * the form drops those keys and uploads the files again.
  */
-export function staleUploads(message: string | undefined, colors: readonly ColorKey[]): ColorKey[] {
+export function staleUploads(
+  message: string | undefined,
+  colors: readonly ColorKey[],
+  locale: Locale = "vi",
+): ColorKey[] {
   if (!message) return [];
+  // The refusal came back in the page's language, colour and all (round v6 slice E5).
   const named = colors.filter((c) =>
-    message.includes(catalogFailureMessage("ADD_PRODUCT", "PHOTO_UNKNOWN", COLORS[c].label)),
+    message.includes(catalogFailureMessage("ADD_PRODUCT", "PHOTO_UNKNOWN", colorLabel(c, locale), locale)),
   );
   if (named.length > 0) return named;
-  return message.includes(catalogFailureMessage("ADD_PRODUCT", "PHOTO_UNKNOWN")) ? [...colors] : [];
+  return message.includes(catalogFailureMessage("ADD_PRODUCT", "PHOTO_UNKNOWN", "", locale)) ? [...colors] : [];
 }

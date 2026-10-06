@@ -1,10 +1,12 @@
 "use client";
 
 import { ArrowLeft, Check, Copy } from "lucide-react";
-import { useState, type RefObject } from "react";
+import { useState, type ReactNode, type RefObject } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import type { Promotion } from "@/data/types";
 import { PROMO_KIND_LABEL } from "@/lib/admin-rows";
 import type { PromoKind } from "@/lib/catalog-admin";
+import { picker, type Locale, type Pair } from "@/lib/i18n";
 import { moneyInput, parseVnd, vnd } from "@/lib/money";
 import { parseStamp, stampOf, type PromoDraft } from "@/lib/promo-form";
 import { Button } from "@/registry/components/button/button";
@@ -16,17 +18,25 @@ import { keepOpenForToasts } from "./arc-toasts";
 import { useCapitals } from "./useCapitals";
 
 /** The three shapes a code can take, named the way the form names them (v3). */
-const KIND_OPTIONS: Array<{ value: PromoKind; label: string }> = [
-  { value: "PERCENT", label: "Giảm theo phần trăm" },
-  { value: "AMOUNT", label: "Giảm số tiền" },
-  { value: "FREE_SHIPPING", label: "Miễn phí giao" },
+const KIND_OPTIONS: Array<{ value: PromoKind; label: Pair }> = [
+  { value: "PERCENT", label: { vi: "Giảm theo phần trăm", en: "Percentage off" } },
+  { value: "AMOUNT", label: { vi: "Giảm số tiền", en: "Amount off" } },
+  { value: "FREE_SHIPPING", label: { vi: "Miễn phí giao", en: "Free delivery" } },
 ];
+
+/** The menu's rows in the page's language (round v6 slice E5). */
+const kindOptions = (locale: Locale) => KIND_OPTIONS.map((o) => ({ value: o.value, label: o.label[locale] }));
 
 /** Lucide at 16, Arc's stroke (skill-design.md). Decorative: every icon sits beside its label. */
 const ICON = { size: 16, strokeWidth: 1.75, "aria-hidden": true } as const;
 
 /** The fields a check reads, and what is wrong with each. */
-type Problems = Partial<Record<"code" | "percent" | "amount" | "from" | "to", string>>;
+/**
+ * What is wrong, by field, in both languages: kept as pairs and said at render,
+ * so a switch of language rewords a sentence already under a field (round v6
+ * slice E5, the lookup's rule of slice E2).
+ */
+type Problems = Partial<Record<"code" | "percent" | "amount" | "from" | "to", Pair>>;
 
 /** The name and window a copy of a code would take. */
 export interface PromoCopy {
@@ -87,6 +97,7 @@ export function ArcPromoDrawer({
   onSave,
   onDuplicate,
 }: ArcPromoDrawerProps) {
+  const t = picker(useLocale());
   return (
     <Drawer
       open={open}
@@ -97,12 +108,17 @@ export function ArcPromoDrawer({
       <DrawerContent
         onInteractOutside={keepOpenForToasts}
         className={styles.drawer}
-        title={promo ? `Sửa mã ${promo.code}` : "Tạo mã"}
+        title={promo ? t({ vi: `Sửa mã ${promo.code}`, en: `Edit code ${promo.code}` }) : t({ vi: "Tạo mã", en: "Create code" })}
         // Opening the sentence on a new code, the verb takes the capital
         // (v3 slice 13); after the standing it stays lower case.
-        description={`${standing ? `${standing} · đổi` : "Đổi"} điều kiện chỉ áp cho đơn đặt từ lúc lưu.${
-          duplicate ? ` Nhân bản thì mã mới tên ${duplicate.code}, hiệu lực theo ${duplicate.label}.` : ""
-        }`}
+        description={t({
+          vi: `${standing ? `${standing} · đổi` : "Đổi"} điều kiện chỉ áp cho đơn đặt từ lúc lưu.${
+            duplicate ? ` Nhân bản thì mã mới tên ${duplicate.code}, hiệu lực theo ${duplicate.label}.` : ""
+          }`,
+          en: `${standing ? `${standing} · changes` : "Changes"} to the terms apply to orders placed after saving.${
+            duplicate ? ` A duplicate is named ${duplicate.code} and runs for ${duplicate.label}.` : ""
+          }`,
+        })}
         onCloseAutoFocus={(event) => {
           const back = opener.current;
           if (!back?.isConnected) return;
@@ -146,6 +162,8 @@ function PromoForm({
   onSave: (draft: PromoDraft) => void;
   onDuplicate?: (draft: PromoDraft) => void;
 }) {
+  const locale = useLocale();
+  const t = picker(locale);
   const [code, setCode] = useState(promo ? String(promo.code) : "");
   const [kind, setKind] = useState<PromoKind>(promo ? promo.kind : "PERCENT");
   const [percent, setPercent] = useState(promo?.kind === "PERCENT" ? String(promo.percent) : "10");
@@ -172,24 +190,33 @@ function PromoForm({
    */
   function check(): { ok: true; draft: PromoDraft } | { ok: false; problems: Problems } {
     const refuse = (found: Problems) => ({ ok: false as const, problems: found });
-    if (!clean) return refuse({ code: "Nhập mã — đây là thứ khách gõ ở ô giảm giá." });
+    if (!clean) {
+      return refuse({
+        code: {
+          vi: "Nhập mã — đây là thứ khách gõ ở ô giảm giá.",
+          en: "Enter the code. It's what shoppers type in the discount box.",
+        },
+      });
+    }
     if (clean !== String(promo?.code ?? "") && taken.includes(clean)) {
-      return refuse({ code: `Mã ${clean} đã có rồi.` });
+      return refuse({ code: { vi: `Mã ${clean} đã có rồi.`, en: `Code ${clean} already exists.` } });
     }
     if (kind === "PERCENT" && (Number(percent) <= 0 || Number(percent) > 100)) {
-      return refuse({ percent: "Phần trăm phải nằm giữa 1 và 100." });
+      return refuse({
+        percent: { vi: "Phần trăm phải nằm giữa 1 và 100.", en: "The percentage must be between 1 and 100." },
+      });
     }
     if (kind === "AMOUNT" && parseVnd(amount) <= 0) {
-      return refuse({ amount: "Số tiền giảm phải lớn hơn 0." });
+      return refuse({ amount: { vi: "Số tiền giảm phải lớn hơn 0.", en: "The discount must be more than 0." } });
     }
     const start = parseStamp(from);
     const end = parseStamp(to);
     if (!start || !end) {
-      const format = "Nhập thời gian theo dạng 20:00 11/09/2026.";
+      const format = { vi: "Nhập thời gian theo dạng 20:00 11/09/2026.", en: "Enter times as 20:00 11/09/2026." };
       return refuse({ ...(start ? {} : { from: format }), ...(end ? {} : { to: format }) });
     }
     if (Date.parse(end) <= Date.parse(start)) {
-      return refuse({ to: "Giờ kết thúc phải sau giờ bắt đầu." });
+      return refuse({ to: { vi: "Giờ kết thúc phải sau giờ bắt đầu.", en: "The end must be after the start." } });
     }
     return {
       ok: true,
@@ -216,6 +243,8 @@ function PromoForm({
 
   /** As in v3, typing in any field a check reads clears what was said. */
   const clear = () => setProblems({});
+  /** A field's problem in the page's language, or nothing. */
+  const said = (pair: Pair | undefined) => (pair ? t(pair) : undefined);
 
   /**
    * A code is written in capitals, as checkout reads it and as the table
@@ -235,20 +264,27 @@ function PromoForm({
       <div className={styles.fields}>
         <Input
           {...capitals}
-          label="Mã"
+          label={t({ vi: "Mã", en: "Code" })}
           placeholder="DOT06"
           autoComplete="off"
           spellCheck={false}
           value={code}
           readOnly={promo !== null}
           className={promo ? styles.readOnly : undefined}
-          description={promo ? "Mã không đổi được sau khi tạo — dùng Nhân bản để có mã mới." : undefined}
-          error={problems.code}
+          description={
+            promo
+              ? t({
+                  vi: "Mã không đổi được sau khi tạo — dùng Nhân bản để có mã mới.",
+                  en: "A code can't change once created. Use Duplicate for a new one.",
+                })
+              : undefined
+          }
+          error={said(problems.code)}
         />
         {/* Another kind draws other fields: what was said about the old ones goes with them. */}
         <Select
-          label="Loại"
-          options={KIND_OPTIONS}
+          label={t({ vi: "Loại", en: "Type" })}
+          options={kindOptions(locale)}
           value={kind}
           onValueChange={(v) => {
             setKind(v as PromoKind);
@@ -259,29 +295,29 @@ function PromoForm({
         {kind === "PERCENT" && (
           <>
             <Input
-              label="Giảm (%)"
+              label={t({ vi: "Giảm (%)", en: "Discount (%)" })}
               inputMode="numeric"
               value={percent}
-              error={problems.percent}
+              error={said(problems.percent)}
               onChange={(e) => {
                 setPercent(e.target.value.replace(/\D/g, ""));
                 clear();
               }}
             />
             <Input
-              label="Giảm tối đa (₫)"
+              label={t({ vi: "Giảm tối đa (₫)", en: "Maximum discount (₫)" })}
               inputMode="numeric"
-              value={moneyInput(cap)}
+              value={moneyInput(cap, locale)}
               onChange={(e) => setCap(String(parseVnd(e.target.value) || ""))}
             />
           </>
         )}
         {kind === "AMOUNT" && (
           <Input
-            label="Giảm (₫)"
+            label={t({ vi: "Giảm (₫)", en: "Discount (₫)" })}
             inputMode="numeric"
-            value={moneyInput(amount)}
-            error={problems.amount}
+            value={moneyInput(amount, locale)}
+            error={said(problems.amount)}
             onChange={(e) => {
               setAmount(String(parseVnd(e.target.value) || ""));
               clear();
@@ -290,35 +326,35 @@ function PromoForm({
         )}
 
         <Input
-          label="Đơn từ (₫)"
+          label={t({ vi: "Đơn từ (₫)", en: "Minimum order (₫)" })}
           inputMode="numeric"
-          value={moneyInput(min)}
+          value={moneyInput(min, locale)}
           onChange={(e) => setMin(String(parseVnd(e.target.value) || ""))}
         />
         <Input
-          label="Giới hạn lượt · trống = không giới hạn"
+          label={t({ vi: "Giới hạn lượt · trống = không giới hạn", en: "Use limit · empty = no limit" })}
           inputMode="numeric"
-          placeholder="không giới hạn"
+          placeholder={t({ vi: "không giới hạn", en: "no limit" })}
           value={limit}
           onChange={(e) => setLimit(e.target.value.replace(/\D/g, ""))}
         />
         <Input
-          label="Bắt đầu"
+          label={t({ vi: "Bắt đầu", en: "Starts" })}
           placeholder="20:00 11/09/2026"
           autoComplete="off"
           value={from}
-          error={problems.from}
+          error={said(problems.from)}
           onChange={(e) => {
             setFrom(e.target.value);
             clear();
           }}
         />
         <Input
-          label="Kết thúc"
+          label={t({ vi: "Kết thúc", en: "Ends" })}
           placeholder="20:00 25/09/2026"
           autoComplete="off"
           value={to}
-          error={problems.to}
+          error={said(problems.to)}
           onChange={(e) => {
             setTo(e.target.value);
             clear();
@@ -327,20 +363,38 @@ function PromoForm({
       </div>
 
       <p className={styles.preview}>
-        Xem trước: <b>{clean || "—"}</b>{" "}
-        {kind === "PERCENT"
-          ? `giảm ${percent || 0}%${parseVnd(cap) > 0 ? `, tối đa ${vnd(parseVnd(cap))}` : ""}`
-          : kind === "AMOUNT"
-            ? `giảm ${vnd(parseVnd(amount))}`
-            : PROMO_KIND_LABEL.FREE_SHIPPING.toLocaleLowerCase("vi")}
-        {parseVnd(min) > 0 ? `, cho đơn từ ${vnd(parseVnd(min))}` : ""},{" "}
-        {limit.trim() === "" ? "không giới hạn lượt" : `${limit} lượt`}.
+        {t<ReactNode>({
+          vi: (
+            <>
+              Xem trước: <b>{clean || "—"}</b>{" "}
+              {kind === "PERCENT"
+                ? `giảm ${percent || 0}%${parseVnd(cap) > 0 ? `, tối đa ${vnd(parseVnd(cap))}` : ""}`
+                : kind === "AMOUNT"
+                  ? `giảm ${vnd(parseVnd(amount))}`
+                  : PROMO_KIND_LABEL.FREE_SHIPPING.toLocaleLowerCase("vi")}
+              {parseVnd(min) > 0 ? `, cho đơn từ ${vnd(parseVnd(min))}` : ""},{" "}
+              {limit.trim() === "" ? "không giới hạn lượt" : `${limit} lượt`}.
+            </>
+          ),
+          en: (
+            <>
+              Preview: <b>{clean || "—"}</b>{" "}
+              {kind === "PERCENT"
+                ? `${percent || 0}% off${parseVnd(cap) > 0 ? `, up to ${vnd(parseVnd(cap), "en")}` : ""}`
+                : kind === "AMOUNT"
+                  ? `${vnd(parseVnd(amount), "en")} off`
+                  : "free delivery"}
+              {parseVnd(min) > 0 ? `, on orders from ${vnd(parseVnd(min), "en")}` : ""},{" "}
+              {limit.trim() === "" ? "no use limit" : `${limit} ${limit === "1" ? "use" : "uses"}`}.
+            </>
+          ),
+        })}
       </p>
 
       <div className={styles.actions}>
         <Button variant="secondary" size="sm" disabled={pending} onClick={onCancel}>
           {pending ? null : <ArrowLeft {...ICON} />}
-          Huỷ
+          {t({ vi: "Huỷ", en: "Cancel" })}
         </Button>
         {duplicate && onDuplicate && (
           <Button
@@ -359,12 +413,12 @@ function PromoForm({
             }
           >
             {pending ? null : <Copy {...ICON} />}
-            Nhân bản thành {duplicate.code}
+            {t<ReactNode>({ vi: <>Nhân bản thành {duplicate.code}</>, en: <>Duplicate as {duplicate.code}</> })}
           </Button>
         )}
         <Button variant="primary" size="sm" loading={pending} onClick={() => submit(onSave)}>
           {pending ? null : <Check {...ICON} />}
-          {pending ? "Đang lưu…" : "Lưu"}
+          {pending ? t({ vi: "Đang lưu…", en: "Saving…" }) : t({ vi: "Lưu", en: "Save" })}
         </Button>
       </div>
     </div>

@@ -319,4 +319,17 @@ describe("registry/components (both languages, round v6 slice E0)", () => {
     expect(source).toMatch(/optionsLang,\s*\.\.\.inputProps/);
     expect(source).toMatch(/role="option"[\s\S]{0,200}lang=\{optionsLang\}/);
   });
+
+  it("lets a select option carry its own lang, on its row and on both copies of the value (slice E5)", () => {
+    const source = readFileSync(join(COMPONENTS, "select", "select.tsx"), "utf8");
+    // The option type takes an optional lang, beside the note.
+    expect(source).toMatch(/options:\s*\{[^}]*\blang\?:\s*string[^}]*\}\[\]/);
+    // On the option's row, Radix's item.
+    const item = source.slice(source.indexOf("<SelectPrimitive.Item "), source.indexOf("</SelectPrimitive.Item>"));
+    expect(item).toContain("lang={option.lang}");
+    // The chosen option's lang, on the value read to assistive tech and on the one drawn.
+    expect(source).toMatch(/const shownLang = currentValue \? options\[index\]\?\.lang : undefined;/);
+    expect(source).toMatch(/className=\{styles\.srOnly\} lang=\{shownLang\}/);
+    expect(source).toMatch(/<motion\.span[^>]*lang=\{shownLang\}>/);
+  });
 });

@@ -294,11 +294,19 @@ export function promoState(p: Promotion, now: Date = demoNow()): PromoState {
   return "LIVE";
 }
 
-export const PROMO_KIND_LABEL: Record<Promotion["kind"], string> = {
-  PERCENT: "Phần trăm",
-  AMOUNT: "Số tiền",
-  FREE_SHIPPING: "Miễn phí giao",
+/** A code's kind in either language (round v6 slice E5). */
+export const PROMO_KIND_TEXT: Record<Promotion["kind"], Pair> = {
+  PERCENT: { vi: "Phần trăm", en: "Percentage" },
+  AMOUNT: { vi: "Số tiền", en: "Amount" },
+  FREE_SHIPPING: { vi: "Miễn phí giao", en: "Free delivery" },
 };
+
+export const PROMO_KIND_LABEL: Record<Promotion["kind"], string> = pickAll(PROMO_KIND_TEXT, "vi");
+
+/** A code's kind in one language. */
+export function promoKindLabel(kind: Promotion["kind"], locale: Locale = "vi"): string {
+  return pick(PROMO_KIND_TEXT[kind], locale);
+}
 
 /**
  * What the code actually takes off.
@@ -307,15 +315,24 @@ export const PROMO_KIND_LABEL: Record<Promotion["kind"], string> = {
  * order reads as 300.000₫ when the code stops at 150.000₫. The cap is the
  * number somebody is checking, so it goes on the same line.
  */
-export function promoValueLabel(p: Promotion): string {
+export function promoValueLabel(p: Promotion, locale: Locale = "vi"): string {
+  const t = picker(locale);
   if (p.kind === "PERCENT") {
-    return p.maxDiscountVnd ? `${p.percent}% · tối đa ${vnd(p.maxDiscountVnd)}` : `${p.percent}%`;
+    return p.maxDiscountVnd
+      ? t({
+          vi: `${p.percent}% · tối đa ${vnd(p.maxDiscountVnd)}`,
+          en: `${p.percent}% · up to ${vnd(p.maxDiscountVnd, "en")}`,
+        })
+      : `${p.percent}%`;
   }
-  if (p.kind === "AMOUNT") return vnd(p.amountVnd);
+  if (p.kind === "AMOUNT") return vnd(p.amountVnd, locale);
   // What free shipping is WORTH, which is the number the column is for —
   // the kind column beside it already says "Miễn phí giao", and printing
   // that twice tells nobody what it takes off.
-  return `Phí giao tiêu chuẩn · ${vnd(STANDARD_FEE_VND)}`;
+  return t({
+    vi: `Phí giao tiêu chuẩn · ${vnd(STANDARD_FEE_VND)}`,
+    en: `Standard delivery fee · ${vnd(STANDARD_FEE_VND, "en")}`,
+  });
 }
 
 export interface DropRow {

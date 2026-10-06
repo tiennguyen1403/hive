@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useId, useRef, type KeyboardEvent } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
+import { picker } from "@/lib/i18n";
 import { photoUrl } from "@/lib/photos";
 import styles from "./ArcPhotoPicker.module.css";
 
@@ -36,7 +38,7 @@ export function ArcPhotoPicker({
   onValueChange,
   onCommit,
   hideLabel = false,
-  nameOf = (key) => `Ảnh ${key}`,
+  nameOf: nameOfProp,
 }: {
   /** The visible label, and the group's accessible name. */
   label: string;
@@ -53,6 +55,9 @@ export function ArcPhotoPicker({
   nameOf?: (key: string) => string;
 }) {
   const labelId = useId();
+  // Each photo's default name in the page's language (round v6 slice E5): v3's "Ảnh reu", or "Photo reu".
+  const locale = useLocale();
+  const nameOf = nameOfProp ?? ((key: string) => picker(locale)({ vi: `Ảnh ${key}`, en: `Photo ${key}` }));
   const photos = useRef<Array<HTMLButtonElement | null>>([]);
   const chosen = value === null ? -1 : keys.indexOf(value);
   // The group's one Tab stop: the chosen photo, else the first.

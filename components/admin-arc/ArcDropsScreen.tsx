@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState, useTransition, type Ref } from "react";
+import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import { SIZES, type Drop, type Product, type Teaser } from "@/data/types";
 import { addDrop, addTeaser, closeDropNow, scheduleDrop } from "@/lib/actions/catalog-admin";
@@ -14,6 +15,7 @@ import type { AdminOrder } from "@/lib/admin-orders";
 import { dropRows, type DropRow } from "@/lib/admin-rows";
 import { teasersIn } from "@/lib/catalog";
 import { nextDropNo, proposedWindow } from "@/lib/catalog-admin";
+import { joinPhrases, phrase, stored } from "@/lib/admin-text";
 import { downloadCsv } from "@/lib/csv";
 import { clockLabel, dayMonth, dayMonthYear } from "@/lib/datetime";
 import { closesInLabel, dropState, opensInLabel } from "@/lib/drop";
@@ -28,11 +30,13 @@ import {
   soldUnits,
   type IssueStyle,
 } from "@/lib/inventory";
+import { picker, plural, type Locale } from "@/lib/i18n";
 import { issueCsvName, issueCsvRows } from "@/lib/issue-csv";
-import { LEX, issueLabel, issueNo, styleInList, styleName } from "@/lib/lexicon";
+import { LEX, issueLabel, issueNo, lexicon, styleInList, styleName } from "@/lib/lexicon";
 import { compactVnd, plainVnd, vnd } from "@/lib/money";
 import { orderTotalVnd } from "@/lib/orders";
 import { photoUrl } from "@/lib/photos";
+import { nameLang, productText, teaserText } from "@/lib/product-text";
 import { soldOutTimes } from "@/lib/sold-out-times";
 import type { TeaserDraft } from "@/lib/teaser-form";
 import { Badge } from "@/registry/components/badge/badge";
@@ -51,8 +55,9 @@ import { ArcMeter } from "./ArcMeter";
 import panel from "./ArcOrderScreen.module.css";
 import book from "./ArcOrdersScreen.module.css";
 import page from "./ArcPage.module.css";
+import { phraseNode } from "./ArcPhrase";
 import { ArcTeaserDialog } from "./ArcTeaserDialog";
-import { ISSUE_STATE } from "./arc-issue-state";
+import { issueState } from "./arc-issue-state";
 import { useArcToast } from "./useArcToast";
 
 /** Lucide at 16, Arc's stroke (skill-design.md). Decorative: every icon sits beside its label. */
@@ -152,6 +157,9 @@ export function ArcDropsScreen({
 }) {
   const catalog = useCatalog();
   const say = useArcToast();
+  // The page's language (round v6 slice E5).
+  const locale = useLocale();
+  const t = picker(locale);
   const router = useRouter();
   const pathname = usePathname();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
@@ -241,7 +249,7 @@ export function ArcDropsScreen({
   }
 
   function downloadIssue(issue: number) {
-    downloadCsv(issueCsvName(issue), issueCsvRows(catalog, issue, catalog.products));
+    downloadCsv(issueCsvName(issue, locale), issueCsvRows(catalog, issue, catalog.products, locale));
   }
 
   // Newest number first, the order the table reads in.
@@ -275,16 +283,16 @@ export function ArcDropsScreen({
   function rowMenu(row: DropRow, issue: Drop) {
     const items: DropdownItem[] = [
       {
-        label: "Mở chi tiết",
+        label: t({ vi: "Mở chi tiết", en: "Open details" }),
         icon: <Eye {...ICON} />,
         onSelect: () => {
           noteSwitch(row.no, "menu");
           router.push(detailHref(row.no), { scroll: false });
         },
       },
-      { label: "Tải CSV", icon: <Download {...ICON} />, onSelect: () => downloadIssue(row.no) },
+      { label: t({ vi: "Tải CSV", en: "Download CSV" }), icon: <Download {...ICON} />, onSelect: () => downloadIssue(row.no) },
       {
-        label: "Sửa giờ",
+        label: t({ vi: "Sửa giờ", en: "Reschedule" }),
         icon: <Calendar {...ICON} />,
         onSelect: () =>
           openForm(
@@ -297,7 +305,7 @@ export function ArcDropsScreen({
       ...(row.state === "OPEN"
         ? [
             {
-              label: "Đóng sớm",
+              label: t({ vi: "Đóng sớm", en: "Close early" }),
               icon: <Clock {...ICON} />,
               destructive: true,
               separatorBefore: true,
@@ -316,7 +324,7 @@ export function ArcDropsScreen({
       >
         <DropdownMenu
           iconOnly
-          label={`Thao tác ${issueLabel(row.no)}`}
+          label={t({ vi: `Thao tác ${issueLabel(row.no)}`, en: `Actions for ${issueLabel(row.no, "en")}` })}
           icon={<MoreHorizontal {...ICON} />}
           items={items}
         />
@@ -327,7 +335,7 @@ export function ArcDropsScreen({
   const columnList: DataColumn<IssueRow>[] = [
     {
       key: "no",
-      label: LEX.t,
+      label: t({ vi: LEX.t, en: "Drop" }),
       render: (_v, x) => (
         <Link
           ref={(el) => {
@@ -351,51 +359,55 @@ export function ArcDropsScreen({
     },
     {
       key: "state",
-      label: "Trạng thái",
+      label: t({ vi: "Trạng thái", en: "Status" }),
       render: (_v, x) => (
-        <Badge tone={ISSUE_STATE[x.row.state].tone} size="sm">
-          {ISSUE_STATE[x.row.state].text}
+        <Badge tone={issueState(x.row.state, locale).tone} size="sm">
+          {issueState(x.row.state, locale).text}
         </Badge>
       ),
     },
     {
       key: "opens",
-      label: "Mở",
+      label: t({ vi: "Mở", en: "Opens" }),
       render: (_v, x) => (
         <span className={`${book.nowrap} ${book.num}`}>
-          {clockLabel(x.drop.opensAt)} · {dayMonth(x.drop.opensAt)}
+          {clockLabel(x.drop.opensAt)} · {dayMonth(x.drop.opensAt, locale)}
         </span>
       ),
     },
     {
       key: "closes",
-      label: "Đóng",
+      label: t({ vi: "Đóng", en: "Closes" }),
       render: (_v, x) => (
         <span className={`${book.nowrap} ${book.num}`}>
-          {clockLabel(x.drop.closesAt)} · {dayMonth(x.drop.closesAt)}
+          {clockLabel(x.drop.closesAt)} · {dayMonth(x.drop.closesAt, locale)}
         </span>
       ),
     },
     {
       key: "styles",
-      label: "Mẫu",
+      label: t({ vi: "Mẫu", en: "Styles" }),
       numeric: true,
       // An issue before it opens holds no style yet: what is being teased, or nothing.
       render: (_v, x) => (
         <span className={book.nowrap}>
-          {x.row.styles > 0 ? x.row.styles : x.row.teasers > 0 ? `${x.row.teasers} hé lộ` : "—"}
+          {x.row.styles > 0
+            ? x.row.styles
+            : x.row.teasers > 0
+              ? t({ vi: `${x.row.teasers} hé lộ`, en: plural(x.row.teasers, "teaser", "teasers") })
+              : "—"}
         </span>
       ),
     },
     {
       key: "cut",
-      label: "Đã cắt",
+      label: t({ vi: "Đã cắt", en: "Cut" }),
       numeric: true,
       render: (_v, x) => (x.row.cutUnits > 0 ? x.row.cutUnits : "—"),
     },
     {
       key: "sold",
-      label: "Đã bán",
+      label: t({ vi: "Đã bán", en: "Sold" }),
       numeric: true,
       render: (_v, x) => (
         <span className={book.nowrap}>
@@ -407,10 +419,10 @@ export function ArcDropsScreen({
     },
     {
       key: "revenue",
-      label: "Doanh thu",
+      label: t({ vi: "Doanh thu", en: "Revenue" }),
       numeric: true,
       render: (_v, x) => (
-        <span className={book.nowrap}>{x.row.revenueVnd > 0 ? plainVnd(x.row.revenueVnd) : "—"}</span>
+        <span className={book.nowrap}>{x.row.revenueVnd > 0 ? plainVnd(x.row.revenueVnd, locale) : "—"}</span>
       ),
     },
     // v3 names this column for assistive tech only; each menu names its issue.
@@ -430,9 +442,9 @@ export function ArcDropsScreen({
     <div className={page.page}>
       <header className={page.header}>
         <div className={page.headRow}>
-          <h1 className={page.title}>{LEX.adm}</h1>
+          <h1 className={page.title}>{lexicon(locale).adm}</h1>
           <div className={page.actions}>
-            <Badge size="sm">Dữ liệu mẫu</Badge>
+            <Badge size="sm">{t({ vi: "Dữ liệu mẫu", en: "Demo data" })}</Badge>
             <Button
               variant="primary"
               size="sm"
@@ -444,7 +456,7 @@ export function ArcDropsScreen({
               }
             >
               <Plus {...ICON} />
-              {`Tạo ${LEX.tl}`}
+              {t({ vi: `Tạo ${LEX.tl}`, en: "Create drop" })}
             </Button>
           </div>
         </div>
@@ -455,7 +467,7 @@ export function ArcDropsScreen({
           rows={tableRows}
           columns={columns}
           rowKey="key"
-          caption={LEX.adm}
+          caption={lexicon(locale).adm}
           holdWidths={false}
           density="compact"
           showCount={false}
@@ -573,6 +585,8 @@ function IssueDetail({
   onTease: (from: HTMLElement) => void;
 }) {
   const catalog = useCatalog();
+  const locale = useLocale();
+  const t = picker(locale);
   const ids = { detail: useId(), teasers: useId() };
   const no = drop.no;
   const state = dropState(drop, now);
@@ -607,34 +621,50 @@ function IssueDetail({
   const styleColumns: DataColumn<StyleRow>[] = [
     {
       key: "name",
-      label: "Mẫu",
-      render: (_v, x) => <span className={styles.name}>{styleName(x.product.name, x.product.dropNo)}</span>,
+      label: t({ vi: "Mẫu", en: "Style" }),
+      render: (_v, x) => (
+        <span className={styles.name} lang={nameLang(x.product, locale)}>
+          {styleName(productText(x.product, locale).name, x.product.dropNo, locale)}
+        </span>
+      ),
     },
-    { key: "kind", label: "Loại", render: (_v, x) => <span className={book.text}>{x.product.kind}</span> },
+    {
+      key: "kind",
+      label: t({ vi: "Loại", en: "Type" }),
+      render: (_v, x) => (
+        <span className={book.text}>{phraseNode(phrase(stored(productText(x.product, locale).kind, locale)))}</span>
+      ),
+    },
     {
       key: "price",
-      label: "Giá",
+      label: t({ vi: "Giá", en: "Price" }),
       numeric: true,
-      render: (_v, x) => <span className={book.nowrap}>{plainVnd(x.product.priceVnd)}</span>,
+      render: (_v, x) => <span className={book.nowrap}>{plainVnd(x.product.priceVnd, locale)}</span>,
     },
-    { key: "cut", label: "Đã cắt", numeric: true, render: (_v, x) => x.product.cutUnits },
-    { key: "sold", label: "Đã bán / còn", render: (_v, x) => <SoldCell product={x.product} /> },
+    { key: "cut", label: t({ vi: "Đã cắt", en: "Cut" }), numeric: true, render: (_v, x) => x.product.cutUnits },
+    {
+      key: "sold",
+      label: t({ vi: "Đã bán / còn", en: "Sold / left" }),
+      render: (_v, x) => <SoldCell product={x.product} locale={locale} />,
+    },
     {
       key: "out",
-      label: "Size hết",
+      label: t({ vi: "Size hết", en: "Sizes out" }),
       render: (_v, x) => {
         const out = soldOutSizes(x.product);
         return (
-          <span className={book.nowrap}>{out.length === SIZES.length ? "tất cả" : out.join(" · ") || "—"}</span>
+          <span className={book.nowrap}>
+            {out.length === SIZES.length ? t({ vi: "tất cả", en: "all" }) : out.join(" · ") || "—"}
+          </span>
         );
       },
     },
     {
       key: "revenue",
-      label: "Doanh thu",
+      label: t({ vi: "Doanh thu", en: "Revenue" }),
       numeric: true,
       render: (_v, x) => (
-        <span className={book.nowrap}>{plainVnd(x.product.priceVnd * soldUnits(x.product))}</span>
+        <span className={book.nowrap}>{plainVnd(x.product.priceVnd * soldUnits(x.product), locale)}</span>
       ),
     },
   ];
@@ -646,31 +676,37 @@ function IssueDetail({
       <div className={styles.detailHead}>
         <div className={styles.detailHeading}>
           <h2 id={ids.detail} className={styles.detailTitle}>
-            {issueLabel(no)}
+            {issueLabel(no, locale)}
           </h2>
           <p className={styles.detailState}>
             {state === "OPEN"
-              ? `đang bán · ${closesInLabel(drop.closesAt, now).replace("đóng sau ", "")}`
+              ? t({
+                  vi: `đang bán · ${closesInLabel(drop.closesAt, now).replace("đóng sau ", "")}`,
+                  en: `live · ${closesInLabel(drop.closesAt, now, "en").replace("closes in ", "")} left`,
+                })
               : state === "UPCOMING"
-                ? opensInLabel(drop.opensAt, now)
-                : `đã đóng ${dayMonthYear(drop.closesAt)}`}
+                ? opensInLabel(drop.opensAt, now, locale)
+                : t({
+                    vi: `đã đóng ${dayMonthYear(drop.closesAt)}`,
+                    en: `closed ${dayMonthYear(drop.closesAt, "en")}`,
+                  })}
           </p>
         </div>
         <div className={page.actions}>
           <Button ref={csvRef} variant="secondary" size="sm" onClick={onDownload}>
             <Download {...ICON} />
-            {`Tải CSV ${LEX.tl} này`}
+            {t({ vi: `Tải CSV ${LEX.tl} này`, en: "Download this drop's CSV" })}
           </Button>
           {state === "OPEN" && (
             <Button variant="secondary" size="sm" onClick={(e) => onClose(e.currentTarget)}>
               <Clock {...ICON} />
-              Đóng sớm
+              {t({ vi: "Đóng sớm", en: "Close early" })}
             </Button>
           )}
           {state === "CLOSED" && (
             <ArcButtonLink variant="secondary" size="sm" href={`/so/${no}`}>
               <BookOpen {...ICON} />
-              {`Xem sổ ${LEX.tl} ${issueNo(no)}`}
+              {t({ vi: `Xem sổ ${LEX.tl} ${issueNo(no)}`, en: `View the ${issueLabel(no, "en")} page` })}
             </ArcButtonLink>
           )}
         </div>
@@ -678,7 +714,9 @@ function IssueDetail({
 
       {summary.styles === 0 ? (
         <div className={panel.panel}>
-          <p className={styles.none}>{LEX.t} này chưa có mẫu nào.</p>
+          <p className={styles.none}>
+            {t<React.ReactNode>({ vi: <>{LEX.t} này chưa có mẫu nào.</>, en: <>This drop has no styles yet.</> })}
+          </p>
         </div>
       ) : (
         <>
@@ -686,35 +724,83 @@ function IssueDetail({
               rows from its own width (`.kpis` in the module). */}
           <div className={styles.kpis}>
             <div className={styles.kpiGrid}>
-              <ArcKpi aligned label="Doanh thu" value={compactVnd(revenue)}>
-                {vnd(revenue)} · theo giá niêm yết
+              <ArcKpi aligned label={t({ vi: "Doanh thu", en: "Revenue" })} value={compactVnd(revenue, locale)}>
+                {t<React.ReactNode>({
+                  vi: <>{vnd(revenue)} · theo giá niêm yết</>,
+                  en: <>{vnd(revenue, "en")} · at list price</>,
+                })}
               </ArcKpi>
-              <ArcKpi aligned label="Đơn trong dữ liệu mẫu" value={String(issueOrders.length)}>
+              <ArcKpi
+                aligned
+                label={t({ vi: "Đơn trong dữ liệu mẫu", en: "Orders in demo data" })}
+                value={String(issueOrders.length)}
+              >
                 {booked.length > 0
-                  ? `trung bình ${vnd(averageVnd)} mỗi đơn đã thanh toán`
-                  : "chưa có đơn đã thanh toán nào"}
+                  ? t({
+                      vi: `trung bình ${vnd(averageVnd)} mỗi đơn đã thanh toán`,
+                      en: `average ${vnd(averageVnd, "en")} per paid order`,
+                    })
+                  : t({ vi: "chưa có đơn đã thanh toán nào", en: "no paid orders yet" })}
               </ArcKpi>
-              <ArcKpi aligned label="Đã bán" value={`${summary.soldUnits} / ${summary.cutUnits}`} meter={soldPercent}>
-                {soldPercent}% · còn {summary.onHand}
+              <ArcKpi
+                aligned
+                label={t({ vi: "Đã bán", en: "Sold" })}
+                value={`${summary.soldUnits} / ${summary.cutUnits}`}
+                meter={soldPercent}
+              >
+                {t<React.ReactNode>({
+                  vi: <>{soldPercent}% · còn {summary.onHand}</>,
+                  en: <>{soldPercent}% · {summary.onHand} left</>,
+                })}
               </ArcKpi>
-              <ArcKpi aligned label="Hết hàng" value={`${gone.length} / ${summary.styles}`}>
+              <ArcKpi aligned label={t({ vi: "Hết hàng", en: "Sold out" })} value={`${gone.length} / ${summary.styles}`}>
                 {soldOut.length > 0
-                  ? soldOut
-                      .map(
-                        // One entry, held together (`HOLD`): the name
-                        // (`styleInList`, v3 slice 13) and when it ran out.
-                        (r) =>
-                          `${styleInList(styleName(r.product.name, r.product.dropNo))}${r.soldOutAt ? `${HOLD_SEP}hết${HOLD}${dayMonth(r.soldOutAt)}` : ""}`,
+                  ? locale === "vi"
+                    ? soldOut
+                        .map(
+                          // One entry, held together (`HOLD`): the name
+                          // (`styleInList`, v3 slice 13) and when it ran out.
+                          (r) =>
+                            `${styleInList(styleName(r.product.name, r.product.dropNo))}${r.soldOutAt ? `${HOLD_SEP}hết${HOLD}${dayMonth(r.soldOutAt)}` : ""}`,
+                        )
+                        .join(SEP)
+                    : phraseNode(
+                        // English: the name the shop prints, marked when it is Vietnamese.
+                        joinPhrases(
+                          soldOut.map((r) =>
+                            phrase(
+                              stored(styleInList(styleName(productText(r.product, "en").name, r.product.dropNo, "en")), "en"),
+                              // The date alone under "Sold out": the heading says what it is (measured, slice E5).
+                              r.soldOutAt ? `${HOLD_SEP}${dayMonth(r.soldOutAt, "en")}` : "",
+                            ),
+                          ),
+                          SEP,
+                        ),
                       )
-                      .join(SEP)
-                  : "chưa mẫu nào bán hết"}
+                  : t({ vi: "chưa mẫu nào bán hết", en: "none sold out yet" })}
               </ArcKpi>
-              <ArcKpi aligned label={`Còn dưới ${LOW_STOCK_AT + 1} chiếc`} value={`${low.length} mẫu`}>
+              <ArcKpi
+                aligned
+                label={t({ vi: `Còn dưới ${LOW_STOCK_AT + 1} chiếc`, en: `Under ${LOW_STOCK_AT + 1} left` })}
+                value={t({ vi: `${low.length} mẫu`, en: plural(low.length, "style", "styles") })}
+              >
                 {low.length > 0
-                  ? low
-                      .map((a) => `${styleInList(styleName(a.product.name, a.product.dropNo))}${HOLD}còn${HOLD}${a.left}`)
-                      .join(SEP)
-                  : "chưa mẫu nào xuống thấp"}
+                  ? locale === "vi"
+                    ? low
+                        .map((a) => `${styleInList(styleName(a.product.name, a.product.dropNo))}${HOLD}còn${HOLD}${a.left}`)
+                        .join(SEP)
+                    : phraseNode(
+                        joinPhrases(
+                          low.map((a) =>
+                            phrase(
+                              stored(styleInList(styleName(productText(a.product, "en").name, a.product.dropNo, "en")), "en"),
+                              `${HOLD}${a.left}${HOLD}left`,
+                            ),
+                          ),
+                          SEP,
+                        ),
+                      )
+                  : t({ vi: "chưa mẫu nào xuống thấp", en: "none running low yet" })}
               </ArcKpi>
             </div>
           </div>
@@ -726,15 +812,27 @@ function IssueDetail({
               rows={styleList.map<StyleRow>((product) => ({ id: product.id, product }))}
               columns={columns}
               rowKey="id"
-              caption={issueLabel(no)}
+              caption={issueLabel(no, locale)}
               holdWidths={false}
               density="compact"
               showCount={false}
             />
             <div className={book.foot}>
               <p className={book.shown}>
-                {summary.styles} mẫu · {summary.cutUnits} đã cắt · {summary.soldUnits} đã bán · doanh thu theo
-                giá niêm yết, chưa trừ mã giảm giá
+                {t<React.ReactNode>({
+                  vi: (
+                    <>
+                      {summary.styles} mẫu · {summary.cutUnits} đã cắt · {summary.soldUnits} đã bán · doanh thu theo
+                      giá niêm yết, chưa trừ mã giảm giá
+                    </>
+                  ),
+                  en: (
+                    <>
+                      {plural(summary.styles, "style", "styles")} · {summary.cutUnits} cut · {summary.soldUnits} sold ·
+                      revenue at list price, before discount codes
+                    </>
+                  ),
+                })}
               </p>
             </div>
           </div>
@@ -743,27 +841,45 @@ function IssueDetail({
           <section className={panel.panel} aria-labelledby={ids.teasers}>
             <div className={panel.panelHead}>
               <h3 id={ids.teasers} className={panel.panelTitle}>
-                {issueLabel(no + 1)} · mẫu hé lộ
+                {t<React.ReactNode>({
+                  vi: <>{issueLabel(no + 1)} · mẫu hé lộ</>,
+                  en: <>{issueLabel(no + 1, "en")} · teasers</>,
+                })}
               </h3>
               {canTease && (
                 <Button variant="secondary" size="sm" onClick={(e) => onTease(e.currentTarget)}>
                   <Plus {...ICON} />
-                  Thêm mẫu hé lộ
+                  {t({ vi: "Thêm mẫu hé lộ", en: "Add teaser" })}
                 </Button>
               )}
             </div>
             {teasers.length === 0 ? (
               <p className={styles.none}>
-                Chưa hé lộ mẫu nào cho {LEX.tl} {issueNo(no + 1)}.
+                {t<React.ReactNode>({
+                  vi: (
+                    <>
+                      Chưa hé lộ mẫu nào cho {LEX.tl} {issueNo(no + 1)}.
+                    </>
+                  ),
+                  en: <>No teasers for {issueLabel(no + 1, "en")} yet.</>,
+                })}
               </p>
             ) : (
               <ul className={styles.teasers}>
-                {teasers.map((t) => (
-                  <li className={styles.teaser} key={t.slug}>
-                    <Image className={panel.thumb} src={photoUrl(t.photoKey, 120)} alt="" width={36} height={45} />
+                {teasers.map((teaser) => (
+                  <li className={styles.teaser} key={teaser.slug}>
+                    <Image className={panel.thumb} src={photoUrl(teaser.photoKey, 120)} alt="" width={36} height={45} />
                     <span className={styles.teaserText}>
-                      <span className={styles.teaserName}>{styleName(t.name, t.dropNo)}</span>
-                      <span className={styles.teaserKind}>{t.kind} · giá công bố khi mở</span>
+                      <span className={styles.teaserName} lang={nameLang(teaser, locale)}>
+                        {styleName(teaserText(teaser, locale).name, teaser.dropNo, locale)}
+                      </span>
+                      <span className={styles.teaserKind}>
+                        {locale === "vi" ? (
+                          <>{teaser.kind} · giá công bố khi mở</>
+                        ) : (
+                          phraseNode(phrase(stored(teaserText(teaser, "en").kind, "en"), " · price set at opening"))
+                        )}
+                      </span>
                     </span>
                   </li>
                 ))}
@@ -783,7 +899,7 @@ function IssueDetail({
  * The count is a box of one width on every row, flush right, so the bars start
  * and end at the same x down the column, as the codes' "Lượt" (slice 3).
  */
-function SoldCell({ product }: { product: IssueStyle }) {
+function SoldCell({ product, locale }: { product: IssueStyle; locale: Locale }) {
   const sold = soldUnits(product);
   const left = onHand(product);
   const percent = product.cutUnits === 0 ? 0 : Math.round((sold / product.cutUnits) * 100);
@@ -792,7 +908,18 @@ function SoldCell({ product }: { product: IssueStyle }) {
     <span className={styles.sold}>
       <ArcMeter percent={percent} reading={reading} className={styles.soldBar} />
       <span className={styles.soldCount}>
-        {sold} · {left === 0 ? "hết" : `còn ${left}`}
+        {picker(locale)<React.ReactNode>({
+          vi: (
+            <>
+              {sold} · {left === 0 ? "hết" : `còn ${left}`}
+            </>
+          ),
+          en: (
+            <>
+              {sold} · {left === 0 ? "sold out" : `${left} left`}
+            </>
+          ),
+        })}
       </span>
     </span>
   );

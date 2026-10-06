@@ -1,6 +1,7 @@
 import { SIZES, type Product } from "@/data/types";
 import type { Query } from "./admin-url";
 import type { Catalog } from "./catalog";
+import { picker, plural, type Locale } from "./i18n";
 import { FIXED_LOW_AT, isFixed, isRunningLow, onHand, onHandOf, productsOnSale } from "./inventory";
 
 /**
@@ -38,14 +39,16 @@ export function fixedStatus(p: Product): FixedStatus {
  * not in another the board printed nothing, and the brief's rule — the
  * fewest left — reads "L còn 0".
  */
-export function lowNote(p: Product): string | null {
+export function lowNote(p: Product, locale: Locale = "vi"): string | null {
   if (!isFixed(p) || !isRunningLow(p)) return null;
+  const t = picker(locale);
   const parts: string[] = [];
   for (const size of SIZES) {
     const left = p.colors.map((c) => onHandOf(p, c, size));
     const fewest = Math.min(...left);
-    if (left.every((n) => n === 0)) parts.push(`${size} hết`);
-    else if (fewest <= FIXED_LOW_AT) parts.push(`${size} còn ${fewest}`);
+    // "out", as the drops' detail says it: the table's stock column is narrow (round v6 slice E5, measured).
+    if (left.every((n) => n === 0)) parts.push(t({ vi: `${size} hết`, en: `${size} out` }));
+    else if (fewest <= FIXED_LOW_AT) parts.push(t({ vi: `${size} còn ${fewest}`, en: `${size} ${fewest} left` }));
   }
   return parts.length > 0 ? parts.join(" · ") : null;
 }
@@ -91,8 +94,8 @@ export function productsTab(query: Query): ProductsTab {
  * issue's, sold out included, and every fixed one). The clause that explained
  * the stock columns went at v3 slice 13 (the user's copy review).
  */
-export function stylesLine(catalog: Catalog, now: Date): string {
+export function stylesLine(catalog: Catalog, now: Date, locale: Locale = "vi"): string {
   const all = catalog.products.length;
   const selling = productsOnSale(catalog, now).length;
-  return `${all} mẫu · ${selling} đang bán`;
+  return picker(locale)({ vi: `${all} mẫu · ${selling} đang bán`, en: `${plural(all, "style", "styles")} · ${selling} live` });
 }

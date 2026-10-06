@@ -3269,6 +3269,26 @@ Phiên chính đo và tra trước khi đề xuất:
 - Người dùng tạo OAuth client trên Google Cloud, dán vào dashboard Supabase, và chuyển ứng dụng sang "In production". Nếu không,
   chỉ người trong danh sách thử mới đăng nhập được.
 - Màn đồng ý của Google hiện tên miền `….supabase.co`. Cách hiện tên miền riêng sẽ cân trong brief.
+- **06/10, phiên chính cân xong:** giữ `….supabase.co`, coi là giới hạn đã biết.
+  - Tên miền riêng cho Auth là add-on trả phí của Supabase (10 USD một tháng, chỉ gói trả phí), lại cần một tên miền riêng.
+    Vượt mức 0đ của QĐ-25.
+  - Cách miễn phí là nút do script của Google vẽ, gửi ID token cho một Server Action. Cách này nạp script Google vào trang và
+    trái câu "trình duyệt chỉ chuyển trang qua Google" ở trên.
+- **06/10, người dùng chọn (AskUserQuestion):** nút dùng **chữ G bốn màu chuẩn** của Google, vì luật thương hiệu của Google bắt
+  nút tự vẽ phải có chữ G chuẩn. Nút giữ hình viên thuốc và chữ của Feed; chỉ chữ G đổi (mock dùng G đơn sắc).
+- Tài khoản chỉ có Google thì không có mật khẩu, nên form đổi mật khẩu (đòi mật khẩu hiện tại) không dùng được. Phiên chính quyết:
+  ẩn lối vào form đó với tài khoản này.
+- **06/10, Google Cloud:** muốn publish (In production) thì trang Branding phải đủ.
+  - Phiên chính hướng dẫn người dùng điền:
+    - Authorized domains `hive-neon-three.vercel.app` và `ajgnyamnjmqdhsaqqyug.supabase.co`;
+    - app name HIVE, không logo (ứng dụng đã production mà tải logo lên thì phải qua xét duyệt mới hiện);
+    - home page là trang chủ demo;
+    - privacy policy `https://hive-neon-three.vercel.app/privacy`.
+  - **Người dùng chọn (AskUserQuestion): làm trang `/privacy` riêng**, không trỏ về trang chủ hay một câu trong Hỏi đáp.
+    - Trang ngắn, song ngữ, khung như trang Giới thiệu.
+    - Nội dung đúng sự thật: lưu gì, ở đâu, quản trị che dữ liệu người thật, đơn bị xoá hằng ngày.
+    - Phiên chính soạn chữ, người dùng duyệt, rồi `ui-implementer` dựng.
+    - Phải lên cùng lúc hoặc trước Google.
 
 ### QĐ-42: Stripe, chỉ chế độ thử *(01/10/2026)*
 - Chỉ sandbox, không bao giờ có tiền thật. Lựa chọn `CARD` thành thanh toán bằng thẻ thử trên trang Stripe. Khách quay về thì
@@ -3280,6 +3300,34 @@ Phiên chính đo và tra trước khi đề xuất:
 
 ### QĐ-43: Đợt này không làm chế độ tối *(01/10/2026)*
 - QĐ-38 giữ nguyên: quản trị chỉ nền sáng. Feed không có bản tối.
+
+### QĐ-44: Quản trị công khai che dữ liệu của người thật *(06/10/2026)*
+- **Bối cảnh:** quản trị thử là công khai (QĐ-25, câu 2). Ai bấm "Vào quản trị thử" cũng xem được danh sách khách và sổ đơn.
+  - Hôm nay tài khoản tạo bằng email và đơn của khách vãng lai đã hiện đủ tên, email, số điện thoại, địa chỉ.
+  - Có Google thì người đăng nhập sẽ hiện tên và Gmail thật mà không phải gõ gì, và mọi người xem demo sau đều thấy.
+  - Lần đặt lại hằng ngày xoá đơn nhưng giữ `profiles`, nên tài khoản thật nằm đó mãi.
+- **Người dùng chọn (06/10, AskUserQuestion): che trong quản trị.**
+  - Với dữ liệu không thuộc dữ liệu mẫu, tên rút gọn; email, số điện thoại và số nhà bị che. Ví dụ "Peter S. · pe•••@gmail.com ·
+    09•• ••• 678".
+  - Phường, tỉnh, món, tiền hiện đủ. Dữ liệu mẫu hiện như cũ.
+  - Khách vẫn thấy đơn mình vừa đặt trong quản trị.
+  - Họ không chọn "ẩn hẳn khỏi quản trị" (kín nhất, nhưng khách không thấy đơn của mình) hay "giữ như hiện tại".
+- Áp cho mọi chỗ quản trị in dữ liệu đó: danh sách và trang khách, sổ đơn, trang đơn, phiếu giao, CSV, Nhật ký.
+- Phía cửa hàng không đổi: chủ tài khoản vẫn thấy đủ dữ liệu của mình.
+- Làm cùng lát Google, và phải xong trước khi Google lên demo.
+
+### QĐ-45: Tài khoản thật bị xoá mỗi ngày *(06/10/2026)*
+- **Bối cảnh:** kiểm kê 06/10 cho thấy:
+  - app không có cách xoá tài khoản ("Xoá tài khoản" ở Hồ sơ đang "Đang chuẩn bị") và không có kênh liên hệ;
+  - tài khoản thật, địa chỉ, cài đặt, yêu thích, nhắc nằm đó mãi; chỉ đơn và Nhật ký bị xoá mỗi ngày.
+  - Trang `/privacy` phải nói được cách xoá dữ liệu.
+- **Người dùng chọn (06/10, AskUserQuestion): tự xoá mỗi ngày.** Lần đặt lại hằng ngày (cron, 19:00–19:59 giờ Việt Nam) xoá mọi
+  tài khoản không thuộc dữ liệu mẫu, kèm toàn bộ dữ liệu của chúng. Khách Google đăng nhập lại thì có tài khoản mới.
+  - Họ không chọn bật nút "Xoá tài khoản" hay làm cả hai. Nút đó giữ "Đang chuẩn bị".
+- **Phiên chính quyết:** chỉ cron hằng ngày xoá tài khoản. Nút "Đặt lại dữ liệu mẫu" trong quản trị công khai ai cũng bấm được (3
+  lần mỗi 10 phút), nên nó không xoá tài khoản, để một người xem không xoá được tài khoản của người khác giữa chừng.
+- Đảo một phần thiết kế B4 và B13: `reset_demo` giữ yêu thích và nhắc của mọi tài khoản. Nay tài khoản thật không còn qua đêm.
+- Làm trong lát B17.
 
 ### Rà soát
 - Một lượt toàn app ở cuối đợt: cả hai thứ tiếng, điện thoại, máy tính, quản trị, gồm cả luồng Google và Stripe.
@@ -3565,3 +3613,92 @@ chụp lại ảnh "trước", và dặn giữ đầu ra gọn (kết quả scri
   - chân thanh bên in tên tài khoản quản trị mẫu "Quản lý cửa hàng" (chữ đã lưu).
 - **Mẫu thêm cho E5:** `Phrase` / `Stored` cho chữ đã lưu giữa câu; `storedLang` cho ô nhập; muốn biết bảng có vừa thẻ không thì đo
   trong cửa sổ thật 1280×800.
+
+**06/10, lát E5 giao** (brief `tasks/briefs/v6-lat-e5.md`, agent `ui-implementer`). Trước khi giao, phiên chính bật lại Docker và
+Supabase cục bộ (Docker Desktop đang tắt).
+
+**06/10, chuẩn bị lát Google trong lúc E5 chạy.** Người dùng chốt hai việc (ghi ở QĐ-41 và QĐ-44): chữ G bốn màu chuẩn; che dữ liệu
+người thật trong quản trị công khai.
+- Brief: `tasks/briefs/backend-b16.md` (đăng nhập Google), `tasks/briefs/backend-b17.md` (che dữ liệu người thật).
+- Giao sau khi đợt tiếng Anh lên demo. B17 phải xong trước khi Google lên demo.
+- **Google Cloud xong (06/10, người dùng làm):**
+  - ứng dụng HIVE đã publish (In production);
+  - OAuth client loại Web: redirect URI `https://ajgnyamnjmqdhsaqqyug.supabase.co/auth/v1/callback` và
+    `http://127.0.0.1:54321/auth/v1/callback`; JS origin `https://hive-neon-three.vercel.app` và `http://localhost:3200`;
+  - người dùng giữ khoá ngoài repo.
+- **Chưa bật Google ở Supabase hosted:** bật trước khi B17 lên thì ai gọi thẳng `/auth/v1/authorize` vẫn tạo được tài khoản Google, và
+  tài khoản đó hiện đủ trong quản trị công khai. Phiên chính sẽ gửi các bước bật cùng danh sách Redirect URL khi Google sắp lên demo.
+- **Khoá cục bộ:** phiên chính dặn người dùng ghi vào tệp nào khi giao B16, sau khi đo tệp mà CLI đọc.
+
+**06/10, kiểm kê dữ liệu cá nhân** (agent Explore, chỉ đọc; để soạn trang `/privacy`):
+- **Lưu gì:**
+  - tài khoản: email, mật khẩu đã băm, tên, số điện thoại, địa chỉ, size, công tắc thông báo, yêu thích (kể cả mẫu đã bỏ lưu), nhắc;
+  - đơn: người nhận, số điện thoại, địa chỉ, email và ghi chú nếu có;
+  - lượt giới hạn tần suất: HMAC của IP, giữ khoảng 2–3 ngày;
+  - trình duyệt: cookie `hive-lang` (1 năm), cookie phiên Supabase (400 ngày, không `HttpOnly`), cookie `guest_orders` (30 ngày,
+    `HttpOnly`), `inbox_read`; localStorage giỏ, mã giảm giá, tìm gần đây, chiều cao.
+- **Giữ bao lâu:**
+  - đơn và Nhật ký bị xoá mỗi ngày lúc 19:00–19:59 giờ Việt Nam, hoặc sớm hơn khi có ai bấm đặt lại trong quản trị công khai;
+  - tài khoản thật, địa chỉ, cài đặt, yêu thích, nhắc thì giữ mãi.
+- **Không có:** email gửi đi, analytics, script hay request trình duyệt gửi tới bên thứ ba. Ảnh Unsplash đi qua `/_next/image`.
+- **Máy chủ:** Vercel `sin1` và Supabase `ap-southeast-1`, đều ở Singapore.
+- **Không có cách xoá tài khoản trong app** ("Xoá tài khoản" đang "Đang chuẩn bị"), và không có kênh liên hệ.
+- **Quản trị công khai lộ dữ liệu người thật:** chép vào brief B17, kể cả dữ liệu có trong trang mà không hiện.
+- **Để sau:** link tra đơn `/track?code=…&phone=…` đưa số điện thoại vào URL, tức vào lịch sử trình duyệt và log. Cookie phiên đưa vào
+  B16 để gia cố.
+
+**06/10, trang `/privacy`:** người dùng duyệt chữ cả hai bản (`tasks/briefs/v6-privacy-copy.md`), link cuối nhóm "Trợ giúp" ở chân
+trang, khung như Giới thiệu. Brief `tasks/briefs/v6-lat-p.md` (agent `ui-implementer`).
+- **Thứ tự sau khi đợt tiếng Anh lên demo:** B17 (che + xoá mỗi ngày) → B16 (Google) → P (`/privacy`) → người dùng bật Google ở
+  Supabase hosted → đẩy cả ba lên demo cùng lúc.
+
+**07/10, lát E5 ĐẠT (phiên chính duyệt và kiểm nốt).** Brief `tasks/briefs/v6-lat-e5.md`, agent `ui-implementer`. Người dùng cho
+commit trên máy (chưa push) rồi làm DESIGN.md.
+- **Phiên chính kiểm nốt** sau khi người dùng tự chạy `reset_demo` (07/10):
+  - sweep EN 109 phát hiện, như E4 (inlineBox 72, smallTarget 12, tinyText 25);
+  - 0 tràn, 0 bị cắt, 0 request ra ngoài; 4 lỗi console là hai route 404 cố ý;
+  - xem ảnh bản EN: hộp "Close Drop 05 early?", menu dòng của mã có "End early".
+- **Phạm vi đã dịch:** bảng Mẫu, tấm tồn kho, form tạo và sửa mẫu, hộp cắt ảnh, Các số và ba hộp, Mã giảm giá và tấm sửa mã; câu báo
+  của `lib/actions/catalog-admin.ts`; CSV Mẫu, Số, Mã; `<title>`.
+- **Chỗ vá Arc mới:** `select` nhận `options[].lang`, để menu loại đã lưu mang `lang="vi"`. Đã ghi `PATCHES.md`, có test.
+- **Phiên chính kiểm:** tsc sạch, 2.139 test xanh (32 test mới, không sửa test cũ); xem ảnh tiếng Anh bảng Mẫu và form sửa mẫu ở
+  1280.
+- **Agent đo:**
+  - bản VI 81 cặp: 67 trùng, 9 nhiễu, 5 lệch do đồng hồ hoặc nhiễu giải mã ảnh;
+  - script dò chữ Việt ở bản EN ra 0 trên 78 trạng thái, ở 1280 và 1440;
+  - CSV bản EN chỉ còn tên mẫu của các Số;
+  - cửa sổ thật 1280×800 và 1440×900: không cuộn ngang;
+  - JS nén +1,0 đến +3,1 KB; `impeccable detect` 8 trước, 8 sau.
+- **Agent chưa làm được:**
+  - hệ thống quyền từ chối `reset_demo` hai lần, nên ảnh "trước" và "sau" chụp trên dữ liệu ngày 02/10 (Số 05 đã đóng, mã hết hạn).
+    Hộp đóng sớm và nút kết thúc mã chưa hiện trên màn lần nào. DB cục bộ còn dữ liệu của lượt kiểm hành vi, kể cả một lỗi script
+    (Xám M của HOODIE TRƠN +2.419);
+  - sweep EN bị dừng vì máy thiếu bộ nhớ.
+- **Lệch quy trình:** agent sửa tệp bằng script Python nên hook impeccable không chạy. Brief B16, B17, P đã thêm luật sửa bằng Edit
+  hay Write.
+- **Quyết định (phiên chính):**
+  - mã nhân bản giữ "SO06" ở cả hai ngôn ngữ, vì mã là dữ liệu: cùng một thao tác thì ra cùng một dữ liệu;
+  - nhận các từ Active / Scheduled / Paused / Expired / Used up, "Sizes out", "Reschedule", "URL slug";
+  - giữ dấu "—" cho ô trống và tiền tố "D05 –" như bản VI.
+- **Phiên chính sửa sau duyệt:** `tools/layout-sweep.js` lấy các dòng `T(vi, en)` của lát E5 từ bản sao của agent.
+- **Để lượt rà cuối:**
+  - câu thứ tự màu ở form ra 2 dòng ở bản EN. Agent đề xuất "Pick order sets the colour band; the first is the cover.";
+  - ô loại · fit và ô màu của bảng Mẫu xuống dòng thêm ở 1280;
+  - từ mượn không dấu lọt máy dò chữ Việt: grep "Form", "Size", "oversize", "VD" trong chữ quản trị.
+  - chỗ vá `select` gắn `lang` lên cả dòng option, nên chữ phụ tiếng Anh ("12 styles", "Jackets") trong dòng cũng mang
+    `lang="vi"`. Gắn vào `ItemText` thì chính xác hơn.
+
+**Chữ Việt còn ở bản EN sau cả đợt tiếng Anh** (bảng kiểm cho lượt rà cuối; tổng hợp từ báo cáo E4, E5):
+1. **Tên mẫu của các Số** (KHÓI, BỤI…; mẫu hé lộ SỎI, NGÓI), giữ theo QĐ-40.
+   - Phần tử chỉ chứa tên thì mang `lang="vi"`.
+   - Không gắn được `lang` khi tên nằm trong một chuỗi: tiêu đề Drawer và Dialog của Arc ("Adjust stock · D05 – KHÓI"),
+     `aria-label` "Actions for D05 – KHÓI", toast, ô CSV, placeholder "e.g. KHÓI".
+2. **Chữ người dùng gõ, in như đã lưu** (B15, QĐ-40):
+   - giá trị đang lưu trong form mẫu;
+   - menu loại của form mẫu và hộp mẫu hé lộ (mang `lang` nhờ chỗ vá `select`);
+   - loại và tên của mẫu tạo trong quản trị (không có cột tiếng Anh);
+   - ghi chú đơn, lý do huỷ gõ tự do, lý do sửa địa chỉ, tên trong payload của Nhật ký;
+   - tên và địa chỉ khách, tên tỉnh và phường; 37 `aria-label` "Actions for <tên khách>";
+   - tên tài khoản quản trị mẫu "Quản lý cửa hàng" ở chân thanh bên.
+3. **Ảnh chia sẻ (OG)** giữ tiếng Việt (QĐ-40).
+4. **Nút "Tiếng Việt"** của công tắc ngôn ngữ, mang `lang="vi"`, đúng thiết kế.
