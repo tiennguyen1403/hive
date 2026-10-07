@@ -76,9 +76,9 @@ export interface HelpNext {
 const low1 = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 /** "a, b, c": a list inside a sentence, the first as written and the rest in lower case (`list`). */
 const list = (items: readonly string[]) => items.map((x, i) => (i ? low1(x) : x)).join(", ");
-/** "a, b hay c" (`anyOf`). */
+/** "a, b, hoặc c" (`anyOf`; the user's wording, round v6). Two read "a hoặc b". */
 const anyOf = (items: readonly string[]) =>
-  items.length > 1 ? `${items.slice(0, -1).join(", ")} hay ${items[items.length - 1]}` : items.join("");
+  items.length > 2 ? `${items.slice(0, -1).join(", ")}, hoặc ${items[items.length - 1]}` : items.join(" hoặc ");
 /** "A và b": two things named together, the second in lower case. */
 const both = (items: readonly string[]) => items.map((x, i) => (i ? low1(x) : x)).join(" và ");
 
@@ -222,7 +222,7 @@ export function helpGroups(next: HelpNext | null, locale: Locale = "vi"): HelpGr
         {
           // Since slice B18 a card pays on Stripe's page, in test mode (QĐ-46): the checkout card's own note, and the
           // hold, which a card order keeps as a transfer does.
-          q: t({ vi: "Trả bằng thẻ được chưa?", en: "Can I pay by card yet?" }),
+          q: t({ vi: "Trả bằng thẻ được không?", en: "Can I pay by card?" }),
           a: [
             t({
               vi: `Được. ${card.note} Đơn chọn thẻ có cùng hạn giữ hàng với chuyển khoản.`,

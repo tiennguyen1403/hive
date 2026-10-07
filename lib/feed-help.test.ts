@@ -58,7 +58,7 @@ describe("Hỏi đáp: the groups, as the mock's help.js lays them out", () => {
       "Có những cách thanh toán nào?",
       "Chuyển khoản thế nào?",
       "COD có mất thêm phí không?",
-      "Trả bằng thẻ được chưa?",
+      "Trả bằng thẻ được không?",
       "Giao tới đâu?",
       "Phí giao hàng bao nhiêu?",
       "Bao lâu thì nhận được hàng?",
@@ -112,7 +112,7 @@ describe("Hỏi đáp: every figure is the app's own", () => {
       "Giữ hàng 12 giờ kể từ khi đặt. Nội dung chuyển khoản hiện ở màn xác nhận. Số tài khoản và tên ngân hàng đang chuẩn bị.",
     );
     // Since slice B18 a card pays on Stripe's page, in test mode (QĐ-46): the checkout card's note, and the same hold.
-    expect(answer("Trả bằng thẻ được chưa?")).toBe(
+    expect(answer("Trả bằng thẻ được không?")).toBe(
       "Được. Trả trên trang Stripe, chế độ thử. Đơn chọn thẻ có cùng hạn giữ hàng với chuyển khoản.",
     );
   });
@@ -123,7 +123,7 @@ describe("Hỏi đáp: every figure is the app's own", () => {
     expect(answer("Ai trả phí gửi hàng về?")).toBe("Cửa hàng trả.");
     expect(answer("Hoàn tiền thế nào?")).toBe(
       "Chuyển khoản vào tài khoản ngân hàng của bạn, đúng số đã trả cho những món trả lại: giá món trừ phần mã giảm giá. " +
-        "Trả cả đơn vì khác với ảnh, lỗi may hoặc in hay giao nhầm món thì hoàn cả phí giao hàng và phụ phí COD.",
+        "Trả cả đơn vì khác với ảnh, lỗi may hoặc in, hoặc giao nhầm món thì hoàn cả phí giao hàng và phụ phí COD.",
     );
     expect(answer("Đổi sang size khác được không?")).toBe(
       "Được, trong hạn đổi trả, sang size cùng màu còn hàng, kể cả khi Số đã đóng.",

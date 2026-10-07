@@ -446,6 +446,10 @@ html[data-pointer] [data-ui="feed"] .lbl-chip:has(input:focus), html[data-pointe
   [data-ui="feed"] .od-right .acc-sec:first-child { margin-top: 28px; }
   [data-ui="feed"] .ad-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   [data-ui="feed"] .ad-add { width: auto; display: inline-flex; padding: 0 26px; }
+  /* Not in the mock (round v6, the main session's choice on 07/10/2026): in the address sheet the province and the
+     ward stack, as below 900px. Side by side its 412px row gave each picker 198px, and the empty labels did not fit:
+     "Chọn tỉnh / thành" by 2px, "Choose province / city" by 38px. The checkout keeps its two columns (flow.css). */
+  [data-ui="feed"] .sheet-form .co-pair { grid-template-columns: minmax(0, 1fr); }
   [data-ui="feed"] .pf { max-width: 640px; }
   [data-ui="feed"] .pf-save { width: auto; justify-self: start; padding: 0 30px; }
   [data-ui="feed"] .si-wrap { max-width: var(--f-max); margin: 0 auto; padding: 36px var(--f-wg) 0; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); column-gap: 72px; align-items: start; }
@@ -456,6 +460,18 @@ html[data-pointer] [data-ui="feed"] .lbl-chip:has(input:focus), html[data-pointe
   /* Not in the mock: the demo box's two shortcuts side by side, at their own width. */
   [data-ui="feed"] .si-demo-acts { display: flex; flex-wrap: wrap; }
   [data-ui="feed"] .si-demo-acts .btn { width: auto; padding: 0 22px; }
+}
+
+/* Not in the mock (round v6, the user's choice on 07/10/2026): from 900 to 1199px the account menu, the page and its
+   side column were three columns, too narrow for what the side holds. One order: the amount to transfer had 25px and
+   broke over 8 lines, the transfer reference over 5. Tôi: the order on its way had 40px per step, and the English
+   labels ran 9px into each other. So in this band the page is one column: the order's summary and delivery go under
+   its pieces, Tôi's two order cards stack. From 1200px the mock's columns stand; the mock breaks the same way here. */
+@media (min-width: 900px) and (max-width: 1199.98px) {
+  [data-ui="feed"] .od { grid-template-columns: minmax(0, 1fr); }
+  [data-ui="feed"] .od-right { position: static; }
+  [data-ui="feed"] .od-right .acc-sec:first-child { margin-top: 40px; }   /* the rhythm of `.acc-sec` from 900px */
+  [data-ui="feed"] .me-now { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Not in the mock: "Tài khoản thử" (the user's choice) on Tôi from 900px, signed out, its two shortcuts on one row as

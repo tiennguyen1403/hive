@@ -190,7 +190,7 @@ describe("a drop's figures in English", () => {
   });
 
   it("says when prices are announced, and names the archive", () => {
-    expect(TEASER_NOTE_TEXT).toEqual({ vi: TEASER_NOTE, en: "Price and quantity announced at opening." });
+    expect(TEASER_NOTE_TEXT).toEqual({ vi: TEASER_NOTE, en: "Price and quantity at opening." });
     expect(ARCHIVE_TITLE).toEqual({ vi: "Các Số đã đóng", en: "Closed drops" });
   });
 });

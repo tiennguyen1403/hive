@@ -72,7 +72,7 @@ export function validateCheckout(d: CheckoutDraft, locale: Locale = "vi"): Check
     e.phone = t({ vi: "Cần số điện thoại để người giao gọi.", en: "A phone number is needed for the courier to call." });
   } else if (!normalisePhone(d.phone)) {
     e.phone = t({
-      vi: "Số điện thoại chưa đúng — 10 số, bắt đầu bằng 0.",
+      vi: "Số điện thoại chưa đúng: 10 số, bắt đầu bằng 0.",
       en: "The phone number isn't right. It has 10 digits, starting with 0.",
     });
   }

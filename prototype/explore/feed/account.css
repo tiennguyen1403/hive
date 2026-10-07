@@ -515,6 +515,9 @@
   .p-return { padding-bottom: 0; }
   .ad-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .ad-add { width: auto; display: inline-flex; padding: 0 26px; }
+  /* the address sheet keeps its province and ward stacked, as below 900: side by side in a 460px sheet the empty
+     labels were cut (round v6 polish, 07/10/2026) */
+  .sheet-form .co-pair { grid-template-columns: minmax(0, 1fr); }
   .pf { max-width: 640px; }
   .pf-save { width: auto; justify-self: start; padding: 0 30px; }
   .si-wrap { max-width: var(--max); margin: 0 auto; padding: 36px var(--wg) 0; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); column-gap: 72px; align-items: start; }
@@ -522,6 +525,15 @@
   .si-art img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
   .si { padding: 0 0 20px; max-width: 440px; }
   .si-title { font-size: 72px; padding-top: 0; }
+}
+
+/* 900–1199: one order and the account's front page in one column (round v6 polish, 07/10/2026) — beside the
+   account's nav, two columns left the transfer's amount 25px wide and the steps' labels overlapping. */
+@media (min-width: 900px) and (max-width: 1199.98px) {
+  .od { grid-template-columns: minmax(0, 1fr); }
+  .od-right { position: static; }
+  .od-right .acc-sec:first-child { margin-top: 40px; }
+  .me-now { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {

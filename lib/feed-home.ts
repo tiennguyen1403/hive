@@ -337,7 +337,7 @@ export function footSkipped(href: string, skip: readonly string[]): boolean {
 /** The words under the next issue's silhouettes (the mock's `FACTS.teaser`), in both languages since round v6 slice E1. */
 export const TEASER_NOTE_TEXT: Pair = {
   vi: "Giá và số lượng công bố lúc mở.",
-  en: "Price and quantity announced at opening.",
+  en: "Price and quantity at opening.",
 };
 
 export const TEASER_NOTE = TEASER_NOTE_TEXT.vi;

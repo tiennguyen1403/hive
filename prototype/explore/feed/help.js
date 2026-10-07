@@ -22,8 +22,11 @@
   const R = H.RETURNS;
   const go = (href, label) => ({ href, label });
   const list = (arr) => arr.map((x, i) => (i ? F.low1(x) : x)).join(", ");
-  // "a, b hay c", for a list inside a sentence.
-  const anyOf = (arr) => (arr.length > 1 ? `${arr.slice(0, -1).join(", ")} hay ${arr[arr.length - 1]}` : arr.join(""));
+  // "a hoặc b", "a, b, hoặc c": a list inside a sentence ("hoặc", never "hay", the user's rule of 07/10/2026).
+  const anyOf = (arr) =>
+    arr.length > 2 ? `${arr.slice(0, -1).join(", ")}, hoặc ${arr[arr.length - 1]}`
+    : arr.length === 2 ? `${arr[0]} hoặc ${arr[1]}`
+    : arr.join("");
 
   // ---------------------------------------------------------------- the answers (facts only)
   function nextIssue() {

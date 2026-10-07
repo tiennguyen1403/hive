@@ -185,9 +185,11 @@ export function FeedShell({
         </InboxProvider>
       </NowProvider>
       {/* Without script nothing would ever reveal the cards that wait for it, nor bring back a bar title that
-          waits for the page's own to scroll away. */}
+          waits for the page's own to scroll away. Each selector is as specific as the rule it undoes
+          (`.rv:not(.in)` in feed.css, `.mbar.title-late .mbar-title` in more.css) and wins by coming later; a bare
+          `.rv` lost to `.rv:not(.in)` and the cards stayed invisible (round v6). */}
       <noscript>
-        <style>{"[data-ui=feed] .rv{opacity:1;transform:none}[data-ui=feed] .mbar.title-late .mbar-title{opacity:1}"}</style>
+        <style>{"[data-ui=feed] .rv:not(.in){opacity:1;transform:none}[data-ui=feed] .mbar.title-late .mbar-title{opacity:1}"}</style>
       </noscript>
     </div>
   );

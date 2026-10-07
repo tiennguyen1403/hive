@@ -321,7 +321,7 @@ describe("the checkout's cards in English", () => {
       method: "EXPRESS",
       title: "Express city delivery",
       days: "24 hours",
-      note: "Central HCMC only, during office hours",
+      note: "Central HCMC only, office hours",
     });
     expect(feedDeliveries("en").map((d) => d.method)).toEqual(FEED_DELIVERY.map((d) => d.method));
     expect(feedDeliveries("vi")).toBe(FEED_DELIVERY);

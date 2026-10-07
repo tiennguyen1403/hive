@@ -357,7 +357,7 @@ dialog.sheet.picker .sh-head { flex: none; }
   .co-sec { padding: 30px 0 34px; border-top: 1px solid var(--line); }
   .co > .co-sec:first-child { padding-top: 0; }
   .co-sec .sect-title { font-size: 24px; }
-  .co-pair { grid-template-columns: 1fr 1fr; }
+  .co-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .co-side { position: sticky; top: 88px; padding: 6px 28px 28px; background: var(--bg2); }
   .co-side .co-sec { padding: 22px 0 0; border-top: 0; }
   .co-side .co-sum { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--line2); }
@@ -392,4 +392,11 @@ dialog.sheet.picker .sh-head { flex: none; }
   .oksum { padding: 24px 28px 28px; border-top: 0; background: var(--bg2); }
   .oksum .co-thumb { background: var(--bg); }
   .ok-acts { padding: 18px 0 0; }
+}
+
+/* 900–1199: the receipt in one column, the summary under it (round v6 polish, 07/10/2026) — two columns left the
+   transfer's amount 14px wide, eight lines tall. */
+@media (min-width: 900px) and (max-width: 1199.98px) {
+  .ok-grid { grid-template-columns: minmax(0, 1fr); }
+  .ok-side { position: static; }
 }

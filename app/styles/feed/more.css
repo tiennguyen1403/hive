@@ -310,7 +310,11 @@
 [data-ui="feed"] .b-help-top .sform { height: 52px; }
 [data-ui="feed"] .b-cats { padding-top: 14px; padding-bottom: 4px; }
 [data-ui="feed"] .b-cats .chip { text-decoration: none; }
-[data-ui="feed"] .b-qgroup { padding: 24px var(--f-g) 4px; scroll-margin-top: calc(var(--f-bar) + 12px); }
+/* Not the mock's margins (round v6): a group reached by its anchor (`/faq#doi-tra`) stops 12px under the bar, at 64px
+   (88px from 900, the mock's). The document's scroll padding (feed.css: 108px, 80px from 900) adds to the margin, and it
+   stays: it keeps a question focused from under the bar clear of it. So the margin is what is left, 64 − 108 = −44px
+   here and 88 − 80 = 8px from 900. With the mock's margin on top of the padding the group stopped at 172px. */
+[data-ui="feed"] .b-qgroup { padding: 24px var(--f-g) 4px; scroll-margin-top: -44px; }
 [data-ui="feed"] .b-qgroup-title { font-size: 30px; line-height: 1.06; margin-bottom: 8px; }
 [data-ui="feed"] .b-qa { border-top: 1px solid var(--f-line); }
 [data-ui="feed"] .b-qa:first-of-type { border-top: 0; }
@@ -403,6 +407,13 @@
 [data-ui="feed"] .b-nf-links .i { width: 26px; height: 26px; }
 [data-ui="feed"] .b-nf-links .disp { font-size: 34px; line-height: 1.04; }
 [data-ui="feed"] .b-nf-links .i-arrow-right { margin-left: auto; width: 22px; height: 22px; transition: transform .2s var(--f-out); }
+
+/* ── phone, an English page: the closed issue's number. Not in the mock (round v6), the same move as `.b-issue-no`
+   from 900px below: "DROP 05" is 334px at 112px (339px for "DROP 04") and broke after "DROP" under 371px; at 360 the
+   title has 328px. Set at 28vw up to the same 112px, it keeps one line from 320px (101px at 360, 112px from 400). ── */
+@media (max-width: 599.98px) {
+  [data-ui="feed"]:lang(en) .b-hero-no { font-size: min(112px, 28vw); }
+}
 
 /* ── tablet: the phone layout in a calmer column ── */
 @media (min-width: 600px) and (max-width: 899.98px) {
@@ -507,7 +518,7 @@
   [data-ui="feed"] .b-cats .chip { justify-content: flex-start; height: 44px; padding: 0 16px; background: transparent; color: var(--f-ink2); font-size: 15px; font-weight: 560; }
   [data-ui="feed"] .b-cats .chip:hover { background: var(--f-bg2); color: var(--f-ink); }
   [data-ui="feed"] .b-help-body, [data-ui="feed"] .b-help-more { grid-column: 2; }
-  [data-ui="feed"] .b-qgroup { padding: 36px 0 4px; max-width: 760px; scroll-margin-top: 88px; }
+  [data-ui="feed"] .b-qgroup { padding: 36px 0 4px; max-width: 760px; scroll-margin-top: 8px; }   /* 88px under the top, less the 80px padding */
   [data-ui="feed"] .b-qgroup-title { font-size: 40px; margin-bottom: 10px; }
   [data-ui="feed"] .b-qa summary { font-size: 17px; min-height: 60px; }
   [data-ui="feed"] .b-qa-a { font-size: 16px; }
@@ -557,8 +568,12 @@
   [data-ui="feed"] .b-res.is-fresh { animation: f-b-fade .3s var(--f-out); }
 }
 
+/* The inbox from 900 to 1199px: not the mock's `minmax(0, 1fr) 300px` (round v6, the user's choice on 07/10/2026).
+   Beside the account menu that left the list 205px at 900 and a title 66px, over 3 or 4 lines. One column here, the
+   reminder and the switches under the list, spaced as the side column spaces them (`.b-nside`, 36px). */
 @media (min-width: 900px) and (max-width: 1199.98px) {
-  [data-ui="feed"] .b-notif { grid-template-columns: minmax(0, 1fr) 300px; column-gap: 32px; }
+  [data-ui="feed"] .b-notif { grid-template-columns: minmax(0, 1fr); row-gap: 36px; }
+  [data-ui="feed"] .b-nside { position: static; }
   [data-ui="feed"] .b-hero-no { font-size: 160px; }
 }
 

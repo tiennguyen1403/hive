@@ -999,6 +999,12 @@ html[data-mouse] .size:has(input:focus), html[data-mouse] .swatch:has(input:focu
   .cal-dd { font-size: 92px; }
 }
 
+/* 900–999: the slim footer's six links a little closer (round v6 polish, 07/10/2026) — at 36px the last one had 8px
+   left before it dropped to a second row. */
+@media (min-width: 900px) and (max-width: 999.98px) {
+  .foot-lite .foot-links { column-gap: 28px; }
+}
+
 @keyframes pop-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px) scale(.98); } }
 

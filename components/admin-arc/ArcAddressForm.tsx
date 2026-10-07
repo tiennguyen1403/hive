@@ -185,7 +185,7 @@ export function ArcAddressForm({
           disabled={!provinceCode || state === "loading"}
           placeholder={
             !provinceCode
-              ? t({ vi: "Chọn tỉnh trước", en: "Choose a province first" })
+              ? t({ vi: "Chọn tỉnh trước", en: "Province first" })
               : state === "loading"
                 ? t({ vi: "Đang tải…", en: "Loading…" })
                 : state === "error"

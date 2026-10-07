@@ -416,7 +416,11 @@ html[data-pointer] [data-ui="feed"] .rcard:has(input:focus) { outline: none; }
   [data-ui="feed"] .co-sec { padding: 30px 0 34px; border-top: 1px solid var(--f-line); }
   [data-ui="feed"] .co > .co-sec:first-child { padding-top: 0; }
   [data-ui="feed"] .co-sec .sect-title { font-size: 24px; }
-  [data-ui="feed"] .co-pair { grid-template-columns: 1fr 1fr; }
+  /* `minmax(0, 1fr)`, not the mock's `1fr 1fr` (round v6): a `1fr` track never shrinks under its content, and the
+     English address sheet's two empty pickers ("Choose province / city", 236px, and its neighbour, 241px) ran 81px past
+     the sheet's 412px row, so the sheet scrolled sideways. The sheet now stacks them (account.css); here the checkout's
+     two halves stay equal whatever they hold, a long value ending in "…" (`.pick-v`). */
+  [data-ui="feed"] .co-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   [data-ui="feed"] .co-side { position: sticky; top: 88px; padding: 6px 28px 28px; background: var(--f-bg2); }
   [data-ui="feed"] .co-side .co-sec { padding: 22px 0 0; border-top: 0; }
   [data-ui="feed"] .co-side .co-sum { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--f-line2); }
@@ -452,4 +456,12 @@ html[data-pointer] [data-ui="feed"] .rcard:has(input:focus) { outline: none; }
   [data-ui="feed"] .oksum { padding: 24px 28px 28px; border-top: 0; background: var(--f-bg2); }
   [data-ui="feed"] .oksum .co-thumb { background: var(--f-bg); }
   [data-ui="feed"] .ok-acts { padding: 18px 0 0; }
+}
+
+/* Not in the mock (round v6, the user's choice on 07/10/2026): from 900 to 1199px the receipt's payment block sat
+   beside the summary, and its copy rows kept 14px for the value (the amount over 10 lines). One column in this band,
+   the summary under the payment, as Tôi's order pages (account.css). From 1200px the mock's two columns stand. */
+@media (min-width: 900px) and (max-width: 1199.98px) {
+  [data-ui="feed"] .ok-grid { grid-template-columns: minmax(0, 1fr); }
+  [data-ui="feed"] .ok-side { position: static; }
 }

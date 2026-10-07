@@ -66,7 +66,7 @@ const DELIVERY_TITLE_EN: Readonly<Record<DeliveryMethod, string>> = {
 /** Express's city in an English sentence: "HCMC", the footer's word for it. */
 export const EXPRESS_CITY_EN = "HCMC";
 
-const EXPRESS_NOTE_EN = `Central ${EXPRESS_CITY_EN} only, during office hours`;
+const EXPRESS_NOTE_EN = `Central ${EXPRESS_CITY_EN} only, office hours`;
 
 const FEED_DELIVERY_EN: readonly FeedDelivery[] = DELIVERY_OPTIONS.map((o) => {
   const [, days = ""] = o.label.split(" · ");

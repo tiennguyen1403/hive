@@ -1027,6 +1027,12 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
   [data-ui="feed"] .cal-dd { font-size: 92px; }
 }
 
+/* Not in the mock (round v6): at 900px the light footer's six links left 8px before the last one ("Quyền riêng tư")
+   fell to a second row. A closer step to 999px gives them 40px more; from 1000px the row has room at the mock's 36px. */
+@media (min-width: 900px) and (max-width: 999.98px) {
+  [data-ui="feed"] .foot-lite .foot-links { column-gap: 28px; }
+}
+
 @keyframes f-pop-in { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes f-pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px) scale(.98); } }
 

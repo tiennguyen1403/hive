@@ -125,25 +125,26 @@ export function orderFailureOf(error: { code?: string; message?: string } | null
  * size, another code, nothing at all.
  *
  * In both languages since round v6 slice E2, the action answering in the
- * request's language. The English is written without the long dash, as the
- * Feed prints every sentence (`feedSentence`).
+ * request's language. Both are written without the long dash, as the Feed
+ * prints every sentence (`feedSentence`): the English from the start, the
+ * Vietnamese since the round v6 review (the user's wording, 07/10/2026).
  */
 export function placeFailureMessage(failure: OrderFailure, locale: Locale = "vi"): string {
   const t = picker(locale);
   switch (failure) {
     case "OUT_OF_STOCK":
       return t({
-        vi: "Một món vừa hết — mở giỏ để đổi size hoặc bỏ món.",
+        vi: "Một món vừa hết. Mở giỏ để đổi size hoặc bỏ món.",
         en: "An item just sold out. Open your bag to change the size or remove it.",
       });
     case "DROP_CLOSED":
       return t({
-        vi: `${LEX.t} đã đóng — món trong giỏ không còn bán.`,
+        vi: `${LEX.t} đã đóng. Món trong giỏ không còn bán.`,
         en: `The ${lexicon("en").tl} has closed. An item in your bag is no longer on sale.`,
       });
     case "PROMO_INVALID":
       return t({
-        vi: "Mã giảm giá không còn dùng được cho đơn này — bỏ mã hoặc thử mã khác.",
+        vi: "Mã giảm giá không còn dùng được cho đơn này. Bỏ mã hoặc thử mã khác.",
         en: "The discount code no longer works for this order. Remove it or try another.",
       });
     case "EMPTY_ORDER":
@@ -153,7 +154,7 @@ export function placeFailureMessage(failure: OrderFailure, locale: Locale = "vi"
       });
     case "BAD_INPUT":
       return t({
-        vi: "Thông tin đơn chưa đúng — kiểm lại địa chỉ và giỏ rồi đặt lại.",
+        vi: "Thông tin đơn chưa đúng. Kiểm lại địa chỉ và giỏ rồi đặt lại.",
         en: "Some order details aren't right. Check the address and your bag, then try again.",
       });
     case "NOT_OWNER":
@@ -174,7 +175,7 @@ export function cancelFailureMessage(failure: OrderFailure, locale: Locale = "vi
       return t({ vi: "Không tìm thấy đơn này trong tài khoản.", en: "This order isn't in your account." });
     case "NOT_CANCELLABLE":
       return t({
-        vi: "Đơn này không huỷ được nữa — liên hệ cửa hàng.",
+        vi: "Đơn này không huỷ được nữa. Liên hệ cửa hàng.",
         en: "This order can no longer be cancelled. Contact the shop.",
       });
     default:

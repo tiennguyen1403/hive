@@ -476,7 +476,7 @@ export function AddressesView({ book, provinces, seed, open }: AddressesViewProp
                   empty={
                     draft.provinceCode
                       ? t({ vi: "Chọn phường / xã", en: "Choose ward / commune" })
-                      : t({ vi: "Chọn tỉnh trước", en: "Choose a province first" })
+                      : t({ vi: "Chọn tỉnh trước", en: "Province first" })
                   }
                   disabled={!draft.provinceCode}
                   error={errors.ward}

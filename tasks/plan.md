@@ -4078,3 +4078,26 @@ Agent: 363 test DB; `seed:users` ra 9/9 handle; build sạch; 5 route đối ch�
 chặn (trigger thăm dò trên `auth.users`, WebFetch mã nguồn GoTrue, hai lệnh grep); agent không tìm đường vòng.
 
 **Lên hosted** (gộp vào lần đưa cuối lượt rà): `db push` hai migration TRƯỚC `git push`, rồi bốn câu kiểm một dòng trong báo cáo B19.
+
+**07/10, R1 xong vòng 1** (agent `ui-implementer`, kiểm theo tầng: sweep rút gọn 73 lượt mỗi ngôn ngữ, khớp mốc theo từng route; trang
+đối chứng không lệch ngoài vùng đồng hồ và dữ liệu; 2.380 test). Đạt mọi tiêu chí:
+- dải 900: số tiền 8 dòng thành 1, tiêu đề thư 4 dòng thành 1, nhãn bước từ chồng 8,7px thành cách 71px;
+- sheet: 517/460 thành 460/460;
+- không script: 0 thẻ vô hình;
+- `/faq`: dừng ở 64/88px;
+- chân trang: còn 48px;
+- "Drop 05" một dòng ở 360.
+
+**Phiên chính quyết bốn hệ quả phụ:**
+- ô tỉnh bị cắt 2px (VI) và 38px (EN) khi sheet chia hai cột, nên trong sheet hai ô xếp chồng ở mọi bề ngang; trang thanh toán giữ hai
+  cột;
+- luật `/faq` làm focus Shift+Tab chui dưới thanh trên, nên dùng `scroll-margin-top` -44px / 8px cho `.b-qgroup` và giữ scroll-padding
+  của tài liệu;
+- nút hoá đơn trong dải rộng hết cột: giữ, vì bằng khối Tóm tắt và giống cách trang hiện ở tablet;
+- test mẫu `feedSentence` và câu "office hours" của Hỏi đáp: giữ.
+
+Đã giao vòng sửa nhỏ.
+
+**Lên hosted:** `PRIVACY_UPDATED_AT` phải đổi thành ngày đưa lên, vì C9 sửa chữ `/privacy`.
+
+**07/10, R1 vòng 2 ĐẠT.** Sheet địa chỉ: hai ô xếp chồng, "Chọn tỉnh / thành" (132/132) và "Choose province / city" (168/168) hiện đủ, panel 445/445; trang thanh toán đo y như trước. `/faq`: 64/88px, Shift+Tab 410/80. Phiên chính kiểm: tsc, 2.380 test, ảnh. **Phiên chính áp vào mock** (`prototype/explore/feed/`): `.co-pair` dùng `minmax(0,1fr)`, `.sheet-form .co-pair` một cột, dải 900–1199 (`.ok-grid`, `.od`, `.me-now`, `.b-notif`), `scroll-margin` của `.b-qgroup`, chân trang 900–999, `anyOf` dùng "hoặc". Câu hỏi thẻ ở mock giữ như cũ, vì câu trả lời của mock vẫn là trước B18.

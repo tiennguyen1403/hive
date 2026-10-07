@@ -128,7 +128,7 @@ describe("readPlaceOrderPayload — the form, re-checked with the form's own rul
   it("names the first thing wrong, in the words the field would use", () => {
     expect(refuse(payload({}, { recipient: "  " }))).toBe("Cần tên người nhận.");
     expect(refuse(payload({}, { phone: "12345" }))).toBe(
-      "Số điện thoại chưa đúng — 10 số, bắt đầu bằng 0.",
+      "Số điện thoại chưa đúng: 10 số, bắt đầu bằng 0.",
     );
   });
 
@@ -191,8 +191,29 @@ describe("what the database's refusals become", () => {
 
   it("says plainly that a piece just sold, and where to fix it", () => {
     expect(placeFailureMessage("OUT_OF_STOCK")).toBe(
-      "Một món vừa hết — mở giỏ để đổi size hoặc bỏ món.",
+      "Một món vừa hết. Mở giỏ để đổi size hoặc bỏ món.",
     );
+  });
+
+  it("writes every sentence without a long dash: a full stop, the next word capitalised (the user's wording, round v6)", () => {
+    expect(placeFailureMessage("DROP_CLOSED")).toMatch(/ đã đóng\. Món trong giỏ không còn bán\.$/);
+    expect(placeFailureMessage("PROMO_INVALID")).toBe("Mã giảm giá không còn dùng được cho đơn này. Bỏ mã hoặc thử mã khác.");
+    expect(placeFailureMessage("BAD_INPUT")).toBe("Thông tin đơn chưa đúng. Kiểm lại địa chỉ và giỏ rồi đặt lại.");
+    expect(cancelFailureMessage("NOT_CANCELLABLE")).toBe("Đơn này không huỷ được nữa. Liên hệ cửa hàng.");
+    const failures = [
+      "OUT_OF_STOCK",
+      "DROP_CLOSED",
+      "PROMO_INVALID",
+      "EMPTY_ORDER",
+      "BAD_INPUT",
+      "NOT_OWNER",
+      "NOT_CANCELLABLE",
+      "UNAVAILABLE",
+    ] as const;
+    for (const f of failures) {
+      expect(placeFailureMessage(f)).not.toMatch(/[–—]/);
+      expect(cancelFailureMessage(f)).not.toMatch(/[–—]/);
+    }
   });
 
   it("never shows a raw database message", () => {

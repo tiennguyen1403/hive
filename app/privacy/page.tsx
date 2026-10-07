@@ -118,7 +118,7 @@ const PARTS: readonly { id: string; title: Pair; lines: readonly Line[] }[] = [
       {
         text: {
           vi: "Trang quản trị của demo mở cho mọi người xem thử. Ở đó tên bạn được rút gọn; email, số điện thoại và số nhà bị che.",
-          en: "The demo's back office is open for anyone to try. There, your name is shortened and your email, phone number and street address are hidden.",
+          en: "The demo's admin is open for anyone to try. There, your name is shortened and your email, phone number and street address are hidden.",
         },
       },
       {

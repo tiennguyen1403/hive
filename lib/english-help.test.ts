@@ -100,7 +100,7 @@ describe("Hỏi đáp in English: the same page, other words", () => {
       "How can I pay?",
       "How does bank transfer work?",
       "Does COD cost extra?",
-      "Can I pay by card yet?",
+      "Can I pay by card?",
       "Where do you deliver?",
       "How much is delivery?",
       "How long does delivery take?",
