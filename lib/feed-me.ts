@@ -437,6 +437,18 @@ export const PASSWORD_FAILED_TEXT: Pair = {
   en: "Couldn't change the password. Try again in a few minutes.",
 };
 
+/**
+ * What `changePassword` answers an account that has only ever signed in with
+ * Google (slice B16): it has no password, so there is no current one to type.
+ * Hồ sơ draws no "Đổi mật khẩu" for such an account; this is the server's
+ * answer to a request that comes anyway, above the fields like the demo
+ * accounts' lock.
+ */
+export const PASSWORD_NONE_TEXT: Pair = {
+  vi: "Tài khoản này đăng nhập bằng Google nên không có mật khẩu để đổi.",
+  en: "This account signs in with Google, so it has no password to change.",
+};
+
 /** The toast once the password has changed (`profile.js`). */
 export const PASSWORD_CHANGED_TEXT: Pair = { vi: "Đã đổi mật khẩu", en: "Password changed" };
 

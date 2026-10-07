@@ -391,9 +391,10 @@ export function helpGroups(next: HelpNext | null, locale: Locale = "vi"): HelpGr
         {
           q: t({ vi: "Đăng nhập bằng gì?", en: "What do I sign in with?" }),
           a: [
+            // Slice B16: "Tiếp tục với Google" works.
             t({
-              vi: "Email và mật khẩu. Đăng nhập bằng Google đang chuẩn bị.",
-              en: "Email and password. Signing in with Google is coming soon.",
+              vi: "Email và mật khẩu, hoặc tài khoản Google.",
+              en: "Email and password, or your Google account.",
             }),
           ],
         },

@@ -172,7 +172,12 @@ site_url = "http://127.0.0.1:3200"
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 # 3100 is `npm run dev`; both are loopback, and nothing else is allowed.
-additional_redirect_urls = ["http://127.0.0.1:3100", "http://localhost:3200", "http://localhost:3100"]
+# Slice B16: `/**` on each. Google's round trip comes back to `<origin>/auth/callback?next=…`, and Auth matches the
+# WHOLE address, query included, against these patterns (`**` is any run of characters, `/` and `.` too). Measured
+# on this stack, 07/10/2026: with the exact `http://localhost:3200` entry, `http://localhost:3200/auth/callback?…`
+# was sent to the Site URL instead; an address on the Site URL's own host (127.0.0.1, any port) is let through
+# without an entry.
+additional_redirect_urls = ["http://127.0.0.1:3100/**", "http://localhost:3200/**", "http://localhost:3100/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -350,6 +355,19 @@ url = ""
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
+
+# Slice B16 (QĐ-41): "Tiếp tục với Google". The browser only navigates — the app, `/auth/v1/authorize` here, Google,
+# `/auth/v1/callback` here, the app's `/auth/callback` — and the app's server trades the code. The client id and the
+# secret are never in this file: `env()` reads them from `supabase/.env` (see `.env.example`), which `.gitignore`'s
+# `.env*` keeps out of git. Google Cloud must list `http://127.0.0.1:54321/auth/v1/callback` as a redirect URI.
+# Measured on CLI v2.117.0 (07/10/2026): without the two variables `supabase start` still succeeds and Auth passes
+# the text `env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)` to Google as the client id, so a fresh clone runs
+# `npm run test:db` with nothing from Google.
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+skip_nonce_check = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
 # You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.

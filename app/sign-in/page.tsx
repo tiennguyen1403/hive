@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SignInView } from "@/components/feed/account/SignInView";
 import { FeedFrame } from "@/components/feed/FeedFrame";
+import { GOOGLE_ERROR, SIGN_IN_ERROR_PARAM } from "@/lib/auth-redirect";
 import { demoAccounts } from "@/lib/demo-sign-in";
 import { nextParam, signTitle } from "@/lib/feed-sign-in";
 import { picker } from "@/lib/i18n";
@@ -31,9 +32,15 @@ export async function generateMetadata(): Promise<Metadata> {
  * rides in a hidden field so the Server Action gets it too, and the action
  * checks it again (`safeNext`), because a hidden field is a thing anyone can
  * edit.
+ *
+ * `?error=google` (slice B16) is what `/auth/callback` adds when the Google
+ * round trip ended without a session: the form opens with that line above it.
+ * Any other value, or none, draws the page as before.
  */
 export default async function SignInPage(props: PageProps<"/sign-in">) {
   const [sp, locale] = await Promise.all([props.searchParams, getLocale()]);
+  const flag = sp[SIGN_IN_ERROR_PARAM];
+  const googleFailed = (Array.isArray(flag) ? flag[0] : flag) === GOOGLE_ERROR;
   return (
     <FeedFrame
       page="sign-in"
@@ -48,7 +55,7 @@ export default async function SignInPage(props: PageProps<"/sign-in">) {
         watch: "[data-ui='feed'] .si-title",
       }}
     >
-      <SignInView mode="in" next={nextParam(sp.next)} demo={demoAccounts()} />
+      <SignInView mode="in" next={nextParam(sp.next)} demo={demoAccounts()} googleFailed={googleFailed} />
     </FeedFrame>
   );
 }

@@ -339,7 +339,6 @@ html[data-pointer] [data-ui="feed"] .lbl-chip:has(input:focus), html[data-pointe
 [data-ui="feed"] .si-or { display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; font-size: 13px; color: var(--f-ink2); }
 [data-ui="feed"] .si-or::before, [data-ui="feed"] .si-or::after { content: ""; flex: 1; height: 1px; background: var(--f-line2); }
 [data-ui="feed"] .si-google { gap: 10px; }
-[data-ui="feed"] .si-google .tag-soon { font-size: 12px; font-weight: 640; padding: 4px 8px; border-radius: var(--f-r-pill); background: var(--f-bg3); color: var(--f-ink2); }
 [data-ui="feed"] .si-switch { margin-top: 12px; }
 [data-ui="feed"] .si-formerr { display: flex; gap: 8px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: var(--f-err-bg); color: var(--f-err); font-size: 14px; font-weight: 620; line-height: 1.4; }
 [data-ui="feed"] .si-formerr .i { flex: none; width: 20px; height: 20px; }

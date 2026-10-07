@@ -32,8 +32,8 @@ function mbarOf(locale: Locale): FeedMbarProps {
  * carries is MISSING ON PURPOSE: nobody has told this build who makes the
  * clothes, where, or why the shop exists, so the story is an empty slot
  * marked "Đang chuẩn bị" — the way the Feed says a thing is not there yet, as
- * on its Google button and on "Xoá tài khoản" — rather than something warm
- * and untrue.
+ * on "Xoá tài khoản" (and on the Google button until slice B16 made it work) —
+ * rather than something warm and untrue.
  *
  * In the page's language since round v6 slice E3b: the sentence and the rules
  * from `lib/lexicon.ts` (`aboutLead`, `fourRules`), the slot "Brand story" ·

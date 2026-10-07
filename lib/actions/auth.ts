@@ -1,15 +1,23 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { CUSTOMERS } from "@/data/customers";
+import { googleCallbackUrl, requestOrigin } from "@/lib/auth-redirect";
 import { takeRate } from "@/lib/db/rate-limit";
 import { getSupabase, supabaseEnv } from "@/lib/db/server";
 import { getSession } from "@/lib/db/session";
 import { DEMO_ACCOUNT_PASSWORD_LOCKED_TEXT, isDemoEmail } from "@/lib/demo-accounts";
 import { DEMO_ADMIN } from "@/lib/demo-admin";
-import { PASSWORD_FAILED_TEXT, PASSWORD_WRONG_TEXT, passwordSheetErrors } from "@/lib/feed-me";
-import { EMAIL_TAKEN_TEXT, SIGN_IN_WRONG_TEXT, SIGN_UP_FAILED_TEXT, signErrors } from "@/lib/feed-sign-in";
+import { PASSWORD_FAILED_TEXT, PASSWORD_NONE_TEXT, PASSWORD_WRONG_TEXT, passwordSheetErrors } from "@/lib/feed-me";
+import {
+  EMAIL_TAKEN_TEXT,
+  GOOGLE_FAILED_TEXT,
+  SIGN_IN_WRONG_TEXT,
+  SIGN_UP_FAILED_TEXT,
+  signErrors,
+} from "@/lib/feed-sign-in";
 import { pick, type Locale } from "@/lib/i18n";
 import { getActionLocale } from "@/lib/locale";
 import { safeNext, type ActionState } from "./state";
@@ -35,7 +43,8 @@ import { safeNext, type ActionState } from "./state";
  *
  *   · every call that reaches Supabase Auth with a password first spends a
  *     token of the visitor's own rate limit (`lib/db/rate-limit.ts`): ten
- *     sign-ins per five minutes across the three sign-in buttons, three
+ *     sign-ins per five minutes across the sign-in buttons (four since slice
+ *     B16, with Google's), three
  *     sign-ups an hour, five password changes per ten minutes. The token goes
  *     immediately before the Auth call, so a form the rules refuse costs
  *     nothing. Supabase Auth's own limit is per IP address too, and every
@@ -145,6 +154,62 @@ export async function demoAdminSignIn(_prev: ActionState, form: FormData): Promi
 
   const next = safeNext(field(form, "next"), "/admin");
   redirect(next === "/admin" || next.startsWith("/admin/") ? next : "/admin");
+}
+
+// ─────────────────────────────────────────────────────────── with Google
+/**
+ * "Tiếp tục với Google" (slice B16, QĐ-41): start the round trip, on the
+ * server, and send the browser on its way.
+ *
+ * `signInWithOAuth` on a server client makes no request at all: it builds
+ * Supabase Auth's `/auth/v1/authorize` address and stores the PKCE verifier
+ * through the client's cookie methods (`@supabase/auth-js@2.117.0`,
+ * `_handleProviderSignIn` — it only calls `window.location.assign` in a
+ * browser — and `@supabase/ssr`, which writes a `…-code-verifier` cookie at
+ * once because no auth event announces it). The action then redirects there;
+ * in a Server Action `redirect` "performs a client-side navigation when
+ * JavaScript is available" and answers a form posted without it with a 303
+ * (`node_modules/next/dist/docs/01-app/03-api-reference/04-functions/
+ * redirect.md`), and it "also accepts absolute URLs". From there the browser
+ * only navigates: Google, Supabase's `/auth/v1/callback`, then
+ * `/auth/callback` here (`app/auth/callback/route.ts`), where the server trades
+ * the code for a session. Source:
+ * https://supabase.com/docs/guides/auth/social-login/auth-google.
+ *
+ * `redirectTo` is the visitor's own origin (`requestOrigin`, the forwarded
+ * host and proto, so a Vercel preview comes back to itself) and the path the
+ * shopper was headed for (`safeNext`, the one rule for every `next`; the
+ * callback applies it again). Supabase compares the whole address against
+ * its allow list and sends anything it does not list to the Site URL instead.
+ *
+ * RATE LIMIT: `sign_in`, the bucket of the three other sign-in buttons. It
+ * opens a session like they do, and the Auth call it leads to — the code
+ * trade in the callback — comes from this server's address, the reason B4b
+ * counts per visitor at all (`lib/rate-limit.ts`). A bucket of its own would
+ * be a fourteenth name for `rate_hits.bucket`, `take_rate()` and
+ * `RATE_BUCKETS` to agree on, in a migration, for no difference a visitor
+ * could feel. Spent after the origin is read, so a request the action refuses
+ * costs nothing.
+ */
+export async function googleSignIn(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const locale = await getActionLocale();
+  const next = safeNext(field(form, "next"));
+
+  const request = await headers();
+  const origin = requestOrigin((name) => request.get(name));
+  if (!origin) return { errors: { form: pick(GOOGLE_FAILED_TEXT, locale) } };
+
+  const pace = await takeRate("sign_in", 1, locale);
+  if (!pace.ok) return { errors: { form: pace.message } };
+
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: googleCallbackUrl(origin, next) },
+  });
+  if (error || !data.url) return { errors: { form: pick(GOOGLE_FAILED_TEXT, locale) } };
+
+  redirect(data.url);
 }
 
 // ──────────────────────────────────────────────────────────────── sign up
@@ -262,8 +327,8 @@ async function passwordIsCurrent(email: string, password: string): Promise<boole
  *
  * What is about one field says so under it (the current password the auth
  * server refused); what is about the whole account says so above the fields
- * (`form`): a shared demo account's lock (B4b), the rate limit, a server that
- * would not change it.
+ * (`form`): a shared demo account's lock (B4b), an account made with Google
+ * (B16), the rate limit, a server that would not change it.
  */
 export async function changePassword(
   _prev: ActionState,
@@ -281,6 +346,11 @@ export async function changePassword(
 
   const session = await getSession();
   if (!session) redirect("/sign-in?next=%2Faccount%2Fprofile");
+
+  // Slice B16: an account made with Google has no password, so there is no
+  // current one to check — Hồ sơ draws no "Đổi mật khẩu" for it, and a request
+  // that comes anyway is answered here, before any token or Auth call.
+  if (session.oauthOnly) return { errors: { form: pick(PASSWORD_NONE_TEXT, locale) } };
 
   // Slice B4b: a shared demo account's password is printed on the sign-in
   // screen and has to keep opening it for the next visitor. Refused before

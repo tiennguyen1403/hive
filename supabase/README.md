@@ -226,6 +226,39 @@ and real accounts do not outlive the day (QĐ-45).
 
 On hosted, `db push` the migration; the seed does not change. Without the
 function the reset still runs and reports `accountsDeleted: null`.
+
+## Google sign-in (slice B16)
+
+"Tiếp tục với Google" runs Supabase Auth's PKCE flow on the server (QĐ-41).
+The browser only navigates: the Server Action `googleSignIn`
+(`lib/actions/auth.ts`) asks `signInWithOAuth` for the authorize URL and
+redirects there; Google sends the visitor back through Supabase to
+`/auth/callback` (`app/auth/callback/route.ts`), which exchanges the code
+for a session. No browser client, no `NEXT_PUBLIC_SUPABASE_*`.
+
+- **Local keys.** `config.toml` reads `[auth.external.google]` through
+  `env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)` and
+  `env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)`. Put both in
+  `supabase/.env` (git-ignored). The CLI (2.117) also reads the root `.env`,
+  which wins, but Next loads the root `.env` into the server too, so keep
+  them out of it. Without keys the stack still starts; Google then shows its
+  own error page.
+- **Allowed redirects** need the `/**` form: an exact
+  `http://localhost:3200` entry does not admit `/auth/callback?next=…`.
+- **Names.** `handle_new_user()` takes `name`, then `full_name`, then the
+  email's local part, then "Khách" (`20261007120000_google_names.sql`).
+- **Google-only accounts** (`app_metadata.providers` without `email`) have no
+  password, so Hồ sơ shows no "Đổi mật khẩu" and `changePassword` refuses.
+- **Session cookies** are `HttpOnly`, and `Secure` over https
+  (`lib/db/cookie-options.ts`): no page script reads them.
+- A Google account has no `handle`, so slice B17 masks it in the back office
+  and the daily reset deletes it.
+
+On hosted, enable the provider BEFORE the code ships, or the button lands
+on Supabase's raw "provider is not enabled" JSON: Authentication → Providers
+→ Google (client ID and secret, nonce check on), URL Configuration → Site URL
+`https://hive-neon-three.vercel.app` and Redirect URLs
+`https://hive-neon-three.vercel.app/**`. Then `db push` the migration.
 `lib/db/real-accounts.dbtest.ts` and `lib/db/sample-orders.dbtest.ts` cover
 the function, the sweep and the sample rule; they delete real accounts, so
 they run against the local stack only.

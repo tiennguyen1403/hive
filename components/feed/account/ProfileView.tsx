@@ -51,8 +51,13 @@ const spaced = (digits: string) => (digits ? formatPhone(digits).replace(/ /g, 
  * sizes", "Change password", "Notification settings", "Sign out", "Delete
  * account" · "Coming soon"). Switching language while editing keeps what was
  * typed: the form's values are its own state, and the page redraws in place.
+ *
+ * Slice B16: an account made with Google has no password, so the sheet would
+ * ask for a current one nobody has. The page says so (`canChangePassword`,
+ * from the session's `oauthOnly`), and then neither the row nor the sheet is
+ * drawn; `changePassword` refuses such an account on its own as well.
  */
-export function ProfileView({ me }: { me: Me }) {
+export function ProfileView({ me, canChangePassword = true }: { me: Me; canChangePassword?: boolean }) {
   const t = picker(useLocale());
   const [pwOpen, setPwOpen] = useState(false);
   const pwOpener = useRef<HTMLButtonElement | null>(null);
@@ -87,18 +92,20 @@ export function ProfileView({ me }: { me: Me }) {
             {t({ vi: "Khác", en: "More" })}
           </h2>
           <div className="me-rows">
-            <button
-              className="me-row"
-              type="button"
-              onClick={(e) => {
-                pwOpener.current = e.currentTarget;
-                setPwOpen(true);
-              }}
-            >
-              <FeedIcon name="lock-simple" />
-              <span>{t({ vi: "Đổi mật khẩu", en: "Change password" })}</span>
-              <FeedIcon name="caret-right" className="i-caret-right" />
-            </button>
+            {canChangePassword && (
+              <button
+                className="me-row"
+                type="button"
+                onClick={(e) => {
+                  pwOpener.current = e.currentTarget;
+                  setPwOpen(true);
+                }}
+              >
+                <FeedIcon name="lock-simple" />
+                <span>{t({ vi: "Đổi mật khẩu", en: "Change password" })}</span>
+                <FeedIcon name="caret-right" className="i-caret-right" />
+              </button>
+            )}
             <Link className="me-row" href="/account/notifications">
               <FeedIcon name="bell" />
               <span>{t({ vi: "Cài đặt thông báo", en: "Notification settings" })}</span>
@@ -119,7 +126,9 @@ export function ProfileView({ me }: { me: Me }) {
         </section>
       </div>
       <SignOutForm id="pf-signout" />
-      <PasswordSheetView open={pwOpen} onClose={() => setPwOpen(false)} back={pwOpener.current} />
+      {canChangePassword && (
+        <PasswordSheetView open={pwOpen} onClose={() => setPwOpen(false)} back={pwOpener.current} />
+      )}
     </>
   );
 }

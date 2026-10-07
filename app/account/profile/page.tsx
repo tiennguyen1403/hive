@@ -5,6 +5,7 @@ import { ProfileView } from "@/components/feed/account/ProfileView";
 import { FeedFrame } from "@/components/feed/FeedFrame";
 import type { FeedMbarProps } from "@/components/feed/FeedMbar";
 import { loadMe } from "@/lib/db/profiles";
+import { getSession } from "@/lib/db/session";
 import { picker, type Locale, type Pair } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
 import { PROFILE_SIGN_IN_TEXT } from "@/lib/my-state";
@@ -43,16 +44,19 @@ function mbarOf(locale: Locale): FeedMbarProps {
  * Signed out, the page asks to sign in in place, "Đăng nhập để sửa hồ sơ",
  * as the mock does. Signed in, the account's name, phone and e-mail come from
  * the server (`loadMe`); its sizes from the root layout's `MyStateProvider`.
+ *
+ * Slice B16: an account made with Google gets no "Đổi mật khẩu" — it has no
+ * password (`getSession().oauthOnly`; `loadMe` asks the same cached session).
  */
 export default async function ProfilePage() {
-  const [me, locale] = await Promise.all([loadMe(), getLocale()]);
+  const [me, locale, session] = await Promise.all([loadMe(), getLocale(), getSession()]);
   const t = picker(locale);
   return (
     <FeedFrame page="profile" foot="lite" mainClass="acc-layout" mbar={mbarOf(locale)}>
       <AccountNav on="profile" signedIn={me !== null} locale={locale} />
       <div className="acc-main">
         {me ? (
-          <ProfileView me={me} />
+          <ProfileView me={me} canChangePassword={!session?.oauthOnly} />
         ) : (
           <>
             <h1 className="acc-h1 disp" data-hero>

@@ -3746,3 +3746,52 @@ ngay sau khi tiếng Anh lên demo. Brief B16, B17, P thêm luật: lệnh bị 
 - **Phiên chính viết** mục "Real people in a public demo (slice B17)" trong `supabase/README.md`.
 - **Lên hosted:** `db push` một migration; seed không đổi. Thiếu hàm thì cron vẫn chạy, báo `accountsDeleted: null`.
 - **Còn biết:** `order-lookup.dbtest.ts` (d) hỏng ngẫu nhiên khi vắt qua mốc 10 phút; brief B16 cho sửa timeout.
+
+**07/10, lát B16 giao** (brief `tasks/briefs/backend-b16.md`, agent `backend-implementer`). Người dùng chưa ghi khoá Google thật:
+agent đo tệp mà CLI đọc cho `env()` bằng giá trị giả, rồi phiên chính dặn người dùng ghi khoá thật và cùng chạy thử bằng tài khoản
+Google thật.
+
+**07/10, lát B16 ĐẠT (phiên chính duyệt; agent sửa chuyển hướng mở sau duyệt; chạy thật bằng tài khoản Google đạt).** Brief
+`tasks/briefs/backend-b16.md`, agent `backend-implementer`. Người dùng cho commit trên máy (chưa push) rồi làm trang `/privacy`.
+- **Đã làm:**
+  - Server Action `googleSignIn` và Route Handler `/auth/callback` (PKCE phía server);
+  - `lib/auth-redirect.ts` (`localPath` chặt hơn `safeNext`);
+  - migration `20261007120000_google_names.sql`: tên lấy `name`, rồi `full_name`, rồi email;
+  - tài khoản chỉ có Google ẩn "Đổi mật khẩu", và `changePassword` từ chối;
+  - cookie phiên `HttpOnly`, và `Secure` khi chạy https;
+  - chữ G chính thức của Google (bản "super G" chuyển sắc, tài sản hiện hành; phiên chính xem ảnh 390 VI: đạt);
+  - câu Hỏi đáp mới.
+- **Agent đo:**
+  - 2.223 test xanh, `test:db` 339 xanh;
+  - sweep VI 110, EN 109; JS `/sign-in` +1,6 KB;
+  - đường thành công đo bằng mã PKCE thật qua magic link.
+  - **CLI 2.117 đọc cả `supabase/.env` lẫn `.env` gốc, `.env` gốc thắng.** Next cũng nạp `.env` gốc, nên dặn người dùng ghi khoá
+    vào `supabase/.env`;
+  - allow list cục bộ cần dạng `/**`;
+  - **phải bật Google ở hosted trước khi đẩy code**, nếu không nút ra JSON lỗi thô của Supabase.
+- **Lỗi có từ trước, agent tìm ra (đang có trên demo):** `safeNext` để lọt chuyển hướng mở `/sign-in?next=%2F%5Cevil.example`.
+  - **Đã sửa sau duyệt.** `safeNext` (`lib/actions/state.ts`) là quy tắc duy nhất, chặt như `localPath` cũ: từ chối backslash, ký
+    tự điều khiển, và dạng chuẩn hoá thành `//host`. Mọi action, `requireSession`, `requireAdmin` và callback đều đi qua nó.
+  - Agent chạy lại cách tái hiện qua UI: ở lại trên site. 2.257 test xanh, phiên chính kiểm lại và curl callback.
+- **Phiên chính viết** mục "Google sign-in (slice B16)" trong `supabase/README.md`.
+- **Để sau:**
+  - trigger tin `handle` trong `raw_user_meta_data` (ai có publishable key thì tự đặt được `handle`, và B17 sẽ coi là dữ liệu mẫu;
+    hiện không với tới vì trình duyệt không có key);
+  - callback chưa có giới hạn tần suất riêng;
+  - tên Google dài quá 60 ký tự thì không lưu Hồ sơ được tới khi rút ngắn;
+  - `DESIGN.md` còn dòng "nút Google tắt vẫn có icon", và cần ghi chữ G của Google có màu.
+
+**07/10, B16 chạy thật bằng tài khoản Google của người dùng (cục bộ, đạt).**
+- **Khoá:** người dùng ghi khoá vào `supabase/.env`. Phiên chính khởi động lại stack. `/auth/v1/authorize` chuyển sang Google kèm
+  client id thật (`…apps.googleusercontent.com`), `redirect_uri` là `http://127.0.0.1:54321/auth/v1/callback`.
+- **Người dùng đăng nhập được.** Phiên chính đọc DB (chỉ đọc):
+  - metadata Google có cả `name` lẫn `full_name`, cùng `avatar_url`, `picture`, `email`, `email_verified`, `iss`, `sub`,
+    `provider_id`, `phone_verified`;
+  - `providers` và identity đều là `google`;
+  - hồ sơ lấy tên từ Google; email chép đúng; `handle` null; không số điện thoại, không mật khẩu; có trong `real_accounts()`.
+- **Quản trị che đúng:**
+  - danh sách khách hiện "Tien N." và "ti•••@gmail.com", 0 đơn;
+  - trang khách cũng vậy;
+  - HTML và payload RSC không có tên đầy đủ hay Gmail thật.
+- **Ghi chú:** tài khoản Google này chỉ nằm trên DB cục bộ. Cục bộ không có cron, nên `real-accounts.dbtest.ts` sẽ xoá nó khi chạy
+  `test:db`.

@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { sessionCookieOptions } from "@/lib/db/cookie-options";
 import { supabaseEnv } from "@/lib/db/server";
 import {
   chooseLocale,
@@ -110,6 +111,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { url, publishableKey } = supabaseEnv();
 
   const supabase = createServerClient(url, publishableKey, {
+    // Slice B16: the refreshed cookie keeps the flags every other write gives it — HttpOnly, and Secure over https
+    // (`lib/db/cookie-options.ts`).
+    cookieOptions: sessionCookieOptions(request.headers.get("x-forwarded-proto")),
     cookies: {
       getAll() {
         return request.cookies.getAll();

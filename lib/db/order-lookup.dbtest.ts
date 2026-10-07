@@ -419,7 +419,10 @@ describe("(d) ten lookups per ten minutes per visitor, and not an eleventh", () 
     // Another visitor, in the same window, is untouched.
     newVisitor();
     expect((await lookupOrder(found.input)).ok).toBe(true);
-  });
+    // Slice B16 (the main session's call): its own timeout. `awayFromWindowEdge()` waits up to 32 s for a fresh
+    // ten-minute window when this one has less than 30 s left, and vitest's default of 5 s failed the test whenever a
+    // run happened to cross that edge. 45 s covers the wait and the twelve lookups after it.
+  }, 45_000);
 });
 
 // ─────────────────────────────── (e) anon: the lookup, and no table at all

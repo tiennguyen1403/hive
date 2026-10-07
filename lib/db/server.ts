@@ -2,7 +2,8 @@ import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { sessionCookieOptions } from "./cookie-options";
 import type { Database } from "./database.types";
 
 /**
@@ -61,13 +62,15 @@ export function supabaseEnv(): { url: string; publishableKey: string } {
 }
 
 export async function getSupabase(): Promise<SupabaseClient<Database>> {
-  const cookieStore = await cookies();
+  const [cookieStore, request] = await Promise.all([cookies(), headers()]);
   const { url, publishableKey } = supabaseEnv();
 
   return createServerClient<Database>(
     url,
     publishableKey,
     {
+      // Slice B16: HttpOnly always, Secure over https (`./cookie-options.ts`).
+      cookieOptions: sessionCookieOptions(request.get("x-forwarded-proto")),
       cookies: {
         getAll() {
           return cookieStore.getAll();

@@ -5,11 +5,12 @@ import Link from "next/link";
 import { startTransition, useActionState, useRef, useState } from "react";
 import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { demoAdminSignIn, demoSignIn, signIn, signUp } from "@/lib/actions/auth";
+import { demoAdminSignIn, demoSignIn, googleSignIn, signIn, signUp } from "@/lib/actions/auth";
 import { IDLE, type ActionState } from "@/lib/actions/state";
 import { PICTURE, pictureAlt, pictureOf } from "@/lib/feed";
 import {
   FORGOT_NOT_SENT_TEXT,
+  GOOGLE_FAILED_TEXT,
   SIGN_SENTENCES,
   firstWrongSign,
   signErrors,
@@ -21,6 +22,7 @@ import {
 import type { DemoAccounts } from "@/lib/demo-sign-in";
 import { picker, reword } from "@/lib/i18n";
 import { FeedIcon } from "../icon/FeedIcon";
+import { GoogleG } from "../icon/GoogleG";
 import { cx } from "../useReveal";
 
 /** The published demo accounts, read from the environment by the page (`lib/demo-sign-in.ts`); none means no box. */
@@ -31,6 +33,12 @@ interface SignInViewProps {
   /** Where the shopper was headed: a path of this app's own, already checked by the page. */
   next?: string | undefined;
   demo?: DemoAccounts | null;
+  /**
+   * Slice B16: the page was reached from `/auth/callback` with `?error=google`
+   * — Google did not sign anybody in — so the form opens with that line above
+   * it, where a refused sign-in goes.
+   */
+  googleFailed?: boolean;
 }
 
 /** The photo beside the form from 900px: SƯƠNG in black, worn (`sign-in.js`: `si-art`). */
@@ -51,6 +59,12 @@ const ART_KEY = "shot-suong-black";
  *   field (the mock's words).
  * · Quên mật khẩu: nothing can be sent yet (QĐ-35), so after a valid address
  *   the page says exactly that, with the way back to signing in.
+ * · Tiếp tục với Google (slice B16, QĐ-41): under "hoặc" on Đăng nhập and Tạo
+ *   tài khoản, a form of its own whose Server Action (`googleSignIn`) sends
+ *   the browser to Google through Supabase Auth; Google's standard "G"
+ *   (`GoogleG`) instead of the mock's one-colour glyph, the user's choice. A
+ *   round trip that ends without a session comes back to Đăng nhập with
+ *   "Chưa đăng nhập được bằng Google." on the refusal line.
  *
  * Rate limits and server failures keep the app's words, on the line where a
  * refused sign-in goes. Every link to another mode carries `next`.
@@ -61,7 +75,7 @@ const ART_KEY = "shot-suong-black";
  * Action's — is worded again at each render (`reword`), so switching language
  * rewords it in place; the rate limit's carries a wait and stays as sent.
  */
-export function SignInView({ mode, next, demo }: SignInViewProps) {
+export function SignInView({ mode, next, demo, googleFailed = false }: SignInViewProps) {
   const catalog = useCatalog();
   const locale = useLocale();
   const art = catalog.products.find((p) => p.photoKeys.includes(ART_KEY));
@@ -76,7 +90,12 @@ export function SignInView({ mode, next, demo }: SignInViewProps) {
         ) : (
           <>
             <h1 className="si-title disp">{signTitle(mode, locale)}</h1>
-            <AccountForm mode={mode} next={next} demo={mode === "in" ? (demo ?? null) : null} />
+            <AccountForm
+              mode={mode}
+              next={next}
+              demo={mode === "in" ? (demo ?? null) : null}
+              googleFailed={googleFailed}
+            />
           </>
         )}
       </div>
@@ -117,25 +136,28 @@ interface AccountFormProps {
   row?: boolean;
   /** "hoặc", Google and the way to the other mode, under the form (the sign-in page's; not Tôi's). */
   extras?: boolean;
+  /** Slice B16: open with "Chưa đăng nhập được bằng Google." on the refusal line (`?error=google`). */
+  googleFailed?: boolean;
 }
 
 /** Đăng nhập and Tạo tài khoản: the fields, the refusal line, "hoặc", Google, and the way to the other mode. */
-function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFormProps) {
+function AccountForm({ mode, next, demo, row = false, extras = true, googleFailed = false }: AccountFormProps) {
   const locale = useLocale();
   const t = picker(locale);
   const [state, dispatch, pending] = useActionState(mode === "up" ? signUp : signIn, IDLE);
   const [demoState, dispatchDemo, demoPending] = useActionState(demoSignIn, IDLE);
   const [adminState, dispatchAdmin, adminPending] = useActionState(demoAdminSignIn, IDLE);
+  const [googleState, dispatchGoogle, googlePending] = useActionState(googleSignIn, IDLE);
   const [values, setValues] = useState<Values>({ name: "", email: "", password: "" });
   const [shown, setShown] = useState(false);
   const [server, setServer] = useState<Partial<Record<SignField, string>>>({});
-  const [formError, setFormError] = useState<string | null>(null);
-  const [seen, setSeen] = useState<ActionState[]>([state, demoState, adminState]);
+  const [formError, setFormError] = useState<string | null>(() => (googleFailed ? t(GOOGLE_FAILED_TEXT) : null));
+  const [seen, setSeen] = useState<ActionState[]>([state, demoState, adminState, googleState]);
   const form = useRef<HTMLFormElement>(null);
 
   // An answer from the server (the adjust-state-while-rendering pattern: each answer is read once). The last one
   // pressed is the one with something to say.
-  const answers = [state, demoState, adminState];
+  const answers = [state, demoState, adminState, googleState];
   if (answers.some((a, i) => a !== seen[i])) {
     const fresh = answers.find((a, i) => a !== seen[i])!;
     setSeen(answers);
@@ -151,7 +173,7 @@ function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFo
     }
   }
 
-  const busy = pending || demoPending || adminPending;
+  const busy = pending || demoPending || adminPending || googlePending;
   const local = shown ? signErrors(mode, values, locale) : {};
   const errors: Partial<Record<SignField, string>> = { ...server, ...local };
   // What the form was told stays as it came; it is printed in the page's language.
@@ -176,6 +198,16 @@ function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFo
     }
     const data = new FormData(e.currentTarget);
     startTransition(() => dispatch(data));
+  }
+
+  // "Tiếp tục với Google" (slice B16): a form of its own carrying `next`, sent the way the demo box sends its two; the
+  // action answers with a redirect to Supabase Auth, or with a line for the refusal line (the rate limit).
+  function onGoogle(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (busy) return;
+    setFormError(null);
+    const data = new FormData(e.currentTarget);
+    startTransition(() => dispatchGoogle(data));
   }
 
   const submitLabel =
@@ -266,13 +298,15 @@ function AccountForm({ mode, next, demo, row = false, extras = true }: AccountFo
       {extras && (
         <>
           <p className="si-or">{t({ vi: "hoặc", en: "or" })}</p>
-          <button className="btn btn-line si-google" type="button" disabled aria-describedby="g-soon">
-            <FeedIcon name="google-logo" />
-            {t({ vi: "Tiếp tục với Google", en: "Continue with Google" })}
-            <span className="tag-soon" id="g-soon">
-              {t({ vi: "Đang chuẩn bị", en: "Coming soon" })}
-            </span>
-          </button>
+          <form onSubmit={onGoogle}>
+            <input type="hidden" name="next" value={next ?? ""} />
+            <button className="btn btn-line si-google" type="submit" disabled={busy}>
+              <GoogleG />
+              {googlePending
+                ? t({ vi: "Đang mở Google…", en: "Opening Google…" })
+                : t({ vi: "Tiếp tục với Google", en: "Continue with Google" })}
+            </button>
+          </form>
           {mode === "up" ? (
             <Link className="link si-switch" href={signHref("in", next)}>
               {t({ vi: "Đã có tài khoản? Đăng nhập", en: "Have an account? Sign in" })}

@@ -8,13 +8,16 @@ import { PATH_HEADER } from "@/lib/request-path";
 import { getSupabase } from "./server";
 
 /**
- * Where the visitor was going, for the sign-in detour: the proxy's header,
- * kept to a path of this app's own (`safeNext` — never a full URL, never
- * `//somewhere`), or `fallback` when the header is missing.
+ * Where the visitor was going, for the sign-in detour: the path the caller
+ * names, or else the proxy's header — either way kept to a path of this app's
+ * own by the one rule every redirect follows (`safeNext`: never a full URL,
+ * never `//somewhere`, no backslash or control character, nothing that
+ * resolves off the site), or `fallback`. Since slice B16 the caller's own path
+ * goes through it too: an admin page builds it from a route parameter, which
+ * arrives decoded.
  */
-async function requestedPath(fallback: string): Promise<string> {
-  const raw = (await headers()).get(PATH_HEADER);
-  return safeNext(raw, fallback);
+async function requestedPath(nextPath: string | undefined, fallback: string): Promise<string> {
+  return safeNext(nextPath ?? (await headers()).get(PATH_HEADER), fallback);
 }
 
 /**
@@ -48,6 +51,22 @@ export interface SessionInfo {
    * and the database cannot disagree about who is one.
    */
   role: "admin" | "customer";
+  /**
+   * Slice B16: the account has signed in only through an OAuth provider —
+   * Google — and has no `email` identity, so it has no password: Hồ sơ draws
+   * no "Đổi mật khẩu" and `changePassword` refuses it.
+   *
+   * Read from `app_metadata.providers` of the same verified token, "a list of
+   * all providers that the user has linked to their account" (the auth-js
+   * type `UserAppMetadata`, `@supabase/auth-js@2.117.0`): `["email"]` for an
+   * account made with a password — a demo shopper's and the manager's token
+   * both say so, and their `identities` agree (measured on the local stack,
+   * 07/10/2026) — and `["google"]` for one made with Google. `getUser()`
+   * would answer from `identities`, at the cost of a round trip to the auth
+   * server on every Hồ sơ. No list at all reads as false, so the password
+   * sheet stays as it was and its own check of the current password decides.
+   */
+  oauthOnly: boolean;
 }
 
 export const getSession = cache(async (): Promise<SessionInfo | null> => {
@@ -59,10 +78,15 @@ export const getSession = cache(async (): Promise<SessionInfo | null> => {
   const { sub, email, app_metadata } = data.claims;
   if (typeof sub !== "string" || sub === "") return null;
 
+  const providers = Array.isArray(app_metadata?.providers)
+    ? app_metadata.providers.filter((p: unknown): p is string => typeof p === "string")
+    : [];
+
   return {
     userId: sub,
     email: typeof email === "string" ? email : "",
     role: app_metadata?.role === "admin" ? "admin" : "customer",
+    oauthOnly: providers.length > 0 && !providers.includes("email"),
   };
 });
 
@@ -83,7 +107,7 @@ export const getSession = cache(async (): Promise<SessionInfo | null> => {
 export async function requireSession(nextPath?: string): Promise<SessionInfo> {
   const session = await getSession();
   if (!session) {
-    const back = nextPath ?? (await requestedPath("/account"));
+    const back = await requestedPath(nextPath, "/account");
     redirect(`/sign-in?next=${encodeURIComponent(back)}`);
   }
   return session;
@@ -110,7 +134,7 @@ export async function requireSession(nextPath?: string): Promise<SessionInfo> {
 export async function requireAdmin(nextPath?: string): Promise<SessionInfo> {
   const session = await getSession();
   if (!session) {
-    const back = nextPath ?? (await requestedPath("/admin"));
+    const back = await requestedPath(nextPath, "/admin");
     redirect(`/sign-in?next=${encodeURIComponent(back)}`);
   }
   if (session.role !== "admin") notFound();

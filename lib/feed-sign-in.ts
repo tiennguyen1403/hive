@@ -142,6 +142,19 @@ export const SIGN_UP_FAILED_TEXT: Pair = {
 };
 
 /**
+ * "Tiếp tục với Google" that did not end signed in (slice B16): above the
+ * form, where a refused sign-in goes, when `/auth/callback` sends the shopper
+ * back with `?error=google` (`lib/auth-redirect.ts`) — a press on "Huỷ" at
+ * Google, a code that would not trade — or when the Server Action could not
+ * start the round trip at all. One sentence for all of them: the shopper's
+ * next step is the same.
+ */
+export const GOOGLE_FAILED_TEXT: Pair = {
+  vi: "Chưa đăng nhập được bằng Google.",
+  en: "Couldn't sign in with Google.",
+};
+
+/**
  * The line "Quên mật khẩu" ends on (QĐ-35): no mail can be sent yet, so the
  * page says so instead of the mock's "Đã gửi liên kết…", and offers neither a
  * check mark nor "Gửi lại". The address is set in bold between the two parts.
@@ -171,6 +184,7 @@ export const SIGN_SENTENCES: readonly Pair[] = [
   SIGN_IN_WRONG_TEXT,
   EMAIL_TAKEN_TEXT,
   SIGN_UP_FAILED_TEXT,
+  GOOGLE_FAILED_TEXT,
 ];
 
 /**

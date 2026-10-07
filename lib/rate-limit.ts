@@ -86,7 +86,8 @@ const DAY = 86_400;
  *                 lookup says WHICH of the two did not match, and this is
  *                 what keeps that from being a way to find out, one code
  *                 after another, which orders exist
- *   sign_in       `signIn`, `demoSignIn`, `demoAdminSignIn`
+ *   sign_in       `signIn`, `demoSignIn`, `demoAdminSignIn`, since slice B16
+ *                 `googleSignIn`
  *   sign_up       `signUp`
  *   password      `changePassword`
  *   account       the address book's writes (`saveFeedAddress`,
