@@ -278,7 +278,7 @@ describe("reset_demo, with the demo accounts in place", () => {
     // Every handled profile but the manager's (slice B3a), who is no shopper.
     const profiles = await admin
       .from("profiles")
-      .select("handle, name, email, phone, joined_at")
+      .select("id, handle, name, email, phone, joined_at")
       .not("handle", "is", null)
       .neq("handle", DEMO_ADMIN.handle)
       .order("handle");
@@ -294,7 +294,14 @@ describe("reset_demo, with the demo accounts in place", () => {
       expect(row!.joined_at.slice(0, 10)).toBe(customer.joinedAt.slice(0, 10));
     }
 
-    const addresses = await admin.from("addresses").select("id", { count: "exact", head: true });
+    // The nine addresses of those eight books, and only theirs (slice B17
+    // review): an account somebody signed up for on the local stack, or a
+    // Google account from slice B16, keeps its own addresses through a reset,
+    // and they are no part of the sample this test is about.
+    const addresses = await admin
+      .from("addresses")
+      .select("id", { count: "exact", head: true })
+      .in("profile_id", profiles.data!.map((p) => p.id));
     expect(addresses.count).toBe(CUSTOMERS.reduce((n, c) => n + c.addresses.length, 0));
   });
 

@@ -1372,6 +1372,13 @@ export type Database = {
       photo_key_ok: { Args: { p_key: string }; Returns: boolean }
       place_order: { Args: { p_input: Json; p_now: string }; Returns: Json }
       read_promo_terms: { Args: { p_terms: Json }; Returns: Json }
+      real_accounts: {
+        Args: never
+        Returns: {
+          email: string
+          id: string
+        }[]
+      }
       receipt_order: { Args: { p_code: string; p_key: string }; Returns: Json }
       remove_address: { Args: { p_id: string }; Returns: boolean }
       reset_demo: { Args: { p_anchor?: string }; Returns: undefined }

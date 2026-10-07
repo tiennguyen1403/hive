@@ -42,6 +42,50 @@ export type AdminOrder = Order & { owner: OrderOwner | null };
 /** The frozen delivery address an order carries. */
 export type ShipTo = Order["shipTo"];
 
+// ─────────────────────────────────────────── sample or real (QĐ-44, B17)
+/**
+ * Whether an order is part of the sample: copied from `seed_orders` by
+ * `reset_demo()`, or placed by a sample account — a visitor who pressed "Đăng
+ * nhập thử" and ordered. Anything else — a guest's order, an order of an
+ * account somebody signed up for — belongs to a real person, and the public
+ * back office shows it masked (`lib/admin-mask.ts`).
+ *
+ * Read off `customerId`, which is `orders.customer_handle` as `order_json()`
+ * writes it, and that column is written by exactly the two doors the rule
+ * names: `reset_demo()` copies it from `seed_orders` (every sample order has
+ * one — `data/orders.ts` cannot build an order without its customer), and
+ * `place_order()` copies the placing profile's handle, which only a sample
+ * account has. A guest's and a real account's order carry none. It is frozen
+ * at placement, so nothing done to an account later turns its orders into
+ * sample ones; when in doubt, an order reads as real, which masks it.
+ */
+export function isSampleOrder(o: Pick<Order, "customerId">): boolean {
+  return String(o.customerId) !== "";
+}
+
+/**
+ * The same question asked of a raw `order_json()` document (the address
+ * edit's guard in `lib/actions/admin.ts`), without reading the rest of it:
+ * a sample order is one whose `customerId` is a non-empty string. Anything
+ * else — a real order, or a document not shaped like one — answers false.
+ */
+export function isSampleOrderJson(value: unknown): boolean {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const id = (value as Record<string, unknown>).customerId;
+  return typeof id === "string" && id !== "";
+}
+
+/**
+ * Why "Sửa địa chỉ" refuses a real customer's order (QĐ-44): the order
+ * screen does not offer the edit there, so only a direct call ever reads it.
+ */
+export function realAddressMessage(code: string, locale: Locale = "vi"): string {
+  return picker(locale)({
+    vi: `${code} là đơn của khách thật, không sửa địa chỉ được.`,
+    en: `${code} is a real customer's order. Its address can't be changed.`,
+  });
+}
+
 // ───────────────────────────────────────────────────────────── the guard
 /**
  * The next move on an order, and whose hand it is in: the SQL guard read as a

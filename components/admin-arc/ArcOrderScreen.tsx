@@ -19,7 +19,7 @@ import {
 } from "@/lib/actions/admin";
 import type { ActionState } from "@/lib/actions/state";
 import { customerKey, isShopper } from "@/lib/admin-customers";
-import { canCancel, canEditAddress, isPaidFor, nextMove, type AdminOrder } from "@/lib/admin-orders";
+import { canCancel, canEditAddress, isPaidFor, isSampleOrder, nextMove, type AdminOrder } from "@/lib/admin-orders";
 import { HANDOVER_LATE_DAYS, orderItemsLabel, orderItemsLang } from "@/lib/admin-rows";
 import { timelineOf, timelineSteps } from "@/lib/admin-timeline";
 import { carrierLabel } from "@/lib/carrier";
@@ -172,6 +172,12 @@ export function ArcOrderScreen({
 
   /** Before handover, the address can still be changed. After, it cannot. */
   const beforeHandover = canEditAddress(order, now);
+  /**
+   * A real customer's address arrives masked (QĐ-44, `lib/admin-mask.ts`), and
+   * the public back office does not rewrite it: no "Sửa" on their order, and
+   * `editAddress` refuses it all the same.
+   */
+  const editable = beforeHandover && isSampleOrder(order);
 
   function addNote() {
     const text = note.trim();
@@ -446,7 +452,7 @@ export function ArcOrderScreen({
               <h2 id={ids.address} className={styles.panelTitle}>
                 {t({ vi: "Giao tới", en: "Deliver to" })}
               </h2>
-              {beforeHandover && !editingAddress && (
+              {editable && !editingAddress && (
                 <Button
                   variant="ghost"
                   size="sm"

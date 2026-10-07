@@ -1,7 +1,12 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
-import { DEMO_EMAILS, demoPasswordState, type DemoPasswordState } from "@/lib/demo-accounts";
+import {
+  DEMO_EMAILS,
+  accountsToDelete,
+  demoPasswordState,
+  type DemoPasswordState,
+} from "@/lib/demo-accounts";
 import { supabaseEnv } from "./server";
 import { getServiceSupabase } from "./service";
 
@@ -143,4 +148,80 @@ export async function restoreDemoPasswords(): Promise<DemoPasswordCheck | null> 
     }
   }
   return { checked, restored };
+}
+
+/**
+ * Delete every account that is not part of the sample (slice B17, QĐ-45).
+ *
+ * Called by the daily reset (`/api/reset`) after `reset_demo()`, never by the
+ * back office's "Đặt lại dữ liệu mẫu": that button is open to every visitor of
+ * the public demo, and one visitor must not be able to delete another's
+ * account in the middle of their visit.
+ *
+ *   1. `public.real_accounts()` — granted to the service role only — names
+ *      every auth user whose profile has no handle
+ *      (`supabase/migrations/20261007010000_real_accounts.sql`);
+ *   2. `accountsToDelete` drops any whose e-mail is one of the nine shared demo
+ *      accounts (`lib/demo-accounts.ts`), so those are never deleted whatever
+ *      became of their handle;
+ *   3. each is deleted with `auth.admin.deleteUser(id)` — a hard delete, the
+ *      default: it "removes the row from `auth.users`, which cascades to
+ *      `auth.sessions` and invalidates the user's refresh tokens"
+ *      (https://supabase.com/docs/guides/auth/managing-user-data, "Deleting
+ *      users"; https://supabase.com/docs/reference/javascript/auth-admin-deleteuser),
+ *      and the profile with everything hanging off it goes by `on delete
+ *      cascade`. An access token already handed out stays valid until it
+ *      expires — the same page says so — but nothing is left for it to read.
+ *
+ * One that fails is logged — by its id, never its e-mail — and the rest are
+ * still deleted. Supabase refuses to delete "an Auth user that owns any
+ * Storage objects"; none does here, every upload goes through the service
+ * client, but that refusal would be logged and skipped like any other.
+ *
+ * Answers `{ deleted, failed }`, or null when it could not start: no service
+ * key, or the list could not be read. Never throws; the caller reports the
+ * count and never fails the reset for it.
+ */
+export interface RealAccountSweep {
+  deleted: number;
+  failed: number;
+}
+
+export async function deleteRealAccounts(): Promise<RealAccountSweep | null> {
+  const service = getServiceSupabase();
+  if (!service) {
+    console.error("deleteRealAccounts: SUPABASE_URL or SUPABASE_SECRET_KEY is not set");
+    return null;
+  }
+
+  let rows: { id: string; email: string }[];
+  try {
+    const { data, error } = await service.rpc("real_accounts");
+    if (error) {
+      console.error("real_accounts:", error.message);
+      return null;
+    }
+    rows = data ?? [];
+  } catch (e) {
+    console.error("real_accounts:", e instanceof Error ? e.message : e);
+    return null;
+  }
+
+  let deleted = 0;
+  let failed = 0;
+  for (const account of accountsToDelete(rows)) {
+    try {
+      const { error } = await service.auth.admin.deleteUser(account.id);
+      if (error) {
+        console.error(`deleteRealAccounts: ${account.id}:`, error.message);
+        failed += 1;
+        continue;
+      }
+      deleted += 1;
+    } catch (e) {
+      console.error(`deleteRealAccounts: ${account.id}:`, e instanceof Error ? e.message : e);
+      failed += 1;
+    }
+  }
+  return { deleted, failed };
 }

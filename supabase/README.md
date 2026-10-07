@@ -194,6 +194,42 @@ with the seed: reload `seed.sql` after `db push` (it ends with a reset).
 `lib/db/catalog-english.dbtest.ts` covers the snapshot, the reset, the edit
 and the constraints.
 
+## Real people in a public demo (slice B17)
+
+The back office is open to anyone who presses "Vào quản trị thử", so data a
+real visitor typed or Google handed over never reaches it in full (QĐ-44),
+and real accounts do not outlive the day (QĐ-45).
+
+- **Sample or real.** An account is the sample's when its profile carries a
+  `handle` (the eight shoppers and the manager). An order is the sample's when
+  `orders.customer_handle` is set: `reset_demo()` copies it from
+  `seed_orders`, and `place_order()` copies the handle of the profile placing
+  the order. Everything else — guest orders, orders of real accounts — is
+  real. Order codes cannot tell them apart: the sequence restarts with every
+  reset.
+- **Masking happens in the data layer** (`lib/admin-mask.ts`, applied in
+  `lib/db/admin.ts`), so the real values never leave the server: not in the
+  HTML, not in the RSC payload, not in a CSV. Row level security is
+  unchanged.
+- **`real_accounts()`** returns the id and email of every user whose profile
+  has no handle, or who has no profile at all. `service_role` cannot read
+  `auth.users`, so this `security definer` function is how the daily reset
+  finds them; only `service_role` may call it
+  (`20261007010000_real_accounts.sql`).
+- **The daily reset deletes real accounts.** `/api/reset` calls
+  `deleteRealAccounts()` (`lib/db/demo-accounts.ts`) after `reset_demo()`:
+  one `auth.admin.deleteUser` per account, never one of the nine demo emails,
+  a failure logged by id and skipped. The foreign keys cascade to the
+  profile, addresses, saved styles, reminders, settings and removed
+  addresses. The back office's "Đặt lại dữ liệu mẫu" does NOT delete
+  accounts: anybody can press it.
+
+On hosted, `db push` the migration; the seed does not change. Without the
+function the reset still runs and reports `accountsDeleted: null`.
+`lib/db/real-accounts.dbtest.ts` and `lib/db/sample-orders.dbtest.ts` cover
+the function, the sweep and the sample rule; they delete real accounts, so
+they run against the local stack only.
+
 ## What an account keeps (slice B9)
 
 Saved styles (`favorites`), issue reminders (`reminders`), "Size của tôi" and

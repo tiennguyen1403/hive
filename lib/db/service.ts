@@ -5,7 +5,8 @@ import type { Database } from "./database.types";
 
 /**
  * The service role, for the product-photo bucket, the daily reset, the rate
- * limits and the demo accounts' password, and NOTHING ELSE.
+ * limits, the demo accounts' password and the deletion of the real accounts,
+ * and NOTHING ELSE.
  *
  * Slice B3c needs one thing the publishable key cannot do: write objects into
  * the `product-photos` bucket. That bucket has row level security on
@@ -39,6 +40,11 @@ import type { Database } from "./database.types";
  *     reset, the Auth admin API (`auth.admin.listUsers`,
  *     `auth.admin.updateUserById`) sets back to `DEMO_PASSWORD` any of them
  *     the demo password no longer opens.
+ *
+ * Slice B17 (QĐ-45) adds one more, again a function and an API: in the daily
+ * reset, `real_accounts()` — which only `service_role` may call — names every
+ * account that is not part of the sample, and `auth.admin.deleteUser` deletes
+ * each (`deleteRealAccounts`, `lib/db/demo-accounts.ts`).
  *
  * `import "server-only"` makes the key's reach enforceable: a Client
  * Component importing this module fails the build. The key is read from the

@@ -9,8 +9,10 @@ import {
   bulkPaidMessage,
   isCancelReason,
   isCarrier,
+  isSampleOrderJson,
   isTrackingCode,
   normaliseTrackingCode,
+  realAddressMessage,
   type AdminFailure,
   type AdminMove,
 } from "@/lib/admin-orders";
@@ -284,6 +286,14 @@ export async function noteOrder(code: unknown, body: unknown): Promise<ActionSta
  * "Lưu địa chỉ": the new delivery address and why. The ward is checked
  * against the province here — the list lives in `data/regions.ts`, not in
  * Postgres — and everything else again in `admin_edit_address()`.
+ *
+ * A REAL CUSTOMER'S ORDER IS REFUSED (QĐ-44, slice B17). The back office
+ * shows that address masked and offers no "Sửa" on it; this is the same answer
+ * for a direct call. The order is read through the manager's own session —
+ * `order_json()`, which the admin read policy lets see every row — and only
+ * its `customerId` is looked at (`isSampleOrderJson`). No order at all (null)
+ * goes on to `admin_edit_address()`, which answers NOT_FOUND itself; a read
+ * that fails is "chưa lưu được", never a write.
  */
 export async function editAddress(code: unknown, form: unknown): Promise<ActionState> {
   await requireAdmin("/admin/orders");
@@ -312,6 +322,16 @@ export async function editAddress(code: unknown, form: unknown): Promise<ActionS
     reason.length > MAX_REASON
   ) {
     return refused("EDIT_ADDRESS", "BAD_INPUT", code, locale);
+  }
+
+  const supabase = await getSupabase();
+  const found = await supabase.rpc("order_json", { p_code: code });
+  if (found.error) {
+    console.error("order_json:", found.error.message);
+    return refused("EDIT_ADDRESS", "UNAVAILABLE", code, locale);
+  }
+  if (found.data !== null && !isSampleOrderJson(found.data)) {
+    return { errors: { form: realAddressMessage(code, locale) } };
   }
 
   const failure = await run("admin_edit_address", {

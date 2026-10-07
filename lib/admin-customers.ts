@@ -46,6 +46,17 @@ export function isShopper(profile: { handle: string | null }): boolean {
 }
 
 /**
+ * Whether an account is part of the sample (QĐ-44, slice B17): it carries a
+ * handle — the eight demo shoppers' `c-…` and the manager's `a-quanly`, given
+ * by `scripts/seed-users.ts` and put back by `reset_demo()`. An account with
+ * none is somebody real, who signed up, and the public back office shows it
+ * masked (`lib/admin-mask.ts`). The same reading as `customerKey` below.
+ */
+export function isSampleAccount(profile: { handle: string | null }): boolean {
+  return profile.handle !== null;
+}
+
+/**
  * How the back office addresses an account in its URLs: the fixture handle
  * when there is one (`/admin/customers/c-minhanh`, the addresses the screens
  * were built with), the uuid otherwise.

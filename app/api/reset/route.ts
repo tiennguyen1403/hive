@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { cronAuthorized } from "@/lib/cron-auth";
 import { toVnIso } from "@/lib/datetime";
-import { restoreDemoPasswords } from "@/lib/db/demo-accounts";
+import { deleteRealAccounts, restoreDemoPasswords } from "@/lib/db/demo-accounts";
 import { purgeUploadedPhotos } from "@/lib/db/photos";
 import { tidyRateHits } from "@/lib/db/rate-limit";
 import { getServiceSupabase } from "@/lib/db/service";
@@ -53,6 +53,16 @@ import { getServiceSupabase } from "@/lib/db/service";
  * IP address, https://supabase.com/docs/guides/auth/rate-limits — every day.
  * The back office's button does not do this part at all.
  *
+ * THE REAL ACCOUNTS (slice B17, QĐ-45). Then every account that is not part of
+ * the sample is deleted, with all of its data — its profile, addresses, saved
+ * styles, reminders and sizes go with it by `on delete cascade`; its orders
+ * went with the reset. The sample's nine are recognised by their handle and
+ * checked against the fixed list of their e-mails, and never deleted
+ * (`deleteRealAccounts`, `lib/db/demo-accounts.ts`). One that fails is logged
+ * and the rest still go. Only this route does it: "Đặt lại dữ liệu mẫu" in
+ * the back office is open to every visitor, and one visitor must not delete
+ * another's account in the middle of their visit.
+ *
  * THE RATE LIMITS (slice B4b). Once the photo bucket is empty the day's photo
  * count (`upload_global`) describes photos that are gone, so it is cleared —
  * only when the bucket really was emptied — and every counter window that is
@@ -86,15 +96,17 @@ import { getServiceSupabase } from "@/lib/db/service";
  * already empty (`photosRemoved: 0`), and a missed day is caught by the next.
  *
  * THE ANSWER. `{ ok: true, anchor, passwordsChecked, passwordsRestored,
- * photosRemoved }` — the anchor written as Vietnamese wall-clock time, how
- * many of the nine demo accounts gave a clear answer to the probe (normally 9)
- * and how many had to be set back (normally 0), and how many uploaded photos
- * went. When the database cannot be reached or refuses, `{ ok: false }` with
- * 503, and the reason goes to the server log only: this endpoint is public,
- * and a Postgres error names schemas and roles. When the database part went
- * through but the passwords or the bucket could not be seen to, the reset
- * still happened, so the answer is still 200, with the two password counts
- * or `photosRemoved` null — the same reasoning as `resetDemo`.
+ * accountsDeleted, photosRemoved }` — the anchor written as Vietnamese
+ * wall-clock time, how many of the nine demo accounts gave a clear answer to
+ * the probe (normally 9) and how many had to be set back (normally 0), how
+ * many real accounts were deleted, and how many uploaded photos went. When the
+ * database cannot be reached or refuses, `{ ok: false }` with 503, and the
+ * reason goes to the server log only: this endpoint is public, and a Postgres
+ * error names schemas and roles. When the database part went through but the
+ * passwords, the accounts or the bucket could not be seen to, the reset still
+ * happened, so the answer is still 200, with the two password counts,
+ * `accountsDeleted` or `photosRemoved` null — the same reasoning as
+ * `resetDemo`.
  */
 
 // Never prerendered, never served from a cache: a cached answer would report
@@ -135,6 +147,10 @@ export async function GET(request: NextRequest) {
   // no longer does is set back. Never throws; null when it could not start.
   const passwords = await restoreDemoPasswords();
 
+  // Every account that is not the sample's goes, with all of its data
+  // (QĐ-45). Never throws; null when it could not start.
+  const accounts = await deleteRealAccounts();
+
   // The sample uses borrowed frames only, so after the reset no row shows an
   // upload and every object under `up/` is one nobody links to.
   let photosRemoved: number | null;
@@ -161,6 +177,7 @@ export async function GET(request: NextRequest) {
       anchor: toVnIso(new Date(anchor.data)),
       passwordsChecked: passwords?.checked ?? null,
       passwordsRestored: passwords?.restored ?? null,
+      accountsDeleted: accounts?.deleted ?? null,
       photosRemoved,
     },
     { headers: NO_STORE },

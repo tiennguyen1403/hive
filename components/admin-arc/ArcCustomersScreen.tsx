@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { useMemo, useOptimistic, useTransition } from "react";
 import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { customerKey, customerRows, type AdminCustomer, type CustomerRow } from "@/lib/admin-customers";
+import {
+  customerKey,
+  customerRows,
+  isSampleAccount,
+  type AdminCustomer,
+  type CustomerRow,
+} from "@/lib/admin-customers";
 import type { AdminOrder } from "@/lib/admin-orders";
 import { storedLang } from "@/lib/admin-text";
 import { hrefWith, pageOf, paginate, patched, PER_PAGE_CHOICES, perPageOf, type Query } from "@/lib/admin-url";
@@ -194,11 +200,18 @@ export function ArcCustomersScreen({
             icon: <ShoppingBag {...ICON} />,
             onSelect: () => router.push(`/admin/orders?customer=${key}`),
           },
-          {
-            label: t({ vi: "Chép email", en: "Copy email" }),
-            icon: <Copy {...ICON} />,
-            onSelect: () => void copyEmail(customer.email),
-          },
+          // A real account's e-mail arrives masked (QĐ-44, `lib/admin-mask.ts`):
+          // copying "pe•••@gmail.com" copies nothing anybody can use, so the
+          // item is offered on a sample account only (DESIGN.md §9 rule 3).
+          ...(isSampleAccount(customer)
+            ? [
+                {
+                  label: t({ vi: "Chép email", en: "Copy email" }),
+                  icon: <Copy {...ICON} />,
+                  onSelect: () => void copyEmail(customer.email),
+                },
+              ]
+            : []),
         ]}
       />
     );

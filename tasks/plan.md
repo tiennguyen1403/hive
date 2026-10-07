@@ -3706,3 +3706,43 @@ commit trên máy (chưa push) rồi làm DESIGN.md.
 **07/10, DESIGN.md đợt v6 ĐẠT** (agent `impeccable-documenter`, brief `tasks/briefs/v6-design-md.md`; phiên chính đối chiếu mục
 "Ngôn ngữ" với code). +189/−21 dòng, frontmatter và token không đổi, máy dò 8 trước và 8 sau. Người dùng cho commit rồi đưa phần
 tiếng Anh lên demo.
+
+**07/10, PHẦN TIẾNG ANH ĐÃ LÊN ONLINE** (`847f481`). Người dùng tự chạy:
+- `db push --linked --dry-run`: đúng một migration, `20261001150000_catalog_english.sql`;
+- `db push --linked --yes`;
+- `db query --linked -f supabase/seed.sql`;
+- câu kiểm chỉ đọc ra 29 / 8 / 10 (mẫu, tên tiếng Anh, chi tiết tiếng Anh);
+- `git push origin main`, dải `3ffa49f..847f481`.
+
+Vercel dựng xong trong khoảng 50 giây. Phiên chính kiểm bằng curl:
+- `Accept-Language: en` ra `lang="en"`, có "Cut once." và "PLAIN TEE";
+- `vi`, hay không có header, ra `lang="vi"`;
+- `/products?lang=en&line=all` chuyển hướng 307 về `/products?line=all`, kèm `Set-Cookie: hive-lang=en`.
+
+**07/10, lát B17 giao** (brief `tasks/briefs/backend-b17.md`, agent `backend-implementer`). Người dùng chọn bắt đầu phần Google
+ngay sau khi tiếng Anh lên demo. Brief B16, B17, P thêm luật: lệnh bị hệ thống quyền từ chối thì không thử cách khác, chỉ báo lại.
+
+**07/10, lát B17 ĐẠT (phiên chính duyệt; agent sửa hai việc sau duyệt).** Brief `tasks/briefs/backend-b17.md`, agent
+`backend-implementer`. Người dùng cho commit trên máy (chưa push) rồi làm B16.
+- **Che (QĐ-44):** `lib/admin-mask.ts`, áp ở lớp đọc `lib/db/admin.ts`.
+  - Đơn mẫu là đơn có `orders.customer_handle`; chỉ `reset_demo` và `place_order` ghi cột này. Không so mã đơn, vì dãy số chạy lại
+    sau mỗi lần đặt lại.
+  - Đơn thật không có "Sửa địa chỉ", và action cũng từ chối. Tài khoản thật không có "Chép email".
+- **Xoá tài khoản thật (QĐ-45):**
+  - migration `20261007010000_real_accounts.sql` thêm hàm `real_accounts()`, chỉ `service_role` gọi được;
+  - `deleteRealAccounts()` chạy trong `/api/reset` sau `reset_demo`; nút đặt lại trong quản trị thì không xoá.
+- **Phiên chính kiểm:** tsc sạch, 2.186 test xanh; xem ảnh trang đơn thật (EN, menu "Thao tác khác") và danh sách khách (VI).
+- **Agent đo:**
+  - 60 cặp ảnh chỉ có dữ liệu mẫu (28 route × vi/en, cộng 2 menu × vi/en): chỉ lệch giờ;
+  - tìm 14 chuỗi thật và 12 mảnh trong HTML, payload RSC, 8 CSV: 0 lần;
+  - 42 lượt tìm bằng giá trị thật không ra dòng người thật;
+  - `test:db` 333 xanh; sweep VI 111 (thêm 1 `arrowCursor` chụp giữa lúc tra đơn ở `/track`, trang không đổi).
+- **Sửa sau duyệt (phiên chính yêu cầu):**
+  - `npm run test:db` từ chối chạy khi `SUPABASE_URL` không phải `127.0.0.1` hay `localhost`, vì có test xoá tài khoản;
+  - `accounts.dbtest.ts` chỉ đếm địa chỉ của tám khách mẫu (phiên chính cho sửa test cũ). Có tài khoản thật giữ hai địa chỉ mà test
+    vẫn xanh.
+- **Quyết định (phiên chính):** xoá tuần tự trong `maxDuration = 60` là đủ cho lưu lượng demo. Token của tài khoản đã xoá còn hạn tới
+  1 giờ nhưng không còn gì để đọc.
+- **Phiên chính viết** mục "Real people in a public demo (slice B17)" trong `supabase/README.md`.
+- **Lên hosted:** `db push` một migration; seed không đổi. Thiếu hàm thì cron vẫn chạy, báo `accountsDeleted: null`.
+- **Còn biết:** `order-lookup.dbtest.ts` (d) hỏng ngẫu nhiên khi vắt qua mốc 10 phút; brief B16 cho sửa timeout.

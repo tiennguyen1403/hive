@@ -25,7 +25,8 @@ import { defineConfig } from "vitest/config";
  *
  * Only the four names the tests need cross into the worker; the rest of
  * `.env.local` is none of a test runner's business. A missing file leaves them
- * unset and each suite says which one by name.
+ * unset and each suite says which one by name, except `SUPABASE_URL`: without
+ * one the runner does not start at all (`refuseUnlessLocal` below).
  */
 function readEnvLocal(): Record<string, string> {
   const wanted = [
@@ -56,11 +57,57 @@ function readEnvLocal(): Record<string, string> {
   return env;
 }
 
+/**
+ * THE LOCAL STACK ONLY (slice B17 review). These tests write to the database
+ * they are pointed at: every file puts the sample back with `reset_demo()`, and
+ * `lib/db/real-accounts.dbtest.ts` deletes every account without a handle, the
+ * way the daily reset does (QĐ-45). Pointed at the hosted project, one run
+ * would empty the public demo's orders and delete its visitors' accounts. So
+ * the runner refuses to start (the config throws before a single file loads)
+ * unless every SUPABASE_URL it can see is on 127.0.0.1 or localhost:
+ *
+ *   · the one in `.env.local`, which is the one the tests use: `test.env`
+ *     below is written into each worker's `process.env` over whatever the
+ *     worker inherited (vitest's `setupEnv`);
+ *   · one set in the shell, which the tests fall back to when `.env.local` has
+ *     none, and which says where the developer is pointed right now.
+ *
+ * A URL missing from both, or one that does not parse, is refused as well.
+ * The message names the host and where it came from, never a key.
+ */
+const LOCAL_HOSTS: readonly string[] = ["127.0.0.1", "localhost"];
+
+function refuseUnlessLocal(sources: ReadonlyArray<readonly [where: string, url: string | undefined]>): void {
+  const stop = (why: string): never => {
+    throw new Error(
+      `npm run test:db refuses to run: ${why}. These tests reset the sample data and delete every ` +
+        "account without a handle, so they only run against the local stack (127.0.0.1 or localhost).",
+    );
+  };
+  const given = sources.filter(([, url]) => url !== undefined && url.trim() !== "");
+  if (given.length === 0) stop("SUPABASE_URL is set neither in .env.local nor in the shell");
+  for (const [where, url] of given) {
+    let host = "";
+    try {
+      host = new URL(url!).hostname;
+    } catch {
+      stop(`SUPABASE_URL from ${where} is not a URL`);
+    }
+    if (!LOCAL_HOSTS.includes(host)) stop(`SUPABASE_URL from ${where} points at the host "${host}"`);
+  }
+}
+
+const env = readEnvLocal();
+refuseUnlessLocal([
+  [".env.local", env.SUPABASE_URL],
+  ["the shell environment", process.env.SUPABASE_URL],
+]);
+
 export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     environment: "node",
-    env: readEnvLocal(),
+    env,
     include: ["lib/db/**/*.dbtest.ts"],
     // Every db test file rebuilds the same local database through reset_demo(); run them one after another.
     fileParallelism: false,

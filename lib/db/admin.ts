@@ -6,6 +6,13 @@ import {
   type AdminCustomer,
   type AdminCustomerDetail,
 } from "@/lib/admin-customers";
+import {
+  maskAdminCustomer,
+  maskAdminCustomerDetail,
+  maskAdminEvents,
+  maskAdminOrder,
+  sampleOrderCodes,
+} from "@/lib/admin-mask";
 import type { AdminOrder } from "@/lib/admin-orders";
 import { demoNowMs } from "@/lib/clock";
 import { isOrderCode } from "@/lib/lookup";
@@ -31,6 +38,13 @@ import { getSession } from "./session";
  * `event-dto.ts`), never rows. Cached per request (`React.cache`): the admin
  * layout counts the orders waiting while the page below lists them, from one
  * round trip.
+ *
+ * MASKED HERE (QĐ-44, slice B17). The back office is public, so every read
+ * below hands what belongs to a real person — a guest's order, an account
+ * somebody signed up for — through `lib/admin-mask.ts` before it returns:
+ * name shortened, e-mail, number and street hidden. The sample comes back as
+ * the same objects. Nothing above this file ever holds the real value, so no
+ * screen, payload, search or CSV of the back office can carry it.
  */
 
 async function adminClient() {
@@ -55,12 +69,12 @@ const ADDRESS_COLUMNS = "id, recipient, phone, line, province_code, ward_code, l
 const EVENT_COLUMNS = "id, at, actor_role, actor, kind, order_code, product_id, promo_code, drop_no, payload";
 
 // ──────────────────────────────────────────────────────────────── orders
-/** Every order in the book, newest first, each with its account. */
+/** Every order in the book, newest first, each with its account; a real person's masked. */
 export const listAllOrders = cache(async (): Promise<AdminOrder[]> => {
   const supabase = await adminClient();
   const { data, error } = await supabase.rpc("admin_orders");
   if (error) readFailed("admin_orders", error);
-  return toAdminOrders(data);
+  return toAdminOrders(data).map(maskAdminOrder);
 });
 
 /**
@@ -77,7 +91,7 @@ export async function findOrderAdmin(code: string): Promise<AdminOrder | null> {
 /**
  * Every shopper — the demo accounts and everybody who signed up — oldest
  * account first, which is the order `data/customers.ts` lists the eight in.
- * The shop's own manager is left out (`isShopper`).
+ * The shop's own manager is left out (`isShopper`); a real account is masked.
  */
 export const listCustomers = cache(async (): Promise<AdminCustomer[]> => {
   const supabase = await adminClient();
@@ -87,13 +101,14 @@ export const listCustomers = cache(async (): Promise<AdminCustomer[]> => {
     .order("joined_at", { ascending: true })
     .order("id", { ascending: true });
   if (error) readFailed("profiles", error);
-  return data.map(toAdminCustomer).filter(isShopper);
+  return data.map(toAdminCustomer).filter(isShopper).map(maskAdminCustomer);
 });
 
 /**
  * One shopper with their address book, by the key the back office's URLs use:
  * the fixture handle (`c-minhanh`) or the uuid. Null for anything else — the
- * page turns it into `notFound()`.
+ * page turns it into `notFound()`. A real account comes back masked, every
+ * address of its book with it.
  */
 export async function findCustomer(key: string): Promise<AdminCustomerDetail | null> {
   if (key === "") return null;
@@ -116,7 +131,7 @@ export async function findCustomer(key: string): Promise<AdminCustomerDetail | n
     .order("position", { ascending: true });
   if (book.error) readFailed("addresses", book.error);
 
-  return { ...customer, addresses: book.data.map(toAddress) };
+  return maskAdminCustomerDetail({ ...customer, addresses: book.data.map(toAddress) });
 }
 
 // ──────────────────────────────────────────────────────────────── the log
@@ -124,6 +139,10 @@ export async function findCustomer(key: string): Promise<AdminCustomerDetail | n
  * The log, newest first — read straight off `public.events`, which only the
  * manager may read (the `events: admin reads` policy). One kind, and only the
  * last `days` days, when asked.
+ *
+ * Masked against the book (`maskAdminEvents`): an actor's e-mail unless it is
+ * a shared demo account's, and an address change of an order that is not a
+ * sample one. The book is the cached one the layout and the page read anyway.
  */
 export async function listEvents({
   kind,
@@ -146,10 +165,10 @@ export async function listEvents({
 
   const { data, error } = await query;
   if (error) readFailed("events", error);
-  return toEvents(data);
+  return maskAdminEvents(toEvents(data), sampleOrderCodes(await listAllOrders()));
 }
 
-/** One order's own events, oldest first — its notes, read a second way. */
+/** One order's own events, oldest first — its notes, read a second way; masked like the log. */
 export const orderEvents = cache(async (code: string): Promise<AdminEvent[]> => {
   if (!isOrderCode(code)) return [];
   const supabase = await adminClient();
@@ -160,7 +179,7 @@ export const orderEvents = cache(async (code: string): Promise<AdminEvent[]> => 
     .order("at", { ascending: true })
     .order("id", { ascending: true });
   if (error) readFailed("events", error);
-  return toEvents(data);
+  return maskAdminEvents(toEvents(data), sampleOrderCodes(await listAllOrders()));
 });
 
 /** When the sample data was last put back, or null if the log has no reset. */

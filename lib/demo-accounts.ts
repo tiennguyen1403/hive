@@ -23,6 +23,10 @@ import type { Pair } from "./i18n";
  * addresses and run the back office like anybody, and the reset puts that
  * back too.
  *
+ * Since slice B17 (QĐ-45) the list is also what the daily reset must never
+ * delete: it deletes every account that is not part of the sample, and checks
+ * each against these nine first (`accountsToDelete`).
+ *
  * Read from the fixture and from `lib/demo-admin.ts`, never typed again here:
  * the account `seed:users` creates and the one this guards are the same list.
  */
@@ -40,6 +44,26 @@ const KNOWN = new Set(DEMO_EMAILS.map((e) => e.toLowerCase()));
 export function isDemoEmail(email: string): boolean {
   const key = email.trim().toLowerCase();
   return key !== "" && KNOWN.has(key);
+}
+
+/**
+ * One account `public.real_accounts()` names: an auth user whose profile has
+ * no handle (slice B17, QĐ-45).
+ */
+export interface AccountRow {
+  id: string;
+  email: string;
+}
+
+/**
+ * Which of them the daily reset deletes (QĐ-45): every one, except one whose
+ * e-mail is among the nine above. The database already left out every account
+ * with a handle; this is the second, fixed check the brief asks for, so that a
+ * demo account that somehow lost its handle is still never deleted. A row
+ * without an id names nothing to delete.
+ */
+export function accountsToDelete(rows: readonly AccountRow[]): AccountRow[] {
+  return rows.filter((r) => r.id !== "" && !isDemoEmail(r.email));
 }
 
 /**
