@@ -51,8 +51,8 @@ describe("isOrderCode", () => {
 });
 
 describe("trackHref", () => {
-  it("carries both values, the phone as digits", () => {
-    expect(trackHref("dh2425", "0908 221 447")).toBe("/track?code=DH-2425&phone=0908221447");
+  it("carries the code alone, as the app reads it — never the phone (slice B19)", () => {
+    expect(trackHref("dh2425")).toBe("/track?code=DH-2425");
   });
 
   it("leaves the phone out when there is none", () => {

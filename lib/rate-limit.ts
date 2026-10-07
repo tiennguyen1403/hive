@@ -28,18 +28,20 @@ import { picker, plural, type Locale } from "./i18n";
  * rate.
  *
  * The numbers are the brief's (B4b §2.5, `keep` from the review of slice B9,
- * `lookup` from the brief of slice B11) and are deliberately NOT environment
- * variables: a limit that a deploy can switch off is a limit nobody can rely
- * on. `lib/rate-limit.test.ts` restates the table by hand.
+ * `lookup` from the brief of slice B11, `auth_callback` from the brief of
+ * slice B19) and are deliberately NOT environment variables: a limit that a
+ * deploy can switch off is a limit nobody can rely on. `lib/rate-limit.test.ts`
+ * restates the table by hand.
  */
 
 /**
- * The thirteen buckets. `public.rate_hits.bucket` checks the same thirteen,
+ * The fourteen buckets. `public.rate_hits.bucket` checks the same fourteen,
  * and `take_rate()` refuses any other name as `BAD_INPUT` — three lists that
  * must agree, which `lib/db/rate-limit.dbtest.ts` proves by calling
  * `take_rate()` with every name here. `keep` joined at slice B9
  * (`20260929120000_account_state.sql`), `lookup` at slice B11
- * (`20260930150000_order_lookup.sql`).
+ * (`20260930150000_order_lookup.sql`), `auth_callback` at slice B19
+ * (`20261007201000_auth_callback_rate.sql`).
  */
 export const RATE_BUCKETS = [
   "order_place",
@@ -55,6 +57,7 @@ export const RATE_BUCKETS = [
   "upload",
   "upload_global",
   "reset",
+  "auth_callback",
 ] as const;
 
 export type RateBucket = (typeof RATE_BUCKETS)[number];
@@ -108,6 +111,11 @@ const DAY = 86_400;
  *   upload_global …and for everybody: 300 × 1,5 MB ≤ 450 MB a day into a 1 GB
  *                 bucket, which "Đặt lại dữ liệu mẫu" and the daily reset empty
  *   reset         `resetDemo`
+ *   auth_callback `/auth/callback` (`app/auth/callback/route.ts`, slice B19),
+ *                 one per code it is about to trade for a session: each trade
+ *                 is a call to Supabase Auth's `/token` from the server's own
+ *                 address, and codes that cannot trade would otherwise spend
+ *                 the limit Auth keeps for every visitor at once
  */
 export const RATE_RULES: Readonly<Record<RateBucket, RateRule>> = {
   order_place: { limit: 5, windowSeconds: 10 * MINUTE, per: "visitor" },
@@ -123,6 +131,7 @@ export const RATE_RULES: Readonly<Record<RateBucket, RateRule>> = {
   upload: { limit: 40, windowSeconds: HOUR, per: "visitor" },
   upload_global: { limit: 300, windowSeconds: DAY, per: "everyone" },
   reset: { limit: 3, windowSeconds: 10 * MINUTE, per: "visitor" },
+  auth_callback: { limit: 10, windowSeconds: 5 * MINUTE, per: "visitor" },
 };
 
 // ─────────────────────────────────────────────────────────── the visitor

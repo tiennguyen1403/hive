@@ -3,6 +3,7 @@ import { TrackView } from "@/components/feed/account/TrackView";
 import { FeedFrame } from "@/components/feed/FeedFrame";
 import type { FeedMbarProps } from "@/components/feed/FeedMbar";
 import { loadMe } from "@/lib/db/profiles";
+import { knownOrder } from "@/lib/db/track-known";
 import { picker, type Locale, type Pair } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
 import { SITE_DESCRIPTION_TEXT } from "@/lib/site";
@@ -45,15 +46,30 @@ function first(v: string | string[] | undefined): string {
  * NOTHING IS LOOKED UP HERE. Each lookup spends one of the visitor's lookups
  * (slice B11, `lib/db/order-lookup.ts`), and a render may run again — on a
  * refresh, a revalidation, or a prefetch nobody asked for — so the page only
- * reads `code` and `phone` off the address and hands them down; the screen
- * looks them up once, when it mounts (`lookupOrderAction`). `searchParams` is
- * a promise in Next 16.
+ * reads `code` (and an old link's `phone`) off the address and hands them
+ * down; the screen looks a number up once, when it mounts
+ * (`lookupOrderAction`). `searchParams` is a promise in Next 16.
+ *
+ * What the page DOES read (slice B19) is the order behind `?code=` when this
+ * browser may already see it — the account's own, or the one it placed signed
+ * out (`knownOrder`, the receipt page's own read through `loadReceipt`). That
+ * spends no lookup, so a render may repeat it; the screen then shows the
+ * order at once and asks for no number, which is what lets the address carry
+ * the code alone. Any other browser, and any code that is not an order, gets
+ * the form.
+ *
+ * A form sent without script posts to this page too (`TrackView`'s and
+ * `LookupForm`'s permalink, `/track`); Next runs the lookup's Server Action
+ * and draws the page again with its answer, which the screen takes from
+ * `useActionState`.
  */
 export default async function TrackPage(props: PageProps<"/track">) {
   const [me, sp, locale] = await Promise.all([loadMe(), props.searchParams, getLocale()]);
+  const code = first(sp.code);
+  const known = code ? await knownOrder(code) : null;
   return (
     <FeedFrame page="track" foot="lite" footSkip={["/track"]} mainClass="b-wrap b-page p-track" mbar={mbarOf(locale)}>
-      <TrackView code={first(sp.code)} phone={first(sp.phone)} signedIn={me !== null} />
+      <TrackView code={code} phone={first(sp.phone)} signedIn={me !== null} known={known} />
     </FeedFrame>
   );
 }

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
 import { callbackPlan } from "@/lib/auth-redirect";
+import { takeRate } from "@/lib/db/rate-limit";
 import { getSupabase } from "@/lib/db/server";
 
 /**
@@ -25,6 +26,15 @@ import { getSupabase } from "@/lib/db/server";
  * with `?error=google`, `next` kept. Without a verifier cookie the trade does
  * not even leave the server: auth-js answers "code verifier missing" first.
  *
+ * ONE TOKEN PER TRADE (slice B19). A trade is a call to Supabase Auth's
+ * `/token` from this server's address, and a visitor sending codes that cannot
+ * trade would spend, from there, the limit Auth keeps for every visitor at
+ * once. So each request about to trade spends a token of the visitor's
+ * `auth_callback` bucket (ten per five minutes, `RATE_RULES`) first; refused,
+ * it goes where a refused trade goes — "Đăng nhập" with the same line — and
+ * Auth is not asked. A request with nothing to trade spends nothing. The
+ * limit fails open, as every limit of the demo does (`lib/db/rate-limit.ts`).
+ *
  * GET only, and dynamic by nature — it reads the request's address and writes
  * cookies (`node_modules/next/dist/docs/01-app/01-getting-started/
  * 15-route-handlers.md`: "Route Handlers are not cached by default"). `redirect`
@@ -40,6 +50,9 @@ export async function GET(request: NextRequest): Promise<never> {
     if (said) console.error("auth callback: Supabase sent back", said.slice(0, 80));
     redirect(plan.failed);
   }
+
+  const pace = await takeRate("auth_callback");
+  if (!pace.ok) redirect(plan.failed);
 
   const supabase = await getSupabase();
   const { error } = await supabase.auth.exchangeCodeForSession(plan.code);

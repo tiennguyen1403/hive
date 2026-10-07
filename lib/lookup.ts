@@ -58,10 +58,19 @@ export function isOrderCode(code: string): boolean {
   return /^DH-\d{4,}$/.test(code);
 }
 
-/** `/track?code=DH-2425&phone=0908221447` — shareable, and the QR's target. */
-export function trackHref(code: string, phone?: string): string {
-  const q = new URLSearchParams({ code: normaliseOrderCode(code) });
-  const digits = phone ? phoneDigits(phone) : "";
-  if (digits) q.set("phone", digits);
-  return `/track?${q.toString()}`;
+/** The lookup's page. A form sent without script lands here (slice B19). */
+export const TRACK_PATH = "/track";
+
+/**
+ * `/track?code=DH-2425` — shareable, and the QR's target.
+ *
+ * Never the phone number (slice B19): an address is kept in the history, in
+ * the server's and the host's logs, in a copied link, and sent on as the
+ * referrer. A browser that may already see the order — the account's own, or
+ * one it placed signed out (`loadReceipt`) — gets it at once from the code
+ * alone; any other browser is asked for the number, which the lookup's forms
+ * send in the body of a POST.
+ */
+export function trackHref(code: string): string {
+  return `${TRACK_PATH}?${new URLSearchParams({ code: normaliseOrderCode(code) }).toString()}`;
 }

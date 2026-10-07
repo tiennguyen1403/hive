@@ -164,6 +164,6 @@ describe("delivery, the summary, the lines and the way on", () => {
 
   it("leads to the order's own page in the account, or to the lookup", () => {
     expect(followLink(waiting(), true)).toEqual({ label: "Xem đơn", href: "/account/orders/DH-1507" });
-    expect(followLink(waiting(), false)).toEqual({ label: "Tra cứu đơn", href: "/track?code=DH-1507&phone=0938571204" });
+    expect(followLink(waiting(), false)).toEqual({ label: "Tra cứu đơn", href: "/track?code=DH-1507" });
   });
 });

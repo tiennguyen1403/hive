@@ -144,6 +144,13 @@ const PROFILE_FIELD_TEXT = {
 export const PROFILE_SENTENCES: readonly Pair[] = Object.values(PROFILE_FIELD_TEXT);
 
 /**
+ * "Họ và tên tối đa 60 ký tự": Hồ sơ's sentence, which "Tạo tài khoản" says
+ * too since slice B19 (`signErrors("up")`), so a name the profile could never
+ * save is refused before the account exists.
+ */
+export const NAME_LONG_TEXT: Pair = PROFILE_FIELD_TEXT.nameLong;
+
+/**
  * What `updateProfileAction` hands back to `useActionState`: the form's own
  * `ActionState`, plus the saved values once they are saved, and — when the
  * whole form was refused — why, so a screen can tell "sign in" from "wait".

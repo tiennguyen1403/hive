@@ -3951,3 +3951,130 @@ Người dùng trả thử bằng thẻ 4242 trên demo: đơn **DH-2432** thàn
   - `PRODUCT.md` còn ghi "không cổng thanh toán" (QĐ-25), phải sửa theo QĐ-42/46;
   - `supabase/README.md` thêm mục Stripe;
   - `DESIGN.md` (khối `.hold-pay`, nhãn theo cách trả) ghi một lần sau lượt rà toàn app, vì lượt rà sẽ đổi giao diện thêm.
+
+## Lượt rà toàn app, đợt v6 *(07/10/2026)*
+
+**Người dùng chốt 07/10:**
+- **phạm vi:** cả cửa hàng lẫn quản trị, tiếng Việt và tiếng Anh, ở 390, 900 và 1280, kèm 4 việc an toàn: số điện thoại trên URL
+  tra đơn, trigger tin `handle`, callback chưa giới hạn tần suất, tên Google dài hơn 60 ký tự;
+- **câu chữ:** duyệt từng câu trên một trang so sánh, như lát 13.
+
+**Cách làm** (phiên chính đề xuất, người dùng duyệt):
+1. việc đã biết làm thẳng;
+2. agent soát tìm lỗi mới, chỉ đọc;
+3. người dùng quyết một lần cho các mục thiết kế và câu chữ;
+4. sửa theo lát: cửa hàng, quản trị, backend;
+5. `DESIGN.md` ghi một lần ở cuối, rồi đưa lên demo.
+
+**Điều chỉnh luật:** lượt này được đổi pixel bản VI. Luật "bản VI không đổi pixel" chỉ áp dụng trong đợt tiếng Anh.
+
+**07/10, phiên chính sửa trước khi soát:** `tools/layout-sweep.js` chờ menu hiện ở 7 bước, rồi chờ thêm 400 ms trước khi bấm mục menu
+(trước đây chỉ chờ 250 ms). Thay đổi chưa commit, sẽ commit cùng lượt rà.
+
+**07/10, bước 1 (soát) giao `ui-implementer`.** Brief `tasks/briefs/v6-polish-audit.md`; kết quả ghi ở
+`.playwright-cli/audit-v6/findings.md`.
+
+**Ngoài code, không thuộc lượt rà:** ảnh thật cho Số 03/04/06, dòng Cố định và bìa.
+
+**Kiểm tối 07/10:** sau cron 19:00, người dùng chạy `select count(*) from public.orders where stripe_session_id is not null;` trên
+hosted. Kết quả phải là 0. Đây là lần đầu `reset_demo` chạy trên hosted khi có đơn đã trả qua Stripe.
+- **Kiểm sau cron (07/10, đạt):** lúc 19:01 câu kiểm ra 1, vì cron Hobby chạy lúc nào đó trong khung 19:00–19:59. Sau khi cron chạy, câu kiểm ra 0: `reset_demo` trên hosted xoá đúng đơn đã trả qua Stripe.
+
+**07/10, bước 1 (soát) xong.** Agent `ui-implementer` chỉ đọc:
+- 64 đường dẫn, 660 lượt chụp có đo, 979 ảnh (`.playwright-cli/audit-v6/`);
+- 27 mục (3 cao, 6 vừa, 18 thấp) và 45 câu chữ đề xuất;
+- máy dò khớp mốc cũ; 0 chữ Việt lạ ở bản EN; hành trình khách nước ngoài bản EN chạy trọn;
+- harness chặn agent ghi `findings.md`, nên danh sách chỉ nằm trong tin cuối của agent.
+
+**Phiên chính lọc rồi quyết, không hỏi người dùng:**
+- **Lỗi rõ:**
+  - F1: `.co-pair` dùng `minmax(0,1fr)`;
+  - F5: luật `<noscript>` dùng `.rv:not(.in)`;
+  - F10: `/faq#…` dừng quá thấp;
+  - F11: chân trang ở 900;
+  - F14: `lang` gắn vào `ItemText`.
+- **An toàn:** F9 (handle lấy từ `raw_app_meta_data`), F16 (bucket `auth_callback`), F17 (tên tối đa 60 ký tự).
+- **Nhất quán:**
+  - F6: một kiểu "giờ · ngày" cho cả quản trị; bỏ hạn in trùng ở cột Thanh toán;
+  - F13 và F25: bỏ form khi tên loại đã chứa nó; ô màu 2 dòng thì chấp nhận;
+  - F15: chấp nhận chỗ xuống dòng do dữ liệu dài hơn; thêm luật `.b-hero-no` cho EN dưới 600;
+  - F21: template tiêu đề tab;
+  - F22: `/admin/drops/99` gọi `notFound()`, như đơn không tồn tại đang làm.
+- **Công cụ:** sửa báo nhầm của sweep (`inlineBox` bỏ phần tử có tổ tiên bị ẩn; `.sz` đổi thành `.size`).
+- **F27:** documenter viết sau, cuối lượt.
+
+**Người dùng chốt 07/10** (cả bốn chọn đề xuất):
+- **dải 900–1199:** trang đơn, hoá đơn, hộp thư và trang Tôi xếp một cột (cột phụ xuống dưới, hai thẻ đơn xếp chồng). Từ 1200 giữ 3
+  cột như mock. Mock cũng lỗi y hệt ở dải này;
+- **tên quản trị mẫu:** in nhãn vai theo ngôn ngữ, VI "Quản lý cửa hàng", EN "Store manager"; tài khoản khác in tên đã lưu;
+- **số điện thoại:** bỏ khỏi URL. `/track?code=` hiện kết quả ngay khi `loadReceipt` cho xem được; trình duyệt khác phải nhập số;
+- **cột Mẫu** ở trang một đơn quản trị: loại thành dòng phụ có chủ ý.
+
+**Câu chữ:** trang duyệt từng câu `prototype/v6/copy.html` (server 3100), 52 câu:
+- C1–C11 (bỏ những câu đã thay bằng quyết định);
+- N1: "Store manager"; N2: tiêu đề tab "DH-2429 · Quản trị · HIVE";
+- G1–G5: định dạng ở quản trị;
+- D1–D34: bỏ gạch ngang dài trong câu báo.
+
+**Lát:** B19 (backend, 4 việc an toàn) giao ngay vì không phụ thuộc câu chữ; brief `tasks/briefs/backend-b19.md`. Sau đó là lát cửa
+hàng, rồi lát quản trị, chờ kết quả duyệt câu chữ.
+
+**07/10, người dùng duyệt câu chữ:** nhận cả 52 câu đề xuất ("approve với tất cả đề xuất"). Trang: `prototype/v6/copy.html`.
+
+**07/10, cách kiểm theo tầng (người dùng hỏi, Fable tư vấn, người dùng chốt).** Người dùng thấy mỗi lát chạy lại toàn bộ cửa hàng và
+quản trị, tốn tài nguyên và thời gian; họ muốn chỉ kiểm chỗ sửa và chỗ bị ảnh hưởng, và hỏi ý kiến Fable. Fable chỉ đọc mã và tài
+liệu, rồi khuyên:
+- **Mỗi lát:**
+  - typecheck và `npm test` trọn bộ (8 giây; `vitest related` không thấy các test đọc tệp bằng `fs`);
+  - build một lần;
+  - ảnh của đúng các route bị ảnh hưởng, ở mép dải bề ngang, cả vi lẫn en khi đổi CSS;
+  - sweep chỉ vùng bị ảnh hưởng, kèm lớp nổi của nó;
+  - trang đối chứng so pixel với mốc;
+  - `test:db` chỉ khi đụng `supabase/`, `lib/db/`, `lib/actions/`, `data/`;
+  - báo cáo kèm "tệp đổi, suy ra route".
+- **Cuối đợt, trước khi lên hosted:** sweep trọn vi và en, `test:db` trọn, so pixel trọn với mốc, xem mọi ảnh lệch.
+- **Bỏ:** 8 bề ngang cho mọi màn; so pixel mọi trang VI; hai sweep trọn ở mỗi lát.
+- **Biên đã kiểm trong mã:**
+  - CSS Feed chỉ chạm cửa hàng (`scope.test.ts`); `registry/` chỉ chạm quản trị;
+  - tệp toàn cục (`lexicon`, `i18n`, `locale`, `FeedChrome`/`FeedFrame`, `ArcAdminFrame`/`ArcSidebar`) đổi thì sweep trọn vùng đó;
+  - CSS Module của Arc dùng chung nhiều màn.
+- **Lỗ Fable tìm ra trong brief của phiên chính** (đã sửa):
+  - R1 C10 (`feed-checkout.ts`, nhiều nơi import);
+  - R1 mục 1.4 (`.b-qgroup` có cả ở `/privacy`);
+  - R2 G1–G3 (`admin-rows.ts` dùng ở drops, promotions, log);
+  - C7 có cả ở `ArcAddressForm`.
+
+**Người dùng chốt:** áp ngay cho R1 và R2 bằng brief; **làm công cụ sau R1**. Công cụ gồm:
+- `tools/impact.mjs`;
+- manifest route có nhãn, kèm generator;
+- diff theo route so với mốc;
+- `tools/pixdiff.mjs`;
+- luật thăng mốc.
+
+Lát công cụ gộp luôn R2 §1.9 (sửa báo nhầm của sweep) và chạy sweep trọn một lần để lấy mốc mới.
+
+**Phiên chính làm ngay:**
+- sửa brief B19 đang chạy: bỏ so pixel mọi trang VI, chỉ kiểm 4 trang tra đơn và 5 trang đối chứng;
+- viết lại mục 2 brief R1;
+- thêm ghi chú vào R2;
+- chép script generator của bước soát, `b17-pixdiff.mjs` và JSON mốc sweep sau B18 vòng 2 vào `tools/sweep/reference/`, vì
+  `.playwright-cli/` bị git bỏ qua.
+
+**07/10, B19 ĐẠT** (agent `backend-implementer`; phiên chính duyệt theo tầng). Hai migration:
+- `20261007200000_new_user_handle.sql`: F9 và F17, kèm trigger thứ hai `on_auth_user_app_meta_changed`. Agent đo được rằng GoTrue
+  ghi `app_metadata` SAU khi insert, nên quản trị mẫu không nhận được handle nếu chỉ có trigger lúc tạo;
+- `20261007201000_auth_callback_rate.sql`: F16.
+
+`/track?code=` hiện kết quả ngay khi `loadReceipt` cho xem được. Hai form tra đơn POST qua Server Action, có JavaScript lẫn không. Ô
+tra đơn ở `/account` chuyển sang `/track` và giao số qua bộ nhớ của tab.
+
+**Phiên chính kiểm:**
+- tsc sạch; 2.379 test;
+- grep không còn chỗ nào dựng URL có `phone`; chỉ còn chỗ đọc link cũ;
+- đọc hai trigger: `security definer`, `search_path ''`, handle phải thuộc danh sách mẫu và chưa ai giữ;
+- xem ảnh tra đơn có JavaScript và không JavaScript.
+
+Agent: 363 test DB; `seed:users` ra 9/9 handle; build sạch; 5 route đối chứng không lệch ngoài vùng đồng hồ. Bốn lệnh bị hệ thống quyền
+chặn (trigger thăm dò trên `auth.users`, WebFetch mã nguồn GoTrue, hai lệnh grep); agent không tìm đường vòng.
+
+**Lên hosted** (gộp vào lần đưa cuối lượt rà): `db push` hai migration TRƯỚC `git push`, rồi bốn câu kiểm một dòng trong báo cáo B19.

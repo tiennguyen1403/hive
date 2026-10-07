@@ -1,5 +1,6 @@
 import { safeNext } from "./actions/state";
 import { pick, pickAll, type Locale, type Pair } from "./i18n";
+import { NAME_LONG_TEXT, NAME_MAX } from "./my-state";
 
 /**
  * The Feed's sign-in page and its two other modes (round v4 slice 3a): the
@@ -67,6 +68,9 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
  * tự" counts the characters that are not spaces at either end.
  *
  * · "Nhập họ và tên" — a name of fewer than two characters;
+ * · "Họ và tên tối đa 60 ký tự" — a name longer than Hồ sơ can save
+ *   (`NAME_MAX`, slice B19), counted in characters as Postgres counts them;
+ *   Hồ sơ's own sentence (`NAME_LONG_TEXT`);
  * · "Nhập email", "Email chưa đúng";
  * · "Nhập mật khẩu" when signing in, "Mật khẩu từ 8 ký tự" for a new account.
  *
@@ -78,7 +82,11 @@ export function signErrors(mode: SignMode, f: SignFields, locale: Locale = "vi")
   const w = pickAll(FIELD_TEXT, locale);
   const e: Partial<Record<SignField, string>> = {};
   const fields = SIGN_FIELDS[mode];
-  if (fields.includes("name") && (f.name ?? "").trim().length < 2) e.name = w.name;
+  if (fields.includes("name")) {
+    const name = (f.name ?? "").trim();
+    if (name.length < 2) e.name = w.name;
+    else if ([...name].length > NAME_MAX) e.name = pick(NAME_LONG_TEXT, locale);
+  }
   if (fields.includes("email")) {
     const email = (f.email ?? "").trim();
     if (!email) e.email = w.emailMissing;
@@ -181,6 +189,7 @@ export const FORGOT_NOT_SENT = FORGOT_NOT_SENT_TEXT.vi;
  */
 export const SIGN_SENTENCES: readonly Pair[] = [
   ...Object.values(FIELD_TEXT),
+  NAME_LONG_TEXT,
   SIGN_IN_WRONG_TEXT,
   EMAIL_TAKEN_TEXT,
   SIGN_UP_FAILED_TEXT,

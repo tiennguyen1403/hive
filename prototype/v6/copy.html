@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duyệt câu chữ v6 · HIVE</title>
+<style>
+  :root{ --font:"Segoe UI",system-ui,-apple-system,sans-serif;
+    --ink:#121212; --ink2:#5f6368; --hair:#e6e6e6; --line:#b9b9b9; --blue:#1846F0; --blue-soft:#eef2ff;
+    --old:#8a8f96; --ok:#1b6b3a; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:#fff; color:var(--ink); font-family:var(--font); font-size:14px; line-height:1.55;
+    -webkit-font-smoothing:antialiased; }
+  .page{ max-width:1040px; margin:0 auto; padding:32px 24px 128px; }
+  h1{ font-size:26px; line-height:1.15; font-weight:800; letter-spacing:-.02em; margin:0 0 8px; }
+  .intro{ color:var(--ink2); max-width:78ch; margin:0 0 8px; }
+  .rules{ display:flex; flex-wrap:wrap; gap:6px 18px; font-size:12px; color:var(--ink2); margin:0 0 20px; }
+  .rules b{ color:var(--ink); }
+  h2{ font-size:18px; line-height:1.25; font-weight:800; letter-spacing:-.01em; margin:36px 0 0; padding-bottom:10px;
+    border-bottom:2px solid var(--ink); }
+  .item{ display:grid; grid-template-columns:52px minmax(0,1fr) 210px; gap:8px 16px; padding:14px 0;
+    border-bottom:1px solid var(--hair); align-items:start; }
+  .id{ font-weight:800; font-size:12px; line-height:1.7; color:var(--ink2); }
+  .where{ font-size:12px; color:var(--ink2); margin-bottom:6px; }
+  .pair{ display:grid; grid-template-columns:28px minmax(0,1fr); gap:2px 8px; margin:2px 0; }
+  .lang{ font-size:11px; font-weight:700; color:var(--ink2); line-height:1.9; }
+  .was{ color:var(--old); text-decoration:line-through; text-decoration-color:#c9cdd2; }
+  .is{ font-weight:600; }
+  .is::before{ content:"→ "; color:var(--blue); font-weight:700; }
+  .same{ color:var(--ink2); font-style:italic; }
+  .item[data-choice="keep"] .was{ text-decoration:none; color:var(--ink); }
+  .item[data-choice="keep"] .is{ color:var(--old); text-decoration:line-through; font-weight:400; }
+  .why{ margin:6px 0 0; font-size:12px; color:var(--ink2); }
+  .pick{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .pick button{ height:34px; padding:0 12px; border:1px solid var(--line); border-radius:999px; background:#fff;
+    color:var(--ink); font:inherit; font-size:12px; cursor:pointer; }
+  .pick button:hover{ border-color:var(--ink); }
+  .pick button[aria-pressed="true"]{ background:var(--ink); border-color:var(--ink); color:#fff; }
+  .pick button.rec::after{ content:" · đề xuất"; opacity:.75; }
+  .note{ grid-column:2 / -1; }
+  .note input{ width:100%; height:34px; padding:0 12px; border:1px solid var(--hair); border-radius:8px; font:inherit;
+    font-size:12px; color:var(--ink); }
+  .note input:focus{ outline:none; border-color:var(--blue); }
+  .bar{ position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--ink);
+    box-shadow:0 -8px 24px -16px rgba(0,0,0,.3); }
+  .bar .in{ max-width:1040px; margin:0 auto; padding:12px 24px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .bar .count{ font-size:12px; color:var(--ink2); }
+  .bar .count b{ color:var(--ink); }
+  .bar .go{ margin-left:auto; height:40px; padding:0 20px; border:0; border-radius:999px; background:var(--blue);
+    color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  .bar .go:hover{ filter:brightness(1.08); }
+  .bar .all{ height:40px; padding:0 16px; border:1px solid var(--line); border-radius:999px; background:#fff; font:inherit;
+    font-size:13px; cursor:pointer; }
+  .bar .done{ font-size:12px; color:var(--ok); }
+  textarea.out{ position:absolute; left:-9999px; }
+  @media (max-width:760px){
+    .item{ grid-template-columns:40px minmax(0,1fr); }
+    .pick{ grid-column:2; justify-content:flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Duyệt câu chữ, lượt rà v6</h1>
+  <p class="intro">52 câu, gom từ lượt soát toàn app ngày 07/10. Mỗi dòng đã chọn sẵn đề xuất của tôi, tức <b>Nhận</b> câu mới. Bấm
+    <b>Giữ cũ</b> nếu không muốn đổi, hoặc gõ câu khác vào ô ghi chú. Xong thì bấm <b>Sao chép kết quả</b> rồi dán lại cho tôi.</p>
+  <p class="rules"><span><b>Nhận</b>: dùng câu sau mũi tên</span><span><b>Giữ cũ</b>: không đổi</span>
+    <span><i>(không đổi)</i>: thứ tiếng đó giữ nguyên</span><span>Chữ "hoặc" thay "hay" theo luật 07/10.</span></p>
+  <div id="list"></div>
+</div>
+<div class="bar"><div class="in">
+  <span class="count" id="count"></span>
+  <span class="done" id="done" hidden>Đã chép, dán lại cho tôi.</span>
+  <button type="button" class="all" id="reset">Chọn lại đề xuất</button>
+  <button type="button" class="go" id="copy">Sao chép kết quả</button>
+</div></div>
+<textarea class="out" id="out" aria-hidden="true"></textarea>
+<script>
+// [id, group, where, viOld, viNew, enOld, enNew, why]; a null "new" means that language does not change.
+const ITEMS = [
+  ["C1","Cửa hàng","Hỏi đáp › Thanh toán, câu hỏi",
+    "Trả bằng thẻ được chưa?","Trả bằng thẻ được không?",
+    "Can I pay by card yet?","Can I pay by card?",
+    "Thẻ đã chạy từ B18; \"chưa\" / \"yet\" nghe như chưa có."],
+  ["C2","Cửa hàng","Hỏi đáp › \"Hoàn tiền thế nào?\", vế cuối",
+    "Trả cả đơn vì khác với ảnh, lỗi may hoặc in hay giao nhầm món thì hoàn cả phí giao hàng và phụ phí COD.",
+    "Trả cả đơn vì khác với ảnh, lỗi may hoặc in, hoặc giao nhầm món thì hoàn cả phí giao hàng và phụ phí COD.",
+    null,null,
+    "Luật \"hoặc\" 07/10; dấu phẩy tách mục cuối khỏi \"lỗi may hoặc in\". Đây là chỗ \"hay\" duy nhất trên giao diện."],
+  ["C7","Cửa hàng","Ô Phường/xã khi chưa chọn tỉnh (sổ địa chỉ, thanh toán, quản trị)",
+    "Chọn tỉnh trước",null,
+    "Choose a province first","Province first",
+    "Bản EN quá dài cho ô ở sheet \"Add address\". Không nhận thì chữ sẽ bị cắt \"…\"; lỗi tràn ngang vẫn được sửa bằng CSS."],
+  ["C8","Cửa hàng","Trang chủ, dòng dưới Số sắp mở (.soon-note)",
+    "Giá và số lượng công bố lúc mở.",null,
+    "Price and quantity announced at opening.","Price and quantity at opening.",
+    "Bản EN ra 2 dòng ở 900."],
+  ["C10","Cửa hàng","Thanh toán, dòng phụ của Giao nhanh",
+    null,null,
+    "Central HCMC only, during office hours","Central HCMC only, office hours",
+    "Chữ \"hours\" mồ côi ở 390."],
+  ["C9","Cửa hàng","/privacy, đoạn về trang quản trị (chữ bạn đã duyệt)",
+    "Trang quản trị của demo mở cho mọi người xem thử. …",null,
+    "The demo's back office is open for anyone to try. …","The demo's admin is open for anyone to try. …",
+    "Giao diện EN gọi khu này là \"admin\" (\"Try the admin\", \"· Admin ·\")."],
+  ["N1","Quản trị","Chân thanh bên, riêng tài khoản quản trị mẫu (bạn chọn: nhãn vai theo ngôn ngữ)",
+    "Quản lý cửa hàng",null,
+    "Quản lý cửa hàng","Store manager",
+    "Tài khoản khác vẫn in tên đã lưu."],
+  ["C3","Quản trị","Tiêu đề tab của Tổng quan",
+    "Tổng quan · HIVE","Tổng quan · Quản trị · HIVE",
+    "Overview · HIVE","Overview · Admin · HIVE",
+    "Giống mọi trang quản trị khác."],
+  ["N2","Quản trị","Tiêu đề tab của trang một đơn",
+    "Chi tiết đơn · Quản trị · HIVE","DH-2429 · Quản trị · HIVE",
+    "Order details · Admin · HIVE","DH-2429 · Admin · HIVE",
+    "Mở nhiều đơn cùng lúc thì mỗi tab có mã riêng."],
+  ["C4","Quản trị","Thêm mẫu, câu dưới chip màu",
+    "Thứ tự chọn là thứ tự dải màu trên thẻ; màu đầu là ảnh đại diện.",null,
+    "The pick order is the card's colour band; the first is the cover photo.","Pick order sets the colour band; the first is the cover.",
+    "Bản EN ra 2 dòng ở 1280."],
+  ["C5","Quản trị","Sửa địa chỉ, gợi ý trong ô Lý do",
+    null,null,
+    "E.g. the customer asked to change the house number","e.g. the customer asked to change the house number",
+    "Mọi chỗ khác viết \"e.g.\"."],
+  ["C6","Quản trị","Bàn giao, gợi ý trong ô Ghi chú",
+    null,null,
+    "E.g. sent as 2 parcels","e.g. sent as 2 parcels",
+    "Như C5."],
+  ["C11","Quản trị","Hồ sơ khách, ô Nhãn",
+    "— 3 đơn đã thanh toán","· 3 đơn đã thanh toán",
+    "— 3 paid orders","· 3 paid orders",
+    "\"·\" là dấu tách của quản trị; bỏ gạch ngang dài."],
+  ["G1","Định dạng giờ ở quản trị","Tổng quan › Cần xử lý, đơn đang chờ",
+    "hạn 08:05 ngày 08/10","hạn 08:05 · 08/10",
+    "due 08:05, 8 Oct","due 08:05 · 8 Oct",
+    "Gom về một kiểu \"giờ · ngày\", kiểu của sổ đơn."],
+  ["G2","Định dạng giờ ở quản trị","Tổng quan › Cần xử lý, đơn đã trả",
+    "Đã thanh toán 07:52 05/10","Đã thanh toán 07:52 · 05/10",
+    "Paid 07:52 5 Oct","Paid 07:52 · 5 Oct",
+    "Như G1."],
+  ["G3","Định dạng giờ ở quản trị","Sổ đơn, dòng dưới nhãn trạng thái",
+    "hạn 08:05 08/10","hạn 08:05 · 08/10",
+    "due 08:05 8 Oct","due 08:05 · 8 Oct",
+    "Như G1."],
+  ["G4","Định dạng giờ ở quản trị","Sổ đơn, cột Thanh toán của đơn đang chờ",
+    "Chuyển khoản / hạn 08:05 · 08/10","Chuyển khoản",
+    "Bank transfer / due 08:05 · 8 Oct","Bank transfer",
+    "Hạn đã in dưới nhãn trạng thái cùng hàng; bỏ cái trùng (như B18 đã bỏ \"chờ trả thẻ\")."],
+  ["G5","Định dạng giờ ở quản trị","Bảng Mẫu, ô Loại · form",
+    "Áo thun oversize · oversize","Áo thun oversize",
+    "Oversized tee · oversized","Oversized tee",
+    "Bỏ form khi tên loại đã có nó."],
+  ["D1","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Thanh toán, lỗi số điện thoại",
+    "Số điện thoại chưa đúng — 10 số, bắt đầu bằng 0.","Số điện thoại chưa đúng: 10 số, bắt đầu bằng 0.",null,null,""],
+  ["D2","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Đặt hàng, món vừa hết",
+    "Một món vừa hết — mở giỏ để đổi size hoặc bỏ món.","Một món vừa hết. Mở giỏ để đổi size hoặc bỏ món.",null,null,""],
+  ["D3","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Đặt hàng, Số đã đóng",
+    "Số 05 đã đóng — món trong giỏ không còn bán.","Số 05 đã đóng. Món trong giỏ không còn bán.",null,null,""],
+  ["D4","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Đặt hàng, mã giảm giá hết hiệu lực",
+    "Mã giảm giá không còn dùng được cho đơn này — bỏ mã hoặc thử mã khác.","Mã giảm giá không còn dùng được cho đơn này. Bỏ mã hoặc thử mã khác.",null,null,""],
+  ["D5","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Đặt hàng, thông tin sai",
+    "Thông tin đơn chưa đúng — kiểm lại địa chỉ và giỏ rồi đặt lại.","Thông tin đơn chưa đúng. Kiểm lại địa chỉ và giỏ rồi đặt lại.",null,null,""],
+  ["D6","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Huỷ đơn, quá bước",
+    "Đơn này không huỷ được nữa — liên hệ cửa hàng.","Đơn này không huỷ được nữa. Liên hệ cửa hàng.",null,null,""],
+  ["D7","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, tồn kho đổi ở nơi khác",
+    "Tồn kho đã đổi ở nơi khác — tải lại rồi sửa tiếp","Tồn kho đã đổi ở nơi khác. Tải lại rồi sửa tiếp",null,null,""],
+  ["D8","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, tồn kho vừa đổi",
+    "Tồn kho vừa đổi ở nơi khác — kiểm lại số rồi gửi","Tồn kho vừa đổi ở nơi khác. Kiểm lại số rồi gửi",null,null,""],
+  ["D9","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, hết phiên (2 chỗ)",
+    "Phiên quản trị đã hết — đăng nhập lại bằng tài khoản quản trị.","Phiên quản trị đã hết. Đăng nhập lại bằng tài khoản quản trị.",null,null,""],
+  ["D10","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, chưa có Số",
+    "Chưa có Số 07 — chọn số khác.","Chưa có Số 07. Chọn số khác.",null,null,""],
+  ["D11","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, chưa có số này",
+    "Chưa có số này — chọn số khác.","Chưa có số này. Chọn số khác.",null,null,""],
+  ["D12","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, tạo Số trùng",
+    "Số 07 đã có — tải lại trang để lấy số kế tiếp.","Số 07 đã có. Tải lại trang để lấy số kế tiếp.",null,null,""],
+  ["D13","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, Số không còn mở",
+    "… không còn mở — tải lại trang để xem.","… không còn mở. Tải lại trang để xem.",null,null,""],
+  ["D14","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, trạng thái đổi ở nơi khác",
+    "Số 05 đã đổi trạng thái ở nơi khác — tải lại trang để xem.","Số 05 đã đổi trạng thái ở nơi khác. Tải lại trang để xem.",null,null,""],
+  ["D15","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, giới hạn mã đổi ở nơi khác",
+    "Giới hạn của mã đã đổi ở nơi khác — tải lại trang để xem.","Giới hạn của mã đã đổi ở nơi khác. Tải lại trang để xem.",null,null,""],
+  ["D16","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, mã không còn chạy",
+    "Mã không còn đang chạy — tải lại trang để xem.","Mã không còn đang chạy. Tải lại trang để xem.",null,null,""],
+  ["D17","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, thao tác hết hiệu lực (2 chỗ)",
+    "Thao tác này không còn làm được — tải lại trang để xem.","Thao tác này không còn làm được. Tải lại trang để xem.",null,null,""],
+  ["D18","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, tồn kho gửi lên sai",
+    "Tồn kho gửi lên chưa hợp lệ — mỗi ô từ 0 trở lên, tổng không vượt số đã cắt, và cần một lý do.",
+    "Tồn kho gửi lên chưa hợp lệ: mỗi ô từ 0 trở lên, tổng không vượt số đã cắt, và cần một lý do.",null,null,"Câu giải thích dùng dấu hai chấm."],
+  ["D19","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, thứ tự màu đổi ở nơi khác",
+    "Thứ tự màu đã đổi ở nơi khác — tải lại trang để xem.","Thứ tự màu đã đổi ở nơi khác. Tải lại trang để xem.",null,null,""],
+  ["D20","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, điều kiện mã sai",
+    "Điều kiện mã chưa hợp lệ — kiểm lại các ô.","Điều kiện mã chưa hợp lệ. Kiểm lại các ô.",null,null,""],
+  ["D21","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, thông tin mẫu sai",
+    "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.","Thông tin mẫu chưa hợp lệ. Kiểm lại các ô.",null,null,""],
+  ["D22","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, ô Mã trống (2 chỗ)",
+    "Nhập mã — đây là thứ khách gõ ở ô giảm giá.","Nhập mã. Đây là thứ khách gõ ở ô giảm giá.",null,null,""],
+  ["D23","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, thứ tự màu thiếu màu",
+    "Thứ tự màu phải gồm đúng các màu của mẫu — màu chốt lúc cắt.","Thứ tự màu phải gồm đúng các màu của mẫu, chốt lúc cắt.",null,null,""],
+  ["D24","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, đơn không còn chờ tiền",
+    "DH-2430 không còn chờ tiền — tải lại trang để xem trạng thái mới.","DH-2430 không còn chờ tiền. Tải lại trang để xem trạng thái mới.",null,null,""],
+  ["D25","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, chưa bàn giao được",
+    "DH-2430 chưa bàn giao được ở trạng thái này — tải lại trang để xem.","DH-2430 chưa bàn giao được ở trạng thái này. Tải lại trang để xem.",null,null,""],
+  ["D26","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, không còn đang giao",
+    "DH-2430 không còn ở bước đang giao — tải lại trang để xem.","DH-2430 không còn ở bước đang giao. Tải lại trang để xem.",null,null,""],
+  ["D27","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, ghi chú sai độ dài",
+    "Ghi chú trống hoặc quá dài — tối đa 500 ký tự.","Ghi chú trống hoặc quá dài: tối đa 500 ký tự.",null,null,"Câu giải thích dùng dấu hai chấm."],
+  ["D28","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, địa chỉ hoặc số điện thoại sai",
+    "Địa chỉ chưa đủ hoặc số điện thoại chưa đúng — kiểm lại các ô.","Địa chỉ chưa đủ hoặc số điện thoại chưa đúng. Kiểm lại các ô.",null,null,""],
+  ["D29","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, đổi mã giảm giá",
+    "Mã không đổi được — dùng \"Nhân bản\" để tạo mã mới.","Mã không đổi được. Dùng \"Nhân bản\" để tạo mã mới.",null,null,""],
+  ["D30","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, xoá ảnh đang dùng",
+    "Ảnh này đang dùng cho một mẫu — giữ lại, không xoá.","Ảnh này đang dùng cho một mẫu, nên được giữ lại.",null,null,""],
+  ["D31","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, sheet sửa mã",
+    "Mã không đổi được sau khi tạo — dùng Nhân bản để có mã mới.","Mã không đổi được sau khi tạo. Dùng Nhân bản để có mã mới.",null,null,""],
+  ["D32","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, hộp \"Đặt lại dữ liệu mẫu\"",
+    "Đơn hàng quay về các đơn mẫu — đơn đặt thêm, kể cả của tài khoản đăng ký thật, sẽ mất. …",
+    "Đơn hàng quay về các đơn mẫu: đơn đặt thêm, kể cả của tài khoản đăng ký thật, sẽ mất. …",null,null,"Câu giải thích dùng dấu hai chấm."],
+  ["D33","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, đánh dấu đã trả nhiều đơn",
+    "Chỉ đơn đang chờ tiền mới đánh dấu được — chưa chọn đơn nào như vậy","Chỉ đơn đang chờ tiền mới đánh dấu được. Chưa chọn đơn nào như vậy",null,null,""],
+  ["D34","Câu báo lỗi: bỏ gạch ngang dài (bản EN đã là hai câu, không đổi)","Quản trị, chép email bị chặn",
+    "Trình duyệt không cho chép tự động — email là a@b.com","Trình duyệt không cho chép tự động. Email là a@b.com",null,null,""]
+];
+const LABEL = { take:"Nhận", keep:"Giữ cũ" };
+const KEY = "copyboard.v6";
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+const list = document.getElementById("list");
+let group = "";
+function pair(lang, was, is) {
+  const row = document.createElement("div");
+  row.className = "pair";
+  const l = document.createElement("span"); l.className = "lang"; l.textContent = lang; row.appendChild(l);
+  const body = document.createElement("div");
+  if (is === null) {
+    const s = document.createElement("span"); s.className = "same"; s.textContent = was === null ? "(không đổi)" : was + "  (không đổi)";
+    body.appendChild(s);
+  } else {
+    const a = document.createElement("div"); a.className = "was"; a.textContent = was; body.appendChild(a);
+    const b = document.createElement("div"); b.className = "is"; b.textContent = is; body.appendChild(b);
+  }
+  row.appendChild(body);
+  return row;
+}
+for (const [id, g, where, viOld, viNew, enOld, enNew, why] of ITEMS) {
+  if (g !== group) { group = g; const h = document.createElement("h2"); h.textContent = g; list.appendChild(h); }
+  const s = state[id] || { choice: "take", note: "" };
+  const el = document.createElement("div");
+  el.className = "item"; el.dataset.id = id; el.dataset.choice = s.choice;
+  el.innerHTML = `<span class="id">${id}</span><div class="body"><div class="where"></div></div>
+    <div class="pick" role="group" aria-label="Quyết định cho ${id}">${["take","keep"].map((o) =>
+      `<button type="button" data-o="${o}" class="${o === "take" ? "rec" : ""}" aria-pressed="${o === s.choice}">${LABEL[o]}</button>`).join("")}</div>
+    <div class="note"><input type="text" placeholder="Câu khác hoặc ghi chú (không bắt buộc)" aria-label="Ghi chú cho ${id}"></div>`;
+  el.querySelector(".where").textContent = where;
+  const body = el.querySelector(".body");
+  body.appendChild(pair("VI", viOld, viNew));
+  body.appendChild(pair("EN", enOld, enNew));
+  if (why) { const p = document.createElement("p"); p.className = "why"; p.textContent = why; body.appendChild(p); }
+  const input = el.querySelector("input"); input.value = s.note || "";
+  el.querySelectorAll(".pick button").forEach((b) => b.addEventListener("click", () => {
+    el.dataset.choice = b.dataset.o;
+    el.querySelectorAll(".pick button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    save();
+  }));
+  input.addEventListener("input", save);
+  list.appendChild(el);
+}
+function read() {
+  const out = {};
+  document.querySelectorAll(".item").forEach((el) => {
+    out[el.dataset.id] = { choice: el.dataset.choice, note: el.querySelector("input").value.trim() };
+  });
+  return out;
+}
+function save() {
+  state = read();
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  count();
+}
+function count() {
+  const s = read(); let take = 0, keep = 0, notes = 0;
+  Object.values(s).forEach((v) => { if (v.choice === "take") take++; else keep++; if (v.note) notes++; });
+  document.getElementById("count").innerHTML = `${ITEMS.length} câu · <b>${take}</b> nhận · <b>${keep}</b> giữ cũ · <b>${notes}</b> ghi chú`;
+}
+count();
+document.getElementById("reset").addEventListener("click", () => {
+  document.querySelectorAll(".item").forEach((el) => {
+    el.dataset.choice = "take";
+    el.querySelectorAll(".pick button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.o === "take")));
+  });
+  save();
+});
+document.getElementById("copy").addEventListener("click", async () => {
+  const s = read();
+  const odd = ITEMS.filter(([id]) => s[id].choice !== "take" || s[id].note);
+  const lines = [`Kết quả duyệt câu chữ v6 (prototype/v6/copy.html): ${ITEMS.length - odd.length}/${ITEMS.length} nhận nguyên đề xuất.`];
+  if (odd.length === 0) lines.push("Nhận hết.");
+  for (const [id, , where] of odd) {
+    const v = s[id];
+    let line = `${id} ${LABEL[v.choice]} · ${where}`;
+    if (v.note) line += ` · ghi chú: ${v.note}`;
+    lines.push(line);
+  }
+  const text = lines.join("\n");
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) { const t = document.getElementById("out"); t.value = text; t.select(); document.execCommand("copy"); }
+  const d = document.getElementById("done"); d.hidden = false; setTimeout(() => { d.hidden = true; }, 2500);
+});
+</script>
+</body>
+</html>

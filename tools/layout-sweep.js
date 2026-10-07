@@ -556,7 +556,8 @@ async (page) => {
     }],
     ["/admin/products#restock", "admin-products-restock-sheet-1280", async () => {
       await page.getByRole("button", { name: T("Thao tác HOODIE TRƠN", "Actions for PLAIN HOODIE"), exact: true }).click();
-      await page.waitForTimeout(250);
+      await page.getByRole("menuitem").first().waitFor({ state: "visible" });
+      await page.waitForTimeout(400); // the menu animates in: a click before it settles can miss (07/10/2026)
       await page.getByRole("menuitem", { name: T("Nhập thêm", "Restock") }).click();
       await page.waitForTimeout(350);
       await page.getByRole("dialog").getByLabel(LANG === "en" ? /^Restock Grey M,/ : /^Nhập thêm Xám M,/).fill("4");
@@ -566,7 +567,8 @@ async (page) => {
     }],
     ["/admin/products?drop=5#adjust", "admin-products-adjust-sheet-1280", async () => {
       await page.getByRole("button", { name: T("Thao tác S05\u00a0\u2013 KHÓI", "Actions for D05\u00a0\u2013 KHÓI"), exact: true }).click();
-      await page.waitForTimeout(250);
+      await page.getByRole("menuitem").first().waitFor({ state: "visible" });
+      await page.waitForTimeout(400);
       await page.getByRole("menuitem", { name: T("Điều chỉnh tồn kho", "Adjust stock") }).click();
       await page.waitForTimeout(350);
       // round v5 slice 5a: Arc Select, by role and label.
@@ -583,7 +585,8 @@ async (page) => {
     }],
     ["/admin/products?drop=5#adjust-ready", "admin-products-adjust-ready-1280", async () => {
       await page.getByRole("button", { name: T("Thao tác S05 – KHÓI", "Actions for D05 – KHÓI"), exact: true }).click();
-      await page.waitForTimeout(250);
+      await page.getByRole("menuitem").first().waitFor({ state: "visible" });
+      await page.waitForTimeout(400);
       await page.getByRole("menuitem", { name: T("Điều chỉnh tồn kho", "Adjust stock") }).click();
       await page.waitForTimeout(500);
       await page.getByRole("dialog").getByRole("button", { name: T("Bớt Đen M", "Decrease Black M") }).click();
@@ -593,7 +596,8 @@ async (page) => {
     }],
     ["/admin/products#adjust-fixed", "admin-products-adjust-fixed-1280", async () => {
       await page.getByRole("button", { name: T("Thao tác HOODIE TRƠN", "Actions for PLAIN HOODIE"), exact: true }).click();
-      await page.waitForTimeout(250);
+      await page.getByRole("menuitem").first().waitFor({ state: "visible" });
+      await page.waitForTimeout(400);
       await page.getByRole("menuitem", { name: T("Điều chỉnh tồn kho", "Adjust stock") }).click();
     }],
     ["/admin/drops#rowmenu", "admin-drops-row-menu-1280", async () => {
@@ -605,12 +609,14 @@ async (page) => {
     }],
     ["/admin/drops#edit", "admin-drops-edit-sheet-1280", async () => {
       await page.getByRole("button", { name: T("Thao tác Số 06", "Actions for Drop 06"), exact: true }).click();
-      await page.waitForTimeout(250);
+      await page.getByRole("menuitem").first().waitFor({ state: "visible" });
+      await page.waitForTimeout(400);
       await page.getByRole("menuitem", { name: T("Sửa giờ", "Reschedule") }).click();
     }],
     ["/admin/drops#close", "admin-drops-close-sheet-1280", async () => {
       await page.getByRole("button", { name: T("Thao tác Số 05", "Actions for Drop 05"), exact: true }).click();
-      await page.waitForTimeout(250);
+      await page.getByRole("menuitem").first().waitFor({ state: "visible" });
+      await page.waitForTimeout(400);
       await page.getByRole("menuitem", { name: T("Đóng sớm", "Close early") }).click();
     }],
     ["/admin/drops/05#teaser", "admin-drops-teaser-sheet-1280", async () => {
@@ -652,7 +658,8 @@ async (page) => {
     }],
     ["/admin/promotions#edit-arc", "admin-promotions-edit-drawer-1280", async () => {
       await page.getByRole("button", { name: T("Thao tác DOT05", "Actions for DOT05"), exact: true }).click();
-      await page.waitForTimeout(250);
+      await page.getByRole("menuitem").first().waitFor({ state: "visible" });
+      await page.waitForTimeout(400);
       await page.getByRole("menuitem", { name: T("Sửa", "Edit"), exact: true }).click();
     }],
     ["/admin/promotions#error-arc", "admin-promotions-create-error-1280", async () => {

@@ -18,7 +18,7 @@ import { feedDelivery, feedPayments } from "./feed-checkout";
 import { pick, pickAll, picker, plural, type Locale, type Pair } from "./i18n";
 import { isFixed, onHandOf } from "./inventory";
 import { FIXED_WORD_TEXT, issueLabel } from "./lexicon";
-import { phoneDigits } from "./lookup";
+import { phoneDigits, trackHref } from "./lookup";
 import { lookupWords } from "./order-lookup";
 import { isRealPhotoKey } from "./photos";
 import { RETURN_WINDOW_DAYS } from "./shipping";
@@ -630,8 +630,10 @@ export type LookupField = "code" | "phone";
  * "Tra cứu đơn" without an account (`lookupForm`), checked in the mock's
  * words: "Nhập mã đơn", "Mã đơn có dạng DH-1499", "Nhập số điện thoại", "Số
  * điện thoại gồm 10 số, bắt đầu bằng 0". A valid pair leads to `/track`, the
- * code with its dash and the phone as its ten digits. The sentences are the
- * lookup's own (`LOOKUP_TEXT`), in both languages since round v6 slice E2.
+ * code with its dash — and since slice B19 nothing else: the number never
+ * rides in an address (`trackHref`); the form hands it to the lookup's page
+ * itself. The sentences are the lookup's own (`LOOKUP_TEXT`), in both
+ * languages since round v6 slice E2.
  */
 export function lookupCheck(
   rawCode: string,
@@ -648,6 +650,5 @@ export function lookupCheck(
   if (!phone) errors.phone = words.phoneMissing;
   else if (!/^0\d{9}$/.test(digits)) errors.phone = words.phoneShape;
   if (errors.code || errors.phone) return { ok: false, errors };
-  const q = new URLSearchParams({ code: code.replace(/^DH(\d)/, "DH-$1"), phone: digits });
-  return { ok: true, href: `/track?${q.toString()}` };
+  return { ok: true, href: trackHref(code) };
 }

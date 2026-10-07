@@ -76,7 +76,8 @@ A demo account's `profiles.handle` carries its fixture id (`c-minhanh`). That
 is what ties it to its sample orders: `seed_orders.customer_handle` holds the
 same id, and `reset_demo()` sets `orders.profile_id` from it. An account
 created through the sign-up form has no handle, and therefore no sample
-orders.
+orders. Since slice B19 `seed:users` writes the handle into `app_metadata`,
+not `user_metadata` (see *The safety pass* below), and reads the nine back.
 
 ## Orders (slice B2)
 
@@ -320,6 +321,54 @@ select proname, proacl from pg_proc where proname in ('card_session', 'card_chec
 ```
 
 `lib/db/card-checkout.dbtest.ts` covers the three functions and their grants.
+
+## The safety pass (slice B19)
+
+Four findings of the v6 sweep.
+
+- **A handle only from the sample** (`20261007200000_new_user_handle.sql`).
+  A profile with a handle is the sample's: B17 neither masks it nor deletes
+  it. `handle_new_user()` read the handle from `raw_user_meta_data`, the
+  sign-up's `data`, which anybody holding the publishable key writes. It now
+  reads `raw_app_meta_data` (service role only), and takes a handle only when
+  it is one of `seed_customers.handle` or the manager's `a-quanly` (written
+  out in SQL, mirrored from `lib/demo-admin.ts`) and no profile holds it yet.
+  `auth.admin.createUser` writes `app_metadata` AFTER the insert (measured,
+  GoTrue v2.197.0), so a second trigger, `on_auth_user_app_meta_changed`,
+  gives a handle that arrives by update to a profile that has none, never
+  replacing one. The shoppers' handles also come from `reset_demo()`, which
+  matches `seed_customers` by e-mail; the manager's comes only from the
+  triggers. `seed:users` fails when one of the nine is missing.
+- **Names of 60 characters at most.** Both triggers' name is trimmed, cut to
+  60 characters and trimmed again, as Hồ sơ allows (`NAME_MAX`); the profiles
+  already longer were cut once by the migration. The sign-up form refuses a
+  longer name in Hồ sơ's words.
+- **`/auth/callback` is limited** (`20261007201000_auth_callback_rate.sql`):
+  a fourteenth bucket, `auth_callback`, ten per five minutes per visitor,
+  spent before each code is traded; refused, the visitor lands on "Đăng nhập"
+  with `?error=google`, and Supabase Auth is not asked.
+- **The phone number is never in an address.** `/track?code=DH-…` shows the
+  order at once to a browser `loadReceipt` lets see it (the account's own, or
+  the guest receipt cookie; `lib/db/track-known.ts`, no lookup spent); any
+  other browser is asked for the number. Both lookup forms post it through a
+  Server Action (`lookupFormAction`), with script or without. An old link
+  with `?phone=` still works once, and the number leaves the address.
+
+On hosted, `db push` the two migrations before `git push`; the seed does not
+change. Then, one line each:
+
+```sql
+select proname, proacl from pg_proc where proname = 'take_rate';
+select tgname, tgenabled from pg_trigger where tgrelid = 'auth.users'::regclass and not tgisinternal order by tgname;
+select pg_get_constraintdef(oid) like '%auth_callback%' from pg_constraint where conname = 'rate_hits_bucket_check';
+select email, handle from public.profiles where email = 'quanly@email.com';
+```
+
+`take_rate` reads `{postgres=X/postgres,service_role=X/postgres}`; the triggers
+are `on_auth_user_app_meta_changed`, `on_auth_user_created`,
+`on_auth_user_email_changed`, each `O`; the constraint answers `t`; the
+manager keeps `a-quanly`. `lib/db/new-user-handle.dbtest.ts` covers the
+handle and the name.
 
 ## What an account keeps (slice B9)
 

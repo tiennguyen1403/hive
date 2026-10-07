@@ -422,8 +422,8 @@ describe("Tra cứu đơn, checked in the mock's words (account.js lookupForm)",
     });
   });
 
-  it("leads a valid pair to the lookup, the code with its dash, the phone as its digits", () => {
-    expect(lookupCheck(" dh2430 ", "0912 345 678")).toEqual({ ok: true, href: "/track?code=DH-2430&phone=0912345678" });
-    expect(lookupCheck("DH-2430", "0912.345.678")).toEqual({ ok: true, href: "/track?code=DH-2430&phone=0912345678" });
+  it("leads a valid pair to the lookup, the code with its dash, and never the phone (slice B19)", () => {
+    expect(lookupCheck(" dh2430 ", "0912 345 678")).toEqual({ ok: true, href: "/track?code=DH-2430" });
+    expect(lookupCheck("DH-2430", "0912.345.678")).toEqual({ ok: true, href: "/track?code=DH-2430" });
   });
 });

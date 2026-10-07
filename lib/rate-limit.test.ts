@@ -18,9 +18,10 @@ import {
  * counter table, and what the screen says when the answer is "not now".
  *
  * The table below is the brief's §2.5 — plus `keep`, from the review of slice
- * B9, and `lookup`, from the brief of slice B11 — restated on purpose rather
- * than read from the module: a number changed in `lib/rate-limit.ts` has to
- * change here too, by hand, or this fails.
+ * B9, `lookup`, from the brief of slice B11, and `auth_callback`, from the
+ * brief of slice B19 — restated on purpose rather than read from the module: a
+ * number changed in `lib/rate-limit.ts` has to change here too, by hand, or
+ * this fails.
  */
 const TABLE: Record<RateBucket, { limit: number; windowSeconds: number; per: "visitor" | "everyone" }> = {
   order_place: { limit: 5, windowSeconds: 10 * 60, per: "visitor" },
@@ -36,13 +37,14 @@ const TABLE: Record<RateBucket, { limit: number; windowSeconds: number; per: "vi
   upload: { limit: 40, windowSeconds: 3600, per: "visitor" },
   upload_global: { limit: 300, windowSeconds: 24 * 3600, per: "everyone" },
   reset: { limit: 3, windowSeconds: 10 * 60, per: "visitor" },
+  auth_callback: { limit: 10, windowSeconds: 5 * 60, per: "visitor" },
 };
 
 describe("RATE_RULES", () => {
-  it("has exactly the thirteen buckets — B4b's eleven, B9's `keep`, B11's `lookup` — no more", () => {
+  it("has exactly the fourteen buckets — B4b's eleven, B9's `keep`, B11's `lookup`, B19's `auth_callback` — no more", () => {
     expect([...RATE_BUCKETS].sort()).toEqual(Object.keys(TABLE).sort());
     expect(Object.keys(RATE_RULES).sort()).toEqual(Object.keys(TABLE).sort());
-    expect(RATE_BUCKETS).toHaveLength(13);
+    expect(RATE_BUCKETS).toHaveLength(14);
   });
 
   it("gives the lookup ten tries per ten minutes, per visitor, in the app's own sentence", () => {

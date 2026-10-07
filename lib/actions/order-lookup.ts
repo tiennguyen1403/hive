@@ -3,7 +3,15 @@
 import { awaitsCardPayment } from "@/lib/card-checkout";
 import { lookupOrder } from "@/lib/db/order-lookup";
 import { getActionLocale } from "@/lib/locale";
-import { lookupResultOf, lookupWords, readLookup, type LookupResult } from "@/lib/order-lookup";
+import {
+  lookupFormState,
+  lookupResultOf,
+  lookupWords,
+  readLookup,
+  readLookupForm,
+  type LookupFormState,
+  type LookupResult,
+} from "@/lib/order-lookup";
 
 /**
  * "Tra cứu" on the Feed's lookup screen (slice B11): the order behind a code
@@ -35,11 +43,12 @@ import { lookupResultOf, lookupWords, readLookup, type LookupResult } from "@/li
  * the server (`lib/db/order-lookup.ts` says why it must not).
  *
  * FOR THE SCREEN: call it inside a transition from the form's submit; for a
- * link that carries `code` and `phone`, call it ONCE when the screen mounts
- * with the two values the page read from the URL — never from the page's
- * render, and not again when the URL changes. Writing `code` and `phone` into
- * the URL after a result, as the mock does, is `window.history.replaceState`,
- * which does not ask the server for anything.
+ * number the screen was handed — a link made before slice B19 that carries
+ * `phone`, or the lookup form of another page (`lookup-handoff.ts`) — call it
+ * ONCE when the screen mounts, never from the page's render, and not again
+ * when the URL changes. Since slice B19 the URL a result leaves behind carries
+ * the code alone (`window.history.replaceState`, which asks the server for
+ * nothing); the mock wrote the number too.
  *
  * Its sentences are in the request's language since round v6 slice E2
  * (`getActionLocale`: the `hive-lang` cookie, Vietnamese without a request),
@@ -67,4 +76,30 @@ export async function lookupOrderAction(code: string, phone: string): Promise<Lo
     console.error("lookupOrderAction:", error instanceof Error ? error.message : error);
     return { ok: false, reason: "UNAVAILABLE", message: lookupWords(locale).unavailable };
   }
+}
+
+/**
+ * The same lookup, for a FORM (slice B19): the action both lookup forms carry
+ * — `/track`'s (`TrackView`) and the one on Tôi and an order's page
+ * (`LookupForm`) — through `useActionState`, so they work without script.
+ * Such a form posts its two fields to `/track` (the hook's permalink), in the
+ * body of the POST, and the server draws that page again with the answer
+ * (`02-guides/forms.md`, "Validation errors"; "Server Components support
+ * progressive enhancement by default, meaning forms that call Server Actions
+ * will be submitted even if JavaScript hasn't loaded yet or is disabled",
+ * `01-getting-started/07-mutating-data.md`). The phone number is therefore
+ * never in an address: not a link, not a GET form, not the page the form
+ * lands on.
+ *
+ * Everything that matters is `lookupOrderAction`'s, in the same order — the
+ * fields read as untrusted, a token spent, Stripe asked for a card order still
+ * waiting. The previous state is not read: it came from the browser too. A
+ * body that is not a form reads as two empty fields, and is answered as such
+ * without a lookup. The answer carries the two fields back (cut to a few
+ * dozen characters) so the page can fill the form in again; that is the
+ * number the same browser just typed.
+ */
+export async function lookupFormAction(_previous: LookupFormState, form: FormData): Promise<LookupFormState> {
+  const sent = readLookupForm(form);
+  return lookupFormState(sent, await lookupOrderAction(sent.code, sent.phone));
 }

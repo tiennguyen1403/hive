@@ -295,13 +295,17 @@ export function confirmLines(catalog: Catalog, o: Order, locale: Locale = "vi"):
 
 /**
  * The second button: the order's own page for an order in the signed-in
- * account, the lookup by code and phone otherwise — an order placed signed
- * out is not in the account's list, whoever is signed in now. In English
- * "View order", or the lookup by its glossary name, "Track an order".
+ * account, the lookup otherwise — an order placed signed out is not in the
+ * account's list, whoever is signed in now. In English "View order", or the
+ * lookup by its glossary name, "Track an order".
+ *
+ * The lookup's address carries the code alone since slice B19, never the
+ * phone number: the browser that placed the order is shown it at once from
+ * the code (`/track` reads its receipt), any other is asked for the number.
  */
 export function followLink(o: Order, inAccount: boolean, locale: Locale = "vi"): { label: string; href: string } {
   const t = picker(locale);
   return inAccount
     ? { label: t({ vi: "Xem đơn", en: "View order" }), href: `/account/orders/${o.code}` }
-    : { label: t({ vi: "Tra cứu đơn", en: "Track an order" }), href: trackHref(o.code, o.shipTo.phone) };
+    : { label: t({ vi: "Tra cứu đơn", en: "Track an order" }), href: trackHref(o.code) };
 }

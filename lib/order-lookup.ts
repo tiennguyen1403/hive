@@ -1,7 +1,7 @@
 import type { Order } from "@/data/types";
 import type { LookupField } from "./feed-account";
 import { pick, pickAll, type Locale, type Pair } from "./i18n";
-import { normaliseOrderCode, phoneDigits } from "./lookup";
+import { TRACK_PATH, isOrderCode, normaliseOrderCode, phoneDigits, trackHref } from "./lookup";
 
 /**
  * Looking an order up without an account, the Feed's way (slice B11): the
@@ -222,4 +222,154 @@ export function lookupResultOf(answer: LookupAnswer, locale: Locale = "vi"): Loo
     case "RATE_LIMITED":
       return { ok: false, reason: "RATE_LIMITED", message: answer.message };
   }
+}
+
+/**
+ * An order the app already holds whole — read for a browser that may see it
+ * (`loadReceipt`) — cut down to what the lookup screen prints, key by key, as
+ * `toLookupAnswer` builds what `lookup_order()` sends: the same ten keys, and
+ * no courier inside SHIPPING's status. What is not printed never reaches the
+ * page's payload, whoever is looking (slice B19).
+ */
+export function lookedUpOf(o: Order): LookedUpOrder {
+  const s = o.status;
+  return {
+    code: o.code,
+    placedAt: o.placedAt,
+    status: s.state === "SHIPPING" ? { state: "SHIPPING", shippedAt: s.shippedAt, trackingCode: s.trackingCode } : s,
+    payment: o.payment,
+    lines: o.lines,
+    shippingFeeVnd: o.shippingFeeVnd,
+    codFeeVnd: o.codFeeVnd,
+    discountVnd: o.discountVnd,
+    ...(o.promo ? { promo: o.promo } : {}),
+    ...(o.moments ? { moments: o.moments } : {}),
+  };
+}
+
+// ────────────────────────────────────────────── the two forms (slice B19)
+/**
+ * What the lookup's form action (`lookupFormAction`) keeps between two
+ * answers, for `useActionState`: the two fields as they were sent, and the
+ * answer. It matters to a page drawn WITHOUT script — the form posted to the
+ * action, the server drew `/track` again with this — which fills the form in
+ * again and shows the answer; the number travels in the POST's body and this
+ * state, never in an address. With script the screens look up through
+ * `lookupOrderAction` and never post the form.
+ */
+export interface LookupFormState {
+  code: string;
+  phone: string;
+  /** The answer, or null while nothing has been sent. */
+  result: LookupResult | null;
+}
+
+/** Nothing sent yet. */
+export const NO_LOOKUP: LookupFormState = { code: "", phone: "", result: null };
+
+/**
+ * The longest a field comes back in the state, in UTF-16 units. The fields
+ * are read whole and judged whole (`readLookup`); only what is handed back to
+ * fill the form in again is cut, so a request carrying a megabyte of text
+ * gets an answer of a few hundred bytes.
+ */
+const ECHO_MAX = 64;
+
+/**
+ * The two fields of a lookup form, as the browser sent them — "" for one
+ * missing, or a file, or a body that is not a form at all: an action is a
+ * public endpoint, and its argument is whatever the request carried.
+ */
+export function readLookupForm(form: unknown): { code: string; phone: string } {
+  if (!(form instanceof FormData)) return { code: "", phone: "" };
+  const field = (name: string) => {
+    const value = form.get(name);
+    return typeof value === "string" ? value : "";
+  };
+  return { code: field("code"), phone: field("phone") };
+}
+
+/** The state the form action answers: what was sent, cut to `ECHO_MAX`, and the answer. */
+export function lookupFormState(sent: { code: string; phone: string }, result: LookupResult): LookupFormState {
+  return { code: sent.code.slice(0, ECHO_MAX), phone: sent.phone.slice(0, ECHO_MAX), result };
+}
+
+/** An order on the lookup screen: the order, the number COD's line prints, and whether it fades in. */
+export interface TrackFound {
+  order: LookedUpOrder;
+  /** The number the shopper typed — or, for an order this browser may already see, the one on the order. */
+  phone: string;
+  /** Just looked up from the form (with script): it fades in. Anything else is simply there. */
+  fresh: boolean;
+}
+
+/**
+ * The order behind `/track?code=…` when this browser may already see it — the
+ * account's own, or one it placed signed out — as the lookup prints it, with
+ * the number on the order for COD's line (`knownOrder`, `lib/db/track-known.ts`).
+ */
+export interface KnownOrder {
+  order: LookedUpOrder;
+  phone: string;
+}
+
+/** What the lookup screen is drawn with first. */
+export interface TrackStart {
+  values: { code: string; phone: string };
+  errors: LookupErrors;
+  /**
+   * One sentence for the whole form — out of lookups, or none could be made —
+   * only after a form sent without script: there is no toast without script.
+   */
+  notice: string | null;
+  found: TrackFound | null;
+  /**
+   * The address the screen stands on, never with the number: where "Đăng
+   * nhập" brings the shopper back to, and where an old link's `phone` goes.
+   */
+  here: string;
+}
+
+/**
+ * The lookup screen's first state, from what its page knows (slice B19), in
+ * this order:
+ *
+ *   1. the answer to a form sent without script (`posted`): the fields as
+ *      sent, and the order, the sentence under a field, or the sentence for
+ *      the whole form. The page is then `/track`, where such a form posts;
+ *   2. an order this browser may already see (`known`), drawn at once — no
+ *      number asked, no lookup spent;
+ *   3. otherwise the form, with what the address carried: `?code=` typed in,
+ *      and the number only from a link made before slice B19. The screen
+ *      looks such a link up once it mounts, as before.
+ */
+export function trackStart(from: {
+  posted: LookupFormState;
+  known: KnownOrder | null;
+  code: string;
+  phone: string;
+}): TrackStart {
+  const { posted, known } = from;
+  const result = posted.result;
+  if (result) {
+    const values = { code: posted.code, phone: posted.phone };
+    if (result.ok) {
+      const found = { order: result.order, phone: posted.phone.trim(), fresh: false };
+      return { values, errors: {}, notice: null, found, here: TRACK_PATH };
+    }
+    if (result.errors) return { values, errors: result.errors, notice: null, found: null, here: TRACK_PATH };
+    return { values, errors: {}, notice: result.message, found: null, here: TRACK_PATH };
+  }
+  if (known) {
+    const found = { order: known.order, phone: known.phone, fresh: false };
+    return { values: { code: known.order.code, phone: "" }, errors: {}, notice: null, found, here: trackHref(known.order.code) };
+  }
+  const code = normaliseOrderCode(from.code);
+  return {
+    values: { code: from.code, phone: from.phone },
+    errors: {},
+    notice: null,
+    found: null,
+    here: isOrderCode(code) ? trackHref(code) : TRACK_PATH,
+  };
 }

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
-import { lookupOrderAction } from "@/lib/actions/order-lookup";
+import { lookupFormAction, lookupOrderAction } from "@/lib/actions/order-lookup";
 import { dayMonth } from "@/lib/datetime";
 import {
   canReturn,
@@ -18,8 +18,17 @@ import {
 import { BACK_IN_STOCK_EN, confirmHold, confirmTransfer } from "@/lib/feed-order";
 import { signHref } from "@/lib/feed-sign-in";
 import { picker, plural } from "@/lib/i18n";
+import { TRACK_PATH, trackHref } from "@/lib/lookup";
 import { vnd } from "@/lib/money";
-import { lookupWordIn, type LookedUpOrder, type LookupErrors } from "@/lib/order-lookup";
+import {
+  NO_LOOKUP,
+  lookupWordIn,
+  trackStart,
+  type KnownOrder,
+  type LookedUpOrder,
+  type LookupErrors,
+  type TrackFound,
+} from "@/lib/order-lookup";
 import { orderUnits } from "@/lib/orders";
 import { FeedClock } from "../FeedClock";
 import { useMbarTitle } from "../FeedMbar";
@@ -27,16 +36,19 @@ import { useFeedToast } from "../FeedToast";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNow, useNowMs } from "../now";
 import { cx } from "../useReveal";
+import { takeOver } from "./lookup-handoff";
 import { OrderSteps } from "./OrderBits";
 import { CopyRow, OrderItems, OrderSums } from "./OrderView";
 
 interface TrackViewProps {
-  /** `?code=` as the page read it: looked up once, when the screen mounts (with `phone`). */
+  /** `?code=` as the page read it: typed into the form, or the order shown at once (`known`). */
   code: string;
-  /** `?phone=` as the page read it. */
+  /** `?phone=` as the page read it — only a link made before slice B19 carries one: used once, then dropped. */
   phone: string;
   /** Whether somebody is signed in: "Đơn hàng của bạn" and "Xem trang đơn", or the way in. */
   signedIn: boolean;
+  /** The order behind `code` when this browser may already see it (`knownOrder`): shown at once, no number asked. */
+  known: KnownOrder | null;
 }
 
 type Focus = "result" | "error" | "code" | null;
@@ -66,25 +78,47 @@ type Focus = "result" | "error" | "code" | null;
  * link opens, or signs in first.
  *
  * The page never looks anything up while it renders — each lookup spends one
- * of the visitor's ten per ten minutes (`lib/db/order-lookup.ts`). A link that
- * carries `code` and `phone` is looked up once, when the screen mounts, and
- * never again as the address changes; after a lookup the address is written
- * with `history.replaceState`, as the mock writes it.
+ * of the visitor's ten per ten minutes (`lib/db/order-lookup.ts`). A number
+ * the screen is handed is looked up once, when the screen mounts, and never
+ * again as the address changes; after a lookup the address is written with
+ * `history.replaceState`, as the mock writes it.
+ *
+ * THE NUMBER IS NEVER IN THE ADDRESS (slice B19). The address a result leaves
+ * is `/track?code=…`, the code alone, and that is the link to share:
+ *
+ *   · a browser that may already see the order — the account's own, or one it
+ *     placed signed out — is shown it at once (`known`, read by the page, no
+ *     lookup spent); any other gets the form with the code typed in;
+ *   · the lookup form of another page hands its number over in memory
+ *     (`lookup-handoff.ts`) and this screen looks it up on mount;
+ *   · a link made before slice B19 still works: its `phone` is used once, as
+ *     before, and leaves the address as soon as the screen mounts;
+ *   · without script the form posts its two fields to this page through the
+ *     lookup's Server Action (`useActionState`, permalink `/track`), and the
+ *     page comes back drawn with the answer (`trackStart`). With script it
+ *     never posts: `submit` looks up through `lookupOrderAction`. The answer
+ *     that cannot go in a toast without script — out of lookups, or none
+ *     could be made — is the line above the form (`.si-formerr`, the sign-in
+ *     form's).
  *
  * In the page's language since round v6 slice E2 ("Track an order"). The
  * sentence under a field is kept as it came — from the check here or from the
  * server — and read through `lookupWordIn`, so a switch of language rewords it
  * in place.
  */
-export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackViewProps) {
+export function TrackView({ code: fromCode, phone: fromPhone, signedIn, known }: TrackViewProps) {
   const toast = useFeedToast();
   const locale = useLocale();
   const t = picker(locale);
-  const [values, setValues] = useState({ code: fromCode, phone: fromPhone });
-  const [errors, setErrors] = useState<LookupErrors>({});
-  const [found, setFound] = useState<{ order: LookedUpOrder; phone: string; fresh: boolean } | null>(null);
+  // `posted` is NO_LOOKUP unless this page is the answer to a form sent without script (slice B19).
+  const [posted, send] = useActionState(lookupFormAction, NO_LOOKUP, TRACK_PATH);
+  const [start] = useState(() => trackStart({ posted, known, code: fromCode, phone: fromPhone }));
+  const [values, setValues] = useState(start.values);
+  const [errors, setErrors] = useState<LookupErrors>(start.errors);
+  const [notice, setNotice] = useState(start.notice);
+  const [found, setFound] = useState<TrackFound | null>(start.found);
   const [busy, startLookup] = useTransition();
-  const [query, setQuery] = useState(() => queryOf(fromCode, fromPhone));
+  const [here, setHere] = useState(start.here);
   const focus = useRef<Focus>(null);
   const opened = useRef(false);
   const has = found !== null;
@@ -105,11 +139,11 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
     target?.focus();
   });
 
-  /** The address after a lookup: the order's code and the ten digits while it stands, nothing otherwise (`writeUrl`). */
-  function writeUrl(code: string, phone: string) {
-    const q = queryOf(code, phone);
-    setQuery(q);
-    window.history.replaceState(null, "", q ? `/track?${q}` : "/track");
+  /** The address after a lookup: the order's code while it stands, nothing otherwise — never the number (slice B19). */
+  function writeUrl(code: string) {
+    const href = code ? trackHref(code) : TRACK_PATH;
+    setHere(href);
+    window.history.replaceState(null, "", href);
   }
 
   function lookUp(code: string, phone: string, fromForm: boolean) {
@@ -118,15 +152,17 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
       startLookup(() => {
         if (answer.ok) {
           setErrors({});
+          setNotice(null);
           setFound({ order: answer.order, phone: phone.trim(), fresh: fromForm });
-          writeUrl(answer.order.code, phone);
+          writeUrl(answer.order.code);
           if (fromForm) focus.current = "result";
           return;
         }
         if (answer.errors) {
           setErrors(answer.errors);
+          setNotice(null);
           setFound(null);
-          writeUrl("", "");
+          writeUrl("");
           if (fromForm) focus.current = "error";
           return;
         }
@@ -136,32 +172,53 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
     });
   }
 
-  // A link that carries the code or the phone is looked up at once (`if (st.code || st.phone) run()`) — once,
-  // however often the effect runs (a development build runs it twice), and never again as the address changes.
+  // Once, when the screen mounts — however often the effect runs (a development build runs it twice) — and never
+  // again as the address changes:
+  //   · an old link's `phone` leaves the address at once, whatever the lookup then answers;
+  //   · a number handed over by another page's lookup form is taken (and forgotten) whether or not it is used;
+  //   · with a number, the code is looked up (`if (st.code || st.phone) run()`), unless an order already stands —
+  //     this browser's own, or the answer to a form sent without script. A code alone asks for the number.
+  //
+  // One task later, not in the effect itself (measured, slice B19). Next learns of `history.replaceState` by
+  // patching it in an effect of its own router (`node_modules/next/dist/client/components/app-router.js`), and on
+  // the first mount that effect runs after this one; an action posts to the router's copy of the address
+  // (`fetch(state.canonicalUrl, …)`, `router-reducer/reducers/server-action-reducer.js`). Stripped too early, the
+  // number left the address bar but still went to the server in the lookup's request line. A task later the patch
+  // is in place: the router takes the address without the number, and the lookup posts there.
   useEffect(() => {
     if (opened.current) return;
     opened.current = true;
-    if (!fromCode && !fromPhone) return;
-    const check = lookupCheck(fromCode, fromPhone, locale);
-    if (!check.ok) {
-      setErrors(check.errors);
-      return;
-    }
-    lookUp(fromCode, fromPhone, false);
+    window.setTimeout(() => {
+      if (fromPhone) window.history.replaceState(null, "", here);
+      const handed = takeOver(here);
+      if (found || posted.result) return;
+      const phone = fromPhone || handed;
+      if (!phone) return;
+      if (!fromPhone) setValues((v) => ({ ...v, phone }));
+      const check = lookupCheck(fromCode, phone, locale);
+      if (!check.ok) {
+        setErrors(check.errors);
+        return;
+      }
+      lookUp(fromCode, phone, false);
+    }, 0);
     // Mount only, by design: the address is written by this screen afterwards.
   }, []);
 
+  // With script the lookup runs from here and the form never posts; `send`, its action, is for a page without script.
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy) return;
     const check = lookupCheck(values.code, values.phone, locale);
     if (!check.ok) {
       setErrors(check.errors);
+      setNotice(null);
       setFound(null);
       focus.current = "error";
       return;
     }
     setErrors({});
+    setNotice(null);
     lookUp(values.code, values.phone, true);
   }
 
@@ -178,8 +235,9 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
 
   function again() {
     setFound(null);
+    setNotice(null);
     setValues({ code: "", phone: "" });
-    writeUrl("", "");
+    writeUrl("");
     focus.current = "code";
   }
 
@@ -208,7 +266,13 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
       </div>
       <div className={cx("b-trk", has && "has-result", busy && "is-busy")}>
         <div className="b-trk-side">
-          <form className="b-trk-form" action="/track" noValidate onSubmit={submit}>
+          <form className="b-trk-form" action={send} noValidate onSubmit={submit}>
+            {notice && (
+              <p className="si-formerr" role="alert">
+                <FeedIcon name="warning-circle" />
+                <span>{notice}</span>
+              </p>
+            )}
             {field(
               "code",
               t({ vi: "Mã đơn", en: "Order code" }),
@@ -257,7 +321,7 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
             ) : (
               <p className="b-trk-alt">
                 {t({ vi: "Có tài khoản?", en: "Have an account?" })}{" "}
-                <Link className="link" href={signHref("in", query ? `/track?${query}` : "/track")}>
+                <Link className="link" href={signHref("in", here)}>
                   {t({ vi: "Đăng nhập", en: "Sign in" })}
                 </Link>
               </p>
@@ -280,15 +344,12 @@ export function TrackView({ code: fromCode, phone: fromPhone, signedIn }: TrackV
   );
 }
 
-/** `code=DH-1499&phone=0938571204`, or "" when there is no order to point at. */
-function queryOf(code: string, phone: string): string {
-  if (!code || !phone) return "";
-  return new URLSearchParams({ code, phone: phone.replace(/\D/g, "") }).toString();
-}
-
 interface TrackResultProps {
   order: LookedUpOrder;
-  /** The number as the shopper typed it: what COD's line says the shop will call. */
+  /**
+   * What COD's line says the shop will call: the number as the shopper typed it, or, for an order this browser may
+   * already see (`known`), the one on the order.
+   */
   phone: string;
   /** Just looked up from the form: it fades in (desktop, motion on). One opened from a link is simply there. */
   fresh: boolean;

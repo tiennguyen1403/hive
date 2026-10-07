@@ -31,6 +31,15 @@
  * `auth.admin.updateUserById` as its password, so a run always leaves the
  * manager a manager, whatever happened to the account in between.
  *
+ * THE HANDLE rides in `app_metadata` too since slice B19 — the fixture id that
+ * makes a profile the sample's (`c-minhanh`, the manager's `a-quanly`). The
+ * `handle_new_user()` trigger takes it from there and from nowhere else
+ * (`20261007200000_new_user_handle.sql`): `user_metadata` is the sign-up's
+ * `data`, which any visitor writes, so a handle read from it would let anybody
+ * pass for the sample and keep an account past the daily reset. The name and
+ * the phone stay in `user_metadata`. At the end the script reads the nine
+ * handles back and fails when one is missing.
+ *
  * It holds the SERVICE ROLE key, which bypasses row level security — so it
  * runs under `tsx` on a developer machine or in CI, never inside the app.
  * Nothing here prints a key. The demo password IS printed on the sign-in
@@ -108,8 +117,9 @@ async function main(): Promise<void> {
       // Read by the `handle_new_user()` trigger, which is what actually
       // writes `public.profiles`. `handle` is the fixture id that ties this
       // account to its sample orders: `reset_demo()` matches them up by it.
+      // It goes in `app_metadata`, which only this key can write (slice B19).
+      app_metadata: { handle: customer.id },
       user_metadata: {
-        handle: customer.id,
         name: customer.name,
         phone: normalisePhone(customer.phone),
       },
@@ -131,8 +141,8 @@ async function main(): Promise<void> {
     email: DEMO_ADMIN.email,
     password: env.DEMO_PASSWORD,
     email_confirm: true,
-    app_metadata: { role: "admin" },
-    user_metadata: { handle: DEMO_ADMIN.handle, name: DEMO_ADMIN.name, phone: "" },
+    app_metadata: { role: "admin", handle: DEMO_ADMIN.handle },
+    user_metadata: { name: DEMO_ADMIN.name, phone: "" },
   });
   if (manager.error) {
     if (!isAlreadyThere(manager.error)) {
@@ -145,8 +155,12 @@ async function main(): Promise<void> {
   }
 
   // ── the accounts that were already there: the demo password again, and
-  // for the manager its role again, in one call each. Whatever somebody set
-  // since, the sign-in screen's password opens all nine after this.
+  // their handle — for the manager its role too — in one call each. Whatever
+  // somebody set since, the sign-in screen's password opens all nine after
+  // this. `app_metadata` is merged, not replaced; a handle written here
+  // reaches a profile that has none (`on_auth_user_app_meta_changed`, slice
+  // B19) and never moves one that has.
+  const handleOf = new Map<string, string>(CUSTOMERS.map((c) => [c.email.toLowerCase(), c.id]));
   let restored = 0;
   if (existing.length > 0) {
     const ids = await idsByEmail(existing);
@@ -157,8 +171,8 @@ async function main(): Promise<void> {
       const { error } = await admin.auth.admin.updateUserById(
         id,
         isManager
-          ? { password: env.DEMO_PASSWORD, app_metadata: { role: "admin" } }
-          : { password: env.DEMO_PASSWORD },
+          ? { password: env.DEMO_PASSWORD, app_metadata: { role: "admin", handle: DEMO_ADMIN.handle } }
+          : { password: env.DEMO_PASSWORD, app_metadata: { handle: handleOf.get(email.toLowerCase()) } },
       );
       if (error) throw new Error(`updateUserById failed for ${email}: ${error.message}`);
       restored += 1;
@@ -175,11 +189,24 @@ async function main(): Promise<void> {
   const { error } = await admin.rpc("reset_demo", { p_anchor: anchor.data });
   if (error) throw new Error(`reset_demo failed: ${error.message}`);
 
+  // ── the nine handles, read back. A demo profile without its handle is
+  // "real" to the daily reset, which would delete the account that evening
+  // (`real_accounts()`, slice B17), so a missing one stops here, by name.
+  const handles = [...CUSTOMERS.map((c) => c.id), DEMO_ADMIN.handle];
+  const held = await admin.from("profiles").select("handle").in("handle", handles);
+  if (held.error) throw new Error(`reading the demo profiles failed: ${held.error.message}`);
+  const found = new Set(held.data.map((p) => p.handle));
+  const missing = handles.filter((h) => !found.has(h));
+  if (missing.length > 0) {
+    throw new Error(`demo profiles without their handle: ${missing.join(", ")}`);
+  }
+
   const total = CUSTOMERS.length + 1;
   process.stdout.write(
     `demo accounts: ${created} created, ${skipped} already there (of ${total})\n` +
       `passwords set back to DEMO_PASSWORD: ${restored}\n` +
       `${DEMO_ADMIN.email} carries app_metadata.role = admin\n` +
+      `demo profiles carrying their handle: ${handles.length} of ${total}\n` +
       "profiles, addresses, sample orders and their log reset to the latest 18:50 anchor\n",
   );
 }

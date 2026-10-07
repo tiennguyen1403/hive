@@ -501,7 +501,7 @@ describe("the receipt in English", () => {
     expect(followLink(waiting(), true, "en")).toEqual({ label: "View order", href: "/account/orders/DH-1507" });
     expect(followLink(waiting(), false, "en")).toEqual({
       label: "Track an order",
-      href: "/track?code=DH-1507&phone=0938571204",
+      href: "/track?code=DH-1507",
     });
   });
 });
