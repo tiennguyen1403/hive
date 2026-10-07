@@ -3929,3 +3929,25 @@ Chờ người dùng thử đăng nhập Google trên demo.
   không được lưu thì không được nhận. Muốn sửa phải có idempotency key hoặc sửa hàm SQL. Tiền thử, rất hiếm.
 - **Để lượt rà cuối:** `tools/layout-sweep.js` chỉ chờ 250 ms sau khi mở menu, nên ba ảnh lớp nổi quản trị (`admin-drops-edit-sheet`,
   `admin-drops-close-sheet`, `admin-promotions-edit-drawer`) có lúc chụp được menu thay vì hộp thoại. Chờ menu hiện rồi mới bấm.
+
+**07/10, PHẦN STRIPE ĐÃ LÊN ONLINE** (B18 `ce2fe8a`). Người dùng tự làm:
+- `db push --linked --dry-run`: đúng một migration (`card_checkout`), không seed; rồi `--yes`;
+- kiểm `proacl`: `card_checkout_opened`, `card_mark_paid`, `card_session` đều là `{postgres=X/postgres,service_role=X/postgres}`.
+  `cardinality` lọt vào vì `_` trong `LIKE` khớp một ký tự bất kỳ;
+- `git push`, dải `de665bf..ce2fe8a`.
+
+Vercel dựng xong chưa tới một phút. Phiên chính kiểm bằng curl:
+- `/`, `/faq`, `/privacy`, `/checkout`, `/sign-in` trả 200;
+- `/faq` có hai câu thẻ mới;
+- `/privacy` bản EN có câu Stripe;
+- trang chủ không lộ khoá.
+
+Người dùng trả thử bằng thẻ 4242 trên demo: đơn **DH-2432** thành `PAID`, có payment intent.
+
+- **Hạn sandbox:** sandbox tạo 07/10/2026; nếu không claim, Stripe xoá nó sau 60 ngày, tức khoảng **06/12/2026**. Khi đó thanh toán thẻ
+  tự tắt: đơn vẫn đặt được, hoá đơn báo "Chưa mở được trang thanh toán". Muốn chạy tiếp thì claim sandbox, hoặc tạo sandbox mới, thay
+  `STRIPE_SECRET_KEY` trên Vercel và `.env.local`, rồi redeploy.
+- **Tài liệu còn lại:**
+  - `PRODUCT.md` còn ghi "không cổng thanh toán" (QĐ-25), phải sửa theo QĐ-42/46;
+  - `supabase/README.md` thêm mục Stripe;
+  - `DESIGN.md` (khối `.hold-pay`, nhãn theo cách trả) ghi một lần sau lượt rà toàn app, vì lượt rà sẽ đổi giao diện thêm.

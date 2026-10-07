@@ -40,7 +40,7 @@ Neither is edited by hand. `scripts/gen-seed.test.ts` fails the moment
 
 ## Environment
 
-`.env.local` (git-ignored) carries four names; `.env.example` lists them with
+`.env.local` (git-ignored) carries five names; `.env.example` lists them with
 placeholder values.
 
 | Name | Used by | Notes |
@@ -49,6 +49,7 @@ placeholder values.
 | `SUPABASE_PUBLISHABLE_KEY` | the app | safe to hand to a client — but this app has no client-side Supabase at all (QĐ-25) |
 | `SUPABASE_SECRET_KEY` | `scripts/seed-users.ts`, the db tests | service role: bypasses row level security. Scripts only, never the app |
 | `DEMO_PASSWORD` | the sign-in screen, `scripts/seed-users.ts` | the PUBLIC demo password. Printed on screen on purpose |
+| `STRIPE_SECRET_KEY` | `lib/stripe.ts`, server only | the Stripe sandbox's secret key, test mode only: anything but `sk_test_…` turns card payment off. On Vercel the Stripe integration sets it (slice B18) |
 
 None of them carries the `NEXT_PUBLIC_` prefix, and that is the point: such a
 variable is inlined into the client bundle, and the browser never talks to
@@ -262,6 +263,63 @@ on Supabase's raw "provider is not enabled" JSON: Authentication → Providers
 `lib/db/real-accounts.dbtest.ts` and `lib/db/sample-orders.dbtest.ts` cover
 the function, the sweep and the sample rule; they delete real accounts, so
 they run against the local stack only.
+
+## Card payments on Stripe (slice B18)
+
+A card order pays on Stripe's hosted Checkout page, in test mode only (QĐ-42,
+QĐ-46): a sandbox, never real money. The browser only navigates there — no
+Stripe script — and the order keeps its states: placed `AWAITING_TRANSFER`
+with its twelve-hour hold, `PAID` when Stripe, not the shop, says so.
+
+- **Keys.** The Vercel Marketplace Stripe integration made the sandbox,
+  connected it to the `hive` project and set its variables for every
+  environment; on a developer machine `STRIPE_SECRET_KEY` is in `.env.local`.
+  The `NEXT_PUBLIC_…` key beside it is never read. `lib/stripe.ts` refuses
+  any key that is not `sk_test_…`, and card payment is then off, gracefully:
+  the order is still placed and held, and its receipt says no payment page
+  could be opened.
+- **Flow** (`lib/db/card-payments.ts`). Place the order, open a Checkout
+  Session for its total in đồng, keep its id on the row, redirect to Stripe;
+  Stripe sends the shopper back to `/order-confirmed/<code>`. No webhook: the
+  server asks Stripe when the shopper comes back and each time one waiting
+  order's page is drawn (receipt, order in Tôi, lookup, back office; never a
+  list).
+- **Only the session the row stored is believed**, and only when Stripe's
+  copy names the order, its total, `vnd`, and is paid. Order codes come round
+  again after every `reset_demo`, so an older paid session for the same code
+  and total would pass on its own data; a `session_id` on the URL that is not
+  the stored one is not even asked about. "Trả bằng thẻ" expires the old
+  session before opening a new one; a cancel, the shopper's or the shop's,
+  expires the open one.
+- **Three functions, `service_role` only**
+  (`20261007180000_card_checkout.sql`): `card_session()` reads the stored id,
+  `card_checkout_opened()` keeps a new one for a card order inside its hold,
+  `card_mark_paid()` records Stripe's answer — idempotent, checks the amount
+  again against the order's lines and fees, never revives a cancelled order,
+  and leaves the shop one note per payment to refund by hand.
+- **By hand:** card `4242 4242 4242 4242`, any future expiry, any CVC, any
+  made-up email. The Playwright browser allows loopback origins only and
+  cannot reach Stripe's page.
+- **The sandbox runs out.** Stripe deletes an unclaimed sandbox after 60
+  days: this one dates from 07/10/2026, so about 06/12/2026. No payment page
+  opens after that; orders are still placed. Claim it before then, or make a
+  new one, put its secret key in `STRIPE_SECRET_KEY` on Vercel and in
+  `.env.local`, and redeploy.
+- **Known limits.** A shopper who pays, closes the tab and does not come back
+  before the hold runs out — the order unopened meanwhile — leaves a
+  cancelled order, and nothing tells the shop. Two browsers pressing "Trả
+  bằng thẻ" in the same second can open two pages; the row keeps one. An
+  order under Stripe's minimum charge gets no page. No refund is automatic.
+
+On hosted, `db push` the migration before `git push`; the seed does not
+change. Each row of this should read
+`{postgres=X/postgres,service_role=X/postgres}`:
+
+```sql
+select proname, proacl from pg_proc where proname in ('card_session', 'card_checkout_opened', 'card_mark_paid');
+```
+
+`lib/db/card-checkout.dbtest.ts` covers the three functions and their grants.
 
 ## What an account keeps (slice B9)
 

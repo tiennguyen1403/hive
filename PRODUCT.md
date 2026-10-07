@@ -10,7 +10,7 @@ web
 
 Next.js (App Router) + TypeScript + Tailwind CSS — chosen by the user in the init interview over static HTML/CSS and Vite+React, on the grounds that ~20 mock pages need reusable components and real routing, and that the mock should be upgradable into a production build without a rewrite.
 
-Deliverable **từ 23/09/2026 (QĐ-25, `tasks/backend.md`)**: một cửa hàng **demo / portfolio chạy thật** trên backend **Supabase** (Postgres + Auth + Storage cho ảnh tải lên, gói Free, vùng Singapore), host **Vercel Hobby**, chạy công khai ở https://hive-neon-three.vercel.app từ 24/09, ngân sách 0đ — không khách thật, không tiền thật. Đã quyết: không chuyển sang Shopify/Haravan; không cổng thanh toán, không webhook ngân hàng, không API vận chuyển, không máy chủ email. Từ 19/09 tới 23/09 deliverable là mock UI trên fixture cục bộ; `data/*.ts` nay vẫn là fixture cho test và là nguồn sinh seed.
+Deliverable **từ 23/09/2026 (QĐ-25, `tasks/backend.md`)**: một cửa hàng **demo / portfolio chạy thật** trên backend **Supabase** (Postgres + Auth + Storage cho ảnh tải lên, gói Free, vùng Singapore), host **Vercel Hobby**, chạy công khai ở https://hive-neon-three.vercel.app từ 24/09, ngân sách 0đ — không khách thật, không tiền thật. Đã quyết: không chuyển sang Shopify/Haravan; không webhook ngân hàng, không API vận chuyển, không máy chủ email. Cổng thanh toán duy nhất là Stripe ở **chế độ thử** (từ 07/10/2026, QĐ-42 và QĐ-46): sandbox, không bao giờ có tiền thật. QĐ này đảo câu "không cổng thanh toán" của QĐ-25. Từ 19/09 tới 23/09 deliverable là mock UI trên fixture cục bộ; `data/*.ts` nay vẫn là fixture cho test và là nguồn sinh seed.
 
 ## Users
 
@@ -52,7 +52,7 @@ Chưa quyết định (không được bịa): điểm khác biệt cụ thể c
 **Đưa lại vào phạm vi 2026-09-20:** trang giới thiệu, FAQ, chính sách đổi trả, liên hệ và trang 404 — người dùng chốt dựng luôn (xem `tasks/plan.md`, mục "Câu hỏi mở — ĐÃ CHỐT", ý 4). Ràng buộc đi kèm: **không bịa** câu chuyện thương hiệu, xưởng, đối tác, giải thưởng hay testimonial; chỗ nào chưa có sự thật thì để trống chờ người dùng viết (component `NeedWrite`).
 
 **Ràng buộc kỹ thuật:**
-- Backend (từ 23/09/2026, QĐ-25): Supabase Postgres + Auth + Storage (ảnh tải lên, QĐ-27), đọc qua Server Components và ghi qua Server Actions; **trình duyệt không gọi Supabase**. `data/types.ts` vẫn là hợp đồng dữ liệu; `data/*.ts` là fixture cho test và nguồn sinh seed. Thanh toán: chuyển khoản đối chiếu tay + COD; không cổng thanh toán.
+- Backend (từ 23/09/2026, QĐ-25): Supabase Postgres + Auth + Storage (ảnh tải lên, QĐ-27), đọc qua Server Components và ghi qua Server Actions; **trình duyệt không gọi Supabase**. `data/types.ts` vẫn là hợp đồng dữ liệu; `data/*.ts` là fixture cho test và nguồn sinh seed. Thanh toán có ba cách: chuyển khoản đối chiếu tay; COD; thẻ trên trang Checkout của Stripe ở chế độ thử (QĐ-42, QĐ-46). Thanh toán thẻ không có webhook: server hỏi Stripe khi khách quay về và khi trang của một đơn được mở. Không tự hoàn tiền.
 - Ngôn ngữ giao diện: **tiếng Việt và tiếng Anh** (từ 01/10/2026, QĐ-40, để demo cho khách nước ngoài). Ngôn ngữ lưu ở cookie
   `hive-lang`; lần đầu theo `Accept-Language`, không có thì tiếng Việt; link `?lang=en` ép tiếng Anh. Nút đổi ở thanh trên của
   cửa hàng và chân thanh bên quản trị. Tiền tệ: **VND** ở cả hai (`390.000₫` / `390,000₫`). Thuật ngữ tiếng Anh đã chốt ở
