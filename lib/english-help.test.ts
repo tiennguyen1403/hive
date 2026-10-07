@@ -165,7 +165,8 @@ describe("Hỏi đáp in English: every figure is the app's own", () => {
   });
 
   it("names the ways to pay as the English checkout does, and the transfer's hold and the COD fee", () => {
-    expect(answer("q-thanh-toan-0")).toBe(`Bank transfer, cash on delivery${NBSP}(COD), card (domestic, Visa).`);
+    // The card's name for Stripe's test mode since slice B18 (QĐ-46).
+    expect(answer("q-thanh-toan-0")).toBe(`Bank transfer, cash on delivery${NBSP}(COD), card (Visa, Mastercard).`);
     expect(answer("q-thanh-toan-1")).toBe(
       `Reserved for ${TRANSFER_HOLD_HOURS} hours after you order. The transfer reference is on the confirmation ` +
         "screen. Account number and bank name coming soon.",

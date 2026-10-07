@@ -3,9 +3,12 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { ArcOrderScreen } from "@/components/admin-arc/ArcOrderScreen";
 import { ordersOfCustomer } from "@/lib/admin-customers";
+import { awaitsCardPayment } from "@/lib/card-checkout";
 import { demoNow } from "@/lib/clock";
+import { effectiveOrder } from "@/lib/customer-orders";
 import { toVnIso } from "@/lib/datetime";
 import { findOrderAdmin, listAllOrders, orderEvents } from "@/lib/db/admin";
+import { reconcileCardOrder } from "@/lib/db/card-payments";
 import { requireAdmin } from "@/lib/db/session";
 import { picker } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
@@ -35,10 +38,20 @@ export default async function AdminOrderDetailPage(props: PageProps<"/admin/orde
   await connection();
   const sp = await props.searchParams;
 
-  const order = await findOrderAdmin(code);
-  if (!order) notFound();
+  const found = await findOrderAdmin(code);
+  if (!found) notFound();
 
-  const [events, book] = await Promise.all([orderEvents(String(order.code)), listAllOrders()]);
+  // A card order still waiting is checked against Stripe before it is drawn
+  // (slice B18, `reconcileCardOrder`; `/order-confirmed/[code]` says why it
+  // is done while rendering). Only when the clock still reads it as waiting:
+  // past its hold it is cancelled, and Stripe is not asked. The book is
+  // cached for the request, so the order is patched into it by hand; its
+  // events are read after, and so include the payment's own.
+  const now = demoNow();
+  const order = awaitsCardPayment(effectiveOrder(found, now)) ? await reconcileCardOrder(found) : found;
+
+  const [events, all] = await Promise.all([orderEvents(String(order.code)), listAllOrders()]);
+  const book = order === found ? all : all.map((o) => (o.code === order.code ? order : o));
   const customerOrders = order.owner ? ordersOfCustomer(book, order.owner) : [];
 
   // The Arc screen since round v5 slice 1; the admin layout wraps it in the
@@ -48,7 +61,7 @@ export default async function AdminOrderDetailPage(props: PageProps<"/admin/orde
       order={order}
       events={events}
       customerOrders={customerOrders}
-      nowIso={toVnIso(demoNow())}
+      nowIso={toVnIso(now)}
       openHandover={sp.handover === "1"}
     />
   );

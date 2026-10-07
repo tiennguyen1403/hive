@@ -103,7 +103,7 @@ describe("Hỏi đáp: every figure is the app's own", () => {
   });
 
   it("names the ways to pay as the checkout's cards do, and the COD fee", () => {
-    expect(answer("Có những cách thanh toán nào?")).toBe("Chuyển khoản, thanh toán khi nhận (COD), thẻ (nội địa, Visa).");
+    expect(answer("Có những cách thanh toán nào?")).toBe("Chuyển khoản, thanh toán khi nhận (COD), thẻ (Visa, Mastercard)."); // the card's name since slice B18 (QĐ-46)
     expect(answer("COD có mất thêm phí không?")).toBe(
       `Có, thêm ${vnd(COD_SURCHARGE_VND)}. Cửa hàng gọi xác nhận trước khi giao. Kiểm hàng trước khi trả.`,
     );
@@ -111,7 +111,10 @@ describe("Hỏi đáp: every figure is the app's own", () => {
     expect(answer("Chuyển khoản thế nào?")).toBe(
       "Giữ hàng 12 giờ kể từ khi đặt. Nội dung chuyển khoản hiện ở màn xác nhận. Số tài khoản và tên ngân hàng đang chuẩn bị.",
     );
-    expect(answer("Trả bằng thẻ được chưa?")).toBe("Cổng thẻ đang chuẩn bị. Đơn chọn thẻ trả bằng chuyển khoản, cùng hạn giữ hàng.");
+    // Since slice B18 a card pays on Stripe's page, in test mode (QĐ-46): the checkout card's note, and the same hold.
+    expect(answer("Trả bằng thẻ được chưa?")).toBe(
+      "Được. Trả trên trang Stripe, chế độ thử. Đơn chọn thẻ có cùng hạn giữ hàng với chuyển khoản.",
+    );
   });
 
   it("states the return rules the user settled on 27/09, from lib/returns", () => {

@@ -11,7 +11,7 @@ import {
   type Product,
 } from "@/data/types";
 import type { Catalog } from "./catalog";
-import { CUSTOMER_CANCEL_REASON, OVERDUE_REASON } from "./customer-orders";
+import { CARD_OVERDUE_REASON, CUSTOMER_CANCEL_REASON, OVERDUE_REASON } from "./customer-orders";
 import { addDaysIso, clockLabel, dateTimeLabel, dayMonth } from "./datetime";
 import { canBuy, photoKeyOf, pictureOf } from "./feed";
 import { feedDelivery, feedPayments } from "./feed-checkout";
@@ -58,23 +58,36 @@ export const FEED_STATE_LABEL_TEXT: Readonly<Record<OrderState, Pair>> = {
 
 export const FEED_STATE_LABEL: Readonly<Record<OrderState, string>> = pickAll(FEED_STATE_LABEL_TEXT, "vi");
 
-/** One state's name in one language. */
-export function feedStateLabel(state: OrderState, locale: Locale = "vi"): string {
+/**
+ * A card order waiting for its money (slice B18, QĐ-46): it pays on Stripe's
+ * page, so it waits for a card payment, not a transfer — the same name the
+ * back office gives it (`orderStateLabel`, `lib/order-labels.ts`).
+ */
+export const CARD_AWAITING_TEXT: Pair = { vi: "Chờ trả thẻ", en: "Awaiting card payment" };
+
+/**
+ * One state's name in one language — for one order, by how it is paid when
+ * that is given: a card order waiting for its money is "Chờ trả thẻ".
+ */
+export function feedStateLabel(state: OrderState, locale: Locale = "vi", payment?: PaymentMethod): string {
+  if (state === "AWAITING_TRANSFER" && payment === "CARD") return pick(CARD_AWAITING_TEXT, locale);
   return pick(FEED_STATE_LABEL_TEXT[state], locale);
 }
 
 /**
  * Every reason the app itself writes into `orders.cancel_reason`, in English
  * (round v6 slice E2): the back office's four (`CANCEL_REASONS`,
- * `lib/admin-orders.ts`), the hold that ran out (`OVERDUE_REASON`) and the
- * shopper's own cancel (`CUSTOMER_CANCEL_REASON`). Keyed by the stored
- * Vietnamese in lower case — the sample writes the overdue one both ways,
- * "Quá hạn chuyển khoản" and "quá hạn chuyển khoản". The column keeps the
- * Vietnamese; it is translated where it is printed.
+ * `lib/admin-orders.ts`), the hold that ran out (`OVERDUE_REASON`; a card
+ * order's, `CARD_OVERDUE_REASON`, since slice B18) and the shopper's own
+ * cancel (`CUSTOMER_CANCEL_REASON`). Keyed by the stored Vietnamese in lower
+ * case — the sample writes the overdue one both ways, "Quá hạn chuyển khoản"
+ * and "quá hạn chuyển khoản". The column keeps the Vietnamese; it is
+ * translated where it is printed.
  */
 const CANCEL_REASON_EN: Readonly<Record<string, string>> = {
   "khách đổi ý": "Change of mind",
   [OVERDUE_REASON]: "Transfer overdue",
+  [CARD_OVERDUE_REASON]: "Payment overdue",
   "hết hàng thật": "Out of stock",
   "khác": "Other",
   [CUSTOMER_CANCEL_REASON]: "Cancelled by the customer",
@@ -96,9 +109,10 @@ export function cancelReasonLabel(reason: string, locale: Locale = "vi"): string
 /**
  * Why an order was cancelled, in the mock's words where it has them: the
  * shopper's own cancel reads "Bạn đã huỷ", the hold that ran out "Quá hạn
- * chuyển khoản". Any other reason — the shop's, in its own words — is kept as
- * the app has it, with a capital to start the line. In English (round v6
- * slice E2) "You cancelled", "Transfer overdue", or the reason by
+ * chuyển khoản" — a card order's "Quá hạn thanh toán" since slice B18. Any
+ * other reason — the shop's, in its own words — is kept as the app has it,
+ * with a capital to start the line. In English (round v6 slice E2) "You
+ * cancelled", "Transfer overdue", "Payment overdue", or the reason by
  * `cancelReasonLabel`.
  */
 export function cancelReasonText(reason: string, locale: Locale = "vi"): string {
@@ -107,13 +121,15 @@ export function cancelReasonText(reason: string, locale: Locale = "vi"): string 
   if (locale === "en") return low === CUSTOMER_CANCEL_REASON ? "You cancelled" : cancelReasonLabel(r, "en");
   if (low === CUSTOMER_CANCEL_REASON) return "Bạn đã huỷ";
   if (low === OVERDUE_REASON) return "Quá hạn chuyển khoản";
+  if (low === CARD_OVERDUE_REASON) return "Quá hạn thanh toán";
   return capitalise(r);
 }
 
 /**
- * "Chuyển khoản", "Thanh toán khi nhận (COD)", "Thẻ (nội địa, Visa)": the
+ * "Chuyển khoản", "Thanh toán khi nhận (COD)", "Thẻ (Visa, Mastercard)": the
  * checkout's names (`PAYMENTS[].label`); in English the checkout's English
- * ("Bank transfer", "Cash on delivery (COD)", "Card (domestic, Visa)").
+ * ("Bank transfer", "Cash on delivery (COD)", "Card (Visa, Mastercard)"). The
+ * card's name is the one the user chose for Stripe's test mode (QĐ-46).
  */
 export function paymentTitle(method: PaymentMethod, locale: Locale = "vi"): string {
   return feedPayments(locale).find((p) => p.method === method)?.title ?? "";

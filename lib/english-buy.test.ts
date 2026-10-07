@@ -352,7 +352,8 @@ describe("the checkout's cards in English", () => {
         null,
       ],
       ["COD", `Cash on delivery${NBSP}(COD)`, "Check before you pay.", "+15,000₫"],
-      ["CARD", "Card (domestic, Visa)", "For now, paid by bank transfer.", null],
+      // The card pays on Stripe's page in test mode since slice B18 (QĐ-46, the user's words).
+      ["CARD", "Card (Visa, Mastercard)", "Pay on Stripe's page, test mode.", null],
     ]);
     expect(feedPayments("vi")).toBe(FEED_PAYMENTS);
   });
@@ -433,7 +434,8 @@ describe("the receipt in English", () => {
   it("says what happens next, or what happened", () => {
     expect(confirmNext(waiting(), "en")).toBe("Transfer within 12 hours to keep your items.");
     expect(confirmNext(order("COD", { state: "RECEIVED" }), "en")).toBe("The shop will call to confirm before delivery.");
-    expect(confirmNext(order("CARD", { state: "RECEIVED" }), "en")).toBe("For now, paid by bank transfer.");
+    // A card order left RECEIVED from before slice B7 no longer pays by transfer (slice B18): it waits for the shop.
+    expect(confirmNext(order("CARD", { state: "RECEIVED" }), "en")).toBe("Awaiting confirmation.");
     expect(confirmNext(order("BANK_TRANSFER", { state: "PAID", paidAt: DUE }), "en")).toBe("Paid.");
     expect(confirmNext(order("BANK_TRANSFER", { state: "SHIPPING", shippedAt: DUE, trackingCode: "VNP-1" }), "en")).toBe(
       "Shipping.",

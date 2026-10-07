@@ -7,7 +7,10 @@ import type { Locale } from "./i18n";
  * 7 Oct 2026."). Google's consent screen links to the page (QĐ-41), so the
  * day is a promise about the text: change it whenever the words change.
  *
- * 07/10/2026, the day the page went up to the demo (the main session). An
+ * 07/10/2026, the day the page went up to the demo (the main session), and
+ * the day of slice B18, whose three Stripe sentences the user approved — the
+ * same day, so the value stays (the main session moves it to the day B18 goes
+ * up, if that is a later one). An
  * instant at midnight in Vietnam, as every instant in this codebase carries
  * +07:00, so `lib/datetime.ts` reads the date off the text and no server's
  * zone moves it.

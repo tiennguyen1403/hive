@@ -161,6 +161,21 @@ export async function placeOrder(input: PlaceOrderInput, now: string): Promise<P
   return { code: answer.code as OrderCode, accessKey: answer.accessKey };
 }
 
+/**
+ * The order `placeOrder` has just placed, by the receipt it answered with —
+ * code and key, through `receipt_order()`, which anybody holding both may
+ * call — so the action that placed a card order can price its Stripe page
+ * from the database's own lines and fees (slice B18), signed in or not, in the
+ * same request that set the guest's cookie. Null when the database does not
+ * find it; a failed read throws.
+ */
+export async function loadPlacedOrder(receipt: PlacedReceipt): Promise<Order | null> {
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.rpc("receipt_order", { p_code: receipt.code, p_key: receipt.accessKey });
+  if (error) readFailed("receipt_order", error);
+  return data === null ? null : toOrder(data);
+}
+
 /** Call off one of the account's own unpaid orders. Refusals throw `OrderError`. */
 export async function cancelOrder(code: string, now: string): Promise<void> {
   const supabase = await getSupabase();

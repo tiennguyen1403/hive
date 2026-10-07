@@ -27,7 +27,8 @@ import { vnd } from "./money";
 import { isRealPhotoKey } from "./photos";
 import { productText } from "./product-text";
 import { TRANSFER_HOLD_HOURS, orderTotalVnd, paysByTransfer } from "./orders";
-import { STATE_LABEL, stateLabel } from "./order-labels";
+import { STATE_LABEL, orderStateLabel, stateLabel } from "./order-labels";
+import { lateCardPaymentText } from "./card-checkout";
 
 /**
  * "Nhật ký thao tác" — the back office's record, read out of the places the
@@ -120,8 +121,16 @@ export function logStamp(iso: string, locale: Locale = "vi"): string {
   return `${clockLabel(iso)} · ${dayMonth(iso, locale)}`;
 }
 
-/** What a state is called in a sentence: "chờ chuyển khoản"; in English "awaiting transfer". */
-function stateWord(state: OrderState, locale: Locale): string {
+/**
+ * What a state is called in a sentence: "chờ chuyển khoản"; in English
+ * "awaiting transfer". For a card order, when its way of paying is known, the
+ * waiting is "chờ trả thẻ" / "awaiting card payment" (slice B18,
+ * `orderStateLabel`).
+ */
+function stateWord(state: OrderState, locale: Locale, payment?: PaymentMethod): string {
+  if (state === "AWAITING_TRANSFER" && payment === "CARD") {
+    return orderStateLabel({ status: { state }, payment }, locale).text.toLocaleLowerCase(locale);
+  }
   if (locale === "vi") return STATE_LABEL[state].text.toLocaleLowerCase("vi");
   return stateLabel(state, locale).text.toLocaleLowerCase("en");
 }
@@ -239,20 +248,31 @@ export function logRows(
 /** The row id of an event: padded, so a later one sorts after an earlier one. */
 const eventId = (id: number) => `ev-${String(id).padStart(12, "0")}`;
 
+/**
+ * A hold that ran out. A card order's (slice B18) waited for a card payment,
+ * not a transfer, so its line says no payment came; the book tells which.
+ */
 function expiredRow(catalog: Catalog, book: Book, id: string, code: string, at: string, locale: Locale): LogRow {
   const t = picker(locale);
+  const payment = book.get(code)?.payment;
   return {
     id,
     at,
     kind: "order",
     author: "Hệ thống",
     action: t({ vi: "Huỷ đơn", en: "Order cancelled" }),
-    detail: t({
-      vi: `quá ${TRANSFER_HOLD_HOURS} giờ chưa chuyển khoản`,
-      en: `no transfer within ${plural(TRANSFER_HOLD_HOURS, "hour", "hours")}`,
-    }),
+    detail:
+      payment === "CARD"
+        ? t({
+            vi: `quá ${TRANSFER_HOLD_HOURS} giờ chưa thanh toán`,
+            en: `no payment within ${plural(TRANSFER_HOLD_HOURS, "hour", "hours")}`,
+          })
+        : t({
+            vi: `quá ${TRANSFER_HOLD_HOURS} giờ chưa chuyển khoản`,
+            en: `no transfer within ${plural(TRANSFER_HOLD_HOURS, "hour", "hours")}`,
+          }),
     ...orderSubject(book, code, locale),
-    before: stateWord("AWAITING_TRANSFER", locale),
+    before: stateWord("AWAITING_TRANSFER", locale, payment),
     after: stateWord("CANCELLED", locale),
     ...itemsTail(catalog, book, code, locale),
   };
@@ -354,7 +374,9 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
   const t = picker(locale);
   const id = eventId(e.id);
   const author = AUTHOR[e.actorRole];
-  const from = (s: OrderState | undefined) => (s ? { before: stateWord(s, locale) } : {});
+  // The state an order left, named by how the order is paid (a card order's waiting is its own, slice B18).
+  const from = (s: OrderState | undefined, code: string) =>
+    s ? { before: stateWord(s, locale, book.get(code)?.payment) } : {};
   const issueHref = (no: number) => `/admin/drops/${String(no).padStart(2, "0")}`;
 
   switch (e.kind) {
@@ -371,7 +393,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
         ...(payment ? { detail: t(PAYMENT_WORD[payment]) } : {}),
         ...orderSubject(book, e.code, locale),
         ...(payment
-          ? { after: stateWord(paysByTransfer(payment) ? "AWAITING_TRANSFER" : "RECEIVED", locale) }
+          ? { after: stateWord(paysByTransfer(payment) ? "AWAITING_TRANSFER" : "RECEIVED", locale, payment) }
           : {}),
         ...totalTail(book, e.code, locale),
       };
@@ -379,22 +401,29 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
     case "ORDER_PAID":
       // Only a transfer MATCHES, and only the system matches one: the
       // sample's history says so. A payment the manager confirms is a hand.
+      // Since slice B18 the system also records a card payment Stripe
+      // confirmed (`via: "STRIPE"`): that is no matched transfer, and says so.
       return {
         id,
         at: e.at,
         kind: "order",
         author,
-        ...(e.actorRole === "system"
+        ...(e.via === "STRIPE"
           ? {
-              action: t({ vi: "Khớp chuyển khoản", en: "Transfer matched" }),
-              detail: t({ vi: "tự động theo nội dung", en: "automatic, by reference" }),
+              action: t({ vi: "Trả bằng thẻ", en: "Paid by card" }),
+              detail: t({ vi: "qua Stripe", en: "via Stripe" }),
             }
-          : {
-              action: t({ vi: "Đã nhận tiền", en: "Marked as paid" }),
-              detail: t({ vi: "đánh dấu tay", en: "by hand" }),
-            }),
+          : e.actorRole === "system"
+            ? {
+                action: t({ vi: "Khớp chuyển khoản", en: "Transfer matched" }),
+                detail: t({ vi: "tự động theo nội dung", en: "automatic, by reference" }),
+              }
+            : {
+                action: t({ vi: "Đã nhận tiền", en: "Marked as paid" }),
+                detail: t({ vi: "đánh dấu tay", en: "by hand" }),
+              }),
         ...orderSubject(book, e.code, locale),
-        ...from(e.from),
+        ...from(e.from, e.code),
         after: stateWord("PAID", locale),
         ...totalTail(book, e.code, locale),
       };
@@ -406,7 +435,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
         author,
         action: t({ vi: "Bàn giao", en: "Handed over" }),
         ...orderSubject(book, e.code, locale),
-        ...from(e.from),
+        ...from(e.from, e.code),
         after: stateWord("SHIPPING", locale),
         tail: e.carrier ? phrase(carrierPiece(e.carrier, locale), ` · ${e.trackingCode}`) : e.trackingCode,
       };
@@ -434,7 +463,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
         action: t({ vi: "Huỷ đơn", en: "Order cancelled" }),
         detail: cancelReasonDetail(e.reason, locale),
         ...orderSubject(book, e.code, locale),
-        ...from(e.from),
+        ...from(e.from, e.code),
         after: stateWord("CANCELLED", locale),
         ...itemsTail(catalog, book, e.code, locale),
       };
@@ -447,7 +476,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
         action: t({ vi: "Huỷ đơn", en: "Order cancelled" }),
         detail: t({ vi: "khách huỷ", en: "cancelled by the customer" }),
         ...orderSubject(book, e.code, locale),
-        ...from(e.from),
+        ...from(e.from, e.code),
         after: stateWord("CANCELLED", locale),
         ...itemsTail(catalog, book, e.code, locale),
       };
@@ -461,7 +490,12 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
         author,
         action: t({ vi: "Ghi chú nội bộ", en: "Internal note" }),
         ...orderSubject(book, e.code, locale),
-        tail: quoted(e.text, locale),
+        // The system's own note about a late card payment (slice B18) is the
+        // app's sentence, in the page's language; a typed note is quoted as stored.
+        tail:
+          e.via === "STRIPE" && e.paymentIntent
+            ? lateCardPaymentText(e.paymentIntent, locale)
+            : quoted(e.text, locale),
       };
     case "ORDER_ADDRESS_EDITED":
       return {

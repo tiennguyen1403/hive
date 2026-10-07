@@ -77,7 +77,9 @@ const DAY = 86_400;
  * B4b §2.5, row for row, `keep` since slice B9 and `lookup` since B11. Where
  * each one is taken:
  *
- *   order_place   `placeOrderAction`, one per order
+ *   order_place   `placeOrderAction`, one per order; since slice B18 also
+ *                 `payByCard`, one per new Stripe page for a card order —
+ *                 the second half of placing one
  *   order_units   `placeOrderAction`, one per PIECE — the cost is the order's
  *                 total quantity, so a visitor cannot buy the shelf empty
  *   lookup        `lookupOrder` (`lib/db/order-lookup.ts`), one per lookup,

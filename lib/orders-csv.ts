@@ -4,7 +4,7 @@ import type { Catalog } from "./catalog";
 import type { CsvRow } from "./csv";
 import { clockLabel, dayMonth } from "./datetime";
 import { pick, type Locale, type Pair } from "./i18n";
-import { PAYMENT_LABEL, STATE_LABEL, adminPaymentLabel, stateLabel } from "./order-labels";
+import { adminPaymentDetail, orderStateLabel } from "./order-labels";
 import { orderTotalVnd } from "./orders";
 
 /**
@@ -20,6 +20,11 @@ import { orderTotalVnd } from "./orders";
  * transfer", "COD"), the date the English way, each style by `productText`;
  * the name and the phone number are printed as stored. Amounts go out as plain
  * numbers in both, so a spreadsheet can sum them (`lib/csv.ts`).
+ *
+ * Since slice B18 a card order Stripe has seen pays "Thẻ · Stripe", with
+ * Stripe's payment intent once paid (`adminPaymentDetail`), and one waiting
+ * for its money is "Chờ trả thẻ" (`orderStateLabel`); a sample card order
+ * keeps plain "Thẻ".
  */
 const HEADER: Readonly<Record<Locale, readonly string[]>> = {
   vi: ["Mã đơn", "Khách", "Điện thoại", "Thời gian", "Món", "Giá trị (VND)", "Thanh toán", "Trạng thái"],
@@ -44,8 +49,8 @@ export function ordersCsvRows(catalog: Catalog, list: readonly AdminOrder[], loc
       `${dayMonth(o.placedAt, locale)} ${clockLabel(o.placedAt)}`,
       orderItemsLabel(catalog, o, locale),
       orderTotalVnd(o),
-      locale === "vi" ? PAYMENT_LABEL[o.payment] : adminPaymentLabel(o.payment, locale),
-      locale === "vi" ? STATE_LABEL[o.status.state].text : stateLabel(o.status.state, locale).text,
+      adminPaymentDetail(o, locale),
+      orderStateLabel(o, locale).text,
     ]),
   ];
 }

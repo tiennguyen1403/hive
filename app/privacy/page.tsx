@@ -31,7 +31,10 @@ const RESET = dailyResetWindow();
  * main session's change of one dash on 07/10), in both languages. Every
  * sentence has to stay true on the demo: after slice B16
  * (Google) and B17 (the back office masks real people, real accounts go every
- * day); the page changes when Stripe comes, and `PRIVACY_UPDATED_AT` with it.
+ * day), and since slice B18 Stripe: the three places the user approved on
+ * 07/10/2026 — "Thanh toán thẻ" under "Demo lưu gì", Stripe beside Google in
+ * the third-party line, Stripe beside the servers — and `PRIVACY_UPDATED_AT`
+ * with them.
  *
  * The deletion window is the daily reset's hour, read from `lib/` like every
  * figure on a screen (DESIGN.md §9, rule 2): the Vietnamese sentence sets it
@@ -73,6 +76,13 @@ const PARTS: readonly { id: string; title: Pair; lines: readonly Line[] }[] = [
           en: "a hash of your IP address, kept for a few days.",
         },
       },
+      {
+        lead: { vi: "Thanh toán thẻ:", en: "Card payments:" },
+        text: {
+          vi: "chạy ở chế độ thử của Stripe, không bao giờ trừ tiền thật. Bạn nhập thẻ trên trang của Stripe; số thẻ không bao giờ tới HIVE. HIVE chỉ lưu mã giao dịch của Stripe.",
+          en: "run in Stripe's test mode and never charge real money. You enter the card on Stripe's page; the card number never reaches HIVE. HIVE keeps only Stripe's payment reference.",
+        },
+      },
     ],
   },
   {
@@ -95,8 +105,8 @@ const PARTS: readonly { id: string; title: Pair; lines: readonly Line[] }[] = [
       },
       {
         text: {
-          vi: "Không quảng cáo, không công cụ đo lường. Trang không tải gì từ bên thứ ba; chỉ khi đăng nhập bằng Google, trình duyệt mới chuyển qua Google.",
-          en: "No ads and no analytics. Pages load nothing from third parties; only signing in with Google takes your browser to Google.",
+          vi: "Không quảng cáo, không công cụ đo lường. Trang không tải gì từ bên thứ ba; trình duyệt chỉ chuyển qua Google khi bạn đăng nhập bằng Google, và qua Stripe khi bạn trả bằng thẻ.",
+          en: "No ads and no analytics. Pages load nothing from third parties; your browser goes to Google only when you sign in with Google, and to Stripe only when you pay by card.",
         },
       },
     ],
@@ -119,8 +129,8 @@ const PARTS: readonly { id: string; title: Pair; lines: readonly Line[] }[] = [
       },
       {
         text: {
-          vi: "Dữ liệu nằm ở Supabase và Vercel, máy chủ tại Singapore. Demo không gửi email, không bán và không chia sẻ dữ liệu.",
-          en: "Data is stored with Supabase and Vercel, on servers in Singapore. The demo sends no email and does not sell or share data.",
+          vi: "Dữ liệu nằm ở Supabase và Vercel, máy chủ tại Singapore; thanh toán thẻ do Stripe xử lý. Demo không gửi email, không bán và không chia sẻ dữ liệu.",
+          en: "Data is stored with Supabase and Vercel, on servers in Singapore; card payments are handled by Stripe. The demo sends no email and does not sell or share data.",
         },
       },
     ],

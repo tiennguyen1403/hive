@@ -290,6 +290,8 @@ export type Database = {
           shipped_at: string | null
           shipping_fee_vnd: number
           state: Database["public"]["Enums"]["order_state"]
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
           tracking_code: string | null
           ward_code: string
         }
@@ -319,6 +321,8 @@ export type Database = {
           shipped_at?: string | null
           shipping_fee_vnd: number
           state: Database["public"]["Enums"]["order_state"]
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
           tracking_code?: string | null
           ward_code: string
         }
@@ -348,6 +352,8 @@ export type Database = {
           shipped_at?: string | null
           shipping_fee_vnd?: number
           state?: Database["public"]["Enums"]["order_state"]
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
           tracking_code?: string | null
           ward_code?: string
         }
@@ -1342,6 +1348,21 @@ export type Database = {
         Args: { p_code: string; p_now: string }
         Returns: undefined
       }
+      card_checkout_opened: {
+        Args: { p_code: string; p_now: string; p_session_id: string }
+        Returns: undefined
+      }
+      card_mark_paid: {
+        Args: {
+          p_amount_vnd: number
+          p_code: string
+          p_now: string
+          p_payment_intent: string
+          p_session_id: string
+        }
+        Returns: string
+      }
+      card_session: { Args: { p_code: string }; Returns: string }
       catalog_last_sold: {
         Args: never
         Returns: {

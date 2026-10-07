@@ -6,8 +6,10 @@ import { useRef } from "react";
 import { useLocale } from "@/components/i18n/LocaleContext";
 import { useCatalog } from "@/components/shop/CatalogContext";
 import type { Order } from "@/data/types";
+import { paymentReturnText, type PaymentFlag } from "@/lib/card-checkout";
 import { pictureOf } from "@/lib/feed";
 import {
+  confirmHold,
   confirmLines,
   confirmNext,
   confirmRows,
@@ -27,6 +29,7 @@ import { FeedOkTitle } from "../FeedOkTitle";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNowMs } from "../now";
 import { cx } from "../useReveal";
+import { PayByCard } from "./PayByCard";
 
 interface OrderConfirmedViewProps {
   /**
@@ -39,6 +42,12 @@ interface OrderConfirmedViewProps {
   addressLine: string;
   /** The order is in the signed-in account's list, so "Xem đơn" can open it there. */
   inAccount: boolean;
+  /**
+   * Back without paying (slice B18): `cancelled` from Stripe's "←", `failed`
+   * when no Stripe page could be opened. Only for a card order still waiting;
+   * null otherwise.
+   */
+  payment?: PaymentFlag | null;
 }
 
 /**
@@ -47,13 +56,19 @@ interface OrderConfirmedViewProps {
  * placed (`lib/feed-order.ts`).
  *
  * · "Đã đặt hàng" with the check on its line, "Mã đơn", and what happens next.
- * · A transfer — a card order too, which pays by transfer while no gateway is
- *   connected (slice B7) — gets "Chuyển khoản": the amount and the memo, each
+ * · A transfer gets "Chuyển khoản": the amount and the memo, each
  *   to copy; the account row that says it is being prepared, and the QR's
  *   place, empty until there is a real bank account; then "Giữ hàng", the
  *   12-hour hold counting down to its deadline.
  * · COD gets its one line — the shop calls before delivery — and no block of
  *   its own (the user's call).
+ * · A card order waiting for its money (slice B18, QĐ-46) pays on Stripe's
+ *   page: no transfer block — nothing to copy, no bank account — but the same
+ *   "Giữ hàng" with "Trả bằng thẻ" under it (`PayByCard`), the page's one blue
+ *   button: "Tiếp tục mua" is outlined while the card payment is awaited.
+ *   Back from Stripe unpaid, "Chưa trả." under the next step (the hold below
+ *   prints the hour); when no page could be opened, a line says that instead
+ *   (`paymentReturnText`). Paid, it reads as any paid order.
  * · "Trạng thái", "Giao hàng", "Tóm tắt" as the order was priced, then
  *   "Tiếp tục mua" and "Xem đơn" — or "Tra cứu đơn" for an order that is not
  *   in the signed-in account.
@@ -61,7 +76,7 @@ interface OrderConfirmedViewProps {
  * In the page's language since round v6 slice E2 ("Order placed"): the
  * recipient and the address keep their Vietnamese, marked `lang="vi"`.
  */
-export function OrderConfirmedView({ order, addressLine, inAccount }: OrderConfirmedViewProps) {
+export function OrderConfirmedView({ order, addressLine, inAccount, payment = null }: OrderConfirmedViewProps) {
   const catalog = useCatalog();
   const locale = useLocale();
   const t = picker(locale);
@@ -70,6 +85,8 @@ export function OrderConfirmedView({ order, addressLine, inAccount }: OrderConfi
   const memo = useRef<HTMLElement>(null);
 
   const transfer = confirmTransfer(order, locale);
+  // A card order's hold, with the button to pay on Stripe's page (slice B18).
+  const cardHold = order.payment === "CARD" ? confirmHold(order, locale) : null;
   const steps = confirmSteps(order, locale);
   const lines = confirmLines(catalog, order, locale);
   const follow = followLink(order, inAccount, locale);
@@ -98,6 +115,17 @@ export function OrderConfirmedView({ order, addressLine, inAccount }: OrderConfi
           })}
         </p>
         <p className="ok-next">{confirmNext(order, locale)}</p>
+        {cardHold && payment === "cancelled" && (
+          <p className="hold-until" role="status">
+            {paymentReturnText("cancelled", locale)}
+          </p>
+        )}
+        {cardHold && payment === "failed" && (
+          <p className="err" role="alert">
+            <FeedIcon name="warning-circle" />
+            <span>{paymentReturnText("failed", locale)}</span>
+          </p>
+        )}
       </div>
 
       <div className="ok-grid">
@@ -169,6 +197,33 @@ export function OrderConfirmedView({ order, addressLine, inAccount }: OrderConfi
             </>
           )}
 
+          {cardHold && (
+            <section className="hold" aria-labelledby="h-hold">
+              <h2 className="sect-title" id="h-hold">
+                {t({ vi: "Giữ hàng", en: "Reserved" })}
+              </h2>
+              <p className="hold-cd">
+                <FeedClock until={cardHold.dueAt} now={now} tag="span" />
+              </p>
+              <p className="hold-until">
+                {t<React.ReactNode>({
+                  vi: (
+                    <>
+                      tới <b>{cardHold.until}</b>
+                    </>
+                  ),
+                  en: (
+                    <>
+                      until <b>{cardHold.until}</b>
+                    </>
+                  ),
+                })}
+              </p>
+              <p className="hold-note">{cardHold.note}</p>
+              <PayByCard code={order.code} className="hold-pay" />
+            </section>
+          )}
+
           <section className="track" aria-labelledby="h-track">
             <h2 className="sect-title" id="h-track">
               {t({ vi: "Trạng thái", en: "Status" })}
@@ -229,7 +284,9 @@ export function OrderConfirmedView({ order, addressLine, inAccount }: OrderConfi
             </div>
           </section>
           <div className="ok-acts">
-            <Link className="btn btn-blue" href="/">
+            {/* A card order still waiting has one blue button, "Trả bằng thẻ"; "Tiếp tục mua" steps back to the
+                outlined one beside "Xem đơn" (the user, 07/10). Every other receipt keeps it blue. */}
+            <Link className={cardHold ? "btn btn-line" : "btn btn-blue"} href="/">
               {t({ vi: "Tiếp tục mua", en: "Continue shopping" })}
             </Link>
             <Link className="btn btn-line" href={follow.href}>

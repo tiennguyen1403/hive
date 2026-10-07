@@ -219,8 +219,9 @@ describe("the order book's rows in English", () => {
     expect(orderNote(byCode("DH-2426"), NOW, "en")).toEqual({ text: "VNP-8842377", late: false });
     const cod: Order = { ...byCode("DH-2431"), payment: "COD", status: { state: "RECEIVED" } };
     expect(orderNote(cod, new Date("2026-09-20T09:00:00+07:00"), "en")).toEqual({ text: "not handed over", late: false });
+    // A card order waits for a card payment since slice B18, not a transfer.
     const card: Order = { ...byCode("DH-2431"), payment: "CARD", status: { state: "RECEIVED" } };
-    expect(orderNote(card, NOW, "en")).toEqual({ text: "awaiting transfer", late: false });
+    expect(orderNote(card, NOW, "en")).toEqual({ text: "awaiting card payment", late: false });
   });
 
   it("builds the overview's queue in English", () => {
@@ -233,8 +234,9 @@ describe("the order book's rows in English", () => {
     expect(late.standing).toBe(`Paid 20:41 ${D(17, "Sep")} · not handed over`);
     expect(late.due).toBe(`2${NB}days`);
     expect(late.late).toBe(true);
+    // A card order waiting for its money is Stripe's to confirm since slice B18: not in the shop's queue.
     const card: AdminOrder = { ...byCode("DH-2431"), payment: "CARD" };
-    expect(queueRows(FIXTURE_CATALOG, [card], NOW, "en")[0]!.standing).toBe("Awaiting transfer · card");
+    expect(queueRows(FIXTURE_CATALOG, [card], NOW, "en")).toEqual([]);
     const cod: AdminOrder = { ...byCode("DH-2431"), payment: "COD", status: { state: "RECEIVED" } };
     const codRow = queueRows(FIXTURE_CATALOG, [cod], new Date("2026-09-23T09:00:00+07:00"), "en")[0]!;
     expect(codRow.standing).toBe(`Order received 08:05 ${D(20, "Sep")} · COD, collect on delivery`);

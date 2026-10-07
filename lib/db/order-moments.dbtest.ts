@@ -198,7 +198,9 @@ describe("order_json(): every step's moment, under `moments`", () => {
   });
 
   it("keeps the payment's moment on an order on its way", async () => {
-    const { code } = await place("CARD", 2);
+    // A transfer, confirmed by hand: since slice B18 a card order's money is Stripe's to confirm and
+    // `admin_mark_paid()` refuses it (this test was written with a card order, which paid by transfer then).
+    const { code } = await place("BANK_TRANSFER", 2);
     const paid = minutesAgo(1);
     const shipped = minutesAgo(0);
     await markPaid(code, paid);

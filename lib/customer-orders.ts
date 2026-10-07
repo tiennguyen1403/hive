@@ -1,4 +1,4 @@
-import type { Order, OrderStatus } from "@/data/types";
+import type { Order, OrderStatus, PaymentMethod } from "@/data/types";
 import { demoNow } from "./clock";
 
 /**
@@ -23,9 +23,13 @@ import { demoNow } from "./clock";
  * exactly this reason, and the back office's own log says "Huỷ đơn / quá 12
  * giờ chưa chuyển khoản · Hệ thống").
  *
- * Since slice B7 a card order is such a transfer: no card gateway is
- * connected, so it pays by one and waits in the same state. Nothing here asks
- * how an order is paid, only what state it is in, so it is read the same way.
+ * Since slice B7 a card order waits in the same state with the same hold,
+ * and since slice B18 it pays on Stripe's page (QĐ-46): past its hold it is
+ * cancelled the same way, only the reason names what never came — "quá hạn
+ * thanh toán", a card payment, where a transfer's is "quá hạn chuyển khoản".
+ * `expire_and_lock()` writes the same two words when the sweep catches up
+ * (`20261007180000_card_checkout.sql`). An order read without its way of
+ * paying is read as a transfer, as before.
  *
  * The moment recorded is the DEADLINE, not "now": that is when the pieces
  * went back on the shelf, and it is the same number however long after the
@@ -39,6 +43,18 @@ import { demoNow } from "./clock";
 export const OVERDUE_REASON = "quá hạn chuyển khoản";
 
 /**
+ * Why a card order whose hold ran out is cancelled (slice B18): no card
+ * payment came. `customer-orders.test.ts` checks the migration spells it
+ * exactly this way.
+ */
+export const CARD_OVERDUE_REASON = "quá hạn thanh toán";
+
+/** The reason an order's hold ran out under, by how it was being paid. */
+export function overdueReason(payment?: PaymentMethod): string {
+  return payment === "CARD" ? CARD_OVERDUE_REASON : OVERDUE_REASON;
+}
+
+/**
  * Why an order the shopper called off themselves is cancelled — the words
  * `cancel_order()` writes into `cancel_reason`, which the screens read to
  * name the reason. Kept beside `OVERDUE_REASON` because the two are
@@ -47,10 +63,13 @@ export const OVERDUE_REASON = "quá hạn chuyển khoản";
  */
 export const CUSTOMER_CANCEL_REASON = "khách huỷ";
 
-export function effectiveStatus(o: Pick<Order, "status">, now: Date = demoNow()): OrderStatus {
+export function effectiveStatus(
+  o: Pick<Order, "status"> & Partial<Pick<Order, "payment">>,
+  now: Date = demoNow(),
+): OrderStatus {
   if (o.status.state !== "AWAITING_TRANSFER") return o.status;
   if (now.getTime() < Date.parse(o.status.dueAt)) return o.status;
-  return { state: "CANCELLED", cancelledAt: o.status.dueAt, reason: OVERDUE_REASON };
+  return { state: "CANCELLED", cancelledAt: o.status.dueAt, reason: overdueReason(o.payment) };
 }
 
 /** The same order, with the status the clock says it is in. */

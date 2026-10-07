@@ -40,7 +40,8 @@ export type StatusTone = "" | "ok" | "hot" | "warn" | "info" | "shut" | "flat";
 const STATE_TEXT: Record<OrderState, { text: Pair; tone: StatusTone }> = {
   AWAITING_TRANSFER: { text: { vi: "Chờ chuyển khoản", en: "Awaiting transfer" }, tone: "warn" },
   // Taken, and waiting for nothing but the shop — a COD order, or a card
-  // order from before slice B7 (a card pays by transfer since). "Đã
+  // order from before slice B7 (a card order waits in AWAITING_TRANSFER since,
+  // and pays on Stripe's page since B18). "Đã
   // nhận đơn" and not "Đã thanh toán": no money has moved, and `PAID` on that
   // row would be the screen inventing a payment. Until slice B2 only an order
   // kept in the browser could be in this state, so it had a map of its own
@@ -69,6 +70,41 @@ export const STATE_LABEL: Record<OrderState, { text: string; tone: StatusTone }>
   DELIVERED: stateLabel("DELIVERED"),
   CANCELLED: stateLabel("CANCELLED"),
 };
+
+/**
+ * A card order waiting in AWAITING_TRANSFER since slice B18 (QĐ-46): it waits
+ * for a card payment on Stripe's page, not a transfer, and says so. The state
+ * is the same one — the machine did not change — and so is the tone.
+ */
+const CARD_AWAITING_TEXT: Pair = { vi: "Chờ trả thẻ", en: "Awaiting card payment" };
+
+/**
+ * One ORDER's state, named for how it is being paid (slice B18): a card order
+ * waiting for its money is "Chờ trả thẻ", a transfer's "Chờ chuyển khoản" as
+ * before, every other state its own name (`stateLabel`). Every screen that
+ * prints the state of a particular order reads this; a label for the state
+ * alone — a tab, a filter — reads `stateLabel` or `stateTabLabel`.
+ */
+export function orderStateLabel(
+  o: { status: { state: OrderState }; payment: PaymentMethod },
+  locale: Locale = "vi",
+): { text: string; tone: StatusTone } {
+  if (o.status.state === "AWAITING_TRANSFER" && o.payment === "CARD") {
+    return { text: pick(CARD_AWAITING_TEXT, locale), tone: STATE_TEXT.AWAITING_TRANSFER.tone };
+  }
+  return stateLabel(o.status.state, locale);
+}
+
+/**
+ * The order book's tab for a state (slice B18): AWAITING_TRANSFER holds the
+ * transfers AND the card orders waiting for their money, so its tab is "Chờ
+ * thanh toán" / "Awaiting payment"; every other tab is the state's own name.
+ */
+const AWAITING_ANY_TEXT: Pair = { vi: "Chờ thanh toán", en: "Awaiting payment" };
+
+export function stateTabLabel(state: OrderState, locale: Locale = "vi"): string {
+  return state === "AWAITING_TRANSFER" ? pick(AWAITING_ANY_TEXT, locale) : stateLabel(state, locale).text;
+}
 
 const PAYMENT_TEXT: Record<PaymentMethod, Pair> = {
   BANK_TRANSFER: { vi: "Chuyển khoản", en: "Bank transfer" },
@@ -100,4 +136,36 @@ const ADMIN_PAYMENT_TEXT: Record<PaymentMethod, Pair> = {
 /** A way to pay, as the back office names it, in one language. */
 export function adminPaymentLabel(method: PaymentMethod, locale: Locale = "vi"): string {
   return pick(ADMIN_PAYMENT_TEXT[method], locale);
+}
+
+/**
+ * What the database knows about a card order's Stripe side (slice B18,
+ * `admin_orders()` v2): whether it ever opened a Stripe page, and Stripe's
+ * payment intent once it was paid there.
+ */
+export interface CardPaymentFacts {
+  checkout: boolean;
+  paymentIntent: string | null;
+}
+
+/**
+ * The way an order was paid, as one order's page and the CSV print it (slice
+ * B18): "Thẻ · Stripe" / "Card · Stripe" for a card order Stripe has seen, and
+ * then " · pi_…", Stripe's reference, once Stripe says it was paid — the
+ * reference a manager quotes to find the payment in Stripe's dashboard.
+ *
+ * Only on EVIDENCE: a card order with neither a Stripe page nor a payment
+ * intent — the sample's, all paid before any gateway existed — stays plain
+ * "Thẻ". Calling it Stripe's would be the screen inventing where the money
+ * came from (DESIGN.md §9 rule 1). Every other way to pay is its
+ * `adminPaymentLabel`.
+ */
+export function adminPaymentDetail(
+  o: { payment: PaymentMethod; card?: CardPaymentFacts | null },
+  locale: Locale = "vi",
+): string {
+  const label = adminPaymentLabel(o.payment, locale);
+  const card = o.payment === "CARD" ? o.card : null;
+  if (!card || (!card.checkout && !card.paymentIntent)) return label;
+  return card.paymentIntent ? `${label} · Stripe · ${card.paymentIntent}` : `${label} · Stripe`;
 }

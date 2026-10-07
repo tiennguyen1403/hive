@@ -2,7 +2,7 @@ import { colorLabel } from "@/data/colors";
 import type { Order, Product, Size } from "@/data/types";
 import type { Catalog } from "./catalog";
 import { clockDayLabel } from "./datetime";
-import { cancelReasonLabel } from "./feed-account";
+import { cancelReasonLabel, feedStateLabel } from "./feed-account";
 import { feedDelivery, feedDeliveryWindow, type FeedRow } from "./feed-checkout";
 import { pickAll, picker, plural, type Locale, type Pair } from "./i18n";
 import { trackHref } from "./lookup";
@@ -24,18 +24,20 @@ import { nameLang, productText } from "./product-text";
  * `confirmed.js` over one order the database placed. Pure; the screen is
  * `components/feed/order/OrderConfirmedView.tsx`.
  *
- * The mock shows the moment just after checkout: a transfer waiting (a card
- * too, which pays by transfer, `paysByTransfer`) or a COD order waiting for
- * the shop's call. A receipt can be reopened later, when the order has moved
- * on; the title "Đã đặt hàng" stays true, and the line under it and the
- * status follow the order instead of repeating a request that no longer
- * applies.
+ * The mock shows the moment just after checkout: a transfer waiting, or a COD
+ * order waiting for the shop's call. Since slice B18 a card order waits for a
+ * card payment on Stripe's page (QĐ-46): the same hold as a transfer, no
+ * transfer details, and a button to pay. A receipt can be reopened later,
+ * when the order has moved on; the title "Đã đặt hàng" stays true, and the
+ * line under it and the status follow the order instead of repeating a
+ * request that no longer applies.
  */
 
-/** Which of the mock's two screens: the transfer's (a card's too) or COD's. */
-export type ConfirmFlow = "transfer" | "cod";
+/** Which screen: the transfer's (the mock's), the card's (slice B18), or COD's (the mock's). */
+export type ConfirmFlow = "transfer" | "card" | "cod";
 
 export function confirmFlow(o: Pick<Order, "payment">): ConfirmFlow {
+  if (o.payment === "CARD") return "card";
   return paysByTransfer(o.payment) ? "transfer" : "cod";
 }
 
@@ -43,12 +45,17 @@ export function confirmFlow(o: Pick<Order, "payment">): ConfirmFlow {
  * The mock's four steps of each flow (`confirmed.js`: `STEPS`), in both
  * languages since round v6 slice E2 — the order states in the glossary's
  * words ("Awaiting transfer", "Shipping", "Delivered"); `CONFIRM_STEPS` is the
- * Vietnamese side.
+ * Vietnamese side. The card's (slice B18) waits on "Chờ trả thẻ", the name
+ * every screen gives a card order waiting for its money.
  */
 export const CONFIRM_STEPS_TEXT: Readonly<Record<ConfirmFlow, Pair<readonly string[]>>> = {
   transfer: {
     vi: ["Đã đặt", "Chờ chuyển khoản", "Đang giao", "Đã giao"],
     en: ["Placed", "Awaiting transfer", "Shipping", "Delivered"],
+  },
+  card: {
+    vi: ["Đã đặt", "Chờ trả thẻ", "Đang giao", "Đã giao"],
+    en: ["Placed", "Awaiting card payment", "Shipping", "Delivered"],
   },
   cod: {
     vi: ["Đã đặt", "Gọi xác nhận", "Đang giao", "Đã giao"],
@@ -98,10 +105,12 @@ const capitalise = (s: string) => (s ? s.charAt(0).toLocaleUpperCase("vi") + s.s
 
 /**
  * The one line under "Mã đơn": what happens next (`confirmed.js`: `NEXT`) —
- * transfer within the hold, or the shop's call before delivery. A card order
- * taken before slice B7 waits in RECEIVED and pays by transfer (the checkout's
- * words). Reopened later: the state in its own words, or, cancelled, why and
- * that the pieces went back (the Feed's order page, `order.js`).
+ * transfer within the hold, pay by card within it (slice B18), or the shop's
+ * call before delivery. A card order taken before slice B7 waits in RECEIVED
+ * for the shop, and says so in the account's own word for that state, "Chờ
+ * xác nhận" (it can no longer be paid by transfer, nor on Stripe's page).
+ * Reopened later: the state in its own words, or, cancelled, why and that the
+ * pieces went back (the Feed's order page, `order.js`).
  *
  * In English (round v6 slice E2) the reason a cancelled order gives is the
  * stored one translated by `cancelReasonLabel`, or as stored when it is not
@@ -111,14 +120,19 @@ export function confirmNext(o: Order, locale: Locale = "vi"): string {
   const t = picker(locale);
   switch (o.status.state) {
     case "AWAITING_TRANSFER":
-      return t({
-        vi: `Chuyển khoản trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng.`,
-        en: `Transfer within ${TRANSFER_HOLD_HOURS} hours to keep your items.`,
-      });
+      return o.payment === "CARD"
+        ? t({
+            vi: `Trả bằng thẻ trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng.`,
+            en: `Pay by card within ${TRANSFER_HOLD_HOURS} hours to keep your items.`,
+          })
+        : t({
+            vi: `Chuyển khoản trong ${TRANSFER_HOLD_HOURS} giờ để giữ hàng.`,
+            en: `Transfer within ${TRANSFER_HOLD_HOURS} hours to keep your items.`,
+          });
     case "RECEIVED":
       return o.payment === "COD"
         ? t({ vi: "Cửa hàng gọi xác nhận trước khi giao.", en: "The shop will call to confirm before delivery." })
-        : t({ vi: "Tạm thời trả bằng chuyển khoản.", en: "For now, paid by bank transfer." });
+        : `${feedStateLabel("RECEIVED", locale)}.`;
     case "PAID":
     case "SHIPPING":
     case "DELIVERED":
@@ -134,11 +148,8 @@ export function confirmNext(o: Order, locale: Locale = "vi"): string {
 /** "Hàng đã về kệ." in English: what follows a cancelled order's reason, here and on the lookup. */
 export const BACK_IN_STOCK_EN = "Items back in stock.";
 
-/** The transfer block and the hold, while the transfer is awaited. */
-export interface ConfirmTransfer {
-  amountVnd: number;
-  /** The bank memo: the order code without its dash ("DH1507"), `transferReference`. */
-  memo: string;
+/** The hold, while the money is awaited — a transfer's, or a card order's (slice B18). */
+export interface ConfirmHold {
   dueAt: string;
   /** "07:02 thứ Ba 22/09". */
   until: string;
@@ -146,20 +157,22 @@ export interface ConfirmTransfer {
   note: string;
 }
 
-/*
- * `confirmTransfer` and `confirmRows` take only the fields they read (round v4
- * slice 4a): the guest lookup (`/track`) prints the same hold, memo and totals
- * from an order that has no address, phone or owner (`LookedUpOrder`).
+/** The transfer block and the hold, while the transfer is awaited. */
+export interface ConfirmTransfer extends ConfirmHold {
+  amountVnd: number;
+  /** The bank memo: the order code without its dash ("DH1507"), `transferReference`. */
+  memo: string;
+}
+
+/**
+ * "Giữ hàng": when the hold ends and what happens then, for any order waiting
+ * for its money — a transfer, and since slice B18 a card order, which keeps
+ * the same twelve hours and is cancelled the same way.
  */
-export function confirmTransfer(
-  o: Pick<Order, "code" | "status" | "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd">,
-  locale: Locale = "vi",
-): ConfirmTransfer | null {
+export function confirmHold(o: Pick<Order, "status" | "lines">, locale: Locale = "vi"): ConfirmHold | null {
   if (o.status.state !== "AWAITING_TRANSFER") return null;
   const units = orderUnits(o);
   return {
-    amountVnd: orderTotalVnd(o),
-    memo: transferReference(o.code),
     dueAt: o.status.dueAt,
     until: clockDayLabel(o.status.dueAt, locale),
     note: picker(locale)({
@@ -167,6 +180,27 @@ export function confirmTransfer(
       en: `Then it's cancelled and ${plural(units, "item goes", "items go")} back in stock.`,
     }),
   };
+}
+
+/*
+ * `confirmTransfer` and `confirmRows` take only the fields they read (round v4
+ * slice 4a): the guest lookup (`/track`) prints the same hold, memo and totals
+ * from an order that has no address, phone or owner (`LookedUpOrder`).
+ *
+ * A card order has no transfer to make since slice B18 — it pays on Stripe's
+ * page — so it gets no transfer block: no amount to copy, no memo, no bank
+ * account. Its hold is `confirmHold`. An order read without its way of paying
+ * is read as a transfer, as before.
+ */
+export function confirmTransfer(
+  o: Pick<Order, "code" | "status" | "lines" | "shippingFeeVnd" | "codFeeVnd" | "discountVnd"> &
+    Partial<Pick<Order, "payment">>,
+  locale: Locale = "vi",
+): ConfirmTransfer | null {
+  if (o.payment === "CARD") return null;
+  const hold = confirmHold(o, locale);
+  if (!hold) return null;
+  return { amountVnd: orderTotalVnd(o), memo: transferReference(o.code), ...hold };
 }
 
 /**

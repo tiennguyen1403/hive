@@ -126,15 +126,29 @@ export interface FeedPayment {
   method: PaymentMethod;
   title: string;
   note: string;
+  /**
+   * A third line, the card's alone (slice B18): Stripe's test card number, as
+   * the sign-in screen prints the demo accounts. Absent on the other two.
+   */
+  hint?: string;
   /** "+15.000₫" on COD, nothing otherwise. */
   price: string | null;
 }
 
 /**
- * The three ways, in the mock's order. A card pays by transfer while no card
- * gateway is connected (slice B7, `paysByTransfer`); the transfer card above it
- * already states the hold, so the card's note keeps only what differs (the
- * mock's `PAY_NOTE`). "nhận (COD)" holds together, as at v3 slice 13.
+ * Stripe's test Visa card, "4242 4242 4242 4242"
+ * (https://docs.stripe.com/testing), its four groups held together by no-break
+ * spaces so the number never breaks across two lines.
+ */
+export const STRIPE_TEST_CARD = ["4242", "4242", "4242", "4242"].join(" ");
+
+/**
+ * The three ways, in the mock's order. A card pays on Stripe's page, in test
+ * mode, since slice B18 (QĐ-46): its three lines are the user's words
+ * (07/10/2026) — what it takes, where and in which mode it is paid, and the
+ * test card to pay with, as the sign-in screen prints the demo accounts (the
+ * same exception). The transfer card above it states the hold, which a card
+ * order keeps too. "nhận (COD)" holds together, as at v3 slice 13.
  */
 export const FEED_PAYMENTS: readonly FeedPayment[] = [
   {
@@ -144,14 +158,20 @@ export const FEED_PAYMENTS: readonly FeedPayment[] = [
     price: null,
   },
   { method: "COD", title: "Thanh toán khi nhận (COD)", note: "Kiểm hàng trước khi trả.", price: `+${vnd(COD_SURCHARGE_VND)}` },
-  { method: "CARD", title: "Thẻ (nội địa, Visa)", note: "Tạm thời trả bằng chuyển khoản.", price: null },
+  {
+    method: "CARD",
+    title: "Thẻ (Visa, Mastercard)",
+    note: "Trả trên trang Stripe, chế độ thử.",
+    hint: `Thẻ thử ${STRIPE_TEST_CARD}, hạn và CVC bất kỳ.`,
+    price: null,
+  },
 ];
 
 /**
  * The three ways in English (round v6 slice E2), by the glossary: "Bank
  * transfer", "Card", and on the checkout "Cash on delivery (COD)" in full,
  * "(COD)" held to the word before it by a no-break space as the Vietnamese
- * title holds it.
+ * title holds it. The card's three lines are the user's English (QĐ-46).
  */
 const FEED_PAYMENTS_EN: readonly FeedPayment[] = [
   {
@@ -166,7 +186,13 @@ const FEED_PAYMENTS_EN: readonly FeedPayment[] = [
     note: "Check before you pay.",
     price: `+${vnd(COD_SURCHARGE_VND, "en")}`,
   },
-  { method: "CARD", title: "Card (domestic, Visa)", note: "For now, paid by bank transfer.", price: null },
+  {
+    method: "CARD",
+    title: "Card (Visa, Mastercard)",
+    note: "Pay on Stripe's page, test mode.",
+    hint: `Test card ${STRIPE_TEST_CARD}, any expiry and CVC.`,
+    price: null,
+  },
 ];
 
 /** The payment cards in one language; `FEED_PAYMENTS` is the Vietnamese side. */

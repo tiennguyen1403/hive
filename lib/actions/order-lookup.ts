@@ -1,5 +1,6 @@
 "use server";
 
+import { awaitsCardPayment } from "@/lib/card-checkout";
 import { lookupOrder } from "@/lib/db/order-lookup";
 import { getActionLocale } from "@/lib/locale";
 import { lookupResultOf, lookupWords, readLookup, type LookupResult } from "@/lib/order-lookup";
@@ -43,6 +44,12 @@ import { lookupResultOf, lookupWords, readLookup, type LookupResult } from "@/li
  * Its sentences are in the request's language since round v6 slice E2
  * (`getActionLocale`: the `hive-lang` cookie, Vietnamese without a request),
  * the rate limit's included.
+ *
+ * Slice B18: an order found that is a card order still waiting for its money
+ * is checked against Stripe here, in the action — the lookup draws one order,
+ * and a shopper who paid and closed the tab must find it paid
+ * (`reconcileCardOrder`). Here and not in a render, for the reason above. The
+ * Stripe side is loaded only for such an order.
  */
 export async function lookupOrderAction(code: string, phone: string): Promise<LookupResult> {
   const locale = await getActionLocale();
@@ -50,7 +57,12 @@ export async function lookupOrderAction(code: string, phone: string): Promise<Lo
   if (!read.ok) return { ok: false, reason: "INVALID", errors: read.errors };
 
   try {
-    return lookupResultOf(await lookupOrder(read.input, locale), locale);
+    const answer = await lookupOrder(read.input, locale);
+    if (answer.ok && awaitsCardPayment(answer.order)) {
+      const { reconcileCardOrder } = await import("@/lib/db/card-payments");
+      return lookupResultOf({ ...answer, order: await reconcileCardOrder(answer.order) }, locale);
+    }
+    return lookupResultOf(answer, locale);
   } catch (error) {
     console.error("lookupOrderAction:", error instanceof Error ? error.message : error);
     return { ok: false, reason: "UNAVAILABLE", message: lookupWords(locale).unavailable };

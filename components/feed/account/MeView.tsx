@@ -21,7 +21,7 @@ import {
   type MeNow,
   type SavedStyle,
 } from "@/lib/feed-me";
-import { confirmTransfer } from "@/lib/feed-order";
+import { confirmHold } from "@/lib/feed-order";
 import { picker } from "@/lib/i18n";
 import type { Me } from "@/lib/me";
 import { vnd } from "@/lib/money";
@@ -217,21 +217,22 @@ const orderHref = (o: Order) => `/account/orders/${o.code}`;
 
 /**
  * The order that needs the shopper, on ink (`nowCard`): a transfer awaited —
- * a card order's too, since B7 — with its hold ticking, "Giữ hàng tới …", the
- * pieces and "Chuyển khoản" to the order's payment block; a COD order before
- * the shop's call with its state and the total. The code's link covers the
- * card; the button stands above it.
+ * or since slice B18 a card payment, on Stripe's page — with its hold
+ * ticking, "Giữ hàng tới …", the pieces and the way to pay ("Chuyển khoản",
+ * "Trả bằng thẻ") to the order's payment block; a COD order before the shop's
+ * call with its state and the total. The code's link covers the card; the
+ * button stands above it.
  */
 function NowCard({ order: o }: { order: Order }) {
   const nowMs = useNowMs();
   const locale = useLocale();
   const t = picker(locale);
-  const transfer = confirmTransfer(o, locale);
-  if (transfer) {
+  const hold = confirmHold(o, locale);
+  if (hold) {
     return (
       <article
         className="now on-dark"
-        aria-label={`${o.code}, ${feedStateLabel("AWAITING_TRANSFER", locale).toLocaleLowerCase(locale)}`}
+        aria-label={`${o.code}, ${feedStateLabel("AWAITING_TRANSFER", locale, o.payment).toLocaleLowerCase(locale)}`}
       >
         <div className="now-top">
           <p className="now-code disp">
@@ -240,7 +241,7 @@ function NowCard({ order: o }: { order: Order }) {
           <p className="now-total">{vnd(orderTotalVnd(o), locale)}</p>
         </div>
         <FeedClock
-          until={transfer.dueAt}
+          until={hold.dueAt}
           now={nowMs}
           tag="p"
           className="now-cd"
@@ -250,12 +251,12 @@ function NowCard({ order: o }: { order: Order }) {
           {t<React.ReactNode>({
             vi: (
               <>
-                Giữ hàng tới <b>{transfer.until}</b>
+                Giữ hàng tới <b>{hold.until}</b>
               </>
             ),
             en: (
               <>
-                Reserved until <b>{transfer.until}</b>
+                Reserved until <b>{hold.until}</b>
               </>
             ),
           })}
@@ -263,7 +264,9 @@ function NowCard({ order: o }: { order: Order }) {
         <div className="now-foot">
           <Pieces order={o} />
           <Link className="btn btn-light now-cta" href={`${orderHref(o)}#pay`}>
-            {t({ vi: "Chuyển khoản", en: "Bank transfer" })}
+            {o.payment === "CARD"
+              ? t({ vi: "Trả bằng thẻ", en: "Pay by card" })
+              : t({ vi: "Chuyển khoản", en: "Bank transfer" })}
           </Link>
         </div>
       </article>
@@ -275,7 +278,7 @@ function NowCard({ order: o }: { order: Order }) {
         <p className="now-code disp" id={`now-${o.code}`}>
           <Link href={orderHref(o)}>{o.code}</Link>
         </p>
-        <StatusChip state={o.status.state} />
+        <StatusChip state={o.status.state} payment={o.payment} />
       </div>
       <p className="now-when is-first">
         {t({ vi: "Cửa hàng gọi xác nhận trước khi giao", en: "The shop will call to confirm before delivery" })}

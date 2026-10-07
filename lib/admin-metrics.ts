@@ -47,10 +47,19 @@ const BOOKED = new Set<OrderState>(BOOKED_STATES);
  *
  * `RECEIVED` joined at slice B3a, when the back office started reading the
  * orders checkout places: a COD order the shop has taken is waiting to be
- * handed over, a card order to have its money confirmed by hand — both the
- * shop's move (`lib/admin-orders.ts#nextMove`).
+ * handed over — the shop's move (`lib/admin-orders.ts#nextMove`).
+ *
+ * A card order waiting for its money is NOT (slice B18): it waits on the
+ * shopper and on Stripe, which confirms the payment by itself, and the shop
+ * has no "Đã nhận tiền" to press for it (`nextMove`). It shows up here the
+ * moment Stripe says it is paid, as an order to hand over.
  */
 const ACTIONABLE: OrderState[] = ["AWAITING_TRANSFER", "RECEIVED", "PAID"];
+
+/** A card order still waiting for its money: Stripe's and the shopper's, not the shop's. */
+function waitsOnStripe(o: Pick<Order, "payment" | "status">): boolean {
+  return o.payment === "CARD" && (o.status.state === "AWAITING_TRANSFER" || o.status.state === "RECEIVED");
+}
 
 export interface DayPoint {
   /** `YYYY-MM-DD`, Vietnamese calendar day. */
@@ -146,7 +155,7 @@ export function averageOrderVnd(orders: Order[]): number {
  * nobody can act on anyway.
  */
 export function needsAction<T extends Order>(orders: T[]): T[] {
-  return orders.filter((o) => ACTIONABLE.includes(o.status.state));
+  return orders.filter((o) => ACTIONABLE.includes(o.status.state) && !waitsOnStripe(o));
 }
 
 /** Newest first, capped. Cancelled ones stay: an admin list is a ledger. */

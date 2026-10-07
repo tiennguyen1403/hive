@@ -219,11 +219,12 @@ describe("who did it", () => {
     expect(row.after).toBe("đã huỷ");
   });
 
-  it("files a card order placed as waiting for a transfer, and a COD order as taken (slice B7)", () => {
+  it("files a card order placed as waiting for a card payment, and a COD order as taken (slices B7, B18)", () => {
     const placedAs = (code: string) =>
       rowsOf(pressed({ actorRole: "customer", actor: "vy@example.test", kind: "ORDER_PLACED", code }))[0]!;
     const card = placedAs("DH-2428"); // paid by card in the sample
-    expect(card).toMatchObject({ action: "Đặt đơn", detail: "thẻ", after: "chờ chuyển khoản" });
+    // Since slice B18 a card order waits for a card payment on Stripe's page, not a transfer.
+    expect(card).toMatchObject({ action: "Đặt đơn", detail: "thẻ", after: "chờ trả thẻ" });
     const cod = placedAs("DH-2420");
     expect(cod).toMatchObject({ action: "Đặt đơn", detail: "COD", after: "đã nhận đơn" });
   });

@@ -3,10 +3,10 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { CUSTOMERS } from "@/data/customers";
 import type { PaymentMethod } from "@/data/types";
 import { demoNow } from "@/lib/clock";
-import { CUSTOMER_CANCEL_REASON, OVERDUE_REASON, effectiveStatus } from "@/lib/customer-orders";
+import { CARD_OVERDUE_REASON, CUSTOMER_CANCEL_REASON, effectiveStatus } from "@/lib/customer-orders";
 import { toVnIso } from "@/lib/datetime";
 import { DEMO_ADMIN } from "@/lib/demo-admin";
-import { TRANSFER_HOLD_HOURS, paysByTransfer } from "@/lib/orders";
+import { TRANSFER_HOLD_HOURS, orderTotalVnd, paysByTransfer } from "@/lib/orders";
 import { COD_SURCHARGE_VND } from "@/lib/shipping";
 import type { Database, Json } from "./database.types";
 import { toOrder } from "./order-dto";
@@ -22,15 +22,18 @@ import { toOrder } from "./order-dto";
  *     RECEIVED, no deadline, its handling fee;
  *   · the sweep (`expire_transfers()`, and the one at the top of every
  *     `place_order()`) lets a card order's hold go exactly as a transfer's —
- *     cancelled at its deadline, "quá hạn chuyển khoản", `ORDER_EXPIRED`, the
- *     pieces back on the shelf — and `effectiveStatus()` reads it cancelled
- *     before any sweep has run;
- *   · `admin_mark_paid()` confirms a card order inside its hold and refuses
- *     one past it; `admin_hand_over()` still refuses a card order nobody has
- *     paid for; the shopper may still call one off inside its hold;
- *   · a card order taken before this slice — RECEIVED, no deadline, on a
- *     database that had one when the migration ran — is still the shop's to
- *     confirm, and still cannot leave unpaid.
+ *     cancelled at its deadline, `ORDER_EXPIRED`, the pieces back on the shelf
+ *     — and `effectiveStatus()` reads it cancelled before any sweep has run.
+ *     Since slice B18 the reason is "quá hạn thanh toán": a card order pays on
+ *     Stripe's page, so what never came is a card payment;
+ *   · since slice B18 `admin_mark_paid()` refuses a card order, inside its
+ *     hold or past it — Stripe confirms card money (`card_mark_paid()`, see
+ *     `card-checkout.dbtest.ts`); `admin_hand_over()` still refuses a card
+ *     order nobody has paid for; the shopper may still call one off inside its
+ *     hold;
+ *   · a card order taken before slice B7 — RECEIVED, no deadline, on a
+ *     database that had one when the migration ran — still cannot leave
+ *     unpaid, is no longer confirmed by hand (B18), and may be cancelled.
  *
  * Instants the real clock cannot reach are named through the service role,
  * which `assert_now()` exempts on purpose; a signed-in caller acts on the
@@ -248,7 +251,8 @@ describe("the twelve-hour sweep lets a card order's hold go like a transfer's", 
 
     const row = await rowOf(code);
     expect(row.state).toBe("CANCELLED");
-    expect(row.cancel_reason).toBe(OVERDUE_REASON);
+    // Since slice B18 a card order waits for a card payment: its hold runs out as "quá hạn thanh toán".
+    expect(row.cancel_reason).toBe(CARD_OVERDUE_REASON);
     expect(Date.parse(row.cancelled_at!)).toBe(Date.parse(row.due_at!));
     const expired = (await eventsOf(code)).at(-1)!;
     expect(expired).toMatchObject({ kind: "ORDER_EXPIRED", actor_role: "system", actor: "" });
@@ -266,7 +270,7 @@ describe("the twelve-hour sweep lets a card order's hold go like a transfer's", 
     expect(effectiveStatus(order, new Date(DUE))).toEqual({
       state: "CANCELLED",
       cancelledAt: DUE,
-      reason: OVERDUE_REASON,
+      reason: CARD_OVERDUE_REASON, // slice B18: what never came is a card payment
     });
     // Nobody has swept: the row still says it is waiting.
     expect((await rowOf(placed.code)).state).toBe("AWAITING_TRANSFER");
@@ -317,21 +321,34 @@ describe("the shop confirms a card order's transfer, on the real clock", () => {
     await setOnHand("p-khoi", "black", "M", 50);
   });
 
-  it("admin_mark_paid(): AWAITING_TRANSFER → PAID inside the hold, and then it can be handed over", async () => {
-    const { code } = await placeAsGuest("CARD", now());
+  it("admin_mark_paid() refuses a card order inside its hold; Stripe's payment makes it PAID, and then it can be handed over", async () => {
+    const placed = await placeAsGuest("CARD", now());
+    const { code } = placed;
+    expect((await rowOf(code)).state).toBe("AWAITING_TRANSFER");
+
+    // Since slice B18 a card payment is Stripe's to confirm, never the shop's by hand.
+    const byHand = await manager.rpc("admin_mark_paid", { p_code: code, p_now: now() });
+    expect(byHand.error?.message).toBe("NOT_ALLOWED");
     expect((await rowOf(code)).state).toBe("AWAITING_TRANSFER");
 
     const at = now();
-    const paid = await manager.rpc("admin_mark_paid", { p_code: code, p_now: at });
+    const paid = await service.rpc("card_mark_paid", {
+      p_code: code,
+      p_session_id: "cs_test_b7card0001",
+      p_payment_intent: "pi_b7card0001",
+      p_amount_vnd: orderTotalVnd(await receipt(placed)),
+      p_now: at,
+    });
     expect(paid.error).toBeNull();
+    expect(paid.data).toBe("PAID");
     const row = await rowOf(code);
     expect(row.state).toBe("PAID");
     expect(Date.parse(row.paid_at!)).toBe(Date.parse(at));
     expect((await eventsOf(code)).at(-1)).toMatchObject({
       kind: "ORDER_PAID",
-      actor_role: "admin",
-      actor: DEMO_ADMIN.email,
-      payload: { from: "AWAITING_TRANSFER" },
+      actor_role: "system",
+      actor: "",
+      payload: { from: "AWAITING_TRANSFER", via: "STRIPE", paymentIntent: "pi_b7card0001" },
     });
 
     const shipped = await manager.rpc("admin_hand_over", {
@@ -396,7 +413,7 @@ describe("the shop confirms a card order's transfer, on the real clock", () => {
     });
   });
 
-  it("still takes a card order from before this slice: RECEIVED, confirmed by hand, never shipped unpaid", async () => {
+  it("still holds a card order from before this slice: RECEIVED, never shipped unpaid, never confirmed by hand (B18)", async () => {
     // What a database that had card orders when the migration ran still
     // holds: RECEIVED, no deadline. Made here by hand, through the service role.
     const { code } = await placeAsGuest("CARD", now());
@@ -415,12 +432,17 @@ describe("the shop confirms a card order's transfer, on the real clock", () => {
     });
     expect(refused.error?.message).toBe("NOT_ALLOWED");
 
+    // Since slice B18 no card payment is confirmed by hand; the shop may still cancel it.
     const paid = await manager.rpc("admin_mark_paid", { p_code: code, p_now: now() });
-    expect(paid.error).toBeNull();
-    expect((await rowOf(code)).state).toBe("PAID");
-    expect((await eventsOf(code)).at(-1)).toMatchObject({
-      kind: "ORDER_PAID",
-      payload: { from: "RECEIVED" },
+    expect(paid.error?.message).toBe("NOT_ALLOWED");
+    expect((await rowOf(code)).state).toBe("RECEIVED");
+    const cancelled = await manager.rpc("admin_cancel_order", {
+      p_code: code,
+      p_reason: "Khác",
+      p_note: "",
+      p_now: now(),
     });
+    expect(cancelled.error).toBeNull();
+    expect((await rowOf(code)).state).toBe("CANCELLED");
   });
 });

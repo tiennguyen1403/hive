@@ -33,7 +33,7 @@ import { codFeeRow } from "@/lib/feed-order";
 import { picker, plural, type Locale } from "@/lib/i18n";
 import { LEX, issueLabel, issueNo, lexicon, styleName } from "@/lib/lexicon";
 import { plainVnd, vnd } from "@/lib/money";
-import { adminPaymentLabel, stateLabel } from "@/lib/order-labels";
+import { adminPaymentDetail, adminPaymentLabel, orderStateLabel } from "@/lib/order-labels";
 import { addressEditReason, internalNotes } from "@/lib/order-notes";
 import { orderSubtotalVnd, orderTotalVnd, orderUnits, transferReference } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
@@ -151,7 +151,8 @@ export function ArcOrderScreen({
   }
 
   const owner = order.owner && isShopper(order.owner) ? order.owner : null;
-  const state = stateLabel(order.status.state, locale);
+  // A card order waiting for its money is "Chờ trả thẻ" (slice B18).
+  const state = orderStateLabel(order, locale);
   const issue = issueOf(catalog, order);
   const subtotal = orderSubtotalVnd(order);
   const codFee = codFeeRow(order, locale);
@@ -238,7 +239,7 @@ export function ArcOrderScreen({
             <p className={page.sub}>
               Đặt {clockLabel(order.placedAt)} · {dayMonth(order.placedAt)}
               {owner ? ` · ${owner.name} · ${formatPhone(order.shipTo.phone)}` : ""} ·{" "}
-              {adminPaymentLabel(order.payment)}
+              {adminPaymentDetail(order)}
               {/* An order of fixed styles only (slice B5) belongs to no issue. */}
               {issue !== undefined ? ` · ${LEX.t} ${issueNo(issue)}` : ""}
             </p>
@@ -254,7 +255,7 @@ export function ArcOrderScreen({
               ) : (
                 ""
               )}{" "}
-              · {adminPaymentLabel(order.payment, locale)}
+              · {adminPaymentDetail(order, locale)}
               {issue !== undefined ? ` · ${issueLabel(issue, locale)}` : ""}
             </p>
           )}
@@ -661,6 +662,28 @@ function NextStep({
   const confirmPaid = t({ vi: "Bước tiếp theo: xác nhận đã nhận tiền", en: "Next step: confirm the payment" });
   const packAndHand = t({ vi: "Bước tiếp theo: đóng gói và bàn giao", en: "Next step: pack and hand over" });
 
+  // A card order waiting for its money (slice B18): Stripe confirms it, so the
+  // block says what the shop is waiting for and draws no button — no "Đã nhận
+  // tiền" for a card (`nextMove`, `admin_mark_paid()`). The shop may still
+  // cancel it from "Thao tác khác".
+  if (order.status.state === "AWAITING_TRANSFER" && order.payment === "CARD") {
+    return (
+      <Block
+        title={t({ vi: "Bước tiếp theo: chờ khách trả thẻ", en: "Next step: wait for the card payment" })}
+        button={null}
+      >
+        {locale === "vi" ? (
+          <>
+            Hạn {dateTimeLabel(order.status.dueAt)} · {vnd(orderTotalVnd(order))} · qua Stripe
+          </>
+        ) : (
+          <>
+            Due {dateTimeLabel(order.status.dueAt, locale)} · {total} · via Stripe
+          </>
+        )}
+      </Block>
+    );
+  }
   if (order.status.state === "AWAITING_TRANSFER" && move === "MARK_PAID") {
     return (
       <Block title={confirmPaid} button={payButton}>
@@ -678,9 +701,10 @@ function NextStep({
     );
   }
   // Taken, nobody paid yet (slice B3a). A COD order leaves now and is paid at
-  // the door; a card order waits for the shop to confirm the money by hand,
-  // because no payment gateway is connected to confirm it.
+  // the door. A card order taken before slice B7 has no move left for the
+  // shop since slice B18 (its money is never confirmed by hand): no block.
   if (order.status.state === "RECEIVED") {
+    if (move === null) return null;
     const days = Math.floor((now.getTime() - Date.parse(order.placedAt)) / 86_400_000);
     if (locale === "vi") {
       return move === "HAND_OVER" ? (
@@ -767,7 +791,11 @@ function NextStep({
   return null;
 }
 
-/** The muted block: what to do next and its details, and the one button that does it. */
+/**
+ * The muted block: what to do next and its details, and the one button that
+ * does it — or none, when the next move is somebody else's (a card payment,
+ * slice B18).
+ */
 function Block({
   title,
   button,

@@ -142,10 +142,10 @@ export function orderNote(o: Order, now: Date, locale: Locale = "vi"): OrderNote
     // Taken and not yet paid for (slice B3a brought these to the back
     // office). A COD order waits to be handed over — its money comes at the
     // door, so its age counts from the order. A card order here was taken
-    // before slice B7, when card orders were RECEIVED; a card pays by
-    // transfer now, so it waits for one, like every card order.
+    // before slice B7, when card orders were RECEIVED; it waits for a card
+    // payment, as every card order does since slice B18.
     case "RECEIVED": {
-      if (o.payment !== "COD") return { text: t({ vi: "chờ chuyển khoản", en: "awaiting transfer" }), late: false };
+      if (o.payment !== "COD") return { text: t({ vi: "chờ trả thẻ", en: "awaiting card payment" }), late: false };
       const days = Math.floor((now.getTime() - Date.parse(o.placedAt)) / 86_400_000);
       return {
         text: notHandedOver(days, locale),
@@ -185,8 +185,9 @@ export interface QueueRow {
   late: boolean;
   /**
    * What the guard allows next (`lib/admin-orders.ts#nextMove`): a transfer
-   * or a card order has its money confirmed; a paid or COD order is handed
-   * over.
+   * has its money confirmed; a paid or COD order is handed over. A card order
+   * waiting for its money is not in the queue at all (slice B18,
+   * `needsAction`): Stripe confirms it.
    */
   action: "MARK_PAID" | "HAND_OVER";
   items: string;
@@ -215,12 +216,10 @@ export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date, loc
           code: o.code,
           customer,
           totalVnd: orderTotalVnd(o),
-          // A card order pays by transfer (slice B7) and waits like one; the
-          // row names the card, or it would pass for a plain transfer.
-          standing:
-            o.payment === "CARD"
-              ? t({ vi: "Chờ chuyển khoản · thẻ", en: "Awaiting transfer · card" })
-              : t({ vi: "Chờ chuyển khoản", en: "Awaiting transfer" }),
+          // Only a transfer reaches here: a card order waiting for its money
+          // is Stripe's to confirm since slice B18 and stays out of the queue
+          // (`needsAction`).
+          standing: t({ vi: "Chờ chuyển khoản", en: "Awaiting transfer" }),
           due: t({ vi: `hạn ${due}`, en: `due ${due}` }),
           late: note?.late ?? false,
           action: "MARK_PAID" as const,
@@ -238,9 +237,12 @@ export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date, loc
           code: o.code,
           customer,
           totalVnd: orderTotalVnd(o),
+          // A card order taken before slice B7 is no longer the shop's to
+          // confirm (slice B18), so a RECEIVED row here is COD's; anything
+          // else would be an order waiting for money nobody named.
           standing: cod
             ? t({ vi: `Đã nhận đơn ${at} · COD, thu khi giao`, en: `Order received ${at} · COD, collect on delivery` })
-            : t({ vi: `Đã nhận đơn ${at} · thẻ, chờ chuyển khoản`, en: `Order received ${at} · card, awaiting transfer` }),
+            : t({ vi: `Đã nhận đơn ${at} · chờ thanh toán`, en: `Order received ${at} · awaiting payment` }),
           due: cod && note?.late ? lateDays(o.placedAt) : null,
           late: cod ? (note?.late ?? false) : false,
           action: cod ? ("HAND_OVER" as const) : ("MARK_PAID" as const),

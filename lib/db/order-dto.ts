@@ -17,6 +17,7 @@ import {
 } from "@/data/types";
 import type { AdminOrder, OrderOwner } from "@/lib/admin-orders";
 import type { LookupFound, LookupMissed } from "@/lib/order-lookup";
+import type { CardPaymentFacts } from "@/lib/order-labels";
 
 /**
  * The border between `order_json()` and `data/types.ts`.
@@ -332,8 +333,26 @@ export function toAdminOrders(value: unknown): AdminOrder[] {
   return list(value, "admin orders").map((item, i) => {
     const source = record(item, `admin orders[${i}]`);
     const order = toOrder(source.order);
-    return { ...order, owner: toOwner(source.owner, `order ${order.code}.owner`) };
+    const card = toCardFacts(source.card, `order ${order.code}.card`);
+    return { ...order, owner: toOwner(source.owner, `order ${order.code}.owner`), ...(card ? { card } : {}) };
   });
+}
+
+/**
+ * A card order's Stripe side (slice B18, `admin_orders()` v2): whether it
+ * opened a Stripe page, and the payment intent once paid there. Null — and
+ * then left off the order — for every other order, and for a book read from a
+ * database without the B18 migration, which sends no `card` at all.
+ */
+function toCardFacts(value: unknown, path: string): CardPaymentFacts | null {
+  if (value === null || value === undefined) return null;
+  const source = record(value, path);
+  if (typeof source.checkout !== "boolean") fail(`${path}.checkout`, "must be a boolean");
+  const intent = source.paymentIntent;
+  if (intent !== null && intent !== undefined && (typeof intent !== "string" || intent === "")) {
+    fail(`${path}.paymentIntent`, "must be a non-empty string or null");
+  }
+  return { checkout: source.checkout as boolean, paymentIntent: typeof intent === "string" ? intent : null };
 }
 
 function toOwner(value: unknown, path: string): OrderOwner | null {

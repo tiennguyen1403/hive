@@ -96,9 +96,14 @@ export type OrderFailure = OrderErrorCode | "UNAVAILABLE";
  * many orders, or too many pieces, inside the window (`lib/rate-limit.ts`),
  * refused before `place_order()` ran. No key, no database text — only what
  * the UI renders.
+ *
+ * A card order that went through and found its Stripe page is not answered at
+ * all: the action redirects to Stripe (slice B18). One whose page could not be
+ * opened is answered `payment: "FAILED"` — the order is placed and kept, and
+ * its receipt says no page opened, beside the button to try again.
  */
 export type PlaceOrderResult =
-  | { ok: true; code: string }
+  | { ok: true; code: string; payment?: "FAILED" }
   | { ok: false; failure: OrderFailure | "INVALID" | "RATE_LIMITED"; message: string };
 
 /** What "Huỷ đơn" hands back. */

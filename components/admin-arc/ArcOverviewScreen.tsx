@@ -31,7 +31,7 @@ import { picker, plural, type Locale } from "@/lib/i18n";
 import { LOW_STOCK_AT, dropSummary } from "@/lib/inventory";
 import { LEX, issueLabel, issueNo, styleName } from "@/lib/lexicon";
 import { compactVnd, plainVnd, vnd } from "@/lib/money";
-import { stateLabel } from "@/lib/order-labels";
+import { orderStateLabel } from "@/lib/order-labels";
 import { orderTotalVnd } from "@/lib/orders";
 import { photoUrl } from "@/lib/photos";
 import { nameLang, productText } from "@/lib/product-text";
@@ -407,7 +407,7 @@ export function ArcOverviewScreen({
               </thead>
               <tbody>
                 {latest.map((o) => {
-                  const s = stateLabel(o.status.state, locale);
+                  const s = orderStateLabel(o, locale);
                   const { name, guest } = orderCustomerName(o);
                   return (
                     <tr key={o.code}>

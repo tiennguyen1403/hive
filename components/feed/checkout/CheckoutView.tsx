@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { unstable_rethrow, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useMe } from "@/components/account/MeContext";
 import { useCart } from "@/components/cart/CartContext";
@@ -14,6 +14,7 @@ import { colorLabel } from "@/data/colors";
 import type { Ward } from "@/data/regions";
 import type { DeliveryMethod, PaymentMethod, Promotion } from "@/data/types";
 import { placeOrderAction } from "@/lib/actions/orders";
+import { paymentFailedPath } from "@/lib/card-checkout";
 import { cartSubtotalVnd, hasBlockingIssue, resolveCart, type ResolvedLine } from "@/lib/cart";
 import type { CheckoutDraft } from "@/lib/checkout-form";
 import { demoNow } from "@/lib/clock";
@@ -36,6 +37,7 @@ import {
 import { picker, plural, type Locale } from "@/lib/i18n";
 import { isFixed } from "@/lib/inventory";
 import { vnd } from "@/lib/money";
+import type { PlaceOrderResult } from "@/lib/order-payload";
 import { MAX_NOTE_LENGTH, failureMovesCatalog } from "@/lib/order-rules";
 import { nameLang, productText } from "@/lib/product-text";
 import { appliedPromo } from "@/lib/promotions";
@@ -91,6 +93,23 @@ interface Held {
 
 const PAY_IC: Record<PaymentMethod, FeedIconName> = { BANK_TRANSFER: "bank", COD: "money", CARD: "credit-card" };
 
+/**
+ * Whether a Server Action call was rejected by Next's own signal — the redirect
+ * a card order answers with (slice B18) — rather than by a failure.
+ * `unstable_rethrow` throws exactly Next's signals back and returns for
+ * anything else (`node_modules/next/dist/docs/01-app/03-api-reference/
+ * 04-functions/unstable_rethrow.md`); Next ships its browser variant to the
+ * client (`next/dist/build/browser-variant-modules.js`).
+ */
+function isNextNavigation(error: unknown): boolean {
+  try {
+    unstable_rethrow(error);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 /** The control each field's error points at, for the focus after a press. */
 const CONTROL: Record<FeedField, string> = {
   name: "f-name",
@@ -137,7 +156,9 @@ function withPlace(text: string, name: string, locale: Locale): React.ReactNode 
  *   another province while on express moves the order to the standard service
  *   and says so.
  * · Thanh toán: transfer (the 12-hour hold), COD (its surcharge), card —
- *   which pays by transfer while no gateway is connected (slice B7).
+ *   paid on Stripe's page in test mode since slice B18, its third line the
+ *   test card's number. "Đặt hàng" with card goes on to Stripe: the action
+ *   answers with the redirect, and the basket empties as the browser leaves.
  * · Mã giảm giá and Tóm tắt; on a desktop both in a sticky column.
  *
  * Nothing is checked until the first press; from then on each field says
@@ -369,16 +390,29 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
     setHeld({ lines, subtotalVnd, blocked, promo, totals });
     startPlacing(async () => {
       // The refusal comes back in the request's language (`placeOrderAction`, `getActionLocale`).
-      const result = await placeOrderAction(payload);
+      let result: PlaceOrderResult;
+      try {
+        result = await placeOrderAction(payload);
+      } catch (error) {
+        // A card order that went through is answered with a redirect to Stripe's page (slice B18): Next makes it a
+        // full-page navigation itself and rejects this call with its redirect signal (`server-action-reducer.js`). The
+        // order exists, so the basket empties now, before the browser leaves; the signal goes on to Next.
+        if (isNextNavigation(error)) {
+          clear();
+          setHeld(null);
+        }
+        throw error;
+      }
       if (!result.ok) {
         setHeld(null);
         toast(feedSentence(result.message));
         if (result.failure !== "INVALID" && failureMovesCatalog(result.failure)) router.refresh();
         return;
       }
-      // The emptied basket and the receipt land together, in one transition (restated after the await).
+      // The emptied basket and the receipt land together, in one transition (restated after the await). A card order
+      // whose Stripe page could not be opened lands on its receipt with the line that says so, beside the button.
       startPlacing(() => {
-        const receipt = `/order-confirmed/${result.code}`;
+        const receipt = result.payment === "FAILED" ? paymentFailedPath(result.code) : `/order-confirmed/${result.code}`;
         clear();
         startWait(receipt);
         router.push(receipt);
@@ -572,6 +606,7 @@ export function CheckoutView({ provinces, prefill }: CheckoutViewProps) {
                 <span className="rcard-main">
                   <span className="rcard-title">{p.title}</span>
                   <span className="rcard-note">{p.note}</span>
+                  {p.hint && <span className="rcard-note">{p.hint}</span>}
                 </span>
                 {p.price && <span className="rcard-price">{p.price}</span>}
               </label>

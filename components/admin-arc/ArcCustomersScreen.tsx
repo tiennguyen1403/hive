@@ -28,7 +28,7 @@ import { dayMonth } from "@/lib/datetime";
 import { picker, plural, type Locale } from "@/lib/i18n";
 import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import { plainVnd } from "@/lib/money";
-import { stateLabel } from "@/lib/order-labels";
+import { orderStateLabel } from "@/lib/order-labels";
 import { formatPhone } from "@/lib/phone";
 import { Avatar } from "@/registry/components/avatar/avatar";
 import { Badge } from "@/registry/components/badge/badge";
@@ -388,7 +388,7 @@ function ContactCell({ customer }: { customer: AdminCustomer }) {
 /** "20/09 · DH-2431" with the state it is in under it, or nothing yet; "20 Sep · DH-2431" in English. */
 function LastOrderCell({ facts, locale }: { facts: CustomerFacts; locale: Locale }) {
   if (!facts.last) return <>—</>;
-  const s = stateLabel(facts.last.status.state, locale);
+  const s = orderStateLabel(facts.last, locale);
   return (
     <span className={book.stack}>
       <span className={`${book.nowrap} ${book.num}`}>

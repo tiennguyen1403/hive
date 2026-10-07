@@ -102,11 +102,25 @@ export interface DropWindow {
   closesAt: string;
 }
 
+/**
+ * A mark the server leaves on what Stripe confirmed (slice B18): absent on
+ * everything else, so an event written before B18 reads exactly as it did.
+ */
+export interface StripeMark {
+  via?: "STRIPE";
+  /** Stripe's payment intent, `pi_…`. */
+  paymentIntent?: string;
+}
+
 /** The events about an order — the kinds whose `code` is an order code. */
 export type OrderEvent =
   | (OrderEventBase & { kind: "ORDER_PLACED" })
-  /** `from`: the state it left — a transfer being waited on, or a card / COD order taken. */
-  | (OrderEventBase & { kind: "ORDER_PAID"; from?: OrderState })
+  /**
+   * `from`: the state it left — a transfer being waited on, or a card / COD
+   * order taken. `via` and `paymentIntent` since slice B18: a card payment
+   * Stripe confirmed (`card_mark_paid()`), and Stripe's reference for it.
+   */
+  | (OrderEventBase & { kind: "ORDER_PAID"; from?: OrderState } & StripeMark)
   | (OrderEventBase & {
       kind: "ORDER_SHIPPED";
       from?: OrderState;
@@ -118,7 +132,12 @@ export type OrderEvent =
   | (OrderEventBase & { kind: "ORDER_CANCELLED"; from?: OrderState; reason: string; note: string })
   | (OrderEventBase & { kind: "ORDER_CANCELLED_BY_CUSTOMER"; from?: OrderState })
   | (OrderEventBase & { kind: "ORDER_EXPIRED" })
-  | (OrderEventBase & { kind: "ORDER_NOTE"; text: string })
+  /**
+   * A note: typed by the shop, or since slice B18 written by the system with
+   * `via: "STRIPE"` when Stripe took a card payment for an order already
+   * cancelled — `paymentIntent` is the payment to refund by hand.
+   */
+  | (OrderEventBase & { kind: "ORDER_NOTE"; text: string } & StripeMark)
   | (OrderEventBase & { kind: "ORDER_ADDRESS_EDITED"; before: ShipTo; after: ShipTo; reason: string });
 
 /** The events about the catalogue (slice B3b), each naming what it is about. */
@@ -272,6 +291,24 @@ function textOrEmpty(source: Record<string, unknown>, key: string, path: string)
 }
 
 /** `from`, when the writer recorded one. */
+/**
+ * `via` and `paymentIntent` (slice B18), when the payload has them: `via` is
+ * `"STRIPE"` or absent, the reference a non-empty string or absent. Anything
+ * else is a payload this app did not write.
+ */
+function stripeMark(source: Record<string, unknown>, path: string): StripeMark {
+  const via = source.via;
+  const intent = source.paymentIntent;
+  if (via !== undefined && via !== null && via !== "STRIPE") return fail(`${path}.via`, 'must be "STRIPE" or absent');
+  if (intent !== undefined && intent !== null && (typeof intent !== "string" || intent === "")) {
+    return fail(`${path}.paymentIntent`, "must be a non-empty string or absent");
+  }
+  return {
+    ...(via === "STRIPE" ? { via } : {}),
+    ...(typeof intent === "string" ? { paymentIntent: intent } : {}),
+  };
+}
+
 function fromState(source: Record<string, unknown>, path: string): { from?: OrderState } {
   const value = source.from;
   if (value === undefined || value === null) return {};
@@ -565,7 +602,7 @@ export function toEvent(row: EventRow): AdminEvent {
     case "ORDER_PLACED":
       return { ...order, kind: row.kind };
     case "ORDER_PAID":
-      return { ...order, kind: row.kind, ...fromState(payload, at) };
+      return { ...order, kind: row.kind, ...fromState(payload, at), ...stripeMark(payload, at) };
     case "ORDER_SHIPPED": {
       const carrier = textOrEmpty(payload, "carrier", at);
       return {
@@ -591,7 +628,7 @@ export function toEvent(row: EventRow): AdminEvent {
     case "ORDER_EXPIRED":
       return { ...order, kind: row.kind };
     case "ORDER_NOTE":
-      return { ...order, kind: row.kind, text: text(payload, "text", at) };
+      return { ...order, kind: row.kind, text: text(payload, "text", at), ...stripeMark(payload, at) };
     case "ORDER_ADDRESS_EDITED":
       return {
         ...order,

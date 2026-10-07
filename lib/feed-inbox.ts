@@ -114,12 +114,12 @@ interface Draft {
 const NO_BODY: Pair = { vi: "", en: "" };
 
 /** An order as the inbox reads it: its status as the clock says (`effectiveOrder`), and the moments it recorded. */
-export type InboxOrder = Pick<Order, "code" | "status" | "placedAt" | "moments">;
+export type InboxOrder = Pick<Order, "code" | "status" | "placedAt" | "moments"> & Partial<Pick<Order, "payment">>;
 
 /**
  * An order's rows, one per step it has passed that has a moment of its own:
- * waiting for a transfer (a card order too, which pays by transfer) while it
- * waits, then the money received, the parcel handed over, the parcel
+ * waiting for a transfer (a card order for a card payment, since slice B18)
+ * while it waits, then the money received, the parcel handed over, the parcel
  * delivered. COD pays at the door, so it has no "Đã nhận tiền"; a parcel
  * already delivered no longer carries its waybill, so its "đang giao" has no
  * line under it. In English "DH-2430 awaiting transfer" · "Due 07:02, Tuesday
@@ -135,7 +135,11 @@ function orderRows(o: InboxOrder): Draft[] {
     rows.push({
       kind: "order",
       at: o.placedAt,
-      title: { vi: `${o.code} chờ chuyển khoản`, en: `${o.code} awaiting transfer` },
+      // A card order waits for a card payment on Stripe's page since slice B18.
+      title:
+        o.payment === "CARD"
+          ? { vi: `${o.code} chờ trả thẻ`, en: `${o.code} awaiting card payment` }
+          : { vi: `${o.code} chờ chuyển khoản`, en: `${o.code} awaiting transfer` },
       body: { vi: `Hạn ${clockDayLabel(s.dueAt)}`, en: `Due ${clockDayLabel(s.dueAt, "en")}` },
       href,
     });

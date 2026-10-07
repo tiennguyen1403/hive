@@ -78,16 +78,16 @@ export function promoDiscountVnd(
 export const TRANSFER_HOLD_HOURS = 12;
 
 /**
- * Whether an order is paid by bank transfer — and so waits in
- * AWAITING_TRANSFER, holding its pieces for `TRANSFER_HOLD_HOURS`, and
- * cancels itself when the hold runs out.
+ * Whether an order waits in AWAITING_TRANSFER, holding its pieces for
+ * `TRANSFER_HOLD_HOURS`, and cancels itself when the hold runs out — the
+ * name is the Feed mock's (`HIVE.paysByTransfer`) and the state's.
  *
- * A transfer, and since slice B7 a card order too: no card gateway is
- * connected, so a shopper who picks card pays by transfer (user, 27/09; the
- * Feed mock's `HIVE.paysByTransfer`). COD is the one method that is not —
- * it is paid at the door, so nothing is held for it. `place_order()` names
- * the same two methods (`lib/orders.test.ts` pins that the SQL and this
- * agree).
+ * A transfer, and since slice B7 a card order too: from B7 to B18 a card
+ * order paid by transfer (user, 27/09); since slice B18 it pays on Stripe's
+ * page, in test mode (QĐ-46), and keeps the same state and the same hold
+ * while it waits. COD is the one method that is not — it is paid at the door,
+ * so nothing is held for it. `place_order()` names the same two methods
+ * (`lib/orders.test.ts` pins that the SQL and this agree).
  */
 export function paysByTransfer(payment: PaymentMethod): boolean {
   return payment === "BANK_TRANSFER" || payment === "CARD";

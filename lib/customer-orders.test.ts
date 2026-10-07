@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  CARD_OVERDUE_REASON,
   CUSTOMER_CANCEL_REASON,
   OVERDUE_REASON,
   effectiveOrder,
@@ -69,14 +70,15 @@ describe("effectiveStatus — the status is read off the clock", () => {
     expect(waiting.status.state).toBe("AWAITING_TRANSFER");
   });
 
-  it("holds a card order exactly like a transfer: it pays by one (slice B7)", () => {
+  it("holds a card order exactly like a transfer, and lets it go for want of a card payment (slices B7, B18)", () => {
     const card: Order = { ...waiting, payment: "CARD" };
     expect(effectiveStatus(card, new Date("2026-09-21T19:49:00+07:00"))).toBe(card.status);
     const late = effectiveStatus(card, new Date("2026-09-22T10:00:00+07:00"));
+    // Since slice B18 a card order pays on Stripe's page: past its hold, no card payment came.
     expect(late).toEqual({
       state: "CANCELLED",
       cancelledAt: "2026-09-21T19:50:00+07:00",
-      reason: OVERDUE_REASON,
+      reason: CARD_OVERDUE_REASON,
     });
   });
 });

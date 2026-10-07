@@ -44,10 +44,10 @@ function order(payment: PaymentMethod, status: OrderStatus, extra: Partial<Order
 
 const waiting = (p: PaymentMethod = "BANK_TRANSFER") => order(p, { state: "AWAITING_TRANSFER", dueAt: DUE });
 
-describe("the flow: the transfer's screen, a card's too, or COD's", () => {
-  it("pays a card by transfer (slice B7)", () => {
+describe("the flow: the transfer's screen, a card's, or COD's", () => {
+  it("pays a card on Stripe's page, its own flow (slice B18; by transfer from B7)", () => {
     expect(confirmFlow({ payment: "BANK_TRANSFER" })).toBe("transfer");
-    expect(confirmFlow({ payment: "CARD" })).toBe("transfer");
+    expect(confirmFlow({ payment: "CARD" })).toBe("card");
     expect(confirmFlow({ payment: "COD" })).toBe("cod");
   });
 });
@@ -55,7 +55,8 @@ describe("the flow: the transfer's screen, a card's too, or COD's", () => {
 describe("the line under the code, and the status (confirmed.js NEXT, STEPS)", () => {
   it("asks for the transfer within the hold, the second step lit", () => {
     expect(confirmNext(waiting())).toBe("Chuyển khoản trong 12 giờ để giữ hàng.");
-    expect(confirmNext(waiting("CARD"))).toBe("Chuyển khoản trong 12 giờ để giữ hàng.");
+    // A card order pays on Stripe's page since slice B18, within the same hold.
+    expect(confirmNext(waiting("CARD"))).toBe("Trả bằng thẻ trong 12 giờ để giữ hàng.");
     expect(confirmSteps(waiting())).toEqual([
       { label: "Đã đặt", state: "done" },
       { label: "Chờ chuyển khoản", state: "now" },
@@ -76,8 +77,8 @@ describe("the line under the code, and the status (confirmed.js NEXT, STEPS)", (
     expect(confirmTransfer(cod)).toBeNull();
   });
 
-  it("says a card order taken before slice B7 pays by transfer", () => {
-    expect(confirmNext(order("CARD", { state: "RECEIVED" }))).toBe("Tạm thời trả bằng chuyển khoản.");
+  it("says a card order taken before slice B7 waits for the shop: no transfer since slice B18", () => {
+    expect(confirmNext(order("CARD", { state: "RECEIVED" }))).toBe("Chờ xác nhận.");
   });
 
   it("follows an order reopened after it moved on, and asks for nothing that no longer applies", () => {

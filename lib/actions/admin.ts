@@ -20,6 +20,7 @@ import { normalisePhone } from "@/lib/checkout-form";
 import { demoNow } from "@/lib/clock";
 import { toVnIso } from "@/lib/datetime";
 import type { Json } from "@/lib/db/database.types";
+import { toOrder } from "@/lib/db/order-dto";
 import { purgeUploadedPhotos } from "@/lib/db/photos";
 import { takeRate, tidyRateHits } from "@/lib/db/rate-limit";
 import { getSupabase } from "@/lib/db/server";
@@ -259,7 +260,30 @@ export async function cancelOrderAdmin(
   if (failure) return refused("CANCEL", failure, code, locale);
 
   revalidatePath("/", "layout");
+  await closeCardPageAfterCancel(code);
   return done(adminDoneMessage("CANCEL", code, locale, { reason: why }));
+}
+
+/**
+ * Slice B18: once the database has cancelled an order, a card order's Stripe
+ * page stops taking money (`closeCardCheckout`, `lib/db/card-payments.ts`). The
+ * order is read back with the manager's own client (`order_json()`, which the
+ * admin read policy opens), and the Stripe half is loaded for a card order
+ * only. Best effort: anything that fails is logged, and the cancellation and
+ * its toast stand.
+ */
+async function closeCardPageAfterCancel(code: string): Promise<void> {
+  try {
+    const supabase = await getSupabase();
+    const { data, error } = await supabase.rpc("order_json", { p_code: code });
+    if (error || !data) return;
+    const order = toOrder(data);
+    if (order.payment !== "CARD") return;
+    const { closeCardCheckout } = await import("@/lib/db/card-payments");
+    await closeCardCheckout(order);
+  } catch (error) {
+    console.error("cancelOrderAdmin (card page):", error instanceof Error ? error.message : error);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────── the notes

@@ -122,6 +122,7 @@ export function helpGroups(next: HelpNext | null, locale: Locale = "vi"): HelpGr
   const t = picker(locale);
   const transfer = payment("BANK_TRANSFER", locale);
   const cod = payment("COD", locale);
+  const card = payment("CARD", locale);
   const standard = feedDelivery("STANDARD", locale);
   const express = feedDelivery("EXPRESS", locale);
   const [leadFrom, leadTo] = deliveryOption("STANDARD").leadDays;
@@ -170,14 +171,15 @@ export function helpGroups(next: HelpNext | null, locale: Locale = "vi"): HelpGr
         },
         {
           q: t({ vi: "Huỷ đơn thế nào?", en: "How do I cancel an order?" }),
+          // A card order cancels and runs out of its hold as a transfer does since slice B18; the user's words, 07/10.
           a: [
             t({
               vi:
-                "Ở trang đơn: đơn chuyển khoản huỷ được tới khi trả tiền, đơn COD tới khi cửa hàng gọi xác nhận. " +
-                "Đơn chuyển khoản hết hạn giữ hàng mà chưa trả thì tự huỷ.",
+                "Ở trang đơn: đơn chuyển khoản hoặc thẻ huỷ được tới khi trả tiền, đơn COD tới khi cửa hàng gọi xác nhận. " +
+                "Đơn chuyển khoản hoặc thẻ hết hạn giữ hàng mà chưa trả thì tự huỷ.",
               en:
-                "On the order page: a bank transfer order can be cancelled until it's paid, a COD order until the shop " +
-                "calls to confirm. An unpaid bank transfer order cancels itself when its reservation runs out.",
+                "On the order page: a bank transfer or card order can be cancelled until it's paid, a COD order until the " +
+                "shop calls to confirm. An unpaid bank transfer or card order cancels itself when its reservation runs out.",
             }),
           ],
         },
@@ -218,11 +220,13 @@ export function helpGroups(next: HelpNext | null, locale: Locale = "vi"): HelpGr
           }),
         },
         {
+          // Since slice B18 a card pays on Stripe's page, in test mode (QĐ-46): the checkout card's own note, and the
+          // hold, which a card order keeps as a transfer does.
           q: t({ vi: "Trả bằng thẻ được chưa?", en: "Can I pay by card yet?" }),
           a: [
             t({
-              vi: "Cổng thẻ đang chuẩn bị. Đơn chọn thẻ trả bằng chuyển khoản, cùng hạn giữ hàng.",
-              en: "Card payment is coming soon. Card orders are paid by bank transfer, with the same reservation time.",
+              vi: `Được. ${card.note} Đơn chọn thẻ có cùng hạn giữ hàng với chuyển khoản.`,
+              en: `Yes. ${card.note} Card orders have the same reservation time as bank transfers.`,
             }),
           ],
         },

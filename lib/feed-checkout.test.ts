@@ -51,11 +51,12 @@ describe("the delivery cards (checkout.js deliveryCards)", () => {
 });
 
 describe("the payment cards", () => {
-  it("are the mock's three, the card paying by transfer, COD with its surcharge", () => {
+  it("are the mock's three, the card paying on Stripe's page, COD with its surcharge", () => {
     expect(FEED_PAYMENTS.map((p) => [p.method, p.title, p.note, p.price])).toEqual([
       ["BANK_TRANSFER", "Chuyển khoản", "Giữ hàng 12 giờ kể từ khi đặt. Nội dung chuyển khoản hiện ở màn xác nhận.", null],
       ["COD", "Thanh toán khi nhận (COD)", "Kiểm hàng trước khi trả.", "+15.000₫"],
-      ["CARD", "Thẻ (nội địa, Visa)", "Tạm thời trả bằng chuyển khoản.", null],
+      // Since slice B18, in the user's words (QĐ-46).
+      ["CARD", "Thẻ (Visa, Mastercard)", "Trả trên trang Stripe, chế độ thử.", null],
     ]);
   });
 });

@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { FeedFrame } from "@/components/feed/FeedFrame";
 import { OrderConfirmedView } from "@/components/feed/order/OrderConfirmedView";
 import { feedAddressLine } from "@/data/regions";
+import { awaitsCardPayment, readPaymentReturn } from "@/lib/card-checkout";
 import { demoNowMs } from "@/lib/clock";
 import { effectiveOrder } from "@/lib/customer-orders";
+import { reconcileCardOrder } from "@/lib/db/card-payments";
 import { findMyOrder, loadReceipt } from "@/lib/db/orders";
 import { picker } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
@@ -47,16 +49,34 @@ export async function generateMetadata(): Promise<Metadata> {
  * transfer whose hold ran out reads as cancelled on first paint — and the
  * page and the frame draw from that same instant; the address line is built
  * here because the commune list stays on the server.
+ *
+ * WHERE STRIPE SENDS THE SHOPPER BACK (slice B18): `?session_id=cs_test_…`
+ * after paying, `?payment=cancelled` from Stripe's "←", and
+ * `?payment=failed` when no Stripe page could be opened. A card order still
+ * waiting is checked against Stripe before anything is drawn — always the
+ * session this order stored, never an id from the URL that is not it
+ * (`reconcileCardOrder`: order numbers come round again after every reset) —
+ * and drawn PAID when Stripe says so. Back with its own session to an order
+ * already cancelled (the hold ran out while the shopper paid), Stripe is asked
+ * too, and the shop gets its note to refund by hand. That is a write while the
+ * page renders, which the guide warns
+ * against ("Mutations … should never be a side-effect",
+ * `02-guides/data-security.md`); the brief asks for it on every page of one
+ * order because there is no webhook (QĐ-46), and it only records what Stripe
+ * already says, as often as it is asked (`card_mark_paid()` is idempotent).
+ * No cookie is set and nothing is revalidated here. The flag only adds its
+ * line to an order still waiting by card.
  */
 export default async function OrderReceiptPage(props: PageProps<"/order-confirmed/[code]">) {
-  const { code } = await props.params;
+  const [{ code }, sp] = await Promise.all([props.params, props.searchParams]);
 
   const found = await loadReceipt(code);
   if (!found) notFound();
 
+  const back = readPaymentReturn(sp);
   const [mine, locale] = await Promise.all([findMyOrder(code), getLocale()]);
   const now = demoNowMs();
-  const order = effectiveOrder(found, new Date(now));
+  const order = await reconcileCardOrder(effectiveOrder(found, new Date(now)), back.sessionId);
   const t = picker(locale);
 
   return (
@@ -67,7 +87,12 @@ export default async function OrderReceiptPage(props: PageProps<"/order-confirme
       now={now}
       mbar={{ back: "/", label: t({ vi: "Đóng, về trang chủ", en: "Close, back to home" }), close: true, hard: true }}
     >
-      <OrderConfirmedView order={order} addressLine={feedAddressLine(order.shipTo)} inAccount={mine !== null} />
+      <OrderConfirmedView
+        order={order}
+        addressLine={feedAddressLine(order.shipTo)}
+        inAccount={mine !== null}
+        payment={awaitsCardPayment(order) ? back.flag : null}
+      />
     </FeedFrame>
   );
 }

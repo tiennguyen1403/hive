@@ -313,6 +313,9 @@ html[data-pointer] [data-ui="feed"] .rcard:has(input:focus) { outline: none; }
 [data-ui="feed"] .hold-until { margin-top: 6px; font-size: 14px; color: var(--f-ink2); }
 [data-ui="feed"] .hold-until b { color: var(--f-ink); font-weight: 650; }
 [data-ui="feed"] .hold-note { margin-top: 10px; font-size: 14px; font-weight: 560; }
+/* Slice B18: "Trả bằng thẻ" under a card order's hold, set off from the note as the order page's
+   `.od-act .btn` is; the line under it when no page opened is the form's `.err`. */
+[data-ui="feed"] .hold-pay { margin-top: 18px; }
 [data-ui="feed"] .track-list { display: grid; }
 [data-ui="feed"] .track-list li { position: relative; display: flex; align-items: center; gap: 12px; min-height: 40px; font-size: 15px; color: var(--f-ink2); }
 [data-ui="feed"] .track-list li + li::before { content: ""; position: absolute; left: 11px; top: -8px; width: 2px; height: 16px; background: var(--f-line2); }
@@ -441,6 +444,7 @@ html[data-pointer] [data-ui="feed"] .rcard:has(input:focus) { outline: none; }
   [data-ui="feed"] .copyrow { grid-template-columns: 110px minmax(0, 1fr) auto; }
   [data-ui="feed"] .copy-v { font-size: 20px; }
   [data-ui="feed"] .hold-cd .cd-big { font-size: 60px; }
+  [data-ui="feed"] .hold-pay .btn { width: auto; padding: 0 26px; }
   [data-ui="feed"] .track-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   [data-ui="feed"] .track-list li { flex-direction: column; align-items: flex-start; gap: 10px; min-height: 0; font-size: 14px; }
   [data-ui="feed"] .track-list li + li::before { left: calc(-100% + 30px); width: calc(100% - 36px); top: 11px; height: 2px; }

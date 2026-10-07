@@ -19,7 +19,7 @@ import { issueOf } from "@/lib/customer-tags";
 import { picker, plural, type Locale, type Pair } from "@/lib/i18n";
 import { issueLabel, lexicon } from "@/lib/lexicon";
 import { plainVnd } from "@/lib/money";
-import { adminPaymentLabel, stateLabel } from "@/lib/order-labels";
+import { adminPaymentLabel, stateTabLabel } from "@/lib/order-labels";
 import { orderTotalVnd } from "@/lib/orders";
 import { ordersCsvName, ordersCsvRows } from "@/lib/orders-csv";
 import { Badge } from "@/registry/components/badge/badge";
@@ -65,7 +65,9 @@ const ALL = "all";
 
 /**
  * The tabs, in the order an order passes through them (v3), named in the page's
- * language: the glossary's states (`stateLabel`).
+ * language: the glossary's states (`stateTabLabel`), the waiting one "Chờ
+ * thanh toán" / "Awaiting payment" since slice B18 — it holds the transfers
+ * and the card orders waiting for their money alike.
  */
 const TAB_STATES: Array<OrderState | null> = [
   null,
@@ -519,7 +521,7 @@ export function ArcOrdersScreen({
         <TabsList aria-label={t({ vi: "Trạng thái", en: "Status" })}>
           {TAB_STATES.map((state) => (
             <TabsTrigger key={state ?? ALL} value={state ?? ALL}>
-              {state ? stateLabel(state, locale).text : t(ALL_WORD)}{" "}
+              {state ? stateTabLabel(state, locale) : t(ALL_WORD)}{" "}
               <span className={styles.tabCount}>
                 {state ? filtered.filter((o) => o.status.state === state).length : filtered.length}
               </span>

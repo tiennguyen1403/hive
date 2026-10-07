@@ -93,7 +93,8 @@ describe("the state in the mock's words (ORDER_STATES)", () => {
     expect(paymentTitle("BANK_TRANSFER")).toBe("Chuyển khoản");
     // "nhận (COD)" held together, as the checkout's card has it.
     expect(paymentTitle("COD")).toBe("Thanh toán khi nhận (COD)");
-    expect(paymentTitle("CARD")).toBe("Thẻ (nội địa, Visa)");
+    // The card's name for Stripe's test mode since slice B18 (QĐ-46, the user's words).
+    expect(paymentTitle("CARD")).toBe("Thẻ (Visa, Mastercard)");
     expect(deliveryTitle("STANDARD")).toBe("Giao tiêu chuẩn");
     expect(deliveryTitle("EXPRESS")).toBe("Giao nhanh nội thành");
   });

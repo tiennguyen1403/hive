@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useLocale } from "@/components/i18n/LocaleContext";
 import { COLORS } from "@/data/colors";
-import type { Order, OrderLine, OrderState, Product } from "@/data/types";
+import type { Order, OrderLine, OrderState, PaymentMethod, Product } from "@/data/types";
 import { feedStateLabel, linePicture, orderSteps, stepStamp, tileLabel } from "@/lib/feed-account";
 import { picker } from "@/lib/i18n";
 import { isFixed } from "@/lib/inventory";
@@ -62,14 +62,15 @@ const STATE_ICON: Readonly<Record<OrderState, FeedIconName>> = {
 /**
  * The state in words with its glyph (`statusChip`); blue while a transfer is
  * awaited, the one state that asks for the shopper. In the page's language
- * since round v6 slice E3a (`feedStateLabel`).
+ * since round v6 slice E3a (`feedStateLabel`). Given the order's way of
+ * paying, a card order waiting for its money says "Chờ trả thẻ" (slice B18).
  */
-export function StatusChip({ state }: { state: OrderState }) {
+export function StatusChip({ state, payment }: { state: OrderState; payment?: PaymentMethod }) {
   const locale = useLocale();
   return (
     <span className={cx("st-chip", state === "AWAITING_TRANSFER" && "is-act")}>
       <FeedIcon name={STATE_ICON[state]} />
-      {feedStateLabel(state, locale)}
+      {feedStateLabel(state, locale, payment)}
     </span>
   );
 }

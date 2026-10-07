@@ -1,4 +1,5 @@
 import type { Order } from "@/data/types";
+import { lateCardPaymentText } from "./card-checkout";
 import { phrase, stored, type Phrase, type Stored } from "./admin-text";
 import { carrierPiece } from "./carrier";
 import { isOrderEvent, type AdminEvent } from "./db/event-dto";
@@ -82,6 +83,15 @@ export function internalNotes(events: AdminEvent[], order: Order, locale: Locale
       case "ORDER_PAID": {
         const ref = transferReference(order.code);
         const total = vnd(orderTotalVnd(order), locale);
+        // A card payment Stripe confirmed (slice B18) names Stripe and its
+        // reference, the one a manager looks the payment up by.
+        if (e.via === "STRIPE") {
+          const intent = e.paymentIntent ? ` · ${e.paymentIntent}` : "";
+          notes.push(
+            sys(t({ vi: `Đã thanh toán qua Stripe${intent} · ${total}`, en: `Paid via Stripe${intent} · ${total}` }), e.at),
+          );
+          break;
+        }
         notes.push(
           e.actorRole === "system"
             ? sys(t({ vi: `Chuyển khoản khớp nội dung ${ref} · ${total}`, en: `Transfer matched reference ${ref} · ${total}` }), e.at)
@@ -147,14 +157,23 @@ export function internalNotes(events: AdminEvent[], order: Order, locale: Locale
         });
         break;
       case "ORDER_EXPIRED":
+        // A card order's hold ran out without a card payment (slice B18).
         notes.push(
           sys(
-            t({ vi: "Huỷ đơn · lý do: quá hạn chuyển khoản.", en: "Order cancelled · reason: transfer overdue." }),
+            order.payment === "CARD"
+              ? t({ vi: "Huỷ đơn · lý do: quá hạn thanh toán.", en: "Order cancelled · reason: payment overdue." })
+              : t({ vi: "Huỷ đơn · lý do: quá hạn chuyển khoản.", en: "Order cancelled · reason: transfer overdue." }),
             e.at,
           ),
         );
         break;
       case "ORDER_NOTE":
+        // The system's note about a card payment Stripe took after the order
+        // was cancelled (slice B18) is the app's sentence, not the shop's hand.
+        if (e.via === "STRIPE" && e.paymentIntent) {
+          notes.push(sys(lateCardPaymentText(e.paymentIntent, locale), e.at));
+          break;
+        }
         notes.push(typed(e.text, "shop", e.at));
         break;
       case "ORDER_ADDRESS_EDITED":

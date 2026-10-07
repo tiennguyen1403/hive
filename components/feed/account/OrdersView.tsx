@@ -223,7 +223,7 @@ function Ticket({ order: o, groups }: { order: Order; groups: OrderGroup[] }) {
           <p className="ticket-total">{vnd(orderTotalVnd(o), locale)}</p>
         </div>
         <div className="ticket-mid">
-          <StatusChip state={o.status.state} />
+          <StatusChip state={o.status.state} payment={o.payment} />
           {note && (
             <span className="ticket-note">
               {note.kind === "hold" &&

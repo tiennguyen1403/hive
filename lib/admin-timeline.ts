@@ -4,6 +4,7 @@ import { carrierLabel } from "./carrier";
 import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "./datetime";
 import { cancelReasonLabel } from "./feed-account";
 import { picker, type Locale, type Pair } from "./i18n";
+import type { CardPaymentFacts } from "./order-labels";
 
 /**
  * "Hành trình", the back office's reading of one order, and the shape Arc's
@@ -32,11 +33,24 @@ export interface Milestone {
  * In both languages since round v6 slice E4: the words below, the dates the
  * English way, the carrier by `carrierLabel` and a cancel reason by the shop's
  * table (`cancelReasonLabel`). The Vietnamese is the v3 screen's, unchanged.
+ *
+ * Slice B18 (QĐ-46): a card order waiting for its money waits on "Chờ trả
+ * thẻ", and once Stripe's payment intent is on the order (`card`, from
+ * `admin_orders()`), its paid step reads "Đã thanh toán qua Stripe". A card
+ * order of the sample has no payment intent — it was paid before any gateway
+ * existed — and keeps "Đã thanh toán".
  */
-export function timelineOf(order: Order, now: Date, carrier?: string, locale: Locale = "vi"): Milestone[] {
+export function timelineOf(
+  order: Order & { card?: CardPaymentFacts | null },
+  now: Date,
+  carrier?: string,
+  locale: Locale = "vi",
+): Milestone[] {
   const t = picker(locale);
   const at = (iso: string) => `${clockLabel(iso)} · ${dayMonth(iso, locale)}`;
   const W = TIMELINE_WORDS;
+  const card = order.payment === "CARD";
+  const paidTitle = t(card && order.card?.paymentIntent ? W.paidViaStripe : W.paid);
   const placed: Milestone = {
     title: t(W.placed),
     detail: at(order.placedAt),
@@ -50,7 +64,7 @@ export function timelineOf(order: Order, now: Date, carrier?: string, locale: Lo
       return [
         { ...placed, state: "now" },
         {
-          title: t(W.awaitingTransfer),
+          title: t(card ? W.awaitingCard : W.awaitingTransfer),
           detail: t({ vi: `hạn ${dateTimeLabel(order.status.dueAt)}`, en: `due ${dateTimeLabel(order.status.dueAt, "en")}` }),
           state: "todo",
         },
@@ -74,7 +88,7 @@ export function timelineOf(order: Order, now: Date, carrier?: string, locale: Lo
       return [
         placed,
         {
-          title: t(W.paid),
+          title: paidTitle,
           detail: at(order.status.paidAt),
           state: "done",
         },
@@ -96,7 +110,7 @@ export function timelineOf(order: Order, now: Date, carrier?: string, locale: Lo
         // A COD parcel on the road has collected nothing yet: no "paid" step.
         ...(order.payment === "COD"
           ? []
-          : [{ title: t(W.paid), detail: "", state: "done" as const }]),
+          : [{ title: paidTitle, detail: "", state: "done" as const }]),
         { title: t(W.handedOver), detail: "", state: "done" },
         shipping(
           `${at(order.status.shippedAt)} · ${carrier ? `${carrierLabel(carrier, locale)} · ` : ""}${order.status.trackingCode}`,
@@ -107,7 +121,7 @@ export function timelineOf(order: Order, now: Date, carrier?: string, locale: Lo
     case "DELIVERED":
       return [
         placed,
-        { title: t(W.paid), detail: "", state: "done" },
+        { title: paidTitle, detail: "", state: "done" },
         { title: t(W.handedOver), detail: "", state: "done" },
         shipping("", "done"),
         delivered(at(order.status.deliveredAt), "now"),
@@ -133,13 +147,17 @@ export function timelineOf(order: Order, now: Date, carrier?: string, locale: Lo
  * The milestones' words, in both languages (round v6 slice E4). The states are
  * the glossary's ("Order received", "Awaiting transfer", "Paid", "Shipping",
  * "Delivered"); the steps between them name the shop's own move, "Awaiting
- * handover", "Handed over". "2–4 ngày" is the standard service's promise.
+ * handover", "Handed over". "2–4 ngày" is the standard service's promise. A
+ * card order's two (slice B18) are "Chờ trả thẻ" and "Đã thanh toán qua
+ * Stripe".
  */
 const TIMELINE_WORDS = {
   placed: { vi: "Đã nhận đơn", en: "Order received" },
   awaitingTransfer: { vi: "Chờ chuyển khoản", en: "Awaiting transfer" },
+  awaitingCard: { vi: "Chờ trả thẻ", en: "Awaiting card payment" },
   awaitingHandover: { vi: "Chờ bàn giao", en: "Awaiting handover" },
   paid: { vi: "Đã thanh toán", en: "Paid" },
+  paidViaStripe: { vi: "Đã thanh toán qua Stripe", en: "Paid via Stripe" },
   handedOver: { vi: "Đã bàn giao", en: "Handed over" },
   shipping: { vi: "Đang giao", en: "Shipping" },
   delivered: { vi: "Đã giao", en: "Delivered" },

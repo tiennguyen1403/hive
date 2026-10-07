@@ -15,7 +15,7 @@ import { addressLabelText } from "@/lib/feed-account";
 import { picker, plural } from "@/lib/i18n";
 import { LEX, issueNo, lexicon } from "@/lib/lexicon";
 import { plainVnd, vnd } from "@/lib/money";
-import { STATE_LABEL, stateLabel } from "@/lib/order-labels";
+import { orderStateLabel } from "@/lib/order-labels";
 import { orderTotalVnd } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
 import { Avatar } from "@/registry/components/avatar/avatar";
@@ -163,8 +163,8 @@ export function ArcCustomerScreen({
         >
           {facts.last
             ? t({
-                vi: `${facts.last.code} · ${STATE_LABEL[facts.last.status.state].text.toLocaleLowerCase("vi")}`,
-                en: `${facts.last.code} · ${stateLabel(facts.last.status.state, "en").text.toLocaleLowerCase("en")}`,
+                vi: `${facts.last.code} · ${orderStateLabel(facts.last, "vi").text.toLocaleLowerCase("vi")}`,
+                en: `${facts.last.code} · ${orderStateLabel(facts.last, "en").text.toLocaleLowerCase("en")}`,
               })
             : t({ vi: "chưa đặt đơn nào", en: "no orders yet" })}
         </ArcKpi>
@@ -205,7 +205,7 @@ export function ArcCustomerScreen({
                 </thead>
                 <tbody>
                   {facts.orders.map((o) => {
-                    const s = stateLabel(o.status.state, locale);
+                    const s = orderStateLabel(o, locale);
                     return (
                       <tr key={o.code}>
                         <td>

@@ -23,7 +23,7 @@ import {
   returnUntil,
 } from "@/lib/feed-account";
 import { feedSentence } from "@/lib/feed-checkout";
-import { BACK_IN_STOCK_EN, confirmRows, confirmTransfer } from "@/lib/feed-order";
+import { BACK_IN_STOCK_EN, confirmHold, confirmRows, confirmTransfer } from "@/lib/feed-order";
 import { picker, plural } from "@/lib/i18n";
 import { vnd } from "@/lib/money";
 import { orderTotalVnd, orderUnits } from "@/lib/orders";
@@ -37,6 +37,7 @@ import { FeedSheet } from "../FeedSheet";
 import { useFeedToast } from "../FeedToast";
 import { FeedIcon } from "../icon/FeedIcon";
 import { useNow, useNowMs } from "../now";
+import { PayByCard } from "../order/PayByCard";
 import { OrderSteps, Tile } from "./OrderBits";
 
 interface OrderViewProps {
@@ -51,8 +52,10 @@ interface OrderViewProps {
  * `order.js`. The code large with the lines it was bought from; the journey
  * as Feed's story bars; under it what the shopper can do now, and only that:
  *
- * · a transfer awaited (a card order's too): the hold ticking, the amount and
- *   the memo to copy, the account being prepared, the QR's place, "Huỷ đơn";
+ * · a transfer awaited: the hold ticking, the amount and the memo to copy, the
+ *   account being prepared, the QR's place, "Huỷ đơn";
+ * · a card payment awaited (slice B18): the hold ticking, "Trả bằng thẻ" to a
+ *   new Stripe page (`PayByCard`), "Huỷ đơn";
  * · COD before the call: the number the shop will call, "Huỷ đơn";
  * · on its way: the tracking code to copy;
  * · delivered: "Đổi trả tới dd/mm" while the window is open — to the returns
@@ -92,6 +95,8 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
   const units = orderUnits(order);
   const again = buyAgainLines(catalog, order, now);
   const transfer = confirmTransfer(order, locale);
+  // A card order's hold, with the button to pay on Stripe's page (slice B18).
+  const cardHold = order.payment === "CARD" ? confirmHold(order, locale) : null;
   // A name, a phone number, an address: Vietnamese on an English page (QĐ-40).
   const placeLang = locale === "en" ? ("vi" as const) : undefined;
 
@@ -188,6 +193,38 @@ export function OrderView({ order, addressLine }: OrderViewProps) {
             <span>{t({ vi: "Hiện khi có tài khoản ngân hàng thật", en: "Shown once there is a real bank account" })}</span>
           </div>
         </div>
+        <button className="btn btn-line od-cancel" type="button" onClick={openCancel}>
+          {cancelLabel}
+        </button>
+      </section>
+    );
+  } else if (s.state === "AWAITING_TRANSFER" && cardHold) {
+    // A card order (slice B18): the hold, then "Trả bằng thẻ" to Stripe's page, no transfer details.
+    act = (
+      <section className="od-act" id="pay" aria-label={t({ vi: "Thanh toán thẻ", en: "Card payment" })}>
+        <p className="od-hold">
+          <FeedClock
+            until={cardHold.dueAt}
+            now={nowMs}
+            tag="span"
+            label={t({ vi: "Thời gian giữ hàng còn lại", en: "Reservation time left" })}
+          />
+        </p>
+        <p className="od-act-line">
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Giữ hàng tới <b>{cardHold.until}</b>. {cardHold.note}
+              </>
+            ),
+            en: (
+              <>
+                Reserved until <b>{cardHold.until}</b>. {cardHold.note}
+              </>
+            ),
+          })}
+        </p>
+        <PayByCard code={order.code} />
         <button className="btn btn-line od-cancel" type="button" onClick={openCancel}>
           {cancelLabel}
         </button>

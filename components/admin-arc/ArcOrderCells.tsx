@@ -9,7 +9,7 @@ import type { CustomerTag } from "@/lib/customer-tags";
 import { clockLabel, dayMonth } from "@/lib/datetime";
 import { cancelReasonLabel } from "@/lib/feed-account";
 import { picker } from "@/lib/i18n";
-import { adminPaymentLabel, stateLabel, type StatusTone } from "@/lib/order-labels";
+import { adminPaymentLabel, orderStateLabel, type StatusTone } from "@/lib/order-labels";
 import { formatPhone } from "@/lib/phone";
 import { Avatar } from "@/registry/components/avatar/avatar";
 import { Badge, type BadgeTone } from "@/registry/components/badge/badge";
@@ -136,9 +136,10 @@ export function PlacedCell({ order }: { order: Order }) {
 /**
  * How it is being paid, and where that stands: v3's `paymentCell`. COD says
  * "thu khi giao" and not the surcharge, which the stored total does not
- * contain. A card order pays by transfer since slice B7, so while its money
- * is owed it says "chờ chuyển khoản" under "Thẻ". Every line holds on one
- * line, as in v3: "nhận 07:52 · 28/09" is one moment.
+ * contain. A card order waiting for its money reads as a transfer does, "Thẻ"
+ * then "hạn …": its state beside it already says "Chờ trả thẻ" (slice B18; the
+ * line "chờ chuyển khoản" it carried under "Thẻ" until then is gone). Every
+ * line holds on one line, as in v3: "nhận 07:52 · 28/09" is one moment.
  */
 export function PaymentCell({ order }: { order: Order }) {
   const locale = useLocale();
@@ -153,13 +154,9 @@ export function PaymentCell({ order }: { order: Order }) {
       </span>
     );
   }
-  const owed = state.state === "AWAITING_TRANSFER" || state.state === "RECEIVED";
   return (
     <span className={`${styles.stack} ${styles.nowrap}`}>
       <span>{label}</span>
-      {order.payment === "CARD" && owed && (
-        <span className={styles.line}>{t({ vi: "chờ chuyển khoản", en: "awaiting transfer" })}</span>
-      )}
       {/* The Vietnamese keeps its own markup, word and values in the text nodes
           they always were: split differently, the last glyph lands a fraction
           of a pixel elsewhere (round v6 slice E1's lesson). */}
@@ -215,7 +212,8 @@ export function AddressCell({ order }: { order: Order }) {
  */
 export function StatusCell({ order, now }: { order: Order; now: Date }) {
   const locale = useLocale();
-  const s = stateLabel(order.status.state, locale);
+  // A card order waiting for its money is "Chờ trả thẻ" (slice B18).
+  const s = orderStateLabel(order, locale);
   const note = orderNote(order, now, locale);
   // The small pill: a table row is dense, and "Chờ chuyển khoản" in the
   // default size alone makes the column wider than the card at 1280.

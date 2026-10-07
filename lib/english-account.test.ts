@@ -250,7 +250,8 @@ describe("the orders, in English", () => {
   it("pays and delivers in the checkout's English", () => {
     expect(paymentTitle("BANK_TRANSFER", "en")).toBe("Bank transfer");
     expect(paymentTitle("COD", "en")).toBe(`Cash on delivery${NBSP}(COD)`);
-    expect(paymentTitle("CARD", "en")).toBe("Card (domestic, Visa)");
+    // The card's name for Stripe's test mode since slice B18 (QĐ-46, the user's words).
+    expect(paymentTitle("CARD", "en")).toBe("Card (Visa, Mastercard)");
     expect(deliveryTitle("STANDARD", "en")).toBe("Standard delivery");
     expect(deliveryTitle("EXPRESS", "en")).toBe("Express city delivery");
     expect(paymentTitle("COD", "vi")).toBe(paymentTitle("COD"));

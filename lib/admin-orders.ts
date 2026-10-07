@@ -2,6 +2,7 @@ import type { Order, OrderState } from "@/data/types";
 import { effectiveStatus } from "./customer-orders";
 import { cancelReasonLabel } from "./feed-account";
 import { picker, plural, type Locale } from "./i18n";
+import type { CardPaymentFacts } from "./order-labels";
 import { DELIVERY_OPTIONS } from "./shipping";
 
 /**
@@ -36,8 +37,14 @@ export interface OrderOwner {
   joinedAt: string;
 }
 
-/** An order and whose it is — null for one placed signed out. */
-export type AdminOrder = Order & { owner: OrderOwner | null };
+/**
+ * An order and whose it is — null for one placed signed out — and, for a card
+ * order since slice B18, what the database knows of its Stripe side
+ * (`admin_orders()` v2): whether it opened a Stripe page, and the payment
+ * intent once Stripe says it is paid. Absent or null on every other order,
+ * and on a book read from a database the B18 migration has not reached.
+ */
+export type AdminOrder = Order & { owner: OrderOwner | null; card?: CardPaymentFacts | null };
 
 /** The frozen delivery address an order carries. */
 export type ShipTo = Order["shipTo"];
@@ -96,11 +103,13 @@ export function realAddressMessage(code: string, locale: Locale = "vi"): string 
  * cancelled here, as on every screen — and the database refuses to confirm,
  * ship, re-address or cancel it for the same reason.
  *
- *   · AWAITING_TRANSFER → confirm the money arrived — a transfer, or a card
- *                         order, which pays by transfer since slice B7;
+ *   · AWAITING_TRANSFER → confirm the transfer arrived;
+ *   · AWAITING_TRANSFER, card → nothing for the shop: the card payment is
+ *                         Stripe's to confirm (slice B18, the main session's
+ *                         call), and `admin_mark_paid()` refuses a card order;
  *   · RECEIVED, COD     → hand it over: the money is collected at the door;
- *   · RECEIVED, card    → a card order taken before B7: confirm the money by
- *                         hand before anything ships;
+ *   · RECEIVED, card    → a card order taken before B7: nothing either, for
+ *                         the same reason; the shop may still cancel it;
  *   · PAID              → hand it over;
  *   · SHIPPING          → record the delivery (no courier reports it);
  *   · DELIVERED, CANCELLED → nothing is left to do.
@@ -111,8 +120,9 @@ export function nextMove(o: Order, now: Date): NextMove | null {
   const state = effectiveStatus(o, now).state;
   switch (state) {
     case "AWAITING_TRANSFER":
-      return "MARK_PAID";
+      return o.payment === "CARD" ? null : "MARK_PAID";
     case "RECEIVED":
+      if (o.payment === "CARD") return null;
       return o.payment === "COD" ? "HAND_OVER" : "MARK_PAID";
     case "PAID":
       return "HAND_OVER";

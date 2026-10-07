@@ -15,7 +15,7 @@ import {
   returnUntil,
   type LookupField,
 } from "@/lib/feed-account";
-import { BACK_IN_STOCK_EN, confirmTransfer } from "@/lib/feed-order";
+import { BACK_IN_STOCK_EN, confirmHold, confirmTransfer } from "@/lib/feed-order";
 import { signHref } from "@/lib/feed-sign-in";
 import { picker, plural } from "@/lib/i18n";
 import { vnd } from "@/lib/money";
@@ -309,6 +309,8 @@ function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProp
 
   let act: React.ReactNode = null;
   const transfer = confirmTransfer(order, locale);
+  // A card order pays on Stripe's page since slice B18: its hold, and no transfer details.
+  const cardHold = order.payment === "CARD" ? confirmHold(order, locale) : null;
   if (s.state === "AWAITING_TRANSFER" && transfer) {
     act = (
       <section className="od-act" aria-label={t({ vi: "Chuyển khoản", en: "Bank transfer" })}>
@@ -344,6 +346,33 @@ function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProp
             </span>
           </div>
         </div>
+      </section>
+    );
+  } else if (s.state === "AWAITING_TRANSFER" && cardHold) {
+    act = (
+      <section className="od-act" aria-label={t({ vi: "Thanh toán thẻ", en: "Card payment" })}>
+        <p className="od-hold">
+          <FeedClock
+            until={cardHold.dueAt}
+            now={nowMs}
+            tag="span"
+            label={t({ vi: "Thời gian giữ hàng còn lại", en: "Reservation time left" })}
+          />
+        </p>
+        <p className="od-act-line">
+          {t<React.ReactNode>({
+            vi: (
+              <>
+                Giữ hàng tới <b>{cardHold.until}</b>. {cardHold.note}
+              </>
+            ),
+            en: (
+              <>
+                Reserved until <b>{cardHold.until}</b>. {cardHold.note}
+              </>
+            ),
+          })}
+        </p>
       </section>
     );
   } else if (s.state === "RECEIVED") {
@@ -437,8 +466,9 @@ function TrackResult({ order, phone, fresh, signedIn, onAgain }: TrackResultProp
         </div>
         <OrderItems lines={order.lines} />
       </section>
-      {/* Unpaid by transfer, the amount is already in the block above with its copy button. */}
-      {s.state !== "AWAITING_TRANSFER" && (
+      {/* Unpaid by transfer, the amount is already in the block above with its copy button; a card order has no such
+          block (slice B18), so its summary stays. */}
+      {!transfer && (
         <section className="acc-sec" aria-labelledby="h-sum">
           <div className="acc-sec-head">
             <h3 className="acc-sec-title" id="h-sum">

@@ -8,6 +8,7 @@ import { FeedFrame } from "@/components/feed/FeedFrame";
 import { feedAddressLine } from "@/data/regions";
 import { demoNowMs } from "@/lib/clock";
 import { effectiveOrder } from "@/lib/customer-orders";
+import { reconcileCardOrder } from "@/lib/db/card-payments";
 import { findMyOrder } from "@/lib/db/orders";
 import { loadMe } from "@/lib/db/profiles";
 import { picker, type Pair } from "@/lib/i18n";
@@ -101,7 +102,10 @@ export default async function OrderPage(props: PageProps<"/account/orders/[code]
   const found = await findMyOrder(code);
   if (!found) notFound();
 
-  const order = effectiveOrder(found, new Date(now));
+  // A card order still waiting is checked against Stripe before it is drawn
+  // (slice B18, `reconcileCardOrder`; the receipt's page says why it is done
+  // while rendering): a shopper who paid and closed Stripe's tab finds it paid.
+  const order = await reconcileCardOrder(effectiveOrder(found, new Date(now)));
   return (
     <FeedFrame
       page="order"

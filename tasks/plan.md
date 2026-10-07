@@ -3329,6 +3329,33 @@ Phiên chính đo và tra trước khi đề xuất:
 - Đảo một phần thiết kế B4 và B13: `reset_demo` giữ yêu thích và nhắc của mọi tài khoản. Nay tài khoản thật không còn qua đêm.
 - Làm trong lát B17.
 
+### QĐ-46: Stripe chế độ thử, cách làm *(07/10/2026)*
+- **Tích hợp:** Stripe của Vercel Marketplace, "Install New Stripe Sandbox", nối vào project `hive`.
+  - Tích hợp đưa vào dự án `STRIPE_SECRET_KEY` và `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. App chỉ dùng khoá bí mật ở server; khoá
+    `NEXT_PUBLIC_…` không được tham chiếu ở đâu, nên không vào bundle.
+  - Không có khoá webhook. Sandbox chưa claim bị xoá sau 60 ngày.
+  - Tài khoản Vercel là cá nhân (Hobby).
+- **Phiên chính quyết:**
+  - trang thanh toán của Stripe (Checkout, `locale` theo ngôn ngữ của khách); trình duyệt chỉ chuyển trang qua Stripe;
+  - không webhook. Server hỏi Stripe khi khách quay về, và hỏi lại mỗi khi có người xem một đơn thẻ đang chờ;
+  - không tự hoàn tiền khi huỷ (cách huỷ hiện nay đều làm tay);
+  - giá vẫn VND (QĐ-40). Nếu sandbox không nhận VND thì dừng lại, hỏi người dùng.
+- **Người dùng chọn (07/10, AskUserQuestion):**
+  - thẻ chọn ghi "Thẻ (Visa, Mastercard)", "Trả trên trang Stripe, chế độ thử.", kèm dòng **số thẻ thử** "Thẻ thử 4242 4242 4242
+    4242, hạn và CVC bất kỳ.". Bản Anh: "Card (Visa, Mastercard)", "Pay on Stripe's page, test mode.", "Test card 4242 4242 4242
+    4242, any expiry and CVC.". Lý do: trang đăng nhập đã in tài khoản thử, đây là cùng một ngoại lệ;
+  - **đơn chưa trả thì giữ, cho trả lại** bằng nút "Trả bằng thẻ" tới khi hết 12 giờ giữ hàng; quá hạn thì tự huỷ như chuyển khoản.
+    Họ không chọn huỷ ngay;
+  - **duyệt ba câu sửa trang `/privacy`:** thêm mục "Thanh toán thẻ"; câu bên thứ ba có Stripe; câu máy chủ có Stripe. Tệp chữ
+    đã sửa theo.
+- Đảo QĐ-25 ("không cổng thanh toán"). Luật `backend-implementer` sửa hẹp: chỉ Stripe, chỉ khoá thử, qua gói `stripe` khi brief nêu.
+- **Phiên chính quyết thêm (khi viết brief B18):**
+  - giữ máy trạng thái `AWAITING_TRANSFER` → `PAID`, nhãn đổi theo cách trả: "Chờ trả thẻ" / "Awaiting card payment"; lý do quá hạn
+    của đơn thẻ là "quá hạn thanh toán";
+  - tab sổ đơn quản trị "Chờ chuyển khoản" thành **"Chờ thanh toán" / "Awaiting payment"**, vì chứa cả hai loại;
+  - **đơn thẻ không có nút "Đánh dấu đã trả"** ở quản trị: tiền thẻ do Stripe xác nhận.
+- Brief `tasks/briefs/backend-b18.md`. Chờ người dùng cài sandbox và ghi `STRIPE_SECRET_KEY` vào `.env.local`.
+
 ### Rà soát
 - Một lượt toàn app ở cuối đợt: cả hai thứ tiếng, điện thoại, máy tính, quản trị, gồm cả luồng Google và Stripe.
 - Lỗi nặng thấy được trong lúc soạn bảng thuật ngữ thì sửa ngay, không chờ lượt cuối.
@@ -3815,3 +3842,90 @@ khung giờ xoá.
   - `tools/layout-sweep.js`: thêm `/privacy`; nút chọn ảnh "Ảnh tro" đi qua `T()` (bản EN là "Photo tro");
   - `DESIGN.md`: chân trang 6 link; chữ G của Google là ngoại lệ của luật logo đen trắng; nút Google đã bật; số máy dò.
 - **Để lượt rà cuối:** chân trang gọn ở 900 bản VI chỉ còn 8px trước khi link rớt xuống hàng hai.
+
+**07/10, PHẦN GOOGLE ĐÃ LÊN ONLINE** (B17 `eb694c6`, B16 `9c0ec48`, P `de665bf`). Người dùng tự làm:
+- bật Google ở dashboard Supabase hosted (Client ID, secret; Site URL; Redirect URLs `https://hive-neon-three.vercel.app/**`);
+- `db push --linked --dry-run`, đúng hai migration (`real_accounts`, `google_names`), rồi `--yes`;
+- kiểm `proacl` của `real_accounts`: `{postgres=X/postgres,service_role=X/postgres}`. Lần đầu lệnh SQL dài bị ngắt dòng lúc dán
+  nên lỗi cú pháp; dùng câu ngắn một dòng thì qua;
+- `git push`, dải `847f481..de665bf`.
+
+Vercel dựng xong trong khoảng 50 giây. Phiên chính kiểm bằng curl:
+- `/privacy` ra đúng ở hai ngôn ngữ;
+- `/sign-in` không còn nhãn "Đang chuẩn bị", nút Google có mặt;
+- `next=%2F%5Cevil.example` bị bỏ thành `""`;
+- `/auth/callback?error=…` chuyển hướng 307 về `/sign-in?…&error=google`.
+
+Chờ người dùng thử đăng nhập Google trên demo.
+
+**07/10, Stripe sandbox đã tạo (người dùng làm), lát B18 giao.**
+- **Hộp cài thật** (phiên chính đọc bằng Claude in Chrome, chỉ đọc, không tạo gì):
+  - tích hợp đã cài vào team từ trước, nên phải tạo sandbox ở trang tích hợp: Products by Vercel → Install ▾ → Install New Stripe
+    Sandbox;
+  - bước "Configuration and Plan": Default country chỉ có United States hoặc Canada (không có Việt Nam); Default currency chỉ có USD
+    hoặc CAD; gói Sandbox; sau đó là Confirmation và Sandbox Provisioning.
+- **Người dùng đã làm:** chọn United States và USD, nối project `hive`, ghi `STRIPE_SECRET_KEY` vào `.env.local`. Phiên chính kiểm
+  khoá là `sk_test_…` (trong ngoặc kép), không in giá trị.
+- **Agent B18 kiểm VND trước tiên.** Bị từ chối thì dừng lại, hỏi người dùng.
+- **Ngoài lề:** Vercel báo 2 project của người dùng còn Node.js 20. `hive` dựng thành công hôm nay, nên không thuộc diện này.
+
+**07/10, B18 xong, phiên chính duyệt.**
+- **VND:** sandbox nhận. 420.000₫ gửi lên là `420000`, không nhân 100.
+- **Phiên chính kiểm lại:**
+  - tsc sạch, 2.328/2.328 test xanh;
+  - đọc migration, `lib/stripe.ts`, `lib/db/card-payments.ts`, ba trang một đơn và action tra đơn;
+  - xem ảnh: thẻ chọn, hoá đơn chờ, quay về chưa trả, đã trả, sổ đơn, trang đơn quản trị.
+- **Kiểm Vercel env bằng MCP:** lỗi 403 cả `get_project` lẫn `filter_project_envs`, và máy chưa cài Vercel CLI. Trước `git push`,
+  người dùng phải tự xem `STRIPE_SECRET_KEY` đã có ở môi trường Production chưa.
+- **Người dùng chọn 07/10:**
+  - hoá đơn của đơn thẻ đang chờ: "Tiếp tục mua" hạ xuống nút viền, chỉ khi đơn thẻ còn chờ trả;
+  - câu Hỏi đáp "Huỷ đơn thế nào?" thêm đơn thẻ, dùng chữ "hoặc" (người dùng sửa từ "hay"):
+    - "Ở trang đơn: đơn chuyển khoản hoặc thẻ huỷ được tới khi trả tiền, đơn COD tới khi cửa hàng gọi xác nhận. Đơn chuyển khoản
+      hoặc thẻ hết hạn giữ hàng mà chưa trả thì tự huỷ."
+    - "On the order page: a bank transfer or card order can be cancelled until it's paid, a COD order until the shop calls to
+      confirm. An unpaid bank transfer or card order cancels itself when its reservation runs out."
+- **Phiên chính quyết:**
+  - giữ `admin_mark_paid` từ chối đơn thẻ ngay trong SQL, và giữ `needsAction` không đếm đơn thẻ đang chờ. Cả hai là hệ quả của "tiền
+    thẻ do Stripe xác nhận";
+  - **lỗ hổng:** hiện trang chỉ hỏi Stripe khi đơn còn chờ. Khách trả sát hạn rồi quay về sau hạn thì đơn đọc là đã huỷ, Stripe không
+    được hỏi, nên nhánh ghi chú "Stripe nhận tiền sau khi đơn đã huỷ" của `card_mark_paid` không bao giờ chạy. Sửa: hoá đơn có
+    `session_id` trên URL và đơn thẻ đang chờ hoặc đã huỷ thì vẫn hỏi Stripe. Không mở rộng cho phiên đã lưu, vì như vậy mỗi lần xem
+    một đơn thẻ đã huỷ lại tốn một lần gọi. Ca "trả rồi đóng tab, không quay lại" vẫn là giới hạn đã biết;
+  - huỷ đơn thẻ (khách hoặc quản trị) thì `expire` luôn phiên Stripe còn mở. Nếu lỗi thì chỉ ghi log, việc huỷ vẫn thành công;
+  - bỏ chữ lặp: dòng quay về chưa trả còn "Chưa trả." / "Not paid yet.", vì giờ giữ hàng đã in ở khối ngay dưới; ở sổ đơn, bỏ dòng
+    phụ "chờ trả thẻ" dưới "Thẻ", vì nhãn trạng thái cùng hàng đã nói.
+- **Người dùng trả thử 4242 trên 3200** trước, rồi phiên chính mới giao các sửa ở trên, để 3200 không bị dựng lại giữa chừng.
+
+**07/10, người dùng trả thử 4242 trên 3200: đạt.**
+- **DH-2433:** trả thẳng. **DH-2434:** bấm "←" trên Stripe, rồi "Trả bằng thẻ" (nút có JavaScript).
+- **DB:** cả hai PAID; có `stripe_session_id`, `stripe_payment_intent` và đúng một `ORDER_PAID` (`actor_role` system,
+  `via: STRIPE`), dù trang được vẽ nhiều lần.
+- **API Stripe:** DH-2433 một phiên `complete/paid` 420000 vnd. DH-2434 có hai phiên: phiên đầu `expired/unpaid`, phiên sau
+  `complete/paid` 920000 vnd (BỤI 890.000₫ + giao 30.000₫), `locale` vi, `livemode` false.
+- **Quản trị DH-2434:** "Thẻ · Stripe · pi_…", Hành trình "Đã thanh toán qua Stripe", ghi chú hệ thống đúng
+  (`.playwright-cli/shots/main/b18/`).
+- **Phiên chính tìm thêm (sửa ở vòng 2): mã đơn lặp lại sau mỗi `reset_demo`.** Các phiên thử của agent và đơn của người dùng đều
+  mang DH-2434, và tài khoản "Đăng nhập thử" là tài khoản dùng chung. Một phiên đã trả của lần trước, cùng mã và cùng tổng, vẫn qua
+  `checkPaidSession`. Sửa: chỉ tin phiên mà hàng đơn đã lưu (`card_session()`); không mở phiên mới khi phiên cũ đang mở mà không
+  `expire` được.
+  - Cookie khách vãng lai không bị ảnh hưởng: `receipt_order()` cần cả mã đơn lẫn khoá riêng của đơn.
+- **Vòng 2 đã giao agent B18 (SendMessage):** gắn phiên với hàng đơn; cổng hỏi Stripe ở hoá đơn; `expire` khi huỷ; bốn sửa chữ và nút.
+- **Vercel env (người dùng xem 07/10):** `STRIPE_SECRET_KEY` áp cho "All Environments", tức có cả Production. Nếu khoá đó không phải `sk_test_` thì `isTestKey` từ chối, thanh toán thẻ chỉ tắt, không có tiền thật.
+
+**07/10, B18 vòng 2 xong, phiên chính duyệt: đạt.** Migration không đổi so với vòng 1.
+- **Agent làm:**
+  - chỉ tin phiên mà hàng đơn đã lưu; đơn đã huỷ chỉ được hỏi khi URL mang đúng id đã lưu;
+  - `openCardCheckout` không mở phiên mới khi phiên cũ đang mở mà không `expire` được;
+  - `closeCardCheckout` khi khách huỷ và khi quản trị huỷ (không có huỷ hàng loạt);
+  - bốn sửa chữ và nút.
+- **Agent thử thật:**
+  - phát lại phiên đã trả của DH-2433 (420000) lên một DH-2433 mới cùng tổng: đơn vẫn chờ (bản kiểm cũ sẽ cho qua);
+  - khách huỷ và quản trị huỷ: phiên đã lưu thành `expired`.
+- **Phiên chính kiểm lại:**
+  - tsc sạch, 2.345/2.345 test;
+  - ảnh: hoá đơn 1280 chỉ còn một nút xanh, dòng "Chưa trả.", Hỏi đáp có "hoặc";
+  - hộp thoại "Sửa giờ số 06" và "Đóng số 05 sớm?" vẫn mở được.
+- **Giới hạn đã biết, không sửa:** hai trình duyệt cùng bấm "Trả bằng thẻ" cho một đơn trong cùng giây có thể mở hai phiên; phiên
+  không được lưu thì không được nhận. Muốn sửa phải có idempotency key hoặc sửa hàm SQL. Tiền thử, rất hiếm.
+- **Để lượt rà cuối:** `tools/layout-sweep.js` chỉ chờ 250 ms sau khi mở menu, nên ba ảnh lớp nổi quản trị (`admin-drops-edit-sheet`,
+  `admin-drops-close-sheet`, `admin-promotions-edit-drawer`) có lúc chụp được menu thay vì hộp thoại. Chờ menu hiện rồi mới bấm.
