@@ -4101,3 +4101,28 @@ chặn (trigger thăm dò trên `auth.users`, WebFetch mã nguồn GoTrue, hai l
 **Lên hosted:** `PRIVACY_UPDATED_AT` phải đổi thành ngày đưa lên, vì C9 sửa chữ `/privacy`.
 
 **07/10, R1 vòng 2 ĐẠT.** Sheet địa chỉ: hai ô xếp chồng, "Chọn tỉnh / thành" (132/132) và "Choose province / city" (168/168) hiện đủ, panel 445/445; trang thanh toán đo y như trước. `/faq`: 64/88px, Shift+Tab 410/80. Phiên chính kiểm: tsc, 2.380 test, ảnh. **Phiên chính áp vào mock** (`prototype/explore/feed/`): `.co-pair` dùng `minmax(0,1fr)`, `.sheet-form .co-pair` một cột, dải 900–1199 (`.ok-grid`, `.od`, `.me-now`, `.b-notif`), `scroll-margin` của `.b-qgroup`, chân trang 900–999, `anyOf` dùng "hoặc". Câu hỏi thẻ ở mock giữ như cũ, vì câu trả lời của mock vẫn là trước B18.
+
+**07–08/10, T1 ĐẠT** (agent `ui-implementer`). Gồm:
+- `tools/sweep/manifest.mjs`: nguồn route duy nhất, 36 route cửa hàng, 37 route quản trị, 43 lớp nổi; chọn một route là kéo theo lớp
+  nổi của nó;
+- `tools/sweep/template.js` kèm hai sửa báo nhầm; `gen.mjs` (lọc theo zone, route, tag, overlay, width, lang, impact);
+- `diff.mjs` (so từng route với mốc); `tools/pixdiff.mjs`;
+- `tools/impact.mjs`: đồ thị import ngược theo **tên export**, vì đi theo tệp thì B19 đã chạm tới 29 trang. Thêm các khóa `actions`,
+  `unmapped`, `uncovered`, `controls`;
+- `sweep:promote` để thăng mốc;
+- 60 test; `tools/layout-sweep.js` nay sinh ra từ manifest.
+
+**Mốc mới**, 153 mục mỗi ngôn ngữ, đã có trang hoá đơn `/order-confirmed/DH-2430`: VI 26 phát hiện, EN 25 (trước: 110 và 109). Phần
+còn lại: 25 `tinyText` là Avatar `sm` của Arc, đã biết; 1 `smallTarget` là chip "Đổi trả" ở `/faq` 390, nằm trong dải cuộn.
+
+Thử `impact` trên hai commit thật:
+- R1: ra cả vùng cửa hàng (vì `FeedChrome`) và các lớp nổi địa chỉ của quản trị;
+- B19: ra các route tra đơn và đăng nhập, `db: true`;
+- `uncovered` rỗng ở cả hai.
+
+**Phiên chính:**
+- giữ quy trình so pixel (`--tolerance`, `--ignore`), không thêm `reducedMotion`;
+- nhận các chỗ làm khác brief;
+- viết lại mục 2 của brief R2 theo công cụ: `impact`, rồi `sweep:gen --impact`, rồi `sweep:diff` và `pixdiff`; phiên chính thăng mốc
+  sau khi duyệt;
+- tự thử `impact` trên working tree của T1: 0 route, `build: false`, đúng.

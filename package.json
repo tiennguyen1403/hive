@@ -14,7 +14,12 @@
     "db:types": "supabase gen types typescript --local > lib/db/database.types.ts",
     "typecheck": "tsc --noEmit",
     "preview": "next build && next start -p 3200",
-    "preview:serve": "next start -p 3200"
+    "preview:serve": "next start -p 3200",
+    "impact": "node tools/impact.mjs",
+    "sweep:gen": "node tools/sweep/gen.mjs",
+    "sweep:diff": "node tools/sweep/diff.mjs",
+    "sweep:promote": "node tools/sweep/diff.mjs --promote",
+    "pixdiff": "node tools/pixdiff.mjs"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.11",

@@ -121,43 +121,60 @@ Tài khoản quản trị khác vẫn in tên đã lưu như cũ. Email giữ ng
 Số dòng lấy theo lúc soát; sau B19 và lát R1 có thể đã lệch, nên tìm theo câu. Sau khi sửa, grep `" — "` trong chuỗi giao diện tiếng Việt
 ở `lib/`, `components/`, `app/` (bỏ test và chú giải). Còn sót câu nào thì liệt kê, không tự sửa.
 
-### 1.9 Công cụ rà: bỏ báo nhầm (`tools/layout-sweep.js`)
+### 1.9 (đã chuyển sang lát công cụ T1)
 
-> **07/10: mục này chuyển sang lát công cụ, chạy sau R1 và trước R2** (người dùng chốt: kiểm theo tầng; làm công cụ sau R1). Lát
-> công cụ cũng chạy sweep trọn một lần để lấy mốc mới. Khi giao R2, phiên chính bỏ mục này khỏi brief và viết lại mục 2 cho phù hợp
-> với công cụ mới.
->
-> Phải thêm vào phạm vi kiểm của R2: `/admin/drops`, `/admin/promotions`, `/admin/log`. Lý do: `lib/admin-rows.ts` (G1–G3) cũng được
-> `ArcDropsScreen`, `ArcPromotionsScreen`, `ArcPromoDrawer`, `lib/activity-log.ts` và `lib/admin-timeline.ts` import.
->
-> D7–D34 đã được lần hết: chỉ dùng trong quản trị, 0 chỗ ở cửa hàng. Trước khi quyết có chạy `test:db` không, grep câu cũ trong
-> `*.dbtest.ts`.
+Phần sửa báo nhầm của sweep và mốc mới đã làm ở T1: `tools/sweep/baseline-{vi,en}.json`, VI 26 phát hiện, EN 25. Lát này không đụng
+`tools/`.
 
-- `inlineBox` (72 phát hiện): đều là `.acc-item` nằm trong `.acc-nav`, mà `.acc-nav` có `display:none` dưới 900. Bỏ qua phần tử có tổ
-  tiên bị ẩn.
-- `smallTarget` `span.sz` (12 chỗ): selector `.sz` cũ của v3 bắt trúng chữ bên trong `label.size` 84×48. Đổi `.sz` thành `.size`.
-- Giữ nguyên thay đổi chưa commit của phiên chính trong tệp này (7 bước chờ menu hiện rồi mới bấm).
-- Ghi mốc mới, VI và EN, kèm lý do từng nhóm phát hiện còn lại.
+Phạm vi phải kiểm có thêm `/admin/drops`, `/admin/promotions`, `/admin/log`, vì `lib/admin-rows.ts` (G1–G3) cũng được `ArcDropsScreen`,
+`ArcPromotionsScreen`, `ArcPromoDrawer`, `lib/activity-log.ts` và `lib/admin-timeline.ts` import. `impact` sẽ tự ra các route này;
+nếu nó không ra thì báo.
 
-## 2. Kiểm
+## 2. Kiểm, theo tầng, bằng công cụ T1
 
-- **Lệnh:** `npm run typecheck`, `npm test`, `npm run build` sạch. Chạy `npm run test:db` nếu có đụng tới DB.
-- **Ảnh trước và sau** ở 1280 và 1440, vi và en:
-  - Tổng quan;
-  - sổ đơn: tab Tất cả, tab Chờ thanh toán;
-  - trang một đơn: DH-2418, DH-2430, một đơn thẻ;
-  - bảng Mẫu: Basics, Drop 05;
-  - chân thanh bên;
-  - `/admin/drops/99`;
-  - menu loại của hộp mẫu hé lộ: kiểm `lang` trong DOM.
-- **Tiêu đề tab:** kiểm bằng `document.title` trên Tổng quan và trên trang một đơn.
-- **Sweep vi và en:** chạy riêng hai lượt, đóng trình duyệt giữa hai lượt. Báo mốc mới sau mục 1.9.
-- **`npx impeccable detect --json app components`:** mốc 2.
-- Ảnh ở `.playwright-cli/shots/ui/v6-polish-admin/`. Xem tận mắt; mở lớp nổi rồi mới chụp.
+Đọc trước `tools/sweep/README.md`.
+
+**Lệnh**
+- `npm run typecheck` và `npm test` **trọn bộ**.
+- `npm run build` **một lần**, ở cuối.
+- `npx impeccable detect --json app components` (mốc 2).
+- `test:db`: trước hết grep các câu D7–D34 cũ trong `lib/**/*.dbtest.ts`.
+  - Có test khẳng định câu cũ: sửa test đó, rồi chỉ chạy những tệp đó bằng cấu hình DB.
+  - Ngoài trường hợp đó, chỉ chạy `test:db` khi `impact` báo `db: true`.
+
+**Phạm vi, do máy suy ra**
+- Sau khi sửa xong (working tree so với HEAD): `npm run impact -- HEAD --out=.playwright-cli/impact-r2.json`. Dán phần tóm tắt vào báo
+  cáo: `routes`, `overlays`, `widths`, `langs`, `db`, `actions`, `unmapped`, `uncovered`.
+- Phải có mặt: các trang quản trị của mục 1, cùng `/admin/drops`, `/admin/promotions`, `/admin/log`.
+- Không được có trang cửa hàng nào, trừ trang đối chứng. Nếu có thì giải thích.
+
+**Sweep lọc**
+- Mỗi ngôn ngữ: `npm run sweep:gen -- --impact=.playwright-cli/impact-r2.json --lang=vi --label=r2` (rồi `--lang=en`). Chạy bằng
+  trình duyệt mới, đóng trình duyệt giữa hai lượt, sau khi đã `reset_demo`.
+- `npm run sweep:diff` cho từng JSON. Mọi route khác mốc phải là chỗ lát này cố ý đổi; giải thích từng route.
+- **KHÔNG** chạy `sweep:promote`. Phiên chính thăng mốc sau khi duyệt.
+
+**So ảnh trang đối chứng**
+- `npm run pixdiff` cho các trang đối chứng, so với ảnh mốc ở `.playwright-cli/sweep/baseline-{vi,en}/`.
+- Dùng `--ignore` hoặc `--regions` cho vùng đồng hồ. Biểu đồ và giờ in của `/admin` đi theo đồng hồ, nên mở ảnh mà xem.
+
+**Ảnh của từng mục** ở 1280 và 1440, vi và en:
+- Tổng quan;
+- sổ đơn: tab Tất cả và tab Chờ thanh toán;
+- trang một đơn: DH-2418, DH-2430, một đơn thẻ;
+- bảng Mẫu: Basics, Drop 05;
+- chân thanh bên;
+- `/admin/drops/99`.
+
+**Kiểm bằng DOM**
+- `lang` trong menu loại của hộp mẫu hé lộ;
+- `document.title` trên Tổng quan và trên trang một đơn.
+
+Ảnh ở `.playwright-cli/shots/ui/v6-polish-admin/`. Xem tận mắt; mở lớp nổi rồi mới chụp.
 
 ## 3. Luật
 
-- Chỉ Edit/Write. Không commit. Không sửa mock.
+- Chỉ Edit/Write. Không commit. Không sửa mock. Không sửa `tools/`.
 - Lệnh nào bị hệ thống quyền chặn: đừng tìm đường vòng, ghi vào báo cáo.
 - Ghi DB thì chạy `reset_demo(demo_anchor())` sau đó. Không bấm "Đặt lại dữ liệu mẫu" trên UI. Không đọc `supabase/.env`.
 - Để 3200 chạy bản build cuối và để stack Supabase chạy khi xong.
@@ -166,5 +183,7 @@ Số dòng lấy theo lúc soát; sau B19 và lát R1 có thể đã lệch, nê
 
 - **Đã đổi:** tệp, kèm số đo trước và sau cho từng mục.
 - **Test đã sửa,** và lý do.
-- **Mốc sweep mới.**
+- **`impact`:** tóm tắt JSON, kèm nhận xét chỗ nó thừa hoặc thiếu so với những gì bạn biết về lát này.
+- **Sweep lọc:** kết quả `sweep:diff` cho vi và en; đường dẫn tới hai JSON chạy, để phiên chính thăng mốc.
+- **So ảnh trang đối chứng.**
 - **Chỗ lệch so với brief.**

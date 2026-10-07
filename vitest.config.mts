@@ -20,6 +20,9 @@ export default defineConfig({
     // `*.dbtest.ts` is deliberately NOT here. Those need a running Postgres,
     // and `npm test` has to stay runnable without Docker — they have their own
     // runner in `vitest.db.config.mts` (`npm run test:db`).
-    include: ["{data,lib,app,components,scripts}/**/*.test.ts"],
+    //
+    // `tools/` joined at round v6 tooling slice T1: the sweep's manifest, its
+    // generator, `impact.mjs` and the sweep diff are tested beside them.
+    include: ["{data,lib,app,components,scripts,tools}/**/*.test.ts"],
   },
 });
