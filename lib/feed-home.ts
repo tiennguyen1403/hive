@@ -302,6 +302,10 @@ export function footPayments(locale: Locale = "vi"): FootFact[] {
  * Vietnamese side. The English names are the glossary's ("FAQ", "Track an
  * order", "Size guide", "Contact"); the returns link counts its days as the
  * Vietnamese one does.
+ *
+ * A sixth since round v6 slice P, after "Liên hệ": "Quyền riêng tư" /
+ * "Privacy", the page Google's consent screen links to (QĐ-41). The mock has
+ * no such link; the user placed it (06/10/2026).
  */
 const FOOT_HELP_TEXT: readonly { label: Pair; href: string }[] = [
   { label: { vi: "Hỏi đáp", en: "FAQ" }, href: "/faq" },
@@ -309,6 +313,7 @@ const FOOT_HELP_TEXT: readonly { label: Pair; href: string }[] = [
   { label: { vi: "Tra cứu đơn", en: "Track an order" }, href: "/track" },
   { label: { vi: "Bảng size", en: "Size guide" }, href: "/size-guide" },
   { label: { vi: "Liên hệ", en: "Contact" }, href: "/contact" },
+  { label: { vi: "Quyền riêng tư", en: "Privacy" }, href: "/privacy" },
 ];
 
 /** The footer's help links in one language. */

@@ -169,21 +169,29 @@ describe("the footer", () => {
     ]);
   });
 
-  it("links the mock's five help pages in its order, Đổi trả to Hỏi đáp's return group (slice 4b)", () => {
-    expect(FOOT_HELP.map((h) => h.label)).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Tra cứu đơn", "Bảng size", "Liên hệ"]);
-    expect(FOOT_HELP.map((h) => h.href)).toEqual(["/faq", "/faq#doi-tra", "/track", "/size-guide", "/contact"]);
+  // Round v6 slice P added a sixth link, "Quyền riêng tư", after "Liên hệ" (the brief allowed this test to follow).
+  it("links the mock's five help pages in its order, Đổi trả to Hỏi đáp's return group (slice 4b), then Quyền riêng tư (v6 slice P)", () => {
+    expect(FOOT_HELP.map((h) => h.label)).toEqual([
+      "Hỏi đáp",
+      "Đổi trả 7 ngày",
+      "Tra cứu đơn",
+      "Bảng size",
+      "Liên hệ",
+      "Quyền riêng tư",
+    ]);
+    expect(FOOT_HELP.map((h) => h.href)).toEqual(["/faq", "/faq#doi-tra", "/track", "/size-guide", "/contact", "/privacy"]);
   });
 
   it("leaves out what a screen already carries, as the mock's data-foot-skip does", () => {
     const kept = (skip: string[]) => FOOT_HELP.filter((h) => !footSkipped(h.href, skip)).map((h) => h.label);
     // Hỏi đáp: every link to the page goes, its return group included.
-    expect(kept(["/faq"])).toEqual(["Tra cứu đơn", "Bảng size", "Liên hệ"]);
+    expect(kept(["/faq"])).toEqual(["Tra cứu đơn", "Bảng size", "Liên hệ", "Quyền riêng tư"]);
     // A style's page has its own "Đổi trả" row: only that one link goes.
-    expect(kept(["/faq#doi-tra"])).toEqual(["Hỏi đáp", "Tra cứu đơn", "Bảng size", "Liên hệ"]);
-    expect(kept(["/size-guide"])).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Tra cứu đơn", "Liên hệ"]);
-    expect(kept(["/track"])).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Bảng size", "Liên hệ"]);
-    expect(kept(["/contact"])).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Tra cứu đơn", "Bảng size"]);
-    expect(kept([])).toHaveLength(5);
+    expect(kept(["/faq#doi-tra"])).toEqual(["Hỏi đáp", "Tra cứu đơn", "Bảng size", "Liên hệ", "Quyền riêng tư"]);
+    expect(kept(["/size-guide"])).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Tra cứu đơn", "Liên hệ", "Quyền riêng tư"]);
+    expect(kept(["/track"])).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Bảng size", "Liên hệ", "Quyền riêng tư"]);
+    expect(kept(["/contact"])).toEqual(["Hỏi đáp", "Đổi trả 7 ngày", "Tra cứu đơn", "Bảng size", "Quyền riêng tư"]);
+    expect(kept([])).toHaveLength(6);
   });
 
   it("reads a link's page without its query or hash, and nothing that merely starts with it", () => {

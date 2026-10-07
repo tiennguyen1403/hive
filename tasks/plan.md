@@ -3795,3 +3795,23 @@ Google thật.
   - HTML và payload RSC không có tên đầy đủ hay Gmail thật.
 - **Ghi chú:** tài khoản Google này chỉ nằm trên DB cục bộ. Cục bộ không có cron, nên `real-accounts.dbtest.ts` sẽ xoá nó khi chạy
   `test:db`.
+
+**07/10, lát P ĐẠT (phiên chính quyết bốn điểm, agent sửa xong).** Brief `tasks/briefs/v6-lat-p.md`, agent `ui-implementer`. Người dùng cho
+commit rồi đưa cả phần Google lên demo.
+Sau sửa: 2.265 test xanh; chữ 0 lệch ở 8 trạng thái; 0 gạch ngang dài trong HTML; mọi trang khác trùng hẳn hoặc chỉ nhiễu; máy
+dò 8; sweep VI 110, EN 109 (`/privacy` 0). Phiên chính thêm vào `DESIGN.md` §1 khối CSS thứ tư ngoài mock và §9 quy tắc 2 cho
+khung giờ xoá.
+- **Đã dựng:** `/privacy` theo khung `/about`, chữ khớp 0 lệch với bản đã duyệt; link thứ sáu ở chân trang; 2.262 test xanh.
+- **Quyết định (phiên chính):**
+  - chân trang `/privacy` bỏ link tới chính nó, như mọi trang trợ giúp của mock;
+  - danh sách gạch đầu dòng: tối đa 62ch, 16px từ 900px, như Giới thiệu;
+  - "19:00–20:00" đổi thành dạng khoảng giờ của Feed "19:00-20:00" (`feedTight`), theo luật người dùng không dùng gạch ngang
+    dài. Đã ghi chú trong tệp chữ;
+  - khung giờ xoá lấy từ hằng trong `lib/`, có test đối chiếu cron trong `vercel.json` (DESIGN.md §9 quy tắc 2);
+  - ngày cập nhật 07/10/2026.
+- **Máy dò:** B16 thêm 6 lỗi màu ở `GoogleG.tsx`. Người dùng duyệt (07/10, AskUserQuestion) bỏ qua riêng tệp đó, riêng luật màu,
+  trong `.impeccable/config.json`; về 8.
+- **Phiên chính sửa:**
+  - `tools/layout-sweep.js`: thêm `/privacy`; nút chọn ảnh "Ảnh tro" đi qua `T()` (bản EN là "Photo tro");
+  - `DESIGN.md`: chân trang 6 link; chữ G của Google là ngoại lệ của luật logo đen trắng; nút Google đã bật; số máy dò.
+- **Để lượt rà cuối:** chân trang gọn ở 900 bản VI chỉ còn 8px trước khi link rớt xuống hàng hai.

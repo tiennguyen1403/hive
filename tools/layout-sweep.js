@@ -54,6 +54,7 @@ async (page) => {
     "/size-guide",
     "/about",
     "/contact",
+    "/privacy",
     "/returns",
     "/so/4",
     "/so/5",
@@ -635,7 +636,7 @@ async (page) => {
       await page.waitForTimeout(400);
       await page.getByRole("option", { name: "Áo khoác dù", exact: true }).click();
       await page.waitForTimeout(300);
-      await page.getByRole("dialog").getByRole("radio", { name: "Ảnh tro" }).click();
+      await page.getByRole("dialog").getByRole("radio", { name: T("Ảnh tro", "Photo tro") }).click();
     }],
     ["/admin/drops/04#rowmenu", "admin-drops-04-row-menu-1280", async () => {
       await page.getByRole("button", { name: T("Thao tác Số 04", "Actions for Drop 04"), exact: true }).click();

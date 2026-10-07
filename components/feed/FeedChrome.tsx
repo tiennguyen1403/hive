@@ -33,7 +33,8 @@ import { cx } from "./useReveal";
  * mock's `TAB_OF` has `track: "me"`); the 404 is "other", nothing lit.
  * Slice 4b adds Hỏi đáp, Bảng size and Liên hệ, which light Tôi as the mock's
  * `help`, `size-guide` and `contact` do, and Giới thiệu, which the mock has no
- * page for: nothing lit.
+ * page for: nothing lit. Round v6 slice P adds Quyền riêng tư, in Giới thiệu's
+ * frame and with no mock either: nothing lit.
  */
 export type FeedPage =
   | "home"
@@ -58,6 +59,7 @@ export type FeedPage =
   | "size-guide"
   | "contact"
   | "about"
+  | "privacy"
   | "other";
 
 /** The five tab bar destinations and the pages each one lights (`feed.js`: `TAB_OF`). */
@@ -84,6 +86,7 @@ const TAB_OF: Record<FeedPage, "home" | "search" | "fav" | "cart" | "me" | null>
   "size-guide": "me",
   contact: "me",
   about: null,
+  privacy: null,
   other: null,
 };
 
@@ -390,8 +393,9 @@ function FeedTabbar({ page }: { page: FeedPage }) {
 }
 
 /**
- * The footer: the logo, "Trợ giúp" — the mock's five help links, less the
- * ones the screen already carries (`footSkipped`) — and, unless `lite`,
+ * The footer: the logo, "Trợ giúp" — the mock's five help links and, since
+ * round v6 slice P, "Quyền riêng tư", less the ones the screen already
+ * carries (`footSkipped`) — and, unless `lite`,
  * "Giao hàng" and "Thanh toán", every figure from `lib/shipping.ts`
  * (`feed.js`: `footer`). In the page's language since round v6: the help
  * links, the delivery and payment rows come from `lib/feed-home.ts` in it,

@@ -419,7 +419,7 @@ adidas CONFIRMED, StockX, GOAT. Khu quản trị không mang North Star này: n�
 | Thứ | Ở đâu |
 |---|---|
 | Token Feed `--f-*` | `app/globals.css`, khối `[data-ui="feed"]` (và `--f-g` 32px từ 900px). Không ở `@theme`, không ở `:root` |
-| CSS Feed | `app/styles/feed/feed.css`, `flow.css`, `account.css`, `more.css` (4 tệp, 2.593 dòng). Mỗi tệp chép rule của tệp cùng tên trong mock, cùng thứ tự; ba khối ngoài mock có chú giải "Not in the mock" (nút đổi ngôn ngữ, cỡ `.b-issue-no` bản EN, Yêu thích 900–1250px) |
+| CSS Feed | `app/styles/feed/feed.css`, `flow.css`, `account.css`, `more.css` (4 tệp, 2.593 dòng). Mỗi tệp chép rule của tệp cùng tên trong mock, cùng thứ tự; bốn khối ngoài mock có chú giải "Not in the mock" (nút đổi ngôn ngữ, cỡ `.b-issue-no` bản EN, Yêu thích 900–1250px, bề rộng dòng `.b-qgroup > .details li` của trang Quyền riêng tư) |
 | Luật vùng | `app/styles/feed/scope.test.ts` |
 | Vùng và font | `components/feed/FeedScope.tsx` (`FEED_ZONE`, `feedFontClass`), `components/feed/font.ts` (`monaSans`) |
 | Khung trang | `components/feed/FeedFrame.tsx`, `FeedChrome.tsx`, `FeedMbar.tsx` |
@@ -944,7 +944,7 @@ Mã màn trong `components/admin-arc` không khai `z-index`. Lớp mới chọn 
 - **Tab đáy điện thoại** `.tabbar`: 5 mục Trang chủ, Tìm, Yêu thích, Giỏ, Tôi; nhãn 11px; mục đang mở icon đặc và chữ mực.
   Trang sản phẩm thay bằng thanh mua `.buybar`.
 - **Màn đẩy vào** có thanh riêng `.mbar` (`FeedMbar.tsx`): quay lại hoặc đóng, tiêu đề.
-- **Chân trang** `.foot`: 5 link (có "Bảng size"), nền `bg2`, chạm đáy cửa sổ ở trang ngắn.
+- **Chân trang** `.foot`: 6 link (có "Bảng size", và "Quyền riêng tư" từ đợt v6 lát P), nền `bg2`, chạm đáy cửa sổ ở trang ngắn.
 - **Tài khoản trên máy tính**: menu trái 220px `.acc-nav`.
 - **Nút đổi ngôn ngữ** `LangSwitch` (`FeedChrome.tsx`; CSS `.lang-form`, `.ib-lang` ở `feed.css`): ô `.ib` 44px đứng **đầu các
   icon** của thanh trên, in mã ngôn ngữ nó chuyển sang ("EN" khi trang là VI), 14px / 650; `aria-label` và `lang` là tên ngôn ngữ
@@ -1126,7 +1126,8 @@ Không có `lang` thì cả bốn y như Arc gốc. Chi tiết và test: `regist
 **2 · Mọi con số suy từ dữ liệu qua `lib/`.** Giá, tồn, đếm ngược, mốc giờ đơn, số trên chuông, "Còn 2" đều tính ở `lib/`
 (`lib/feed-*.ts`, catalogue, `demoNow()`), không gõ tay trong component. Quản trị: "Số NN" từ `currentIssueNo`, số đơn chờ
 từ `needsAction` (`lib/admin-metrics.ts`). Quản trị mang nhãn "Dữ liệu mẫu" ở thanh bên (`ArcSidebar`) và cạnh tiêu đề màn
-có số mẫu, không tắt được.
+có số mẫu, không tắt được. Trang Quyền riêng tư: khung giờ xoá hằng ngày lấy từ `lib/daily-reset.ts` (`dailyResetWindow`), test
+`lib/daily-reset.test.ts` đỏ nếu lịch `/api/reset` trong `vercel.json` đổi mà hằng không đổi; ngày cập nhật từ `lib/privacy.ts`.
 
 **3 · Không nút chết.** Nút làm được việc nó nói; nút vô hiệu ghi sự thật. Tính năng chưa có thì không vẽ nút (quên mật khẩu
 nói thật "Tính năng này đang chuẩn bị"; nhắc chỉ có kênh "Trong app"). Quản trị: tab chỉ có mẫu hé lộ ở bảng Mẫu không vẽ
@@ -1159,7 +1160,8 @@ thanh công cụ; nút và lỗi gọi tên thứ còn thiếu (hộp tạo số
 - **Don't** dùng đỏ cho gì khác ngoài lỗi, kể cả còn ít hay hết size.
 - **Don't** dùng tên `.sheetwrap`, `.menu3`, `.toast`, `.veil` hay tên utility Tailwind trong Feed.
 - **Don't** thêm vòng lặp chuyển động ngoài chip đang mở và khối đang tải.
-- **Don't** tô logo màu; logo là đen trắng.
+- **Don't** tô logo màu; logo là đen trắng. Chữ G trên nút "Tiếp tục với Google" không phải logo HIVE: đó là tài sản của Google,
+  giữ màu chuẩn theo luật thương hiệu của Google (QĐ-41, `components/feed/icon/GoogleG.tsx`).
 - **Don't** thêm phần marketing, tiêu đề giữa trên gradient, ba thẻ tính năng bằng nhau, khối chữ dài (`BRIEF.md`, *Not in this direction*).
 - **Don't** trộn token Feed vào vùng Arc hay token Arc vào Feed.
 - **Don't** chạy `shadcn init` hay để CLI ghi đè `registry/foundation.css`; cài item Arc bằng tay (§1).
@@ -1201,7 +1203,7 @@ thanh công cụ; nút và lỗi gọi tên thứ còn thiếu (hộp tạo số
 | Email bắt buộc khi đặt hàng | email tuỳ chọn (B8) | người dùng, lát 2, 27/09 |
 | Không tiết lộ email đã đăng ký (QĐ-15) | "Email này đã có tài khoản" | người dùng, lát 3a, 29/09 |
 | Mật khẩu có cả chữ và số | chỉ cần 8 ký tự | người dùng, lát 3a, 29/09 |
-| Nút tắt không icon | nút Google tắt vẫn có icon | người dùng, lát 3a, 29/09 |
+| Nút tắt không icon | nút Google tắt vẫn có icon (từ B16, 07/10, nút đã bật, chữ G màu chuẩn của Google) | người dùng, lát 3a, 29/09 |
 | Ví dụ theo dữ liệu thật | "VD: DH-1499" nguyên văn mock | người dùng, lát 3a, 29/09 |
 | Viền điều khiển ≥ 3:1 | công tắc tắt `#D5D7DC`, ~1,4:1 | người dùng, lát 3a, 29/09 |
 | Mật khẩu mới khác mật khẩu cũ | bỏ luật | người dùng, lát 3b, 30/09 |
@@ -1277,6 +1279,8 @@ EN; sweep chạy ở cả hai ngôn ngữ (hằng `LANG` và `T(vi, en)` trong `
   **8**, cùng bộ: `components/admin-arc` 2 (`design-system-radius`, góc đồng tâm của `ArcCountField`), `registry/foundation.css` 6
   (`design-system-color`, dải `--arc-gradient-*`). Feed 0. Từ 23 của đợt v5 xuống 8 vì `.impeccable/config.json` bỏ ba luật
   design-system ở `registry/components/**` (người dùng duyệt 01/10), không vì mã đổi. E4 và E5 cũng đo 8 trước, 8 sau.
+  B16 (07/10) thêm 6 `design-system-color` ở `components/feed/icon/GoogleG.tsx`: bốn màu chuẩn của Google, luật thương hiệu
+  của Google bắt giữ nguyên. Người dùng duyệt bỏ qua riêng tệp đó, riêng luật màu (07/10), nên lại về 8.
 
 Cách đo không đổi: `tools/layout-sweep.js` quét route × 390/1280 — console, tràn ngang, chữ < 11px, ảnh lệch tỉ lệ, phần tử bị
 cắt, con trỏ, vùng chạm bằng `elementFromPoint`; lớp nổi **mở ra rồi mới đo**; ảnh chụp so mock từng hộp trước khi ghi vào đây.

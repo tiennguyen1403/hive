@@ -169,6 +169,11 @@ describe("isFeedPath", () => {
     }
   });
 
+  it("is the privacy page since round v6 slice P, and nothing that merely starts with its name", () => {
+    for (const p of ["/privacy", "/privacy/"]) expect(isFeedPath(p), p).toBe(true);
+    for (const p of ["/privacyx", "/privacy-policy", "/privacy/more"]) expect(isFeedPath(p), p).toBe(false);
+  });
+
   it("is nothing that merely starts with a Feed route's name", () => {
     for (const p of [
       "/faqs",

@@ -160,13 +160,15 @@ describe("the footer in English", () => {
     ]);
   });
 
-  it("links the same five help pages, named as the glossary names them", () => {
+  // Round v6 slice P added "Privacy" after "Contact", as lib/feed-home.test.ts records for the Vietnamese side.
+  it("links the same help pages, named as the glossary names them", () => {
     expect(footHelp("en")).toEqual([
       { label: "FAQ", href: "/faq" },
       { label: "7-day returns", href: "/faq#doi-tra" },
       { label: "Track an order", href: "/track" },
       { label: "Size guide", href: "/size-guide" },
       { label: "Contact", href: "/contact" },
+      { label: "Privacy", href: "/privacy" },
     ]);
     expect(footHelp("vi")).toEqual(FOOT_HELP);
   });

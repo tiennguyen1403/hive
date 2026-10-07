@@ -65,7 +65,8 @@ export function isAdminPath(pathname: string): boolean {
  * and the guest lookup `/track`; since slice 4b Hỏi đáp `/faq`, Bảng size
  * `/size-guide`, Giới thiệu `/about`, Liên hệ `/contact`, and `/returns`,
  * which leads to Hỏi đáp's return group now. With 4b every shop screen is a
- * Feed screen; the back office has no veil.
+ * Feed screen; the back office has no veil. Round v6 slice P adds the privacy
+ * page `/privacy`, a Feed screen from the start.
  * The veil takes the logo's black-and-white colours (QĐ-33) when it covers
  * one of them or leads to one, and keeps the v3 honey only between two v3
  * screens.
@@ -94,6 +95,7 @@ const FEED_PATHS: readonly string[] = [
   "/about",
   "/contact",
   "/returns",
+  "/privacy",
 ];
 
 /**

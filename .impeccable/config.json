@@ -278,6 +278,15 @@
         ],
         "createdAt": "2026-10-01T06:57:35.006Z",
         "reason": "Người dùng duyệt 01/10/2026: ruột Arc (registry/components) dùng nguyên theo QĐ-37, không phải mã dự án viết; DESIGN.md §10 ghi các giá trị này là khiếm khuyết mang theo của Arc. Các luật khác (tương phản, chữ nhỏ…) vẫn chấm Arc."
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "components/feed/icon/GoogleG.tsx"
+        ],
+        "createdAt": "2026-10-07T04:48:19.845Z",
+        "reason": "Người dùng duyệt 07/10/2026: chữ G chính thức của Google trên nút \"Tiếp tục với Google\" phải giữ màu chuẩn theo luật thương hiệu của Google (QĐ-41); không phải màu của HIVE. Chỉ tệp này, chỉ luật màu."
       }
     ]
   }

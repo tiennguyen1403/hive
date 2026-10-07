@@ -63,7 +63,9 @@
    · `#fff` on a lit row is `--f-white`; the search mark's rgba stays as the
      mock writes it.
    Below them, one block the mock has no page for: Giới thiệu and Liên hệ keep
-   the words they had (QĐ-34) in Feed's type (`.b-read`, `.b-rules`). */
+   the words they had (QĐ-34) in Feed's type (`.b-read`, `.b-rules`). Round v6
+   slice P adds one rule for Quyền riêng tư `/privacy`, which has no mock
+   either: its lists at Giới thiệu's reading measure and size. */
 
 /* ── page frame ── */
 /* The page title; on a pushed screen the phone bar shows it once it has scrolled away. */
@@ -383,6 +385,12 @@
 [data-ui="feed"] .b-rule:first-child { border-top: 0; }
 [data-ui="feed"] .b-rule dt { font-size: 16px; font-weight: 620; line-height: 1.35; }
 [data-ui="feed"] .b-rule dd { margin-top: 4px; max-width: 62ch; font-size: 15px; line-height: 1.55; }
+/* ── Quyền riêng tư (round v6 slice P). Not in the mock: the page has none. Each part is a Hỏi đáp group holding the
+   product page's list (`.b-qgroup > .details`); the list keeps the reading measure of Giới thiệu's text (62ch, as
+   `.b-read p` and `.b-rule dd`) and, from 900px, its 16px. Unset, a line ran the group's 760px in 15px, about 100
+   characters, beside an opening sentence of 610px in 16px. Hỏi đáp's groups hold questions (`.b-qa`), never a
+   `.details`, and the product page's list sits in `.sect`, so no other screen meets the rule. ── */
+[data-ui="feed"] .b-qgroup > .details li { max-width: 62ch; }
 
 /* ── 404 ── */
 [data-ui="feed"] .b-nf { padding: 28px var(--f-g) 8px; }
@@ -533,6 +541,8 @@
   [data-ui="feed"] .b-rules { padding: 36px 0 4px; max-width: 760px; }
   [data-ui="feed"] .b-rule dt { font-size: 17px; }
   [data-ui="feed"] .b-rule dd { font-size: 16px; }
+  /* Quyền riêng tư (not in the mock): its lists at Giới thiệu's reading size, as `.b-read p` */
+  [data-ui="feed"] .b-qgroup > .details li { font-size: 16px; }
 
   /* 404 */
   [data-ui="feed"] .b-nf { padding: 56px 0 8px; }

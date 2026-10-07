@@ -71,4 +71,10 @@ describe("proxy.ts matcher", () => {
       expect(runs(url), url).toBe(true);
     }
   });
+
+  // Round v6 slice P. Google's consent screen links straight to /privacy (QĐ-41), and `getLocale()` reads only the
+  // cookie the proxy writes: a visitor's first page has to pass through it to come out in their language.
+  it("runs on the privacy page, the address Google's consent screen links to", () => {
+    for (const url of ["/privacy", "/privacy?lang=en"]) expect(runs(url), url).toBe(true);
+  });
 });
