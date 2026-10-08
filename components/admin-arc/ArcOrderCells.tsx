@@ -124,11 +124,12 @@ export function AmountCell({ text }: { text: string }) {
   return <span className={styles.nowrap}>{text}</span>;
 }
 
+/** When it was placed, "07:52 · 05/10": the clock first, as the back office writes every moment (round v6 slice R2). */
 export function PlacedCell({ order }: { order: Order }) {
   const locale = useLocale();
   return (
     <span className={`${styles.nowrap} ${styles.num}`}>
-      {dayMonth(order.placedAt, locale)} · {clockLabel(order.placedAt)}
+      {clockLabel(order.placedAt)} · {dayMonth(order.placedAt, locale)}
     </span>
   );
 }
@@ -136,10 +137,12 @@ export function PlacedCell({ order }: { order: Order }) {
 /**
  * How it is being paid, and where that stands: v3's `paymentCell`. COD says
  * "thu khi giao" and not the surcharge, which the stored total does not
- * contain. A card order waiting for its money reads as a transfer does, "Thẻ"
- * then "hạn …": its state beside it already says "Chờ trả thẻ" (slice B18; the
- * line "chờ chuyển khoản" it carried under "Thẻ" until then is gone). Every
- * line holds on one line, as in v3: "nhận 07:52 · 28/09" is one moment.
+ * contain. A paid order says when the money came, "nhận 07:52 · 28/09", one
+ * moment held on one line, as in v3. An order waiting for its money, by
+ * transfer or by card, says its way of paying alone: its deadline is under
+ * its state on the same row (`StatusCell`, "hạn 08:05 · 08/10"), so the line
+ * "hạn …" this cell carried until round v6 slice R2 (G4) is gone, as the line
+ * "chờ chuyển khoản" under "Thẻ" went at slice B18.
  */
 export function PaymentCell({ order }: { order: Order }) {
   const locale = useLocale();
@@ -160,16 +163,6 @@ export function PaymentCell({ order }: { order: Order }) {
       {/* The Vietnamese keeps its own markup, word and values in the text nodes
           they always were: split differently, the last glyph lands a fraction
           of a pixel elsewhere (round v6 slice E1's lesson). */}
-      {state.state === "AWAITING_TRANSFER" &&
-        (locale === "vi" ? (
-          <span className={`${styles.line} ${styles.num}`}>
-            hạn {clockLabel(state.dueAt)} · {dayMonth(state.dueAt)}
-          </span>
-        ) : (
-          <span className={`${styles.line} ${styles.num}`}>
-            due {clockLabel(state.dueAt)} · {dayMonth(state.dueAt, locale)}
-          </span>
-        ))}
       {state.state === "PAID" &&
         (locale === "vi" ? (
           <span className={`${styles.line} ${styles.num}`}>

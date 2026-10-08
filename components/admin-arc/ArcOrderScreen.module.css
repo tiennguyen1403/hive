@@ -177,13 +177,10 @@
   object-fit: cover;
 }
 
+/* The kind under it is the order book's `.line` (round v6 slice R2). */
 .itemName {
   font-weight: 500;
   white-space: nowrap;
-}
-
-.itemKind {
-  color: var(--text-secondary);
 }
 
 .nowrap {

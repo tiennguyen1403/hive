@@ -38,7 +38,7 @@ import {
   type CatalogMove,
 } from "@/lib/catalog-admin";
 import { demoNow } from "@/lib/clock";
-import { dateTimeLabel, dayMonthYear, toVnIso } from "@/lib/datetime";
+import { dayMonthYear, momentLabel, toVnIso } from "@/lib/datetime";
 import { loadCatalog } from "@/lib/db/catalog";
 import type { Json } from "@/lib/db/database.types";
 import {
@@ -430,8 +430,9 @@ export async function closeDropNow(no: unknown): Promise<ActionState> {
   catalogMoved();
   return done(
     picker(locale)({
-      vi: `Đã đóng ${LEX.tl} ${issueNo(n)} lúc ${dateTimeLabel(at)} · đã lưu`,
-      en: `${issueLabel(n, "en")} closed at ${dateTimeLabel(at, "en")} · saved`,
+      // The moment "giờ · ngày", as the back office writes every moment (round v6 slice R2).
+      vi: `Đã đóng ${LEX.tl} ${issueNo(n)} lúc ${momentLabel(at)} · đã lưu`,
+      en: `${issueLabel(n, "en")} closed at ${momentLabel(at, "en")} · saved`,
     }),
   );
 }
@@ -524,7 +525,7 @@ export async function editPromo(code: unknown, draft: unknown): Promise<ActionSt
   if (!read.ok) return refused(read.error);
   if (read.value.code !== key) {
     return refused(t({
-      vi: "Mã không đổi được — dùng “Nhân bản” để tạo mã mới.",
+      vi: "Mã không đổi được. Dùng “Nhân bản” để tạo mã mới.",
       en: "The code itself can't change. Use “Duplicate” to make a new one.",
     }));
   }
@@ -936,7 +937,7 @@ export async function removeUploadedPhoto(key: unknown): Promise<ActionState> {
   if (!isUploadedKey(key)) return failed("UPLOAD_PHOTO", "BAD_INPUT", "", locale);
   if (await photoKeyInUse(key)) {
     return refused(t({
-      vi: "Ảnh này đang dùng cho một mẫu — giữ lại, không xoá.",
+      vi: "Ảnh này đang dùng cho một mẫu, nên được giữ lại.",
       en: "This photo is in use on a style, so it stays.",
     }));
   }

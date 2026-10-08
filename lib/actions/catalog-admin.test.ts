@@ -175,6 +175,8 @@ describe("closeDropNow · 'Đóng sớm'", () => {
       p_now: NOW,
     });
     expect(answer.ok).toBe(true);
+    // The moment as the back office writes every moment, "giờ · ngày" (round v6 slice R2).
+    expect(answer.message).toBe("Đã đóng số 05 lúc 10:00 · 21/09 · đã lưu");
     // Số 06, still selling beside it, is not touched.
     expect(rpc).toHaveBeenCalledTimes(1);
   });
@@ -234,7 +236,7 @@ describe("addDrop · 'Tạo số' in the order of the numbers (slice B14b)", () 
   it("keeps 'the number is taken' for a NOT_ALLOWED with nothing in DETAIL", async () => {
     rpc.mockResolvedValue(refusal(null, null));
     const answer = await addDrop(7, six.closesAt, at20("10-30"));
-    expect(answer).toEqual({ errors: { form: "Số 07 đã có — tải lại trang để lấy số kế tiếp." } });
+    expect(answer).toEqual({ errors: { form: "Số 07 đã có. Tải lại trang để lấy số kế tiếp." } });
   });
 });
 
@@ -301,7 +303,7 @@ describe("scheduleDrop · 'Sửa giờ' in the order of the numbers (slice B14b)
     // A HINT nobody wrote is not read as a calendar refusal.
     rpc.mockResolvedValue(refusal("5", "SIDEWAYS"));
     expect((await scheduleDrop(6, at20("10-03"), at20("10-17"))).errors.form).toBe(
-      "Thao tác này không còn làm được — tải lại trang để xem.",
+      "Thao tác này không còn làm được. Tải lại trang để xem.",
     );
     expect(revalidatePath).not.toHaveBeenCalled();
   });

@@ -118,7 +118,7 @@ export function ArcHandoverForm({
       </div>
       <Input
         label={t({ vi: "Ghi chú nội bộ khi bàn giao · không bắt buộc", en: "Internal note on handover · optional" })}
-        placeholder={t({ vi: "VD: gửi 2 kiện", en: "E.g. sent as 2 parcels" })}
+        placeholder={t({ vi: "VD: gửi 2 kiện", en: "e.g. sent as 2 parcels" })}
         value={note}
         // What is being typed, said in Vietnamese on an English page when it is (as the order's note).
         lang={storedLang(note, locale)}

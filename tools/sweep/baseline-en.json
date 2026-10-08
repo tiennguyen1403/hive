@@ -1,6 +1,6 @@
 {
- "routes": 153,
- "totalFindings": 25,
+ "routes": 232,
+ "totalFindings": 50,
  "byDetector": {
   "inlineBox": 0,
   "ratioSpread": 0,
@@ -8,7 +8,7 @@
   "arrowCursor": 0,
   "clipped": 0,
   "smallTarget": 0,
-  "tinyText": 25,
+  "tinyText": 50,
   "horizontalOverflow": 0
  },
  "consoleErrors": [
@@ -30,6 +30,16 @@
   {
    "at": "so-999-1280",
    "url": "http://127.0.0.1:3200/so/999",
+   "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+   "at": "admin-drops-99-1280",
+   "url": "http://127.0.0.1:3200/admin/drops/99",
+   "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  },
+  {
+   "at": "admin-drops-99-1440",
+   "url": "http://127.0.0.1:3200/admin/drops/99",
    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
   }
  ],
@@ -201,6 +211,196 @@
    "route": "/admin/customers#rowmenu",
    "width": 1280,
    "name": "admin-customers-row-menu-1280",
+   "status": 200,
+   "landedOn": "/admin/customers",
+   "findings": {
+    "inlineBox": [],
+    "ratioSpread": [],
+    "loneButton": [],
+    "arrowCursor": [],
+    "clipped": [],
+    "smallTarget": [],
+    "tinyText": [
+     {
+      "el": "span \"TA\"",
+      "size": 10
+     },
+     {
+      "el": "span \"LN\"",
+      "size": 10
+     },
+     {
+      "el": "span \"PH\"",
+      "size": 10
+     },
+     {
+      "el": "span \"VD\"",
+      "size": 10
+     },
+     {
+      "el": "span \"NV\"",
+      "size": 10
+     },
+     {
+      "el": "span \"ĐB\"",
+      "size": 10
+     }
+    ],
+    "horizontalOverflow": null
+   }
+  },
+  {
+   "route": "/admin/orders",
+   "width": 1440,
+   "name": "admin-orders-1440",
+   "status": 200,
+   "landedOn": "/admin/orders",
+   "findings": {
+    "inlineBox": [],
+    "ratioSpread": [],
+    "loneButton": [],
+    "arrowCursor": [],
+    "clipped": [],
+    "smallTarget": [],
+    "tinyText": [
+     {
+      "el": "span \"NV\"",
+      "size": 10
+     },
+     {
+      "el": "span \"TA\"",
+      "size": 10
+     },
+     {
+      "el": "span \"HL\"",
+      "size": 10
+     },
+     {
+      "el": "span \"VD\"",
+      "size": 10
+     },
+     {
+      "el": "span \"PH\"",
+      "size": 10
+     },
+     {
+      "el": "span \"BT\"",
+      "size": 10
+     }
+    ],
+    "horizontalOverflow": null
+   }
+  },
+  {
+   "route": "/admin/customers",
+   "width": 1440,
+   "name": "admin-customers-1440",
+   "status": 200,
+   "landedOn": "/admin/customers",
+   "findings": {
+    "inlineBox": [],
+    "ratioSpread": [],
+    "loneButton": [],
+    "arrowCursor": [],
+    "clipped": [],
+    "smallTarget": [],
+    "tinyText": [
+     {
+      "el": "span \"TA\"",
+      "size": 10
+     },
+     {
+      "el": "span \"LN\"",
+      "size": 10
+     },
+     {
+      "el": "span \"PH\"",
+      "size": 10
+     },
+     {
+      "el": "span \"VD\"",
+      "size": 10
+     },
+     {
+      "el": "span \"NV\"",
+      "size": 10
+     },
+     {
+      "el": "span \"ĐB\"",
+      "size": 10
+     }
+    ],
+    "horizontalOverflow": null
+   }
+  },
+  {
+   "route": "/admin/customers?group=loyal",
+   "width": 1440,
+   "name": "admin-customers-group-loyal-1440",
+   "status": 200,
+   "landedOn": "/admin/customers",
+   "findings": {
+    "inlineBox": [],
+    "ratioSpread": [],
+    "loneButton": [],
+    "arrowCursor": [],
+    "clipped": [],
+    "smallTarget": [],
+    "tinyText": [
+     {
+      "el": "span \"LN\"",
+      "size": 10
+     }
+    ],
+    "horizontalOverflow": null
+   }
+  },
+  {
+   "route": "/admin/orders#rowmenu",
+   "width": 1440,
+   "name": "admin-orders-row-menu-1440",
+   "status": 200,
+   "landedOn": "/admin/orders",
+   "findings": {
+    "inlineBox": [],
+    "ratioSpread": [],
+    "loneButton": [],
+    "arrowCursor": [],
+    "clipped": [],
+    "smallTarget": [],
+    "tinyText": [
+     {
+      "el": "span \"NV\"",
+      "size": 10
+     },
+     {
+      "el": "span \"TA\"",
+      "size": 10
+     },
+     {
+      "el": "span \"HL\"",
+      "size": 10
+     },
+     {
+      "el": "span \"VD\"",
+      "size": 10
+     },
+     {
+      "el": "span \"PH\"",
+      "size": 10
+     },
+     {
+      "el": "span \"BT\"",
+      "size": 10
+     }
+    ],
+    "horizontalOverflow": null
+   }
+  },
+  {
+   "route": "/admin/customers#rowmenu",
+   "width": 1440,
+   "name": "admin-customers-row-menu-1440",
    "status": 200,
    "landedOn": "/admin/customers",
    "findings": {
@@ -967,7 +1167,7 @@
    "name": "admin-drops-99-1280",
    "route": "/admin/drops/99",
    "width": 1280,
-   "status": 200,
+   "status": 404,
    "landedOn": "/admin/drops/99"
   },
   {
@@ -1312,23 +1512,562 @@
    "width": 1280,
    "status": 200,
    "landedOn": "/order-confirmed/DH-2430"
+  },
+  {
+   "name": "admin-1440",
+   "route": "/admin",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin"
+  },
+  {
+   "name": "admin-orders-1440",
+   "route": "/admin/orders",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders"
+  },
+  {
+   "name": "admin-orders-DH-2429-1440",
+   "route": "/admin/orders/DH-2429",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2429"
+  },
+  {
+   "name": "admin-orders-DH-2430-1440",
+   "route": "/admin/orders/DH-2430",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2430"
+  },
+  {
+   "name": "admin-orders-DH-2418-1440",
+   "route": "/admin/orders/DH-2418",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2418"
+  },
+  {
+   "name": "admin-drops-1440",
+   "route": "/admin/drops",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops"
+  },
+  {
+   "name": "admin-drops-05-1440",
+   "route": "/admin/drops/05",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops/05"
+  },
+  {
+   "name": "admin-promotions-1440",
+   "route": "/admin/promotions",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/promotions"
+  },
+  {
+   "name": "admin-products-1440",
+   "route": "/admin/products",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-drop-5-1440",
+   "route": "/admin/products?drop=5",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-new-1440",
+   "route": "/admin/products/new",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/new"
+  },
+  {
+   "name": "admin-products-p-khoi-1440",
+   "route": "/admin/products/p-khoi",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/p-khoi"
+  },
+  {
+   "name": "admin-products-p-ao-thun-tron-1440",
+   "route": "/admin/products/p-ao-thun-tron",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/p-ao-thun-tron"
+  },
+  {
+   "name": "admin-customers-1440",
+   "route": "/admin/customers",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/customers"
+  },
+  {
+   "name": "admin-customers-c-minhanh-1440",
+   "route": "/admin/customers/c-minhanh",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/customers/c-minhanh"
+  },
+  {
+   "name": "admin-slips-codes-DH-2429-1440",
+   "route": "/admin/slips?codes=DH-2429",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/slips"
+  },
+  {
+   "name": "admin-slips-codes-DH-2429,DH-2428,DH-2423,DH-2426-1440",
+   "route": "/admin/slips?codes=DH-2429,DH-2428,DH-2423,DH-2426",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/slips"
+  },
+  {
+   "name": "admin-slips-codes-DH-9999-1440",
+   "route": "/admin/slips?codes=DH-9999",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/slips"
+  },
+  {
+   "name": "admin-log-1440",
+   "route": "/admin/log",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/log"
+  },
+  {
+   "name": "admin-days-7-1440",
+   "route": "/admin?days=7",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin"
+  },
+  {
+   "name": "admin-days-30-1440",
+   "route": "/admin?days=30",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin"
+  },
+  {
+   "name": "admin-log-kind-order-1440",
+   "route": "/admin/log?kind=order",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/log"
+  },
+  {
+   "name": "admin-log-today-1-1440",
+   "route": "/admin/log?today=1",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/log"
+  },
+  {
+   "name": "admin-log-q-zzz-1440",
+   "route": "/admin/log?q=zzz",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/log"
+  },
+  {
+   "name": "admin-customers-group-loyal-1440",
+   "route": "/admin/customers?group=loyal",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/customers"
+  },
+  {
+   "name": "admin-customers-q-zzz-1440",
+   "route": "/admin/customers?q=zzz",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/customers"
+  },
+  {
+   "name": "admin-customers-c-namle-1440",
+   "route": "/admin/customers/c-namle",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/customers/c-namle"
+  },
+  {
+   "name": "admin-promotions-state-ENDED-1440",
+   "route": "/admin/promotions?state=ENDED",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/promotions"
+  },
+  {
+   "name": "admin-promotions-state-PAUSED-1440",
+   "route": "/admin/promotions?state=PAUSED",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/promotions"
+  },
+  {
+   "name": "admin-drops-04-1440",
+   "route": "/admin/drops/04",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops/04"
+  },
+  {
+   "name": "admin-drops-06-1440",
+   "route": "/admin/drops/06",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops/06"
+  },
+  {
+   "name": "admin-drops-99-1440",
+   "route": "/admin/drops/99",
+   "width": 1440,
+   "status": 404,
+   "landedOn": "/admin/drops/99"
+  },
+  {
+   "name": "admin-products-drop-6-1440",
+   "route": "/admin/products?drop=6",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-drop-4-1440",
+   "route": "/admin/products?drop=4",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-fixed-1&gone-1-1440",
+   "route": "/admin/products?fixed=1&gone=1",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-drop-5&q-zzz-1440",
+   "route": "/admin/products?drop=5&q=zzz",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-drop-99-1440",
+   "route": "/admin/products?drop=99",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-order-more-menu-1440",
+   "route": "/admin/orders/DH-2429#more",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2429"
+  },
+  {
+   "name": "admin-order-cancel-sheet-1440",
+   "route": "/admin/orders/DH-2429#cancel",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2429"
+  },
+  {
+   "name": "admin-order-handover-1440",
+   "route": "/admin/orders/DH-2429#handover",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2429"
+  },
+  {
+   "name": "admin-order-carrier-select-1440",
+   "route": "/admin/orders/DH-2429#carrier",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2429"
+  },
+  {
+   "name": "admin-order-address-form-1440",
+   "route": "/admin/orders/DH-2431#address",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2431"
+  },
+  {
+   "name": "admin-order-address-province-1440",
+   "route": "/admin/orders/DH-2431#province",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2431"
+  },
+  {
+   "name": "admin-order-address-ward-1440",
+   "route": "/admin/orders/DH-2431#ward",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders/DH-2431"
+  },
+  {
+   "name": "admin-orders-row-menu-1440",
+   "route": "/admin/orders#rowmenu",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/orders"
+  },
+  {
+   "name": "admin-reset-sheet-1440",
+   "route": "/admin#reset",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin"
+  },
+  {
+   "name": "admin-overview-day-table-1440",
+   "route": "/admin#days",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin"
+  },
+  {
+   "name": "admin-log-filter-fields-1440",
+   "route": "/admin/log#filter",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/log"
+  },
+  {
+   "name": "admin-log-filter-values-1440",
+   "route": "/admin/log#filter-values",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/log"
+  },
+  {
+   "name": "admin-products-row-menu-1440",
+   "route": "/admin/products#rowmenu",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-restock-sheet-1440",
+   "route": "/admin/products#restock",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-so05-row-menu-1440",
+   "route": "/admin/products?drop=5#rowmenu",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-adjust-sheet-1440",
+   "route": "/admin/products?drop=5#adjust",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-filter-fields-1440",
+   "route": "/admin/products?drop=5#filter",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-filter-values-1440",
+   "route": "/admin/products?drop=5#filter-values",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-adjust-ready-1440",
+   "route": "/admin/products?drop=5#adjust-ready",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-products-adjust-fixed-1440",
+   "route": "/admin/products#adjust-fixed",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products"
+  },
+  {
+   "name": "admin-drops-row-menu-1440",
+   "route": "/admin/drops#rowmenu",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops"
+  },
+  {
+   "name": "admin-drops-create-sheet-1440",
+   "route": "/admin/drops#create",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops"
+  },
+  {
+   "name": "admin-drops-edit-sheet-1440",
+   "route": "/admin/drops#edit",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops"
+  },
+  {
+   "name": "admin-drops-close-sheet-1440",
+   "route": "/admin/drops#close",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops"
+  },
+  {
+   "name": "admin-drops-teaser-sheet-1440",
+   "route": "/admin/drops/05#teaser",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops/05"
+  },
+  {
+   "name": "admin-drops-create-backwards-1440",
+   "route": "/admin/drops#create-backwards",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops"
+  },
+  {
+   "name": "admin-drops-close-detail-1440",
+   "route": "/admin/drops/05#close-detail",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops/05"
+  },
+  {
+   "name": "admin-drops-teaser-ready-1440",
+   "route": "/admin/drops/05#teaser-ready",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops/05"
+  },
+  {
+   "name": "admin-drops-04-row-menu-1440",
+   "route": "/admin/drops/04#rowmenu",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/drops/04"
+  },
+  {
+   "name": "admin-promotions-row-menu-1440",
+   "route": "/admin/promotions#rowmenu",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/promotions"
+  },
+  {
+   "name": "admin-promotions-create-drawer-1440",
+   "route": "/admin/promotions#create-arc",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/promotions"
+  },
+  {
+   "name": "admin-promotions-edit-drawer-1440",
+   "route": "/admin/promotions#edit-arc",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/promotions"
+  },
+  {
+   "name": "admin-promotions-create-error-1440",
+   "route": "/admin/promotions#error-arc",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/promotions"
+  },
+  {
+   "name": "admin-customers-row-menu-1440",
+   "route": "/admin/customers#rowmenu",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/customers"
+  },
+  {
+   "name": "admin-product-new-issue-menu-1440",
+   "route": "/admin/products/new#issue-menu",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/new"
+  },
+  {
+   "name": "admin-product-new-fixed-1440",
+   "route": "/admin/products/new#fixed",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/new"
+  },
+  {
+   "name": "admin-product-form-kind-menu-1440",
+   "route": "/admin/products/p-khoi#kind",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/p-khoi"
+  },
+  {
+   "name": "admin-product-new-crop-sheet-1440",
+   "route": "/admin/products/new#crop",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/new"
+  },
+  {
+   "name": "admin-product-new-photopick-1440",
+   "route": "/admin/products/new#photopick",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/new"
+  },
+  {
+   "name": "admin-product-edit-photopick-1440",
+   "route": "/admin/products/p-khoi#photopick",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/p-khoi"
+  },
+  {
+   "name": "admin-product-new-colours-1440",
+   "route": "/admin/products/new#colours",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/new"
+  },
+  {
+   "name": "admin-product-fixed-photopick-1440",
+   "route": "/admin/products/p-ao-thun-tron#photopick",
+   "width": 1440,
+   "status": 200,
+   "landedOn": "/admin/products/p-ao-thun-tron"
   }
  ],
  "volatile": {
-  "home-390": [
-   [
-    16,
-    543,
-    189,
-    34
-   ],
-   [
-    81,
-    3457,
-    192,
-    32
-   ]
-  ],
   "so-4-390": [
    [
     80,
@@ -1359,28 +2098,6 @@
     1062,
     166,
     28
-   ]
-  ],
-  "account-orders-DH-2430-390": [
-   [
-    34,
-    270,
-    151,
-    50
-   ]
-  ],
-  "home-1280": [
-   [
-    589,
-    620,
-    272,
-    49
-   ],
-   [
-    366,
-    2375,
-    303,
-    51
    ]
   ],
   "so-4-1280": [
@@ -1415,14 +2132,6 @@
     28
    ]
   ],
-  "account-orders-DH-2430-1280": [
-   [
-    338,
-    335,
-    151,
-    49
-   ]
-  ],
   "order-confirmed-DH-2430-390": [
    [
     16,
@@ -1437,6 +2146,50 @@
     642,
     196,
     85
+   ]
+  ],
+  "home-390": [
+   [
+    16,
+    563,
+    189,
+    35
+   ],
+   [
+    81,
+    3552,
+    192,
+    33
+   ]
+  ],
+  "account-orders-DH-2430-390": [
+   [
+    34,
+    270,
+    151,
+    50
+   ]
+  ],
+  "home-1280": [
+   [
+    589,
+    620,
+    272,
+    49
+   ],
+   [
+    366,
+    2375,
+    303,
+    51
+   ]
+  ],
+  "account-orders-DH-2430-1280": [
+   [
+    338,
+    335,
+    151,
+    49
    ]
   ]
  },
@@ -1455,6 +2208,10 @@
    {
     "label": "receipt",
     "entries": 2
+   },
+   {
+    "label": "r2",
+    "entries": 168
    }
   ]
  }

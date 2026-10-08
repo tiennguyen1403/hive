@@ -113,8 +113,9 @@ describe("orderNote", () => {
       testOrder({ state: "AWAITING_TRANSFER", dueAt: "2026-09-21T08:05:00+07:00" }),
       NOW,
     )!;
-    // The hour and the day never part (v3 slice 13): a no-break space.
-    expect(soon.text).toBe("hạn 08:05\u00a021/09");
+    // The back office's one way of writing a moment, "giờ · ngày" (round v6
+    // slice R2, G3); the status cell holds it on one line.
+    expect(soon.text).toBe("hạn 08:05 · 21/09");
     expect(soon.late).toBe(false);
 
     const past = orderNote(
@@ -238,7 +239,7 @@ describe("queueRows", () => {
     expect(rows.map((r) => r.code)).toEqual(["DH-2432"]);
     const [c1] = rows;
     expect(c1).toMatchObject({ code: "DH-2432", action: "HAND_OVER", late: true, due: "3\u00a0ngày" });
-    expect(c1!.standing).toBe("Đã nhận đơn 09:00 17/09 · COD, thu khi giao");
+    expect(c1!.standing).toBe("Đã nhận đơn 09:00 · 17/09 · COD, thu khi giao");
     expect(c1!.customer).toBe(base.owner!.name);
   });
 
@@ -260,6 +261,12 @@ describe("queueRows", () => {
   it("marks only a paid order that has waited too long", () => {
     const rows = queueRows(FIXTURE_CATALOG, BOOK, NOW).filter((r) => r.action === "HAND_OVER");
     for (const r of rows) expect(r.due === null).toBe(!r.late);
+  });
+
+  it("writes a deadline and a payment as every back-office moment is written, \"giờ · ngày\" (round v6 slice R2, G1 and G2)", () => {
+    const rows = queueRows(FIXTURE_CATALOG, BOOK, NOW);
+    expect(rows.find((r) => r.code === "DH-2431")!.due).toBe("hạn 08:05 · 22/09");
+    expect(rows.find((r) => r.code === "DH-2427")!.standing).toBe("Đã thanh toán 20:41 · 17/09 · chưa bàn giao");
   });
 });
 

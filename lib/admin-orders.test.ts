@@ -152,13 +152,13 @@ describe("what went wrong", () => {
 
   it("says which order and what to do, move by move", () => {
     expect(adminFailureMessage("MARK_PAID", "NOT_ALLOWED", "DH-2430")).toBe(
-      "DH-2430 không còn chờ tiền — tải lại trang để xem trạng thái mới.",
+      "DH-2430 không còn chờ tiền. Tải lại trang để xem trạng thái mới.",
     );
     expect(adminFailureMessage("CANCEL", "NOT_ALLOWED", "DH-2422")).toContain("không huỷ được nữa");
     expect(adminFailureMessage("HAND_OVER", "BAD_INPUT")).toContain("Mã vận đơn");
     expect(adminFailureMessage("NOTE", "NOT_FOUND", "DH-9999")).toBe("Không tìm thấy đơn DH-9999.");
     expect(adminFailureMessage("RESET", "NOT_FOUND")).toBe("Không tìm thấy đơn này.");
-    expect(adminFailureMessage("RESET", "NOT_ADMIN")).toContain("đăng nhập lại");
+    expect(adminFailureMessage("RESET", "NOT_ADMIN")).toContain(". Đăng nhập lại");
     expect(adminFailureMessage("EDIT_ADDRESS", "UNAVAILABLE")).toBe("Chưa lưu được. Thử lại sau ít phút.");
   });
 

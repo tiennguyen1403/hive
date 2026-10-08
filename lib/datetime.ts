@@ -84,6 +84,19 @@ export function dateTimeLabel(iso: string, locale: Locale = "vi"): string {
   return locale === "en" ? `${p.hour}:${p.minute}, ${dayMonthEn(p)}` : `${p.hour}:${p.minute} ngày ${p.day}/${p.month}`;
 }
 
+/**
+ * `"08:05 · 08/10"` — a moment as the back office writes every moment: the
+ * clock, a middle dot, the day; in English `"08:05 · 8 Oct"`. One way for the
+ * whole back office since round v6 slice R2 (F6, the user's G1–G4), the way the
+ * order book already wrote a payment ("nhận 07:52 · 05/10"). The shop keeps
+ * `dateTimeLabel`. Empty string when the input is not a timestamp.
+ */
+export function momentLabel(iso: string, locale: Locale = "vi"): string {
+  const p = partsOf(iso);
+  if (!p) return "";
+  return `${p.hour}:${p.minute} · ${locale === "en" ? dayMonthEn(p) : `${p.day}/${p.month}`}`;
+}
+
 // ────────────────────────────────────────── which day of the week that is
 /**
  * The seven days, as this language writes them.

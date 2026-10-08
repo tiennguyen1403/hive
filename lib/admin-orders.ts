@@ -238,7 +238,7 @@ export function adminFailureMessage(move: AdminMove, failure: AdminFailure, code
   switch (failure) {
     case "NOT_ADMIN":
       return t({
-        vi: "Phiên quản trị đã hết — đăng nhập lại bằng tài khoản quản trị.",
+        vi: "Phiên quản trị đã hết. Đăng nhập lại bằng tài khoản quản trị.",
         en: "Your admin session has ended. Sign in again with an admin account.",
       });
     case "NOT_FOUND":
@@ -249,17 +249,17 @@ export function adminFailureMessage(move: AdminMove, failure: AdminFailure, code
       switch (move) {
         case "MARK_PAID":
           return t({
-            vi: `${code} không còn chờ tiền — tải lại trang để xem trạng thái mới.`,
+            vi: `${code} không còn chờ tiền. Tải lại trang để xem trạng thái mới.`,
             en: `${code} is no longer awaiting payment. Reload the page to see its status.`,
           });
         case "HAND_OVER":
           return t({
-            vi: `${code} chưa bàn giao được ở trạng thái này — tải lại trang để xem.`,
+            vi: `${code} chưa bàn giao được ở trạng thái này. Tải lại trang để xem.`,
             en: `${code} can't be handed over in this state. Reload the page to check.`,
           });
         case "MARK_DELIVERED":
           return t({
-            vi: `${code} không còn ở bước đang giao — tải lại trang để xem.`,
+            vi: `${code} không còn ở bước đang giao. Tải lại trang để xem.`,
             en: `${code} is no longer shipping. Reload the page to check.`,
           });
         case "CANCEL":
@@ -274,7 +274,7 @@ export function adminFailureMessage(move: AdminMove, failure: AdminFailure, code
           });
         default:
           return t({
-            vi: "Thao tác này không còn làm được — tải lại trang để xem.",
+            vi: "Thao tác này không còn làm được. Tải lại trang để xem.",
             en: "This can no longer be done. Reload the page to check.",
           });
       }
@@ -289,12 +289,12 @@ export function adminFailureMessage(move: AdminMove, failure: AdminFailure, code
           return t({ vi: "Chọn một lý do trước khi huỷ.", en: "Choose a reason before cancelling." });
         case "NOTE":
           return t({
-            vi: "Ghi chú trống hoặc quá dài — tối đa 500 ký tự.",
+            vi: "Ghi chú trống hoặc quá dài: tối đa 500 ký tự.",
             en: "The note is empty or longer than 500 characters.",
           });
         case "EDIT_ADDRESS":
           return t({
-            vi: "Địa chỉ chưa đủ hoặc số điện thoại chưa đúng — kiểm lại các ô.",
+            vi: "Địa chỉ chưa đủ hoặc số điện thoại chưa đúng. Kiểm lại các ô.",
             en: "The address is incomplete or the phone number is wrong. Check the fields.",
           });
         default:

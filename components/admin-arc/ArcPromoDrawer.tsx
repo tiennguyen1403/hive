@@ -193,7 +193,7 @@ function PromoForm({
     if (!clean) {
       return refuse({
         code: {
-          vi: "Nhập mã — đây là thứ khách gõ ở ô giảm giá.",
+          vi: "Nhập mã. Đây là thứ khách gõ ở ô giảm giá.",
           en: "Enter the code. It's what shoppers type in the discount box.",
         },
       });
@@ -274,7 +274,7 @@ function PromoForm({
           description={
             promo
               ? t({
-                  vi: "Mã không đổi được sau khi tạo — dùng Nhân bản để có mã mới.",
+                  vi: "Mã không đổi được sau khi tạo. Dùng Nhân bản để có mã mới.",
                   en: "A code can't change once created. Use Duplicate for a new one.",
                 })
               : undefined

@@ -21,7 +21,8 @@ describe("timelineOf", () => {
     expect(m.map((x) => x.title)).toEqual(["Đã nhận đơn", "Chờ chuyển khoản", "Chờ bàn giao", "Đang giao", "Đã giao"]);
     expect(m.map((x) => x.state)).toEqual(["now", "todo", "todo", "todo", "todo"]);
     expect(m[0]!.detail).toBe("19:50 · 20/09");
-    expect(m[1]!.detail).toBe("hạn 07:50 ngày 23/09");
+    // Written as every back-office moment is, "giờ · ngày" (round v6 slice R2).
+    expect(m[1]!.detail).toBe("hạn 07:50 · 23/09");
   });
 
   it("turns handover red at the shop's own promise", () => {

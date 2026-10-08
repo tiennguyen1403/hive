@@ -5,6 +5,7 @@ import {
   fixedCounts,
   fixedRows,
   fixedStatus,
+  kindSaysFit,
   lowNote,
   productsTab,
   stylesLine,
@@ -46,6 +47,28 @@ describe("lowNote · the red line under a fixed style's stock (v3 slice 12)", ()
 
   it("is only for a fixed style: an issue's style has its own rule", () => {
     expect(lowNote(catalog.byId.get(productId("p-khoi"))!)).toBeNull();
+  });
+});
+
+describe("kindSaysFit · the 'Loại · form' column says the fit once (round v6 slice R2, G5)", () => {
+  it("finds the fit already in the kind's name, in either language", () => {
+    expect(kindSaysFit("Áo thun oversize", "oversize")).toBe(true);
+    expect(kindSaysFit("Oversized tee", "oversized")).toBe(true);
+  });
+
+  it("compares without marks or case", () => {
+    expect(kindSaysFit("ÁO THUN OVERSIZE", "oversize")).toBe(true);
+    expect(kindSaysFit("Áo thun óversize", "Oversize")).toBe(true);
+  });
+
+  it("keeps the fit when the kind does not name it", () => {
+    expect(kindSaysFit("Áo hoodie", "oversize")).toBe(false);
+    expect(kindSaysFit("Hoodie", "oversized")).toBe(false);
+    expect(kindSaysFit("Áo thun oversize", "regular")).toBe(false);
+  });
+
+  it("never drops a fit for an empty word", () => {
+    expect(kindSaysFit("Áo thun", "")).toBe(false);
   });
 });
 

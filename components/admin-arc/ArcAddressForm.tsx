@@ -204,7 +204,7 @@ export function ArcAddressForm({
       </div>
       <Input
         label={t({ vi: "Lý do sửa", en: "Reason for the change" })}
-        placeholder={t({ vi: "VD: khách nhắn đổi số nhà", en: "E.g. the customer asked to change the house number" })}
+        placeholder={t({ vi: "VD: khách nhắn đổi số nhà", en: "e.g. the customer asked to change the house number" })}
         description={t({ vi: "Chỉ sửa được trước khi bàn giao.", en: "Can only be changed before handover." })}
         error={error ? t({ vi: "Điền đủ các ô trước khi lưu.", en: "Fill in every field before saving." }) : undefined}
         value={reason}

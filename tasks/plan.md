@@ -4126,3 +4126,22 @@ Thử `impact` trên hai commit thật:
 - viết lại mục 2 của brief R2 theo công cụ: `impact`, rồi `sweep:gen --impact`, rồi `sweep:diff` và `pixdiff`; phiên chính thăng mốc
   sau khi duyệt;
 - tự thử `impact` trên working tree của T1: 0 route, `build: false`, đúng.
+
+**08/10, R2 ĐẠT** (agent `ui-implementer`; lát đầu tiên kiểm bằng công cụ T1).
+- **`impact`:** cả vùng quản trị (vì `ArcSidebar` là tệp toàn cục), 0 route cửa hàng ngoài trang đối chứng; `db: true`, vì đụng
+  `lib/actions/`.
+- **Sweep lọc:** 168 mục mỗi ngôn ngữ; so mốc 88 giống, 1 khác (`/admin/drops/99` 200 thành 404, cố ý), 79 mục mới ở 1440.
+- **Lệnh:** 2.448 test, 363 test DB. Pixdiff trang đối chứng chỉ lệch ở chỗ R2 cố ý đổi và ở vùng đồng hồ.
+
+**Phiên chính:**
+- nhận các chỗ agent gom thêm về kiểu "giờ · ngày" (Bước tiếp theo, Hành trình, hộp và toast "Đóng sớm", Nhật ký, ba ô đảo từ "ngày ·
+  giờ") và năm chỗ để nguyên (CSV, `stampOf`, `windowLabel`, `ArcDropFormDialog`, ô ngày ở trang khách);
+- tiêu đề tab 404 của `/admin/drops/99` vẫn là "Chi tiết số · …": chấp nhận, mức thấp;
+- `sweep:promote` hai lượt R2. Mốc nay 232 mục: VI 51 phát hiện, EN 50; `tinyText` 50 là Avatar `sm` ở 1280 và 1440.
+
+**Tài liệu còn lại cho documenter:**
+- `momentLabel`;
+- giờ của quản trị là "08:05 · 8 Oct";
+- `lang` của select nằm ở `ItemText`;
+- khiếm khuyết của select đã sửa;
+- chú giải `lib/demo-admin.ts` đã cũ.

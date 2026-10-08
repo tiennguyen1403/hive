@@ -1,7 +1,7 @@
 import type { Order } from "@/data/types";
 import { HANDOVER_LATE_DAYS } from "./admin-rows";
 import { carrierLabel } from "./carrier";
-import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "./datetime";
+import { momentLabel, sinceLabel } from "./datetime";
 import { cancelReasonLabel } from "./feed-account";
 import { picker, type Locale, type Pair } from "./i18n";
 import type { CardPaymentFacts } from "./order-labels";
@@ -47,7 +47,8 @@ export function timelineOf(
   locale: Locale = "vi",
 ): Milestone[] {
   const t = picker(locale);
-  const at = (iso: string) => `${clockLabel(iso)} · ${dayMonth(iso, locale)}`;
+  // Every moment "giờ · ngày", the deadline too (round v6 slice R2).
+  const at = (iso: string) => momentLabel(iso, locale);
   const W = TIMELINE_WORDS;
   const card = order.payment === "CARD";
   const paidTitle = t(card && order.card?.paymentIntent ? W.paidViaStripe : W.paid);
@@ -65,7 +66,7 @@ export function timelineOf(
         { ...placed, state: "now" },
         {
           title: t(card ? W.awaitingCard : W.awaitingTransfer),
-          detail: t({ vi: `hạn ${dateTimeLabel(order.status.dueAt)}`, en: `due ${dateTimeLabel(order.status.dueAt, "en")}` }),
+          detail: t({ vi: `hạn ${at(order.status.dueAt)}`, en: `due ${at(order.status.dueAt)}` }),
           state: "todo",
         },
         { title: t(W.awaitingHandover), detail: t(W.afterPayment), state: "todo" },

@@ -27,7 +27,7 @@ import type { Catalog } from "@/lib/catalog";
 import { currentIssueNo } from "@/lib/current-issue";
 import { effectiveOrder } from "@/lib/customer-orders";
 import { customerFacts, issueOf } from "@/lib/customer-tags";
-import { clockLabel, dateTimeLabel, dayMonth, sinceLabel } from "@/lib/datetime";
+import { clockLabel, dayMonth, momentLabel, sinceLabel } from "@/lib/datetime";
 import type { AdminEvent } from "@/lib/db/event-dto";
 import { codFeeRow } from "@/lib/feed-order";
 import { picker, plural, type Locale } from "@/lib/i18n";
@@ -54,6 +54,7 @@ import { ArcCancelOrderDialog } from "./ArcCancelOrderDialog";
 import { ArcHandoverForm } from "./ArcHandoverForm";
 import { monogramName, TAG_TONE, TONE } from "./ArcOrderCells";
 import styles from "./ArcOrderScreen.module.css";
+import book from "./ArcOrdersScreen.module.css";
 import page from "./ArcPage.module.css";
 import { phraseNode } from "./ArcPhrase";
 import { useArcToast } from "./useArcToast";
@@ -336,11 +337,15 @@ export function ArcOrderScreen({
                             width={36}
                             height={45}
                           />
-                          <span>
+                          {/* The name, and the kind under it on every row: the
+                              order book's two-line cell (`stack`, `line`), so
+                              no row breaks where another does not (round v6
+                              slice R2, F12). */}
+                          <span className={`${book.stack} ${book.nowrap}`}>
                             <span className={styles.itemName} lang={p ? nameLang(p, locale) : undefined}>
                               {p && words ? styleName(words.name, p.dropNo, locale) : "—"}
-                            </span>{" "}
-                            <span className={styles.itemKind}>· {words?.kind ?? ""}</span>
+                            </span>
+                            <span className={book.line}>{words?.kind ?? ""}</span>
                           </span>
                         </span>
                       </td>
@@ -674,11 +679,11 @@ function NextStep({
       >
         {locale === "vi" ? (
           <>
-            Hạn {dateTimeLabel(order.status.dueAt)} · {vnd(orderTotalVnd(order))} · qua Stripe
+            Hạn {momentLabel(order.status.dueAt)} · {vnd(orderTotalVnd(order))} · qua Stripe
           </>
         ) : (
           <>
-            Due {dateTimeLabel(order.status.dueAt, locale)} · {total} · via Stripe
+            Due {momentLabel(order.status.dueAt, locale)} · {total} · via Stripe
           </>
         )}
       </Block>
@@ -689,12 +694,12 @@ function NextStep({
       <Block title={confirmPaid} button={payButton}>
         {locale === "vi" ? (
           <>
-            Hạn {dateTimeLabel(order.status.dueAt)} · {vnd(orderTotalVnd(order))} · nội dung{" "}
+            Hạn {momentLabel(order.status.dueAt)} · {vnd(orderTotalVnd(order))} · nội dung{" "}
             {transferReference(order.code)}
           </>
         ) : (
           <>
-            Due {dateTimeLabel(order.status.dueAt, locale)} · {total} · reference {transferReference(order.code)}
+            Due {momentLabel(order.status.dueAt, locale)} · {total} · reference {transferReference(order.code)}
           </>
         )}
       </Block>

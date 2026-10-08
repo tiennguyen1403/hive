@@ -2,7 +2,7 @@ import { teasersIn, type Catalog } from "./catalog";
 import type { Drop, DropState, Order, Product, Promotion } from "@/data/types";
 import { needsAction } from "./admin-metrics";
 import type { AdminOrder } from "./admin-orders";
-import { clockLabel, dayMonth, dateTimeLabel, rangeLabel } from "./datetime";
+import { momentLabel, rangeLabel } from "./datetime";
 import { dropState } from "./drop";
 import { dropRevenueVnd, dropSummary } from "./inventory";
 import { styleInList, styleName } from "./lexicon";
@@ -121,10 +121,12 @@ export interface OrderNote {
 export function orderNote(o: Order, now: Date, locale: Locale = "vi"): OrderNote | null {
   const t = picker(locale);
   switch (o.status.state) {
-    // The hour and the day are one moment: a no-break space between them, or
-    // the table printed "hạn 08:05" over "26/09" (v3 slice 13).
+    // The hour and the day are one moment, written as the back office writes
+    // every moment, "hạn 08:05 · 26/09" (round v6 slice R2, G3; it was a
+    // no-break space between them). The status cell holds its lines on one
+    // line, so the table cannot print "hạn 08:05" over "26/09" (v3 slice 13).
     case "AWAITING_TRANSFER": {
-      const due = `${clockLabel(o.status.dueAt)}\u00a0${dayMonth(o.status.dueAt, locale)}`;
+      const due = momentLabel(o.status.dueAt, locale);
       return {
         text: t({ vi: `hạn ${due}`, en: `due ${due}` }),
         late: now.getTime() > Date.parse(o.status.dueAt),
@@ -178,9 +180,9 @@ export interface QueueRow {
   code: string;
   customer: string;
   totalVnd: number;
-  /** "Chờ chuyển khoản" / "Đã thanh toán 07:52 19/09" — where it stands. */
+  /** "Chờ chuyển khoản" / "Đã thanh toán 07:52 · 19/09" — where it stands. */
   standing: string;
-  /** "hạn 08:05 ngày 22/09" / "3 ngày", the part rendered as `.due`. */
+  /** "hạn 08:05 · 22/09" / "3 ngày", the part rendered as `.due`. */
   due: string | null;
   late: boolean;
   /**
@@ -210,8 +212,11 @@ export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date, loc
       const note = orderNote(o, now, locale);
       const customer = orderCustomer(o, locale);
       const items = orderItemsLabel(catalog, o, locale);
+      // Every moment in the row "giờ · ngày", as the order book writes one
+      // (round v6 slice R2, G1 and G2): "hạn 08:05 · 08/10", "Đã thanh toán
+      // 07:52 · 05/10".
       if (o.status.state === "AWAITING_TRANSFER") {
-        const due = dateTimeLabel(o.status.dueAt, locale);
+        const due = momentLabel(o.status.dueAt, locale);
         return {
           code: o.code,
           customer,
@@ -232,7 +237,7 @@ export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date, loc
         daysHeld(Math.floor((now.getTime() - Date.parse(from)) / 86_400_000), locale);
       if (o.status.state === "RECEIVED") {
         const cod = o.payment === "COD";
-        const at = `${clockLabel(o.placedAt)} ${dayMonth(o.placedAt, locale)}`;
+        const at = momentLabel(o.placedAt, locale);
         return {
           code: o.code,
           customer,
@@ -250,7 +255,7 @@ export function queueRows(catalog: Catalog, orders: AdminOrder[], now: Date, loc
         };
       }
       const paidAt = o.status.state === "PAID" ? o.status.paidAt : o.placedAt;
-      const at = `${clockLabel(paidAt)} ${dayMonth(paidAt, locale)}`;
+      const at = momentLabel(paidAt, locale);
       return {
         code: o.code,
         customer,

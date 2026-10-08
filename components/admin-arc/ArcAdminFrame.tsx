@@ -27,7 +27,8 @@ export function ArcAdminFrame({
   lastResetAt,
   children,
 }: {
-  me: { name: string; email: string };
+  /** Who is signed in; `demo` for the published demo manager (round v6 slice R2). */
+  me: { name: string; email: string; demo: boolean };
   waiting: number;
   lastResetAt: string | null;
   children: React.ReactNode;

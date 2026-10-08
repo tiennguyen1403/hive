@@ -8,10 +8,22 @@ import { listAllOrders } from "@/lib/db/admin";
 import { requireAdmin } from "@/lib/db/session";
 import { picker } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
+import { SITE_NAME } from "@/lib/site";
 
-/** The screen's name in the title, in the page's language (round v6 slice E4); the layout adds "· Admin · HIVE". */
+/**
+ * "Tổng quan · Quản trị · HIVE", "Overview · Admin · HIVE": the whole title,
+ * `absolute` (round v6 slice R2, C3). This page sits in the admin layout's own
+ * segment, and a layout's `title.template` applies to the segments below it,
+ * not to a page of its own segment
+ * (`03-api-reference/04-functions/generate-metadata.md`, "template"); the root
+ * layout's "%s · HIVE" was the one that applied. "Quản trị" / "Admin" is the
+ * layout's word for the back office.
+ */
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: picker(await getLocale())({ vi: "Tổng quan", en: "Overview" }) };
+  const t = picker(await getLocale());
+  return {
+    title: { absolute: `${t({ vi: "Tổng quan", en: "Overview" })} · ${t({ vi: "Quản trị", en: "Admin" })} · ${SITE_NAME}` },
+  };
 }
 
 /**

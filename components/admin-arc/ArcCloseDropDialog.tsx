@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Clock } from "lucide-react";
 import { useLocale } from "@/components/i18n/LocaleContext";
-import { dateTimeLabel } from "@/lib/datetime";
+import { momentLabel } from "@/lib/datetime";
 import { picker, plural } from "@/lib/i18n";
 import { LEX, issueLabel, issueNo } from "@/lib/lexicon";
 import { Button } from "@/registry/components/button/button";
@@ -68,8 +68,9 @@ export function ArcCloseDropDialog({
         description={
           target
             ? t({
-                vi: `Giờ đóng đổi từ ${dateTimeLabel(target.closesAt)} thành bây giờ. ${target.onHand} chiếc còn lại rời kệ; đơn đã đặt không bị ảnh hưởng.`,
-                en: `The closing time moves from ${dateTimeLabel(target.closesAt, "en")} to now. The ${plural(target.onHand, "piece", "pieces")} left come off the shelf; orders already placed are not affected.`,
+                // The closing moment "giờ · ngày", as the back office writes every moment (round v6 slice R2).
+                vi: `Giờ đóng đổi từ ${momentLabel(target.closesAt)} thành bây giờ. ${target.onHand} chiếc còn lại rời kệ; đơn đã đặt không bị ảnh hưởng.`,
+                en: `The closing time moves from ${momentLabel(target.closesAt, "en")} to now. The ${plural(target.onHand, "piece", "pieces")} left come off the shelf; orders already placed are not affected.`,
               })
             : undefined
         }

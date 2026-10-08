@@ -10,12 +10,24 @@ import { toVnIso } from "@/lib/datetime";
 import { findOrderAdmin, listAllOrders, orderEvents } from "@/lib/db/admin";
 import { reconcileCardOrder } from "@/lib/db/card-payments";
 import { requireAdmin } from "@/lib/db/session";
-import { picker } from "@/lib/i18n";
-import { getLocale } from "@/lib/locale";
 
-/** The screen's name in the title, in the page's language (round v6 slice E4); the layout adds "· Admin · HIVE". */
-export async function generateMetadata(): Promise<Metadata> {
-  return { title: picker(await getLocale())({ vi: "Chi tiết đơn", en: "Order details" }) };
+/**
+ * The order's code is the title, "DH-2429 · Quản trị · HIVE" through the
+ * layout's template (round v6 slice R2, N2), so orders open in several tabs
+ * tell themselves apart. The code is the found order's own, never the
+ * address's: a code that is not an order in the book is a 404 here as in the
+ * page (`notFound()` may be called in `generateMetadata`,
+ * `03-api-reference/04-functions/generate-metadata.md`), and its title says
+ * nothing of what was typed. `requireAdmin` first, as the page asks: the book
+ * is read with the manager's session, and anybody else is sent to sign in or
+ * answered 404 before it is read.
+ */
+export async function generateMetadata(props: PageProps<"/admin/orders/[code]">): Promise<Metadata> {
+  const { code } = await props.params;
+  await requireAdmin(`/admin/orders/${code}`);
+  const found = await findOrderAdmin(code);
+  if (!found) notFound();
+  return { title: String(found.code) };
 }
 
 /**

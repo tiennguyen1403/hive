@@ -174,7 +174,7 @@ export function ArcCustomersScreen({
       // rather than claiming a copy that did not take place.
       say(
         t({
-          vi: `Trình duyệt không cho chép tự động — email là ${email}`,
+          vi: `Trình duyệt không cho chép tự động. Email là ${email}`,
           en: `The browser won't copy it for you. The email is ${email}`,
         }),
         "error",

@@ -47,6 +47,13 @@ const LINKS: Array<{ href: string; label: Pair; icon: LucideIcon }> = [
 ];
 
 /**
+ * The published demo manager's role, which the foot prints in place of the
+ * name its profile keeps (round v6 slice R2, N1; the user's choice): in English
+ * "Store manager", an English label, so it carries no `lang="vi"`.
+ */
+const DEMO_MANAGER: Pair = { vi: "Quản lý cửa hàng", en: "Store manager" };
+
+/**
  * `AdminNav`'s rule: `/admin` matches only itself, every other entry also owns
  * its children, so an order's page keeps "Đơn hàng" lit.
  */
@@ -73,7 +80,8 @@ export function ArcSidebar({
   waiting,
   lastResetAt,
 }: {
-  me: { name: string; email: string };
+  /** Who is signed in; `demo` for the published demo manager (`lib/demo-admin.ts`). */
+  me: { name: string; email: string; demo: boolean };
   waiting: number;
   lastResetAt: string | null;
 }) {
@@ -147,9 +155,11 @@ export function ArcSidebar({
         </Button>
         <LanguageControl />
         <p>
-          {/* Who is signed in, as their profile has it (round v6 slice E4): the
-              demo manager's name is Vietnamese, said so on an English page. */}
-          <strong lang={storedLang(me.name, locale)}>{me.name}</strong> · {me.email}
+          {/* Who is signed in: the demo manager by its role in the page's
+              language (round v6 slice R2, N1); any other account as its
+              profile has it (slice E4), said in Vietnamese on an English page
+              when it is. */}
+          <strong lang={me.demo ? undefined : storedLang(me.name, locale)}>{me.demo ? t(DEMO_MANAGER) : me.name}</strong> · {me.email}
         </p>
         <form action={signOut}>
           <Button variant="ghost" size="sm" type="submit" className={styles.edge}>

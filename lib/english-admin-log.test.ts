@@ -306,7 +306,8 @@ describe("the catalogue's rows in English", () => {
     } as const;
     expect(rowEn(done({ kind: "PROMO_ADDED", promoCode: "TEST10", terms: TERMS }))).toMatchObject({
       action: "Code created",
-      tail: `20:00, ${D(11, "Sep")} → 20:00, ${D(25, "Sep")}`,
+      // Every moment "giờ · ngày", the back office's one way (round v6 slice R2).
+      tail: `20:00 · ${D(11, "Sep")} → 20:00 · ${D(25, "Sep")}`,
     });
     expect(rowEn(done({ kind: "PROMO_EDITED", promoCode: "DOT05", before: TERMS, after: TERMS })).action).toBe("Code edited");
     expect(rowEn(done({ kind: "PROMO_LIMIT_RAISED", promoCode: "DOT05", before: null, after: 1 }))).toMatchObject({
@@ -327,7 +328,7 @@ describe("the catalogue's rows in English", () => {
     });
     expect(
       rowEn(done({ kind: "PROMO_ENDED", promoCode: "DOT05", before: "2026-09-25T20:00:00+07:00", after: AT })),
-    ).toMatchObject({ action: "Ended early", tail: "end time = now" });
+    ).toMatchObject({ action: "Ended early", before: `20:00 · ${D(25, "Sep")}`, tail: "end time = now" });
   });
 
   it("records the drops and a teaser in English, the teaser's words as stored", () => {
@@ -340,7 +341,7 @@ describe("the catalogue's rows in English", () => {
           closesAt: "2026-10-23T20:00:00+07:00",
         }),
       ),
-    ).toMatchObject({ action: "Drop created", subject: "Drop 07", tail: `opens 20:00, ${D(9, "Oct")} → closes 20:00, ${D(23, "Oct")}` });
+    ).toMatchObject({ action: "Drop created", subject: "Drop 07", tail: `opens 20:00 · ${D(9, "Oct")} → closes 20:00 · ${D(23, "Oct")}` });
     const early = rowEn(
       done({
         kind: "DROP_SCHEDULED",
@@ -358,7 +359,7 @@ describe("the catalogue's rows in English", () => {
         after: { opensAt: "2026-10-10T20:00:00+07:00", closesAt: "2026-10-24T20:00:00+07:00" },
       }),
     );
-    expect(moved).toMatchObject({ action: "Times changed", tail: `opens 20:00, ${D(10, "Oct")}` });
+    expect(moved).toMatchObject({ action: "Times changed", tail: `opens 20:00 · ${D(10, "Oct")}` });
     expect(rowEn(done({ kind: "TEASER_ADDED", no: 6, name: "MÂY", garment: "Áo khoác dù" }))).toMatchObject({
       action: "Teaser added",
       subject: "Drop 06",

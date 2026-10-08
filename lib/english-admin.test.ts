@@ -213,7 +213,8 @@ describe("the order book's rows in English", () => {
   });
 
   it("says what each waiting order waits for", () => {
-    expect(orderNote(byCode("DH-2431"), NOW, "en")).toEqual({ text: `due 08:05${NB}${D(22, "Sep")}`, late: false });
+    // "giờ · ngày", the back office's one way of writing a moment (round v6 slice R2, G3).
+    expect(orderNote(byCode("DH-2431"), NOW, "en")).toEqual({ text: `due 08:05 · ${D(22, "Sep")}`, late: false });
     expect(orderNote(byCode("DH-2429"), NOW, "en")).toEqual({ text: `not handed over · 1${NB}day`, late: false });
     expect(orderNote(byCode("DH-2427"), NOW, "en")).toEqual({ text: `not handed over · 2${NB}days`, late: true });
     expect(orderNote(byCode("DH-2426"), NOW, "en")).toEqual({ text: "VNP-8842377", late: false });
@@ -228,10 +229,11 @@ describe("the order book's rows in English", () => {
     const rows = queueRows(FIXTURE_CATALOG, BOOK, NOW, "en");
     const first = rows.find((r) => r.code === "DH-2431")!;
     expect(first.standing).toBe("Awaiting transfer");
-    expect(first.due).toBe(`due 08:05, ${D(22, "Sep")}`);
+    // G1 and G2 (round v6 slice R2): every moment "giờ · ngày".
+    expect(first.due).toBe(`due 08:05 · ${D(22, "Sep")}`);
     expect(first.items).toBe(`D05${NB}–⁠${NB}CÁT${NB}×1`);
     const late = rows.find((r) => r.code === "DH-2427")!;
-    expect(late.standing).toBe(`Paid 20:41 ${D(17, "Sep")} · not handed over`);
+    expect(late.standing).toBe(`Paid 20:41 · ${D(17, "Sep")} · not handed over`);
     expect(late.due).toBe(`2${NB}days`);
     expect(late.late).toBe(true);
     // A card order waiting for its money is Stripe's to confirm since slice B18: not in the shop's queue.
@@ -239,14 +241,14 @@ describe("the order book's rows in English", () => {
     expect(queueRows(FIXTURE_CATALOG, [card], NOW, "en")).toEqual([]);
     const cod: AdminOrder = { ...byCode("DH-2431"), payment: "COD", status: { state: "RECEIVED" } };
     const codRow = queueRows(FIXTURE_CATALOG, [cod], new Date("2026-09-23T09:00:00+07:00"), "en")[0]!;
-    expect(codRow.standing).toBe(`Order received 08:05 ${D(20, "Sep")} · COD, collect on delivery`);
+    expect(codRow.standing).toBe(`Order received 08:05 · ${D(20, "Sep")} · COD, collect on delivery`);
     expect(codRow.due).toBe(`3${NB}days`);
     expect(codRow.action).toBe("HAND_OVER");
   });
 
-  it("keeps the Vietnamese queue as it was", () => {
+  it("keeps the Vietnamese queue, its moments written \"giờ · ngày\" since round v6 slice R2", () => {
     const late = queueRows(FIXTURE_CATALOG, BOOK, NOW).find((r) => r.code === "DH-2427")!;
-    expect(late.standing).toBe("Đã thanh toán 20:41 17/09 · chưa bàn giao");
+    expect(late.standing).toBe("Đã thanh toán 20:41 · 17/09 · chưa bàn giao");
     expect(late.due).toBe(`2${NB}ngày`);
   });
 });
@@ -291,7 +293,7 @@ describe("an order's timeline in English", () => {
 
   it("names the milestones in the glossary's words", () => {
     expect(titles(byCode("DH-2431"))).toEqual(["Order received", "Awaiting transfer", "Awaiting handover", "Shipping", "Delivered"]);
-    expect(timelineOf(byCode("DH-2431"), NOW, undefined, "en")[1]!.detail).toBe(`due 08:05, ${D(22, "Sep")}`);
+    expect(timelineOf(byCode("DH-2431"), NOW, undefined, "en")[1]!.detail).toBe(`due 08:05 · ${D(22, "Sep")}`);
     expect(timelineOf(byCode("DH-2431"), NOW, undefined, "en")[4]!.detail).toBe("2–4 days");
     expect(titles(byCode("DH-2429"))).toEqual(["Order received", "Paid", "Awaiting handover", "Shipping", "Delivered"]);
     expect(timelineOf(byCode("DH-2429"), NOW, undefined, "en")[2]!.detail).toBe(

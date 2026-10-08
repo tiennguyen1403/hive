@@ -16,7 +16,7 @@ import type { Catalog } from "./catalog";
 import type { PromoTerms } from "./catalog-admin";
 import { fitLabel } from "./catalog-query";
 import { effectiveStatus } from "./customer-orders";
-import { clockLabel, dateTimeLabel, dayMonth } from "./datetime";
+import { clockLabel, dayMonth, momentLabel } from "./datetime";
 import type { AdminEvent, ProductFields } from "./db/event-dto";
 import { cancelReasonLabel } from "./feed-account";
 import { pick, picker, plural, type Locale, type Pair } from "./i18n";
@@ -308,9 +308,9 @@ function fieldValue(key: keyof ProductFields, fields: ProductFields, locale: Loc
   }
 }
 
-/** "20:00 11/09 → 20:00 25/09" — a code's run. */
+/** "20:00 · 11/09 → 20:00 · 25/09" — a code's run, each end "giờ · ngày" (round v6 slice R2). */
 function termsWindow(t: PromoTerms, locale: Locale): string {
-  return `${dateTimeLabel(t.startsAt, locale)} → ${dateTimeLabel(t.endsAt, locale)}`;
+  return `${momentLabel(t.startsAt, locale)} → ${momentLabel(t.endsAt, locale)}`;
 }
 
 /**
@@ -719,13 +719,13 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
         action: t({ vi: "Kết thúc sớm", en: "Ended early" }),
         subject: e.promoCode,
         href: "/admin/promotions",
-        before: dateTimeLabel(e.before, locale),
-        after: dateTimeLabel(e.after, locale),
+        before: momentLabel(e.before, locale),
+        after: momentLabel(e.after, locale),
         tail: t({ vi: "giờ kết thúc = bây giờ", en: "end time = now" }),
       };
     case "DROP_ADDED": {
-      const opens = dateTimeLabel(e.opensAt, locale);
-      const closes = dateTimeLabel(e.closesAt, locale);
+      const opens = momentLabel(e.opensAt, locale);
+      const closes = momentLabel(e.closesAt, locale);
       return {
         id,
         at: e.at,
@@ -742,7 +742,7 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
       // action and the log tells them apart by how far apart the two
       // instants are rather than by a flag nobody could derive.
       const early = Math.abs(Date.parse(e.after.closesAt) - Date.parse(e.at)) < 60_000;
-      const opens = dateTimeLabel(e.after.opensAt, locale);
+      const opens = momentLabel(e.after.opensAt, locale);
       return {
         id,
         at: e.at,
@@ -752,8 +752,8 @@ function eventRow(catalog: Catalog, book: Book, e: AdminEvent, locale: Locale): 
         ...(early ? { detail: t({ vi: "giờ đóng đổi thành bây giờ", en: "closing time moved to now" }) } : {}),
         subject: issueLabel(e.no, locale),
         href: issueHref(e.no),
-        before: dateTimeLabel(e.before.closesAt, locale),
-        after: dateTimeLabel(e.after.closesAt, locale),
+        before: momentLabel(e.before.closesAt, locale),
+        after: momentLabel(e.after.closesAt, locale),
         ...(early ? {} : { tail: t({ vi: `mở ${opens}`, en: `opens ${opens}` }) }),
       };
     }

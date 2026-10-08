@@ -422,8 +422,9 @@ export function ArcOverviewScreen({
                       ) : (
                         <td className={panel.nowrap}>{guest ? `${name} · ${guestSuffix(locale)}` : name}</td>
                       )}
+                      {/* The clock first, as the back office writes every moment (round v6 slice R2). */}
                       <td className={panel.nowrap}>
-                        {dayMonth(o.placedAt, locale)} · {clockLabel(o.placedAt)}
+                        {clockLabel(o.placedAt)} · {dayMonth(o.placedAt, locale)}
                       </td>
                       <td className={panel.num}>{plainVnd(orderTotalVnd(o), locale)}</td>
                       <td>

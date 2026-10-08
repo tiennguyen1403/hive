@@ -211,8 +211,9 @@ export function ArcCustomerScreen({
                         <td>
                           <CodeCell code={String(o.code)} />
                         </td>
+                        {/* The clock first, as the back office writes every moment (round v6 slice R2). */}
                         <td className={panel.nowrap}>
-                          {dayMonth(o.placedAt, locale)} · {clockLabel(o.placedAt)}
+                          {clockLabel(o.placedAt)} · {dayMonth(o.placedAt, locale)}
                         </td>
                         {/* Empty for an order of fixed styles only (slice B5). */}
                         <td>{issueCell(issueOf(catalog, o))}</td>
@@ -293,7 +294,7 @@ export function ArcCustomerScreen({
                 <Badge tone={TAG_TONE[facts.tag.tone]} size="sm">
                   {facts.tag.label}
                 </Badge>
-                <span>— {tagReason(facts.tag.key, facts, current, locale)}</span>
+                <span>· {tagReason(facts.tag.key, facts, current, locale)}</span>
               </p>
             ) : (
               <p className={styles.none}>{untaggedReason(current, locale)}</p>

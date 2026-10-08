@@ -103,7 +103,7 @@ describe("editAddress and a real customer's order", () => {
 
   it("checks the form before it reads anything", async () => {
     expect(await editAddress("DH-2433", { ...FORM, recipient: "" })).toEqual({
-      errors: { form: "Địa chỉ chưa đủ hoặc số điện thoại chưa đúng — kiểm lại các ô." },
+      errors: { form: "Địa chỉ chưa đủ hoặc số điện thoại chưa đúng. Kiểm lại các ô." },
     });
     expect(rpc).not.toHaveBeenCalled();
   });

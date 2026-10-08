@@ -596,7 +596,7 @@ export function ArcOrdersScreen({
                   if (unpaid.length === 0) {
                     return say(
                       t({
-                        vi: "Chỉ đơn đang chờ tiền mới đánh dấu được — chưa chọn đơn nào như vậy",
+                        vi: "Chỉ đơn đang chờ tiền mới đánh dấu được. Chưa chọn đơn nào như vậy",
                         en: "Only orders awaiting payment can be marked as paid, and none of these are",
                       }),
                       "error",

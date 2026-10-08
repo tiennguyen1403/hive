@@ -76,7 +76,7 @@ export function ArcResetDialog({
         onCloseAutoFocus={onCloseAutoFocus}
         title={t({ vi: "Đặt lại dữ liệu mẫu?", en: "Reset demo data?" })}
         description={t({
-          vi: `Đơn hàng quay về các đơn mẫu — đơn đặt thêm, kể cả của tài khoản đăng ký thật, sẽ mất. Mẫu, tồn kho, các ${LEX.tl}, mẫu hé lộ, mã giảm giá, các tài khoản mẫu và sổ địa chỉ của họ về như ban đầu; nhật ký bắt đầu lại. Ngày giờ mẫu neo vào 18:50 gần nhất.`,
+          vi: `Đơn hàng quay về các đơn mẫu: đơn đặt thêm, kể cả của tài khoản đăng ký thật, sẽ mất. Mẫu, tồn kho, các ${LEX.tl}, mẫu hé lộ, mã giảm giá, các tài khoản mẫu và sổ địa chỉ của họ về như ban đầu; nhật ký bắt đầu lại. Ngày giờ mẫu neo vào 18:50 gần nhất.`,
           en: "Orders return to the sample orders, and any order placed since, including those of real sign-ups, is lost. Styles, stock, drops, teasers, discount codes, the demo accounts and their address books go back to how they started, and the activity log starts over. Demo dates and times are anchored to the most recent 18:50.",
         })}
       >

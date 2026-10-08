@@ -130,7 +130,7 @@ export type CatalogMove =
 
 /** The sentence the brief fixed for a shelf that moved under the form. */
 export const STALE_STOCK_TEXT: Pair = {
-  vi: "Tồn kho đã đổi ở nơi khác — tải lại rồi sửa tiếp",
+  vi: "Tồn kho đã đổi ở nơi khác. Tải lại rồi sửa tiếp",
   en: "Stock changed elsewhere. Reload, then edit again.",
 };
 export const STALE_STOCK_MESSAGE = STALE_STOCK_TEXT.vi;
@@ -143,7 +143,7 @@ export const STALE_STOCK_MESSAGE = STALE_STOCK_TEXT.vi;
  * `STALE_STOCK_MESSAGE`.
  */
 export const RESTOCK_STALE_TEXT: Pair = {
-  vi: "Tồn kho vừa đổi ở nơi khác — kiểm lại số rồi gửi",
+  vi: "Tồn kho vừa đổi ở nơi khác. Kiểm lại số rồi gửi",
   en: "Stock just changed elsewhere. Check the numbers, then send again.",
 };
 export const RESTOCK_STALE_MESSAGE = RESTOCK_STALE_TEXT.vi;
@@ -174,7 +174,7 @@ export function catalogFailureMessage(
   switch (failure) {
     case "NOT_ADMIN":
       return t({
-        vi: "Phiên quản trị đã hết — đăng nhập lại bằng tài khoản quản trị.",
+        vi: "Phiên quản trị đã hết. Đăng nhập lại bằng tài khoản quản trị.",
         en: "Your admin session has ended. Sign in again with an admin account.",
       });
     case "UNAVAILABLE":
@@ -235,9 +235,9 @@ export function catalogFailureMessage(
             : t({ vi: "Không tìm thấy mẫu hoặc màu này.", en: "Style or colour not found." });
         case "ADD_PRODUCT":
           return subject
-            ? t({ vi: `Chưa có ${subject} — chọn số khác.`, en: `${subject} doesn't exist yet. Choose another drop.` })
+            ? t({ vi: `Chưa có ${subject}. Chọn số khác.`, en: `${subject} doesn't exist yet. Choose another drop.` })
             : t({
-                vi: `Chưa có ${LEX.tl} này — chọn ${LEX.tl} khác.`,
+                vi: `Chưa có ${LEX.tl} này. Chọn ${LEX.tl} khác.`,
                 en: "That drop doesn't exist yet. Choose another drop.",
               });
         case "SCHEDULE_DROP":
@@ -258,12 +258,12 @@ export function catalogFailureMessage(
       switch (move) {
         case "ADD_DROP":
           return t({
-            vi: `${subject || "Số này"} đã có — tải lại trang để lấy số kế tiếp.`,
+            vi: `${subject || "Số này"} đã có. Tải lại trang để lấy số kế tiếp.`,
             en: `${subject || "This drop"} already exists. Reload the page for the next number.`,
           });
         case "CLOSE_DROP":
           return t({
-            vi: `${subject || "Số này"} không còn mở — tải lại trang để xem.`,
+            vi: `${subject || "Số này"} không còn mở. Tải lại trang để xem.`,
             en: `${subject || "This drop"} is no longer live. Reload the page to check.`,
           });
         case "ADD_TEASER":
@@ -272,17 +272,17 @@ export function catalogFailureMessage(
           return t({ vi: `Mã ${subject} đã có rồi.`, en: `Code ${subject} already exists.` });
         case "PAUSE_PROMO":
           return t({
-            vi: `${subject} đã đổi trạng thái ở nơi khác — tải lại trang để xem.`,
+            vi: `${subject} đã đổi trạng thái ở nơi khác. Tải lại trang để xem.`,
             en: `${subject} changed status elsewhere. Reload the page to check.`,
           });
         case "RAISE_LIMIT":
           return t({
-            vi: `Giới hạn của ${subject} đã đổi ở nơi khác — tải lại trang để xem.`,
+            vi: `Giới hạn của ${subject} đã đổi ở nơi khác. Tải lại trang để xem.`,
             en: `The limit of ${subject} changed elsewhere. Reload the page to check.`,
           });
         case "END_PROMO":
           return t({
-            vi: `${subject} không còn đang chạy — tải lại trang để xem.`,
+            vi: `${subject} không còn đang chạy. Tải lại trang để xem.`,
             en: `${subject} is no longer running. Reload the page to check.`,
           });
         case "UPDATE_PRODUCT":
@@ -294,7 +294,7 @@ export function catalogFailureMessage(
           return t(SLUG_TAKEN_TEXT);
         default:
           return t({
-            vi: "Thao tác này không còn làm được — tải lại trang để xem.",
+            vi: "Thao tác này không còn làm được. Tải lại trang để xem.",
             en: "This can no longer be done. Reload the page to check.",
           });
       }
@@ -302,7 +302,7 @@ export function catalogFailureMessage(
       switch (move) {
         case "ADJUST_STOCK":
           return t({
-            vi: "Tồn kho gửi lên chưa hợp lệ — mỗi ô từ 0 trở lên, tổng không vượt số đã cắt, và cần một lý do.",
+            vi: "Tồn kho gửi lên chưa hợp lệ: mỗi ô từ 0 trở lên, tổng không vượt số đã cắt, và cần một lý do.",
             en: "The stock sent isn't valid. Each cell is 0 or more, the total stays within the cut, and a reason is needed.",
           });
         case "RESTOCK":
@@ -337,7 +337,7 @@ export function catalogFailureMessage(
           return t(NO_CHANGE_TEXT);
         case "REORDER_COLORS":
           return t({
-            vi: "Thứ tự màu đã đổi ở nơi khác — tải lại trang để xem.",
+            vi: "Thứ tự màu đã đổi ở nơi khác. Tải lại trang để xem.",
             en: "The colour order changed elsewhere. Reload the page to check.",
           });
         default:
@@ -365,13 +365,13 @@ const CLOSES_AFTER_OPENS_TEXT: Pair = {
 
 /** A code's form that does not read. */
 const PROMO_BAD_TEXT: Pair = {
-  vi: "Điều kiện mã chưa hợp lệ — kiểm lại các ô.",
+  vi: "Điều kiện mã chưa hợp lệ. Kiểm lại các ô.",
   en: "The code's terms aren't valid. Check the fields.",
 };
 
 /** A style's form that does not read. */
 const PRODUCT_BAD_TEXT: Pair = {
-  vi: "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.",
+  vi: "Thông tin mẫu chưa hợp lệ. Kiểm lại các ô.",
   en: "The style's details aren't valid. Check the fields.",
 };
 
@@ -893,7 +893,7 @@ export function readPromoDraft(value: unknown, locale: Locale = "vi"): Checked<{
   const code = normalisePromoCode(typeof value.code === "string" ? value.code : "");
   if (code === "" || code.length > MAX_PROMO_CODE) {
     return no(t({
-      vi: "Nhập mã — đây là thứ khách gõ ở ô giảm giá.",
+      vi: "Nhập mã. Đây là thứ khách gõ ở ô giảm giá.",
       en: "Enter the code. It's what shoppers type in the discount box.",
     }));
   }
@@ -1175,7 +1175,7 @@ export function readColorOrder(
   locale: Locale = "vi",
 ): Checked<ColorKey[]> {
   const bad = no<ColorKey[]>(picker(locale)({
-    vi: "Thứ tự màu phải gồm đúng các màu của mẫu — màu chốt lúc cắt.",
+    vi: "Thứ tự màu phải gồm đúng các màu của mẫu, chốt lúc cắt.",
     en: "The colour order must hold exactly the style's colours, fixed when it was cut.",
   }));
   if (!Array.isArray(value) || value.length !== current.length) return bad;

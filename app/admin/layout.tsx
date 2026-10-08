@@ -6,6 +6,7 @@ import { effectiveOrder } from "@/lib/customer-orders";
 import { lastReset, listAllOrders } from "@/lib/db/admin";
 import { loadMe } from "@/lib/db/profiles";
 import { requireAdmin } from "@/lib/db/session";
+import { DEMO_ADMIN } from "@/lib/demo-admin";
 import { picker } from "@/lib/i18n";
 import { getLocale } from "@/lib/locale";
 // Arc's tokens (round v5, QĐ-37), here and not in the root layout. Every rule
@@ -63,10 +64,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const [me, orders, lastResetAt] = await Promise.all([loadMe(), listAllOrders(), lastReset()]);
   const now = demoNow();
   const waiting = needsAction(orders.map((o) => effectiveOrder(o, now))).length;
+  // The published demo manager, by the handle `scripts/seed-users.ts` gives
+  // the account: the sidebar names it by its role, in the page's language
+  // (round v6 slice R2, N1). Any other admin is named as its profile has it.
+  const handle: string | null = me?.handle ?? null;
 
   return (
     <ArcAdminFrame
-      me={{ name: me?.name ?? session.email, email: session.email }}
+      me={{ name: me?.name ?? session.email, email: session.email, demo: handle === DEMO_ADMIN.handle }}
       waiting={waiting}
       lastResetAt={lastResetAt}
     >

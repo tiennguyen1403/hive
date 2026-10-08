@@ -12,6 +12,7 @@ import {
   dayFromIsoDay,
   dayInput,
   isoDayFromInput,
+  momentLabel,
   sinceLabel,
   weekdayLabel,
 } from "./datetime";
@@ -132,6 +133,22 @@ describe("addDaysIso", () => {
 describe("dateTimeLabel", () => {
   it("reads the way the confirmation prints a deadline", () => {
     expect(dateTimeLabel("2026-09-21T06:50:00+07:00")).toBe("06:50 ngày 21/09");
+  });
+});
+
+describe("momentLabel · the back office's one way of writing a moment (round v6 slice R2)", () => {
+  it("puts the clock first, a middle dot, then the day", () => {
+    expect(momentLabel("2026-10-08T08:05:00+07:00")).toBe("08:05 · 08/10");
+    expect(momentLabel("2026-10-08T08:05:00+07:00", "vi")).toBe("08:05 · 08/10");
+  });
+
+  it("writes the day the English way in English, the day held to its month", () => {
+    expect(momentLabel("2026-10-08T08:05:00+07:00", "en")).toBe("08:05 · 8 Oct");
+  });
+
+  it("says nothing rather than guessing when the text is not a timestamp", () => {
+    expect(momentLabel("")).toBe("");
+    expect(momentLabel("hôm qua", "en")).toBe("");
   });
 });
 

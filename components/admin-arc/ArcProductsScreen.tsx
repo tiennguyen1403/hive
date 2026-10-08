@@ -21,6 +21,7 @@ import {
   fixedCounts,
   fixedRows,
   fixedStatus,
+  kindSaysFit,
   lowNote,
   productsTab,
   stylesLine,
@@ -664,10 +665,13 @@ function pickKind(locale: Locale): string {
 /**
  * "Áo hoodie · oversize"; in English "Hoodie · oversized", the kind through
  * `productText` and marked as Vietnamese when that is what the database has.
+ * A kind that already says its fit stands alone: "Áo thun oversize", not
+ * "Áo thun oversize · oversize" (round v6 slice R2, G5, `kindSaysFit`).
  */
 function kindAndFit(p: Product, locale: Locale) {
   const fit = p.fit === "OVERSIZE" ? (locale === "vi" ? "oversize" : "oversized") : "regular";
-  return phrase(stored(productText(p, locale).kind, locale), ` · ${fit}`);
+  const kind = productText(p, locale).kind;
+  return kindSaysFit(kind, fit) ? phrase(stored(kind, locale)) : phrase(stored(kind, locale), ` · ${fit}`);
 }
 
 /** The size column: the sizes gone in every colour, "tất cả", or a dash. */

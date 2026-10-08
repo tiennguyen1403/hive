@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { FIXTURE_CATALOG } from "@/data/fixture-catalog";
 import { productId, type Drop } from "@/data/types";
 import { buildCatalog } from "@/lib/catalog";
-import { dateTimeLabel, dayMonthYear } from "@/lib/datetime";
+import { dayMonthYear } from "@/lib/datetime";
 import type { Locale } from "@/lib/i18n";
 import { onHandOf } from "@/lib/inventory";
 
@@ -160,7 +160,8 @@ describe("the issues, asked in English", () => {
       `Drop 06: dates changed to ${dayMonthYear(at20("10-03"), "en")} → ${dayMonthYear(at20("10-17"), "en")} · saved`,
     );
     const closed = await actions.closeDropNow(5);
-    expect(closed.message).toBe(`Drop 05 closed at ${dateTimeLabel("2026-09-21T10:00:00+07:00", "en")} · saved`);
+    // The moment as the back office writes every moment, "giờ · ngày" (round v6 slice R2).
+    expect(closed.message).toBe(`Drop 05 closed at 10:00 · 21 Sep · saved`);
     expect((await actions.closeDropNow(4)).errors.form).toBe("Drop 04 is no longer live. Reload the page to check.");
     expect((await actions.scheduleDrop(9, at20("12-01"), at20("12-10"))).errors.form).toBe("Drop 09 not found.");
   });

@@ -96,12 +96,12 @@ describe("what the database answered", () => {
 
   it("says the brief's own sentence for a shelf that moved under the form", () => {
     expect(catalogFailureMessage("ADJUST_STOCK", "STALE")).toBe(STALE_STOCK_MESSAGE);
-    expect(STALE_STOCK_MESSAGE).toBe("Tồn kho đã đổi ở nơi khác — tải lại rồi sửa tiếp");
+    expect(STALE_STOCK_MESSAGE).toBe("Tồn kho đã đổi ở nơi khác. Tải lại rồi sửa tiếp");
   });
 
   it("names what to do next, with the subject", () => {
     expect(catalogFailureMessage("ADD_DROP", "NOT_ALLOWED", "Số 07")).toBe(
-      "Số 07 đã có — tải lại trang để lấy số kế tiếp.",
+      "Số 07 đã có. Tải lại trang để lấy số kế tiếp.",
     );
     expect(catalogFailureMessage("ADD_PROMO", "NOT_ALLOWED", "DOT05")).toBe("Mã DOT05 đã có rồi.");
     expect(catalogFailureMessage("END_PROMO", "NOT_ALLOWED", "DOT05")).toMatch(/không còn đang chạy/);
@@ -109,7 +109,7 @@ describe("what the database answered", () => {
       'Mã trên địa chỉ "bui" đã dùng cho mẫu khác.',
     );
     expect(catalogFailureMessage("ADD_TEASER", "NOT_FOUND", "Số 09")).toBe("Chưa có Số 09 để hé lộ mẫu.");
-    expect(catalogFailureMessage("PAUSE_PROMO", "NOT_ADMIN")).toMatch(/đăng nhập lại/);
+    expect(catalogFailureMessage("PAUSE_PROMO", "NOT_ADMIN")).toMatch(/\. Đăng nhập lại/);
     expect(catalogFailureMessage("RAISE_LIMIT", "UNAVAILABLE")).toBe("Chưa lưu được. Thử lại sau ít phút.");
   });
 });
@@ -333,6 +333,8 @@ describe("readPromoDraft — the code sheet's draft, as the database takes it", 
     expect(readPromoDraft(draft({ promoKind: "GIFT" })).ok).toBe(false);
     expect(readPromoDraft(draft({ code: "" })).ok).toBe(false);
     expect(readPromoDraft(draft({ code: "X".repeat(MAX_PROMO_CODE + 1) })).ok).toBe(false);
+    // Two sentences, no long dash (round v6 slice R2, D22).
+    expect(readPromoDraft(draft({ code: "" }))).toMatchObject({ ok: false, error: "Nhập mã. Đây là thứ khách gõ ở ô giảm giá." });
   });
 
   it("tells an unchanged code from a changed one", () => {
@@ -424,7 +426,7 @@ describe("productPatch — only what changed", () => {
     // Into an issue, or out of one: refused either way.
     expect(productPatch(tee, { ...formOf(tee), dropNo: 5 }, catalog)).toEqual({
       ok: false,
-      error: "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.",
+      error: "Thông tin mẫu chưa hợp lệ. Kiểm lại các ô.",
     });
     expect(productPatch(khoi, { ...formOf(khoi), dropNo: null }, catalog).ok).toBe(false);
   });
@@ -466,7 +468,7 @@ describe("what the database answers about a new style and its photos", () => {
     expect(catalogFailureMessage("ADD_PRODUCT", "PHOTO_MISSING", "Rêu")).toBe("Chọn ảnh cho Rêu");
     expect(catalogFailureMessage("ADD_PRODUCT", "PHOTO_UNKNOWN")).toBe("Ảnh không còn trên kho, chọn lại");
     expect(catalogFailureMessage("SET_PHOTO", "PHOTO_UNKNOWN", "Kem")).toBe("Ảnh Kem không còn trên kho, chọn lại");
-    expect(catalogFailureMessage("ADD_PRODUCT", "NOT_FOUND", "Số 09")).toBe("Chưa có Số 09 — chọn số khác.");
+    expect(catalogFailureMessage("ADD_PRODUCT", "NOT_FOUND", "Số 09")).toBe("Chưa có Số 09. Chọn số khác.");
     expect(catalogFailureMessage("SET_PHOTO", "BAD_INPUT")).toBe(NO_CHANGE_MESSAGE);
     expect(NO_CHANGE_MESSAGE).toBe("Chưa có thay đổi nào để lưu.");
     expect(catalogFailureMessage("UPLOAD_PHOTO", "UPLOAD_BAD")).toBe("Tệp không phải WebP/JPEG hoặc nặng hơn 1,5 MB");
@@ -734,7 +736,7 @@ describe("readRestockCells · 'Nhập thêm', as its sheet sends it (slice B5)",
     // "tải lại rồi sửa tiếp" would ask for what already happened.
     expect(catalogFailureMessage("RESTOCK", "STALE")).toBe(RESTOCK_STALE_MESSAGE);
     expect(catalogFailureMessage("RESTOCK", "STALE", "HOODIE TRƠN")).toBe(RESTOCK_STALE_MESSAGE);
-    expect(RESTOCK_STALE_MESSAGE).toBe("Tồn kho vừa đổi ở nơi khác — kiểm lại số rồi gửi");
+    expect(RESTOCK_STALE_MESSAGE).toBe("Tồn kho vừa đổi ở nơi khác. Kiểm lại số rồi gửi");
     // The adjustment sheet keeps its own sentence.
     expect(catalogFailureMessage("ADJUST_STOCK", "STALE")).toBe(STALE_STOCK_MESSAGE);
     expect(RESTOCK_STALE_MESSAGE).not.toBe(STALE_STOCK_MESSAGE);
@@ -821,6 +823,11 @@ describe("readPhotoMap and readColorOrder", () => {
     for (const bad of [["black"], ["black", "black"], ["black", "cream", "moss"], ["black", "moss"], "black", null]) {
       expect(readColorOrder(bad, colors).ok, JSON.stringify(bad)).toBe(false);
     }
+    // No long dash (round v6 slice R2, D23).
+    expect(readColorOrder(["black"], colors)).toMatchObject({
+      ok: false,
+      error: "Thứ tự màu phải gồm đúng các màu của mẫu, chốt lúc cắt.",
+    });
     expect(sameOrder(["black", "cream"], colors)).toBe(true);
     expect(sameOrder(["cream", "black"], colors)).toBe(false);
   });
@@ -934,9 +941,9 @@ describe("readNewProduct — the new-style form, as the database takes it", () =
     };
     expect(error({ colors: [] })).toBe("Chọn ít nhất một màu");
     expect(error({ colors: undefined })).toBe("Chọn ít nhất một màu");
-    expect(error({ colors: ["black", "black"] })).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
-    expect(error({ colors: ["black", "pink"] })).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
-    expect(error({ colors: "black" })).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
+    expect(error({ colors: ["black", "black"] })).toBe("Thông tin mẫu chưa hợp lệ. Kiểm lại các ô.");
+    expect(error({ colors: ["black", "pink"] })).toBe("Thông tin mẫu chưa hợp lệ. Kiểm lại các ô.");
+    expect(error({ colors: "black" })).toBe("Thông tin mẫu chưa hợp lệ. Kiểm lại các ô.");
   });
 
   it("wants a cut of 0–999 a cell and at least one piece in every colour", () => {
@@ -950,8 +957,8 @@ describe("readNewProduct — the new-style form, as the database takes it", () =
     expect(error({ ...full, black: { ...full.black, M: 1000 } })).toBe("Số cắt mỗi ô từ 0 đến 999.");
     expect(error({ ...full, black: { ...full.black, M: -1 } })).toBe("Số cắt mỗi ô từ 0 đến 999.");
     expect(error({ ...full, black: { ...full.black, M: 1.5 } })).toBe("Số cắt mỗi ô từ 0 đến 999.");
-    expect(error({ ...full, black: "12" })).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
-    expect(error("36")).toBe("Thông tin mẫu chưa hợp lệ — kiểm lại các ô.");
+    expect(error({ ...full, black: "12" })).toBe("Thông tin mẫu chưa hợp lệ. Kiểm lại các ô.");
+    expect(error("36")).toBe("Thông tin mẫu chưa hợp lệ. Kiểm lại các ô.");
   });
 
   it("spells out all four sizes and leaves out a colour the form dropped", () => {
@@ -976,7 +983,7 @@ describe("readNewProduct — the new-style form, as the database takes it", () =
     expect(error(undefined)).toBe("Chọn ảnh cho Đen");
     expect(error({ black: UP, cream: "lua", moss: "khong-co" })).toBe("Ảnh Rêu không còn trên kho, chọn lại");
     expect(error({ black: UP, cream: "lua", moss: "tro", navy: "mua" })).toBe(
-      "Thông tin mẫu chưa hợp lệ — kiểm lại các ô.",
+      "Thông tin mẫu chưa hợp lệ. Kiểm lại các ô.",
     );
   });
 

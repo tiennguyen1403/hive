@@ -881,7 +881,7 @@ export function ArcProductForm({
                 <p className={styles.help}>
                   {t({
                     vi: "Thứ tự chọn là thứ tự dải màu trên thẻ; màu đầu là ảnh đại diện.",
-                    en: "The pick order is the card's colour band; the first is the cover photo.",
+                    en: "Pick order sets the colour band; the first is the cover.",
                   })}
                 </p>
               </div>

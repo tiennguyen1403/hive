@@ -18,7 +18,7 @@ export interface SelectProps extends Omit<ComponentPropsWithoutRef<typeof Select
   placeholder?: string;
   id?: string;
   className?: string;
-  /** HIVE patch (registry/PATCHES.md): `note` is secondary text at the end of the option's row in the list, before the tick. It stays outside the item text, so the trigger shows the label alone. `lang` is the label's language when it is not the page's: on the option, and on the trigger while it is the value. */
+  /** HIVE patch (registry/PATCHES.md): `note` is secondary text at the end of the option's row in the list, before the tick. It stays outside the item text, so the trigger shows the label alone. `lang` is the label's language when it is not the page's: on the option's label (not its note), and on the trigger while it is the value. */
   options: { value: string; label: string; disabled?: boolean; note?: string; lang?: string }[];
 }
 
@@ -80,8 +80,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
             </SelectPrimitive.ScrollUpButton>
             <SelectPrimitive.Viewport className={styles.viewport}>
               {options.map((option) => (
-                <SelectPrimitive.Item key={option.value} value={option.value} disabled={option.disabled} className={styles.item} lang={option.lang}>
-                  <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
+                <SelectPrimitive.Item key={option.value} value={option.value} disabled={option.disabled} className={styles.item}>
+                  {/* HIVE patch (registry/PATCHES.md): the label's lang on the label alone, so the note keeps the page's. */}
+                  <SelectPrimitive.ItemText lang={option.lang}>{option.label}</SelectPrimitive.ItemText>
                   {/* HIVE patch (registry/PATCHES.md): the option's note. Outside ItemText, so neither the trigger nor the value read to assistive tech carries it. */}
                   {option.note ? <span className={styles.note}>{option.note}</span> : null}
                   <SelectPrimitive.ItemIndicator className={styles.indicator}>

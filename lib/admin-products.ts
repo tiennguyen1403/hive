@@ -1,6 +1,7 @@
 import { SIZES, type Product } from "@/data/types";
 import type { Query } from "./admin-url";
 import type { Catalog } from "./catalog";
+import { fold } from "./catalog-query";
 import { picker, plural, type Locale } from "./i18n";
 import { FIXED_LOW_AT, isFixed, isRunningLow, onHand, onHandOf, productsOnSale } from "./inventory";
 
@@ -72,6 +73,18 @@ export function fixedCounts(products: readonly Product[]): { low: number; out: n
     low: products.filter(isRunningLow).length,
     out: products.filter((p) => onHand(p) === 0).length,
   };
+}
+
+/**
+ * Whether a kind's name already says its fit: "Áo thun oversize" says
+ * "oversize", "Oversized tee" says "oversized". The styles table's "Loại ·
+ * form" column then prints the kind alone, not "Áo thun oversize · oversize"
+ * (round v6 slice R2, G5). Compared without marks or case (`fold`). An empty
+ * fit word is never said.
+ */
+export function kindSaysFit(kind: string, fit: string): boolean {
+  const word = fold(fit);
+  return word !== "" && fold(kind).includes(word);
 }
 
 /** Which tab the address opens: `?drop=N` an issue, anything else Cố định. */

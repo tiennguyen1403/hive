@@ -555,7 +555,8 @@ describe("what the shop did to the catalogue", () => {
     expect(made.action).toBe("Tạo mã");
     expect(made.subject).toBe("TEST10");
     expect(made.kind).toBe("promo");
-    expect(made.tail).toBe("20:00 ngày 11/09 → 20:00 ngày 25/09");
+    // Every moment "giờ · ngày", the back office's one way (round v6 slice R2).
+    expect(made.tail).toBe("20:00 · 11/09 → 20:00 · 25/09");
 
     const edited = rowsOf(
       done({ kind: "PROMO_EDITED", promoCode: "DOT05", before: TERMS, after: { ...TERMS, percent: 12 } }),
@@ -587,8 +588,8 @@ describe("what the shop did to the catalogue", () => {
       done({ kind: "PROMO_ENDED", promoCode: "DOT05", before: "2026-09-25T20:00:00+07:00", after: AT }),
     )[0]!;
     expect(row.action).toBe("Kết thúc sớm");
-    expect(row.before).toBe("20:00 ngày 25/09");
-    expect(row.after).toBe("18:52 ngày 20/09");
+    expect(row.before).toBe("20:00 · 25/09");
+    expect(row.after).toBe("18:52 · 20/09");
     expect(row.tail).toBe("giờ kết thúc = bây giờ");
   });
 
@@ -600,6 +601,7 @@ describe("what the shop did to the catalogue", () => {
     expect(created.subject).toBe("Số 07");
     expect(created.kind).toBe("drop");
     expect(created.href).toBe("/admin/drops/07");
+    expect(created.tail).toBe("mở 20:00 · 06/11 → đóng 20:00 · 20/11");
 
     const window = { opensAt: "2026-09-11T20:00:00+07:00", closesAt: "2026-09-25T20:00:00+07:00" };
     const early = rowsOf(
@@ -607,8 +609,8 @@ describe("what the shop did to the catalogue", () => {
     )[0]!;
     expect(early.action).toBe("Đóng sớm");
     expect(early.detail).toBe("giờ đóng đổi thành bây giờ");
-    expect(early.before).toBe("20:00 ngày 25/09");
-    expect(early.after).toBe("18:52 ngày 20/09");
+    expect(early.before).toBe("20:00 · 25/09");
+    expect(early.after).toBe("18:52 · 20/09");
 
     const moved = rowsOf(
       done({
@@ -619,7 +621,7 @@ describe("what the shop did to the catalogue", () => {
       }),
     )[0]!;
     expect(moved.action).toBe("Sửa giờ");
-    expect(moved.tail).toBe("mở 20:00 ngày 03/10");
+    expect(moved.tail).toBe("mở 20:00 · 03/10");
   });
 
   it("records a teaser against the issue it was announced for", () => {
