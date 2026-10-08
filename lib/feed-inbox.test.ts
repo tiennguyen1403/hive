@@ -125,7 +125,7 @@ describe("an issue's rows", () => {
       href: "/products?line=5",
       kind: "drop",
     });
-    expect(find(items, "Số 06 công bố: SỎI và NGÓI")).toMatchObject({
+    expect(find(items, "Số 06 công bố 4 mẫu")).toMatchObject({
       at: "2026-09-18T12:00:00+07:00",
       body: "Mở 20:00 thứ Sáu 02/10",
       href: "/#sap-mo",
@@ -140,20 +140,34 @@ describe("an issue's rows", () => {
     expect(find(items, "Số 05 đã đóng")).toMatchObject({ at: "2026-09-25T20:00:00+07:00", body: "108/181 chiếc đã bán", href: "/so/5" });
   });
 
-  it("names every teaser of the issue once, on one row, dated by the first to be announced", () => {
-    const three = buildCatalog({
+  it("counts every announced teaser of the issue on one row, dated by the first to be announced", () => {
+    const more = buildCatalog({
       products: [...C.products],
       drops: [...C.drops],
       teasers: [
         ...C.teasers,
         { slug: "s06-gach", name: "GẠCH", kind: "Áo thun", family: "TEE", dropNo: 6, photoKey: "suong", announcedAt: "2026-09-17T09:00:00+07:00" },
+        // Nobody recorded when VỮA was announced: it is left out of the count rather than guessed.
         { slug: "s06-vua", name: "VỮA", kind: "Áo thun", family: "TEE", dropNo: 6, photoKey: "suong", announcedAt: null },
       ],
       promotions: [...C.promotions],
     });
-    const rows = inboxItems(sources(ANCHOR, { catalog: three })).filter((i) => i.title.includes("công bố"));
+    const rows = inboxItems(sources(ANCHOR, { catalog: more })).filter((i) => i.title.includes("công bố"));
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ title: "Số 06 công bố: SỎI, NGÓI và GẠCH", at: "2026-09-17T09:00:00+07:00" });
+    expect(rows[0]).toMatchObject({ title: "Số 06 công bố 5 mẫu", at: "2026-09-17T09:00:00+07:00" });
+  });
+
+  it("counts one teaser as one style, in both languages (round v6: the count, no longer the names)", () => {
+    const one = buildCatalog({
+      products: [...C.products],
+      drops: [...C.drops],
+      teasers: [C.teasers[0]!],
+      promotions: [...C.promotions],
+    });
+    const at = (locale: "vi" | "en") =>
+      inboxItems(sources(ANCHOR, { catalog: one }), locale).filter((i) => i.kind === "drop" && i.href === "/#sap-mo");
+    expect(at("vi").map((i) => i.title)).toEqual(["Số 06 công bố 1 mẫu"]);
+    expect(at("en").map((i) => i.title)).toEqual(["Drop 06 reveals 1 style"]);
   });
 });
 
@@ -237,7 +251,7 @@ describe("the list", () => {
     expect(times).toEqual([...times].sort((x, y) => y - x));
     expect(titles(a).slice(0, 4)).toEqual([
       "DH-2430 chờ chuyển khoản",
-      "Số 06 công bố: SỎI và NGÓI",
+      "Số 06 công bố 4 mẫu",
       "DH-2422 đang giao",
       "DH-2416 đã giao",
     ]);

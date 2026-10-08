@@ -59,7 +59,7 @@ export function teaserText(teaser: Pick<Teaser, "name" | "kind" | "en">, locale:
 /**
  * The `lang` an element holding nothing but a style's or a teaser's name
  * carries (round v6 slice E1): `"vi"` on an English page when the name printed
- * is the Vietnamese one — an issue's style (KHÓI, SỎI), or a fixed style whose
+ * is the Vietnamese one — an issue's style (KHÓI, BỤI), or a fixed style whose
  * English the back office dropped — so a screen reader says it as Vietnamese;
  * nothing otherwise, and nothing at all on a Vietnamese page, whose `<html>`
  * says it already. Read off the same fallback `productText` and `teaserText`

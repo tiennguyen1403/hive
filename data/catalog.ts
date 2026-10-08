@@ -15,8 +15,9 @@ import { issueCode } from "@/lib/lexicon";
  *
  * Photos: each colourway names its photo in `photoKeys`, in band order. Số 05
  * wears its own (`shot-<style>-<colour>`, AI-made packshots with a lookbook
- * frame each — `lib/shots.ts`, v3 slice 14); Số 03 and 04 and the teasers
- * still borrow Unsplash frames; the fixed styles are flat drawings.
+ * frame each — `lib/shots.ts`, v3 slice 14), and so do Số 06's teasers
+ * (`shot-<stem>`, a packshot each, round v6); Số 03 and 04 still borrow
+ * Unsplash frames; the fixed styles are flat drawings.
  *
  * Construction lines (`details`, backend slice B6): only Số 05 has them. They
  * are the garment briefs its photos were made from
@@ -30,8 +31,9 @@ import { issueCode } from "@/lib/lexicon";
  * the British English of its `kind` and, for a style, its `material` and its
  * lines — translated line for line, in their order, with the print titles in
  * quotes kept as they are, like the names. Only the eight fixed styles have
- * an English `name`; the issues' styles and the teasers keep theirs
- * (`tasks/plan.md`, "Thuật ngữ tiếng Anh"). A style without lines has no
+ * an English `name` of their own; the issues' styles keep theirs
+ * (`tasks/plan.md`, "Thuật ngữ tiếng Anh"), and Số 06's teasers, named in
+ * English, repeat theirs (round v6, `TEASERS`). A style without lines has no
  * English ones either: `details_en` is null or holds a line.
  *
  * The figures themselves are carried over unchanged from the approved
@@ -62,7 +64,7 @@ export const DROPS: Drop[] = [
  * B12): fourteen days and eight hours.
  *
  * The one rule the sample's announcements are written by, taken from the Feed
- * mock's own inbox — "Số 06 công bố: SỎI và NGÓI" at 12:00 on 18/09
+ * mock's own inbox — its row announcing Số 06's teasers at 12:00 on 18/09
  * (`NOTIFICATIONS` in `prototype/explore/shared/data.js`) for an issue that
  * opens at 20:00 on 02/10 — and held to it by `catalog.test.ts`, which reads
  * the mock. Sample data authored by a stated rule, like the order moments of
@@ -83,13 +85,21 @@ function announcedFor(dropNo: number): string {
  *
  * No price and no stock: "Giá và số lượng công bố đúng lúc mở" is what the
  * upcoming-drop screen promises, and the data has to keep that promise rather
- * than carry the numbers around invisibly. Their photos are borrowed frames
- * — see `lib/photos.ts`. Both were announced together, when Số 06 was
- * (`announcedFor`).
+ * than carry the numbers around invisibly. All four were announced together,
+ * when Số 06 was (`announcedFor`).
+ *
+ * Số 06's four printed tees (the user, 08/10/2026, replacing SỎI and NGÓI):
+ * each wears its own packshot, made with Qwen-Image-2.1 (`shot-<stem>`,
+ * `lib/shots.ts`). The name is the title printed on the shirt, so it is the
+ * same in both languages: nothing is translated (QĐ-40). It is English,
+ * though, so `en.name` repeats it — which is what keeps an English page from
+ * marking it `lang="vi"` (`nameLang`), as it marks a name kept in Vietnamese.
  */
 export const TEASERS: Teaser[] = [
-  { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong", announcedAt: announcedFor(6), en: { kind: "Nylon jacket" } },
-  { slug: "s06-ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi", announcedAt: announcedFor(6), en: { kind: "Printed hoodie" } },
+  { slug: "s06-out-of-character", name: "OUT OF CHARACTER", kind: "Áo thun in", family: "TEE", dropNo: 6, photoKey: "shot-out-of-character", announcedAt: announcedFor(6), en: { name: "OUT OF CHARACTER", kind: "Printed tee" } },
+  { slug: "s06-still-in-motion", name: "STILL IN MOTION", kind: "Áo thun in", family: "TEE", dropNo: 6, photoKey: "shot-still-in-motion", announcedAt: announcedFor(6), en: { name: "STILL IN MOTION", kind: "Printed tee" } },
+  { slug: "s06-midnight-unedited", name: "MIDNIGHT, UNEDITED", kind: "Áo thun in", family: "TEE", dropNo: 6, photoKey: "shot-midnight-unedited", announcedAt: announcedFor(6), en: { name: "MIDNIGHT, UNEDITED", kind: "Printed tee" } },
+  { slug: "s06-for-reference-only", name: "FOR REFERENCE ONLY", kind: "Áo thun in", family: "TEE", dropNo: 6, photoKey: "shot-for-reference-only", announcedAt: announcedFor(6), en: { name: "FOR REFERENCE ONLY", kind: "Printed tee" } },
 ];
 
 export function teasersIn(dropNo: number): Teaser[] {

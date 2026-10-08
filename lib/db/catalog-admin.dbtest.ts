@@ -693,7 +693,7 @@ describe("admin_add_teaser", () => {
   });
 
   it("refuses a slug that is taken, one that is not a slug, a photo nobody borrows, and a missing issue", async () => {
-    expect((await manager.rpc("admin_add_teaser", teaser({ p_slug: "s06-soi" }))).error?.message).toBe("NOT_ALLOWED");
+    expect((await manager.rpc("admin_add_teaser", teaser({ p_slug: "s06-out-of-character" }))).error?.message).toBe("NOT_ALLOWED");
     expect((await manager.rpc("admin_add_teaser", teaser({ p_slug: "Thử 6" }))).error?.message).toBe("BAD_INPUT");
     expect((await manager.rpc("admin_add_teaser", teaser({ p_photo_key: "khong-co" }))).error?.message).toBe(
       "BAD_INPUT",

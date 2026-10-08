@@ -257,9 +257,12 @@ describe("readTeaser — a name, a kind and a borrowed photo", () => {
     // `slugFor`, the one pattern: the issue's code, then the name's segment.
     const soi = readTeaser({ ...sheet, name: "sỏi" }, catalog);
     expect(soi.ok && soi.value.slug).toBe("s06-soi");
-    // SỎI is already announced for Số 06 under that address, so a second one
-    // is the same row — the database refuses it as taken.
-    expect(catalog.teasers.map((t) => t.slug)).toContain("s06-soi");
+    // MIDNIGHT, UNEDITED is already announced for Số 06 under that address —
+    // its comma goes like any other mark — so a second one is the same row:
+    // the database refuses it as taken.
+    const midnight = readTeaser({ ...sheet, name: "midnight, unedited" }, catalog);
+    expect(midnight.ok && midnight.value.slug).toBe("s06-midnight-unedited");
+    expect(catalog.teasers.map((t) => t.slug)).toContain("s06-midnight-unedited");
     for (const t of catalog.teasers) {
       const again = readTeaser({ ...sheet, name: t.name, dropNo: t.dropNo }, catalog);
       expect(again.ok && again.value.slug).toBe(t.slug);

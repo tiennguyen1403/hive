@@ -29,6 +29,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { entryNames, select } from "./gen.mjs";
 import { OVERLAYS, ROUTES } from "./manifest.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -235,12 +236,20 @@ export function formatDiff(d, { runFile = "run", baseFile = "baseline" } = {}) {
  * The baseline after an approved slice: every entry the run visited replaces the baseline's entry of the same name
  * (or joins it), with its findings, landing, console errors and clock boxes; the other entries stay as they were.
  * The totals are counted again from the result.
+ *
+ * `allowed`, when given, is the set of entry names the full sweep visits (`entryNames(select({ zone: "all" }))`):
+ * an entry outside it — a band edge such as 1199 or 1200 that `impact` added for one slice — is checked by that
+ * slice's run but never joins the baseline, so the baseline stays exactly the full sweep (`gen.test.ts` pins that).
+ *
+ * @param {any} base
+ * @param {any} run
+ * @param {Set<string> | null} [allowed]
  */
-export function promote(base, run) {
-  const names = new Set((run.visited ?? []).map((v) => v.name));
-  if (names.size === 0) throw new Error("the run has no `visited` list to promote");
+export function promote(base, run, allowed = null) {
+  const names = new Set((run.visited ?? []).map((v) => v.name).filter((n) => !allowed || allowed.has(n)));
+  if (names.size === 0) throw new Error("the run has no `visited` entry to promote");
   const visited = (base.visited ?? []).map((v) => (names.has(v.name) ? run.visited.find((x) => x.name === v.name) : v));
-  for (const v of run.visited) if (!visited.some((x) => x.name === v.name)) visited.push(v);
+  for (const v of run.visited) if (names.has(v.name) && !visited.some((x) => x.name === v.name)) visited.push(v);
   const results = [
     ...(base.results ?? []).filter((r) => !names.has(r.name)),
     ...(run.results ?? []).filter((r) => names.has(r.name)),
@@ -304,13 +313,16 @@ function main(argv) {
   const base = loadRun(baseFile);
   const rel = (f) => relative(ROOT, f).replace(/\\/g, "/");
   if (opts.promote) {
-    const next = promote(base, run);
+    const allowed = new Set(entryNames(select({ zone: "all" })));
+    const next = promote(base, run, allowed);
     writeFileSync(baseFile, JSON.stringify(next, null, 1) + "\n");
     // The shots follow the findings: the run's shot of each promoted entry replaces the baseline's.
+    const promoted = run.visited.filter((v) => allowed.has(v.name));
+    const skipped = run.visited.length - promoted.length;
     let copied = 0;
     if (run.shots && base.shots) {
       mkdirSync(resolve(ROOT, base.shots), { recursive: true });
-      for (const v of run.visited) {
+      for (const v of promoted) {
         const from = resolve(ROOT, run.shots, `${v.name}.png`);
         if (existsSync(from)) {
           copyFileSync(from, resolve(ROOT, base.shots, `${v.name}.png`));
@@ -318,7 +330,10 @@ function main(argv) {
         }
       }
     }
-    console.log(`promoted ${run.visited.length} entries of ${rel(runFile)} into ${rel(baseFile)}; ${copied} shots copied into ${base.shots}`);
+    console.log(
+      `promoted ${promoted.length} entries of ${rel(runFile)} into ${rel(baseFile)}; ${copied} shots copied into ${base.shots}` +
+        (skipped ? `; ${skipped} entries outside the full sweep (slice-only widths) left out` : ""),
+    );
     return 0;
   }
   const d = diffRuns(base, run);

@@ -9,7 +9,7 @@ import { savedStyles } from "./feed-me";
 import { pick, plural, pluralNoun, type Locale, type Pair } from "./i18n";
 import { LOW_STOCK_AT, dropSummary, isFixed, lastSoldAtOf, onHandByColor, onHandOf } from "./inventory";
 import { issueLabel } from "./lexicon";
-import { productText, teaserText } from "./product-text";
+import { productText } from "./product-text";
 import { livePromotions } from "./promotions";
 
 /**
@@ -33,10 +33,10 @@ import { livePromotions } from "./promotions";
  * depends on the time is handed `now`.
  *
  * In both languages since round v6 slice E3a: each row is written in both
- * (`Draft`), its sentence translated and its order code, style and teaser
- * names (through `productText`/`teaserText`) and numbers kept, and printed in
- * one. A row's `key` is always made of its VIETNAMESE title, so a row read in
- * one language stays read in the other and the bell counts the same.
+ * (`Draft`), its sentence translated and its order code, style names (through
+ * `productText`) and numbers kept, and printed in one. A row's `key` is always
+ * made of its VIETNAMESE title, so a row read in one language stays read in
+ * the other and the bell counts the same.
  */
 
 /** The five kinds, each with its glyph on the page (`notifications.js`: `KIND`). */
@@ -182,21 +182,17 @@ function orderRows(o: InboxOrder): Draft[] {
   return rows;
 }
 
-/** "SỎI và NGÓI", "A, B và C"; in English "SỎI and NGÓI", "A, B and C". */
-function namesList(names: readonly string[], locale: Locale = "vi"): string {
-  if (names.length < 2) return names.join("");
-  return `${names.slice(0, -1).join(", ")} ${pick({ vi: "và", en: "and" }, locale)} ${names[names.length - 1]}`;
-}
-
 /**
  * Each issue's rows: opened (its styles and pieces), two days from closing,
  * closed (what sold), and — once its teasers are out — one announcement,
- * dated by the earliest of them and naming every one. In English "Drop 05 is
- * live" (as the drop page says it, LIVE) · "6 styles, 210 pieces", "Drop 05:
- * 2 days left" · "Closes 20:00, Tuesday 6 Oct", "Drop 05 has closed" ·
- * "180/210 pieces sold", "Drop 06 reveals SỎI and NGÓI" · "Opens 20:00,
- * Tuesday 13 Oct" — "reveals" and not "announced:", measured: the latter took
- * two lines at 390 where the Vietnamese takes one.
+ * dated by the earliest of them and counting them: "Số 06 công bố 4 mẫu"
+ * (round v6, the user's call 08/10; the row named every teaser until Số 06's
+ * four long names, one with a comma, made a four-line title at 390 that read
+ * as five). In English "Drop 05 is live" (as the drop page says it, LIVE) ·
+ * "6 styles, 210 pieces", "Drop 05: 2 days left" · "Closes 20:00, Tuesday
+ * 6 Oct", "Drop 05 has closed" · "180/210 pieces sold", "Drop 06 reveals
+ * 4 styles" · "Opens 20:00, Tuesday 13 Oct" — "reveals" and not "announced:",
+ * measured: the latter took two lines at 390 where the Vietnamese took one.
  */
 function dropRows(catalog: Catalog): Draft[] {
   const rows: Draft[] = [];
@@ -245,11 +241,8 @@ function dropRows(catalog: Catalog): Draft[] {
         kind: "drop",
         at,
         title: {
-          vi: `${label.vi} công bố: ${namesList(told.map((t) => t.name))}`,
-          en: `${label.en} reveals ${namesList(
-            told.map((t) => teaserText(t, "en").name),
-            "en",
-          )}`,
+          vi: `${label.vi} công bố ${told.length} mẫu`,
+          en: `${label.en} reveals ${plural(told.length, "style", "styles")}`,
         },
         body: { vi: `Mở ${clockDayLabel(d.opensAt)}`, en: `Opens ${clockDayLabel(d.opensAt, "en")}` },
         href: "/#sap-mo",

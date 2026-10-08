@@ -340,7 +340,7 @@ describe("(d) the sample teasers are announced TEASER_LEAD_HOURS before Số 06 
 
   it("keeps the lead on the real clock's anchor, after reset_demo(demo_anchor())", async () => {
     const { teasers, opensAt } = await teasersAndOpening();
-    expect(teasers).toHaveLength(2);
+    expect(teasers).toHaveLength(4);
     for (const t of teasers) {
       expect(t.announcedAt, t.slug).toMatch(VN_ISO);
       expect((Date.parse(opensAt) - Date.parse(t.announcedAt!)) / HOUR, t.slug).toBe(TEASER_LEAD_HOURS);
@@ -350,13 +350,23 @@ describe("(d) the sample teasers are announced TEASER_LEAD_HOURS before Số 06 
   it("is the fixture's own minute on the fixture's anchor, and moves with it", async () => {
     await resetTo(FIXTURE_ANCHOR);
     let got = await teasersAndOpening();
-    expect(got.teasers.map((t) => t.announcedAt)).toEqual(["2026-09-18T12:00:00+07:00", "2026-09-18T12:00:00+07:00"]);
+    expect(got.teasers.map((t) => t.announcedAt)).toEqual([
+      "2026-09-18T12:00:00+07:00",
+      "2026-09-18T12:00:00+07:00",
+      "2026-09-18T12:00:00+07:00",
+      "2026-09-18T12:00:00+07:00",
+    ]);
     expect(got.teasers).toEqual([...FIXTURE_CATALOG.teasers]);
 
     await resetTo("2026-09-25T18:50:00+07:00");
     got = await teasersAndOpening();
     expect(got.opensAt).toBe("2026-10-07T20:00:00+07:00");
-    expect(got.teasers.map((t) => t.announcedAt)).toEqual(["2026-09-23T12:00:00+07:00", "2026-09-23T12:00:00+07:00"]);
+    expect(got.teasers.map((t) => t.announcedAt)).toEqual([
+      "2026-09-23T12:00:00+07:00",
+      "2026-09-23T12:00:00+07:00",
+      "2026-09-23T12:00:00+07:00",
+      "2026-09-23T12:00:00+07:00",
+    ]);
   });
 });
 

@@ -25,7 +25,7 @@ import { cx, useReveal } from "./useReveal";
  * `remindBtn`, `closedRows`): a rail of small cards, the next issue, the
  * reminder, the closed issues. In both languages since round v6 slice E1;
  * a teaser's words come through `teaserText`, and its name keeps `lang="vi"`
- * on an English page.
+ * on an English page unless it has an English one (`nameLang`).
  */
 
 /** A link a block leads on with: a place on this page (the home's tabs) is a plain anchor, anywhere else a Next link. */
@@ -141,21 +141,31 @@ export function Rail({ id, title, chip, sub, more, items, className }: RailProps
   );
 }
 
-/** The next issue's styles as their garments' silhouettes: no photo, no price (`feed.js`: `teasers`). */
+/**
+ * The width a teaser's picture is drawn at: four in a row across the block from 1200px (at most a quarter of the
+ * 1280px feed, less its padding), two side by side in the block's side column from 900px, two across the phone.
+ */
+const TEASER_SIZES = "(min-width: 1200px) 280px, (min-width: 900px) 200px, 45vw";
+
+/**
+ * The next issue's styles, never with a price (`feed.js`: `teasers`): each in its own packshot, in colour, when it
+ * has one (round v6), else as its garment's silhouette, as the mock draws them (`teaserPicture`).
+ */
 export function Teasers({ teasers }: { teasers: readonly Teaser[] }) {
   const locale = useLocale();
   return (
     <div className="teasers">
       {teasers.map((teaser) => {
         const text = teaserText(teaser, locale);
+        const picture = teaserPicture(teaser);
         return (
           <figure className="teaser" key={teaser.slug}>
-            <div className="teaser-plate">
+            <div className={cx("teaser-plate", picture.photo && "is-shot")}>
               <Image
-                src={teaserPicture(teaser)}
+                src={picture.src}
                 width={PICTURE.width}
                 height={PICTURE.height}
-                sizes="(min-width: 900px) 200px, 45vw"
+                sizes={TEASER_SIZES}
                 alt={`${text.name}, ${kindInSentence(text.kind, locale)}`}
               />
             </div>

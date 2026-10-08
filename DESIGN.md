@@ -563,7 +563,18 @@ không nhập utilities. `@theme` còn khối v3 vì preflight đọc `--font-sa
   (`KEEP_PAPER`). Chi tiết nguồn gốc, nền giấy `#C3BBB2` và bảng khung mượn: `git show c018134:DESIGN.md` §1.
 - **Mẫu cố định** là hình phẳng sinh bằng máy: `scripts/flats.ts` từ `lib/flats.ts`, 17 PNG trong `public/flats/`, nền
   `#F4EFE6`. Feed đặt chúng trên `--f-plate` / `--f-plate2`.
-- Bảng tin mở bằng ảnh NGUỘI của Số 05; Số 03/04 và teaser Số 06 vẫn mượn khung Unsplash.
+- **Số 06 "Independent Editions"** (08/10/2026, người dùng chọn):
+  - bốn áo thun in OUT OF CHARACTER, STILL IN MOTION, MIDNIGHT, UNEDITED, FOR REFERENCE ONLY;
+  - ảnh sản phẩm sinh bằng Qwen-Image-2.1 (Hugging Face), qua cùng đường ống `scripts/shots.ts`, khoá `shot-<stem>` không màu
+    (`isTeaserShotKey`);
+  - tên mang `en.name` bằng chính nó, nên trang EN không gắn `lang="vi"`.
+- **Thẻ hé lộ hiện ảnh màu thật** khi mẫu có ảnh riêng (`teaserPicture` trả `{ src, photo }`, class `.teaser-plate.is-shot` bỏ
+  `grayscale` và `darken`). Mẫu không có ảnh riêng vẫn vẽ hình bóng theo họ áo. Vẫn không giá, không số lượng.
+  - Đây là chỗ lệch khỏi mock ("không ảnh"), người dùng chốt 08/10.
+  - Từ 1200px, bốn mẫu một hàng dưới ngày, đếm ngược và nút "Nhắc tôi", ở khối "Sắp mở" và hàng Số kế tiếp của lịch. Dưới 1200px vẫn
+    2×2.
+  - Mock giữ hình bóng, vì không có bản sao ảnh của app.
+- Bảng tin mở bằng ảnh NGUỘI của Số 05; Số 03/04 vẫn mượn khung Unsplash.
 
 ### Tệp thương hiệu
 Sinh bằng máy, **bản đen trắng** (QĐ-33): favicon, apple-icon, icon manifest qua `scripts/brand-assets.ts --icons`, màu từ

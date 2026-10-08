@@ -463,6 +463,10 @@ html:has([data-ui="feed"]) {
 [data-ui="feed"] .teasers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
 [data-ui="feed"] .teaser-plate { background: var(--f-bg2); isolation: isolate; }
 [data-ui="feed"] .teaser img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; filter: grayscale(1) brightness(1.03); mix-blend-mode: darken; }
+/* Not in the mock (round v6, the user's call 08/10): a teaser with a packshot of its own (Số 06's four) shows it in
+   colour. The grey and the darken blend above are the mock's for its flat silhouettes, the only pictures its teasers
+   had; a teaser without a packshot still wears them. */
+[data-ui="feed"] .teaser-plate.is-shot img { filter: none; mix-blend-mode: normal; }
 [data-ui="feed"] .teaser-name { margin-top: 8px; font-size: 26px; line-height: 1.06; }
 [data-ui="feed"] .teaser-kind { margin-top: 2px; font-size: 13px; color: var(--f-ink2); }
 [data-ui="feed"] .soon-note { margin-top: 16px; font-size: 14px; font-weight: 560; }
@@ -1025,6 +1029,22 @@ html[data-pointer] [data-ui="feed"] .size:has(input:focus), html[data-pointer] [
   [data-ui="feed"] .cal-row { grid-template-columns: 140px minmax(0, 1fr); column-gap: 28px; padding: 28px 28px; }
   [data-ui="feed"] .cal-row.is-next { grid-template-columns: 140px minmax(0, 1fr) minmax(0, 36%); }
   [data-ui="feed"] .cal-dd { font-size: 92px; }
+}
+
+/* Not in the mock (round v6, the user's call 08/10): from 1200px the next issue's teasers run four to a row across
+   the whole block, under the date, the countdown and Nhắc tôi. The mock's side column (34% of the card, 36% of the
+   calendar row) held its two teasers in one row; Số 06's four made two there and left the card's middle column
+   empty for about 330px at 1280 (the card went from about 373px to 694px tall). Under 1200px the side column stays,
+   two by two. */
+@media (min-width: 1200px) {
+  [data-ui="feed"] .soon {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto auto auto auto;
+    grid-template-areas: "date head" "date ." "date cd" "date note" "date btn" "teasers teasers";
+  }
+  [data-ui="feed"] .soon .teasers { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 40px; align-self: start; }
+  [data-ui="feed"] .cal-row.is-next { grid-template-columns: 180px minmax(0, 1fr); grid-template-rows: auto 1fr auto; }
+  [data-ui="feed"] .cal-row.is-next > .teasers { grid-column: 1 / -1; grid-row: 3; margin-top: 32px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 /* Not in the mock (round v6): at 900px the light footer's six links left 8px before the last one ("Quyền riêng tư")

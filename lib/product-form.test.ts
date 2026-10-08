@@ -176,11 +176,13 @@ describe("loanPhotos", () => {
   it("offers the borrowed frames the catalogue still wears, in the order lib/photos.ts lists them", () => {
     // Thirteen since v3 slice 14: the five frames only Số 05 wore (`khoi`,
     // `muoi`, `cat`, `gio`, `da`) went with Số 05's own photographs, and a
-    // frame nothing wears is one the database no longer takes either.
+    // frame nothing wears is one the database no longer takes either. Twelve
+    // since round v6: `nguoi`, which only the teaser NGÓI wore, went with
+    // Số 06's teasers when they were replaced by four in their own packshots.
     expect(loans.map((l) => l.key)).toEqual(
-      PHOTO_KEYS.filter((k) => !["hero", "khoi", "muoi", "cat", "gio", "da"].includes(k)),
+      PHOTO_KEYS.filter((k) => !["hero", "khoi", "muoi", "cat", "gio", "da", "nguoi"].includes(k)),
     );
-    expect(loans).toHaveLength(13);
+    expect(loans).toHaveLength(12);
   });
 
   it("never offers a photograph that ships with the app, or a flat", () => {
@@ -200,8 +202,12 @@ describe("loanPhotos", () => {
     // Worn by no style first: the first style wearing it at all, with the
     // colour that wears it (v3 slice 14), then a teaser as it is.
     expect(name("than")).toBe(`${shown("s04-tro")}, màu Đen`);
-    expect(name("nguoi")).toBe(styleName("NGÓI", 6));
     expect(loans.every((l) => l.name !== "")).toBe(true);
+    // No sample teaser wears a borrowed frame since round v6; one the back
+    // office adds on a frame no style wears is named after it.
+    const gach = { slug: "s06-gach", name: "GẠCH", kind: "Áo thun", family: "TEE", dropNo: 6, photoKey: "nguoi", announcedAt: null } as const;
+    const withTeaser = loanPhotos({ ...FIXTURE_CATALOG, teasers: [...FIXTURE_CATALOG.teasers, gach] });
+    expect(withTeaser.find((l) => l.key === "nguoi")?.name).toBe(styleName("GẠCH", 6));
   });
 
   it("gives no two frames one name, so no two radios in the grid read alike", () => {

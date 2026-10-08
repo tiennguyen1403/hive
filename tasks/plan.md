@@ -4179,3 +4179,90 @@ thật ra 2.447 xanh, 1 đỏ. Đã giao T1 sửa:
 - một lượt sweep trọn đồng bộ để thăng mốc.
 
 **08/10, T1 sửa sau mốc cuối đợt ĐẠT.** Quản trị quét cả 1280 và 1440 (`--zone=all` = 232 mục, bằng mốc; hai trang đối chứng quản trị giữ 1280). `VOLATILE` thêm dòng giờ đặt lại ở thanh bên (qua class CSS Module, không sửa mã ứng dụng). Hộp đồng hồ của ảnh trọn trang nay đo ở đúng bố cục của ảnh (không thanh cuộn). Sweep trọn vi và en trên bản build cuối: 232/232 giống mốc về phát hiện; pixel chỉ lệch ở chữ đi theo đồng hồ, ảnh sản phẩm render hơi khác, khung cuối của hiệu ứng, và ngày `/privacy`. Đã thăng mốc đồng bộ: 232 mục, VI 51, EN 50, 6 lỗi console (đều là trang 404). Phiên chính kiểm: tsc sạch, **2.448/2.448 test**.
+
+**08/10, LƯỢT RÀ TOÀN APP ĐÃ LÊN ONLINE** (B19 `f9ff40d`, R1 `5a51305`, T1 `60f9989`, R2 `bb3ee4c`, cuối đợt `272c260`). Người dùng tự
+làm:
+- `db push --linked --dry-run`: đúng hai migration B19; rồi `--yes`;
+- ba câu kiểm: ba trigger trên `auth.users` đều `O`; `rate_hits_bucket_check` có `auth_callback`; quản trị mẫu giữ handle `a-quanly`;
+- `git push`, dải `7b299c1..272c260`.
+
+Vercel dựng xong chưa tới một phút. Phiên chính kiểm bằng curl:
+- 7 trang chính trả 200;
+- `/privacy` in "08/10/2026"; bản EN có "The demo's admin is open";
+- `/faq` có "Trả bằng thẻ được không?" và "hoặc";
+- `/track?code=…&phone=…` (link cũ) trả 200, không link nào trong trang mang `phone`, form tra đơn là `method="POST"`;
+- `/admin/drops/99` khi chưa đăng nhập: 307 về `/sign-in?next=…`.
+
+**ĐỢT v6 XONG:** tiếng Anh, Google, Stripe, lượt rà toàn app, tất cả đã lên demo.
+
+**Còn lại, mức thấp:**
+- tiêu đề tab 404 của `/admin/drops/99`;
+- ô "Loại · form" 2 dòng với vài loại;
+- giới hạn của thẻ khi không có webhook (ghi ở `supabase/README.md`).
+
+**Ngoài code:** sandbox Stripe hết hạn khoảng 06/12/2026; ảnh thật cho Số 03/04/06, dòng Cố định và bìa.
+
+## Ảnh sản phẩm bằng Hugging Face *(08/10/2026)*
+
+Người dùng hỏi có nên dùng Hugging Face tạo ảnh sản phẩm, với concept tự do không bị ràng buộc bởi concept hiện tại của store.
+
+**Phiên chính tìm thấy hai lần thử trước** (02–03/10, trong `photos-raw/`, git bỏ qua):
+- Qwen-Image-2.1 tạo lại KHÓI đen từ packshot gốc: giữ đúng dáng áo, hình in, đường may; nền sạch và đều hơn. Lần thử dừng vì hết
+  hạn mức ZeroGPU;
+- FLUX.1-dev: chạy được sau khi đăng nhập;
+- bốn mẫu concept Số 06 "Independent Editions" bằng Qwen (`_s06-qwen-concepts-20261003/`): Out of Character, Still in Motion,
+  Midnight Unedited, For Reference Only. Mỗi ảnh ghép mặt trước và mặt sau, khổ 1280×800; hai ảnh lộ ma-nơ-canh; một ảnh có nhãn cổ.
+
+**Hạn mức ZeroGPU** (tài liệu HF): chưa đăng nhập 2 phút mỗi ngày, tài khoản miễn phí 5 phút, PRO 40 phút; hồi lại sau 24 giờ kể từ
+lần dùng đầu.
+
+**Người dùng chốt 08/10 (đừng hỏi lại):**
+- concept tự do **chỉ cho các mẫu chưa có ảnh**: Số 03, 04, 06, dòng Cố định, ảnh bìa. Số 05 giữ ảnh hiện có. Sửa dữ liệu của chính
+  mẫu đó nếu cần;
+- **giữ luật người mẫu** trong AGENTS.md;
+- **Số 06 dùng bốn mẫu Independent Editions**, thay SỎI và NGÓI; sửa dữ liệu Số 06 bằng một lát nhỏ;
+- **dùng gói miễn phí, chạy dần**.
+
+**Phiên chính:**
+- viết `photos-raw/_s06-packshots-20261008/generate.py`: cắt mặt trước của mỗi ảnh concept làm tham chiếu, rồi nhờ Qwen-Image-2.1
+  tạo lại thành ảnh 1024×1280 trên nền giấy `#D4CDC1`, ma-nơ-canh vô hình, bỏ nhãn cổ, giữ nguyên hình in và chữ;
+- người dùng tự chạy, vì script tiêu hạn mức trên tài khoản của họ.
+
+**Thứ tự đề xuất:** Số 06 (khối "Sắp mở" ở trang chủ), dòng Cố định (lưới Cửa hàng), ảnh bìa, Số 03 và 04.
+
+**08/10, bốn ảnh sản phẩm Số 06 ĐẠT** (Qwen-Image-2.1, gói miễn phí, xong trong một lần chạy của người dùng). Mỗi ảnh 1024×1280: ma-nơ-canh đã mất ở hai mẫu từng lộ, nhãn cổ của áo xanh chanh đã mất, chữ trên áo đọc đúng, hình in giữ sát concept. Lề trái và phải 39–95px; gấu áo xanh chanh trọn trong khung, phần chạm mép dưới chỉ là bóng của nền. Nền `#AA`–`#C6`, tối hơn đích; `scripts/shots.ts` sẽ kéo về `PAPER`. Bảng so: `photos-raw/_s06-packshots-20261008/_review-sheet.jpg`. Đã giao `ui-implementer` lát Số 06 (brief `tasks/briefs/v6-s06-teasers.md`): ảnh qua `scripts/shots.ts`, bốn teaser thay SỎI và NGÓI, seed, kiểm khối "Sắp mở" với 4 mẫu, kiểm theo tầng bằng T1. Lên hosted sẽ phải nạp lại seed.
+
+**08/10, lát Số 06 vòng 1 xong** (ảnh qua `scripts/shots.ts` vào `public/shots/<stem>.webp`, khoá `shot-<stem>`; `TEASERS` thành bốn mẫu;
+seed sinh lại; 2.456 test, 363 DB; `sweep:diff` không khác mốc). **Phát hiện:** theo mock ("không giá, không ảnh"), thẻ hé lộ ở cửa
+hàng vẽ hình bóng áo theo họ, nên bốn mẫu hiện thành bốn áo thun đen giống nhau; ảnh thật chỉ thấy trong quản trị. Ở 1280, khối "Sắp
+mở" cao 694px (trước 373px), cột giữa trống khoảng 330px.
+
+**Người dùng chốt 08/10** (cả bốn chọn đề xuất):
+- thẻ hé lộ **hiện ảnh màu thật**, vẫn không giá, không số lượng. Đây là chỗ lệch khỏi mock, do người dùng quyết; teaser không có ảnh
+  vẫn vẽ hình bóng;
+- **từ 1200px, bốn mẫu một hàng** dưới ngày, đếm ngược và nút "Nhắc tôi"; dưới 1200 giữ 2×2;
+- tiêu đề hộp thư: "Số {N} công bố {K} mẫu" / "Drop {N} reveals {K} styles";
+- gợi ý tên mẫu hé lộ ở quản trị: "VIẾT HOA" / "UPPERCASE".
+
+**Phiên chính quyết:** tên tiếng Anh của bốn mẫu không mang `lang="vi"` trên trang EN.
+
+Đã giao vòng sửa. `DESIGN.md` và mock (ISSUE_06, NOTIFICATIONS còn SỎI và NGÓI) để phiên chính sửa sau.
+
+**08/10, lát Số 06 ĐẠT** (vòng 2):
+- thẻ hé lộ hiện ảnh màu thật (`teaserPicture` → `{ src, photo }`, `.teaser-plate.is-shot`);
+- từ 1200px bốn mẫu một hàng, mọi tên một dòng ở 1200 và 1280;
+- hộp thư "Số {N} công bố {K} mẫu";
+- gợi ý tên mẫu hé lộ ở quản trị "VIẾT HOA";
+- bốn tên mang `en.name`, nên 0 `lang="vi"` trên trang EN;
+- seed sinh lại;
+- 2.459 test, 363 DB; `sweep:diff` 198/198 giống mốc, cộng 74 mục 1199/1200 mới.
+
+**Phiên chính:**
+- xem ảnh khối "Sắp mở" ở 1280 vi và 390 en;
+- **sửa `sweep:promote`**: chỉ thăng các mục có trong sweep trọn, mục chỉ một lát cần (bề ngang 1199/1200 do `impact` thêm) thì bỏ
+  ra và báo ra; thêm test, sửa README;
+- thăng mốc hai lượt (198 thăng, 74 bỏ ra; mốc vẫn 232 mục, VI 51, EN 50), rồi chạy lại tsc và test;
+- sửa mock (`ISSUE_06` bốn mẫu, thông báo "Số 06 công bố 4 mẫu");
+- ghi `DESIGN.md` §1 Ảnh.
+
+**Lên hosted:** seed đổi, nên nạp lại seed bằng `db query --linked -f supabase/seed.sql`, rồi `git push`. Không có migration.

@@ -278,7 +278,7 @@ export interface Teaser {
   photoKey: string;
   /**
    * When it was announced (backend slice B12), for the Feed inbox's "Số 06
-   * công bố: SỎI và NGÓI": the moment the back office added it, or for a
+   * công bố 4 mẫu": the moment the back office added it, or for a
    * sample teaser the fixture's own, authored by the mock's offset
    * (`TEASER_LEAD_HOURS` in `data/catalog.ts`) and moved by every reset with
    * the rest of the sample. Null when nobody recorded one — a teaser from a

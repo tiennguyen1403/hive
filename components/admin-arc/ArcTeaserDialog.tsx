@@ -117,7 +117,7 @@ function TeaserForm({
         <Input
           {...capitals}
           label={t({ vi: "Tên mẫu", en: "Style name" })}
-          placeholder={t({ vi: "VIẾT HOA, một từ", en: "CAPITALS, one word" })}
+          placeholder={t({ vi: "VIẾT HOA", en: "UPPERCASE" })}
           autoComplete="off"
           spellCheck={false}
           value={name}

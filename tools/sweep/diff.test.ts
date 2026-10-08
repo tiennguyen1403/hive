@@ -135,4 +135,17 @@ describe("promote", () => {
     // After promotion the same run compares clean.
     expect(diffRuns(next, run).differs).toBe(false);
   });
+
+  it("leaves out an entry the full sweep never visits (a slice-only band edge), so the baseline stays the full sweep", () => {
+    const run = sweep({
+      visited: [visit("admin-orders-1280", "/admin/orders", 1280), visit("home-1199", "/", 1199)],
+      findings: { "home-1199": { tinyText: [tiny('span "NV"')] } },
+    });
+    const allowed = new Set(BASE.visited.map((v: { name: string }) => v.name));
+    const next = promote(BASE, run, allowed);
+    expect(next.visited.map((v: { name: string }) => v.name)).toEqual(["home-390", "cart-390", "admin-orders-1280", "so-999-390"]);
+    expect(next.results.map((r: { name: string }) => r.name)).not.toContain("home-1199");
+    expect(next.totalFindings).toBe(0);
+    expect(next.scope.promoted.at(-1)).toEqual({ label: "slice", entries: 1 });
+  });
 });

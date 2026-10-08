@@ -154,7 +154,8 @@ describe("catalog_snapshot and the English", () => {
     });
     const tee = raw.products.find((p) => p.id === "p-ao-thun-tron")!;
     expect(tee.en).toEqual({ name: "PLAIN TEE", kind: "Tee", material: "Cotton 220gsm", details: null });
-    expect(raw.teasers.find((t) => t.slug === "s06-soi")!.en).toEqual({ name: null, kind: "Nylon jacket" });
+    // Số 06's teasers are named in English (round v6): the English name repeats the name.
+    expect(raw.teasers.find((t) => t.slug === "s06-out-of-character")!.en).toEqual({ name: "OUT OF CHARACTER", kind: "Printed tee" });
   });
 
   it("reads back, through the parser, exactly the fixture's English — every style, every teaser", async () => {
@@ -177,7 +178,7 @@ describe("reset_demo and the English", () => {
       details_en: null,
     });
     expect(await englishOf("seed_products", "p-khoi")).toMatchObject({ name_en: null, details_en: KHOI.en!.details });
-    expect(await teaserEnglishOf("seed_teasers", "s06-ngoi")).toEqual({ name_en: null, kind_en: "Printed hoodie" });
+    expect(await teaserEnglishOf("seed_teasers", "s06-still-in-motion")).toEqual({ name_en: "STILL IN MOTION", kind_en: "Printed tee" });
 
     const cleared = await service
       .from("products")
@@ -186,7 +187,7 @@ describe("reset_demo and the English", () => {
     expect(cleared.error).toBeNull();
     const renamed = await service.from("products").update({ name_en: "SOMETHING ELSE", details_en: ["One line"] }).eq("id", "p-ao-thun-tron");
     expect(renamed.error).toBeNull();
-    const teaser = await service.from("teasers").update({ kind_en: null }).eq("slug", "s06-ngoi");
+    const teaser = await service.from("teasers").update({ name_en: null, kind_en: null }).eq("slug", "s06-still-in-motion");
     expect(teaser.error).toBeNull();
     expect("en" in (await snapshotAs(anon)).byId.get("p-khoi" as never)!).toBe(false);
 
@@ -203,7 +204,7 @@ describe("reset_demo and the English", () => {
       material_en: "Cotton 220gsm",
       details_en: null,
     });
-    expect(await teaserEnglishOf("teasers", "s06-ngoi")).toEqual({ name_en: null, kind_en: "Printed hoodie" });
+    expect(await teaserEnglishOf("teasers", "s06-still-in-motion")).toEqual({ name_en: "STILL IN MOTION", kind_en: "Printed tee" });
     const catalog = await snapshotAs(anon);
     expect(catalog.products.map((p) => [p.id, p.en])).toEqual(FIXTURE_EN);
     expect(catalog.teasers.map((t) => [t.slug, t.en])).toEqual(FIXTURE_TEASER_EN);
@@ -344,7 +345,7 @@ describe("the English columns", () => {
     expect((await service.from("products").update({ kind_en: null }).eq("id", "p-ao-thun-tron")).error).toBeNull();
     for (const table of ["teasers", "seed_teasers"] as const) {
       for (const column of ["name_en", "kind_en"] as const) {
-        const { error } = await service.from(table).update({ [column]: " " } as { name_en: string }).eq("slug", "s06-soi");
+        const { error } = await service.from(table).update({ [column]: " " } as { name_en: string }).eq("slug", "s06-out-of-character");
         expect(error?.code, `${table}.${column}`).toBe(CHECK_VIOLATION);
       }
     }

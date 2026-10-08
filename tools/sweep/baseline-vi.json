@@ -2092,18 +2092,290 @@
   }
  ],
  "volatile": {
+  "admin-promotions-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-c-minhanh-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-2429-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-2429,DH-2428,DH-2423,DH-2426-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-9999-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-group-loyal-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-q-zzz-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-c-namle-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-state-ENDED-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-state-PAUSED-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-c-minhanh-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-2429-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-2429,DH-2428,DH-2423,DH-2426-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-9999-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-group-loyal-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-q-zzz-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-c-namle-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-state-ENDED-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-state-PAUSED-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-row-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-create-drawer-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-edit-drawer-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-create-error-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-row-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-create-drawer-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-edit-drawer-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-create-error-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
   "home-390": [
    [
     16,
-    563,
+    543,
     192,
-    35
+    34
    ],
    [
     71,
-    3552,
+    3457,
     195,
-    33
+    32
    ]
   ],
   "order-confirmed-DH-2430-390": [
@@ -2156,14 +2428,14 @@
   ],
   "home-1280": [
    [
-    583,
-    612,
-    275,
+    589,
+    620,
+    276,
     49
    ],
    [
     356,
-    2355,
+    2375,
     306,
     51
    ]
@@ -2272,14 +2544,6 @@
     35
    ]
   ],
-  "admin-promotions-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
   "admin-products-1280": [
    [
     28,
@@ -2313,46 +2577,6 @@
    ]
   ],
   "admin-products-p-ao-thun-tron-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-c-minhanh-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-slips-codes-DH-2429-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-slips-codes-DH-2429,DH-2428,DH-2423,DH-2426-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-slips-codes-DH-9999-1280": [
    [
     28,
     552,
@@ -2401,46 +2625,6 @@
    ]
   ],
   "admin-log-q-zzz-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-group-loyal-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-q-zzz-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-c-namle-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-state-ENDED-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-state-PAUSED-1280": [
    [
     28,
     552,
@@ -2512,14 +2696,6 @@
     35
    ]
   ],
-  "admin-orders-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
   "admin-orders-DH-2429-1440": [
    [
     28,
@@ -2560,14 +2736,6 @@
     35
    ]
   ],
-  "admin-promotions-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
   "admin-products-1440": [
    [
     28,
@@ -2601,46 +2769,6 @@
    ]
   ],
   "admin-products-p-ao-thun-tron-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-c-minhanh-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-slips-codes-DH-2429-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-slips-codes-DH-2429,DH-2428,DH-2423,DH-2426-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-slips-codes-DH-9999-1440": [
    [
     28,
     652,
@@ -2689,46 +2817,6 @@
    ]
   ],
   "admin-log-q-zzz-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-group-loyal-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-q-zzz-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-c-namle-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-state-ENDED-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-state-PAUSED-1440": [
    [
     28,
     652,
@@ -3024,46 +3112,6 @@
     35
    ]
   ],
-  "admin-promotions-row-menu-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-create-drawer-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-edit-drawer-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-create-error-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-row-menu-1280": [
-   [
-    28,
-    552,
-    183,
-    35
-   ]
-  ],
   "admin-product-new-issue-menu-1280": [
    [
     28,
@@ -3177,14 +3225,6 @@
    ]
   ],
   "admin-order-address-ward-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-orders-row-menu-1440": [
    [
     28,
     652,
@@ -3360,46 +3400,6 @@
     35
    ]
   ],
-  "admin-promotions-row-menu-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-create-drawer-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-edit-drawer-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-promotions-create-error-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
-  "admin-customers-row-menu-1440": [
-   [
-    28,
-    652,
-    183,
-    35
-   ]
-  ],
   "admin-product-new-issue-menu-1440": [
    [
     28,
@@ -3488,6 +3488,10 @@
    {
     "label": "sync",
     "entries": 232
+   },
+   {
+    "label": "impact",
+    "entries": 198
    }
   ]
  }

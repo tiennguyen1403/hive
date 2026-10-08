@@ -55,14 +55,15 @@ describe("the generator itself", () => {
   const sql = render();
 
   // Slice B5 added the eight fixed styles: 8 styles, 17 colours, 68 cells.
-  it("writes one row per fixture entry — 29 · 55 · 220 · 4 · 2 · 6 · 8 · 9 · 24 · 33", () => {
+  // Round v6 (08/10/2026): Số 06's two teasers became four.
+  it("writes one row per fixture entry — 29 · 55 · 220 · 4 · 4 · 6 · 8 · 9 · 24 · 33", () => {
     const rowsOf = (table: string) => rowsIn(sql, table).length;
 
     expect(rowsOf("seed_drops")).toBe(4);
     expect(rowsOf("seed_products")).toBe(29);
     expect(rowsOf("seed_product_colors")).toBe(55);
     expect(rowsOf("seed_stock_cells")).toBe(220);
-    expect(rowsOf("seed_teasers")).toBe(2);
+    expect(rowsOf("seed_teasers")).toBe(4);
     expect(rowsOf("seed_promotions")).toBe(6);
     expect(rowsOf("seed_customers")).toBe(8);
     expect(rowsOf("seed_addresses")).toBe(9);
@@ -122,8 +123,10 @@ describe("the generator itself", () => {
       "insert into public.seed_teasers (slug, name, kind, family, drop_no, photo_key, position, announced_at, name_en, kind_en) values",
     );
     expect(rowsIn(sql, "seed_teasers")).toEqual([
-      "  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0, '2026-09-18T12:00:00+07:00'::timestamptz, null, 'Nylon jacket'),",
-      "  ('s06-ngoi', 'NGÓI', 'Áo hoodie in', 'HOODIE', 6, 'nguoi', 1, '2026-09-18T12:00:00+07:00'::timestamptz, null, 'Printed hoodie')",
+      "  ('s06-out-of-character', 'OUT OF CHARACTER', 'Áo thun in', 'TEE', 6, 'shot-out-of-character', 0, '2026-09-18T12:00:00+07:00'::timestamptz, 'OUT OF CHARACTER', 'Printed tee'),",
+      "  ('s06-still-in-motion', 'STILL IN MOTION', 'Áo thun in', 'TEE', 6, 'shot-still-in-motion', 1, '2026-09-18T12:00:00+07:00'::timestamptz, 'STILL IN MOTION', 'Printed tee'),",
+      "  ('s06-midnight-unedited', 'MIDNIGHT, UNEDITED', 'Áo thun in', 'TEE', 6, 'shot-midnight-unedited', 2, '2026-09-18T12:00:00+07:00'::timestamptz, 'MIDNIGHT, UNEDITED', 'Printed tee'),",
+      "  ('s06-for-reference-only', 'FOR REFERENCE ONLY', 'Áo thun in', 'TEE', 6, 'shot-for-reference-only', 3, '2026-09-18T12:00:00+07:00'::timestamptz, 'FOR REFERENCE ONLY', 'Printed tee')",
     ]);
   });
 
@@ -136,7 +139,7 @@ describe("the generator itself", () => {
       fixtureStates(),
     );
     expect(rowsIn(unknown, "seed_teasers")).toEqual([
-      "  ('s06-soi', 'SỎI', 'Áo khoác dù', 'JACKET', 6, 'suong', 0, null, null, 'Nylon jacket')",
+      "  ('s06-out-of-character', 'OUT OF CHARACTER', 'Áo thun in', 'TEE', 6, 'shot-out-of-character', 0, null, 'OUT OF CHARACTER', 'Printed tee')",
     ]);
   });
 
@@ -241,7 +244,7 @@ describe("the generator itself", () => {
           fixtureOrders(),
           fixtureStates(),
         ),
-      ).toThrow("s06-soi: en.name is blank");
+      ).toThrow("s06-out-of-character: en.name is blank");
     });
   });
 });

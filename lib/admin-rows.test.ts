@@ -294,7 +294,7 @@ describe("dropRows", () => {
     const rows = dropRows(FIXTURE_CATALOG, DROPS, NOW);
     const six = rows.find((r) => r.no === 6)!;
     expect(six.styles).toBe(0);
-    expect(six.teasers).toBe(2);
+    expect(six.teasers).toBe(4);
   });
 
   it("reports a drop closed once its closing hour has been moved to the past", () => {

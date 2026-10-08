@@ -1,18 +1,23 @@
 /**
  * The photographs of Số 05, from what the image tool made to what the shop
- * serves (v3 slice 14).
+ * serves (v3 slice 14) — and since round v6 (08/10/2026) the packshots of
+ * Số 06's four teasers, through the same frame and the same paper.
  *
  * WHAT IT WRITES
  *   public/shots/<style>-<colour>.webp        the packshot, 1200 × 1500
  *   public/shots/<style>-<colour>-look.webp   the lookbook frame, 1200 × 1500
- *   — one pair per entry of `SHOTS` in `lib/shots.ts`.
+ *   public/shots/<stem>.webp                  a teaser's packshot, 1200 × 1500
+ *   — one file or pair per entry of `SHOTS` in `lib/shots.ts`.
  *
  * WHERE FROM
  *   photos-raw/<style>-<colour>.png           the packshot as ChatGPT made it
  *   photos-raw/<style>-<colour>-street.png    the lookbook frame
+ *   photos-raw/<run>/<stem>.png               a teaser's packshot as Qwen-Image-2.1
+ *                                             made it, `<run>` per `TEASER_RUNS`
  *   (git ignores the folder; the files are only ever read.)
  *   tasks/anh-san-pham-prompt.md, tasks/lookbook-register.md — the prompts
- *   each file carries as its provenance, read as they are on disk.
+ *   each file carries as its provenance, read as they are on disk; a teaser's
+ *   from `<stem>-prompt.txt` and `<stem>-metadata.json` beside its photo.
  *
  * HOW — a packshot (the lessons of `tools/photo-frame-trial.py` built in)
  *   1. The paper: a smooth surface (a cubic in x and y) fitted to the paper
@@ -58,7 +63,10 @@
  *   bytes), so each WebP carries XMP instead: IPTC's digital source type
  *   "trainedAlgorithmicMedia", the tool, the source file's name, and the
  *   prompt as the project's prompt files record it — saying so in as many
- *   words, since it is not a transcript of the ChatGPT session.
+ *   words, since it is not a transcript of the ChatGPT session. A teaser's
+ *   prompt is its `-prompt.txt`, which the script holds to the prompt the
+ *   run's `-metadata.json` recorded (with the model, the output and the seed)
+ *   and refuses to write when they differ.
  *
  * WHEN TO RUN IT
  *   When a photo in photos-raw/ is made again, run it for that one pair; the
@@ -67,6 +75,7 @@
  *
  *     npx tsx scripts/shots.ts                 every pair
  *     npx tsx scripts/shots.ts khoi-black      one pair (packshot and lookbook)
+ *     npx tsx scripts/shots.ts out-of-character  one teaser's packshot
  *     npx tsx scripts/shots.ts --packs khoi-black  --looks …  only one kind
  *     npx tsx scripts/shots.ts --measure       print the median paper again
  *     npx tsx scripts/shots.ts --out <dir>     write elsewhere (a trial run)
@@ -115,6 +124,19 @@ export const PAPER = [195.0, 186.9, 178.1] as const; // #C3BBB2
  * The photos are to be made again; until then they are framed only.
  */
 export const KEEP_PAPER: ReadonlySet<string> = new Set(["khoi-black", "khoi-cream"]);
+
+/**
+ * Where each teaser's photo is, under `photos-raw/`: the folder of the run
+ * that made it, which holds `<stem>.png`, `<stem>-prompt.txt` and
+ * `<stem>-metadata.json` (and the front reference the prompt calls Image 1).
+ * Số 06's four, made with Qwen-Image-2.1 on 08/10/2026.
+ */
+export const TEASER_RUNS: Readonly<Record<string, string>> = {
+  "out-of-character": "_s06-packshots-20261008",
+  "still-in-motion": "_s06-packshots-20261008",
+  "midnight-unedited": "_s06-packshots-20261008",
+  "for-reference-only": "_s06-packshots-20261008",
+};
 
 /** WebP quality: a packshot about 300 KB at most, a lookbook frame about 400 KB. */
 export const QUALITY = { pack: 90, look: 86 } as const;
@@ -242,6 +264,44 @@ export function lookPrompt(doc: string, register: string, rawFile: string): stri
   return `${rule.replace(/^- /, "").replace(/\*\*/g, "")}\n\n${row2}`;
 }
 
+/** The tool Số 06's teaser photos were made with: the run's `model` is `Qwen/Qwen-Image-2.1`. */
+export const TEASER_TOOL = "Qwen-Image-2.1";
+
+/** What a teaser's photo says of itself: its prompt, and the sentence saying what that prompt is. */
+export interface TeaserProvenance {
+  prompt: string;
+  note: string;
+}
+
+/**
+ * A teaser's provenance, from the two files its run left beside the photo
+ * (`<stem>-prompt.txt`, `<stem>-metadata.json`, in `photos-raw/<run>/`). The
+ * prompt is the prompt file's text, its Windows line ends made plain; the
+ * script refuses to write a provenance the run's own record contradicts —
+ * another model, another output file, another prompt.
+ */
+export function teaserProvenance(stem: string, run: string, promptFile: string, metadataFile: string): TeaserProvenance {
+  const prompt = promptFile.replace(/\r\n/g, "\n").trim();
+  const meta = JSON.parse(metadataFile) as { model?: unknown; output?: unknown; prompt?: unknown; seed?: unknown; reference?: unknown };
+  const model = typeof meta.model === "string" ? meta.model : "";
+  if (model.split("/").pop() !== TEASER_TOOL) throw new Error(`${stem}: the run's model is "${model}", not ${TEASER_TOOL}`);
+  if (meta.output !== `${stem}.png`) throw new Error(`${stem}: the run's output is ${String(meta.output)}, not ${stem}.png`);
+  if (typeof meta.prompt !== "string" || meta.prompt.replace(/\r\n/g, "\n").trim() !== prompt) {
+    throw new Error(`${stem}: ${stem}-prompt.txt differs from the prompt the run recorded`);
+  }
+  const reference = typeof meta.reference === "string" ? meta.reference.split(/[\\/]/).pop() : undefined;
+  const seed = typeof meta.seed === "number" ? `, seed ${meta.seed}` : "";
+  return {
+    prompt,
+    note:
+      `Ảnh do AI tạo (${TEASER_TOOL})` +
+      (reference ? `, từ prompt dưới đây và một ảnh tham chiếu mặt trước (${reference})` : "") +
+      `. Prompt dưới đây là prompt như ghi trong tệp prompt của dự án (photos-raw/${run}/${stem}-prompt.txt), ` +
+      `trùng với prompt trong tệp metadata của lượt tạo (${model}${seed}). ` +
+      "scripts/shots.ts đặt ảnh vào khung 1200×1500 và đưa nền về tông giấy chung của bộ ảnh; điểm ảnh của món đồ giữ nguyên.",
+  };
+}
+
 const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export const DIGITAL_SOURCE_TYPE = "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia";
@@ -249,10 +309,12 @@ export const CREATOR_TOOL = "ChatGPT (GPT Image)";
 
 /**
  * The XMP packet a file carries: IPTC's digital source type, the tool, the
- * source file, the prompt, and the sentence saying what that prompt is.
+ * source file, the prompt, and the sentence saying what that prompt is. The
+ * tool is ChatGPT's unless named (a teaser's: `TEASER_TOOL`).
  */
-export function xmpPacket(p: { source: string; prompt: string; note: string }): string {
+export function xmpPacket(p: { source: string; prompt: string; note: string; tool?: string }): string {
   const alt = (text: string) => `<rdf:Alt><rdf:li xml:lang="x-default">${escapeXml(text)}</rdf:li></rdf:Alt>`;
+  const tool = p.tool ?? CREATOR_TOOL;
   return (
     `<?xpacket begin="\uFEFF" id="W5M0MpCehiHzreSzNTczkc9d"?>\n` +
     `<x:xmpmeta xmlns:x="adobe:ns:meta/">\n` +
@@ -262,8 +324,8 @@ export function xmpPacket(p: { source: string; prompt: string; note: string }): 
     `    xmlns:dc="http://purl.org/dc/elements/1.1/"\n` +
     `    xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/">\n` +
     `   <Iptc4xmpExt:DigitalSourceType>${DIGITAL_SOURCE_TYPE}</Iptc4xmpExt:DigitalSourceType>\n` +
-    `   <Iptc4xmpExt:AISystemUsed>${escapeXml(CREATOR_TOOL)}</Iptc4xmpExt:AISystemUsed>\n` +
-    `   <xmp:CreatorTool>${escapeXml(CREATOR_TOOL)}</xmp:CreatorTool>\n` +
+    `   <Iptc4xmpExt:AISystemUsed>${escapeXml(tool)}</Iptc4xmpExt:AISystemUsed>\n` +
+    `   <xmp:CreatorTool>${escapeXml(tool)}</xmp:CreatorTool>\n` +
     `   <dc:source>${escapeXml(p.source)}</dc:source>\n` +
     `   <dc:description>${alt(p.note)}</dc:description>\n` +
     `   <Iptc4xmpExt:AIPromptInformation>${escapeXml(p.prompt)}</Iptc4xmpExt:AIPromptInformation>\n` +
@@ -1123,6 +1185,36 @@ function note(file: string): string {
   return path.startsWith(root) ? path.slice(root.length) : path;
 }
 
+/** The folder of the run that made a teaser's photo, under `photos-raw/` (`TEASER_RUNS`). */
+function teaserRun(name: string): string {
+  const run = TEASER_RUNS[name];
+  if (!run) throw new Error(`the teaser ${name} has no folder in TEASER_RUNS`);
+  return run;
+}
+
+/** The photo a packshot is made from: `photos-raw/<style>-<colour>.png`, or a teaser's in its run's folder. */
+export function packRaw(shot: Shot): string {
+  const name = shotName(shot);
+  return shot.color === undefined ? join(RAW_DIR, teaserRun(name), `${name}.png`) : join(RAW_DIR, `${name}.png`);
+}
+
+/** The XMP a packshot carries: a colourway's prompt from the project's prompt file, a teaser's from its run. */
+function packXmp(shot: Shot, kept: boolean): string {
+  const name = shotName(shot);
+  if (shot.color === undefined) {
+    const run = teaserRun(name);
+    const read = (file: string) => readFileSync(join(RAW_DIR, run, file), "utf8");
+    const p = teaserProvenance(name, run, read(`${name}-prompt.txt`), read(`${name}-metadata.json`));
+    return xmpPacket({ source: `${name}.png`, note: p.note, prompt: p.prompt, tool: TEASER_TOOL });
+  }
+  const doc = readFileSync(PROMPTS, "utf8");
+  return xmpPacket({
+    source: `${name}.png`,
+    note: packNote(kept),
+    prompt: packPrompt(doc, shot.style, shot.color, isFirstColour(shot)),
+  });
+}
+
 async function writeWebp(rgb: Uint8Array, w: number, h: number, quality: number, xmp: string, file: string) {
   mkdirSync(dirname(file), { recursive: true });
   await sharp(Buffer.from(rgb.buffer, rgb.byteOffset, rgb.byteLength), { raw: { width: w, height: h, channels: 3 } })
@@ -1139,8 +1231,7 @@ export async function makePack(
   debug?: string,
 ): Promise<PackReport> {
   const name = shotName(shot);
-  const raw = `${name}.png`;
-  const img = await readRgb(join(RAW_DIR, raw));
+  const img = await readRgb(packRaw(shot));
   const sep = separate(img);
   const at = place(sep.box);
   const kept = KEEP_PAPER.has(name);
@@ -1159,8 +1250,7 @@ export async function makePack(
   for (let i = 0; i < noGrain.length; i++) if (shade[i]) noGrain[i] = 1;
   const frame = await compose(toned, img.w, img.h, keepOut, noGrain, at, seedOf(name));
 
-  const doc = readFileSync(PROMPTS, "utf8");
-  const xmp = xmpPacket({ source: raw, note: packNote(kept), prompt: packPrompt(doc, shot.style, shot.color, isFirstColour(shot)) });
+  const xmp = packXmp(shot, kept);
   const file = join(out, `${name}.webp`);
   const bytes = await writeWebp(frame, FRAME.width, FRAME.height, QUALITY.pack, xmp, file);
 
@@ -1305,10 +1395,10 @@ export async function makeLook(shot: Shot, out: string): Promise<{ name: string;
   return { name: `${name}-look`, bytes: statSync(file).size };
 }
 
-/** `--measure`: the median paper of the packshots that are not KHÓI. */
+/** `--measure`: the median paper of Số 05's packshots that are not KHÓI (the teasers' are toned to it, not part of it). */
 export async function measurePaper(): Promise<number[]> {
   const levels: number[][] = [];
-  for (const shot of SHOTS.filter((s) => s.style !== "khoi")) {
+  for (const shot of SHOTS.filter((s) => s.color !== undefined && s.style !== "khoi")) {
     const img = await readRgb(join(RAW_DIR, `${shotName(shot)}.png`));
     const sep = separate(img);
     const bands = edgeBands(img.d, img.w, img.h, (i) => sep.alpha[i] === 0 && !sep.shadow[i]);
@@ -1349,8 +1439,8 @@ async function main(): Promise<void> {
   const looks = !flag("--packs");
 
   for (const shot of chosen) {
-    for (const raw of [`${shotName(shot)}.png`, ...(shot.look ? [`${shotName(shot)}-street.png`] : [])]) {
-      if (!existsSync(join(RAW_DIR, raw))) throw new Error(`photos-raw/${raw} is missing`);
+    for (const raw of [packRaw(shot), ...(shot.look ? [join(RAW_DIR, `${shotName(shot)}-street.png`)] : [])]) {
+      if (!existsSync(raw)) throw new Error(`${note(raw)} is missing`);
     }
   }
   for (const shot of chosen) {

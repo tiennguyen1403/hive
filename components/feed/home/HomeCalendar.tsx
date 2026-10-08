@@ -19,7 +19,7 @@ import { cx, useReveal } from "../useReveal";
 /*
  * Sắp mở, the home page's third tab: the launch calendar (`home.js`: `cal`,
  * `calRow`). Every issue, newest first — the next one as a big date row with
- * its countdown, its silhouettes and Nhắc tôi; the open one with its clock and
+ * its countdown, its teasers and Nhắc tôi; the open one with its clock and
  * what is left; the closed ones with what sold. With nothing announced, a calm
  * "Chưa có Số mới" first, and a way to what sells. In both languages since
  * round v6 slice E1; a Vietnamese side that sets figures inside its words

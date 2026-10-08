@@ -10,6 +10,7 @@ import {
   familyShortLabel,
   productId,
   type Product,
+  type Teaser,
 } from "@/data/types";
 import { FIT_LABELS, fitLabel } from "./catalog-query";
 import { clockDayLabel, dayAndMonth } from "./datetime";
@@ -130,8 +131,11 @@ describe("a style's name and its language", () => {
   it("is marked Vietnamese on an English page when the name printed is the Vietnamese one", () => {
     expect(nameLang(style("khoi"), "en")).toBe("vi");
     expect(nameLang(style("ao-thun-tron"), "en")).toBeUndefined();
-    const soi = C.teasers.find((t) => t.slug === "s06-soi")!;
+    // A teaser with no English name, as SỎI was until round v6 replaced Số 06's teasers.
+    const soi: Teaser = { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong", announcedAt: null, en: { kind: "Nylon jacket" } };
     expect(nameLang(soi, "en")).toBe("vi");
+    // Số 06's four are named in English, and say so (`en.name`): an English page does not mark them Vietnamese.
+    for (const t of C.teasers) expect(nameLang(t, "en"), t.slug).toBeUndefined();
     // A fixed style the back office renamed has lost its English name: its Vietnamese one is printed, and marked.
     const renamed: Product = { ...style("ao-thun-tron"), en: { kind: "Tee" } };
     expect(nameLang(renamed, "en")).toBe("vi");

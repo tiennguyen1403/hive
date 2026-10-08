@@ -446,15 +446,20 @@ describe("the teasers' announcement (backend slice B12)", () => {
     expect(TEASERS.filter((t) => t.dropNo === 6).map((t) => t.announcedAt)).toEqual([
       "2026-09-18T12:00:00+07:00",
       "2026-09-18T12:00:00+07:00",
+      "2026-09-18T12:00:00+07:00",
+      "2026-09-18T12:00:00+07:00",
     ]);
   });
 
-  it("changes none of the fixture's other teaser fields", () => {
+  it("are Số 06's four printed tees, each in its own packshot (round v6, 08/10/2026, replacing SỎI and NGÓI)", () => {
     // `en` (slice B15) is checked with the rest of the English, below.
     expect(TEASERS.map(({ announcedAt: _told, en: _english, ...t }) => t)).toEqual([
-      { slug: "s06-soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", dropNo: 6, photoKey: "suong" },
-      { slug: "s06-ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", dropNo: 6, photoKey: "nguoi" },
+      { slug: "s06-out-of-character", name: "OUT OF CHARACTER", kind: "Áo thun in", family: "TEE", dropNo: 6, photoKey: "shot-out-of-character" },
+      { slug: "s06-still-in-motion", name: "STILL IN MOTION", kind: "Áo thun in", family: "TEE", dropNo: 6, photoKey: "shot-still-in-motion" },
+      { slug: "s06-midnight-unedited", name: "MIDNIGHT, UNEDITED", kind: "Áo thun in", family: "TEE", dropNo: 6, photoKey: "shot-midnight-unedited" },
+      { slug: "s06-for-reference-only", name: "FOR REFERENCE ONLY", kind: "Áo thun in", family: "TEE", dropNo: 6, photoKey: "shot-for-reference-only" },
     ]);
+    expect(TEASERS.map((t) => t.en)).toEqual(TEASERS.map((t) => ({ name: t.name, kind: "Printed tee" })));
   });
 
   it("dates no style's sales: lastSoldAt is read off the orders by the database, never kept in the fixture", () => {
@@ -494,13 +499,14 @@ describe("the English (backend slice B15)", () => {
     ...TEASERS.flatMap((t) => (["name", "kind"] as const).flatMap((k) => (t.en?.[k] === undefined ? [] : [[`${t.slug}.${k}`, t.en[k]!]]))),
   ] as Array<[string, string]>;
 
-  it("names the eight fixed styles by the glossary, and leaves every issue's style and teaser its Vietnamese name", () => {
+  it("names the eight fixed styles by the glossary, leaves every issue's style its Vietnamese name, and translates no teaser's", () => {
     for (const p of CATALOG) {
       if (p.dropNo === null) expect(p.en?.name, p.slug).toBe(BASICS_EN[p.name]);
       else expect(p.en?.name, p.slug).toBeUndefined();
     }
     expect(CATALOG.filter((p) => p.en?.name !== undefined)).toHaveLength(8);
-    for (const t of TEASERS) expect(t.en?.name, t.slug).toBeUndefined();
+    // Số 06's teasers are named in English (round v6): their English name is the name itself, never another one.
+    for (const t of TEASERS) expect(t.en?.name ?? t.name, t.slug).toBe(t.name);
   });
 
   it("gives every style an English kind and material, and every teaser an English kind", () => {

@@ -6,7 +6,17 @@ import { productText, teaserText } from "./product-text";
 const style = (id: string): Product => FIXTURE_CATALOG.byId.get(id as never)!;
 const KHOI = style("p-khoi");
 const TEE = style("p-ao-thun-tron");
-const SOI = FIXTURE_CATALOG.teasers.find((t) => t.slug === "s06-soi")!;
+/** A teaser with a Vietnamese name and no English one, as Số 06's SỎI was until round v6 replaced the teasers. */
+const SOI: Teaser = {
+  slug: "s06-soi",
+  name: "SỎI",
+  kind: "Áo khoác dù",
+  family: "JACKET",
+  dropNo: 6,
+  photoKey: "suong",
+  announcedAt: null,
+  en: { kind: "Nylon jacket" },
+};
 
 describe("productText", () => {
   it("prints the Vietnamese in Vietnamese, whatever English the style has", () => {
@@ -62,6 +72,13 @@ describe("teaserText", () => {
 
   it("keeps the teaser's Vietnamese name in English and prints its English kind", () => {
     expect(teaserText(SOI, "en")).toEqual({ name: "SỎI", kind: "Nylon jacket" });
+  });
+
+  it("prints Số 06's teasers under the title on the shirt in both languages, their kind in each", () => {
+    for (const t of FIXTURE_CATALOG.teasers) {
+      expect(teaserText(t, "en"), t.slug).toEqual({ name: t.name, kind: "Printed tee" });
+      expect(teaserText(t, "vi"), t.slug).toEqual({ name: t.name, kind: "Áo thun in" });
+    }
   });
 
   it("falls back field by field, and entirely for a teaser the back office added", () => {

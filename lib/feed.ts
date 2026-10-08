@@ -20,6 +20,7 @@ import {
 import { FIXED_WORD_TEXT, issueLabel, kindInSentence } from "./lexicon";
 import { lookbookUrl, photoUrl } from "./photos";
 import { productText } from "./product-text";
+import { isTeaserShotKey } from "./shots";
 
 /**
  * What the Feed screens (round v4, QĐ-32) print about one style, and how
@@ -151,9 +152,9 @@ export function pictureAlt(p: Product, color: ColorKey, look: boolean, locale: L
 }
 
 /**
- * The shape a teaser is drawn as. A teaser has no photo of its own and no
- * price; the mock shows the next issue's styles as flat silhouettes of their
- * kind of garment, never another style's photo.
+ * The shape a teaser without a packshot of its own is drawn as: the mock
+ * shows the next issue's styles as flat silhouettes of their kind of garment
+ * ("No price, no photo"), never another style's photo.
  */
 const TEASER_SHAPE: Record<Family, FlatShape> = {
   TEE: "tee",
@@ -164,12 +165,26 @@ const TEASER_SHAPE: Record<Family, FlatShape> = {
   PANTS: "trousers",
 };
 
-/** The flat drawing a teaser stands as: its family's shape, in black where that drawing exists. */
-export function teaserPicture(t: Teaser): string {
+/** A teaser's picture, and whether it is a photograph of the teaser itself. */
+export interface TeaserPicture {
+  src: string;
+  /** The teaser's own packshot, shown in colour; false for the silhouette. */
+  photo: boolean;
+}
+
+/**
+ * What a teaser stands as. Its own packshot when it has one (Số 06's four,
+ * round v6, the user's call 08/10: `shot-<stem>`, `isTeaserShotKey`), in
+ * colour; otherwise — a borrowed frame, another style's photo — the flat
+ * drawing of its family's shape, in black where that drawing exists, as the
+ * mock draws every teaser. Never a price either way.
+ */
+export function teaserPicture(t: Teaser): TeaserPicture {
+  if (isTeaserShotKey(t.photoKey)) return { src: photoUrl(t.photoKey, PICTURE.width), photo: true };
   const shape = TEASER_SHAPE[t.family];
   const made = FLATS_MADE[shape];
   const color = made.includes("black") ? "black" : made[0]!;
-  return photoUrl(flatKey(shape, color), PICTURE.width);
+  return { src: photoUrl(flatKey(shape, color), PICTURE.width), photo: false };
 }
 
 // ─────────────────────────────────────────────────────────── the quick add

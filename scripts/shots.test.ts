@@ -1,4 +1,6 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { SHOTS, shotName } from "@/lib/shots";
 import {
   BOX,
   CREATOR_TOOL,
@@ -7,10 +9,15 @@ import {
   KEEP_PAPER,
   MIN_MARGIN,
   PAPER,
+  RAW_DIR,
+  TEASER_RUNS,
+  TEASER_TOOL,
   TOP,
   lookPrompt,
   packPrompt,
+  packRaw,
   place,
+  teaserProvenance,
   xmpPacket,
 } from "./shots";
 
@@ -146,5 +153,52 @@ describe("the provenance each file carries (A5)", () => {
     expect(xmp).toContain("<dc:source>khoi-black.png</dc:source>");
     expect(xmp).toContain("a &lt; b &amp; c &gt; d");
     expect(xmp).toContain('<rdf:li xml:lang="x-default">prompt như ghi trong tệp</rdf:li>');
+  });
+
+  it("names another tool when told, in both places that name one", () => {
+    const xmp = xmpPacket({ source: "out-of-character.png", prompt: "p", note: "n", tool: TEASER_TOOL });
+    expect(TEASER_TOOL).toBe("Qwen-Image-2.1");
+    expect(xmp).toContain("<xmp:CreatorTool>Qwen-Image-2.1</xmp:CreatorTool>");
+    expect(xmp).toContain("<Iptc4xmpExt:AISystemUsed>Qwen-Image-2.1</Iptc4xmpExt:AISystemUsed>");
+    expect(xmp).not.toContain(CREATOR_TOOL);
+  });
+});
+
+/** A teaser run's two files in miniature: the prompt as Windows wrote it, and the run's own record. */
+const PROMPT_TXT = "Create a photograph of the shirt in Image 1.\r\nThe fabric is bright clean white.";
+const RECORD = (over: Record<string, unknown> = {}) =>
+  JSON.stringify({
+    model: "Qwen/Qwen-Image-2.1",
+    reference: "photos-raw\\_s06-packshots-20261008\\out-of-character-front-ref.png",
+    prompt: "Create a photograph of the shirt in Image 1.\nThe fabric is bright clean white.",
+    seed: 608101,
+    output: "out-of-character.png",
+    ...over,
+  });
+
+describe("a teaser's provenance (round v6)", () => {
+  it("is its prompt file, the line ends made plain, and a note naming the tool, the reference, the run and the seed", () => {
+    const p = teaserProvenance("out-of-character", "_s06-packshots-20261008", PROMPT_TXT, RECORD());
+    expect(p.prompt).toBe("Create a photograph of the shirt in Image 1.\nThe fabric is bright clean white.");
+    expect(p.note).toContain("Ảnh do AI tạo (Qwen-Image-2.1), từ prompt dưới đây và một ảnh tham chiếu mặt trước (out-of-character-front-ref.png).");
+    expect(p.note).toContain("prompt như ghi trong tệp prompt của dự án (photos-raw/_s06-packshots-20261008/out-of-character-prompt.txt)");
+    expect(p.note).toContain("(Qwen/Qwen-Image-2.1, seed 608101)");
+  });
+
+  it("refuses a record that contradicts the files: another model, another output, another prompt", () => {
+    const read = (over: Record<string, unknown>) => () =>
+      teaserProvenance("out-of-character", "_s06-packshots-20261008", PROMPT_TXT, RECORD(over));
+    expect(read({ model: "openai/gpt-image-1" })).toThrow(/not Qwen-Image-2.1/);
+    expect(read({ output: "still-in-motion.png" })).toThrow(/output/);
+    expect(read({ prompt: "Something else." })).toThrow(/differs/);
+    expect(read({ prompt: undefined })).toThrow(/differs/);
+  });
+
+  it("finds every teaser's photo in its run's folder, and only the teasers there", () => {
+    const teasers = SHOTS.filter((s) => s.color === undefined).map(shotName);
+    expect(Object.keys(TEASER_RUNS)).toEqual(teasers);
+    expect(packRaw({ style: "out-of-character", look: false })).toBe(join(RAW_DIR, "_s06-packshots-20261008", "out-of-character.png"));
+    expect(packRaw({ style: "khoi", color: "black", look: true })).toBe(join(RAW_DIR, "khoi-black.png"));
+    expect(() => packRaw({ style: "no-such-teaser", look: false })).toThrow(/TEASER_RUNS/);
   });
 });

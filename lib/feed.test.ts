@@ -115,13 +115,22 @@ describe("pictures", () => {
     expect(pictureAlt(style("than"), "navy", false)).toBe("THAN, áo khoác bomber màu xanh than");
   });
 
-  it("draws a teaser as its garment's flat silhouette, never another style's photo", () => {
-    const t = (family: Teaser["family"]): Teaser => ({ slug: "x", name: "X", kind: "Áo", family, dropNo: 6, photoKey: "suong", announcedAt: null });
-    expect(teaserPicture(t("JACKET"))).toBe("/flats/jacket-black.png");
-    expect(teaserPicture(t("HOODIE"))).toBe("/flats/hoodie-black.png");
-    expect(teaserPicture(t("PANTS"))).toBe("/flats/trousers-black.png");
+  it("draws a teaser without a packshot of its own as its garment's flat silhouette, never another style's photo", () => {
+    const t = (family: Teaser["family"], photoKey = "suong"): Teaser => ({ slug: "x", name: "X", kind: "Áo", family, dropNo: 6, photoKey, announcedAt: null });
+    const silhouette = (src: string) => ({ src, photo: false });
+    expect(teaserPicture(t("JACKET"))).toEqual(silhouette("/flats/jacket-black.png"));
+    expect(teaserPicture(t("HOODIE"))).toEqual(silhouette("/flats/hoodie-black.png"));
+    expect(teaserPicture(t("PANTS"))).toEqual(silhouette("/flats/trousers-black.png"));
     // No black shirt drawing exists: its first colour.
-    expect(teaserPicture(t("SHIRT"))).toBe("/flats/shirt-white.png");
+    expect(teaserPicture(t("SHIRT"))).toEqual(silhouette("/flats/shirt-white.png"));
+    // Another style's own photograph is still another style's photo.
+    expect(teaserPicture(t("TEE", "shot-khoi-black"))).toEqual(silhouette("/flats/tee-black.png"));
+  });
+
+  it("shows a teaser in its own packshot, in colour, when it has one (round v6)", () => {
+    const named = (slug: string) => C.teasers.find((x) => x.slug === slug)!;
+    expect(teaserPicture(named("s06-out-of-character"))).toEqual({ src: "/shots/out-of-character.webp", photo: true });
+    for (const x of C.teasers) expect(teaserPicture(x).photo, x.slug).toBe(true);
   });
 });
 

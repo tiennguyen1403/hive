@@ -216,11 +216,15 @@
   ];
 
   // Issue 06, not open yet. Price and quantity are announced at opening, so the data has none.
-  // No photos exist: shared/flats/<shape>-black.png is a flat drawing that can serve as a silhouette.
+  // Since 08/10/2026 Issue 06 is "Independent Editions", four printed tees (the user's choice; the app's
+  // data/catalog.ts). The app shows each one's own photo on the teaser card, four in a row from 1200px; the mock
+  // keeps the flat silhouette (shared/flats/<shape>-black.png), as it has no copy of the app's photos.
   // Empty in the "closed" mode: between two issues nothing has been announced yet.
   const ISSUE_06 = GAP ? [] : [
-    { slug: "soi", name: "SỎI", kind: "Áo khoác dù", family: "JACKET", flat: "../shared/flats/jacket-black.png" },
-    { slug: "ngoi", name: "NGÓI", kind: "Áo hoodie in", family: "HOODIE", flat: "../shared/flats/hoodie-black.png" },
+    { slug: "out-of-character", name: "OUT OF CHARACTER", kind: "Áo thun in", family: "TEE", flat: "../shared/flats/tee-black.png" },
+    { slug: "still-in-motion", name: "STILL IN MOTION", kind: "Áo thun in", family: "TEE", flat: "../shared/flats/tee-black.png" },
+    { slug: "midnight-unedited", name: "MIDNIGHT, UNEDITED", kind: "Áo thun in", family: "TEE", flat: "../shared/flats/tee-black.png" },
+    { slug: "for-reference-only", name: "FOR REFERENCE ONLY", kind: "Áo thun in", family: "TEE", flat: "../shared/flats/tee-black.png" },
   ];
 
   // Closed issues: every piece sold. No photos of their own.
@@ -854,7 +858,7 @@
     { kind: "drop", at: "2026-09-23T20:00:00+07:00", title: "Số 05 còn 2 ngày", body: "Đóng 20:00 thứ Sáu 25/09", href: "products.html" },
     { kind: "drop", at: "2026-09-25T20:00:00+07:00", title: "Số 05 đã đóng", body: "108/181 chiếc đã bán", href: "archive.html" },
     { kind: "promo", at: "2026-09-24T09:00:00+07:00", title: "Mã DOT05 sắp hết hạn", body: "20:00 thứ Sáu 25/09", href: "products.html" },
-    { kind: "drop", at: "2026-09-18T12:00:00+07:00", title: "Số 06 công bố: SỎI và NGÓI", body: "Mở 20:00 thứ Sáu 02/10", href: "home.html#sap-mo", issue: 6 },
+    { kind: "drop", at: "2026-09-18T12:00:00+07:00", title: "Số 06 công bố 4 mẫu", body: "Mở 20:00 thứ Sáu 02/10", href: "home.html#sap-mo", issue: 6 },
     { kind: "reminder", at: "2026-09-30T19:00:00+07:00", title: "Số 06 mở sau 2 ngày", body: "20:00 thứ Sáu 02/10", href: "home.html#sap-mo", issue: 6 },
   ];
   function notifications() {

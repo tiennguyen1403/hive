@@ -110,8 +110,13 @@ describe("currentDropNo · derived, not stored", () => {
 describe("teasersIn", () => {
   it("lists the styles announced for the issue that has not opened", () => {
     const t = teasersIn(FIXTURE_CATALOG, 6);
-    expect(t).toHaveLength(2);
-    expect(t.map((x) => x.slug)).toEqual(["s06-soi", "s06-ngoi"]);
+    expect(t).toHaveLength(4);
+    expect(t.map((x) => x.slug)).toEqual([
+      "s06-out-of-character",
+      "s06-still-in-motion",
+      "s06-midnight-unedited",
+      "s06-for-reference-only",
+    ]);
   });
 
   it("has nothing to tease for an issue already on sale", () => {

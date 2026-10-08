@@ -96,12 +96,13 @@ describe("the catalogue in Postgres", () => {
   });
 
   // Slice B5 added the eight fixed styles: 8 styles, 17 colours, 68 cells.
-  it("holds 29 styles, 55 colours, 220 stock cells, 4 drops, 2 teasers, 6 codes", async () => {
+  // Round v6 (08/10/2026): Số 06's two teasers became four.
+  it("holds 29 styles, 55 colours, 220 stock cells, 4 drops, 4 teasers, 6 codes", async () => {
     expect(await countOf("products")).toBe(29);
     expect(await countOf("product_colors")).toBe(55);
     expect(await countOf("stock_cells")).toBe(220);
     expect(await countOf("drops")).toBe(4);
-    expect(await countOf("teasers")).toBe(2);
+    expect(await countOf("teasers")).toBe(4);
     expect(await countOf("promotions")).toBe(6);
   });
 

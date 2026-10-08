@@ -75,7 +75,10 @@ slice's intended changes as leaks.
    `npm run sweep:promote -- .playwright-cli/sweep-impact-vi.json` (and the `-en` run). Each visited entry replaces
    the baseline's entry of the same name: findings, landing, console errors, clock boxes. Its shot replaces the
    baseline's shot in `.playwright-cli/sweep/baseline-<lang>/`. An entry the baseline did not have (a new route, a
-   1440 shot) joins it. The totals are counted again.
+   1440 shot) joins it. The totals are counted again. An entry the full sweep never visits — a band edge such as
+   1199 or 1200 that `impact` added for one slice — is checked by that slice's run but left out of the baseline, and
+   the command says how many it left out: the baseline stays exactly the full sweep, as `gen.test.ts` pins.
+   After promoting, run `npm test` again before committing.
 3. Commit the two `baseline-*.json` with the slice they belong to. `scope.promoted` lists every run promoted into
    them.
 4. An approved end-of-round full sweep is promoted the same way. It visits every entry of the manifest, so each

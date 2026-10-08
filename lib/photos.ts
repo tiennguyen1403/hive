@@ -8,9 +8,9 @@
  * · a SHOT (`shot-khoi-black`), a photograph that ships with the app — below;
  * · a FLAT (`flat-tee-white`), a fixed style's drawing — below;
  * · anything else is a BORROWED Unsplash frame (`PHOTO_IDS`), standing in
- *   where no photograph of the style exists yet: Số 03 and 04, the teasers
- *   of Số 06, and the cover of the home page. A borrowed frame is never the
- *   garment it stands for, and the back office says so ("mượn tạm").
+ *   where no photograph of the style exists yet: Số 03 and 04, and the cover
+ *   of the home page. A borrowed frame is never the garment it stands for,
+ *   and the back office says so ("mượn tạm").
  *
  * SHOTS (v3 slice 14). Số 05 has its own photographs: a packshot for every
  * colourway and a lookbook frame beside each, in `public/shots/`, made with
@@ -18,7 +18,9 @@
  * (`lib/shots.ts` lists them). The packshot is the colour's photo wherever a
  * photo is shown; the lookbook frame is reached only through `lookbookUrl`,
  * which the product page's gallery alone calls. A `shot-…` key with no file
- * falls back to the hero frame, like any key this file does not know.
+ * falls back to the hero frame, like any key this file does not know. Số 06's
+ * teasers have one each since round v6 (`shot-<stem>`, Qwen-Image-2.1), with
+ * no lookbook frame.
  *
  * UPLOADS (slice B3c). A photo the back office uploads is an object in
  * the `product-photos` bucket named `up/<32 hex>.webp` (or `.jpg`), and the

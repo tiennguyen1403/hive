@@ -403,7 +403,7 @@ describe("Thông báo, in English", () => {
     expect(by("DH-2422 is on its way")).toMatchObject({ body: "Tracking no. VD-8842-1907" });
     expect(by("DH-2416 delivered")).toMatchObject({ body: `Returns until ${D(23, "Sep")}` });
     expect(by("Drop 05 is live")).toMatchObject({ body: "10 styles, 181 pieces" });
-    expect(by("Drop 06 reveals SỎI and NGÓI")).toMatchObject({ body: `Opens 20:00, Friday ${D(2, "Oct")}` });
+    expect(by("Drop 06 reveals 4 styles")).toMatchObject({ body: `Opens 20:00, Friday ${D(2, "Oct")}` });
     expect(by("BỤI in black: 1 left")).toMatchObject({ body: "Size L" });
     expect(by("THAN in navy: 3 left")).toMatchObject({ body: "Size M L XL" });
   });
@@ -433,7 +433,8 @@ describe("Thông báo, in English", () => {
   });
 
   it("leaves no Vietnamese in an English row but a style's or a teaser's own name", () => {
-    const names = /BỤI|THAN|MUỐI|SỎI|NGÓI/g;
+    // The announcement counts the teasers since round v6 rather than naming them: only Số 05's names are left.
+    const names = /BỤI|THAN|MUỐI/g;
     for (const now of [ANCHOR, new Date("2026-09-26T09:00:00+07:00"), new Date("2026-09-30T19:00:00+07:00")]) {
       for (const r of inboxItems(sources(now), "en")) {
         expect(r.title.replace(names, ""), r.title).not.toMatch(VI_LETTERS);
