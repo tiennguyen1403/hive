@@ -4145,3 +4145,37 @@ Thử `impact` trên hai commit thật:
 - `lang` của select nằm ở `ItemText`;
 - khiếm khuyết của select đã sửa;
 - chú giải `lib/demo-admin.ts` đã cũ.
+
+**08/10, cuối đợt.** Phiên chính:
+- đổi `PRIVACY_UPDATED_AT` thành 08/10/2026 (C9 sửa chữ `/privacy`) và sửa test theo;
+- sửa chú giải `DEMO_ADMIN.name`.
+
+Giao song song:
+- documenter ghi `DESIGN.md` (brief `tasks/briefs/v6-design-md-polish.md`);
+- `ui-implementer` chạy **mốc cuối đợt**: typecheck, `npm test`, `db reset` (kiểm hai migration B19 áp sạch), `seed:users`,
+  `test:db` trọn, build kèm đọc hết warning, sweep trọn vi và en kèm `sweep:diff`, pixdiff trọn, detector.
+
+Xong thì: phiên chính duyệt, thăng mốc, commit; rồi lên hosted (`db push` hai migration B19 trước, rồi `git push`).
+
+**08/10, DESIGN.md sau lượt rà ĐẠT** (documenter, +106/−27, chạm giới hạn 30 lượt một lần rồi làm tiếp). Ghi B18, B19, R1, T1, R2; các luật "hoặc" và "không gạch ngang dài"; dải 900–1199 một cột; hai luật `:lang(en)`; `momentLabel`; bỏ bốn khiếm khuyết đã sửa ở §10; mốc sweep 232 mục (VI 51, EN 50). Máy dò: 2 trước, 2 sau. Theo báo của documenter, phiên chính sửa chú giải cũ trong `PayByCard.tsx` (`.pay-card` thành `.hold-pay`); `tools/sweep/README.md` sẽ sửa số mốc sau khi thăng mốc cuối đợt.
+
+**08/10, mốc cuối đợt** (agent `ui-implementer`). Phía ứng dụng sạch:
+- typecheck sạch;
+- `db reset` áp sạch 25 migration, có hai migration B19; `seed:users` 9/9 handle;
+- `test:db` 363;
+- build 0 warning. Dòng `claude-code-hint` là do Stripe SDK in ra khi có biến `CLAUDECODE`; trên Vercel không có;
+- sweep trọn 153 mục mỗi ngôn ngữ: 153/153 giống mốc;
+- pixdiff: ngoài `/privacy` (ngày 08/10, cố ý), mọi chỗ lệch là đồng hồ, chấm nhấp nháy hoặc nhiễu vẽ (ClearType, giải mã ảnh, hoạt
+  ảnh). Agent chụp lại lần hai để chứng minh: lượt chụp lại trùng mốc từng điểm ảnh;
+- detector 2.
+
+**Đỏ một test công cụ** (`tools/sweep/gen.test.ts:97`). **Lỗi của phiên chính:** `sweep:promote` hai lượt R2 SAU khi đã chạy test, mà
+lượt R2 có 79 mục quản trị ở 1440, nên mốc 232 mục khác `--zone=all` 153 mục. Commit `bb3ee4c` vì vậy ghi "2,448 tests pass" là sai:
+thật ra 2.447 xanh, 1 đỏ. Đã giao T1 sửa:
+- 1440 vào manifest cho quản trị, khớp `impact`;
+- dòng giờ đặt lại của thanh bên vào `VOLATILE`;
+- hộp timer `home-390`;
+- README;
+- một lượt sweep trọn đồng bộ để thăng mốc.
+
+**08/10, T1 sửa sau mốc cuối đợt ĐẠT.** Quản trị quét cả 1280 và 1440 (`--zone=all` = 232 mục, bằng mốc; hai trang đối chứng quản trị giữ 1280). `VOLATILE` thêm dòng giờ đặt lại ở thanh bên (qua class CSS Module, không sửa mã ứng dụng). Hộp đồng hồ của ảnh trọn trang nay đo ở đúng bố cục của ảnh (không thanh cuộn). Sweep trọn vi và en trên bản build cuối: 232/232 giống mốc về phát hiện; pixel chỉ lệch ở chữ đi theo đồng hồ, ảnh sản phẩm render hơi khác, khung cuối của hiệu ứng, và ngày `/privacy`. Đã thăng mốc đồng bộ: 232 mục, VI 51, EN 50, 6 lỗi console (đều là trang 404). Phiên chính kiểm: tsc sạch, **2.448/2.448 test**.

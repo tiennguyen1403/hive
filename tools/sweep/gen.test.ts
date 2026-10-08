@@ -54,12 +54,13 @@ describe("the manifest", () => {
     for (const o of OVERLAYS) for (const c of o.components) expect(existsSync(c), `${o.name}: ${c}`).toBe(true);
   });
 
-  it("keeps the control pages among its routes, tagged", () => {
+  it("keeps the control pages among its routes, tagged, at widths the full sweep shoots", () => {
     for (const c of CONTROLS) {
       const r = routeOf(c.path);
       expect(r, c.path).not.toBeNull();
       expect(r!.tags).toContain("control");
-      expect([...c.widths]).toEqual([...r!.widths]);
+      // The brief's widths (the back office at 1280 only), inside the route's own.
+      for (const w of c.widths) expect(r!.widths, c.path).toContain(w);
     }
   });
 
@@ -74,23 +75,27 @@ describe("the manifest", () => {
 });
 
 describe("select", () => {
-  it("picks the full sweep: 153 entries in the order the sweep has always walked, the receipt after /order-confirmed", () => {
+  it("picks the full sweep: 232 entries, the shop one width after the other, then the back office at 1280 and 1440", () => {
     const all = select({ zone: "all" });
     const names = entryNames(all);
     expect(all.full).toBe(true);
-    // The 151 of `tools/layout-sweep.js` on 07/10/2026, and the receipt at both widths since 08/10.
-    expect(names).toHaveLength(153);
+    // The 151 of `tools/layout-sweep.js` on 07/10/2026, the receipt at both widths and every admin entry at 1440
+    // since 08/10: 36 shop routes × 2 + 2 shop layers + (37 admin routes + 42 admin layers) × 2.
+    expect(names).toHaveLength(232);
     expect(names.slice(0, 3)).toEqual(["home-390", "products-390", "products-s05-khoi-390"]);
     expect(names.slice(7, 10)).toEqual(["order-confirmed-390", "order-confirmed-DH-2430-390", "track-code-DH-2425&phone-0908221447-390"]);
     expect(names[36]).toBe("home-1280");
     expect(names.slice(72, 74)).toEqual(["account-addresses-add-province-390", "account-addresses-add-province-1280"]);
-    expect(names[74]).toBe("admin-1280");
-    expect(names.at(-1)).toBe("admin-product-fixed-photopick-1280");
+    expect([names[74], names[111]]).toEqual(["admin-1280", "admin-1440"]);
+    expect([names[148], names[190]]).toEqual(["admin-order-more-menu-1280", "admin-order-more-menu-1440"]);
+    expect(names.at(-1)).toBe("admin-product-fixed-photopick-1440");
     expect([...names].sort()).toEqual([...allEntryNames()].sort());
   });
 
-  it("produces the entries of both baselines, no more and no fewer", () => {
-    // By name, not by order: a promoted entry joins the end of a baseline (`diff.mjs`, promote).
+  it("selects exactly the entries of both baselines, no more and no fewer", () => {
+    // The full selection is what an end-of-round sweep shoots, and the baselines must hold one entry for each, so
+    // that a slice's run of any route and width has its twin. By name, not by order: a promoted entry joins the end
+    // of a baseline (`diff.mjs`, promote).
     const full = [...entryNames(select({ zone: "all" }))].sort();
     for (const lang of ["vi", "en"]) {
       const baseline = JSON.parse(readFileSync(`tools/sweep/baseline-${lang}.json`, "utf8"));
@@ -99,17 +104,14 @@ describe("select", () => {
   });
 
   it("picks a zone, a route with its layers, a tag, a prefix, a layer alone", () => {
-    expect(entryNames(select({ zone: "admin" }))).toHaveLength(79);
+    expect(entryNames(select({ zone: "admin" }))).toHaveLength(158);
     expect(entryNames(select({ zone: "shop" }))).toHaveLength(74);
+    const layers = ["more-menu", "cancel-sheet", "handover", "carrier-select", "address-form", "address-province", "address-ward"];
     expect(entryNames(select({ routes: ["/admin/orders/DH-2429"] }))).toEqual([
       "admin-orders-DH-2429-1280",
-      "admin-order-more-menu-1280",
-      "admin-order-cancel-sheet-1280",
-      "admin-order-handover-1280",
-      "admin-order-carrier-select-1280",
-      "admin-order-address-form-1280",
-      "admin-order-address-province-1280",
-      "admin-order-address-ward-1280",
+      "admin-orders-DH-2429-1440",
+      ...layers.map((l) => `admin-order-${l}-1280`),
+      ...layers.map((l) => `admin-order-${l}-1440`),
     ]);
     expect(entryNames(select({ tags: ["lookup"] }))).toEqual([
       "track-code-DH-2425&phone-0908221447-390",
@@ -118,7 +120,7 @@ describe("select", () => {
       "track-1280",
     ]);
     expect(entryNames(select({ routes: ["/account/orders*"] }))).toHaveLength(8);
-    expect(entryNames(select({ overlays: ["admin-reset-sheet"] }))).toEqual(["admin-reset-sheet-1280"]);
+    expect(entryNames(select({ overlays: ["admin-reset-sheet"] }))).toEqual(["admin-reset-sheet-1280", "admin-reset-sheet-1440"]);
   });
 
   it("takes other widths, and never sweeps the back office under 1180px", () => {

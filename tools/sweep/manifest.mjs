@@ -18,8 +18,8 @@
  *               (`account-orders-DH-2430`); the shot is `<name>-<width>.png`
  *   path        what the browser opens, query included
  *   zone        "shop" (the Feed) or "admin" (Arc)
- *   widths      the full sweep's widths: 390 and 1280 for the shop; 1280 for
- *               the back office, which is desktop-only by design
+ *   widths      the full sweep's widths: 390 and 1280 for the shop; 1280 and
+ *               1440 for the back office, which is desktop-only by design
  *               (`ArcAdminFrame.module.css`, `min-width: 1180px`)
  *   tags        groups to pick by (`--tag=lookup`)
  *   components  the files Next renders for the path: the page first, then the
@@ -56,9 +56,13 @@
 
 export const ORIGIN = "http://127.0.0.1:3200";
 
-/** The full sweep's widths per zone. */
+/**
+ * The full sweep's widths per zone. The back office is shot at 1280 and 1440, the widths `impact.mjs` names for any
+ * admin change, so every admin entry a slice shoots has its twin in the baseline (since 08/10/2026; until then the
+ * full sweep shot it at 1280 alone).
+ */
 export const SHOP_WIDTHS = Object.freeze([390, 1280]);
-export const ADMIN_WIDTHS = Object.freeze([1280]);
+export const ADMIN_WIDTHS = Object.freeze([1280, 1440]);
 
 /**
  * The narrowest width the back office is laid out for (`ArcAdminFrame.module.css`,
@@ -84,11 +88,19 @@ export function slugOf(path) {
 }
 
 /**
- * Elements whose pixels change with the clock alone: a countdown
- * (`FeedClock`, `role="timer"`). The sweep records their boxes beside each
- * shot (`volatile`), and `../pixdiff.mjs --regions` leaves them out.
+ * Elements whose pixels change with the clock alone. The sweep records their
+ * boxes beside each shot (`volatile`), and `../pixdiff.mjs --regions` leaves
+ * them out.
+ *
+ *   - a countdown (`FeedClock`, `role="timer"`);
+ *   - the back office's sidebar line "đặt lại lần cuối HH:MM · dd/mm" / "last
+ *     reset …", which every `reset_demo` moves: the first paragraph of the
+ *     sidebar's foot (`ArcSidebar.tsx`). It is found by its CSS Module class,
+ *     which keeps the local name in the build (`ArcSidebar-module__…__foot`),
+ *     so the app needs no hook for the sweep. The whole paragraph, not just
+ *     the time: a wider time can wrap it.
  */
-export const VOLATILE = Object.freeze(['[role="timer"]']);
+export const VOLATILE = Object.freeze(['[role="timer"]', 'aside [class*="foot"] > p:first-of-type']);
 
 // ───────────────────────────────────────────────────────────── the shop
 
@@ -751,16 +763,17 @@ export const ROUTES = Object.freeze([
 /**
  * The control pages (round v6, the user's choice on 07/10/2026): checked on every slice whatever it touched, by
  * their shots against the baseline's, so a leak outside the slice's own routes shows. The routes carry the tag
- * `control` too.
+ * `control` too. The brief's widths: 390 and 1280 for the shop, 1280 for the back office.
  */
+const CONTROL_ADMIN_WIDTHS = Object.freeze([1280]);
 export const CONTROLS = Object.freeze([
   Object.freeze({ path: "/", widths: SHOP_WIDTHS }),
   Object.freeze({ path: "/products/s05-khoi", widths: SHOP_WIDTHS }),
   Object.freeze({ path: "/cart", widths: SHOP_WIDTHS }),
   Object.freeze({ path: "/checkout", widths: SHOP_WIDTHS }),
   Object.freeze({ path: "/account/orders/DH-2430", widths: SHOP_WIDTHS }),
-  Object.freeze({ path: "/admin", widths: ADMIN_WIDTHS }),
-  Object.freeze({ path: "/admin/orders", widths: ADMIN_WIDTHS }),
+  Object.freeze({ path: "/admin", widths: CONTROL_ADMIN_WIDTHS }),
+  Object.freeze({ path: "/admin/orders", widths: CONTROL_ADMIN_WIDTHS }),
 ]);
 
 /** A route by its path or its name. */

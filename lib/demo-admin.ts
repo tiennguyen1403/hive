@@ -20,7 +20,7 @@
  */
 export const DEMO_ADMIN = {
   email: "quanly@email.com",
-  /** Shown as-is, in the back office's sidebar. */
+  /** The stored name. The sidebar prints its role label instead, "Quản lý cửa hàng" / "Store manager" (round v6 polish R2). */
   name: "Quản lý cửa hàng",
   handle: "a-quanly",
 } as const;

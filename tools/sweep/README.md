@@ -12,7 +12,7 @@ is Fable's, recorded in `tasks/plan.md` ("cách kiểm theo tầng").
 | `diff.mjs` | A run against `baseline-<lang>.json`, entry by entry (`npm run sweep:diff`); `--promote` (`npm run sweep:promote`). |
 | `../impact.mjs` | From a git diff to routes, layers, widths, languages, `db`, `build` (`npm run impact`). |
 | `../pixdiff.mjs` | Two folders of shots, pixel by pixel, in 20px bands (`npm run pixdiff`). |
-| `baseline-vi.json`, `baseline-en.json` | The sweep of 08/10/2026 on HEAD `5a51305` (R1): the full 151 entries, and the receipt's two (`/order-confirmed/DH-2430`, added to the manifest the same day) promoted from their own run; 153 each. Their shots are in `.playwright-cli/sweep/baseline-vi/` and `baseline-en/` (git-ignored). |
+| `baseline-vi.json`, `baseline-en.json` | One full sweep per language, 232 entries each (the shop at 390 and 1280, the back office at 1280 and 1440), shot on 08/10/2026 on the end-of-round build (after R2) and promoted whole. Their shots are in `.playwright-cli/sweep/baseline-vi/` and `baseline-en/` (git-ignored). |
 | `reference/` | The audit's generator and the B18 baseline this slice replaced. The main session deletes it at the end of round v6. |
 
 `tools/layout-sweep.js` is a generated copy of the full Vietnamese sweep, kept because the agents' instructions run
@@ -60,8 +60,8 @@ layers. The back office is never swept under 1180px.
 
 ## The end of a round
 
-Before the demo goes up: `npm run sweep:gen -- --label=round` writes the full sweep for both languages (153 entries
-each). Run the two passes separately, with `npx playwright cli close` and `open` between them; diff each against its
+Before the demo goes up: `npm run sweep:gen -- --label=round` writes the full sweep for both languages (232 entries
+each, about five minutes a pass). Run the two passes separately, with `npx playwright cli close` and `open` between them; diff each against its
 baseline; `npm run pixdiff -- .playwright-cli/sweep/baseline-vi .playwright-cli/sweep/round-vi --regions=…` over
 every shot; `npm run test:db` whole; look at every shot that differs.
 
@@ -78,24 +78,26 @@ slice's intended changes as leaks.
    1440 shot) joins it. The totals are counted again.
 3. Commit the two `baseline-*.json` with the slice they belong to. `scope.promoted` lists every run promoted into
    them.
-4. An approved end-of-round full sweep replaces the baseline whole: promote it the same way.
+4. An approved end-of-round full sweep is promoted the same way. It visits every entry of the manifest, so each
+   baseline entry it shares is replaced. An entry the baseline holds and the full sweep did not visit (a route taken
+   out of the manifest) stays as it was; the full sweep's diff names it under `missing`.
 5. Never edit a baseline by hand, and never promote a run made against a database that was not put back with
    `select public.reset_demo(public.demo_anchor());` first.
 
 ## What a baseline holds, and its noise
 
-The baseline of 08/10/2026 (`reset_demo(demo_anchor())` just before, anchor 07/10 18:50; the receipt's two entries,
-added later that day, have no findings):
+The baseline of 08/10/2026 (`reset_demo(demo_anchor())` just before, anchor 07/10 18:50):
 
-- **vi, 26 findings:** 25 `tinyText` and 1 `smallTarget`;
-- **en, 25 findings:** the same 25 `tinyText`;
-- **the 25 `tinyText`:** the customers' initials in Arc's `Avatar` `sm`, 10px, on `/admin/orders` and
-  `/admin/customers` and their row menus, and one on `/admin/customers?group=loyal`. `DESIGN.md` carries it as a known
-  defect ("Khiếm khuyết đang mang theo"): `aria-hidden`, the name printed beside it.
+- **vi, 51 findings:** 50 `tinyText` and 1 `smallTarget`;
+- **en, 50 findings:** the same 50 `tinyText`;
+- **the 50 `tinyText`:** the customers' initials in Arc's `Avatar` `sm`, 10px, on `/admin/orders` and
+  `/admin/customers` and their row menus, and one on `/admin/customers?group=loyal`: 25 at 1280, the same 25 at 1440.
+  `DESIGN.md` carries it as a known defect ("Khiếm khuyết đang mang theo"): `aria-hidden`, the name printed beside
+  it.
 - **the `smallTarget`:** the chip "Đổi trả" on `/faq` at 390, 34px wide (the English "Returns" is wider). It is
   44px tall.
-- **console errors:** four, the 404 page's own `Failed to load resource` on `/khong-co-trang-nay` and `/so/999` at
-  both widths.
+- **console errors:** six, each a 404 page's own `Failed to load resource`: `/khong-co-trang-nay` and `/so/999` at 390
+  and 1280, `/admin/drops/99` at 1280 and 1440.
 
 Two runs of the same build are not pixel-identical everywhere. The admin trial of 08/10 against the baseline
 differed on 14 of 79 shots, by 0.0001% to 0.08%. Two causes:
@@ -104,9 +106,17 @@ differed on 14 of 79 shots, by 0.0001% to 0.08%. Two causes:
   the sample's hours pass), the time a slip says it was printed (`printed 00:22 · 8 Oct`).
 - **Frames of an opening animation:** the edges of a dialog or a drawer shot 450ms after the click.
 
-`--regions` removes the countdowns. For the rest, use `--ignore=<pattern>:x,y,w,h`, or `--tolerance=0.1` to call a
-pair under 0.1% "within", and look at what is left. The date matters too: the sample is anchored at 18:50 each day,
-so shots of different days differ in their dates.
+`--regions` removes what `VOLATILE` names: the countdowns, and the sidebar's "đặt lại lần cuối HH:MM · dd/mm", which
+every `reset_demo` moves. For the rest, use `--ignore=<pattern>:x,y,w,h`, or `--tolerance=0.1` to call a pair under
+0.1% "within", and look at what is left. The date matters too: the sample is anchored at 18:50 each day, so shots of
+different days differ in their dates.
+
+A full-page shot is not laid out quite like the page the detectors measure. The browser lays it out without the
+classic scrollbar, 15px wider (so the photos are a little taller and what sits under them lower), then cuts it back
+to the size the page had with the bar: a 390 shot is 375px wide. The detectors run right after the shot, as the sweep
+always has, in whichever of the two layouts the browser has by then. The clock boxes are measured after them with the
+scrollbars hidden, the shot's own layout. Measured in the page's layout, the countdown's box on home-390 sat 20px
+above its digits (08/10).
 
 ## What `impact` does not see
 

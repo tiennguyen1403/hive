@@ -29,7 +29,7 @@
  *     selector reaches the routes all its classes reach. A selector without a class outside parentheses
  *     (`[data-ui="feed"] a`, `html:has(…) body`) reaches the whole shop. The widths come from the `@media` around
  *     the rule (`widthsOf`: both edges of the band and a point just outside; 390 and 1280 without one).
- *   - The back office is shot at 1280 and 1440 whatever changed (the brief); the full sweep keeps 1280 only.
+ *   - The back office is shot at 1280 and 1440 whatever changed (the brief), the widths the full sweep keeps too.
  *   - Languages: a changed string that is the `vi:` or `en:` side of a pair (or a `*_VI` / `*_EN` constant)
  *     counts for that language; anything else, CSS included, for both, except a rule limited by `:lang()`.
  */

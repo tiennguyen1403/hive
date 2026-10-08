@@ -349,13 +349,28 @@ async (page) => {
 
   // The boxes, in the shot's own pixels, of what changes with the clock alone
   // (`manifest.mjs`, VOLATILE): `pixdiff.mjs --regions` leaves them out.
+  //
+  // A full-page shot is laid out without the classic scrollbar: 15px wider,
+  // so the photos are a little taller and whatever sits under them lower; then
+  // it is cut back to the size the page had with the bar (390 → a 375px-wide
+  // shot). Measured in the page's own layout after the shot, the boxes raced
+  // the browser putting the bar back: on home-390 (vi, 08/10/2026) the
+  // countdown's box sat at y543 and its digits at y563 in the shot. So a
+  // full-page shot's boxes are measured with the scrollbars hidden, the shot's
+  // layout, and after the detectors, which measure right after the shot as the
+  // sweep always has.
+  const cdp = await page.context().newCDPSession(page).catch(() => null);
+  const scrollbars = (hidden) => (cdp ? cdp.send("Emulation.setScrollbarsHidden", { hidden }).catch(() => {}) : null);
   const volatile = {};
-  const boxes = (name, fullPage) =>
-    page
-      .evaluate(
+  const boxes = async (name, fullPage) => {
+    try {
+      const selectors = PLAN.volatile.join(",");
+      if (!(await page.evaluate((s) => document.querySelector(s) !== null, selectors))) return;
+      if (fullPage) await scrollbars(true);
+      const list = await page.evaluate(
         ({ selectors, fullPage }) => {
           const out = [];
-          for (const el of document.querySelectorAll(selectors.join(","))) {
+          for (const el of document.querySelectorAll(selectors)) {
             const r = el.getBoundingClientRect();
             if (r.width < 1 || r.height < 1) continue;
             const x = r.left + (fullPage ? scrollX : 0);
@@ -364,12 +379,15 @@ async (page) => {
           }
           return out;
         },
-        { selectors: PLAN.volatile, fullPage },
-      )
-      .then((list) => {
-        if (list.length) volatile[name] = list;
-      })
-      .catch(() => {});
+        { selectors, fullPage },
+      );
+      if (list.length) volatile[name] = list;
+    } catch {
+      // no boxes for this shot: pixdiff compares it whole
+    } finally {
+      if (fullPage) await scrollbars(false);
+    }
+  };
 
   const results = [];
   const visited = [];
@@ -402,8 +420,8 @@ async (page) => {
       entry.landedOn = pathOf(page.url());
       await page.waitForTimeout(250); // let layout and any client render settle
       await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true });
-      await boxes(name, true);
       entry.findings = await probe(width);
+      await boxes(name, true);
     } catch (e) {
       entry.error = String(e).slice(0, 200);
     }
@@ -424,8 +442,8 @@ async (page) => {
       await open({ page, T, LANG });
       await page.waitForTimeout(450);
       await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: false });
-      await boxes(name, false);
       entry.findings = await probe(width);
+      await boxes(name, false);
     } catch (e) {
       entry.error = String(e).slice(0, 200);
     }
@@ -446,8 +464,8 @@ async (page) => {
         await page.waitForTimeout(450);
       }
       await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: !open });
-      await boxes(name, !open);
       entry.findings = await probe(width);
+      await boxes(name, !open);
     } catch (e) {
       entry.error = String(e).slice(0, 200);
     }
@@ -468,6 +486,7 @@ async (page) => {
 
   page.off("console", onConsole);
   page.context().off("request", onRequest);
+  if (cdp) await cdp.detach().catch(() => {});
 
   const counts = {};
   let total = 0;

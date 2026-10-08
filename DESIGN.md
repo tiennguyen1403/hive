@@ -383,13 +383,15 @@ components:
 
 # DESIGN.md — hệ thiết kế, đọc ra từ code đã dựng
 
-**Đợt v6, ghi 07/10/2026, theo commit `bea062e`.** App nay **song ngữ Việt và Anh, cả cửa hàng lẫn quản trị** (QĐ-40),
-qua các lát E0, B15, E1, E2, E3a, E3b, E4, E5. Hệ thị giác không đổi: phần khách (mọi route trừ `/admin`) chạy hệ **Feed**
+**Đợt v6, ghi 08/10/2026, theo commit `bb3ee4c`.** App nay **song ngữ Việt và Anh, cả cửa hàng lẫn quản trị** (QĐ-40),
+qua các lát E0, B15, E1, E2, E3a, E3b, E4, E5; rồi **trả bằng thẻ qua Stripe** (B18, QĐ-46) và **lượt rà toàn app** (B19, R1,
+T1, R2). Hệ thị giác không đổi: phần khách (mọi route trừ `/admin`) chạy hệ **Feed**
 (QĐ-32 đến QĐ-36), khu quản trị chạy toàn bộ trên bộ **Arc** (uiarc.dev, bản free, MIT; QĐ-37 đến QĐ-39). Mã, CSS, icon và
 font của quản trị v3 "NHÃN" đã xoá ở lát 6 đợt v5. Phần ngôn ngữ nằm ở §1 "Ngôn ngữ", §3 "Tiếng Anh", §7 (nút đổi), §8 (chỗ
-vá Arc theo ngôn ngữ) và §10.
+vá Arc theo ngôn ngữ) và §10. Phần thẻ và lượt rà nằm ở §1, §4 (dải 900–1199), §7, §9 và §10.
 
 Các bản trước:
+- bản v6 trước B18 (song ngữ, chưa có thẻ): `git show bea062e:DESIGN.md`;
 - bản v5 cuối (Feed cộng Arc, chỉ tiếng Việt): `git show b3e8cff:DESIGN.md`;
 - tài liệu v3 đầy đủ: `git show c018134:DESIGN.md`;
 - bản v4 (Feed cộng quản trị v3 tả gọn): `git show dc6db0a:DESIGN.md`;
@@ -419,7 +421,7 @@ adidas CONFIRMED, StockX, GOAT. Khu quản trị không mang North Star này: n�
 | Thứ | Ở đâu |
 |---|---|
 | Token Feed `--f-*` | `app/globals.css`, khối `[data-ui="feed"]` (và `--f-g` 32px từ 900px). Không ở `@theme`, không ở `:root` |
-| CSS Feed | `app/styles/feed/feed.css`, `flow.css`, `account.css`, `more.css` (4 tệp, 2.593 dòng). Mỗi tệp chép rule của tệp cùng tên trong mock, cùng thứ tự; bốn khối ngoài mock có chú giải "Not in the mock" (nút đổi ngôn ngữ, cỡ `.b-issue-no` bản EN, Yêu thích 900–1250px, bề rộng dòng `.b-qgroup > .details li` của trang Quyền riêng tư) |
+| CSS Feed | `app/styles/feed/feed.css`, `flow.css`, `account.css`, `more.css` (4 tệp, 2.655 dòng). Mỗi tệp chép rule của tệp cùng tên trong mock, cùng thứ tự; mọi khối ngoài mock mang chú giải "Not in the mock" (hoặc "Not the mock's …") kèm lý do và số đo: tìm chuỗi đó thay vì tin một danh sách. Từ lượt rà v6 có thêm dải 900–1199 một cột, `.co-pair` trong sheet, chân trang 900–999, `.b-hero-no` bản EN, `scroll-margin` của `.b-qgroup` (§4); phiên chính chép các luật này ngược vào mock (`prototype/explore/feed/`) |
 | Luật vùng | `app/styles/feed/scope.test.ts` |
 | Vùng và font | `components/feed/FeedScope.tsx` (`FEED_ZONE`, `feedFontClass`), `components/feed/font.ts` (`monaSans`) |
 | Khung trang | `components/feed/FeedFrame.tsx`, `FeedChrome.tsx`, `FeedMbar.tsx` |
@@ -429,6 +431,8 @@ adidas CONFIRMED, StockX, GOAT. Khu quản trị không mang North Star này: n�
 | Tên site, màu trình duyệt | `lib/site.ts` — `SITE_NAME` "HIVE", `SITE_DESCRIPTION`, `THEME_COLOR` `#FCFCFD` (cả app) |
 | Ảnh | `lib/photos.ts` (`photoUrl`, `lookbookUrl`), `lib/shots.ts` (`public/shots`), `lib/flats.ts` (`public/flats`) |
 | Đồng hồ | `lib/clock.ts` — `demoNow()` (QĐ-24); trên màn: `components/feed/FeedClock.tsx`, `components/feed/now.tsx` |
+| Trả bằng thẻ (B18, QĐ-46) | `lib/stripe.ts` (chỉ khoá `sk_test_`), `lib/card-checkout.ts` (`paymentReturnText`…), `lib/db/card-payments.ts`, action `payByCard` ở `lib/actions/orders.ts`; nút `components/feed/order/PayByCard.tsx`. Trình duyệt chỉ chuyển trang sang Stripe Checkout; không nạp script Stripe |
+| Tra đơn (B19) | `lib/order-lookup.ts`, `lib/actions/order-lookup.ts` (`lookupOrderAction`, `lookupFormAction`), `components/feed/account/lookup-handoff.ts`, `lib/db/track-known.ts` |
 | Lớp chờ | `components/shop/WaitVeil.tsx`, nhịp ở `lib/wait.ts` (`WAIT`, `shouldVeil`, `isFeedPath`), CSS `app/styles/sheet.css` |
 | Logic từng màn | `lib/feed-*.ts` (`feed-home`, `feed-product`, `feed-cart`, `feed-checkout`, `feed-order`, `feed-account`, `feed-me`, `feed-inbox`, `feed-help`, `feed-size-guide`, `feed-search`, `feed-issue`, `feed-sign-in`, `feed-range`) |
 | Mock, thước đo của bản dựng | `prototype/explore/feed/*.html` + `.js` từng trang, `feed.css`, `flow.css`, `account.css`, `more.css`, `feed.js`; quyết định ở `BRIEF.md`; tên, màu, chữ, hình, chuyển động ở `direction.json` |
@@ -462,7 +466,7 @@ adidas CONFIRMED, StockX, GOAT. Khu quản trị không mang North Star này: n�
 | Chữ của DB | `lib/product-text.ts` — `productText`, `teaserText`, `nameLang`; cột `*_en` ở `supabase/migrations/20261001150000_catalog_english.sql` |
 | Chữ đã lưu giữa câu (quản trị) | `lib/admin-text.ts` — `Phrase`, `Stored`, `phrase`, `plainText`, `storedLang`; `components/admin-arc/ArcPhrase.tsx` — `phraseNode` |
 | Bảng in chữ Việt đã lưu | `lib/feed-account.ts` (`cancelReasonLabel`, nhãn địa chỉ Home / Work / Other), `lib/carrier.ts` (`carrierLabel`, `carrierPiece`), `lib/inventory-adjust.ts` (`STOCK_REASON_EN`) |
-| Tiền, ngày, mã Số | `lib/money.ts` (`vnd`, `compactVnd`), `lib/datetime.ts` (`dayMonth`, `dayMonthYear`, `monthYear`, `dateTimeLabel`…), `lib/lexicon.ts` (`issueCode`) |
+| Tiền, ngày, mã Số | `lib/money.ts` (`vnd`, `compactVnd`), `lib/datetime.ts` (`dayMonth`, `dayMonthYear`, `monthYear`, `dateTimeLabel` của cửa hàng, `momentLabel` của quản trị…), `lib/lexicon.ts` (`issueCode`) |
 | Giới hạn tần suất | `lib/db/rate-limit.ts` — `takeRate(bucket, cost, locale)` |
 | Bảng thuật ngữ | `tasks/plan.md`, mục "Thuật ngữ tiếng Anh" (§3) |
 
@@ -593,8 +597,9 @@ Sàn gần trắng, mực gần đen, **một** màu nhấn xanh. Mọi cặp ch
 - **Bôi đen** (`select`): 24% xanh trong trắng, chữ mực 12,6:1.
 
 ### Lỗi
-- **Đỏ lỗi** (`err`) và nền `err-bg`: chỉ cho lỗi — dòng giỏ hết size, ô nhập sai `.err`, mã không dùng được, dòng từ chối
-  đăng nhập `.si-formerr`. 5,5:1 trên nền.
+- **Đỏ lỗi** (`err`) và nền `err-bg`: chỉ cho lỗi — dòng giỏ hết size, ô nhập sai `.err`, mã không dùng được, dòng `.err` dưới
+  "Trả bằng thẻ" khi không mở được trang Stripe; dòng `.si-formerr` trên form: từ chối đăng nhập, và (B19) câu tra đơn không vào
+  được toast khi không có JavaScript (hết lượt tra, không tra được). 5,5:1 trên nền.
 
 ### Neutral
 - **Mực** (`ink`): chữ, lựa chọn đang bật (chip, size, đoạn `.seg-btn`), dấu ĐÃ HẾT `.plate`, bong bóng đếm `.badge`, dòng còn
@@ -623,6 +628,10 @@ số, không phải màu thứ hai (`.stock.is-low`). Logo là đen trắng đ�
 ### Trạng thái
 - Đơn: chip `.st-chip`; hành trình bốn chặng `.track-dot` / `.ostep` — xong là mực đặc, đang ở là vòng xanh, chưa tới là vòng
   `line2`. Chữ luôn đi kèm, màu không là kênh duy nhất.
+- **Nhãn đơn theo cách trả** (B18): máy trạng thái không đổi (`AWAITING_TRANSFER` → `PAID`), chỉ chữ đổi. Một đơn cụ thể đọc
+  `orderStateLabel` (`lib/order-labels.ts`): đơn thẻ đang chờ là "Chờ trả thẻ" / "Awaiting card payment", cùng tone với "Chờ
+  chuyển khoản". Tab và bộ lọc đọc `stateTabLabel`: "Chờ thanh toán" / "Awaiting payment", vì tab chứa cả hai loại. Đơn thẻ quá
+  12 giờ giữ hàng tự huỷ với lý do "quá hạn thanh toán" (`CARD_OVERDUE_REASON`, `lib/customer-orders.ts`).
 - Size hết: nền `bg2`, chữ `ink2`, gạch chéo `rgba(91,95,102,.38)`; không đỏ, vì hết là sự thật, không phải báo động.
 - Mẫu đã hết: ảnh xám (`filter: grayscale(1)`) và dấu ĐÃ HẾT.
 - Chữ khớp khi tìm Hỏi đáp: `mark.b-hit` nền `rgba(24,70,240,.14)`.
@@ -732,6 +741,11 @@ Trọng lượng: 400 và 500. Không viết hoa bằng CSS.
 - Khoảng ngày và khoảng số dùng gạch nối thường, **không ngắt dòng** (NBSP/WJ; luật giữ, lát 1a/1b).
 - Câu bìa: "Cắt 1 lần. Không tái bản." (`HOME_COVER.headline`); bản EN "Cut once. No restocks.", cùng hai dòng.
 - Chưa có email (QĐ-35): chữ "email" ở màn Feed thành "Thông báo" hoặc bỏ.
+- **"hoặc", không "hay"** khi nối hai lựa chọn trên UI (người dùng dặn 07/10; ví dụ câu Hỏi đáp "đơn chuyển khoản hoặc thẻ").
+- **Câu báo tiếng Việt không dùng gạch ngang dài giữa câu** (lượt rà v6, D1–D34): việc cần làm thì tách bằng dấu chấm, giải thích
+  thì dấu hai chấm.
+- Dòng quay về từ Stripe khi chưa trả chỉ "Chưa trả." / "Not paid yet." (`paymentReturnText`): giờ giữ hàng đã in ngay ở khối
+  dưới, không in lại.
 - Quản trị: mọi chuỗi Arc đã vá thành cặp `{ vi, en }` theo `useLocale()` (`PATCHES.md` mục 2). `bar-chart` có một
   `Intl.NumberFormat` mỗi ngôn ngữ (`vi-VN`, `en-US`); `sortable-data-table` có một `Intl.Collator` mỗi ngôn ngữ (`vi`, `en`) và
   sắp lại khi đổi ngôn ngữ.
@@ -739,7 +753,9 @@ Trọng lượng: 400 và 500. Không viết hoa bằng CSS.
 ### Tiếng Anh (đợt v6)
 - **Tiếng Anh kiểu Anh**: colour, cancelled, trousers, gilet.
 - **Ngày** "1 Oct", có năm "6 Oct 2026", tháng "Mar 2026" (`dayMonth`, `dayMonthYear`, `monthYear`; ngày giữ với tháng bằng
-  khoảng trắng không ngắt). **Giờ** 24 tiếng "18:50" như bản VI (`clockLabel`); giờ kèm ngày "06:50, 21 Sep" (`dateTimeLabel`).
+  khoảng trắng không ngắt). **Giờ** 24 tiếng "18:50" như bản VI (`clockLabel`). Giờ kèm ngày: cửa hàng "06:50, 21 Sep" (`dateTimeLabel`); quản trị
+  **một kiểu cho mọi mốc** từ R2, "08:05 · 08/10" / "08:05 · 8 Oct" (`momentLabel`, hoặc ghép `clockLabel · dayMonth` cùng
+  hình). Năm chỗ để nguyên có chủ ý: CSV, `stampOf`, `windowLabel`, `ArcDropFormDialog`, ô ngày ở trang khách.
 - **Giá** `390,000₫` (`vnd`: chỉ đổi dấu chấm thành dấu phẩy). **Tiền gọn** `1.2M₫` (`compactVnd`; bản VI "1,2tr₫").
 - **Mã Số trước tên mẫu**: "S05" ở bản VI, "D05" ở bản EN (`issueCode`). Slug và URL không đổi (`s05-khoi`). Mã giảm giá nhân bản
   giữ "SO06" ở cả hai ngôn ngữ, vì mã là dữ liệu.
@@ -750,9 +766,13 @@ Trọng lượng: 400 và 500. Không viết hoa bằng CSS.
   "received …" ở cột thanh toán của sổ đơn); không đổi cỡ chữ, trừ luật CSS dưới. Phiên chính nhận vài tiêu đề hiển thị hai dòng
   ở bản EN: "DROP 04" ở `/so` 1280, "FORGOT PASSWORD" ở 900 và 1280, "TRACK AN / ORDER" của 404 ở 900.
 - **CSS chỉ cho EN** viết `[data-ui="feed"]:lang(en) …`, vì `scope.test.ts` chỉ nhận selector bắt đầu bằng vùng (hoặc
-  `html[data-pointer]`, `html:has(…)`), nên `html[lang]` bị chặn. Hiện có **đúng một** luật:
-  `[data-ui="feed"]:lang(en) .b-issue-no { font-size: min(168px, 14vw); }` từ 900px (`more.css`), vì "DROP" ở 168px rộng 319px
-  trong cột 255px ở 900. Vùng Arc không có luật CSS nào theo ngôn ngữ.
+  `html[data-pointer]`, `html:has(…)`), nên `html[lang]` bị chặn. Hiện có **hai** luật, cùng ở `more.css`:
+  - `[data-ui="feed"]:lang(en) .b-issue-no { font-size: min(168px, 14vw); }` từ 900px, vì "DROP" ở 168px rộng 319px trong cột
+    255px ở 900;
+  - `[data-ui="feed"]:lang(en) .b-hero-no { font-size: min(112px, 28vw); }` dưới 600px (lượt rà v6), vì "DROP 05" ở 112px rộng
+    334px và gãy sau "DROP" dưới 371px; nay một dòng từ 320px.
+
+  Vùng Arc không có luật CSS nào theo ngôn ngữ.
 
 ---
 
@@ -786,12 +806,24 @@ chứa `.tile`).
 - Thanh trên `--f-bar` 52px (64px từ 900px); tab trang chủ `--f-tabs-h` 44px; tab đáy `--f-tabbar` 64px + vùng an toàn `--f-sb`.
 - Nhịp dọc Bảng tin: thẻ cách 36px; rail và khối 44px điện thoại, 56–64px máy tính; chân trang cách 48 / 80px. Mục trang sản phẩm
   và thanh toán ngăn bằng kẻ `bg2` dày 8px.
+- **Cặp ô** `.co-pair` (tỉnh và phường) từ 900px là `minmax(0, 1fr) minmax(0, 1fr)`, không `1fr 1fr` của mock: rãnh `1fr` không co
+  dưới nội dung, và bản EN tràn sheet 81px. **Trong sheet** (`.sheet-form .co-pair`, `account.css`) hai ô luôn xếp chồng, ở mọi bề
+  ngang; trang thanh toán giữ hai cột (phiên chính, 07/10).
+- **Neo tới nhóm Hỏi đáp**: tài liệu giữ `scroll-padding-top` 108px (80px từ 900, `feed.css`) để câu hỏi nhận focus không chui dưới
+  thanh trên; `.b-qgroup` bù bằng `scroll-margin-top` **−44px** (8px từ 900), nên `/faq#doi-tra` dừng ở 64px (88px từ 900).
+- **Khối "Trả bằng thẻ"** `.hold-pay` (`flow.css`): cách ghi chú giữ hàng 18px, như `.od-act .btn`; từ 900px nút rộng vừa chữ
+  (`width: auto`, đệm 0 26px).
 
 ### Breakpoint (Feed)
 - **Điện thoại** < 600px.
 - **Tablet 600–899.98px**: vẫn khung điện thoại, cột nội dung **600px** giữa màn, lưới cửa hàng 3 cột, sheet rộng 600px (QĐ-36 #14).
 - **Máy tính ≥ 900px**: web app — thanh trên mang tab, không tab đáy, lưới 4 cột, Bảng tin lưới 3 cột với thẻ rộng chiếm 2.
 - **Dải 900–1199.98px**: story và lịch thu nhỏ đệm, cỡ đếm 38px, ngày lịch 92px, ẩn số liệu story (QĐ-36 #14).
+  **Bốn bố cục xếp một cột** trong dải này (người dùng chốt 07/10; mock lỗi y hệt và đã sửa theo): trang một đơn `.od`, hoá đơn
+  `.ok-grid`, hai thẻ đơn của Tôi `.me-now`, hộp thư `.b-notif` (cột phụ cách 36px). Cột phụ (`.od-right`, `.ok-side`, `.b-nside`)
+  thôi dính: `position: static`. Từ 1200px giữ cột của mock.
+- **Dải 900–999.98px**: sáu link chân trang nhẹ `.foot-lite .foot-links` cách 28px (mock 36px), để "Quyền riêng tư" không rơi
+  xuống dòng hai.
 - `max-width: 899.98px` cho vài bố cục chỉ điện thoại.
 
 ### Hình khối của vùng Arc
@@ -952,6 +984,17 @@ Mã màn trong `components/admin-arc` không khai `z-index`. Lớp mới chọn 
   (Trang chủ, Cửa hàng, Giỏ, Yêu thích, Tôi; người dùng giữ, 01/10) và thanh riêng của thanh toán; thanh màn đẩy `.mbar`, `.pbar`,
   `.sbar` không có nút. Nút là một form gửi `setLocale`; không có script thì form gửi thường và trang trả về ở ngôn ngữ mới. Sheet
   là modal, nên khi sheet mở thì không bấm được nút (nhận ở lát E1).
+- **Trả bằng thẻ** (B18, QĐ-46): thẻ chọn ở thanh toán ghi "Thẻ (Visa, Mastercard)", "Trả trên trang Stripe, chế độ thử." kèm dòng
+  số thẻ thử 4242. Đơn thẻ còn chờ trả có nút "Trả bằng thẻ" (`PayByCard`, một form gửi `payByCard`, chạy cả khi chưa có
+  JavaScript; lúc bấm ghi "Đang mở Stripe…") tới khi hết 12 giờ giữ hàng:
+  - **hoá đơn**: không có khối chuyển khoản; khối "Giữ hàng" như chuyển khoản, rồi nút trong `.hold-pay`. Đây là **nút xanh duy
+    nhất** của trang: "Tiếp tục mua" hạ xuống `btn-line` khi đơn thẻ còn chờ (người dùng chốt 07/10); hoá đơn khác giữ nó xanh.
+    Quay về từ Stripe chưa trả thì dòng "Chưa trả." dưới câu bước tiếp theo;
+  - **trang một đơn của Tôi**: nút nằm trong `.od-act`, không class riêng.
+- **Tra đơn** (B19): số điện thoại **không bao giờ lên URL**; kết quả để lại `/track?code=…`. Trình duyệt đã được xem đơn (của tài
+  khoản, hoặc đặt khi chưa đăng nhập) thấy kết quả ngay; trình duyệt khác nhận form có sẵn mã. Hai form tra đơn (`TrackView`,
+  `LookupForm` ở Tôi) POST qua Server Action bằng `useActionState`, có JavaScript lẫn không; ô ở Tôi chuyển sang `/track` và giao
+  số qua bộ nhớ của tab. Link cũ có `phone` vẫn chạy một lần rồi xoá nó khỏi địa chỉ.
 
 ### Quản trị — Arc
 Mọi route `app/admin/**` vẽ trong `ArcAdminFrame`. Bản free không có sidebar, Data grid hay Settings (Pro), nên khung và thanh
@@ -966,8 +1009,9 @@ gutter duy nhất. Khi in (phiếu giao), khung bỏ lưới, thanh bên và toa
 - Liên kết cao 36px, icon trái, chữ `--text-sm` `--text-secondary`; trang đang mở (`aria-current="page"`) nền `--surface`, chữ
   `--foreground` 500. "Đơn hàng" mang số đơn đang chờ ở cuối dòng, `tabular-nums`.
 - Chân, theo thứ tự trong mã: badge "Dữ liệu mẫu", dòng "Đồng hồ thật · dữ liệu mẫu" kèm lúc đặt lại gần nhất, nút ghost
-  "Đặt lại dữ liệu mẫu" mở `ArcResetDialog` (đóng hộp thì focus về nút này), **nút đổi ngôn ngữ**, người đang dùng (tên mang
-  `storedLang`), nút "Đăng xuất".
+  "Đặt lại dữ liệu mẫu" mở `ArcResetDialog` (đóng hộp thì focus về nút này), **nút đổi ngôn ngữ**, người đang dùng, nút "Đăng
+  xuất". Quản trị mẫu đã công bố (`DEMO_ADMIN.handle`, `lib/demo-admin.ts`) in **nhãn vai** theo ngôn ngữ, "Quản lý cửa hàng" /
+  "Store manager", không `lang` (R2); tài khoản khác in tên đã lưu, mang `storedLang`.
 - **Nút đổi ngôn ngữ** `LanguageControl` (`ArcSidebar.tsx`): `SegmentedControl` hai mục "Tiếng Việt" / "English", mỗi mục viết
   bằng chính ngôn ngữ của nó và mang `lang` riêng (`Segment.lang`, chỗ vá E0). Đổi lạc quan bằng `useOptimistic`, rồi gọi
   `setLocale`.
@@ -981,6 +1025,10 @@ gutter duy nhất. Khi in (phiếu giao), khung bỏ lưới, thanh bên và toa
 phải (`ArcOrdersScreen.module.css`, `.header`). Màn con (một đơn, phiếu): `ArcPage.module.css` — `Breadcrumb` / đường quay lại,
 rồi `h1` và nút việc cùng hàng; dòng dưới `h1` chạy hết bề rộng. Màn nào có số mẫu thì đặt `Badge size="sm"` "Dữ liệu mẫu"
 cạnh tiêu đề.
+
+**Tiêu đề tab trình duyệt.** Layout quản trị đặt `template` "%s · Quản trị · HIVE" (`app/admin/layout.tsx`). Tổng quan nằm cùng
+segment với layout nên đặt `absolute` "Tổng quan · Quản trị · HIVE"; trang một đơn lấy mã đơn đã tìm thấy làm tiêu đề, "DH-2429 ·
+Quản trị · HIVE", mã lạ trả 404 ngay ở `generateMetadata` (R2).
 
 **Tab có số đếm.** `Tabs` của Arc; số đếm `.tabCount` (`--text-secondary`, `tabular-nums`) sau nhãn. Đổi tab dùng `replace`.
 
@@ -998,6 +1046,16 @@ hơn thẻ thì cuộn ngang trong thẻ); ở màn Đơn hàng thêm `selectOnR
 liên kết gạch chân `--border-strong`. Menu dòng chỉ icon (`MoreHorizontal`), "Đóng sớm" ở cuối kèm vạch ngăn. Ô khách mang
 `Avatar` `sm` (`aria-hidden`) với hai chữ họ và tên (`monogramName`). Phân trang `Pagination`, số dòng mỗi trang
 `PER_PAGE_CHOICES` 10 / 25 / 50.
+- **Ô hai dòng** của sổ đơn (`.stack`, `.line` ở `ArcOrdersScreen.module.css`): dòng phụ `--text-secondary`. Ô "Mẫu" trong bảng món
+  của trang một đơn dùng lại đúng cặp này: tên, loại là dòng phụ trên mọi hàng (R2, có chủ ý). Cột Thanh toán của đơn đang chờ chỉ
+  in cách trả; hạn nằm dưới nhãn trạng thái cùng hàng.
+- Cột "Loại · form" của bảng Mẫu bỏ form khi tên loại đã chứa nó ("Áo thun oversize", không "… · oversize"; `kindSaysFit`,
+  `lib/admin-products.ts`, so không dấu, không hoa).
+
+**Đơn thẻ** (B18). Cột thanh toán và trang một đơn in "Thẻ · Stripe" khi Stripe đã thấy đơn, thêm "· pi_…" khi đã trả
+(`lib/order-labels.ts`). Tiền thẻ do Stripe xác nhận, nên đơn thẻ **không có "Đã nhận tiền"** ở đâu (`nextMove` trả null;
+`admin_mark_paid()` từ chối trong SQL; `needsAction` không đếm nó): khối việc của trang một đơn là "Bước tiếp theo: chờ khách trả
+thẻ", không nút, dòng "Hạn … · tổng · qua Stripe". Quản trị vẫn huỷ được từ "Thao tác khác".
 
 **Lọc và trang trong URL** (QĐ-8): tab, tìm, bộ lọc, kỳ xem, trang, số dòng sống trên URL, đọc bằng `queryOf`, sửa bằng
 `patched` / `hrefWith` (`lib/admin-url.ts`). Không giữ trong state riêng.
@@ -1042,10 +1100,10 @@ doanh thu thì không vẽ biểu đồ.
 | Tìm | `search/SearchScreen.tsx` | `.sbar`, `.sform`, `.schip`, `.rchip` | không kết quả `.snone-line` |
 | Giỏ | `cart/CartView.tsx` | `.cline`, `.step`, `.csum`, `.free`, `.paybar` | `.cline-err`, Xoá kèm Hoàn tác |
 | Thanh toán | `checkout/CheckoutView.tsx` | `.co`, `.field`, `.rcard`, `.orderbar`, `.co-promo` | `.is-error`, `.rcard.is-off` |
-| Đặt hàng xong | `order/OrderConfirmedView.tsx` | `.ok-title`, `.paycard`, `.hold`, `.qr-slot` | chuyển khoản / COD |
+| Đặt hàng xong | `order/OrderConfirmedView.tsx`, `order/PayByCard.tsx` | `.ok-title`, `.paycard`, `.hold`, `.hold-pay`, `.qr-slot` | chuyển khoản / COD / thẻ đang chờ (một nút xanh) |
 | Đơn | `account/OrdersView.tsx`, `OrderView.tsx`, `OrderBits.tsx`, `OrderMissing.tsx` | `.ticket`, `.od-*`, `.ostep` | lọc `phase` / `group`; 404 thật |
 | Tài khoản | `account/MeView.tsx`, `MeOut.tsx`, `OutCard.tsx`, `ProfileView.tsx`, `AddressesView.tsx`, `WishlistView.tsx`, `SignInView.tsx`, `AccountNav.tsx` | `.me-*`, `.bt`, `.tile`, `.out-card`, `.ad`, `.switch`, `.si-*`, `.acc-item` | chưa đăng nhập vẽ lời mời tại chỗ |
-| Tra cứu | `account/TrackView.tsx`, `LookupForm.tsx` | `.b-trk*`, `.b-res` | hai câu lỗi dưới đúng ô |
+| Tra cứu | `account/TrackView.tsx`, `LookupForm.tsx`, `lookup-handoff.ts` | `.b-trk*`, `.b-res`, `.si-formerr` | hai câu lỗi dưới đúng ô; không script thì `.si-formerr` trên form |
 | Hỏi đáp, Bảng size | `help/HelpView.tsx`, `help/SizeGuideView.tsx` | `.b-help*`, `.b-qa`, `mark.b-hit`, `.b-hpick`, `.b-fit*` | tìm không dấu |
 | Số | `issue/ArchiveList.tsx`, `IssueParts.tsx`, `IssueRecap.tsx` | `.b-issue-no`, `.b-hero-no`, `.b-tile` | — |
 | Hiện dần, giữ trạng thái | `useReveal.ts`, `useKeep.ts` | `.rv` / `.in` | cập nhật lạc quan |
@@ -1074,7 +1132,7 @@ Trạng thái dùng chung:
 | `checkbox` | chọn dòng | song ngữ |
 | `dialog` | hộp quyết định, form ngắn | song ngữ; bề rộng đè ở `ArcCropDialog.module.css` |
 | `drawer` | form dài | song ngữ, vòng focus nút đóng; `--drawer-size` đè |
-| `select` | chọn trong form | vòng focus, `note` cuối dòng, song ngữ, `options[].lang` (E5) |
+| `select` | chọn trong form | vòng focus, `note` cuối dòng, song ngữ, `options[].lang` (E5; từ R2 nằm trên `ItemText`) |
 | `input` | ô nhập | `hideLabel`, `prefix` ("S06 –", bản EN "D06 –") |
 | `textarea` | form mẫu | — (cài tay, lát 5b) |
 | `toast-stack` | `ArcAdminFrame` | song ngữ |
@@ -1091,6 +1149,7 @@ chữ Việt đã lưu mà Arc vẽ từ một chuỗi:
 - **E4** `combobox`: `optionsLang`, cho danh sách tỉnh và phường (`ArcAddressForm.tsx`); `breadcrumb`: `BreadcrumbItem.lang`,
   cho tên khách (`ArcCustomerScreen.tsx`);
 - **E5** `select`: `options[].lang`, cho loại mẫu đã lưu ở form mẫu và hộp mẫu hé lộ (`kindOptions` chỉ đặt khi trang là EN).
+  Từ R2 `lang` gắn lên `SelectPrimitive.ItemText`, không lên cả dòng: chữ phụ `note` giữ ngôn ngữ của trang.
 
 Không có `lang` thì cả bốn y như Arc gốc. Chi tiết và test: `registry/PATCHES.md`, các mục đợt v6 và mục 3.
 
@@ -1142,6 +1201,8 @@ thanh công cụ; nút và lỗi gọi tên thứ còn thiếu (hộp tạo số
 - "Không tìm thấy đơn" và 404 trả HTTP 404 thật.
 - Vòng focus bàn phím có ở cả hai vùng, tắt khi dùng chuột (QĐ-39).
 - Không có `Accept-Language` thì VI; `?lang=` về URL sạch; ảnh chia sẻ giữ tiếng Việt (QĐ-40).
+- Số điện thoại không bao giờ nằm trên URL tra đơn (người dùng, 07/10, B19).
+- `/admin/drops/<số không có trong catalogue>` trả 404, như trang một đơn với mã lạ (R2).
 
 ### Do's and Don'ts
 
@@ -1203,7 +1264,7 @@ thanh công cụ; nút và lỗi gọi tên thứ còn thiếu (hộp tạo số
 | Email bắt buộc khi đặt hàng | email tuỳ chọn (B8) | người dùng, lát 2, 27/09 |
 | Không tiết lộ email đã đăng ký (QĐ-15) | "Email này đã có tài khoản" | người dùng, lát 3a, 29/09 |
 | Mật khẩu có cả chữ và số | chỉ cần 8 ký tự | người dùng, lát 3a, 29/09 |
-| Nút tắt không icon | nút Google tắt vẫn có icon (từ B16, 07/10, nút đã bật, chữ G màu chuẩn của Google) | người dùng, lát 3a, 29/09 |
+| Nút tắt không icon | nút Google nay đã bật (B16); chữ G màu chuẩn của Google trên nút là ngoại lệ của luật #1 (QĐ-41) | người dùng, lát 3a, 29/09; B16, 07/10 |
 | Ví dụ theo dữ liệu thật | "VD: DH-1499" nguyên văn mock | người dùng, lát 3a, 29/09 |
 | Viền điều khiển ≥ 3:1 | công tắc tắt `#D5D7DC`, ~1,4:1 | người dùng, lát 3a, 29/09 |
 | Mật khẩu mới khác mật khẩu cũ | bỏ luật | người dùng, lát 3b, 30/09 |
@@ -1282,8 +1343,31 @@ EN; sweep chạy ở cả hai ngôn ngữ (hằng `LANG` và `T(vi, en)` trong `
   B16 (07/10) thêm 6 `design-system-color` ở `components/feed/icon/GoogleG.tsx`: bốn màu chuẩn của Google, luật thương hiệu
   của Google bắt giữ nguyên. Người dùng duyệt bỏ qua riêng tệp đó, riêng luật màu (07/10), nên lại về 8.
 
-Cách đo không đổi: `tools/layout-sweep.js` quét route × 390/1280 — console, tràn ngang, chữ < 11px, ảnh lệch tỉ lệ, phần tử bị
-cắt, con trỏ, vùng chạm bằng `elementFromPoint`; lớp nổi **mở ra rồi mới đo**; ảnh chụp so mock từng hộp trước khi ghi vào đây.
+**Đợt v6, thẻ và lượt rà** (07–08/10/2026), ghi trong `tasks/plan.md`, mục QĐ-46 và "Lượt rà toàn app, đợt v6". Lượt rà được đổi
+pixel bản VI; luật "bản VI không đổi pixel" chỉ áp trong đợt tiếng Anh.
+
+| Lát | Đo | Test xanh |
+|---|---|---|
+| B18 (07/10, `ce2fe8a`) | sandbox nhận VND (420.000₫ gửi `420000`); người dùng trả thẻ 4242 trên 3200 và trên demo: đơn `PAID`, đúng một `ORDER_PAID` | 2.345 |
+| B19 (07/10, `f9ff40d`) | grep không còn chỗ dựng URL có `phone`; 4 trang tra đơn có và không JavaScript; 5 route đối chứng không lệch ngoài vùng đồng hồ | 2.379, 363 DB |
+| R1 (07/10, `5a51305`) | dải 900: số tiền 8 dòng thành 1, tiêu đề thư 4 dòng thành 1, nhãn bước từ chồng thành cách 71px; sheet địa chỉ 460/460; không script 0 thẻ vô hình; `/faq` dừng 64/88px, Shift+Tab 410/80; chân trang 900 còn 48px; "Drop 05" một dòng ở 360 | 2.380 |
+| T1 (07–08/10, `60f9989`) | công cụ kiểm theo tầng, dưới | +60 test công cụ |
+| R2 (08/10, `bb3ee4c`) | sweep lọc 168 mục mỗi ngôn ngữ: 88 giống mốc, 1 khác cố ý (`/admin/drops/99` 200 → 404), 79 mục mới ở 1440 | 2.448, 363 DB |
+
+- **Kiểm theo tầng** (T1, `tools/sweep/README.md`): `tools/sweep/manifest.mjs` là nguồn route duy nhất (36 route cửa hàng, 37
+  quản trị, 43 lớp nổi); `tools/impact.mjs` suy route bị ảnh hưởng theo tên export; `gen.mjs`, `diff.mjs` so từng route với mốc;
+  `tools/pixdiff.mjs`; `sweep:promote` thăng mốc. `tools/layout-sweep.js` nay sinh ra từ manifest.
+- **Mốc sweep** sau R2 (`tools/sweep/baseline-vi.json`, `baseline-en.json`): **232 mục mỗi ngôn ngữ, VI 51 phát hiện, EN 50**.
+  `tinyText` 50 là chữ viết tắt `Avatar` `sm` ở 1280 và 1440 (khiếm khuyết đã biết, dưới); `smallTarget` 1 là chip "Đổi trả" ở
+  `/faq` 390, rộng 34px, nằm trong dải cuộn, chỉ bản VI. 0 tràn, 0 bị cắt.
+- **Máy dò thiết kế** (`npx impeccable detect --json app components`, 08/10, phạm vi brief, **không** gồm `registry/`): trước lần
+  viết lại này **2**, sau **2**, cùng bộ: `design-system-radius` ở `ArcCountField.module.css`. Feed 0. (Con số 8 ở trên, đo 07/10, gồm
+  cả `registry`; 6 phát hiện thêm ở đó là dải `--arc-gradient-*` của `foundation.css`. Lần này không đo `registry`.)
+
+Cách đo không đổi: sweep quét route × bề ngang (sweep trọn: cửa hàng 390 và 1280, quản trị 1280, theo `manifest.mjs`; mốc có thêm
+mục 1440 của quản trị từ R2; lát lọc thêm bề ngang khi cần) — console, tràn ngang, chữ < 11px, ảnh lệch tỉ lệ,
+phần tử bị cắt, con trỏ, vùng chạm bằng `elementFromPoint`; lớp nổi **mở ra rồi mới đo**; ảnh chụp so mock từng hộp trước khi ghi
+vào đây.
 
 ### Khiếm khuyết đang mang theo, không phải luật
 - Chữ viết tắt `Avatar` `sm` cỡ **10px** (`registry/components/avatar/avatar.module.css`, ruột Arc), dưới sàn 11px; đã
@@ -1297,16 +1381,11 @@ cắt, con trỏ, vùng chạm bằng `elementFromPoint`; lớp nổi **mở ra 
 **Đợt v6, để lượt rà cuối** (bảng kiểm ở `tasks/plan.md`, mục "Chữ Việt còn ở bản EN sau cả đợt tiếng Anh" và các mục "Để lượt rà
 cuối" của từng lát). Đây là khiếm khuyết, **không** phải mẫu cho màn mới:
 - **Chữ Việt ở bản EN không mang được `lang`**: tên mẫu của Số nằm trong một chuỗi (tiêu đề Drawer và Dialog của Arc như "Adjust
-  stock · D05 – KHÓI", 37 `aria-label` "Actions for <tên>", toast, ô CSV, placeholder "e.g. KHÓI"). Chỗ vá `select` gắn `lang`
-  lên cả dòng option, nên chữ phụ tiếng Anh trong dòng ("12 styles", "Jackets") cũng mang `lang="vi"`; gắn vào `ItemText` mới
-  chính xác. Từ mượn không dấu ("Form", "Size", "oversize", "VD") lọt máy dò chữ Việt ở quản trị, chưa grep.
+  stock · D05 – KHÓI", 37 `aria-label` "Actions for <tên>", toast, ô CSV, placeholder "e.g. KHÓI"). Từ mượn không dấu ("Form",
+  "Size", "oversize", "VD") lọt máy dò chữ Việt ở quản trị, chưa grep.
 - **Chữ Việt in như đã lưu, có chủ ý (QĐ-40)**: tên mẫu của Số, mẫu hé lộ; loại và tên mẫu tạo trong quản trị; ghi chú đơn, lý do
   huỷ gõ tự do, lý do sửa địa chỉ, tên trong payload của Nhật ký; tên và địa chỉ khách; ảnh chia sẻ; nút "Tiếng Việt".
 - **Bản EN xuống dòng nhiều hơn bản VI** (không tràn, không lệch lưới): trang chủ dải 900 (dòng tồn của BỤI, `.soon-note`); ô
   `/so/4`, `/so/3` ở 390 và 900 (`.b-tile-meta`, `.b-tile-kind`); tiêu đề `/so/5` ở 390; trang một đơn của khách ở 900; hộp thư ở
   900 (VI 3 dòng, EN 4); cột "Style" bảng món của một đơn quản trị ra 3 dòng ở 1280; câu thứ tự màu ở form mẫu ra 2 dòng; ô loại ·
-  fit và ô màu của bảng Mẫu ở 1280.
-- **Hai kiểu ngày cạnh nhau** ở quản trị bản EN: hàng chờ Tổng quan "Paid 07:52 30 Sep" và "due 08:05, 3 Oct"; sổ đơn "due 08:05 ·
-  3 Oct" và "due 08:05 3 Oct" (theo đúng bản VI).
-- **Có từ trước, cả bản VI**: không có script thì lưới Cửa hàng trống (giả thuyết chưa đo: `[data-ui="feed"] .rv:not(.in)` thắng
-  luật dự phòng trong `<noscript>`); `/faq#doi-tra` dừng khi nhóm ở 172px, chưa sát dưới thanh trên.
+  fit và ô màu của bảng Mẫu ở 1280. Lượt rà v6 nhận các chỗ này (F15: xuống dòng do dữ liệu dài hơn; F25: ô màu 2 dòng).

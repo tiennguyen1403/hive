@@ -10,7 +10,7 @@ import { FeedIcon } from "../icon/FeedIcon";
 interface PayByCardProps {
   /** The order to pay for. The action looks it up the way the page did, and trusts nothing else. */
   code: string;
-  /** The wrapper's class where the page spaces it (`.pay-card` on the receipt); none inside `.od-act`, which spaces its buttons. */
+  /** The wrapper's class where the page spaces it (`.hold-pay` on the receipt); none inside `.od-act`, which spaces its buttons. */
   className?: string;
 }
 

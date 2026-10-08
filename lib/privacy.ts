@@ -7,15 +7,16 @@ import type { Locale } from "./i18n";
  * 7 Oct 2026."). Google's consent screen links to the page (QĐ-41), so the
  * day is a promise about the text: change it whenever the words change.
  *
- * 07/10/2026, the day the page went up to the demo (the main session), and
- * the day of slice B18, whose three Stripe sentences the user approved — the
- * same day, so the value stays (the main session moves it to the day B18 goes
- * up, if that is a later one). An
+ * 08/10/2026: the round v6 polish pass reached the demo that day, and with it
+ * the English "The demo's admin is open for anyone to try." in place of "back
+ * office" (copy C9, the user's approval of 07/10). Before it, 07/10/2026: the
+ * page itself, then the three Stripe sentences of slice B18, both up the same
+ * day. An
  * instant at midnight in Vietnam, as every instant in this codebase carries
  * +07:00, so `lib/datetime.ts` reads the date off the text and no server's
  * zone moves it.
  */
-export const PRIVACY_UPDATED_AT = "2026-10-07T00:00:00+07:00";
+export const PRIVACY_UPDATED_AT = "2026-10-08T00:00:00+07:00";
 
 /** The same day as `<time dateTime>` takes it: "2026-10-07". */
 export const PRIVACY_UPDATED_DAY = PRIVACY_UPDATED_AT.slice(0, 10);

@@ -2092,6 +2092,28 @@
   }
  ],
  "volatile": {
+  "home-390": [
+   [
+    16,
+    563,
+    192,
+    35
+   ],
+   [
+    71,
+    3552,
+    195,
+    33
+   ]
+  ],
+  "order-confirmed-DH-2430-390": [
+   [
+    16,
+    728,
+    151,
+    66
+   ]
+  ],
   "so-4-390": [
    [
     83,
@@ -2122,6 +2144,36 @@
     1062,
     169,
     28
+   ]
+  ],
+  "account-orders-DH-2430-390": [
+   [
+    34,
+    270,
+    151,
+    50
+   ]
+  ],
+  "home-1280": [
+   [
+    583,
+    612,
+    275,
+    49
+   ],
+   [
+    356,
+    2355,
+    306,
+    51
+   ]
+  ],
+  "order-confirmed-DH-2430-1280": [
+   [
+    32,
+    642,
+    196,
+    85
    ]
   ],
   "so-4-1280": [
@@ -2156,64 +2208,1260 @@
     28
    ]
   ],
-  "order-confirmed-DH-2430-390": [
-   [
-    16,
-    728,
-    151,
-    66
-   ]
-  ],
-  "order-confirmed-DH-2430-1280": [
-   [
-    32,
-    642,
-    196,
-    85
-   ]
-  ],
-  "home-390": [
-   [
-    16,
-    543,
-    192,
-    34
-   ],
-   [
-    71,
-    3457,
-    195,
-    32
-   ]
-  ],
-  "account-orders-DH-2430-390": [
-   [
-    34,
-    270,
-    151,
-    50
-   ]
-  ],
-  "home-1280": [
-   [
-    589,
-    620,
-    276,
-    49
-   ],
-   [
-    356,
-    2375,
-    306,
-    51
-   ]
-  ],
   "account-orders-DH-2430-1280": [
    [
     338,
     335,
     151,
     49
+   ]
+  ],
+  "admin-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-DH-2429-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-DH-2430-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-DH-2418-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-05-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-5-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-new-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-p-khoi-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-p-ao-thun-tron-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-c-minhanh-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-2429-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-2429,DH-2428,DH-2423,DH-2426-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-9999-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-log-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-days-7-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-days-30-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-log-kind-order-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-log-today-1-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-log-q-zzz-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-group-loyal-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-q-zzz-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-c-namle-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-state-ENDED-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-state-PAUSED-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-04-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-06-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-6-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-4-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-fixed-1&gone-1-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-5&q-zzz-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-99-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-DH-2429-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-DH-2430-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-DH-2418-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-05-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-5-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-new-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-p-khoi-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-p-ao-thun-tron-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-c-minhanh-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-2429-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-2429,DH-2428,DH-2423,DH-2426-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-slips-codes-DH-9999-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-log-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-days-7-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-days-30-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-log-kind-order-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-log-today-1-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-log-q-zzz-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-group-loyal-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-q-zzz-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-c-namle-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-state-ENDED-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-state-PAUSED-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-04-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-06-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-6-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-4-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-fixed-1&gone-1-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-5&q-zzz-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-drop-99-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-order-more-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-order-cancel-sheet-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-order-handover-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-order-carrier-select-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-order-address-form-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-order-address-province-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-order-address-ward-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-row-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-reset-sheet-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-overview-day-table-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-log-filter-fields-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-log-filter-values-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-row-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-restock-sheet-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-so05-row-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-adjust-sheet-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-filter-fields-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-filter-values-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-adjust-ready-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-products-adjust-fixed-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-row-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-create-sheet-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-edit-sheet-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-close-sheet-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-teaser-sheet-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-create-backwards-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-close-detail-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-teaser-ready-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-04-row-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-row-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-create-drawer-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-edit-drawer-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-create-error-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-row-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-issue-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-fixed-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-product-form-kind-menu-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-crop-sheet-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-photopick-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-product-edit-photopick-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-colours-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-product-fixed-photopick-1280": [
+   [
+    28,
+    552,
+    183,
+    35
+   ]
+  ],
+  "admin-order-more-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-order-cancel-sheet-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-order-handover-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-order-carrier-select-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-order-address-form-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-order-address-province-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-order-address-ward-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-orders-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-reset-sheet-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-overview-day-table-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-log-filter-fields-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-log-filter-values-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-restock-sheet-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-so05-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-adjust-sheet-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-filter-fields-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-filter-values-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-adjust-ready-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-products-adjust-fixed-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-create-sheet-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-edit-sheet-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-close-sheet-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-teaser-sheet-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-create-backwards-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-close-detail-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-teaser-ready-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-drops-04-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-create-drawer-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-edit-drawer-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-promotions-create-error-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-customers-row-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-issue-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-fixed-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-product-form-kind-menu-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-crop-sheet-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-photopick-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-product-edit-photopick-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-product-new-colours-1440": [
+   [
+    28,
+    652,
+    183,
+    35
+   ]
+  ],
+  "admin-product-fixed-photopick-1440": [
+   [
+    28,
+    652,
+    183,
+    35
    ]
   ]
  },
@@ -2236,6 +3484,10 @@
    {
     "label": "r2",
     "entries": 168
+   },
+   {
+    "label": "sync",
+    "entries": 232
    }
   ]
  }

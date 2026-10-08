@@ -8,11 +8,11 @@ describe("the day /privacy was last changed (round v6 slice P)", () => {
     expect(PRIVACY_UPDATED_DAY).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  it("prints the day by each language's rule: 07/10/2026, and the glossary's British 7 Oct 2026", () => {
-    expect(privacyUpdated("vi")).toBe("07/10/2026");
+  it("prints the day by each language's rule: 08/10/2026, and the glossary's British 8 Oct 2026", () => {
+    expect(privacyUpdated("vi")).toBe("08/10/2026");
     expect(privacyUpdated()).toBe(privacyUpdated("vi"));
     // No leading zero in English; the day, its month and the year held together by no-break spaces.
-    expect(privacyUpdated("en")).toBe("7 Oct 2026");
+    expect(privacyUpdated("en")).toBe("8 Oct 2026");
   });
 
   it("reads the constant, never a date typed beside it", () => {
